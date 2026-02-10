@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Separable ODE (Problem 3) — Full Solution</title>
+
+  <!-- MathJax for LaTeX rendering -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)'], ['$', '$']],
+        displayMath: [['\\[', '\\]'], ['$$', '$$']],
+        processEscapes: true
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg0:#070A12;
+      --bg1:rgba(255,255,255,.06);
+      --bg2:rgba(255,255,255,.10);
+      --txt:#EAF0FF;
+      --muted:rgba(234,240,255,.72);
+      --faint:rgba(234,240,255,.52);
+      --line:rgba(234,240,255,.12);
+      --accent:#7C5CFF;
+      --accent2:#3DE3B5;
+      --warn:#FFCA5C;
+      --bad:#FF5C7C;
+      --ok:#46E39C;
+      --shadow: 0 18px 55px rgba(0,0,0,.55);
+      --radius: 18px;
+      --radius2: 26px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg0:#F6F7FB;
+        --bg1:rgba(0,0,0,.04);
+        --bg2:rgba(0,0,0,.08);
+        --txt:#101827;
+        --muted:rgba(16,24,39,.72);
+        --faint:rgba(16,24,39,.55);
+        --line:rgba(16,24,39,.12);
+        --shadow: 0 18px 55px rgba(16,24,39,.12);
+      }
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--txt);
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(124,92,255,.25), transparent 55%),
+        radial-gradient(900px 500px at 85% 12%, rgba(61,227,181,.22), transparent 55%),
+        radial-gradient(900px 700px at 60% 95%, rgba(255,92,124,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg0));
+      overflow-x:hidden;
+    }
+
+    a{color:inherit}
+    .wrap{
+      width:min(1100px, 92vw);
+      margin: clamp(28px, 5vw, 56px) auto 90px;
+      position:relative;
+    }
+
+    /* Subtle animated grid */
+    .gridfx{
+      position:absolute;
+      inset:-90px -40px auto -40px;
+      height:340px;
+      background:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(300px 220px at 30% 30%, #000 70%, transparent 100%);
+      opacity:.7;
+      pointer-events:none;
+      animation: drift 16s linear infinite;
+    }
+    @keyframes drift{
+      0%{transform:translate3d(0,0,0)}
+      100%{transform:translate3d(-48px,0,0)}
+    }
+
+    header.hero{
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      padding: clamp(18px, 3.2vw, 34px);
+      background: linear-gradient(135deg, var(--bg1), transparent 60%);
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(500px 320px at 22% 18%, rgba(124,92,255,.26), transparent 60%),
+        radial-gradient(520px 360px at 85% 35%, rgba(61,227,181,.22), transparent 60%);
+      filter: blur(0px);
+      opacity:.85;
+      pointer-events:none;
+    }
+
+    .hero > *{position:relative; z-index:1}
+
+    .kicker{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-size: 13px;
+      color:var(--muted);
+      letter-spacing:.2px;
+    }
+    .dot{
+      width:9px;height:9px;border-radius:50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 3px rgba(124,92,255,.18);
+    }
+    h1{
+      font-size: clamp(26px, 3.4vw, 44px);
+      line-height:1.08;
+      margin: 6px 0 10px;
+      letter-spacing:-.6px;
+    }
+    .subtitle{
+      max-width: 72ch;
+      color:var(--muted);
+      font-size: clamp(14px, 1.35vw, 16px);
+      line-height:1.55;
+      margin:0;
+    }
+
+    .metaRow{
+      margin-top: 18px;
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .metaCard{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 14px;
+      padding: 10px 12px;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width: 180px;
+    }
+    .metaCard .label{color:var(--faint); font-size:12px}
+    .metaCard .value{font-family:var(--mono); font-size:13px; color:var(--txt)}
+
+    nav.toc{
+      margin-top: 22px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .toc a{
+      text-decoration:none;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.04);
+      color:var(--muted);
+      font-size: 13px;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .toc a:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.07);
+      border-color: rgba(124,92,255,.35);
+      color:var(--txt);
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 1.55fr .95fr;
+      gap: 18px;
+      margin-top: 18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .layout{grid-template-columns: 1fr; }
+    }
+
+    section.card{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.04);
+      box-shadow: 0 12px 40px rgba(0,0,0,.25);
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(135deg, rgba(255,255,255,.05), transparent 60%);
+    }
+    .cardHeader h2{
+      margin:0;
+      font-size: 15px;
+      letter-spacing:.2px;
+    }
+    .badge{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      color: var(--muted);
+      background: rgba(0,0,0,.12);
+    }
+    .cardBody{
+      padding: 16px;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 720px){
+      .grid2{grid-template-columns: 1fr}
+    }
+
+    .box{
+      border:1px dashed rgba(234,240,255,.18);
+      border-radius: 14px;
+      padding: 12px 12px;
+      background: rgba(0,0,0,.08);
+    }
+    @media (prefers-color-scheme: light){
+      .box{background: rgba(255,255,255,.6);}
+    }
+    .box h3{
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing:.2px;
+      text-transform: uppercase;
+    }
+    ul.clean{
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+    .mathBlock{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,.03);
+      margin: 12px 0;
+      overflow:auto;
+    }
+
+    .steps{
+      counter-reset: step;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .step{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.03);
+      padding: 12px 12px 12px 14px;
+      position:relative;
+      overflow:hidden;
+    }
+    .step::before{
+      counter-increment: step;
+      content: counter(step);
+      position:absolute;
+      top:12px; left:12px;
+      width:28px; height:28px;
+      border-radius:10px;
+      display:grid;
+      place-items:center;
+      font-family:var(--mono);
+      font-size:13px;
+      color: var(--txt);
+      background: linear-gradient(135deg, rgba(124,92,255,.55), rgba(61,227,181,.35));
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .stepInner{padding-left: 42px;}
+    .stepTitle{
+      margin:0 0 6px;
+      font-size: 14px;
+      color: var(--txt);
+      letter-spacing:.2px;
+    }
+    .stepText{
+      margin:0;
+      color: var(--muted);
+      line-height:1.6;
+      font-size: 14px;
+    }
+
+    .callout{
+      border:1px solid rgba(124,92,255,.35);
+      background: linear-gradient(135deg, rgba(124,92,255,.18), rgba(61,227,181,.10));
+      border-radius: 18px;
+      padding: 14px 14px;
+      margin: 14px 0;
+    }
+    .callout strong{color:var(--txt)}
+    .callout p{margin:0; color:var(--muted); line-height:1.6; font-size:14px}
+
+    .danger{
+      border-color: rgba(255,92,124,.35);
+      background: linear-gradient(135deg, rgba(255,92,124,.14), rgba(255,202,92,.10));
+    }
+
+    .final{
+      border:1px solid rgba(61,227,181,.35);
+      background: linear-gradient(135deg, rgba(61,227,181,.14), rgba(124,92,255,.10));
+      border-radius: 20px;
+      padding: 16px;
+      margin-top: 10px;
+    }
+    .final .titleRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .final h3{
+      margin:0;
+      font-size: 14px;
+      letter-spacing:.2px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .copyBtn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color: var(--txt);
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      cursor:pointer;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+      user-select:none;
+    }
+    .copyBtn:hover{transform: translateY(-1px); border-color: rgba(61,227,181,.38);}
+    .copyBtn:active{transform: translateY(0px);}
+
+    pre.code{
+      margin: 0;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      overflow:auto;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height:1.55;
+      color: rgba(234,240,255,.92);
+    }
+    @media (prefers-color-scheme: light){
+      pre.code{
+        background: rgba(0,0,0,.06);
+        color: rgba(16,24,39,.92);
+      }
+    }
+
+    aside.sticky{
+      position: sticky;
+      top: 18px;
+      display:flex;
+      flex-direction:column;
+      gap: 18px;
+    }
+    @media (max-width: 980px){
+      aside.sticky{position:static}
+    }
+
+    .mini{
+      font-size: 13px;
+      color: var(--muted);
+      line-height:1.6;
+      margin: 0;
+    }
+    .hr{
+      height:1px;
+      background: var(--line);
+      margin: 12px 0;
+    }
+
+    .checklist{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .check{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .icon{
+      width:28px;height:28px;
+      border-radius: 12px;
+      flex:0 0 auto;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.12);
+      font-family: var(--mono);
+      font-size: 14px;
+      margin-top:1px;
+    }
+    .icon.ok{background: rgba(70,227,156,.12); border-color: rgba(70,227,156,.32)}
+    .icon.warn{background: rgba(255,202,92,.12); border-color: rgba(255,202,92,.32)}
+    .icon.bad{background: rgba(255,92,124,.12); border-color: rgba(255,92,124,.32)}
+    .check p{margin:0; color:var(--muted); font-size:14px; line-height:1.6;}
+    .check p strong{color:var(--txt)}
+
+    footer{
+      margin-top: 26px;
+      color:var(--faint);
+      font-size: 12px;
+      text-align:center;
+    }
+
+    /* Nice selection */
+    ::selection{background: rgba(124,92,255,.35); color: var(--txt);}
+
+    /* Reduce motion */
+    @media (prefers-reduced-motion: reduce){
+      .gridfx{animation:none}
+      .toc a, .copyBtn{transition:none}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="gridfx" aria-hidden="true"></div>
+
+    <header class="hero" id="top">
+      <div class="kicker">
+        <span class="pill"><span class="dot" aria-hidden="true"></span> Differential Equations • Separable ODE</span>
+        <span class="pill">Problem 3 • Initial Value Problem</span>
+        <span class="pill">Math + Physics style reasoning</span>
+      </div>
+
+      <h1>Solving the IVP \(y'(x)=e^{x+2y}\), \(y(0)=0\)</h1>
+      <p class="subtitle">
+        We solve a first-order separable ODE rigorously and clearly: analysis first, then a clean roadmap, then the full derivation
+        with verification and interpretation (including finite-time blow-up).
+      </p>
+
+      <div class="metaRow" role="list">
+        <div class="metaCard" role="listitem">
+          <div class="label">ODE type</div>
+          <div class="value">Separable (also linear via \(u=e^{-2y}\))</div>
+        </div>
+        <div class="metaCard" role="listitem">
+          <div class="label">Key feature</div>
+          <div class="value">Exponential feedback → runaway growth</div>
+        </div>
+        <div class="metaCard" role="listitem">
+          <div class="label">Domain (real)</div>
+          <div class="value">\(x&lt;\ln(3/2)\)</div>
+        </div>
+      </div>
+
+      <nav class="toc" aria-label="Table of contents">
+        <a href="#part1">PART 1 — Analysis</a>
+        <a href="#part2">PART 2 — Strategy & Tips</a>
+        <a href="#part3">PART 3 — Full Solution</a>
+        <a href="#checks">Sanity Checks</a>
+      </nav>
+    </header>
+
+    <div class="layout">
+      <!-- MAIN COLUMN -->
+      <main>
+        <!-- PART 1 -->
+        <section class="card" id="part1">
+          <div class="cardHeader">
+            <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+            <span class="badge">Understand → choose method</span>
+          </div>
+          <div class="cardBody">
+            <div class="grid2">
+              <div class="box">
+                <h3>Restate the problem</h3>
+                <p class="mini">
+                  Solve the initial-value problem:
+                </p>
+                <div class="mathBlock">
+                  \[
+                    \begin{cases}
+                      y'(x)=e^{x+2y},\\
+                      y(0)=0.
+                    \end{cases}
+                  \]
+                </div>
+                <p class="mini">
+                  Find an explicit \(y(x)\) and state where it is valid (real-valued).
+                </p>
+              </div>
+
+              <div class="box">
+                <h3>Given / Unknowns / Goal</h3>
+                <ul class="clean">
+                  <li><strong>Given:</strong> \(y'(x)=e^{x+2y}\)</li>
+                  <li><strong>Given:</strong> \(y(0)=0\)</li>
+                  <li><strong>Unknown:</strong> \(y(x)\)</li>
+                  <li><strong>Goal:</strong> explicit solution + validity interval</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="hr"></div>
+
+            <div class="box">
+              <h3>Why the main principle applies</h3>
+              <p class="mini">
+                The equation is <strong>separable</strong> because the right-hand side factorizes:
+                \(e^{x+2y}=e^x\,e^{2y}\). That means we can rearrange it into
+                “all \(y\)” on one side and “all \(x\)” on the other, then integrate.
+              </p>
+            </div>
+
+            <div class="grid2" style="margin-top:14px;">
+              <div class="box">
+                <h3>Candidate approaches</h3>
+                <ul class="clean">
+                  <li><strong>Separation of variables:</strong> fastest because it factorizes immediately.</li>
+                  <li><strong>Substitution:</strong> let \(u=e^{-2y}\), turns into a simple ODE for \(u\).</li>
+                  <li><strong>Implicit-first approach:</strong> separate and integrate, then solve for \(y\).</li>
+                </ul>
+              </div>
+              <div class="box">
+                <h3>Chosen approach</h3>
+                <p class="mini">
+                  <strong>Separation of variables</strong> is the cleanest: fewest steps, minimal algebra,
+                  and the initial condition fixes the constant without ambiguity.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PART 2 -->
+        <section class="card" id="part2" style="margin-top:18px;">
+          <div class="cardHeader">
+            <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+            <span class="badge">Plan → avoid mistakes</span>
+          </div>
+          <div class="cardBody">
+            <div class="steps" aria-label="Solution roadmap">
+              <div class="step">
+                <div class="stepInner">
+                  <h3 class="stepTitle">Factor the exponential</h3>
+                  <p class="stepText">
+                    <strong>Goal:</strong> make separability obvious. <br>
+                    <strong>Tool:</strong> \(e^{a+b}=e^a e^b\).
+                  </p>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="stepInner">
+                  <h3 class="stepTitle">Separate variables</h3>
+                  <p class="stepText">
+                    <strong>Goal:</strong> move \(y\)-terms to the left, \(x\)-terms to the right. <br>
+                    <strong>Tool:</strong> algebra with \(dy/dx\).
+                  </p>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="stepInner">
+                  <h3 class="stepTitle">Integrate both sides</h3>
+                  <p class="stepText">
+                    <strong>Goal:</strong> compute \(\int e^{-2y}dy\) and \(\int e^x dx\). <br>
+                    <strong>Tool:</strong> exponential integrals, chain rule awareness.
+                  </p>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="stepInner">
+                  <h3 class="stepTitle">Apply the initial condition</h3>
+                  <p class="stepText">
+                    <strong>Goal:</strong> determine the integration constant. <br>
+                    <strong>Tool:</strong> substitute \(x=0, y=0\).
+                  </p>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="stepInner">
+                  <h3 class="stepTitle">Solve for \(y(x)\)</h3>
+                  <p class="stepText">
+                    <strong>Goal:</strong> isolate \(y\) using logarithms. <br>
+                    <strong>Tool:</strong> \(\ln\) and exponent rules.
+                  </p>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="stepInner">
+                  <h3 class="stepTitle">State the real domain</h3>
+                  <p class="stepText">
+                    <strong>Goal:</strong> ensure the log argument is positive. <br>
+                    <strong>Tool:</strong> inequality check.
+                  </p>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="stepInner">
+                  <h3 class="stepTitle">Verify + interpret</h3>
+                  <p class="stepText">
+                    <strong>Goal:</strong> differentiate back and confirm the ODE; interpret blow-up. <br>
+                    <strong>Tool:</strong> implicit differentiation + limits.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="callout danger" style="margin-top:16px;">
+              <p>
+                <strong>Common mistakes:</strong>
+                (i) missing the factor \(-\tfrac12\) in \(\int e^{-2y}dy\),
+                (ii) forgetting \(e^{x+2y}=e^x e^{2y}\),
+                (iii) ignoring the domain where \(\ln(\cdot)\) is real.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- PART 3 -->
+        <section class="card" id="part3" style="margin-top:18px;">
+          <div class="cardHeader">
+            <h2>PART 3 — Full Solution</h2>
+            <span class="badge">Intuition → derivation → final</span>
+          </div>
+          <div class="cardBody">
+            <div class="callout">
+              <p>
+                <strong>Physical intuition:</strong>
+                The rate \(y'(x)=e^{x+2y}\) is always positive and grows extremely fast as \(x\) or \(y\) increases.
+                This “exponential feedback” often causes runaway growth and can blow up at a finite value of \(x\).
+              </p>
+            </div>
+
+            <h3 style="margin:10px 0 6px; font-size:15px;">Derivation (step-by-step)</h3>
+
+            <div class="mathBlock">
+              <p class="mini" style="margin:0 0 10px;">
+                Start by factorizing the exponential:
+              </p>
+              \[
+                y' = e^{x+2y} = e^x e^{2y}.
+              \]
+            </div>
+
+            <div class="mathBlock">
+              <p class="mini" style="margin:0 0 10px;">
+                Write \(y'=\dfrac{dy}{dx}\) and separate variables:
+              </p>
+              \[
+                \frac{dy}{dx} = e^x e^{2y}
+                \quad\Longrightarrow\quad
+                e^{-2y}\,dy = e^x\,dx.
+              \]
+            </div>
+
+            <div class="mathBlock">
+              <p class="mini" style="margin:0 0 10px;">
+                Integrate both sides:
+              </p>
+              \[
+                \int e^{-2y}\,dy = \int e^x\,dx.
+              \]
+              <p class="mini" style="margin:10px 0 0;">
+                Compute each integral carefully (chain rule on the left):
+              </p>
+              \[
+                \int e^{-2y}\,dy = -\frac12 e^{-2y},
+                \qquad
+                \int e^x\,dx = e^x + C.
+              \]
+              \[
+                -\frac12 e^{-2y} = e^x + C.
+              \]
+            </div>
+
+            <div class="mathBlock">
+              <p class="mini" style="margin:0 0 10px;">
+                Apply the initial condition \(y(0)=0\):
+              </p>
+              \[
+                -\frac12 e^{-2\cdot 0} = e^0 + C
+                \quad\Longrightarrow\quad
+                -\frac12 = 1 + C
+                \quad\Longrightarrow\quad
+                C = -\frac32.
+              \]
+              <p class="mini" style="margin:10px 0 0;">
+                Substitute back:
+              </p>
+              \[
+                -\frac12 e^{-2y} = e^x - \frac32.
+              \]
+            </div>
+
+            <div class="mathBlock">
+              <p class="mini" style="margin:0 0 10px;">
+                Solve explicitly for \(y(x)\):
+              </p>
+              \[
+                e^{-2y} = -2e^x + 3 = 3 - 2e^x.
+              \]
+              \[
+                -2y = \ln(3 - 2e^x)
+                \quad\Longrightarrow\quad
+                y(x) = -\frac12 \ln(3 - 2e^x).
+              \]
+            </div>
+
+            <div class="final" aria-label="Final result">
+              <div class="titleRow">
+                <h3>Final Answer</h3>
+                <button class="copyBtn" id="copyBtn" type="button" aria-label="Copy final answer">
+                  Copy \(y(x)\)
+                </button>
+              </div>
+
+              <div class="mathBlock" style="margin:0;">
+                \[
+                  \boxed{\,y(x)= -\frac12 \ln\!\bigl(3-2e^x\bigr)\,}
+                \]
+                <p class="mini" style="margin:10px 0 0;">
+                  Real-valued solution requires \(3-2e^x&gt;0\), i.e.
+                  \[
+                    \boxed{\,x&lt;\ln\!\left(\frac32\right)\,}.
+                  \]
+                </p>
+              </div>
+
+              <pre class="code" id="finalCode">\boxed{\,y(x)= -\frac12 \ln\!\bigl(3-2e^x\bigr)\,},\qquad x&lt;\ln\!\left(\frac32\right).</pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- CHECKS -->
+        <section class="card" id="checks" style="margin-top:18px;">
+          <div class="cardHeader">
+            <h2>Sanity Checks (units • limits • verification • interpretation)</h2>
+            <span class="badge">Trust the result</span>
+          </div>
+          <div class="cardBody">
+            <div class="checklist">
+              <div class="check">
+                <div class="icon ok">✓</div>
+                <p>
+                  <strong>Initial condition:</strong>
+                  \(y(0)=-\tfrac12\ln(3-2\cdot 1)=-\tfrac12\ln(1)=0\).
+                </p>
+              </div>
+
+              <div class="check">
+                <div class="icon ok">✓</div>
+                <p>
+                  <strong>ODE verification (outline):</strong>
+                  From \(e^{-2y}=3-2e^x\), differentiate:
+                  \(-2y'e^{-2y}=-2e^x \Rightarrow y'=e^x e^{2y}=e^{x+2y}\).
+                </p>
+              </div>
+
+              <div class="check">
+                <div class="icon warn">!</div>
+                <p>
+                  <strong>Units:</strong>
+                  Exponents/logs require dimensionless arguments. In this exam-style ODE, \(x\) and \(y\) are treated as dimensionless,
+                  so \(\ln(3-2e^x)\) is consistent.
+                </p>
+              </div>
+
+              <div class="check">
+                <div class="icon bad">⟂</div>
+                <p>
+                  <strong>Finite-time blow-up:</strong>
+                  As \(x\to \ln(3/2)^-\), \(3-2e^x\to 0^+\), hence \(\ln(\cdot)\to -\infty\) and
+                  \(y(x)\to +\infty\). This matches the “runaway” intuition from exponential feedback.
+                </p>
+              </div>
+            </div>
+
+            <div class="hr"></div>
+
+            <p class="mini">
+              <strong>Physical interpretation (optional):</strong>
+              If \(y\) were a population/energy-like quantity with growth rate exponentially amplified by both position/time \(x\)
+              and the state \(y\), then the model predicts rapid acceleration and a divergence at a finite \(x\). In real physics,
+              such blow-up usually signals missing damping/saturation mechanisms.
+            </p>
+          </div>
+        </section>
+
+        <footer>
+          <p style="margin:0;">
+            Article-ready HTML • Includes MathJax • Responsive layout • Copy-to-clipboard for the final boxed result
+          </p>
+        </footer>
+      </main>
+
+      <!-- SIDEBAR -->
+      <aside class="sticky" aria-label="Sidebar">
+        <section class="card">
+          <div class="cardHeader">
+            <h2>Quick View</h2>
+            <span class="badge">At a glance</span>
+          </div>
+          <div class="cardBody">
+            <p class="mini">
+              <strong>ODE:</strong> \(y'=e^{x+2y}\) <br>
+              <strong>IC:</strong> \(y(0)=0\) <br>
+              <strong>Type:</strong> Separable <br>
+              <strong>Behavior:</strong> monotone increasing; blow-up at finite \(x\)
+            </p>
+            <div class="hr"></div>
+            <p class="mini">
+              <strong>Final:</strong>
+            </p>
+            <div class="mathBlock">
+              \[
+                y(x)= -\frac12 \ln(3-2e^x),\quad x<\ln\!\left(\frac32\right).
+              \]
+            </div>
+            <a class="copyBtn" href="#top" style="display:inline-block; text-decoration:none; text-align:center; width:100%; margin-top:10px;">
+              Back to top
+            </a>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardHeader">
+            <h2>Common Pitfalls</h2>
+            <span class="badge">Avoid</span>
+          </div>
+          <div class="cardBody">
+            <ul class="clean">
+              <li>Dropping the \(-\tfrac12\) from \(\int e^{-2y}dy\).</li>
+              <li>Forgetting to enforce \(3-2e^x>0\) (real solution).</li>
+              <li>Applying \(\ln\) before isolating the exponential cleanly.</li>
+            </ul>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const btn = document.getElementById('copyBtn');
+      const code = document.getElementById('finalCode');
+
+      function toast(msg){
+        const t = document.createElement('div');
+        t.textContent = msg;
+        t.style.position = 'fixed';
+        t.style.left = '50%';
+        t.style.bottom = '22px';
+        t.style.transform = 'translateX(-50%)';
+        t.style.padding = '10px 12px';
+        t.style.borderRadius = '999px';
+        t.style.border = '1px solid rgba(255,255,255,.16)';
+        t.style.background = 'rgba(0,0,0,.35)';
+        t.style.backdropFilter = 'blur(10px)';
+        t.style.webkitBackdropFilter = 'blur(10px)';
+        t.style.color = getComputedStyle(document.documentElement).getPropertyValue('--txt') || '#fff';
+        t.style.fontFamily = 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        t.style.fontSize = '13px';
+        t.style.boxShadow = '0 14px 40px rgba(0,0,0,.35)';
+        t.style.zIndex = 9999;
+        t.style.opacity = '0';
+        t.style.transition = 'opacity .18s ease, transform .18s ease';
+        document.body.appendChild(t);
+        requestAnimationFrame(()=>{ t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(-2px)'; });
+        setTimeout(()=>{
+          t.style.opacity='0';
+          t.style.transform='translateX(-50%) translateY(6px)';
+          setTimeout(()=>t.remove(), 220);
+        }, 1200);
+      }
+
+      if(btn && code){
+        btn.addEventListener('click', async () => {
+          const text = code.textContent.replace(/\s+$/,'');
+          try{
+            await navigator.clipboard.writeText(text);
+            toast('Copied!');
+          }catch(e){
+            // Fallback: select text
+            const range = document.createRange();
+            range.selectNodeContents(code);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            toast('Select + Ctrl/Cmd+C to copy');
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

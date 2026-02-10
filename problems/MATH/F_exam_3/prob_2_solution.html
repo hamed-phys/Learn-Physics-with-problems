@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Riemann Sums & Log Antiderivative — Problem 2 (a,b)</title>
+  <meta name="description" content="A polished, interactive article solving a Riemann sum problem and evaluating a limit via an integral." />
+
+  <!-- ====== Fonts (system-first) ====== -->
+  <style>
+    /* =========================
+       Design System
+       ========================= */
+    :root{
+      --bg: #0b1220;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.72);
+      --faint: rgba(255,255,255,.55);
+
+      --accent: #8b5cf6;      /* violet */
+      --accent2:#22c55e;      /* green  */
+      --accent3:#06b6d4;      /* cyan   */
+      --warn:  #f59e0b;
+      --danger:#ef4444;
+
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --shadow2: 0 12px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 26px;
+
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f6f7fb;
+        --panel: rgba(10,20,40,.05);
+        --panel2: rgba(10,20,40,.07);
+        --stroke: rgba(10,20,40,.10);
+        --text: rgba(10,20,40,.92);
+        --muted: rgba(10,20,40,.72);
+        --faint: rgba(10,20,40,.55);
+        --shadow: 0 18px 44px rgba(10,20,40,.12);
+        --shadow2: 0 10px 22px rgba(10,20,40,.10);
+      }
+    }
+
+    /* =========================
+       Base
+       ========================= */
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% 10%, rgba(139,92,246,.22), transparent 60%),
+        radial-gradient(900px 600px at 80% 20%, rgba(6,182,212,.18), transparent 55%),
+        radial-gradient(900px 800px at 60% 90%, rgba(34,197,94,.16), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.04), transparent 30%),
+        var(--bg);
+      overflow-x:hidden;
+    }
+
+    a{ color:inherit; text-decoration: none; }
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 42px 18px 80px;
+    }
+
+    /* =========================
+       Hero
+       ========================= */
+    .hero{
+      position:relative;
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .hero::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(700px 350px at 10% 10%, rgba(139,92,246,.25), transparent 55%),
+        radial-gradient(600px 320px at 90% 20%, rgba(6,182,212,.22), transparent 55%),
+        radial-gradient(800px 400px at 60% 110%, rgba(34,197,94,.18), transparent 55%);
+      filter: blur(8px);
+      opacity:.9;
+      pointer-events:none;
+    }
+    .hero-inner{
+      position:relative;
+      padding: 28px 26px 24px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+      align-items:start;
+    }
+    @media (max-width: 920px){
+      .hero-inner{ grid-template-columns: 1fr; }
+    }
+    .kicker{
+      display:flex; gap:10px; align-items:center;
+      font-weight: 650;
+      letter-spacing:.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent3));
+      box-shadow: 0 0 0 4px rgba(139,92,246,.15);
+    }
+    h1{
+      margin:10px 0 10px;
+      font-size: clamp(1.75rem, 2.8vw, 2.55rem);
+      letter-spacing: -0.02em;
+      line-height:1.12;
+    }
+    .sub{
+      margin:0;
+      color: var(--muted);
+      font-size: 1.02rem;
+      line-height:1.6;
+      max-width: 70ch;
+    }
+    .meta{
+      margin-top:16px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .pill{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size:.86rem;
+      color: var(--muted);
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      backdrop-filter: blur(10px);
+    }
+    .pill b{ color:var(--text); font-weight:650; }
+    .badge{
+      justify-self:end;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.03);
+      border-radius: var(--radius);
+      padding: 16px 14px;
+      box-shadow: var(--shadow2);
+    }
+    .badge h2{
+      margin:0 0 8px;
+      font-size: 1rem;
+      letter-spacing:.01em;
+    }
+    .badge p{
+      margin:0;
+      color: var(--muted);
+      font-size:.92rem;
+      line-height:1.5;
+    }
+    .badge .callout{
+      margin-top:12px;
+      border-radius: 14px;
+      border:1px dashed rgba(255,255,255,.22);
+      padding: 10px 12px;
+      background: rgba(0,0,0,.15);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: .9rem;
+      overflow:auto;
+    }
+
+    /* =========================
+       Layout Sections
+       ========================= */
+    .grid{
+      margin-top: 20px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .card{
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.035));
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+    }
+    .card-header{
+      padding: 14px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .card-header h3{
+      margin:0;
+      font-size: 1.02rem;
+      letter-spacing:.01em;
+    }
+    .card-header .tag{
+      font-family: var(--mono);
+      font-size: .82rem;
+      color: var(--muted);
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.03);
+      padding: 7px 10px;
+      border-radius: 999px;
+      white-space:nowrap;
+    }
+    .card-body{
+      padding: 16px 18px 20px;
+    }
+
+    .two-col{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 960px){
+      .two-col{ grid-template-columns: 1fr; }
+    }
+
+    /* =========================
+       Typography Helpers
+       ========================= */
+    .lead{
+      margin:0 0 10px;
+      color: var(--muted);
+      line-height:1.7;
+    }
+    .list{
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height:1.7;
+    }
+    .list li{ margin: 6px 0; }
+    .hr{
+      height:1px;
+      background: rgba(255,255,255,.10);
+      margin: 14px 0;
+    }
+    .note{
+      border:1px solid rgba(6,182,212,.35);
+      background: rgba(6,182,212,.08);
+      padding: 12px 14px;
+      border-radius: 16px;
+      color: var(--muted);
+    }
+    .warn{
+      border:1px solid rgba(245,158,11,.35);
+      background: rgba(245,158,11,.08);
+    }
+    .note b{ color: var(--text); }
+
+    /* =========================
+       Math / Code Blocks
+       ========================= */
+    .math{
+      font-family: var(--mono);
+      font-size: .95rem;
+      color: rgba(255,255,255,.9);
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      overflow:auto;
+    }
+    @media (prefers-color-scheme: light){
+      .math{ background: rgba(10,20,40,.06); color: rgba(10,20,40,.9); }
+    }
+    .math .dim{ color: var(--faint); }
+
+    /* =========================
+       Accordion
+       ========================= */
+    details{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.03);
+      border-radius: 18px;
+      overflow:hidden;
+    }
+    summary{
+      cursor:pointer;
+      padding: 14px 16px;
+      list-style:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      user-select:none;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    .chev{
+      width: 28px; height: 28px;
+      display:grid; place-items:center;
+      border-radius: 10px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.03);
+      transition: transform .25s ease;
+      flex:0 0 auto;
+    }
+    details[open] .chev{ transform: rotate(90deg); }
+    .acc-body{ padding: 0 16px 16px; }
+
+    /* =========================
+       Final Box
+       ========================= */
+    .final{
+      border-radius: 20px;
+      border:1px solid rgba(34,197,94,.35);
+      background: rgba(34,197,94,.08);
+      padding: 14px 14px 16px;
+      box-shadow: 0 10px 26px rgba(0,0,0,.20);
+    }
+    .final .title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight: 720;
+      margin-bottom: 10px;
+    }
+    .spark{
+      width: 12px; height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent2), var(--accent3));
+      box-shadow: 0 0 0 5px rgba(34,197,94,.14);
+    }
+
+    /* =========================
+       Footer
+       ========================= */
+    footer{
+      margin-top: 18px;
+      color: var(--muted);
+      text-align:center;
+      font-size: .9rem;
+    }
+    .tiny{
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: .85rem;
+      margin-top:6px;
+    }
+
+    /* Motion accessibility */
+    @media (prefers-reduced-motion: reduce){
+      *{ transition:none !important; scroll-behavior:auto !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <article class="wrap" aria-label="Problem 2 solution article">
+    <!-- =========================
+         HERO
+         ========================= -->
+    <header class="hero">
+      <div class="hero-inner">
+        <div>
+          <div class="kicker"><span class="dot"></span><span>Calculus • Riemann Sums • Definite Integrals</span></div>
+          <h1>Problem 2 — Right-Endpoint Riemann Sum & a Limit via an Integral</h1>
+          <p class="sub">
+            We approximate <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">∫₀ᵃ 1/√(1+x²) dx</span>
+            using a right-endpoint partition, then recognize a “mysterious” limit as that same idea in disguise.
+          </p>
+          <div class="meta" role="list">
+            <div class="pill" role="listitem">Given antiderivative: <b>ln(x + √(x²+1))</b></div>
+            <div class="pill" role="listitem">Rule: <b>Right endpoints</b></div>
+            <div class="pill" role="listitem">Target limit: <b>Σ 1/√(9n²+16k²)</b></div>
+          </div>
+        </div>
+
+        <aside class="badge" aria-label="Quick results">
+          <h2>Quick Results</h2>
+          <p>Part (a): right-endpoint sum for the integral.</p>
+          <p>Part (b): rewrite the limit as an integral and evaluate.</p>
+          <div class="callout" aria-label="Final numeric check">
+            (1/4) ln 3 ≈ 0.27465
+          </div>
+        </aside>
+      </div>
+    </header>
+
+    <main class="grid">
+      <!-- =========================
+           PART 1
+           ========================= -->
+      <section class="card" aria-labelledby="p1">
+        <div class="card-header">
+          <h3 id="p1">PART 1 — Problem Analysis (no solving yet)</h3>
+          <span class="tag">analysis</span>
+        </div>
+        <div class="card-body two-col">
+          <div>
+            <p class="lead">
+              We are given the function
+              <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">f(x)=1/√(1+x²)</span>
+              and the antiderivative formula
+              <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">∫ dx/√(1+x²)=ln(x+√(x²+1))</span>
+              (for x&gt;0).
+            </p>
+
+            <div class="note">
+              <b>Interpretation:</b> The definite integral is the “accumulated area” under a positive curve.
+              A Riemann sum replaces that area by thin rectangles (height from the curve, width from the partition).
+            </div>
+
+            <div class="hr"></div>
+
+            <p class="lead"><b>What we must do:</b></p>
+            <ul class="list">
+              <li><b>(a)</b> Partition <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">[0,a]</span> into <b>n equal pieces</b>, use <b>right endpoints</b>, and write the Riemann sum for <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">∫₀ᵃ f(x) dx</span>.</li>
+              <li><b>(b)</b> Choose an <b>appropriate a</b> so the limit looks like that Riemann sum as <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">n→∞</span>, then evaluate the integral using the given antiderivative.</li>
+            </ul>
+          </div>
+
+          <div>
+            <p class="lead"><b>Key tools / why they apply:</b></p>
+            <ul class="list">
+              <li><b>Riemann sum definition:</b> <span class="math">∫₀ᵃ f(x)dx = limₙ→∞ Σ f(x_k*) Δx</span>.</li>
+              <li><b>Uniform partition:</b> equal subintervals → constant <span class="math">Δx</span>.</li>
+              <li><b>Scaling in sums:</b> factor out <span class="math">n</span> to reveal <span class="math">(1/n)</span> and <span class="math">(k/n)</span>.</li>
+            </ul>
+
+            <div class="hr"></div>
+
+            <p class="lead"><b>Approaches (choose best):</b></p>
+            <ul class="list">
+              <li><b>Direct construction</b> of the right-endpoint sum (best for part a).</li>
+              <li><b>Use the antiderivative</b> to evaluate the associated integral (needed for part b).</li>
+              <li><b>Hyperbolic viewpoint</b> (optional): same integral equals <span class="math">arsinh(x)</span>; not required.</li>
+            </ul>
+
+            <div class="note warn" style="margin-top:12px;">
+              <b>Common pitfall:</b> Using <span class="math">k=0…n-1</span> gives <b>left</b> endpoints. Right endpoints use <span class="math">k=1…n</span>.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =========================
+           PART 2
+           ========================= -->
+      <section class="card" aria-labelledby="p2">
+        <div class="card-header">
+          <h3 id="p2">PART 2 — Strategy & Tips (roadmap only)</h3>
+          <span class="tag">roadmap</span>
+        </div>
+        <div class="card-body">
+          <details open>
+            <summary>
+              <span><b>Minimal roadmap (no algebra yet)</b></span>
+              <span class="chev" aria-hidden="true">›</span>
+            </summary>
+            <div class="acc-body">
+              <ol class="list">
+                <li><b>Compute the width</b> of each subinterval. Tool: <span class="math">Δx = a/n</span>.</li>
+                <li><b>Write right endpoints</b>. Tool: <span class="math">x_k = kΔx</span>, for <span class="math">k=1…n</span>.</li>
+                <li><b>Evaluate f</b> at right endpoints. Tool: substitute <span class="math">x_k</span> into <span class="math">f(x)=1/√(1+x²)</span>.</li>
+                <li><b>Form the Riemann sum</b>. Tool: <span class="math">R_n = Σ f(x_k) Δx</span>.</li>
+                <li><b>For the limit</b>, factor <span class="math">n²</span> inside the square root to expose <span class="math">1/n</span> and <span class="math">k/n</span>.</li>
+                <li><b>Identify the integral</b> as <span class="math">∫₀¹ g(x) dx</span> for some <span class="math">g</span>.</li>
+                <li><b>Evaluate</b> the integral by a substitution to match <span class="math">∫ du/√(1+u²)</span>, then apply the log formula.</li>
+              </ol>
+              <div class="note" style="margin-top:12px;">
+                <b>Tip:</b> In part (b), you want the sum to look like
+                <span class="math" style="display:block;margin-top:8px;">Σ g(k/n) · (1/n)</span>
+                because that is the signature of <span class="math">∫₀¹ g(x) dx</span>.
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- =========================
+           PART 3
+           ========================= -->
+      <section class="card" aria-labelledby="p3">
+        <div class="card-header">
+          <h3 id="p3">PART 3 — Full Solution</h3>
+          <span class="tag">solution</span>
+        </div>
+
+        <div class="card-body">
+          <!-- ===== Intuition ===== -->
+          <div class="note">
+            <b>Physical intuition:</b> Think “accumulation.” The integral is a continuous sum of tiny contributions
+            \(f(x)\,dx\). The Riemann sum approximates it with rectangles: height sampled on the curve, width equals the slice size.
+          </div>
+
+          <div class="hr"></div>
+
+          <!-- ===== (a) ===== -->
+          <h4 style="margin:0 0 8px;">(a) Right-endpoint Riemann sum for <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">∫₀ᵃ 1/√(1+x²) dx</span></h4>
+
+          <p class="lead">
+            Partition <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">[0,a]</span> into <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">n</span> equal pieces.
+          </p>
+
+          <div class="math" aria-label="Part a derivation">
+<span class="dim">Step 1:</span>  Δx = (a - 0)/n = a/n
+
+<span class="dim">Step 2:</span>  Right endpoints:  x_k = 0 + kΔx = k(a/n),  for k = 1,2,...,n
+
+<span class="dim">Step 3:</span>  f(x_k) = 1 / √(1 + x_k²) = 1 / √(1 + (ka/n)²)
+
+<span class="dim">Step 4:</span>  R_n = Σ_{k=1}^{n} f(x_k)Δx
+      = Σ_{k=1}^{n} [ 1/√(1 + (ka/n)²) ] · (a/n)
+          </div>
+
+          <div class="final" style="margin-top:14px;">
+            <div class="title"><span class="spark"></span><span>Final (a)</span></div>
+            <div class="math" style="margin:0;">
+R_n = (a/n) · Σ_{k=1}^{n} 1 / √( 1 + (ka/n)² )
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <!-- ===== (b) ===== -->
+          <h4 style="margin:0 0 8px;">(b) Evaluate <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">limₙ→∞ Σ_{k=1}^n 1/√(9n²+16k²)</span></h4>
+
+          <p class="lead">
+            The goal is to rewrite the sum in the signature form <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">Σ g(k/n)·(1/n)</span>.
+          </p>
+
+          <div class="math" aria-label="Part b rewrite">
+<span class="dim">Step 1:</span> Factor n² inside the square root:
+
+√(9n² + 16k²) = √(n²[9 + 16(k/n)²]) = n √(9 + 16(k/n)²)
+
+So each term becomes:
+
+1/√(9n² + 16k²) = 1/[ n √(9 + 16(k/n)²) ]
+               = (1/n) · 1/√(9 + 16(k/n)²)
+
+Therefore:
+
+Σ_{k=1}^{n} 1/√(9n²+16k²)
+= Σ_{k=1}^{n} (1/n) · 1/√(9 + 16(k/n)²)
+          </div>
+
+          <p class="lead">
+            This is the right-endpoint Riemann sum for
+            <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">∫₀¹ 1/√(9+16x²) dx</span>.
+          </p>
+
+          <div class="math" aria-label="Part b integral identification">
+lim_{n→∞} Σ_{k=1}^{n} (1/n) · 1/√(9 + 16(k/n)²)
+= ∫_{0}^{1} 1/√(9 + 16x²) dx
+          </div>
+
+          <div class="hr"></div>
+
+          <p class="lead"><b>Now evaluate the integral</b> using the provided antiderivative \(∫ du/√(1+u²)\).</p>
+
+          <div class="math" aria-label="Part b evaluation">
+Let u = (4x)/3  ⇒  x = (3u)/4  and  dx = (3/4) du.
+
+Compute the denominator:
+√(9 + 16x²) = √(9 + 16( (3u)/4 )² )
+           = √(9 + 9u²)
+           = 3 √(1 + u²)
+
+So:
+∫₀¹ 1/√(9+16x²) dx
+= ∫_{u=0}^{u=4/3} [ 1 / (3√(1+u²)) ] · (3/4) du
+= (1/4) ∫₀^{4/3} 1/√(1+u²) du
+
+Use the given antiderivative:
+∫ 1/√(1+u²) du = ln( u + √(1+u²) )
+
+Thus:
+(1/4)[ ln(u + √(1+u²)) ]₀^{4/3}
+= (1/4)( ln( 4/3 + √(1+16/9) ) - ln(1) )
+
+√(1+16/9) = √(25/9) = 5/3  ⇒  4/3 + 5/3 = 3
+
+So the value is:
+= (1/4) ln(3)
+          </div>
+
+          <div class="final" style="margin-top:14px;">
+            <div class="title"><span class="spark"></span><span>Final (b)</span></div>
+            <div class="math" style="margin:0;">
+lim_{n→∞} Σ_{k=1}^{n} 1/√(9n² + 16k²) = (1/4) ln 3
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <!-- ===== Sanity checks ===== -->
+          <details>
+            <summary>
+              <span><b>Sanity checks (units • limits • interpretation)</b></span>
+              <span class="chev" aria-hidden="true">›</span>
+            </summary>
+            <div class="acc-body">
+              <div class="two-col">
+                <div class="note">
+                  <b>Units:</b> The expressions are dimensionless (pure numbers). The result
+                  <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">(1/4)ln 3</span>
+                  is also dimensionless — consistent.
+                </div>
+                <div class="note">
+                  <b>Reasonableness:</b> In (b), each term is about
+                  <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">~ 1/(n·constant)</span>.
+                  With <span class="math" style="display:inline-block;padding:2px 8px;border-radius:10px;">n</span> terms, the sum tends to a finite constant — as found.
+                </div>
+              </div>
+
+              <div class="note" style="margin-top:12px;">
+                <b>Bounding check:</b> For <span class="math">x∈[0,1]</span>,
+                <span class="math">1/√(9+16x²)</span> is between <span class="math">1/5</span> and <span class="math">1/3</span>,
+                so the integral is between <span class="math">0.2</span> and <span class="math">0.333…</span>.
+                Our answer <span class="math">(1/4)ln 3 ≈ 0.27465</span> fits nicely.
+              </div>
+
+              <div class="note" style="margin-top:12px;">
+                <b>Physical interpretation:</b> The limit is a continuous “accumulated contribution” obtained by refining a partition.
+                It is literally the area under a specific curve on <span class="math">[0,1]</span>.
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div>Built as a self-contained article block (paste into your site as-is).</div>
+      <div class="tiny">Tip: Replace headings / colors to match your theme. No external dependencies.</div>
+    </footer>
+  </article>
+
+  <script>
+    // Tiny enhancement: remember which accordion sections were open.
+    (function () {
+      const key = "riemann_article_open_details_v1";
+      const details = Array.from(document.querySelectorAll("details"));
+      if (!details.length) return;
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(key) || "[]");
+        details.forEach((d, i) => {
+          if (saved.includes(i)) d.open = true;
+        });
+      } catch (_) {}
+
+      const save = () => {
+        const openIdx = details
+          .map((d, i) => (d.open ? i : null))
+          .filter((v) => v !== null);
+        try { localStorage.setItem(key, JSON.stringify(openIdx)); } catch (_) {}
+      };
+
+      details.forEach((d) => d.addEventListener("toggle", save));
+    })();
+  </script>
+</body>
+</html>

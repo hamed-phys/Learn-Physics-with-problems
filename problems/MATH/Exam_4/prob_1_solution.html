@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Problem 1 — Volume of Revolution (Shell Method)</title>
+
+  <!-- MathJax (LaTeX rendering) -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [["\\(", "\\)"], ["$", "$"]], displayMath: [["\\[", "\\]"], ["$$", "$$"]] },
+      options: { skipHtmlTags: ["script","noscript","style","textarea","pre","code"] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <!-- Optional: icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg0:#05070b;
+      --bg1:#0b1020;
+      --card: rgba(255,255,255,0.06);
+      --card2: rgba(255,255,255,0.09);
+      --stroke: rgba(255,255,255,0.14);
+      --text:#e9eefc;
+      --muted: rgba(233,238,252,0.72);
+      --muted2: rgba(233,238,252,0.55);
+
+      --a:#7c3aed;   /* purple */
+      --b:#22d3ee;   /* cyan */
+      --c:#34d399;   /* green */
+      --warn:#fbbf24;
+
+      --shadow: 0 20px 60px rgba(0,0,0,0.50);
+      --radius: 18px;
+      --radius2: 26px;
+
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    /* Base */
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 12% 10%, rgba(124,58,237,0.22), transparent 60%),
+        radial-gradient(900px 700px at 92% 20%, rgba(34,211,238,0.16), transparent 55%),
+        radial-gradient(900px 700px at 70% 92%, rgba(52,211,153,0.12), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    a{ color:inherit; }
+    code, pre{ font-family: var(--mono); }
+
+    /* Layout shell */
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 34px 18px 64px;
+    }
+
+    .hero{
+      position: relative;
+      border-radius: var(--radius2);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      padding: 26px 22px;
+    }
+
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(600px 240px at 18% 14%, rgba(124,58,237,0.35), transparent 70%),
+        radial-gradient(620px 280px at 82% 22%, rgba(34,211,238,0.26), transparent 72%),
+        radial-gradient(520px 260px at 55% 90%, rgba(52,211,153,0.18), transparent 70%);
+      filter: blur(12px);
+      opacity: 0.85;
+      pointer-events:none;
+    }
+
+    .hero-inner{
+      position: relative;
+      display:flex;
+      gap: 18px;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .kicker{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:700;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      font-size:12px;
+      color: rgba(233,238,252,0.75);
+    }
+    .dot{
+      width:10px; height:10px; border-radius:999px;
+      background: linear-gradient(135deg, var(--a), var(--b));
+      box-shadow: 0 0 0 6px rgba(124,58,237,0.15);
+    }
+
+    h1{
+      margin:10px 0 8px;
+      font-size: clamp(24px, 3.2vw, 40px);
+      line-height:1.12;
+      letter-spacing:-0.02em;
+    }
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      max-width: 70ch;
+      line-height:1.65;
+      font-size: 15.5px;
+    }
+
+    .meta{
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .pill{
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,0.06);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      color: rgba(233,238,252,0.82);
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .pill b{
+      font-weight:800;
+      color: rgba(233,238,252,0.95);
+    }
+    .pill .tag{
+      font-family: var(--mono);
+      font-size: 11.5px;
+      opacity:0.9;
+    }
+
+    /* Grid sections */
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    @media (max-width: 940px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+      overflow:hidden;
+    }
+    .card .head{
+      padding: 16px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    }
+    .card .head h2{
+      margin:0;
+      font-size: 15.5px;
+      letter-spacing: -0.01em;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .badge{
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      color: rgba(233,238,252,0.85);
+      white-space: nowrap;
+    }
+    .card .body{
+      padding: 16px 18px 18px;
+      color: rgba(233,238,252,0.86);
+      line-height: 1.7;
+      font-size: 14.8px;
+    }
+    .muted{ color: var(--muted); }
+
+    .icon{
+      width:28px;height:28px;border-radius: 10px;
+      display:grid;place-items:center;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+    .icon svg{ width:16px;height:16px; opacity:0.9; }
+
+    /* Lists */
+    .list{
+      margin: 10px 0 0;
+      padding-left: 18px;
+    }
+    .list li{ margin: 6px 0; }
+
+    /* Equation blocks */
+    .eq{
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.18);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin: 12px 0;
+      overflow-x:auto;
+    }
+
+    /* Steps */
+    .steps{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .step{
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      border-radius: 14px;
+      padding: 12px 12px;
+      display:grid;
+      grid-template-columns: 40px 1fr;
+      gap: 12px;
+      align-items:flex-start;
+    }
+    .n{
+      width:40px;height:40px;border-radius: 14px;
+      background: linear-gradient(135deg, rgba(124,58,237,0.35), rgba(34,211,238,0.18));
+      border: 1px solid rgba(255,255,255,0.14);
+      display:grid;place-items:center;
+      font-weight:800;
+      color: rgba(233,238,252,0.95);
+      font-family: var(--mono);
+    }
+    .step h3{
+      margin:0;
+      font-size: 14.3px;
+      letter-spacing:-0.01em;
+    }
+    .step p{
+      margin: 6px 0 0;
+      color: rgba(233,238,252,0.78);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .mini{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top: 8px;
+    }
+    .chip{
+      font-size: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.18);
+      padding: 6px 10px;
+      border-radius: 999px;
+      color: rgba(233,238,252,0.80);
+      font-family: var(--mono);
+    }
+
+    /* Callouts */
+    .callout{
+      border-left: 4px solid rgba(34,211,238,0.85);
+      background: rgba(34,211,238,0.08);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin: 12px 0;
+    }
+    .callout.warn{
+      border-left-color: rgba(251,191,36,0.9);
+      background: rgba(251,191,36,0.10);
+    }
+    .callout h4{
+      margin:0 0 6px;
+      font-size: 13.5px;
+      letter-spacing: -0.01em;
+    }
+    .callout p{ margin:0; color: rgba(233,238,252,0.80); }
+
+    /* Final answer box */
+    .answer{
+      position: relative;
+      margin-top: 10px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background:
+        linear-gradient(180deg, rgba(124,58,237,0.18), rgba(34,211,238,0.10));
+      padding: 14px 14px;
+      overflow:hidden;
+    }
+    .answer::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(500px 220px at 20% 0%, rgba(124,58,237,0.40), transparent 70%);
+      opacity: 0.55;
+      pointer-events:none;
+      filter: blur(8px);
+    }
+    .answer .inner{
+      position: relative;
+      display:flex;
+      gap: 12px;
+      align-items:flex-start;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+    .answer h3{
+      margin:0 0 6px;
+      font-size: 14.8px;
+      letter-spacing:-0.01em;
+    }
+    .answer .math{
+      font-size: 16px;
+      color: rgba(233,238,252,0.96);
+    }
+    .answer .sub{
+      color: rgba(233,238,252,0.78);
+      font-size: 13.7px;
+      margin-top: 6px;
+    }
+
+    /* Collapsible sections */
+    details{
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      border-radius: 16px;
+      padding: 10px 12px;
+      margin: 10px 0;
+    }
+    summary{
+      cursor: pointer;
+      list-style: none;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-weight: 700;
+      color: rgba(233,238,252,0.92);
+      user-select:none;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    details[open] summary{ margin-bottom: 8px; }
+    .twisty{
+      width: 22px;
+      height: 22px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.14);
+      display:grid;
+      place-items:center;
+      font-family: var(--mono);
+      font-size: 12px;
+      opacity: 0.95;
+    }
+
+    /* Tiny footer */
+    .foot{
+      margin-top: 14px;
+      color: rgba(233,238,252,0.55);
+      font-size: 12.5px;
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{ background:#fff; color:#111; }
+      .hero, .card, details, .answer{ box-shadow:none; }
+      .hero::before, .answer::before{ display:none; }
+      .badge, .pill, .chip{ border-color:#ddd; background:#f6f6f6; color:#111; }
+      .card{ background:#fff; border-color:#ddd; }
+      .card .head{ background:#fafafa; }
+    }
+  </style>
+</head>
+
+<body>
+  <article class="wrap" aria-label="Volume of Revolution Solution Article">
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="hero-inner">
+        <div>
+          <div class="kicker">
+            <span class="dot" aria-hidden="true"></span>
+            <span>CALCULUS • SOLIDS OF REVOLUTION</span>
+          </div>
+
+          <h1>Problem 1 — Volume from Revolving \(y=h\left(\frac{x}{r}\right)^3\) about the \(y\)-axis</h1>
+
+          <p class="subtitle">
+            We compute the volume of the solid formed by rotating a first-quadrant region around the \(y\)-axis,
+            then compare it to the containing cylinder \(\big(\text{radius } r,\; \text{height } h\big)\).
+            The cleanest method here is the <b>cylindrical shell method</b>.
+          </p>
+
+          <div class="meta">
+            <div class="pill"><span class="tag">Axis</span> <b>\(y\)-axis</b></div>
+            <div class="pill"><span class="tag">Curve</span> <b>\(y=h(x/r)^3\)</b></div>
+            <div class="pill"><span class="tag">Region</span> <b>\(0\le x\le r,\; 0\le y\le h(x/r)^3\)</b></div>
+            <div class="pill"><span class="tag">Goal</span> <b>Volume + fraction of cylinder</b></div>
+          </div>
+        </div>
+
+        <div class="pill" style="align-self:flex-start;">
+          <span class="tag">Score</span> <b>25 pts</b>
+        </div>
+      </div>
+    </header>
+
+    <!-- GRID -->
+    <section class="grid" aria-label="Solution content grid">
+
+      <!-- LEFT COLUMN -->
+      <div class="col">
+
+        <!-- PART 1 -->
+        <section class="card" id="part1">
+          <div class="head">
+            <h2>
+              <span class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4 6h16M4 12h10M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              PART 1 — Problem Analysis (no solving yet)
+            </h2>
+            <span class="badge">conceptual setup</span>
+          </div>
+
+          <div class="body">
+            <h3 style="margin:0 0 6px;">1) Restate the problem</h3>
+            <p class="muted" style="margin:0;">
+              In the first quadrant, the region is bounded by the \(x\)-axis \((y=0)\), the vertical line \(x=r\),
+              and the curve \(y=h\left(\frac{x}{r}\right)^3\). Revolve this region about the \(y\)-axis and find:
+              (a) the resulting volume \(V\), and (b) the fraction of the cylinder \(\pi r^2 h\) occupied by this solid.
+            </p>
+
+            <div class="eq">
+              \[
+                \text{Curve: } y=h\left(\frac{x}{r}\right)^3,\qquad r>0,\;h>0
+              \]
+            </div>
+
+            <h3 style="margin:12px 0 6px;">2) Given, unknowns, required</h3>
+            <ul class="list">
+              <li><b>Given:</b> \(r,h>0\); axis of rotation is the \(y\)-axis; bounding curve \(y=h(x/r)^3\).</li>
+              <li><b>Unknowns:</b> volume \(V\); fraction \(V/(\pi r^2 h)\).</li>
+              <li><b>Find:</b> (a) \(V\), (b) \(\dfrac{V}{\pi r^2 h}\).</li>
+            </ul>
+
+            <h3 style="margin:12px 0 6px;">3) Principles / laws (why they apply)</h3>
+            <p class="muted" style="margin:0;">
+              Volume is obtained by <b>accumulating</b> infinitesimal elements:
+              \(\;dV=(\text{cross-sectional area})\cdot(\text{thickness})\).
+              Rotating about the \(y\)-axis creates circular geometry—either disks/washers (slicing in \(y\))
+              or cylindrical shells (slicing in \(x\)).
+            </p>
+
+            <h3 style="margin:12px 0 6px;">4) Candidate approaches</h3>
+            <ul class="list">
+              <li><b>Cylindrical shells (in \(x\)):</b> direct because \(y\) is already given as a function of \(x\).</li>
+              <li><b>Washers/disks (in \(y\)):</b> valid but needs solving \(x\) in terms of \(y\) (extra step).</li>
+              <li><b>Pappus (centroid theorem):</b> possible but requires centroid of the region (overkill here).</li>
+            </ul>
+
+            <div class="callout">
+              <h4>Chosen method</h4>
+              <p>
+                <b>Shell method</b> is best: it uses \(x\in[0,r]\) directly and avoids inverting the curve.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- PART 2 -->
+        <section class="card" id="part2" style="margin-top:16px;">
+          <div class="head">
+            <h2>
+              <span class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M7 7h10M7 12h7M7 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M4 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              PART 2 — Strategy & Tips (roadmap only)
+            </h2>
+            <span class="badge">no algebra yet</span>
+          </div>
+
+          <div class="body">
+            <div class="steps" role="list">
+              <div class="step" role="listitem">
+                <div class="n">1</div>
+                <div>
+                  <h3>Sketch + confirm bounds</h3>
+                  <p>Confirm the region is \(0\le x\le r\) and \(0\le y\le h(x/r)^3\) in the first quadrant.</p>
+                  <div class="mini">
+                    <span class="chip">Endpoints: \((0,0)\), \((r,h)\)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step" role="listitem">
+                <div class="n">2</div>
+                <div>
+                  <h3>Pick the shell method about the \(y\)-axis</h3>
+                  <p>Vertical slices rotate into cylindrical shells; radius is distance to the \(y\)-axis.</p>
+                  <div class="mini">
+                    <span class="chip">radius \(=\;x\)</span>
+                    <span class="chip">height \(=\;y(x)\)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step" role="listitem">
+                <div class="n">3</div>
+                <div>
+                  <h3>Write the differential volume</h3>
+                  <p>Use the shell formula \(dV=2\pi(\text{radius})(\text{height})\,dx\).</p>
+                  <div class="mini">
+                    <span class="chip">\(dV=2\pi x\,y(x)\,dx\)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step" role="listitem">
+                <div class="n">4</div>
+                <div>
+                  <h3>Integrate from \(0\) to \(r\)</h3>
+                  <p>Add all shells across the region to obtain total volume \(V\).</p>
+                  <div class="mini">
+                    <span class="chip">\(\int_0^r (\cdots)\,dx\)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step" role="listitem">
+                <div class="n">5</div>
+                <div>
+                  <h3>Compute the fraction of the cylinder</h3>
+                  <p>Compute \(V_{\text{cyl}}=\pi r^2 h\) and form \(V/V_{\text{cyl}}\).</p>
+                  <div class="mini">
+                    <span class="chip">fraction \(=\dfrac{V}{\pi r^2 h}\)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="callout warn">
+              <h4>Common pitfalls</h4>
+              <p>
+                (i) mixing shells vs washers formulas, (ii) wrong region height (must be from \(y=0\) to the curve),
+                (iii) losing powers of \(r\) when simplifying \(\left(\frac{x}{r}\right)^3\).
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- PART 3 -->
+        <section class="card" id="part3" style="margin-top:16px;">
+          <div class="head">
+            <h2>
+              <span class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4 18V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M7 16l4-6 3 4 3-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M20 18H4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              PART 3 — Full Solution
+            </h2>
+            <span class="badge">rigorous derivation</span>
+          </div>
+
+          <div class="body">
+            <h3 style="margin:0 0 6px;">Physical intuition</h3>
+            <p class="muted" style="margin:0;">
+              Slice the region into thin vertical strips. Each strip at position \(x\) has height
+              \(y(x)=h(x/r)^3\). Rotating around the \(y\)-axis turns that strip into a thin cylindrical shell of
+              radius \(x\), height \(y(x)\), and thickness \(dx\). Summing all shells gives the volume.
+            </p>
+
+            <details open>
+              <summary><span class="twisty">A</span> Part (a) — Compute the volume \(V\)</summary>
+
+              <p style="margin:0 0 10px;" class="muted">
+                For a shell at position \(x\):
+                <b>radius</b> \(=x\), <b>height</b> \(=h\left(\frac{x}{r}\right)^3\).
+              </p>
+
+              <div class="eq">
+                \[
+                  dV = 2\pi(\text{radius})(\text{height})\,dx
+                     = 2\pi x\;h\left(\frac{x}{r}\right)^3\,dx
+                \]
+              </div>
+
+              <p class="muted" style="margin:0;">
+                Integrate from \(x=0\) to \(x=r\):
+              </p>
+
+              <div class="eq">
+                \[
+                  V=\int_0^r 2\pi x\;h\left(\frac{x}{r}\right)^3\,dx
+                \]
+              </div>
+
+              <p class="muted" style="margin:0;">
+                Simplify the integrand:
+                \(\;x\left(\frac{x}{r}\right)^3 = x\cdot\frac{x^3}{r^3}=\frac{x^4}{r^3}\).
+              </p>
+
+              <div class="eq">
+                \[
+                  V=\int_0^r 2\pi h\frac{x^4}{r^3}\,dx
+                   =\frac{2\pi h}{r^3}\int_0^r x^4\,dx
+                \]
+              </div>
+
+              <p class="muted" style="margin:0;">
+                Compute the power integral:
+                \(\displaystyle \int_0^r x^4\,dx=\left[\frac{x^5}{5}\right]_0^r=\frac{r^5}{5}\).
+              </p>
+
+              <div class="eq">
+                \[
+                  V=\frac{2\pi h}{r^3}\cdot\frac{r^5}{5}
+                   =\frac{2\pi h r^2}{5}
+                \]
+              </div>
+
+              <div class="answer" role="note" aria-label="Final answer for part a">
+                <div class="inner">
+                  <div>
+                    <h3>Final (a)</h3>
+                    <div class="math">\[\boxed{V=\frac{2}{5}\,\pi r^2 h}\]</div>
+                    <div class="sub">Volume of the solid of revolution about the \(y\)-axis.</div>
+                  </div>
+                  <span class="badge" style="border-color: rgba(34,211,238,0.35); background: rgba(34,211,238,0.10);">
+                    shell method
+                  </span>
+                </div>
+              </div>
+            </details>
+
+            <details open>
+              <summary><span class="twisty">B</span> Part (b) — Fraction of the containing cylinder</summary>
+
+              <p class="muted" style="margin:0 0 10px;">
+                The containing cylinder has base radius \(r\) and height \(h\), so:
+              </p>
+
+              <div class="eq">
+                \[
+                  V_{\text{cyl}}=\pi r^2 h
+                \]
+              </div>
+
+              <p class="muted" style="margin:0;">
+                The fraction occupied by the solid is:
+              </p>
+
+              <div class="eq">
+                \[
+                  \frac{V}{V_{\text{cyl}}}
+                  =\frac{\frac{2}{5}\pi r^2 h}{\pi r^2 h}
+                  =\frac{2}{5}
+                \]
+              </div>
+
+              <div class="answer" role="note" aria-label="Final answer for part b">
+                <div class="inner">
+                  <div>
+                    <h3>Final (b)</h3>
+                    <div class="math">\[\boxed{\text{Fraction}=\frac{2}{5}}\]</div>
+                    <div class="sub">So the solid fills 40% of the cylinder volume.</div>
+                  </div>
+                  <span class="badge" style="border-color: rgba(52,211,153,0.35); background: rgba(52,211,153,0.10);">
+                    comparison
+                  </span>
+                </div>
+              </div>
+            </details>
+
+            <details>
+              <summary><span class="twisty">✓</span> Sanity checks (units, limits, interpretation)</summary>
+
+              <div class="callout" style="margin-top:10px;">
+                <h4>Units</h4>
+                <p>
+                  \(\pi r^2 h\) has units of \((\text{length})^2(\text{length})=(\text{length})^3\). Our result
+                  \(V=\frac{2}{5}\pi r^2 h\) matches, so the dimensionality is correct.
+                </p>
+              </div>
+
+              <div class="callout">
+                <h4>Limiting cases</h4>
+                <p>
+                  If \(h\to 0\), the region collapses vertically and \(V\to 0\). If \(r\to 0\), the region collapses toward the axis and \(V\to 0\).
+                  Our formula scales as \(V\propto h\) and \(V\propto r^2\), consistent with both limits.
+                </p>
+              </div>
+
+              <div class="callout">
+                <h4>Physical / geometric interpretation</h4>
+                <p>
+                  The curve satisfies \(0\le y\le h\) on \(0\le x\le r\), so the solid must lie inside the cylinder.
+                  The constant fraction \(\frac{2}{5}\) indicates the “average” shell height relative to \(h\) is \(2/5\) in the shell-weighted sense.
+                </p>
+              </div>
+            </details>
+
+            <div class="foot">
+              <span>Rendered with MathJax • Clean, printable article block</span>
+              <span style="font-family:var(--mono);">DIRAC ARCHIVE / problems • volume_of_revolution</span>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <aside class="col">
+
+        <!-- Quick Problem Statement Card -->
+        <section class="card" aria-label="Problem statement" style="position:sticky; top:16px;">
+          <div class="head">
+            <h2>
+              <span class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M7 4h10v16H7z" stroke="currentColor" stroke-width="2" />
+                  <path d="M9 8h6M9 12h6M9 16h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              At a glance
+            </h2>
+            <span class="badge">summary</span>
+          </div>
+
+          <div class="body">
+            <p class="muted" style="margin:0 0 10px;">
+              <b>Region (first quadrant):</b> bounded by \(y=0\), \(x=r\), and \(y=h(x/r)^3\). Rotate about the \(y\)-axis.
+            </p>
+
+            <div class="eq" style="margin-top:0;">
+              \[
+                y=h\left(\frac{x}{r}\right)^3,\quad 0\le x\le r
+              \]
+            </div>
+
+            <div class="callout" style="margin:10px 0 0;">
+              <h4>Key formula</h4>
+              <p>\(dV=2\pi(\text{radius})(\text{height})\,dx=2\pi x\,y(x)\,dx\)</p>
+            </div>
+
+            <div class="answer" style="margin-top:12px;">
+              <div class="inner">
+                <div>
+                  <h3>Final results</h3>
+                  <div class="math">
+                    \[
+                      \boxed{V=\frac{2}{5}\pi r^2 h}
+                      \qquad
+                      \boxed{\frac{V}{\pi r^2 h}=\frac{2}{5}}
+                    \]
+                  </div>
+                  <div class="sub">Volume and cylinder fraction.</div>
+                </div>
+              </div>
+            </div>
+
+            <details style="margin-top:12px;">
+              <summary><span class="twisty">i</span> Extra note (why shells are natural here)</summary>
+              <p class="muted" style="margin:8px 0 0;">
+                Shells avoid solving for \(x(y)\). Washers would require inversion:
+                \(\displaystyle x=r\left(\frac{y}{h}\right)^{1/3}\), then a washer integral in \(y\).
+              </p>
+            </details>
+          </div>
+        </section>
+
+      </aside>
+    </section>
+
+  </article>
+</body>
+</html>

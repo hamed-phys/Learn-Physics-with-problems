@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Crash Test Kinematics — Problem 5 Solution</title>
+
+  <!-- MathJax (LaTeX rendering) -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']], displayMath: [['\\[','\\]']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+      --faint: rgba(255,255,255,.55);
+      --border: rgba(255,255,255,.12);
+
+      --a: #7c3aed; /* violet */
+      --b: #22c55e; /* green */
+      --c: #06b6d4; /* cyan */
+      --d: #f59e0b; /* amber */
+      --e: #ef4444; /* red */
+
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f7f8ff;
+        --panel: rgba(10, 20, 60, .05);
+        --panel2: rgba(10, 20, 60, .08);
+        --text: rgba(8, 12, 24, .92);
+        --muted: rgba(8, 12, 24, .72);
+        --faint: rgba(8, 12, 24, .55);
+        --border: rgba(10, 20, 60, .12);
+        --shadow: 0 18px 55px rgba(10,20,60,.18);
+      }
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% -10%, rgba(124,58,237,.35), transparent 60%),
+        radial-gradient(1000px 700px at 110% 10%, rgba(6,182,212,.25), transparent 55%),
+        radial-gradient(900px 700px at 50% 120%, rgba(34,197,94,.18), transparent 60%),
+        linear-gradient(180deg, var(--bg), color-mix(in oklab, var(--bg) 70%, #000 30%));
+      line-height: 1.6;
+      overflow-x:hidden;
+    }
+
+    /* Subtle animated grain */
+    .grain{
+      position:fixed; inset:0;
+      pointer-events:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='280' height='280' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+      opacity:.25;
+      animation: drift 12s linear infinite;
+    }
+    @keyframes drift{
+      from{ transform: translate3d(0,0,0); }
+      to{ transform: translate3d(-120px,80px,0); }
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    .wrap{
+      width:min(1040px, calc(100% - 32px));
+      margin: clamp(22px, 3vw, 40px) auto 80px;
+    }
+
+    header.hero{
+      position:relative;
+      padding: clamp(18px, 3.5vw, 30px);
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--panel), transparent 70%);
+      border-radius: calc(var(--radius) + 8px);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      isolation:isolate;
+    }
+    header.hero:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(700px 260px at 20% 10%, rgba(124,58,237,.35), transparent 60%),
+                  radial-gradient(700px 260px at 80% 10%, rgba(6,182,212,.28), transparent 60%);
+      filter: blur(10px);
+      opacity:.9;
+      z-index:-1;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:.55rem;
+      font-family: var(--mono);
+      font-size: .82rem;
+      letter-spacing:.03em;
+      padding: .45rem .65rem;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: color-mix(in oklab, var(--panel) 70%, transparent);
+      color: var(--muted);
+      backdrop-filter: blur(8px);
+    }
+    .badge .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: conic-gradient(from 180deg, var(--a), var(--c), var(--b), var(--a));
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--panel2) 60%, transparent);
+    }
+
+    h1{
+      margin: 14px 0 6px;
+      font-size: clamp(1.45rem, 2.6vw, 2.15rem);
+      letter-spacing: -0.02em;
+      line-height: 1.18;
+    }
+    .subtitle{
+      margin: 0;
+      color: var(--muted);
+      max-width: 78ch;
+    }
+
+    .meta{
+      margin-top: 14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:.45rem;
+      padding: .45rem .65rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: color-mix(in oklab, var(--panel) 75%, transparent);
+      color: var(--muted);
+      font-size:.86rem;
+    }
+    .chip strong{ color: var(--text); font-weight:600; }
+
+    main{
+      margin-top: 20px;
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 18px;
+      align-items:start;
+    }
+    @media (max-width: 920px){
+      main{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, var(--panel), transparent 140%);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .inner{ padding: 18px; }
+    .card h2{
+      font-size: 1.05rem;
+      margin:0 0 10px;
+      letter-spacing:.01em;
+      display:flex;
+      align-items:center;
+      gap:.55rem;
+    }
+    .k{
+      width: 30px; height: 30px;
+      border-radius: 10px;
+      display:grid; place-items:center;
+      font-family: var(--mono);
+      font-size:.86rem;
+      border: 1px solid var(--border);
+      background: color-mix(in oklab, var(--panel2) 75%, transparent);
+    }
+    .k.a{ box-shadow: inset 0 0 0 999px color-mix(in oklab, var(--a) 18%, transparent); }
+    .k.b{ box-shadow: inset 0 0 0 999px color-mix(in oklab, var(--b) 18%, transparent); }
+    .k.c{ box-shadow: inset 0 0 0 999px color-mix(in oklab, var(--c) 18%, transparent); }
+
+    .section{
+      border-top: 1px solid var(--border);
+    }
+    .section:first-of-type{ border-top:none; }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 640px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .list{
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+    .list li{ margin: 6px 0; }
+
+    .callout{
+      margin-top: 12px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: color-mix(in oklab, var(--panel2) 70%, transparent);
+    }
+    .callout .title{
+      display:flex; align-items:center; gap:.5rem;
+      font-weight:700;
+      margin:0 0 6px;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:.45rem;
+      padding:.32rem .58rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: color-mix(in oklab, var(--panel) 75%, transparent);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size:.80rem;
+    }
+
+    .mathblock{
+      margin: 12px 0;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px dashed color-mix(in oklab, var(--border) 80%, transparent);
+      background: color-mix(in oklab, var(--panel) 85%, transparent);
+      overflow:auto;
+    }
+
+    .steps{
+      counter-reset: step;
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+      display:grid;
+      gap: 10px;
+    }
+    .steps li{
+      display:grid;
+      grid-template-columns: 44px 1fr;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: color-mix(in oklab, var(--panel) 82%, transparent);
+    }
+    .steps li:before{
+      counter-increment: step;
+      content: counter(step);
+      width: 44px; height: 44px;
+      border-radius: 14px;
+      display:grid; place-items:center;
+      font-family: var(--mono);
+      font-weight:700;
+      color: var(--text);
+      background: radial-gradient(circle at 30% 30%, color-mix(in oklab, var(--c) 55%, transparent), transparent 60%),
+                  radial-gradient(circle at 70% 70%, color-mix(in oklab, var(--a) 55%, transparent), transparent 60%),
+                  color-mix(in oklab, var(--panel2) 70%, transparent);
+      border: 1px solid var(--border);
+    }
+    .steps h3{
+      margin: 0 0 4px;
+      font-size: .98rem;
+    }
+    .steps p{
+      margin: 0;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .solution{
+      padding: 16px 18px 18px;
+      border-top: 1px solid var(--border);
+    }
+    .solution h3{
+      margin: 14px 0 8px;
+      font-size: 1.02rem;
+      letter-spacing:.01em;
+    }
+    .solution p{ margin: 8px 0; color: var(--muted); }
+
+    .eq{
+      margin: 10px 0;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: color-mix(in oklab, var(--panel) 88%, transparent);
+      overflow:auto;
+    }
+
+    .boxed{
+      margin-top: 14px;
+      padding: 14px 14px;
+      border-radius: 16px;
+      border: 1px solid color-mix(in oklab, var(--b) 55%, var(--border));
+      background:
+        radial-gradient(800px 220px at 20% 0%, color-mix(in oklab, var(--b) 20%, transparent), transparent 55%),
+        color-mix(in oklab, var(--panel2) 70%, transparent);
+      position: relative;
+      overflow:hidden;
+    }
+    .boxed:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: conic-gradient(from 180deg, color-mix(in oklab, var(--b) 75%, transparent),
+                                         color-mix(in oklab, var(--c) 75%, transparent),
+                                         color-mix(in oklab, var(--a) 75%, transparent),
+                                         color-mix(in oklab, var(--b) 75%, transparent));
+      opacity:.20;
+      filter: blur(14px);
+      z-index:0;
+    }
+    .boxed > *{ position:relative; z-index:1; }
+    .boxed .label{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      margin-bottom: 6px;
+    }
+    .boxed .label strong{
+      font-family: var(--mono);
+      letter-spacing:.03em;
+    }
+    .boxed .ans{
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+
+    aside .card{ position: sticky; top: 18px; }
+    @media (max-width: 920px){ aside .card{ position: static; } }
+
+    .mini{
+      display:grid;
+      gap: 10px;
+    }
+    .mini .row{
+      padding: 12px;
+      border-radius: 16px;
+      border:1px solid var(--border);
+      background: color-mix(in oklab, var(--panel) 85%, transparent);
+    }
+    .mini .row h4{
+      margin:0 0 4px;
+      font-size:.95rem;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .mini .row p{
+      margin:0;
+      color: var(--muted);
+      font-size:.93rem;
+    }
+    .tag{
+      font-family: var(--mono);
+      font-size:.78rem;
+      color: var(--faint);
+      border:1px solid var(--border);
+      padding:.2rem .5rem;
+      border-radius:999px;
+      background: color-mix(in oklab, var(--panel2) 70%, transparent);
+      white-space:nowrap;
+    }
+
+    .footer{
+      margin-top: 18px;
+      color: var(--faint);
+      font-size:.9rem;
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      align-items:center;
+      justify-content:space-between;
+      padding: 12px 14px;
+      border:1px solid var(--border);
+      border-radius: 16px;
+      background: color-mix(in oklab, var(--panel) 80%, transparent);
+    }
+    .btns{
+      display:flex; gap:10px; flex-wrap:wrap;
+    }
+    .btn{
+      cursor:pointer;
+      user-select:none;
+      display:inline-flex; align-items:center; gap:.5rem;
+      padding:.55rem .75rem;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background: color-mix(in oklab, var(--panel2) 70%, transparent);
+      color: var(--text);
+      font-weight:600;
+      font-size:.92rem;
+      transition: transform .15s ease, background .15s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); background: color-mix(in oklab, var(--panel2) 88%, transparent); }
+    .btn:active{ transform: translateY(0px); }
+    .btn svg{ width:18px; height:18px; opacity:.9; }
+
+    /* Print */
+    @media print{
+      .grain, .btns{ display:none !important; }
+      body{ background:#fff; color:#111; }
+      header.hero, .card{ box-shadow:none; }
+      a{ text-decoration:none; color:inherit; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <article class="wrap" aria-label="Crash test kinematics solution article">
+    <header class="hero">
+      <div class="badge">
+        <span class="dot" aria-hidden="true"></span>
+        <span>PHYSICS • KINEMATICS • PIECEWISE MOTION</span>
+      </div>
+
+      <h1>Problem 5 — Crash Test Motion (Piecewise Position)</h1>
+      <p class="subtitle">
+        A car accelerates for 5 seconds, then brakes until it hits a barrier. We enforce continuity of
+        position and velocity at the switching time and compute the impact speed at \(s=33\text{ m}\).
+      </p>
+
+      <div class="meta">
+        <div class="chip"><strong>Given:</strong> \(a_1=2\,\mathrm{m/s^2}\) for \(0\le t&lt;5\)</div>
+        <div class="chip"><strong>Given:</strong> \(a_2=-4\,\mathrm{m/s^2}\) for \(t\ge 5\)</div>
+        <div class="chip"><strong>Barrier:</strong> \(s=33\,\mathrm{m}\)</div>
+        <div class="chip"><strong>Model:</strong> \(s(t)=\begin{cases}t^2,&0\le t&lt;5\\-2t^2+At+B,&t\ge 5\end{cases}\)</div>
+      </div>
+    </header>
+
+    <main>
+      <!-- LEFT: Main Content -->
+      <section class="card" aria-label="Full structured solution">
+        <div class="inner">
+
+          <!-- PART 1 -->
+          <section class="section" id="part1">
+            <h2><span class="k a">1</span> PART 1 — Problem Analysis (no solving yet)</h2>
+
+            <div class="callout">
+              <p class="title">
+                <span class="pill">Restatement</span>
+                <span class="tag">translate → physics</span>
+              </p>
+              <p style="margin:0;color:var(--muted)">
+                The car starts from rest and follows a piecewise position function: it accelerates (concave up) until
+                \(t=5\text{ s}\), then brakes (concave down). Find \(A,B\) so both position and velocity are continuous at
+                \(t=5\). Then find the car’s velocity when it reaches the barrier at \(s=33\text{ m}\).
+              </p>
+            </div>
+
+            <div class="grid2" style="margin-top:12px">
+              <div class="callout">
+                <p class="title"><span class="pill">Given</span><span class="tag">inputs</span></p>
+                <ul class="list">
+                  <li>Piecewise position:
+                    \[
+                      s(t)=\begin{cases}
+                        t^2,& 0\le t&lt;5\\
+                        -2t^2+At+B,& t\ge 5
+                      \end{cases}
+                    \]
+                  </li>
+                  <li>Continuity at \(t=5\): \(s\) and \(s'(t)\) are continuous.</li>
+                  <li>Barrier location: \(s=33\,\mathrm{m}\).</li>
+                </ul>
+              </div>
+
+              <div class="callout">
+                <p class="title"><span class="pill">Unknowns</span><span class="tag">targets</span></p>
+                <ul class="list">
+                  <li>Constants \(A\) and \(B\).</li>
+                  <li>Impact time \(t_{\text{hit}}\) (implicitly).</li>
+                  <li>Impact velocity \(v_{\text{hit}}\).</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="callout">
+              <p class="title"><span class="pill">Physics & Why</span><span class="tag">principles</span></p>
+              <ul class="list">
+                <li><strong>Constant-acceleration kinematics:</strong> each phase has constant acceleration, so \(s(t)\) is quadratic and \(v(t)=s'(t)\) is linear.</li>
+                <li><strong>Continuity of motion:</strong> position cannot jump (no teleporting), and velocity cannot jump at a finite switching instant; only acceleration changes abruptly.</li>
+              </ul>
+            </div>
+
+            <div class="callout">
+              <p class="title"><span class="pill">Approaches</span><span class="tag">compare</span></p>
+              <ul class="list">
+                <li><strong>Calculus on the given \(s(t)\):</strong> differentiate to get \(v(t)\), apply continuity at \(t=5\), solve \(s(t)=33\), evaluate \(v\).</li>
+                <li><strong>Pure kinematics formulas:</strong> compute \(s,v\) in each phase from \(a\), match at \(t=5\), then solve for barrier time.</li>
+                <li><strong>Graph/monotonic reasoning:</strong> solve the quadratic, then choose the earliest root after \(t=5\).</li>
+              </ul>
+              <p style="margin:10px 0 0;color:var(--muted)">
+                <strong>Best choice:</strong> use the given \(s(t)\) directly — it minimizes setup and makes continuity conditions purely algebraic.
+              </p>
+            </div>
+          </section>
+
+          <!-- PART 2 -->
+          <section class="section" id="part2" style="margin-top:16px">
+            <h2><span class="k b">2</span> PART 2 — Strategy & Tips (roadmap only)</h2>
+
+            <ol class="steps">
+              <li>
+                <div>
+                  <h3>Differentiate to get velocity in each phase</h3>
+                  <p><strong>Goal:</strong> obtain \(v_1(t), v_2(t)\). <br><strong>Tool:</strong> \(v(t)=s'(t)\).</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <h3>Apply position continuity at \(t=5\)</h3>
+                  <p><strong>Goal:</strong> no jump in location. <br><strong>Tool:</strong> set \(s_1(5)=s_2(5)\).</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <h3>Apply velocity continuity at \(t=5\)</h3>
+                  <p><strong>Goal:</strong> no jump in speed. <br><strong>Tool:</strong> set \(v_1(5)=v_2(5)\).</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <h3>Solve for \(A\) and \(B\)</h3>
+                  <p><strong>Goal:</strong> fully determine the braking-phase model. <br><strong>Tool:</strong> solve two equations in two unknowns.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <h3>Solve \(s(t)=33\) for \(t\ge 5\)</h3>
+                  <p><strong>Goal:</strong> find impact time candidates. <br><strong>Tool:</strong> quadratic equation / factoring.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <h3>Pick the physically correct root</h3>
+                  <p><strong>Goal:</strong> choose the earliest time after braking begins. <br><strong>Tool:</strong> time ordering + physical meaning.</p>
+                </div>
+              </li>
+              <li>
+                <div>
+                  <h3>Evaluate impact velocity</h3>
+                  <p><strong>Goal:</strong> compute \(v_{\text{hit}}=v_2(t_{\text{hit}})\). <br><strong>Tool:</strong> substitution into \(v_2(t)\).</p>
+                </div>
+              </li>
+            </ol>
+
+            <div class="callout">
+              <p class="title"><span class="pill">Mistakes to avoid</span><span class="tag">tips</span></p>
+              <ul class="list">
+                <li>Solving \(s(t)=33\) using the wrong branch (must use \(t\ge 5\)).</li>
+                <li>Forgetting that velocity is \(s'(t)\), not \(s(t)\).</li>
+                <li>Choosing the later root (the car hits the barrier at the <em>first</em> valid time).</li>
+                <li>Sign errors: braking means acceleration is negative → velocity decreases after \(t=5\).</li>
+              </ul>
+            </div>
+          </section>
+        </div>
+
+        <!-- PART 3 -->
+        <section class="solution" id="part3">
+          <h2><span class="k c">3</span> PART 3 — Full Solution</h2>
+
+          <div class="callout">
+            <p class="title"><span class="pill">Physical intuition</span><span class="tag">sense-making</span></p>
+            <p style="margin:0;color:var(--muted)">
+              From \(0\) to \(5\) seconds the car speeds up smoothly, so \(s(t)\) rises like a concave-up quadratic and
+              \(v(t)\) increases linearly. After \(t=5\) the car brakes with constant negative acceleration, so
+              \(v(t)\) must decrease linearly. At the switching moment, position and velocity cannot jump—only
+              acceleration changes.
+            </p>
+          </div>
+
+          <h3>(a) Determine \(A\) and \(B\) from continuity at \(t=5\)</h3>
+
+          <p>
+            For \(0\le t&lt;5\),
+            \[
+              s_1(t)=t^2 \quad\Rightarrow\quad v_1(t)=s_1'(t)=2t.
+            \]
+            For \(t\ge 5\),
+            \[
+              s_2(t)=-2t^2+At+B \quad\Rightarrow\quad v_2(t)=s_2'(t)=-4t+A.
+            \]
+          </p>
+
+          <div class="eq">
+            <p style="margin:0;color:var(--muted)">
+              <strong>Position continuity</strong> at \(t=5\): \(s_1(5)=s_2(5)\).
+            </p>
+            <div class="mathblock">
+              \[
+                s_1(5)=25,\qquad
+                s_2(5)=-2(5^2)+5A+B=-50+5A+B.
+              \]
+              \[
+                -50+5A+B=25\quad\Rightarrow\quad 5A+B=75.
+              \]
+            </div>
+          </div>
+
+          <div class="eq">
+            <p style="margin:0;color:var(--muted)">
+              <strong>Velocity continuity</strong> at \(t=5\): \(v_1(5)=v_2(5)\).
+            </p>
+            <div class="mathblock">
+              \[
+                v_1(5)=10,\qquad v_2(5)=-4(5)+A=-20+A.
+              \]
+              \[
+                -20+A=10\quad\Rightarrow\quad A=30.
+              \]
+            </div>
+          </div>
+
+          <div class="eq">
+            <p style="margin:0;color:var(--muted)">
+              Substitute \(A=30\) into \(5A+B=75\) to solve for \(B\).
+            </p>
+            <div class="mathblock">
+              \[
+                5(30)+B=75 \Rightarrow 150+B=75 \Rightarrow B=-75.
+              \]
+            </div>
+          </div>
+
+          <div class="boxed" role="note" aria-label="Boxed answer for part a">
+            <div class="label">
+              <strong>RESULT (a)</strong>
+              <span class="tag">continuity @ 5s</span>
+            </div>
+            <div class="ans">
+              \[
+                \boxed{A=30,\quad B=-75}
+              \]
+              Hence, for \(t\ge 5\):
+              \[
+                s_2(t)= -2t^2+30t-75,\qquad v_2(t)=-4t+30.
+              \]
+            </div>
+          </div>
+
+          <h3>(b) Velocity at impact when \(s=33\text{ m}\)</h3>
+
+          <p>
+            Since \(s(5)=25\text{ m}\) and the barrier is at \(33\text{ m}\), the hit occurs after braking begins, so use
+            \(s_2(t)\) with \(t\ge 5\):
+          </p>
+
+          <div class="eq">
+            <div class="mathblock">
+              \[
+                -2t^2+30t-75 = 33
+              \]
+              \[
+                -2t^2+30t-108=0
+              \]
+              \[
+                t^2-15t+54=0
+              \]
+              \[
+                (t-6)(t-9)=0 \Rightarrow t=6\ \text{or}\ t=9.
+              \]
+            </div>
+            <p style="margin:0;color:var(--muted)">
+              The physically relevant impact time is the <strong>earliest</strong> valid time after \(t=5\): \(\;t_{\text{hit}}=6\text{ s}\).
+            </p>
+          </div>
+
+          <div class="eq">
+            <p style="margin:0;color:var(--muted)">
+              Now evaluate the braking-phase velocity \(v_2(t)=-4t+30\) at \(t=6\).
+            </p>
+            <div class="mathblock">
+              \[
+                v_{\text{hit}}=v_2(6)=-4(6)+30=-24+30=6\ \text{m/s}.
+              \]
+            </div>
+          </div>
+
+          <div class="boxed" role="note" aria-label="Boxed answer for part b">
+            <div class="label">
+              <strong>RESULT (b)</strong>
+              <span class="tag">impact speed</span>
+            </div>
+            <div class="ans">
+              \[
+                \boxed{t_{\text{hit}}=6\ \text{s},\qquad v_{\text{hit}}=6\ \text{m/s}}
+              \]
+            </div>
+          </div>
+
+          <h3>Sanity checks</h3>
+
+          <div class="callout">
+            <p class="title"><span class="pill">Units</span><span class="tag">dimensional check</span></p>
+            <ul class="list">
+              <li>\(v(t)=s'(t)\) has units of \(\text{m/s}\). The final \(v_{\text{hit}}=6\,\text{m/s}\) is consistent.</li>
+              <li>At \(t=5\): \(s_1(5)=25\text{ m}\) matches \(s_2(5)=25\text{ m}\). Velocity also matches: \(v_1(5)=10\text{ m/s}\) and \(v_2(5)=10\text{ m/s}\).</li>
+            </ul>
+          </div>
+
+          <div class="callout">
+            <p class="title"><span class="pill">Limiting cases</span><span class="tag">behavior</span></p>
+            <ul class="list">
+              <li>Immediately after braking starts, velocity should decrease at \(4\,\text{m/s}\) per second:
+                from \(t=5\) to \(6\), \(10\to 6\ \text{m/s}\) — exactly as computed.</li>
+              <li>The second root \(t=9\) corresponds to reaching \(s=33\text{ m}\) again later (on the way back in the polynomial model). The actual “strike” happens at the first reach time \(t=6\text{ s}\).</li>
+            </ul>
+          </div>
+
+          <div class="callout">
+            <p class="title"><span class="pill">Physical interpretation</span><span class="tag">meaning</span></p>
+            <p style="margin:0;color:var(--muted)">
+              The car begins braking at \(t=5\) s with speed \(10\) m/s, but the barrier is close enough that it still hits
+              it one second later while moving forward at \(6\) m/s.
+            </p>
+          </div>
+
+          <div class="footer">
+            <span>Tip: This file is self-contained (CSS + MathJax). Drop it into your <code style="font-family:var(--mono)">/problems/</code> folder and link it as an article.</span>
+            <div class="btns">
+              <button class="btn" type="button" onclick="window.print()" aria-label="Print to PDF">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M7 8V4h10v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M7 17h10v3H7v-3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M6 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M17 12h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+                Print
+              </button>
+
+              <button class="btn" type="button" onclick="document.getElementById('part1').scrollIntoView({behavior:'smooth'})">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M6 11l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Top
+              </button>
+            </div>
+          </div>
+
+        </section>
+      </section>
+
+      <!-- RIGHT: Quick Reference / Sidebar -->
+      <aside aria-label="Quick reference sidebar">
+        <section class="card">
+          <div class="inner">
+            <h2><span class="k c">★</span> Quick Reference</h2>
+
+            <div class="mini">
+              <div class="row">
+                <h4>Piecewise model <span class="tag">given</span></h4>
+                <div class="mathblock" style="margin:8px 0 0">
+                  \[
+                    s(t)=
+                    \begin{cases}
+                      t^2,&0\le t&lt;5\\
+                      -2t^2+At+B,&t\ge 5
+                    \end{cases}
+                  \]
+                </div>
+              </div>
+
+              <div class="row">
+                <h4>Velocity definition <span class="tag">tool</span></h4>
+                <p>\(v(t)=s'(t)\). Differentiate each branch.</p>
+              </div>
+
+              <div class="row">
+                <h4>Continuity at \(t=5\) <span class="tag">constraints</span></h4>
+                <p>Enforce \(s_1(5)=s_2(5)\) and \(v_1(5)=v_2(5)\).</p>
+              </div>
+
+              <div class="row">
+                <h4>Final constants <span class="tag">result</span></h4>
+                <div class="mathblock" style="margin:8px 0 0">
+                  \[
+                    A=30,\qquad B=-75
+                  \]
+                </div>
+              </div>
+
+              <div class="row">
+                <h4>Impact speed <span class="tag">result</span></h4>
+                <div class="mathblock" style="margin:8px 0 0">
+                  \[
+                    t_{\text{hit}}=6\ \text{s},\qquad
+                    v_{\text{hit}}=6\ \text{m/s}
+                  \]
+                </div>
+              </div>
+
+              <div class="row">
+                <h4>Sanity snapshot <span class="tag">check</span></h4>
+                <p>At \(t=5\): \(s=25\text{ m}\), \(v=10\text{ m/s}\). After 1 s of braking, speed drops by \(4\text{ m/s}\) → \(6\text{ m/s}\).</p>
+              </div>
+            </div>
+
+            <div class="callout" style="margin-top:12px">
+              <p class="title"><span class="pill">Linking tip</span><span class="tag">integration</span></p>
+              <p style="margin:0;color:var(--muted)">
+                Add a card link on your main page like:
+                <span class="pill">href="./problems/PHYSICS/Exam_?/prob5_solution.html"</span>
+                (adjust the path to match your folder structure).
+              </p>
+            </div>
+
+          </div>
+        </section>
+      </aside>
+    </main>
+  </article>
+</body>
+</html>

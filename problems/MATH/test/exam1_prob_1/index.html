@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derivative Limit Simulation: 1/x²</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; color: #333; max-width: 900px; margin: 0 auto; padding: 20px; background: #f4f7f6; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1, h2 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .problem-box { background: #eef2f7; padding: 15px; border-left: 5px solid #3498db; margin-bottom: 20px; }
+        .controls { background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; }
+        .slider-group { margin: 15px 0; display: flex; align-items: center; gap: 20px; }
+        input[type="range"] { flex-grow: 1; cursor: pointer; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-weight: bold; font-family: monospace; background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 8px; }
+        canvas { background: white; border: 1px solid #eee; border-radius: 8px; }
+        .math { font-family: "Times New Roman", serif; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Derivative Visualizer: First Principles</h1>
+    
+    <div class="problem-box">
+        <h2>The Main Problem</h2>
+        <p>Function: <span class="math">y = f(x) = 1/x²</span> for <span class="math">x > 0</span></p>
+        <p>Find the derivative using: <span class="math">f'(x) = lim<sub>h→0</sub> [f(x+h) - f(x)] / h</span></p>
+    </div>
+
+    <div class="controls">
+        <h3>Interactive Parameters</h3>
+        <div class="slider-group">
+            <label>Point <strong>x</strong>: <span id="xVal">2.00</span></label>
+            <input type="range" id="xSlider" min="0.5" max="5" step="0.1" value="2">
+        </div>
+        <div class="slider-group">
+            <label>Interval <strong>h</strong>: <span id="hVal">1.00</span></label>
+            <input type="range" id="hSlider" min="0.01" max="2" step="0.01" value="1">
+        </div>
+        
+        <div class="stats">
+            <div>Secant Slope (Avg Change): <span id="secantSlope">0.00</span></div>
+            <div>Actual Derivative (at x): <span id="actualDeriv">0.00</span></div>
+        </div>
+    </div>
+
+    <canvas id="derivChart" width="800" height="400"></canvas>
+
+    <div style="margin-top: 20px;">
+        <h3>Why this works:</h3>
+        <p>As you slide <strong>h</strong> toward 0, the green line (the Secant) aligns perfectly with the instantaneous rate of change. Notice how the "Secant Slope" value in the black box gets closer and closer to the "Actual Derivative" value ($ -2/x^3 $).</p>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('derivChart').getContext('2d');
+    const xSlider = document.getElementById('xSlider');
+    const hSlider = document.getElementById('hSlider');
+    const xLabel = document.getElementById('xVal');
+    const hLabel = document.getElementById('hVal');
+    const secantLabel = document.getElementById('secantSlope');
+    const actualLabel = document.getElementById('actualDeriv');
+
+    function f(x) { return 1 / (x * x); }
+    function df(x) { return -2 / Math.pow(x, 3); }
+
+    let chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'f(x) = 1/x²',
+                    borderColor: '#3498db',
+                    borderWidth: 3,
+                    data: [],
+                    pointRadius: 0,
+                    fill: false
+                },
+                {
+                    label: 'Secant Line',
+                    borderColor: '#2ecc71',
+                    borderDash: [5, 5],
+                    data: [],
+                    pointRadius: 5,
+                    pointBackgroundColor: '#27ae60',
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { type: 'linear', position: 'bottom', min: 0, max: 6, title: { display: true, text: 'x' } },
+                y: { min: 0, max: 4, title: { display: true, text: 'y' } }
+            },
+            plugins: { legend: { position: 'top' } },
+            animation: false
+        }
+    });
+
+    function update() {
+        const x = parseFloat(xSlider.value);
+        const h = parseFloat(hSlider.value);
+        
+        xLabel.innerText = x.toFixed(2);
+        hLabel.innerText = h.toFixed(2);
+
+        // Generate Curve Data
+        const curveData = [];
+        for (let i = 0.4; i <= 6; i += 0.1) {
+            curveData.push({x: i, y: f(i)});
+        }
+
+        // Calculate slopes
+        const y1 = f(x);
+        const y2 = f(x + h);
+        const slope = (y2 - y1) / h;
+        const actual = df(x);
+
+        secantLabel.innerText = slope.toFixed(4);
+        actualLabel.innerText = actual.toFixed(4);
+
+        // Secant Line Data (2 points: x and x+h)
+        const secantData = [
+            {x: x, y: y1},
+            {x: x + h, y: y2}
+        ];
+
+        // Extend secant line for visual effect
+        const xStart = x - 1;
+        const xEnd = (x + h) + 1;
+        const extendedSecant = [
+            {x: xStart, y: y1 + slope * (xStart - x)},
+            {x: x + h + 1, y: y2 + slope * (1)}
+        ];
+
+        chart.data.datasets[0].data = curveData;
+        chart.data.datasets[1].data = extendedSecant;
+        chart.update();
+    }
+
+    xSlider.oninput = update;
+    hSlider.oninput = update;
+    update();
+</script>
+
+</body>
+</html>

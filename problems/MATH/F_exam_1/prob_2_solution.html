@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Problem 2 — Derivatives of a Gaussian</title>
+  <meta name="description" content="Compute the first, second, and third derivatives of f(x)=e^{-x^2/2}, with a structured analysis, strategy, and full solution." />
+
+  <!-- ====== Inline Article Styles (self-contained) ====== -->
+  <style>
+    :root{
+      --bg0:#0b1020;
+      --bg1:#0f1730;
+      --card:rgba(255,255,255,.06);
+      --card2:rgba(255,255,255,.08);
+      --text:rgba(255,255,255,.90);
+      --muted:rgba(255,255,255,.68);
+      --faint:rgba(255,255,255,.52);
+      --line:rgba(255,255,255,.14);
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+      --radius: 22px;
+      --radius2: 16px;
+      --pad: clamp(14px, 2.2vw, 22px);
+      --max: 1040px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    /* Soft animated background */
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background: radial-gradient(1200px 700px at 12% 10%, rgba(112, 73, 255, .22), transparent 55%),
+                  radial-gradient(1000px 600px at 90% 20%, rgba(0, 245, 255, .16), transparent 55%),
+                  radial-gradient(900px 700px at 50% 90%, rgba(255, 106, 106, .16), transparent 55%),
+                  linear-gradient(180deg, var(--bg0), var(--bg1));
+      min-height:100dvh;
+      overflow-x:hidden;
+    }
+
+    .wrap{
+      width:min(var(--max), calc(100% - 2*var(--pad)));
+      margin: 0 auto;
+      padding: clamp(20px, 3vw, 42px) 0 70px;
+    }
+
+    /* Header */
+    .hero{
+      position:relative;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: clamp(18px, 2.6vw, 28px);
+      overflow:hidden;
+    }
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(400px 140px at 20% 10%, rgba(0, 245, 255, .25), transparent 60%),
+                  radial-gradient(420px 160px at 90% 30%, rgba(112, 73, 255, .25), transparent 60%),
+                  radial-gradient(420px 220px at 40% 100%, rgba(255, 106, 106, .18), transparent 60%);
+      filter: blur(0px);
+      opacity: .9;
+      pointer-events:none;
+    }
+    .hero > *{ position:relative; }
+
+    .kicker{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      letter-spacing:.2px;
+      margin:0 0 12px;
+      flex-wrap:wrap;
+    }
+    .pill{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-family: var(--mono);
+      font-size: .86rem;
+      color: rgba(255,255,255,.82);
+    }
+    .dot{
+      width:8px; height:8px; border-radius:50%;
+      background: rgba(0,245,255,.9);
+      box-shadow: 0 0 18px rgba(0,245,255,.6);
+    }
+    h1{
+      margin: 6px 0 8px;
+      font-size: clamp(1.4rem, 3.2vw, 2.2rem);
+      letter-spacing: -0.6px;
+      line-height: 1.18;
+    }
+    .subtitle{
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 1.4vw, 1.1rem);
+      line-height:1.6;
+      max-width: 72ch;
+    }
+
+    /* Table of contents / quick nav */
+    .navgrid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    @media (max-width: 920px){
+      .navgrid{ grid-template-columns: 1fr; }
+    }
+    .toc, .quickfacts{
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,.06);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 14px 14px;
+    }
+    .toc h2, .quickfacts h2{
+      font-size: 0.95rem;
+      margin: 0 0 10px;
+      color: rgba(255,255,255,.86);
+      letter-spacing:.2px;
+    }
+    .toc a{
+      color: rgba(255,255,255,.82);
+      text-decoration:none;
+      border-bottom: 1px dashed rgba(255,255,255,.20);
+    }
+    .toc a:hover{ color:white; border-bottom-color: rgba(0,245,255,.55); }
+    .toc ul{
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height:1.8;
+    }
+    .quickfacts dl{
+      margin:0;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      color: var(--muted);
+    }
+    .quickfacts dt{
+      font-family: var(--mono);
+      color: rgba(255,255,255,.85);
+      font-size: .9rem;
+    }
+    .quickfacts dd{
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: .96rem;
+    }
+
+    /* Sections */
+    .section{
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.05);
+      box-shadow: 0 18px 40px rgba(0,0,0,.28);
+      overflow:hidden;
+    }
+    .section header{
+      display:flex;
+      gap: 12px;
+      align-items:flex-start;
+      padding: 16px clamp(14px, 2.2vw, 22px);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+    }
+    .badge{
+      display:inline-flex;
+      min-width: 44px;
+      height: 44px;
+      align-items:center;
+      justify-content:center;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0, 245, 255, .10);
+      color: rgba(255,255,255,.92);
+      font-family: var(--mono);
+      box-shadow: 0 0 0 6px rgba(0, 245, 255, .05);
+    }
+    .section header h2{
+      margin:0;
+      font-size: clamp(1.1rem, 2.1vw, 1.4rem);
+      letter-spacing:-.3px;
+      line-height:1.25;
+    }
+    .section header p{
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height:1.6;
+      max-width: 85ch;
+      font-size: 1rem;
+    }
+    .content{
+      padding: clamp(14px, 2.2vw, 22px);
+    }
+
+    /* Typography inside sections */
+    .content h3{
+      margin: 14px 0 8px;
+      font-size: 1.05rem;
+      color: rgba(255,255,255,.92);
+      letter-spacing: -.1px;
+    }
+    .content p{
+      margin: 10px 0;
+      color: rgba(255,255,255,.82);
+      line-height: 1.75;
+    }
+    .content ul, .content ol{
+      margin: 10px 0 10px 18px;
+      color: rgba(255,255,255,.78);
+      line-height: 1.8;
+    }
+
+    /* Callouts */
+    .callout{
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      padding: 14px 14px;
+      background: rgba(255,255,255,.06);
+      margin: 14px 0;
+      position:relative;
+      overflow:hidden;
+    }
+    .callout::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: radial-gradient(300px 120px at 15% 0%, rgba(112,73,255,.20), transparent 60%),
+                  radial-gradient(260px 120px at 95% 40%, rgba(0,245,255,.16), transparent 60%);
+      opacity:.85;
+      pointer-events:none;
+    }
+    .callout > *{ position:relative; }
+    .callout strong{
+      color: rgba(255,255,255,.92);
+    }
+    .tagrow{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      font-family: var(--mono);
+      font-size: .86rem;
+      color: rgba(255,255,255,.78);
+    }
+    .tag i{
+      width:7px;height:7px;border-radius:50%;
+      background: rgba(255,106,106,.9);
+      box-shadow: 0 0 16px rgba(255,106,106,.55);
+      display:inline-block;
+    }
+
+    /* Math blocks (works even without MathJax) */
+    .math{
+      font-family: var(--mono);
+      font-size: .95rem;
+      color: rgba(255,255,255,.86);
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 12px 12px;
+      overflow-x:auto;
+      margin: 12px 0;
+    }
+    .eq{
+      display:block;
+      padding: 6px 0;
+      white-space: nowrap;
+    }
+    .eq .hl{
+      color: rgba(0,245,255,.92);
+    }
+
+    /* Steps cards */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+      margin-top: 12px;
+    }
+    .step{
+      grid-column: span 6;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      padding: 14px;
+    }
+    @media (max-width: 900px){ .step{ grid-column: span 12; } }
+    .step h4{
+      margin: 0 0 6px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size: 1rem;
+      letter-spacing:-.1px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: rgba(112,73,255,.16);
+      border: 1px solid rgba(255,255,255,.12);
+      font-family: var(--mono);
+      color: rgba(255,255,255,.92);
+    }
+    .step p{
+      margin: 6px 0 0;
+      color: rgba(255,255,255,.76);
+      line-height:1.7;
+    }
+
+    /* Final answers */
+    .final{
+      border: 1px solid rgba(0,245,255,.25);
+      background: linear-gradient(180deg, rgba(0,245,255,.10), rgba(255,255,255,.05));
+      box-shadow: 0 20px 60px rgba(0,245,255,.06);
+      border-radius: 20px;
+      padding: 16px;
+      margin: 16px 0 10px;
+    }
+    .final h3{
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .spark{
+      width:10px;height:10px;border-radius:50%;
+      background: rgba(0,245,255,.95);
+      box-shadow: 0 0 18px rgba(0,245,255,.6);
+      display:inline-block;
+    }
+    .final .math{
+      margin: 10px 0 0;
+      background: rgba(0,0,0,.18);
+    }
+
+    /* Accordion details */
+    details{
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      background: rgba(255,255,255,.05);
+      padding: 12px 14px;
+      margin: 12px 0;
+    }
+    summary{
+      cursor:pointer;
+      user-select:none;
+      color: rgba(255,255,255,.88);
+      font-weight: 600;
+      letter-spacing:-.1px;
+      list-style:none;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    details[open] summary{ margin-bottom: 10px; }
+    .small{
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    /* Footer */
+    .footer{
+      margin-top: 18px;
+      color: var(--faint);
+      font-size: .92rem;
+      text-align:center;
+    }
+    .footer a{ color: rgba(0,245,255,.85); text-decoration:none; }
+    .footer a:hover{ text-decoration:underline; }
+
+    /* Print friendly */
+    @media print{
+      body{ background:white; color:black; }
+      .hero, .section, .toc, .quickfacts, .callout, .step, .final, details{
+        box-shadow:none !important;
+        background:white !important;
+        color:black !important;
+        border-color:#ddd !important;
+      }
+      .math{ background:#f7f7f7 !important; border-color:#e6e6e6 !important; color:#111 !important; }
+      a{ color:#000 !important; text-decoration: underline !important; }
+      .dot, .spark, .tag i{ box-shadow:none !important; }
+    }
+  </style>
+
+  <!-- ====== Optional MathJax (renders LaTeX beautifully). Safe to remove if your site already loads it. ====== -->
+  <script>
+    // If your main site already includes MathJax, delete this block to avoid double-loading.
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']], displayMath: [['\\[','\\]']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+
+<body>
+  <main class="wrap">
+    <!-- ================== HERO ================== -->
+    <section class="hero" aria-label="Article Header">
+      <div class="kicker">
+        <span class="pill"><span class="dot" aria-hidden="true"></span> CALCULUS / derivatives / gaussian</span>
+        <span class="pill">Problem 2</span>
+        <span class="pill">Difficulty: ★★★☆☆</span>
+      </div>
+
+      <h1>Derivatives of a Gaussian: \(f(x)=e^{-x^2/2}\)</h1>
+      <p class="subtitle">
+        Compute \(f'(x), f''(x), f^{(3)}(x)\) and reveal the key structural pattern:
+        every derivative stays “Gaussian × polynomial” — a theme that appears everywhere in physics.
+      </p>
+
+      <div class="navgrid" role="navigation" aria-label="In-article navigation">
+        <nav class="toc">
+          <h2>On this page</h2>
+          <ul>
+            <li><a href="#part1">PART 1 — Problem Analysis</a></li>
+            <li><a href="#part2">PART 2 — Strategy & Tips</a></li>
+            <li><a href="#part3">PART 3 — Full Solution</a></li>
+            <li><a href="#extra">Extra Credit — \(f^{(n)}(x)=p_n(x)f(x)\)</a></li>
+            <li><a href="#sanity">Sanity Checks (units + limits + interpretation)</a></li>
+          </ul>
+        </nav>
+
+        <aside class="quickfacts">
+          <h2>Quick facts</h2>
+          <dl>
+            <div>
+              <dt>Given</dt>
+              <dd>\(f(x)=e^{-x^2/2}\)</dd>
+            </div>
+            <div>
+              <dt>Find</dt>
+              <dd>\(f'(x), f''(x), f^{(3)}(x)\)</dd>
+            </div>
+            <div>
+              <dt>Main tools</dt>
+              <dd>Chain rule • Product rule • Factoring</dd>
+            </div>
+            <div>
+              <dt>Key identity</dt>
+              <dd>\(f'(x)=-x f(x)\)</dd>
+            </div>
+          </dl>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ================== PART 1 ================== -->
+    <section class="section" id="part1" aria-label="Part 1 Problem Analysis">
+      <header>
+        <div class="badge">1</div>
+        <div>
+          <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+          <p>We clarify what’s asked, what’s given, which math/physics ideas apply, and pick the cleanest method.</p>
+        </div>
+      </header>
+
+      <div class="content">
+        <h3>1) Restate the problem</h3>
+        <p>
+          You’re given the function \( f(x)=e^{-x^2/2} \). Compute its first, second, and third derivatives:
+          \(f'(x)\), \(f''(x)\), and \(f^{(3)}(x)\).
+          <span class="small">(Extra credit: prove \(f^{(n)}(x)=p_n(x)\,f(x)\) and give a recurrence.)</span>
+        </p>
+
+        <h3>2) Given, unknowns, and goal</h3>
+        <ul>
+          <li><strong>Given:</strong> \( f(x)=e^{-x^2/2} \)</li>
+          <li><strong>Unknowns:</strong> \( f'(x), f''(x), f^{(3)}(x)\)</li>
+          <li><strong>Goal:</strong> Differentiate correctly and simplify in a clear, reusable form.</li>
+        </ul>
+
+        <h3>3) Relevant principles (and why)</h3>
+        <div class="callout">
+          <p>
+            <strong>Chain rule</strong> applies because the exponent is a function of \(x\): \(-x^2/2\).<br/>
+            <strong>Product rule</strong> becomes essential after the first derivative because the result naturally becomes
+            “polynomial × exponential.”<br/>
+            <strong>Gaussian structure</strong>: differentiating a Gaussian yields the same Gaussian times a polynomial,
+            a pattern connected to Hermite polynomials and the quantum harmonic oscillator.
+          </p>
+          <div class="tagrow" aria-label="Key tools tags">
+            <span class="tag"><i aria-hidden="true"></i>Chain rule</span>
+            <span class="tag"><i aria-hidden="true"></i>Product rule</span>
+            <span class="tag"><i aria-hidden="true"></i>Factoring</span>
+            <span class="tag"><i aria-hidden="true"></i>Pattern recognition</span>
+          </div>
+        </div>
+
+        <h3>4) Candidate approaches</h3>
+        <ol>
+          <li><strong>Direct differentiation each time</strong> (chain rule + product rule): straightforward for 1–3 derivatives.</li>
+          <li><strong>Factor-out method</strong>: keep \(e^{-x^2/2}\) factored and only evolve the polynomial prefactor—cleanest.</li>
+          <li><strong>General recurrence</strong> (extra credit): derive \(p_{n+1}\) from \(p_n\) to generate any order derivative.</li>
+        </ol>
+
+        <h3>5) Best approach</h3>
+        <p>
+          We choose the <strong>factor-out method</strong> because it minimizes algebra clutter and reduces sign mistakes:
+          once you know \(f'(x)=-x f(x)\), higher derivatives become systematic.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================== PART 2 ================== -->
+    <section class="section" id="part2" aria-label="Part 2 Strategy and Tips">
+      <header>
+        <div class="badge">2</div>
+        <div>
+          <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+          <p>A minimal plan to solve, plus quick pitfalls to avoid. No algebra expansion yet.</p>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="grid" role="list" aria-label="Solution roadmap steps">
+          <div class="step" role="listitem">
+            <h4><span class="chip">1</span>Differentiate \(e^{g(x)}\)</h4>
+            <p><strong>Goal:</strong> compute \(f'(x)\). <br/><strong>Tool:</strong> chain rule, \( (e^{g})' = g' e^{g} \).</p>
+          </div>
+
+          <div class="step" role="listitem">
+            <h4><span class="chip">2</span>Factor \(f(x)\) out</h4>
+            <p><strong>Goal:</strong> write \(f'(x)=p_1(x)f(x)\). <br/><strong>Tool:</strong> factoring and simplification.</p>
+          </div>
+
+          <div class="step" role="listitem">
+            <h4><span class="chip">3</span>Differentiate the product</h4>
+            <p><strong>Goal:</strong> get \(f''(x)\) from \(p_1(x)f(x)\). <br/><strong>Tool:</strong> product rule.</p>
+          </div>
+
+          <div class="step" role="listitem">
+            <h4><span class="chip">4</span>Refactor to identify \(p_2(x)\)</h4>
+            <p><strong>Goal:</strong> express \(f''(x)=p_2(x)f(x)\). <br/><strong>Tool:</strong> collect terms.</p>
+          </div>
+
+          <div class="step" role="listitem">
+            <h4><span class="chip">5</span>Repeat once more for \(f^{(3)}\)</h4>
+            <p><strong>Goal:</strong> compute the third derivative. <br/><strong>Tool:</strong> product rule + reuse \(f'(x)=-xf(x)\).</p>
+          </div>
+
+          <div class="step" role="listitem">
+            <h4><span class="chip">6</span>(Optional) Build a recurrence</h4>
+            <p><strong>Goal:</strong> show \(f^{(n)}=p_n f\) and derive \(p_{n+1}\). <br/><strong>Tool:</strong> induction + product rule.</p>
+          </div>
+        </div>
+
+        <details>
+          <summary>Common mistakes & quick tips</summary>
+          <ul>
+            <li><strong>Sign error:</strong> \( \frac{d}{dx}(-x^2/2) = -x \), not \(+x\).</li>
+            <li><strong>Forgetting product rule</strong> after the first derivative.</li>
+            <li><strong>Not factoring \(f(x)\)</strong>: keeping the Gaussian outside makes patterns obvious.</li>
+            <li><strong>Tip:</strong> lock in the identity \( f'(x)=-x f(x)\). Use it repeatedly.</li>
+          </ul>
+        </details>
+      </div>
+    </section>
+
+    <!-- ================== PART 3 ================== -->
+    <section class="section" id="part3" aria-label="Part 3 Full Solution">
+      <header>
+        <div class="badge">3</div>
+        <div>
+          <h2>PART 3 — Full Solution</h2>
+          <p>We start with intuition, then derive \(f'(x)\), \(f''(x)\), and \(f^{(3)}(x)\) step-by-step, and box the result.</p>
+        </div>
+      </header>
+
+      <div class="content">
+        <h3>Physical intuition</h3>
+        <p>
+          A Gaussian \(e^{-x^2/2}\) is a “localized envelope” that decays very fast as \(|x|\) grows.
+          Differentiation doesn’t destroy this envelope; instead it “pulls down” powers of \(x\) from the exponent.
+          That’s why every derivative looks like:
+        </p>
+        <div class="math" aria-label="Gaussian times polynomial pattern">
+          <span class="eq">\(\displaystyle f^{(n)}(x) = \big(\text{polynomial in }x\big)\,e^{-x^2/2}\)</span>
+        </div>
+
+        <h3>1) First derivative \(f'(x)\)</h3>
+        <p>
+          Let \(g(x)=-x^2/2\). Then \(f(x)=e^{g(x)}\). By the chain rule:
+        </p>
+        <div class="math" aria-label="First derivative derivation">
+          <span class="eq">\(\displaystyle g'(x)=\frac{d}{dx}\left(-\frac{x^2}{2}\right)=-x\)</span>
+          <span class="eq">\(\displaystyle f'(x)=g'(x)e^{g(x)}=-x\,e^{-x^2/2}\)</span>
+          <span class="eq"><span class="hl">Key identity:</span> \(\displaystyle f'(x)=-x\,f(x)\)</span>
+        </div>
+
+        <h3>2) Second derivative \(f''(x)\)</h3>
+        <p>
+          Start from \(f'(x)=-x e^{-x^2/2}\) and apply the product rule:
+        </p>
+        <div class="math" aria-label="Second derivative derivation">
+          <span class="eq">\(\displaystyle f''(x)=\frac{d}{dx}\Big[-x\cdot e^{-x^2/2}\Big]\)</span>
+          <span class="eq">\(\displaystyle f''(x)=(-1)e^{-x^2/2}+(-x)\frac{d}{dx}\big(e^{-x^2/2}\big)\)</span>
+          <span class="eq">\(\displaystyle \frac{d}{dx}\big(e^{-x^2/2}\big)=f'(x)=-x e^{-x^2/2}\)</span>
+          <span class="eq">\(\displaystyle f''(x)=-e^{-x^2/2}+x^2 e^{-x^2/2}=(x^2-1)e^{-x^2/2}\)</span>
+        </div>
+
+        <h3>3) Third derivative \(f^{(3)}(x)\)</h3>
+        <p>
+          Start from \(f''(x)=(x^2-1)e^{-x^2/2}\) and use the product rule again:
+        </p>
+        <div class="math" aria-label="Third derivative derivation">
+          <span class="eq">\(\displaystyle f^{(3)}(x)=\frac{d}{dx}\Big[(x^2-1)e^{-x^2/2}\Big]\)</span>
+          <span class="eq">\(\displaystyle f^{(3)}(x)=(2x)e^{-x^2/2}+(x^2-1)\frac{d}{dx}\big(e^{-x^2/2}\big)\)</span>
+          <span class="eq">\(\displaystyle \frac{d}{dx}\big(e^{-x^2/2}\big)=-x e^{-x^2/2}\)</span>
+          <span class="eq">\(\displaystyle f^{(3)}(x)=\big[2x-x(x^2-1)\big]e^{-x^2/2}\)</span>
+          <span class="eq">\(\displaystyle 2x-x(x^2-1)=2x-(x^3-x)=3x-x^3\)</span>
+          <span class="eq">\(\displaystyle f^{(3)}(x)=(3x-x^3)e^{-x^2/2}\)</span>
+        </div>
+
+        <div class="final" role="note" aria-label="Final boxed answers">
+          <h3><span class="spark" aria-hidden="true"></span> Final boxed answers</h3>
+          <div class="math">
+            <span class="eq">\(\displaystyle \boxed{\,f'(x)=-x\,e^{-x^2/2}\,}\)</span>
+            <span class="eq">\(\displaystyle \boxed{\,f''(x)=(x^2-1)\,e^{-x^2/2}\,}\)</span>
+            <span class="eq">\(\displaystyle \boxed{\,f^{(3)}(x)=(3x-x^3)\,e^{-x^2/2}\,}\)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================== EXTRA CREDIT ================== -->
+    <section class="section" id="extra" aria-label="Extra Credit">
+      <header>
+        <div class="badge">+</div>
+        <div>
+          <h2>Extra Credit — Prove \(f^{(n)}(x)=p_n(x)\,f(x)\) and get a recurrence</h2>
+          <p>We show why the “Gaussian × polynomial” structure persists for every derivative.</p>
+        </div>
+      </header>
+
+      <div class="content">
+        <p>
+          <strong>Claim:</strong> for every integer \(n\ge 0\),
+          \(\displaystyle f^{(n)}(x)=p_n(x)\,f(x)\),
+          where \(p_n(x)\) is a polynomial.
+        </p>
+
+        <details open>
+          <summary>Proof idea (induction) + recurrence</summary>
+          <p>
+            <strong>Base case:</strong> \(n=0\): \(f^{(0)}(x)=f(x)\Rightarrow p_0(x)=1\) (a polynomial).
+          </p>
+          <p>
+            <strong>Inductive step:</strong> assume \(f^{(n)}(x)=p_n(x)f(x)\). Differentiate:
+          </p>
+          <div class="math" aria-label="Recurrence derivation">
+            <span class="eq">\(\displaystyle f^{(n+1)}(x) = (p_n f)' = p_n'(x)f(x)+p_n(x)f'(x)\)</span>
+            <span class="eq">\(\displaystyle \text{but } f'(x)=-x f(x)\)</span>
+            <span class="eq">\(\displaystyle f^{(n+1)}(x)=\big(p_n'(x)-x p_n(x)\big)f(x)\)</span>
+            <span class="eq">\(\displaystyle \boxed{\,p_{n+1}(x)=p_n'(x)-x\,p_n(x)\,}\)</span>
+            <span class="eq">\(\displaystyle \boxed{\,p_0(x)=1\,}\)</span>
+          </div>
+          <p class="small">
+            This guarantees \(p_{n+1}\) is a polynomial if \(p_n\) is, completing the induction.
+          </p>
+        </details>
+
+        <div class="callout">
+          <p>
+            Check the first few polynomials:
+            \(p_0=1\), \(p_1=-x\), \(p_2=x^2-1\), \(p_3=3x-x^3\) — matching the derivatives above.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================== SANITY CHECKS ================== -->
+    <section class="section" id="sanity" aria-label="Sanity Checks">
+      <header>
+        <div class="badge">✓</div>
+        <div>
+          <h2>Sanity checks</h2>
+          <p>Units, limits, and the physics-style interpretation that builds intuition.</p>
+        </div>
+      </header>
+
+      <div class="content">
+        <h3>1) Units</h3>
+        <p>
+          The exponent \(-x^2/2\) must be dimensionless. So \(x\) is either dimensionless, or (in physical contexts)
+          it’s really \(e^{-x^2/(2\sigma^2)}\) with a length scale \(\sigma\).
+          Under nondimensional \(x\), polynomial factors like \((-x)\), \((x^2-1)\) are consistent.
+        </p>
+
+        <h3>2) Limiting behavior</h3>
+        <p>
+          As \(|x|\to\infty\), \(e^{-x^2/2}\to 0\) extremely fast, so
+          \(f'(x), f''(x), f^{(3)}(x)\to 0\) as well, despite the polynomial factors. This matches the “localized envelope” intuition.
+        </p>
+
+        <h3>3) Physical interpretation</h3>
+        <p>
+          “Gaussian × polynomial” is the hallmark of many physics systems (e.g., the quantum harmonic oscillator):
+          the Gaussian provides confinement/decay, while the polynomial shapes the oscillations and sign changes (nodes).
+        </p>
+      </div>
+    </section>
+
+    <p class="footer">
+      Built as a self-contained article module. If your site already loads MathJax, remove the MathJax scripts in the <code>&lt;head&gt;</code>.
+      <br/>
+      <span class="small">Tip: Use your page’s global CSS by deleting the <code>&lt;style&gt;</code> block and mapping classes as needed.</span>
+    </p>
+  </main>
+
+  <!-- Tiny UX: smooth scroll for internal anchors -->
+  <script>
+    (function(){
+      const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) return;
+
+      document.addEventListener('click', (e) => {
+        const a = e.target.closest('a[href^="#"]');
+        if(!a) return;
+        const id = a.getAttribute('href');
+        const el = document.querySelector(id);
+        if(!el) return;
+        e.preventDefault();
+        el.scrollIntoView({behavior:'smooth', block:'start'});
+        history.pushState(null, '', id);
+      });
+    })();
+  </script>
+</body>
+</html>

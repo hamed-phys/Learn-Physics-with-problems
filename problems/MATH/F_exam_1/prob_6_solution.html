@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Problem 6 — Derivatives (Structured Solution)</title>
+
+  <!-- MathJax (LaTeX rendering) -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']], displayMath: [['\\[', '\\]']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.72);
+      --faint: rgba(255,255,255,.55);
+      --border: rgba(255,255,255,.14);
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius: 18px;
+
+      --c1: #7c3aed;   /* violet */
+      --c2: #06b6d4;   /* cyan  */
+      --c3: #22c55e;   /* green */
+      --c4: #f59e0b;   /* amber */
+      --c5: #ef4444;   /* red   */
+
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    }
+
+    *{ box-sizing: border-box; }
+    html, body{ height: 100%; }
+    body{
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 700px at 18% 10%, rgba(124,58,237,.28), transparent 60%),
+        radial-gradient(1000px 700px at 85% 18%, rgba(6,182,212,.22), transparent 60%),
+        radial-gradient(900px 700px at 65% 85%, rgba(34,197,94,.18), transparent 60%),
+        linear-gradient(180deg, #070a14 0%, #0b1020 30%, #070a14 100%);
+      overflow-x: hidden;
+    }
+
+    /* subtle animated grid */
+    .grid{
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .12;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.16) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.16) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(circle at 50% 10%, rgba(0,0,0,1), rgba(0,0,0,.35) 45%, transparent 72%);
+      animation: drift 14s linear infinite;
+    }
+    @keyframes drift{
+      0%{ transform: translateY(0); }
+      100%{ transform: translateY(56px); }
+    }
+
+    /* layout */
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 90px;
+    }
+
+    .hero{
+      position: relative;
+      padding: 26px 22px 22px;
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) + 6px);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(900px 260px at 10% 0%, rgba(124,58,237,.35), transparent 70%),
+        radial-gradient(900px 260px at 90% 0%, rgba(6,182,212,.28), transparent 70%),
+        radial-gradient(900px 260px at 50% 120%, rgba(34,197,94,.22), transparent 70%);
+      filter: blur(18px);
+      opacity: .85;
+      pointer-events: none;
+    }
+
+    .hero > *{ position: relative; }
+
+    .topline{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.22);
+      backdrop-filter: blur(10px);
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: .2px;
+    }
+    .dot{
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: conic-gradient(from 180deg, var(--c2), var(--c1), var(--c3), var(--c2));
+      box-shadow: 0 0 0 3px rgba(255,255,255,.08);
+    }
+
+    h1{
+      margin: 8px 0 8px;
+      font-size: clamp(24px, 2.6vw, 36px);
+      letter-spacing: -0.5px;
+    }
+    .subtitle{
+      margin: 0;
+      color: var(--muted);
+      max-width: 72ch;
+      line-height: 1.6;
+    }
+
+    .mini{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 900px){
+      .mini{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px){
+      .mini{ grid-template-columns: 1fr; }
+    }
+
+    .miniCard{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      border-radius: var(--radius);
+      padding: 12px 12px 10px;
+    }
+    .miniCard .k{
+      font-size: 12px;
+      color: var(--faint);
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      margin-bottom: 6px;
+    }
+    .miniCard .v{
+      font-family: var(--mono);
+      font-size: 13px;
+      color: rgba(255,255,255,.88);
+      line-height: 1.45;
+    }
+
+    /* sections */
+    .section{
+      margin-top: 18px;
+      border-radius: calc(var(--radius) + 4px);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.045);
+      box-shadow: 0 10px 34px rgba(0,0,0,.22);
+    }
+
+    .sectionHeader{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.04));
+      border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+
+    .sectionHeader h2{
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: .2px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.14);
+      color: var(--muted);
+      font-size: 12px;
+      user-select: none;
+    }
+
+    .pill i{
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display:inline-block;
+      background: var(--c2);
+      box-shadow: 0 0 0 3px rgba(255,255,255,.06);
+    }
+
+    .sectionBody{
+      padding: 16px;
+      line-height: 1.7;
+      color: rgba(255,255,255,.90);
+    }
+
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .twoCol{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .card h3{
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: rgba(255,255,255,.88);
+      letter-spacing: .2px;
+    }
+
+    ul{
+      margin: 8px 0 0 18px;
+      color: var(--muted);
+    }
+    li{ margin: 6px 0; }
+
+    .note{
+      margin-top: 12px;
+      padding: 12px 12px;
+      border-radius: var(--radius);
+      border: 1px dashed rgba(255,255,255,.18);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.82);
+    }
+
+    /* problem blocks */
+    .problems{
+      display:grid;
+      gap: 14px;
+    }
+
+    details.problem{
+      border-radius: calc(var(--radius) + 2px);
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      overflow: hidden;
+    }
+    details.problem[open]{
+      background: rgba(255,255,255,.055);
+      box-shadow: 0 14px 38px rgba(0,0,0,.28);
+    }
+
+    summary{
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 14px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
+      border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+    summary::-webkit-details-marker{ display:none; }
+
+    .left{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .tag{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.82);
+      white-space: nowrap;
+    }
+
+    .title{
+      font-weight: 700;
+      letter-spacing: .2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chev{
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+      transition: transform .18s ease;
+    }
+    details[open] summary .chev{
+      transform: rotate(180deg);
+    }
+
+    .content{
+      padding: 14px;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 900px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .step{
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      padding: 12px;
+    }
+    .step .label{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .step .label span{
+      font-size: 12px;
+      color: var(--faint);
+      text-transform: uppercase;
+      letter-spacing: .12em;
+    }
+    .step .label b{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(255,255,255,.86);
+      font-weight: 700;
+    }
+
+    .math{
+      font-size: 15px;
+      color: rgba(255,255,255,.93);
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .final{
+      margin-top: 10px;
+      border-radius: calc(var(--radius) + 6px);
+      border: 1px solid rgba(255,255,255,.16);
+      background:
+        radial-gradient(800px 220px at 10% 0%, rgba(6,182,212,.22), transparent 60%),
+        radial-gradient(800px 220px at 90% 0%, rgba(124,58,237,.22), transparent 60%),
+        rgba(0,0,0,.22);
+      padding: 14px;
+    }
+
+    .finalHead{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .finalHead strong{
+      font-size: 13px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.82);
+    }
+    .chip{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.88);
+    }
+
+    .checks{
+      margin-top: 10px;
+      display:grid;
+      gap: 10px;
+    }
+    .check{
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      padding: 10px 12px;
+      color: var(--muted);
+    }
+    .check b{
+      color: rgba(255,255,255,.9);
+    }
+
+    /* footer */
+    .footer{
+      margin-top: 18px;
+      color: var(--faint);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    /* print */
+    @media print{
+      body{ background: #fff; color: #000; }
+      .grid{ display:none; }
+      .hero, .section, details.problem, .card, .step, .final, .check{ box-shadow:none !important; }
+      .hero, .section, details.problem, .card, .step, .final, .check{
+        background: #fff !important;
+        border-color: #ddd !important;
+      }
+      .badge, .pill, .tag, .chip, .chev{ background:#fff !important; color:#000 !important; }
+      .subtitle, .miniCard .k, .miniCard .v, .sectionBody, .check, li{ color:#000 !important; }
+      summary{ background:#fff !important; }
+      details.problem{ page-break-inside: avoid; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="grid" aria-hidden="true"></div>
+
+  <main class="wrap">
+    <!-- HERO -->
+    <header class="hero">
+      <div class="topline">
+        <div class="badge"><span class="dot"></span> Calculus • Derivatives • Problem 6</div>
+        <div class="badge" title="Designed as an article embed">
+          <span class="dot" style="background: conic-gradient(from 180deg, var(--c4), var(--c2), var(--c1), var(--c4));"></span>
+          Structured Solution (Analysis → Strategy → Full Work)
+        </div>
+      </div>
+
+      <h1>Problem 6 — Compute the Derivative (Show All Work)</h1>
+      <p class="subtitle">
+        Four functions are given. For each one, compute \( \dfrac{dy}{dx} \) using the appropriate rules
+        (quotient, product, chain, and logarithmic differentiation rules). The structure below mirrors how
+        a physics/engineering solution is typically presented: identify the model (rules), plan the approach,
+        then execute carefully with checks.
+      </p>
+
+      <div class="mini" role="list" aria-label="Quick overview">
+        <div class="miniCard" role="listitem">
+          <div class="k">Part (a) structure</div>
+          <div class="v">Ratio → Quotient rule</div>
+        </div>
+        <div class="miniCard" role="listitem">
+          <div class="k">Part (b) structure</div>
+          <div class="v">Product \(x\ln x\) → Product rule</div>
+        </div>
+        <div class="miniCard" role="listitem">
+          <div class="k">Part (c) structure</div>
+          <div class="v">Root → Power + Chain rule</div>
+        </div>
+        <div class="miniCard" role="listitem">
+          <div class="k">Part (d) structure</div>
+          <div class="v">\(\log_{10}(u)\) → Log rule + Chain</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- PART 1 -->
+    <section class="section" id="part1">
+      <div class="sectionHeader">
+        <h2><span class="pill"><i style="background: var(--c2)"></i>PART 1</span> Problem Analysis (no solving yet)</h2>
+        <span class="pill" title="Read-first framing">Model → Variables → Tools</span>
+      </div>
+
+      <div class="sectionBody">
+        <div class="twoCol">
+          <div class="card">
+            <h3>Restatement</h3>
+            <p class="subtitle" style="margin:0;color:var(--muted)">
+              Compute the derivative \(dy/dx\) for each of the following:
+            </p>
+            <ul>
+              <li><b>(a)</b> \(\displaystyle y=\frac{e^{x}-e^{-x}}{e^{x}+e^{-x}}\)</li>
+              <li><b>(b)</b> \(\displaystyle y=x\ln(x)-x\)</li>
+              <li><b>(c)</b> \(\displaystyle y=\sqrt{1+x^{1234}}\)</li>
+              <li><b>(d)</b> \(\displaystyle y=\log_{10}(x^{3}+3x)\)</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Given / Unknown / Goal</h3>
+            <ul>
+              <li><b>Given:</b> explicit formulas for \(y(x)\).</li>
+              <li><b>Unknowns:</b> derivatives \(y'(x)\) for each part.</li>
+              <li><b>Goal:</b> compute \( \dfrac{dy}{dx} \) and present clean final results.</li>
+            </ul>
+
+            <div class="note">
+              <b>Physics mindset:</b> A derivative measures <i>sensitivity</i>—how fast \(y\) changes if \(x\) changes.
+              Many physics quantities (velocity, acceleration, growth/decay rates) are derivatives.
+            </div>
+          </div>
+        </div>
+
+        <div class="twoCol" style="margin-top:14px">
+          <div class="card">
+            <h3>Relevant rules (why they apply)</h3>
+            <ul>
+              <li><b>Quotient rule</b> for a ratio \(N/D\) (part a).</li>
+              <li><b>Product rule</b> for \(x\ln x\) (part b).</li>
+              <li><b>Chain rule</b> for compositions like \(\sqrt{1+x^{1234}}\) (part c).</li>
+              <li><b>Log rule (base 10) + chain</b> for \(\log_{10}(u(x))\) (part d).</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Approaches (choose best)</h3>
+            <ul>
+              <li><b>Direct rules:</b> always valid; may be algebra-heavy.</li>
+              <li><b>Simplify first:</b> reduces errors (especially part a).</li>
+              <li><b>Identity-based:</b> fastest if recognized (e.g., hyperbolic forms).</li>
+            </ul>
+            <div class="note">
+              <b>Best approach:</b> simplify when beneficial, then apply the standard rule cleanly.
+              This is robust and minimizes algebra mistakes.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 2 -->
+    <section class="section" id="part2">
+      <div class="sectionHeader">
+        <h2><span class="pill"><i style="background: var(--c3)"></i>PART 2</span> Strategy & Tips (roadmap only)</h2>
+        <span class="pill" title="No algebra in this section">Plan (5–10 steps)</span>
+      </div>
+
+      <div class="sectionBody">
+        <div class="twoCol">
+          <div class="card">
+            <h3>Roadmap (minimal)</h3>
+            <ol style="margin:8px 0 0 18px; color: var(--muted);">
+              <li>Recognize the expression type (ratio/product/power/log).</li>
+              <li>Optionally simplify (e.g., exponentials or roots as powers).</li>
+              <li>Select the correct differentiation rule.</li>
+              <li>Differentiate the outer structure first (quotient/product/log).</li>
+              <li>Differentiate the inner functions (chain rule components).</li>
+              <li>Assemble the derivative and simplify.</li>
+              <li>Check domain constraints (like \(\ln x\) needs \(x>0\)).</li>
+              <li>Run sanity checks (limits, sign, qualitative behavior).</li>
+            </ol>
+          </div>
+
+          <div class="card">
+            <h3>Common mistakes & quick tips</h3>
+            <ul>
+              <li><b>Exponentials:</b> \(\dfrac{d}{dx}e^{-x}=-e^{-x}\) (don’t drop the minus).</li>
+              <li><b>Product rule:</b> \(\dfrac{d}{dx}[x\ln x]=\ln x+1\).</li>
+              <li><b>Root → chain:</b> \(\sqrt{u}=u^{1/2}\Rightarrow y'=\tfrac12u^{-1/2}u'\).</li>
+              <li><b>Base-10 log:</b> \(\dfrac{d}{dx}\log_{10}(u)=\dfrac{u'}{u\ln 10}\).</li>
+              <li><b>Domain:</b> \(\ln x\) requires \(x>0\); \(\log_{10}(x^3+3x)\) requires \(x^3+3x>0\).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 3 -->
+    <section class="section" id="part3">
+      <div class="sectionHeader">
+        <h2><span class="pill"><i style="background: var(--c1)"></i>PART 3</span> Full Solution</h2>
+        <span class="pill" title="Expandable detailed work">Step-by-step derivations</span>
+      </div>
+
+      <div class="sectionBody">
+        <div class="card">
+          <h3>Physical intuition (before the math)</h3>
+          <p style="margin:0;color:var(--muted)">
+            In physics, derivatives represent <b>rates of change</b> (e.g., \(v=\frac{dx}{dt}\), \(a=\frac{dv}{dt}\)).
+            Here, \(y'(x)\) tells you how rapidly \(y\) changes when \(x\) changes. Each part is a different “shape” of
+            relationship (ratio, product, root, log), so we choose the matching rule.
+          </p>
+        </div>
+
+        <div class="problems" style="margin-top:14px">
+          <!-- (a) -->
+          <details class="problem" open>
+            <summary>
+              <div class="left">
+                <span class="tag">Part (a)</span>
+                <div class="title">\( \displaystyle y=\frac{e^{x}-e^{-x}}{e^{x}+e^{-x}} \)</div>
+              </div>
+              <div class="chev" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,.86)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </summary>
+
+            <div class="content">
+              <div class="grid2">
+                <div class="step">
+                  <div class="label"><span>Goal</span><b>Set up quotient rule</b></div>
+                  <div class="math">
+                    \[
+                      N(x)=e^{x}-e^{-x},\qquad D(x)=e^{x}+e^{-x}.
+                    \]
+                    \[
+                      y=\frac{N}{D}\quad \Rightarrow\quad y'=\frac{N'D - ND'}{D^2}.
+                    \]
+                  </div>
+                </div>
+
+                <div class="step">
+                  <div class="label"><span>Tool</span><b>Differentiate \(N\), \(D\)</b></div>
+                  <div class="math">
+                    \[
+                      N'(x)=\frac{d}{dx}(e^{x}-e^{-x})=e^{x}-(-e^{-x})=e^{x}+e^{-x}.
+                    \]
+                    \[
+                      D'(x)=\frac{d}{dx}(e^{x}+e^{-x})=e^{x}+(-e^{-x})=e^{x}-e^{-x}.
+                    \]
+                  </div>
+                </div>
+              </div>
+
+              <div class="step" style="margin-top:12px">
+                <div class="label"><span>Assemble</span><b>Apply quotient rule</b></div>
+                <div class="math">
+                  \[
+                    y'=\frac{(e^{x}+e^{-x})(e^{x}+e^{-x})-(e^{x}-e^{-x})(e^{x}-e^{-x})}{(e^{x}+e^{-x})^2}.
+                  \]
+                </div>
+              </div>
+
+              <div class="step" style="margin-top:12px">
+                <div class="label"><span>Simplify</span><b>Use \((A+B)^2-(A-B)^2=4AB\)</b></div>
+                <div class="math">
+                  Let \(A=e^x\), \(B=e^{-x}\). Then
+                  \[
+                    (A+B)^2-(A-B)^2=4AB=4(e^x)(e^{-x})=4.
+                  \]
+                  Therefore
+                  \[
+                    y'=\frac{4}{(e^x+e^{-x})^2}.
+                  \]
+                </div>
+              </div>
+
+              <div class="final">
+                <div class="finalHead">
+                  <strong>Final Answer</strong>
+                  <span class="chip">clean form</span>
+                </div>
+                <div class="math">
+                  \[
+                    \boxed{\displaystyle \frac{dy}{dx}=\frac{4}{(e^x+e^{-x})^2}}
+                  \]
+                </div>
+
+                <div class="checks">
+                  <div class="check"><b>Units:</b> exponentials require dimensionless \(x\) → derivative is dimensionless.</div>
+                  <div class="check"><b>Limits:</b> \(x\to\pm\infty\Rightarrow e^{-x}\) or \(e^{x}\) dominates → denominator grows → \(y'\to 0\).</div>
+                  <div class="check"><b>Interpretation:</b> a smooth saturating “switch” curve; steepest near \(x=0\), flat at extremes.</div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- (b) -->
+          <details class="problem">
+            <summary>
+              <div class="left">
+                <span class="tag">Part (b)</span>
+                <div class="title">\( \displaystyle y=x\ln(x)-x \)</div>
+              </div>
+              <div class="chev" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,.86)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </summary>
+
+            <div class="content">
+              <div class="grid2">
+                <div class="step">
+                  <div class="label"><span>Goal</span><b>Differentiate \(x\ln x\)</b></div>
+                  <div class="math">
+                    Product rule: if \(h=fg\), then \(h'=f'g+fg'\).
+                    Let \(f=x\), \(g=\ln x\).
+                  </div>
+                </div>
+
+                <div class="step">
+                  <div class="label"><span>Tool</span><b>Compute derivatives</b></div>
+                  <div class="math">
+                    \[
+                      f'=1,\qquad g'=\frac{1}{x}.
+                    \]
+                    \[
+                      \frac{d}{dx}(x\ln x)=1\cdot \ln x + x\cdot \frac{1}{x}=\ln x+1.
+                    \]
+                  </div>
+                </div>
+              </div>
+
+              <div class="step" style="margin-top:12px">
+                <div class="label"><span>Assemble</span><b>Include \(-x\)</b></div>
+                <div class="math">
+                  \[
+                    \frac{d}{dx}(-x)=-1
+                    \quad\Rightarrow\quad
+                    y'=(\ln x+1)-1=\ln x.
+                  \]
+                </div>
+              </div>
+
+              <div class="final">
+                <div class="finalHead">
+                  <strong>Final Answer</strong>
+                  <span class="chip">domain: \(x>0\)</span>
+                </div>
+                <div class="math">
+                  \[
+                    \boxed{\displaystyle \frac{dy}{dx}=\ln(x)}\qquad (x>0)
+                  \]
+                </div>
+
+                <div class="checks">
+                  <div class="check"><b>Units:</b> in physics, \(\ln(x)\) requires dimensionless \(x\).</div>
+                  <div class="check"><b>Limiting case:</b> at \(x=1\), \(y'=\ln 1=0\) (flat slope).</div>
+                  <div class="check"><b>Interpretation:</b> sensitivity grows slowly with \(x\) (logarithmically).</div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- (c) -->
+          <details class="problem">
+            <summary>
+              <div class="left">
+                <span class="tag">Part (c)</span>
+                <div class="title">\( \displaystyle y=\sqrt{1+x^{1234}} \)</div>
+              </div>
+              <div class="chev" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,.86)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </summary>
+
+            <div class="content">
+              <div class="step">
+                <div class="label"><span>Rewrite</span><b>Root as a power</b></div>
+                <div class="math">
+                  \[
+                    y=\sqrt{1+x^{1234}}=(1+x^{1234})^{1/2}.
+                  \]
+                </div>
+              </div>
+
+              <div class="grid2" style="margin-top:12px">
+                <div class="step">
+                  <div class="label"><span>Goal</span><b>Apply chain rule</b></div>
+                  <div class="math">
+                    Let \(u=1+x^{1234}\). Then \(y=u^{1/2}\).
+                    \[
+                      \frac{dy}{dx}=\frac{dy}{du}\frac{du}{dx}.
+                    \]
+                  </div>
+                </div>
+
+                <div class="step">
+                  <div class="label"><span>Tool</span><b>Differentiate pieces</b></div>
+                  <div class="math">
+                    \[
+                      \frac{dy}{du}=\frac12 u^{-1/2},\qquad
+                      \frac{du}{dx}=1234x^{1233}.
+                    \]
+                  </div>
+                </div>
+              </div>
+
+              <div class="step" style="margin-top:12px">
+                <div class="label"><span>Assemble</span><b>Multiply + simplify</b></div>
+                <div class="math">
+                  \[
+                    y'=\frac12(1+x^{1234})^{-1/2}\cdot 1234x^{1233}
+                    =\frac{1234}{2}\frac{x^{1233}}{\sqrt{1+x^{1234}}}
+                    =617\,\frac{x^{1233}}{\sqrt{1+x^{1234}}}.
+                  \]
+                </div>
+              </div>
+
+              <div class="final">
+                <div class="finalHead">
+                  <strong>Final Answer</strong>
+                  <span class="chip">chain rule</span>
+                </div>
+                <div class="math">
+                  \[
+                    \boxed{\displaystyle \frac{dy}{dx}=617\,\frac{x^{1233}}{\sqrt{1+x^{1234}}}}
+                  \]
+                </div>
+
+                <div class="checks">
+                  <div class="check"><b>Units:</b> \(1+x^{1234}\) suggests \(x\) is dimensionless (unless scaled).</div>
+                  <div class="check"><b>Limit:</b> for large \(x>0\), \(\sqrt{1+x^{1234}}\sim x^{617}\Rightarrow y'\sim 617x^{616}\) (consistent).</div>
+                  <div class="check"><b>Interpretation:</b> extremely steep growth for large \(|x|\) due to high power.</div>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- (d) -->
+          <details class="problem">
+            <summary>
+              <div class="left">
+                <span class="tag">Part (d)</span>
+                <div class="title">\( \displaystyle y=\log_{10}(x^3+3x) \)</div>
+              </div>
+              <div class="chev" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,.86)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </summary>
+
+            <div class="content">
+              <div class="step">
+                <div class="label"><span>Rule</span><b>Base-10 log derivative</b></div>
+                <div class="math">
+                  \[
+                    \frac{d}{dx}\log_{10}(u)=\frac{u'}{u\,\ln 10}.
+                  \]
+                  This comes from \(\log_{10}(u)=\dfrac{\ln u}{\ln 10}\).
+                </div>
+              </div>
+
+              <div class="grid2" style="margin-top:12px">
+                <div class="step">
+                  <div class="label"><span>Goal</span><b>Differentiate the inside</b></div>
+                  <div class="math">
+                    Let \(u=x^3+3x\). Then
+                    \[
+                      u'=3x^2+3=3(x^2+1).
+                    \]
+                  </div>
+                </div>
+
+                <div class="step">
+                  <div class="label"><span>Assemble</span><b>Chain rule + simplify</b></div>
+                  <div class="math">
+                    \[
+                      y'=\frac{u'}{u\ln 10}
+                      =\frac{3(x^2+1)}{(x^3+3x)\ln 10}.
+                    \]
+                  </div>
+                </div>
+              </div>
+
+              <div class="final">
+                <div class="finalHead">
+                  <strong>Final Answer</strong>
+                  <span class="chip">domain matters</span>
+                </div>
+                <div class="math">
+                  \[
+                    \boxed{\displaystyle \frac{dy}{dx}=\frac{3(x^2+1)}{(x^3+3x)\,\ln 10}}
+                  \]
+                </div>
+
+                <div class="checks">
+                  <div class="check"><b>Units:</b> logs require dimensionless arguments in physics; treat \(x\) as dimensionless unless scaled.</div>
+                  <div class="check"><b>Domain:</b> must have \(x^3+3x>0\) for real \(\log_{10}\).</div>
+                  <div class="check"><b>Limit:</b> large \(|x|\Rightarrow y'\approx \dfrac{3}{x\ln 10}\to 0\) (log grows slowly).</div>
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <!-- Final summary panel -->
+        <div class="card" style="margin-top:14px">
+          <h3>Final boxed results (all parts)</h3>
+          <div class="math">
+            \[
+              \boxed{\text{(a)}\;\; y'=\frac{4}{(e^x+e^{-x})^2}}
+              \qquad
+              \boxed{\text{(b)}\;\; y'=\ln(x)}
+            \]
+            \[
+              \boxed{\text{(c)}\;\; y'=617\,\frac{x^{1233}}{\sqrt{1+x^{1234}}}}
+              \qquad
+              \boxed{\text{(d)}\;\; y'=\frac{3(x^2+1)}{(x^3+3x)\ln 10}}
+            \]
+          </div>
+        </div>
+
+        <p class="footer">
+          Tip: This file is self-contained (CSS in <code>&lt;style&gt;</code>, MathJax via CDN). Drop it into your
+          <span style="font-family:var(--mono);">/problems/...</span> folder and link it from your main page as an article.
+        </p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

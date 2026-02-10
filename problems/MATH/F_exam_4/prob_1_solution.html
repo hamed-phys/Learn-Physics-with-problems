@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Volume of a Solid of Revolution — Sine Arch (Disk Method)</title>
+  <meta name="description" content="A polished, article-style solution for the volume formed by revolving y=b sin(pi x / a) about the x-axis on [0,a]." />
+
+  <!-- Open Graph (nice previews when shared) -->
+  <meta property="og:title" content="Volume of a Solid of Revolution — Sine Arch" />
+  <meta property="og:description" content="Disk method + half-angle identity, fully explained with sanity checks." />
+  <meta property="og:type" content="article" />
+
+  <!-- MathJax (LaTeX rendering) -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']], displayMath: [['\\[','\\]']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,.06);
+      --panel-2: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.72);
+      --faint: rgba(255,255,255,.55);
+      --accent: #7cf7ff;
+      --accent2: #a78bfa;
+      --ok: #8bffb8;
+      --warn: #ffd27c;
+      --shadow: 0 24px 80px rgba(0,0,0,.45);
+      --radius: 18px;
+      --radius2: 26px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 15% 10%, rgba(124,247,255,.14), transparent 55%),
+        radial-gradient(1000px 500px at 85% 20%, rgba(167,139,250,.14), transparent 55%),
+        radial-gradient(800px 500px at 45% 85%, rgba(139,255,184,.10), transparent 55%),
+        linear-gradient(180deg, #070a14 0%, #0b1020 40%, #070a14 100%);
+      overflow-x:hidden;
+    }
+
+    /* Subtle animated grid */
+    .grid{
+      position:fixed; inset:0;
+      pointer-events:none;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.05) 1px, transparent 1px);
+      background-size: 56px 56px;
+      opacity:.28;
+      mask-image: radial-gradient(700px 360px at 50% 15%, black 0%, transparent 70%);
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    @keyframes drift{
+      from{ transform: translateY(-6px); }
+      to{ transform: translateY(10px); }
+    }
+
+    /* Layout */
+    .wrap{
+      width:min(1100px, 92vw);
+      margin: 40px auto 80px;
+      position:relative;
+    }
+
+    header.hero{
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius2);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      box-shadow: var(--shadow);
+      padding: 26px 24px 18px;
+      position:relative;
+      overflow:hidden;
+    }
+    header.hero::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(700px 220px at 20% 0%, rgba(124,247,255,.22), transparent 55%),
+        radial-gradient(700px 260px at 80% 0%, rgba(167,139,250,.18), transparent 60%);
+      opacity:.9;
+      pointer-events:none;
+      filter: blur(0px);
+    }
+    header.hero > * { position:relative; }
+
+    .kicker{
+      display:flex; gap:10px; align-items:center;
+      font-size: 13px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color: var(--faint);
+      margin-bottom:10px;
+    }
+    .pill{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      padding:6px 10px;
+      border-radius: 999px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+
+    h1{
+      margin:0 0 8px;
+      font-size: clamp(26px, 3.2vw, 38px);
+      line-height:1.15;
+      letter-spacing:-.02em;
+    }
+    .subtitle{
+      margin:0 0 18px;
+      color: var(--muted);
+      font-size: 15.5px;
+      line-height:1.6;
+      max-width: 75ch;
+    }
+
+    .hero-grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+      align-items:stretch;
+    }
+    @media (max-width: 920px){
+      .hero-grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+      border-radius: var(--radius);
+      padding: 16px 16px 14px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.25);
+    }
+
+    .card h2{
+      margin:0 0 10px;
+      font-size: 15px;
+      letter-spacing:.04em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.78);
+    }
+
+    .meta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin: 8px 0 2px;
+    }
+
+    .equation{
+      margin: 12px 0;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border:1px dashed rgba(255,255,255,.18);
+      background: rgba(0,0,0,.18);
+      overflow:auto hidden;
+    }
+
+    .two-col{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 720px){
+      .two-col{ grid-template-columns: 1fr; }
+    }
+
+    .list{
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height:1.7;
+      font-size: 14.5px;
+    }
+    .list li{ margin: 6px 0; }
+    .list strong{ color: var(--text); }
+
+    main{
+      margin-top: 22px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .section{
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
+      border-radius: var(--radius2);
+      padding: 18px 18px 14px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .section::after{
+      content:"";
+      position:absolute; inset:auto -30% -60% -30%;
+      height: 260px;
+      background: radial-gradient(closest-side, rgba(124,247,255,.12), transparent 70%);
+      pointer-events:none;
+      transform: rotate(-3deg);
+      opacity:.9;
+    }
+    .section > *{ position:relative; }
+
+    .sec-title{
+      display:flex; align-items:center; justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .sec-title h3{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:-.01em;
+    }
+    .sec-title .tag{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+    }
+
+    .note{
+      margin: 10px 0 0;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      line-height:1.65;
+      font-size: 14px;
+    }
+    .note b{ color: var(--text); }
+
+    .steps{
+      counter-reset: step;
+      display:grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .step{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      border-radius: 16px;
+      padding: 12px 12px;
+      position:relative;
+    }
+    .step::before{
+      counter-increment: step;
+      content: counter(step);
+      position:absolute;
+      top: 12px; right: 12px;
+      width: 30px; height: 30px;
+      display:grid; place-items:center;
+      border-radius: 999px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(0,0,0,.75);
+      background: linear-gradient(135deg, rgba(124,247,255,.9), rgba(167,139,250,.9));
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    }
+    .step .goal{
+      font-weight: 650;
+      margin: 0 0 4px;
+    }
+    .step .tool{
+      margin: 0;
+      color: var(--muted);
+      line-height:1.6;
+      font-size: 14.5px;
+    }
+    code.inline{
+      font-family: var(--mono);
+      font-size: .95em;
+      padding: .14em .38em;
+      border-radius: 8px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.85);
+      white-space: nowrap;
+    }
+
+    .callout{
+      border: 1px solid rgba(124,247,255,.22);
+      background: linear-gradient(180deg, rgba(124,247,255,.12), rgba(255,255,255,.04));
+      border-radius: 18px;
+      padding: 14px 14px;
+      margin-top: 12px;
+    }
+    .callout h4{
+      margin:0 0 6px;
+      font-size: 15.5px;
+      letter-spacing:-.01em;
+    }
+    .callout p{
+      margin:0;
+      color: var(--muted);
+      line-height:1.65;
+      font-size: 14.5px;
+    }
+
+    .final{
+      display:grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .final .box{
+      border: 1px solid rgba(139,255,184,.22);
+      background: linear-gradient(180deg, rgba(139,255,184,.12), rgba(255,255,255,.04));
+      border-radius: 18px;
+      padding: 14px 14px;
+      box-shadow: 0 16px 60px rgba(0,0,0,.26);
+    }
+    .final .box h4{
+      margin:0 0 6px;
+      font-size: 15px;
+      letter-spacing:.02em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.82);
+    }
+
+    .checks{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 920px){
+      .checks{ grid-template-columns: 1fr; }
+    }
+    .check{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      border-radius: 16px;
+      padding: 12px 12px;
+    }
+    .check h5{
+      margin:0 0 6px;
+      font-size: 14.5px;
+      letter-spacing:-.01em;
+    }
+    .check p{
+      margin:0;
+      color: var(--muted);
+      line-height:1.65;
+      font-size: 14.5px;
+    }
+
+    /* Tiny helper: collapsibles */
+    details{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      border-radius: 16px;
+      padding: 10px 12px;
+    }
+    details summary{
+      cursor:pointer;
+      user-select:none;
+      list-style:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-weight:650;
+    }
+    details summary::-webkit-details-marker{ display:none; }
+    details summary .hint{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 5px 8px;
+      border-radius: 999px;
+    }
+    details .inside{
+      margin-top: 10px;
+      color: var(--muted);
+      line-height:1.7;
+      font-size: 14.5px;
+    }
+
+    footer{
+      margin-top: 18px;
+      text-align:center;
+      color: var(--faint);
+      font-size: 12.5px;
+    }
+
+    /* Motion preference */
+    @media (prefers-reduced-motion: reduce){
+      .grid{ animation:none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="grid" aria-hidden="true"></div>
+
+  <article class="wrap">
+    <header class="hero">
+      <div class="kicker">
+        <span class="pill">Solid of Revolution</span>
+        <span class="pill">Disk Method</span>
+        <span class="pill">Half-Angle Identity</span>
+      </div>
+
+      <h1>Volume of a Solid Formed by Revolving a Sine Arch</h1>
+      <p class="subtitle">
+        We revolve the region under \(y=b\sin\!\left(\frac{\pi x}{a}\right)\) from \(x=0\) to \(x=a\) about the \(x\)-axis.
+        The result is a smooth “sine-shaped” solid whose cross-sections are circular disks.
+      </p>
+
+      <div class="hero-grid">
+        <section class="card" aria-label="Problem Statement">
+          <h2>Problem</h2>
+          <p class="subtitle" style="margin:0 0 10px;">
+            A solid is formed by revolving about the \(x\)-axis the region bounded by the \(x\)-axis,
+            the lines \(x=0\), \(x=a\), and the curve
+            \[
+              y=b\sin\!\left(\frac{\pi x}{a}\right).
+            \]
+            Find the volume of the solid.
+          </p>
+          <div class="meta">
+            <span class="pill">Given: \(a>0\), \(b>0\)</span>
+            <span class="pill">Axis: \(x\)-axis</span>
+            <span class="pill">Interval: \([0,a]\)</span>
+          </div>
+        </section>
+
+        <aside class="card" aria-label="Key Idea Snapshot">
+          <h2>Key Idea</h2>
+          <p class="subtitle" style="margin:0 0 10px;">
+            Rotating a nonnegative function \(y(x)\) about the \(x\)-axis gives circular cross-sections:
+            \[
+              dV=\pi\,y(x)^2\,dx.
+            \]
+          </p>
+          <div class="equation">
+            \[
+              V=\pi\int_{0}^{a}\Big[b\sin\!\left(\frac{\pi x}{a}\right)\Big]^2dx.
+            \]
+          </div>
+          <p class="note">
+            Hint: square introduces \(\sin^2\), so use
+            \(\sin^2u=\dfrac{1-\cos(2u)}{2}\).
+          </p>
+        </aside>
+      </div>
+    </header>
+
+    <!-- PART 1 -->
+    <section class="section" id="part-1">
+      <div class="sec-title">
+        <h3>PART 1 — Problem Analysis (no solving yet)</h3>
+        <span class="tag">Analysis</span>
+      </div>
+
+      <div class="two-col">
+        <div class="card" style="box-shadow:none;">
+          <h2>Restatement</h2>
+          <ul class="list">
+            <li>We consider the region under \(y=b\sin(\pi x/a)\) above \(y=0\), from \(x=0\) to \(x=a\).</li>
+            <li>We rotate that region around the \(x\)-axis to create a 3D solid.</li>
+            <li>We must compute the solid’s volume \(V\).</li>
+          </ul>
+        </div>
+
+        <div class="card" style="box-shadow:none;">
+          <h2>Given / Unknown</h2>
+          <ul class="list">
+            <li><strong>Given:</strong> \(y(x)=b\sin\!\left(\frac{\pi x}{a}\right)\), \(0\le x\le a\)</li>
+            <li><strong>Axis:</strong> \(x\)-axis</li>
+            <li><strong>Unknown:</strong> \(V\)</li>
+            <li><strong>Goal:</strong> exact \(V(a,b)\)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px; box-shadow:none;">
+        <h2>Principles & Approaches</h2>
+        <ul class="list">
+          <li><strong>Disk/Washer method:</strong> rotation about \(x\)-axis makes circular disks of radius \(y(x)\), so area \(A(x)=\pi y(x)^2\).</li>
+          <li><strong>Trig identity:</strong> \(\sin^2\) integrates cleanly using \(\sin^2u=\frac{1-\cos(2u)}{2}\).</li>
+          <li><strong>Alternatives:</strong> average value of \(\sin^2\) (fast but needs justification), or Pappus (harder due to centroid).</li>
+        </ul>
+
+        <div class="callout">
+          <h4>Chosen method</h4>
+          <p>
+            <b>Disk method + half-angle identity</b> is the most direct, rigorous, and matches the hint. It uses one clean integral and standard trig simplification.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 2 -->
+    <section class="section" id="part-2">
+      <div class="sec-title">
+        <h3>PART 2 — Strategy & Tips (roadmap only)</h3>
+        <span class="tag">Roadmap</span>
+      </div>
+
+      <div class="steps" aria-label="Plan Steps">
+        <div class="step">
+          <p class="goal">Express the volume as a sum of disk volumes.</p>
+          <p class="tool">Use <code class="inline">Disk method</code>: \(dV=\pi y(x)^2dx\), so \(V=\pi\int_0^a y(x)^2dx\).</p>
+        </div>
+
+        <div class="step">
+          <p class="goal">Substitute the given curve into the integral.</p>
+          <p class="tool">Replace \(y(x)\) with \(b\sin(\pi x/a)\) to get an integral involving \(\sin^2\).</p>
+        </div>
+
+        <div class="step">
+          <p class="goal">Convert \(\sin^2(\cdot)\) into a form you can integrate immediately.</p>
+          <p class="tool">Use \(\sin^2u=\dfrac{1-\cos(2u)}{2}\).</p>
+        </div>
+
+        <div class="step">
+          <p class="goal">Integrate term-by-term on \([0,a]\).</p>
+          <p class="tool">Compute \(\int_0^a 1\,dx\) and \(\int_0^a \cos(2\pi x/a)\,dx\).</p>
+        </div>
+
+        <div class="step">
+          <p class="goal">Evaluate the trig term at the bounds and simplify.</p>
+          <p class="tool">Use \(\sin(0)=0\), \(\sin(2\pi)=0\) to simplify quickly.</p>
+        </div>
+
+        <div class="step">
+          <p class="goal">Check the result with units and limiting behavior.</p>
+          <p class="tool">Verify \(V\sim a\,b^2\) and that \(V\to0\) when \(a\to0\) or \(b\to0\).</p>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>Common mistakes:</b> forgetting the factor \(\pi\); forgetting to square \(b\);
+        using the wrong trig identity; integrating \(\cos(kx)\) but missing the \(1/k\) factor;
+        evaluation errors at \(x=0,a\).
+      </div>
+    </section>
+
+    <!-- PART 3 -->
+    <section class="section" id="part-3">
+      <div class="sec-title">
+        <h3>PART 3 — Full Solution</h3>
+        <span class="tag">Derivation</span>
+      </div>
+
+      <details open>
+        <summary>
+          Physical intuition
+          <span class="hint">Why disks?</span>
+        </summary>
+        <div class="inside">
+          When we rotate the region under the curve around the \(x\)-axis, a thin vertical slice at position \(x\)
+          becomes a circular disk. The disk radius is the function value \(y(x)\), so its area is
+          \(A(x)=\pi y(x)^2\). Adding all disks from \(0\) to \(a\) gives the volume.
+          We also expect \(V\) to scale like \(a\) (length of the interval) and like \(b^2\) (area scales with radius squared).
+        </div>
+      </details>
+
+      <div class="card" style="margin-top:12px; box-shadow:none;">
+        <h2>Step 1 — Set up the disk-method integral</h2>
+        <p class="subtitle" style="margin:0 0 10px;">
+          The radius of a typical disk at position \(x\) is
+          \[
+            r(x)=y(x)=b\sin\!\left(\frac{\pi x}{a}\right).
+          \]
+          Hence the cross-sectional area is
+          \[
+            A(x)=\pi r(x)^2=\pi b^2\sin^2\!\left(\frac{\pi x}{a}\right).
+          \]
+        </p>
+
+        <div class="equation">
+          \[
+            V=\int_0^a A(x)\,dx
+            =\pi b^2\int_0^a \sin^2\!\left(\frac{\pi x}{a}\right)\,dx.
+          \]
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px; box-shadow:none;">
+        <h2>Step 2 — Use a half-angle identity to integrate \(\sin^2\)</h2>
+        <p class="subtitle" style="margin:0 0 10px;">
+          Use the identity
+          \[
+            \sin^2 u=\frac{1-\cos(2u)}{2}.
+          \]
+          Let \(u=\dfrac{\pi x}{a}\). Then
+          \[
+            \sin^2\!\left(\frac{\pi x}{a}\right)=\frac{1-\cos\!\left(\frac{2\pi x}{a}\right)}{2}.
+          \]
+        </p>
+
+        <div class="equation">
+          \[
+            V
+            =\pi b^2\int_0^a \frac{1-\cos\!\left(\frac{2\pi x}{a}\right)}{2}\,dx
+            =\frac{\pi b^2}{2}\int_0^a \left[1-\cos\!\left(\frac{2\pi x}{a}\right)\right]dx.
+          \]
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px; box-shadow:none;">
+        <h2>Step 3 — Integrate and evaluate bounds</h2>
+        <p class="subtitle" style="margin:0 0 10px;">
+          Split the integral:
+          \[
+            \int_0^a \left[1-\cos\!\left(\frac{2\pi x}{a}\right)\right]dx
+            =\int_0^a 1\,dx-\int_0^a \cos\!\left(\frac{2\pi x}{a}\right)dx.
+          \]
+          The first integral is \(a\).
+        </p>
+
+        <p class="subtitle" style="margin:0 0 10px;">
+          For the second integral, use \(\int \cos(kx)\,dx=\frac{1}{k}\sin(kx)\) with \(k=\dfrac{2\pi}{a}\):
+        </p>
+
+        <div class="equation">
+          \[
+            \int_0^a \cos\!\left(\frac{2\pi x}{a}\right)dx
+            =\left[\frac{a}{2\pi}\sin\!\left(\frac{2\pi x}{a}\right)\right]_0^a
+            =\frac{a}{2\pi}\big(\sin(2\pi)-\sin(0)\big)=0.
+          \]
+        </div>
+
+        <p class="subtitle" style="margin:0;">
+          Therefore the bracketed integral equals \(a\), so
+          \[
+            V=\frac{\pi b^2}{2}\cdot a.
+          \]
+        </p>
+      </div>
+
+      <div class="final" aria-label="Final Answer">
+        <div class="box">
+          <h4>Final result</h4>
+          <div class="equation" style="border-style:solid;">
+            \[
+              \boxed{\,V=\frac{\pi a b^{2}}{2}\,}
+            \]
+          </div>
+        </div>
+
+        <div class="checks" aria-label="Sanity Checks">
+          <div class="check">
+            <h5>Units</h5>
+            <p>
+              \(a\) has length, \(b\) has length. So \(ab^2\) has units \(L^3\), correct for volume.
+            </p>
+          </div>
+          <div class="check">
+            <h5>Limiting cases</h5>
+            <p>
+              If \(b\to 0\), the radius goes to zero everywhere \(\Rightarrow V\to 0\).
+              If \(a\to 0\), the interval collapses \(\Rightarrow V\to 0\).
+            </p>
+          </div>
+          <div class="check">
+            <h5>Physical interpretation</h5>
+            <p>
+              \(\sin^2\) averages to \(1/2\) over this half-period, so the average disk area is \(\pi b^2/2\).
+              Multiply by length \(a\) gives \(V=\frac{\pi b^2}{2}a\).
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <details style="margin-top:12px;">
+        <summary>
+          Optional: fast “average-value” shortcut (same result)
+          <span class="hint">Nice insight</span>
+        </summary>
+        <div class="inside">
+          Since \(\sin^2\) has average value \(1/2\) over a full period (and over symmetric half-periods here),
+          \[
+            \int_0^a \sin^2\!\left(\frac{\pi x}{a}\right)\,dx=\frac{a}{2}.
+          \]
+          Then \(V=\pi b^2\cdot \frac{a}{2}\).
+          This is correct, but the main solution above shows the full rigorous steps.
+        </div>
+      </details>
+
+    </section>
+
+    <footer>
+      <div style="margin-top:6px;">
+        Built for your physics/calculus archive — clean math rendering via MathJax, responsive layout, and print-friendly structure.
+      </div>
+    </footer>
+  </article>
+</body>
+</html>

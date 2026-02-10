@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root { --accent: #00e5ff; --bg: #121212; --panel: #1e1e1e; }
+        body { background: var(--bg); color: #eee; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
+        .dashboard-layout { display: grid; grid-template-columns: 300px 1fr; gap: 20px; max-width: 1200px; margin: auto; }
+        .panel { background: var(--panel); padding: 20px; border-radius: 12px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .math-box { background: #000; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px solid var(--accent); }
+        input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; font-size: 13px; }
+        .stat-card { background: #252525; padding: 10px; border-radius: 6px; border-left: 3px solid var(--accent); }
+        .mode-toggle { width: 100%; padding: 10px; margin-bottom: 15px; cursor: pointer; background: #333; color: white; border: none; border-radius: 5px; transition: 0.3s; }
+        .mode-toggle.active { background: var(--accent); color: #000; font-weight: bold; }
+    </style>
+    <title>Advanced RC Simulation</title>
+</head>
+<body>
+
+<div class="dashboard-layout">
+    <div class="panel">
+        <h3>System Parameters</h3>
+        <button id="modeBtn" class="mode-toggle active" onclick="toggleMode()">Mode: Charging</button>
+        
+        <div style="margin-bottom:15px">
+            <label>Resistance: <span id="rVal">1000</span> Ω</label>
+            <input type="range" id="R" min="100" max="10000" value="2000" oninput="update()">
+        </div>
+        
+        <div style="margin-bottom:15px">
+            <label>Capacitance: <span id="cVal">10</span> µF</label>
+            <input type="range" id="C" min="1" max="100" value="47" oninput="update()">
+        </div>
+        
+        <div style="margin-bottom:15px">
+            <label>Source Voltage: <span id="vVal">5</span> V</label>
+            <input type="range" id="Vin" min="1" max="24" value="10" oninput="update()">
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat-card">τ (Tau):<br><strong id="tauVal">0.00s</strong></div>
+            <div class="stat-card">99% Steady:<br><strong id="steadyVal">0.00s</strong></div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="math-box" id="formula">
+            \[ V_c(t) = V_{in}(1 - e^{-t/RC}) \]
+        </div>
+        <canvas id="mainChart"></canvas>
+    </div>
+</div>
+
+<script>
+    let isCharging = true;
+    const ctx = document.getElementById('mainChart').getContext('2d');
+
+    let chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Capacitor Voltage (Vc)',
+                data: [],
+                borderColor: '#00e5ff',
+                backgroundColor: 'rgba(0, 229, 255, 0.1)',
+                fill: true,
+                tension: 0.4,
+                borderWidth: 3,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { title: { display: true, text: 'Time (seconds)', color: '#888' }, grid: { color: '#333' } },
+                y: { title: { display: true, text: 'Voltage (V)', color: '#888' }, grid: { color: '#333' }, min: 0 }
+            },
+            plugins: {
+                legend: { labels: { color: '#eee' } }
+            }
+        }
+    });
+
+    function toggleMode() {
+        isCharging = !isCharging;
+        const btn = document.getElementById('modeBtn');
+        const formula = document.getElementById('formula');
+        
+        if (isCharging) {
+            btn.innerText = "Mode: Charging";
+            btn.classList.add('active');
+            formula.innerHTML = "\\[ V_c(t) = V_{in}(1 - e^{-t/RC}) \\]";
+        } else {
+            btn.innerText = "Mode: Discharging";
+            btn.classList.remove('active');
+            formula.innerHTML = "\\[ V_c(t) = V_0(e^{-t/RC}) \\]";
+        }
+        MathJax.typeset();
+        update();
+    }
+
+    function update() {
+        const R = parseFloat(document.getElementById('R').value);
+        const C = parseFloat(document.getElementById('C').value) * 1e-6;
+        const Vin = parseFloat(document.getElementById('Vin').value);
+        const tau = R * C;
+
+        // UI Updates
+        document.getElementById('rVal').innerText = R;
+        document.getElementById('cVal').innerText = (C * 1e6).toFixed(1);
+        document.getElementById('vVal').innerText = Vin;
+        document.getElementById('tauVal').innerText = tau.toFixed(4) + "s";
+        document.getElementById('steadyVal').innerText = (tau * 5).toFixed(3) + "s";
+
+        // Simulation Logic
+        let labels = [];
+        let data = [];
+        const duration = tau * 6; // Simulate up to 6 time constants
+        const steps = 100;
+
+        for (let i = 0; i <= steps; i++) {
+            let t = (duration / steps) * i;
+            let val = isCharging 
+                ? Vin * (1 - Math.exp(-t / tau)) 
+                : Vin * Math.exp(-t / tau);
+            
+            labels.push(t.toFixed(4));
+            data.push(val.toFixed(3));
+        }
+
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = data;
+        chart.options.scales.y.max = Math.ceil(Vin * 1.1);
+        chart.update('none');
+    }
+
+    window.onload = update;
+</script>
+</body>
+</html>

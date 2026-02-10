@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>HAMED ARCHIVE | Physics & Math Simulation</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-deep: #050608;
+      --bg-panel: #0d0e11;
+      --bg-card: #15171c;
+      --accent: #00d4ff;
+      --accent-glow: rgba(0, 212, 255, 0.15);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --border: #262a33;
+
+      --sidebar-width: 280px;
+      --radius: 14px;
+      --transition: 0.4s cubic-bezier(0.2, 1, 0.2, 1);
+
+      --shadow-soft: 0 18px 45px rgba(0,0,0,0.45);
+      --shadow-glow: 0 18px 50px var(--accent-glow);
+
+      --container-pad: clamp(1.2rem, 3vw, 4rem);
+      --grid-min: 320px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg-deep);
+      color: var(--text-primary);
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow-x: hidden;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Background glow */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(800px 500px at 25% 10%, rgba(0, 212, 255, 0.08), transparent 60%),
+        radial-gradient(700px 450px at 80% 30%, rgba(120, 110, 255, 0.06), transparent 60%),
+        radial-gradient(900px 550px at 50% 85%, rgba(0, 212, 255, 0.05), transparent 60%),
+        linear-gradient(to bottom, rgba(255,255,255,0.03), transparent 20%, transparent 80%, rgba(255,255,255,0.02));
+      opacity: 0.9;
+      z-index: 0;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, rgba(13,14,17,0.98), rgba(13,14,17,0.92));
+      height: 100vh;
+      position: fixed;
+      left: calc(-1 * var(--sidebar-width));
+      top: 0;
+      z-index: 1000;
+      border-right: 1px solid var(--border);
+      transition: var(--transition);
+      padding: 2.2rem 1.35rem;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    body.sidebar-open #sidebar { left: 0; }
+
+    .logo-box {
+      margin-bottom: 2.2rem;
+      padding-bottom: 1.1rem;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      gap: 0.6rem;
+    }
+    .logo-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      color: var(--accent);
+      font-size: 1.05rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Creative logo mark */
+    .logo-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      position: relative;
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid rgba(0, 212, 255, 0.25);
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.25) inset, 0 12px 30px rgba(0,212,255,0.08);
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    .logo-mark::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: conic-gradient(from 180deg, transparent 0 25%, rgba(0,212,255,0.55) 30%, transparent 60%, rgba(0,212,255,0.25) 85%, transparent);
+      animation: spin 6s linear infinite;
+      opacity: 0.9;
+    }
+    .logo-mark::after {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border-radius: 8px;
+      background: rgba(5,6,8,0.8);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .nav-category {
+      font-size: 0.7rem;
+      font-weight: 900;
+      color: #48505c;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin: 1.4rem 0 0.55rem 0.5rem;
+    }
+    .nav-list { list-style: none; display: grid; gap: 6px; }
+
+    .nav-link {
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 0.86rem;
+      padding: 10px 12px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: 0.22s ease;
+      border: 1px solid transparent;
+      outline: none;
+      cursor: pointer;
+      user-select: none;
+    }
+    .nav-link:hover {
+      background: rgba(255,255,255,0.035);
+      color: var(--text-primary);
+      border-color: rgba(255,255,255,0.05);
+      transform: translateX(2px);
+    }
+    .nav-link:focus-visible {
+      border-color: rgba(0,212,255,0.35);
+      box-shadow: 0 0 0 4px rgba(0,212,255,0.12);
+    }
+    .nav-link.active {
+      background: rgba(0,212,255,0.08);
+      border-color: rgba(0,212,255,0.25);
+      color: var(--text-primary);
+    }
+
+    /* Creative icons */
+    .ico {
+      width: 22px;
+      height: 22px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex: 0 0 auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      letter-spacing: -0.02em;
+      color: rgba(248,250,252,0.95);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25) inset;
+      overflow: hidden;
+    }
+    .ico::before {
+      content: "";
+      position: absolute;
+      inset: -60%;
+      background: radial-gradient(circle at 30% 30%, rgba(0,212,255,0.5), transparent 55%);
+      opacity: 0.55;
+      transform: rotate(15deg);
+    }
+    .ico.accent {
+      background: rgba(0,212,255,0.07);
+      border-color: rgba(0,212,255,0.20);
+    }
+    /* ===============================
+      HERO INTRO SECTION
+    =============================== */
+
+    .intro-hero{
+      min-height: 75vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      text-align: center;
+      padding: 80px 20px 40px;
+    }
+
+    .intro-image{
+      width: min(800px, 80vw);   /* big but responsive */
+      height: auto;             /* keep proportions */
+
+      margin-bottom: 40px;
+
+      object-fit: contain;
+
+      filter: drop-shadow(0 18px 60px rgba(34,163,198,0.35));
+    }
+
+
+    .intro-title{
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .intro-title span{
+      color: #22a3c6;
+    }
+
+    .intro-sub{
+      color: #9aa6b2;
+      margin-bottom: 30px;
+    }
+
+    .intro-btn{
+      padding: 12px 28px;
+      border-radius: 14px;
+      background: #22a3c6;
+      color: black;
+      font-weight: 700;
+      text-decoration: none;
+      transition: 0.2s ease;
+    }
+
+    .intro-btn:hover{
+      transform: translateY(-3px);
+    }
+
+    /* Main */
+    #main-wrapper {
+      flex: 1;
+      transition: var(--transition);
+      padding: var(--container-pad);
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+    body.sidebar-open #main-wrapper { margin-left: var(--sidebar-width); }
+
+    /* Toggle button */
+    #toggle-btn {
+      position: fixed;
+      top: 1.2rem;
+      left: 1.2rem;
+      z-index: 1100;
+      background: rgba(21,23,28,0.9);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      box-shadow: var(--shadow-soft);
+      user-select: none;
+    }
+    #toggle-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(0,212,255,0.35);
+      box-shadow: 0 18px 55px rgba(0,0,0,0.55), 0 0 0 4px rgba(0,212,255,0.08);
+    }
+    body.sidebar-open #toggle-btn { left: calc(var(--sidebar-width) + 1rem); }
+
+    /* Overlay */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      opacity: 0;
+      pointer-events: none;
+      transition: var(--transition);
+      z-index: 900;
+    }
+    body.sidebar-open #overlay { opacity: 1; pointer-events: auto; }
+
+    /* Typography */
+    .page-header { margin: clamp(2.2rem, 5vw, 4rem) 0; max-width: 980px; }
+    .page-header h1 {
+      font-size: clamp(2.1rem, 4.5vw, 3.1rem);
+      letter-spacing: -2px;
+      line-height: 1.05;
+    }
+    .page-header span { color: var(--accent); }
+    .page-header p {
+      margin-top: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      font-size: clamp(0.95rem, 1.4vw, 1.05rem);
+    }
+
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin: 3.2rem 0 1.4rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      opacity: 0.9;
+    }
+    .section-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+
+    /* Grid & cards */
+    .archive-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(var(--grid-min), 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(21,23,28,0.92), rgba(21,23,28,0.75));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.65rem;
+      display: flex;
+      flex-direction: column;
+      transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 0 35%, rgba(0,212,255,0.05) 45%, transparent 55% 100%);
+      transform: translateX(-40%);
+      transition: transform 0.6s ease;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .card:hover::before { transform: translateX(40%); }
+    .card:hover {
+      border-color: rgba(0,212,255,0.45);
+      transform: translateY(-7px);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .folder-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.67rem;
+      color: var(--accent);
+      background: rgba(0, 212, 255, 0.06);
+      padding: 6px 10px;
+      border-radius: 999px;
+      align-self: flex-start;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(0,212,255,0.15);
+      position: relative;
+      z-index: 1;
+    }
+
+    .card h3 {
+      font-size: 1.18rem;
+      margin-bottom: 0.75rem;
+      position: relative;
+      z-index: 1;
+      letter-spacing: -0.02em;
+    }
+    .card p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      flex-grow: 1;
+      margin-bottom: 1.6rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn {
+      text-decoration: none;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 10px 12px;
+      border-radius: 12px;
+      transition: 0.2s ease;
+      font-family: 'JetBrains Mono', monospace;
+      border: 1px solid transparent;
+      user-select: none;
+      will-change: transform;
+    }
+    .btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(0,212,255,0.12);
+      border-color: rgba(0,212,255,0.35);
+    }
+
+    .btn-theory {
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.02);
+    }
+    .btn-theory:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+
+    .btn-sim {
+      background: var(--accent);
+      color: #000;
+      border-color: rgba(0,212,255,0.6);
+      box-shadow: 0 10px 30px rgba(0,212,255,0.12);
+    }
+    .btn-sim:hover { filter: contrast(1.15) saturate(1.05); transform: translateY(-1px); }
+
+    /* Responsive */
+    @media (max-width: 1100px) { :root { --grid-min: 300px; } }
+    @media (max-width: 900px) {
+      body.sidebar-open #main-wrapper { margin-left: 0; }
+      body.sidebar-open #toggle-btn { left: 1.2rem; }
+    }
+    @media (max-width: 768px) {
+      #main-wrapper { padding: 1.25rem; }
+      .page-header { margin: 4.2rem 0 2.2rem; }
+      .archive-grid { gap: 14px; }
+      .card { padding: 1.35rem; }
+    }
+    @media (max-width: 420px) {
+      :root { --grid-min: 260px; }
+      .btn-group { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto; }
+      #sidebar, #main-wrapper, #toggle-btn, .card, .card::before, #overlay { transition: none !important; }
+      .logo-mark::before { animation: none !important; }
+    }
+    .back-btn {
+        position: fixed;
+        top: 1.2rem;
+        right: 1.2rem;
+        z-index: 1200;
+
+        background: rgba(21,23,28,0.9);
+        color: var(--accent);
+        border: 1px solid var(--border);
+
+        padding: 10px 16px;
+        border-radius: 12px;
+
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        cursor: pointer;
+
+        backdrop-filter: blur(10px);
+        transition: 0.2s;
+    }
+
+    .back-btn:hover {
+        border-color: rgba(0,212,255,0.35);
+        transform: translateY(-2px);
+    }
+
+  </style>
+</head>
+
+<body class="sidebar-open">
+  
+  <button id="toggle-btn" type="button" aria-label="Toggle sidebar" aria-expanded="true">✦</button>
+  <button id="back-btn" class="back-btn" onclick="goBack()">← Back</button>
+  <div id="overlay" aria-hidden="true"></div>
+
+  <aside id="sidebar" aria-label="Sidebar navigation">
+    <div class="logo-box">
+      <div class="logo-text">
+        <span class="logo-mark" aria-hidden="true"></span>
+        <span>HAMED_Archive</span>
+      </div>
+    </div>
+    <nav>
+      <div class="nav-category">Main</div>
+      <ul class="nav-list">
+
+        <li class="nav-item">
+          <a href="./index.html" class="nav-link">
+            <span class="ico accent" aria-hidden="true">
+              <img
+                src="./main%20page%20image.png"
+                alt="Main Page"
+                width="20"
+                height="20"
+                onerror="this.outerHTML='<span style=&quot;color:#ff6b6b&quot;>IMG 404</span>';"
+              >
+            </span>
+            <span>Main Page</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a
+            href="./Hamed%20Hassanein%20CV.pdf"
+            class="nav-link"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="ico" aria-hidden="true">📄</span>
+            <span>Curriculum Vitae</span>
+          </a>
+        </li>
+
+      </ul>
+    </nav>
+
+      <div class="nav-category">Problems / Math &amp; Physics</div>
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a href="#" class="nav-link js-filter active" data-filter="calculus">
+            <span class="ico accent" aria-hidden="true">∫</span>
+            <span>Calculus</span>
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a href="#" class="nav-link js-filter" data-filter="multivariable">
+            <span class="ico" aria-hidden="true">∇</span>
+            <span>Multivariable</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link js-filter" data-filter="diff-eqns">
+            <span class="ico" aria-hidden="true">δ</span>
+            <span>Diff Eqns</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link js-filter" data-filter="linear-algebra">
+            <span class="ico" aria-hidden="true">A</span>
+            <span>Linear Algebra</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link js-filter" data-filter="em">
+            <span class="ico accent" aria-hidden="true">⚡</span>
+            <span>E&amp;M</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link js-filter" data-filter="waves">
+            <span class="ico" aria-hidden="true">≈</span>
+            <span>Waves</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link js-filter" data-filter="em-field-theory">
+            <span class="ico" aria-hidden="true">Φ</span>
+            <span>EM Field Theory</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link js-filter" data-filter="all">
+            <span class="ico" aria-hidden="true">✷</span>
+            <span>Show All</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div style="margin-top: auto; padding-top: 2rem; border-top: 1px solid var(--border);">
+      <p style="font-size: 0.65rem; color: #47505c; font-family: 'JetBrains Mono', monospace;">
+        ROOT: ./docs/problems/
+      </p>
+    </div>
+  </aside>
+
+  <div id="main-wrapper">
+
+  <!-- ===== INTRO HERO (NEW) ===== -->
+  <section class="intro-hero" id="intro-hero">
+    <img
+      src="./intro_image.png"
+      alt="Physics Archive"
+      class="intro-image"
+    />
+
+    <h1 class="intro-title">
+      Learn <span>Physics</span>
+    </h1>
+
+    <p class="intro-sub">
+      Problems solved with mathematical and physical analysis.
+    </p>
+
+    <a href="#cards-grid" class="intro-btn">Explore Problems ↓</a>
+  </section>
+  <!-- ===== END HERO ===== -->
+
+
+  <!-- ===== ORIGINAL HEADER ===== -->
+  <header class="page-header">
+    <h1>Learn <span>Physics</span></h1>
+    <p>Problems solved with mathematical and physical analysis.</p>
+  </header>
+
+  <div class="section-divider" id="filter-title">Showing: All Problems</div>
+
+  <main class="archive-grid" id="cards-grid">
+    <!-- ===== Cards (tag with data-tags) ===== -->
+
+
+
+
+
+
+
+
+
+
+
+
+        <!-- =======================
+            CARD — PROB 1
+            ======================= -->
+        </article>
+        <article class="card" data-tags="calculus math limits first-principles">
+          <div class="folder-tag">CALCULUS/exam_1</div>
+
+          <h3>Problem 1: First Principles Derivative — y = 1/x²</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_1/prob_1_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob1.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+        <!-- =======================
+            CARD — PROB 2
+            ======================= -->
+        </article>
+        <article class="card" data-tags="calculus math geometry tangents parabola">
+          <div class="folder-tag">CALCULUS/exam_1</div>
+
+          <h3>Problem 2: Tangent Lines — y = x² + 2 through (0, 1)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_1/prob_2_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob2.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+        <!-- =======================
+            CARD — PROB 3
+            ======================= -->
+        </article>
+        <article class="card" data-tags="calculus math implicit-differentiation tangent-line ellipse">
+          <div class="folder-tag">CALCULUS/exam_1</div>
+
+          <h3>Problem 3: Implicit Tangent Line — Ellipse Constraint</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_1/prob_3_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob3.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+        <!-- =======================
+            CARD — PROB 4
+            ======================= -->
+        </article>
+        <article class="card" data-tags="physics kinematics calculus motion velocity">
+          <div class="folder-tag">CALCULUS/exam_1</div>
+
+          <h3>Problem 4: Falling Stone — s(t) = 80 − 5t²</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_1/prob_4_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob4.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+
+        
+
+
+                <!-- Card 1 — prob1.html -->
+        <article class="card" data-tags="calculus math rational-functions graphing asymptotes extrema">
+          <div class="folder-tag">CALCULUS/exam_2</div>
+
+          <h3>Problem 1: Sketch \( y = x³ / (x² − 1) \)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_2/prob_1_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob1.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+        <!-- Card 2 — prob2.html -->
+        <article class="card" data-tags="calculus math optimization distance minimization parabola">
+          <div class="folder-tag">CALCULUS/exam_2</div>
+
+          <h3>Problem 2: Closest Point on Parabola to \(P(4,1)\)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_2/prob_1_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob2.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+        <!-- Card 3 — prob3.html -->
+        <article class="card" data-tags="calculus math taylor-series approximation trig logarithms">
+          <div class="folder-tag">CALCULUS/exam_2</div>
+
+          <h3>Problem 3: Quadratic Taylor of \( \ln(\sin x) \) at \(x=\pi/2\)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_2/prob_1_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob3.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+        <!-- Card 4 — prob4.html -->
+        <article class="card" data-tags="calculus math related-rates kinematics trigonometry">
+          <div class="folder-tag">CALCULUS/exam_2</div>
+
+          <h3>Problem 4: Related Rates — Find \(d\theta/dt\)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_2/prob_1_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob4.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+
+        <article class="card" data-tags="calculus integration definite-integrals substitution trig algebra">
+          <div class="folder-tag">CALCULUS/exam_3</div>
+
+          <h3>Problem 1: Evaluate the Integrals (a)–(d)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_3/prob_1_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./problems/MATH/Exam_3/prob_1_solution.html#sol-a" class="btn btn-sim">Jump to (a)</a>
+          </div>
+        </article>
+
+        <article class="card" data-tags="calculus fundamental-theorem chain-rule integrals trigonometry arctan">
+          <div class="folder-tag">CALCULUS/exam_3</div>
+
+          <h3>Problem 2: FTC + Chain Rule — Differentiate an Accumulation Function</h3>
+
+          <p>
+        
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_3/prob_2_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob2.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+        <article class="card" data-tags="calculus differential-equations separable ivp exponential-growth">
+          <div class="folder-tag">CALCULUS/exam_3</div>
+
+          <h3>Problem 3: Separable ODE — Solve \( \dfrac{dy}{dx}=x^2y \) with \(y(1)=1\)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_3/prob_3_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob3.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/exam_3</div>
+
+          <h3>Problem 4: Riemann Sum → Integral — Evaluate the Limit</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_3/prob_4_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+        <article class="card" data-tags="calculus integration definite-integrals substitution trig algebra">
+          <div class="folder-tag">CALCULUS/exam_4</div>
+
+          <h3>Problem 1 — Volume from Revolving</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_4/prob_1_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./problems/MATH/Exam_3/prob_1_solution.html#sol-a" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+        <article class="card" data-tags="calculus fundamental-theorem chain-rule integrals trigonometry arctan">
+          <div class="folder-tag">CALCULUS/exam_4</div>
+
+          <h3> Problem 2 — Surface Area by Revolving</h3>
+
+          <p>
+        
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_4/prob_2_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob2.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+        <article class="card" data-tags="calculus differential-equations separable ivp exponential-growth">
+          <div class="folder-tag">CALCULUS/exam_4</div>
+
+          <h3>Problem 3 — Polar Curve </h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_4/prob_3_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob3.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/exam_4</div>
+
+          <h3>Problem 4 — Arc Length (Parametric Curve + DE-Given Slope)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_4/prob_4_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+
+        <article class="card" data-tags="calculus integration definite-integrals substitution trig algebra">
+          <div class="folder-tag">CALCULUS/exam_5</div>
+
+          <h3>Problem 1 — Partial Fractions — f(z)=1/(z²−1)²</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_5/prob_1_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./problems/MATH/Exam_3/prob_1_solution.html#sol-a" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+        <article class="card" data-tags="calculus fundamental-theorem chain-rule integrals trigonometry arctan">
+          <div class="folder-tag">CALCULUS/exam_5</div>
+
+          <h3> Problem 2 — Polynomial Division Integral</h3>
+
+          <p>
+        
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_5/prob_2_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob2.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+
+        <article class="card" data-tags="calculus differential-equations separable ivp exponential-growth">
+          <div class="folder-tag">CALCULUS/exam_5</div>
+
+          <h3>Problem 3 — Reduction Formula for ∫secⁿ(θ)dθ </h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_5/prob_3_solution.html" class="btn btn-theory">Theory</a>
+            <a href="./prob3.html" class="btn btn-sim">Run Simulation</a>
+          </div>
+        </article>
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/exam_5</div>
+
+          <h3>Problem 4 — Trig Substitution Integral (x &gt; 1)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_5/prob_4_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/exam_5</div>
+
+          <h3>Problem 5 — Completing the Square & Trig Substitution</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/Exam_5/prob_5_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_1</div>
+
+          <h3>Problem 1 — Derivative by First Principles</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_1/prob_1_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_1</div>
+
+          <h3>Problem 1 — Derivatives of a Gaussian</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_1/prob_2_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+
+        
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_1</div>
+
+          <h3>Problem 1 — Implicit Differentiation — Tangent Line at (1,2)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_1/prob_3_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_1</div>
+
+          <h3>Problem 4 — Tangent Line to y = x + 1/x Through (0,4)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_1/prob_4_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_1</div>
+
+          <h3>Crash Test KinematicsProblem 5  Crash Test Kinematics</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_1/prob_5_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_1</div>
+
+          <h3>Problem 1 — Derivatives (Structured Solution)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_1/prob_6_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+
+
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_2</div>
+
+          <h3>Problem 1 — Derivatives with Trig Identities — Full Structured Solution</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_2/prob_1_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+
+
+        
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_2</div>
+
+          <h3>Problem 2 — Full Curve Analysis | f(x)=√x+1/√x</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_2/prob_2_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_2</div>
+
+          <h3>(Problems 3 & 4) Calculus Optimization & Taylor Approximation — Solutions </h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_2/prob_3_4_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+        
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_3</div>
+
+          <h3>Problem 1 — Related Rates — Moving Away From a Point</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_3/prob_1_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+        
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_3</div>
+
+          <h3>Problem 2 — Riemann Sums & Log Antiderivative</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_3/prob_2_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+        
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_3</div>
+
+          <h3>Problem 3 — Separable ODE</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_3/prob_3_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+
+
+
+
+
+        
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_3</div>
+
+          <h3>Problem 4 — Riemann Integrals (Structured Solution)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_3/prob_4_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_4</div>
+
+          <h3>Problem 1 — Volume of a Solid of Revolution — Sine Arch (Disk Method)</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_4/prob_1_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_4</div>
+
+          <h3>Problem 2 — Volume by Shells — Revolving a Hyperbolic Region About the y-Axis</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_4/prob_2_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+        
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_4</div>
+
+          <h3>Problem 3 — Surface Area of a Surface of Revolution — y = x^3, 0 ≤ x ≤ 1</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_4/prob_3_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_4</div>
+
+          <h3>Problem 4 — Polar Curve Sketch — r(θ)=sinθ·sin(θ+π/2), 0≤θ≤π</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_4/prob_4_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_5</div>
+
+          <h3>Problem 1 — Integration by Parts: ∫ x³ e^{-x²} dx</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_5/prob_1_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_5</div>
+
+          <h3>Problem 2 — Rational Integral via Division & Factoring</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_5/prob_2_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_5</div>
+
+          <h3>Problem 3 — Partial Fractions & Antiderivative</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_5/prob_3_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_5</div>
+
+          <h3>Problem 4 — Quadratic Domain & Semicircle Antiderivative</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_5/prob_4_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+        <article class="card" data-tags="calculus integration riemann-sum limits series analysis sine">
+
+          <div class="folder-tag">CALCULUS/F_exam_5</div>
+
+          <h3>Problem 5 — Derivatives: Hyperbolic & Inverse Hyperbolic + Trig Composition</h3>
+
+          <p>
+
+          </p>
+
+          <div class="btn-group">
+            <a href="./problems/MATH/F_exam_5/prob_5_solution.html" class="btn btn-theory">
+              Theory
+            </a>
+
+            <a href="./riemann_sum_sim.html" class="btn btn-sim">
+              Run Visualization
+            </a>
+          </div>
+
+        </article>
+
+
+
+
+
+
+
+
+
+
+
+
+
+      <!-- Add more cards with data-tags="..." -->
+    </main>
+
+    
+    <footer style="margin-top: 7rem; padding-bottom: 2rem; border-top: 1px solid var(--border); padding-top: 2rem; opacity: 0.35; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">
+      &copy; 2026 THE_HAMED_ARCHIVE // SYSTEM_STATUS: ONLINE
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const body = document.body;
+      const sidebar = document.getElementById("sidebar");
+      const toggleBtn = document.getElementById("toggle-btn");
+      const overlay = document.getElementById("overlay");
+
+      // ===== Sidebar open/close =====
+      function setToggleIcon() {
+        const open = body.classList.contains("sidebar-open");
+        toggleBtn.textContent = open ? "✦" : "☰";
+        toggleBtn.setAttribute("aria-expanded", String(open));
+      }
+
+      function openSidebar() { body.classList.add("sidebar-open"); setToggleIcon(); }
+      function closeSidebar() { body.classList.remove("sidebar-open"); setToggleIcon(); }
+      function toggleSidebar() { body.classList.toggle("sidebar-open"); setToggleIcon(); }
+
+      toggleBtn.addEventListener("click", toggleSidebar);
+      overlay.addEventListener("click", closeSidebar);
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeSidebar();
+      });
+
+      function handleResponsive() {
+        if (window.innerWidth < 900) closeSidebar();
+        else openSidebar();
+      }
+      window.addEventListener("resize", handleResponsive);
+
+      // ===== Filtering =====
+      const filterLinks = Array.from(document.querySelectorAll(".js-filter"));
+      const cards = Array.from(document.querySelectorAll(".card"));
+      const filterTitle = document.getElementById("filter-title");
+
+      function prettyName(key) {
+        if (key === "all") return "All Problems";
+        if (key === "em") return "E&M";
+        return key
+          .split("-")
+          .map(w => w ? (w[0].toUpperCase() + w.slice(1)) : w)
+          .join(" ");
+      }
+
+      function setActiveLink(activeEl) {
+        filterLinks.forEach(a => a.classList.remove("active"));
+        activeEl.classList.add("active");
+      }
+
+      function applyFilter(filterKey) {
+        const key = (filterKey || "all").toLowerCase();
+
+        cards.forEach(card => {
+          const tags = (card.getAttribute("data-tags") || "")
+            .toLowerCase()
+            .split(/\s+/)
+            .filter(Boolean);
+
+          const show = (key === "all") || tags.includes(key);
+          card.style.display = show ? "" : "none";
+        });
+
+        if (filterTitle) filterTitle.textContent = "Showing: " + prettyName(key);
+        location.hash = "filter=" + encodeURIComponent(key);
+      }
+
+      filterLinks.forEach(a => {
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const filterKey = a.getAttribute("data-filter") || "all";
+          setActiveLink(a);
+          applyFilter(filterKey);
+
+          if (window.innerWidth < 900) closeSidebar();
+        });
+      });
+
+      function initFromHash() {
+        const hash = (location.hash || "").replace("#", "");
+        const match = hash.match(/^filter=(.+)$/);
+        const key = match ? decodeURIComponent(match[1]) : "calculus"; // default category
+
+        const link = filterLinks.find(a => (a.getAttribute("data-filter") || "").toLowerCase() === key);
+        if (link) setActiveLink(link);
+
+        applyFilter(key);
+      }
+      function goBack() {
+        if (history.length > 1) {
+            history.back();        // go to previous page
+        } else {
+            window.location.href = "../../index.html"; // fallback
+        }
+      }
+      const hero = document.getElementById("intro-hero");
+      if (hero) hero.style.display = key === "all" ? "flex" : "none";
+
+
+      // Init
+      setToggleIcon();
+      handleResponsive();
+      window.addEventListener("hashchange", initFromHash);
+      initFromHash();
+    })();
+  </script>
+</body>
+</html>

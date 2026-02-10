@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root { --accent: #00e5ff; --probability: #ff4081; --bg: #0b0e14; --panel: #161b22; }
+        body { background: var(--bg); color: #c9d1d9; font-family: 'Inter', sans-serif; padding: 20px; margin: 0; }
+        
+        .dashboard-layout { 
+            display: grid; 
+            grid-template-columns: 320px 1fr; 
+            gap: 20px; 
+            max-width: 1400px; 
+            margin: auto; 
+            height: calc(100vh - 40px); /* Keeps everything on one screen */
+        }
+
+        .panel { 
+            background: var(--panel); 
+            padding: 25px; 
+            border-radius: 12px; 
+            border: 1px solid #30363d; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        /* FIXED: Added specific height to chart area to prevent "deep page" */
+        .chart-container {
+            flex-grow: 1;
+            min-height: 0; 
+            position: relative;
+            margin-top: 10px;
+            height: 450px; /* Specific height for stability */
+        }
+
+        .formula-display { 
+            background: #000; 
+            padding: 15px; 
+            border-radius: 8px; 
+            border-left: 4px solid var(--accent); 
+            font-size: 0.9rem;
+        }
+
+        input[type=range] { width: 100%; margin: 10px 0; accent-color: var(--accent); }
+        
+        .metric-card { 
+            background: #0d1117; 
+            padding: 15px; 
+            border-radius: 8px; 
+            border: 1px solid #30363d; 
+            margin-top: 10px;
+        }
+        .metric-card span { display: block; font-size: 11px; color: #8b949e; text-transform: uppercase; }
+        .metric-card strong { font-size: 1.2rem; color: var(--accent); }
+    </style>
+    <title>Quantum Well Solver</title>
+</head>
+<body>
+
+<div class="dashboard-layout">
+    <div class="panel">
+        <h3>Quantum Controls</h3>
+        <p style="font-size: 13px; color: #8b949e;">Particle in a 1D Infinite Potential Well.</p>
+        
+        <label>Well Width ($L$): <b id="lText">1.0</b> nm</label>
+        <input type="range" id="L" min="0.5" max="5" value="1" step="0.1" oninput="update()">
+
+        <label>Quantum State ($n$): <b id="nText">1</b></label>
+        <input type="range" id="n" min="1" max="10" value="1" step="1" oninput="update()">
+
+        <div class="metric-card">
+            <span>Energy Level ($E_n$)</span>
+            <strong id="energy">0.376 eV</strong>
+        </div>
+        <div class="metric-card">
+            <span>Peak Amplitude ($\sqrt{2/L}$)</span>
+            <strong id="probMax">1.41</strong>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="formula-display">
+            \[ \psi_n(x) = \sqrt{\frac{2}{L}} \sin\left(\frac{n\pi x}{L}\right) \]
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="quantumChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    let chart;
+    const ctx = document.getElementById('quantumChart').getContext('2d');
+
+    function initChart() {
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Wavefunction ψ(x)',
+                        data: [],
+                        borderColor: '#00e5ff',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Prob. Density |ψ(x)|²',
+                        data: [],
+                        borderColor: '#ff4081',
+                        backgroundColor: 'rgba(255, 64, 129, 0.1)',
+                        fill: true,
+                        borderWidth: 2,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { color: '#333' }, title: { display: true, text: 'Width (nm)', color: '#888'} },
+                    y: { grid: { color: '#333' }, min: -2, max: 4 }
+                },
+                plugins: {
+                    legend: { labels: { color: '#fff' } }
+                }
+            }
+        });
+        update();
+    }
+
+    function update() {
+        if (!chart) return;
+
+        const L = parseFloat(document.getElementById('L').value);
+        const n = parseInt(document.getElementById('n').value);
+        
+        document.getElementById('lText').innerText = L.toFixed(1);
+        document.getElementById('nText').innerText = n;
+
+        // Energy Calculation
+        const h = 6.626e-34;
+        const m = 9.109e-31;
+        const eV = (Math.pow(n,2) * Math.pow(h,2)) / (8 * m * Math.pow(L*1e-9, 2) * 1.602e-19);
+        
+        document.getElementById('energy').innerText = eV.toFixed(3) + " eV";
+        document.getElementById('probMax').innerText = Math.sqrt(2/L).toFixed(2);
+
+        let labels = [], psiData = [], probData = [];
+        for (let x = 0; x <= L; x += L/100) {
+            let psi = Math.sqrt(2/L) * Math.sin((n * Math.PI * x) / L);
+            labels.push(x.toFixed(2));
+            psiData.push(psi);
+            probData.push(psi * psi);
+        }
+
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = psiData;
+        chart.data.datasets[1].data = probData;
+        chart.update('none');
+    }
+
+    // Ensures chart initializes only after DOM is ready
+    document.addEventListener('DOMContentLoaded', initChart);
+</script>
+</body>
+</html>

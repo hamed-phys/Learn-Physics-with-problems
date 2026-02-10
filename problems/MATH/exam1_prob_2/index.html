@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parabola Tangent Simulation: y = x² + 2</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f4f7f6;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.10);
+    }
+
+    h1, h2 {
+      color: #2c3e50;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    .problem-box {
+      background: #eef2f7;
+      padding: 15px;
+      border-left: 5px solid #3498db;
+      margin-bottom: 20px;
+    }
+
+    .controls {
+      background: #fff;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .slider-group {
+      margin: 15px 0;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .slider-group label {
+      min-width: 260px;
+    }
+
+    input[type="range"] {
+      flex-grow: 1;
+      cursor: pointer;
+      min-width: 250px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-weight: bold;
+      font-family: monospace;
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 700px){
+      .stats { grid-template-columns: 1fr; }
+    }
+
+    canvas {
+      background: white;
+      border: 1px solid #eee;
+      border-radius: 8px;
+    }
+
+    .math {
+      font-family: "Times New Roman", serif;
+      font-style: italic;
+    }
+
+    .note {
+      margin-top: 16px;
+      background: #fbfbfb;
+      border: 1px dashed #ddd;
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #ddd;
+      background: #fff;
+      font-family: monospace;
+      font-size: 12px;
+      margin-right: 6px;
+    }
+
+    .btn-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    button{
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover{ background:#f7f7f7; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Tangent Lines Simulator (Parabola)</h1>
+
+    <div class="problem-box">
+      <h2>The Main Idea</h2>
+      <p>
+        Curve: <span class="math">y = x² + 2</span>
+      </p>
+      <p>
+        Move the point <span class="math">P = (p<sub>x</sub>, p<sub>y</sub>)</span>. If
+        <span class="math">P</span> is <strong>below</strong> the parabola, you will see
+        <strong>two real tangents</strong> from <span class="math">P</span> to the curve.
+        On the parabola → <strong>one</strong> tangent. Above → <strong>none</strong>.
+      </p>
+      <p class="math">
+        Tangent at x = a: &nbsp; y = 2a x − a² + 2
+      </p>
+    </div>
+
+    <div class="controls">
+      <h3>Interactive Parameters</h3>
+
+      <div class="slider-group">
+        <label>
+          Point <strong>p<sub>x</sub></strong>:
+          <span id="pxVal">0.00</span>
+        </label>
+        <input type="range" id="pxSlider" min="-4" max="4" step="0.01" value="0">
+      </div>
+
+      <div class="slider-group">
+        <label>
+          Point <strong>p<sub>y</sub></strong>:
+          <span id="pyVal">1.00</span>
+        </label>
+        <input type="range" id="pySlider" min="-2" max="10" step="0.01" value="1">
+      </div>
+
+      <div class="btn-row">
+        <button id="presetP">(0,1) preset</button>
+        <button id="toggleExtra">Toggle Extra Credit View</button>
+      </div>
+
+      <div class="stats">
+        <div>Status: <span id="statusText">—</span></div>
+        <div>Discriminant Δ: <span id="discText">—</span></div>
+        <div>a₁ (tangent x): <span id="a1Text">—</span></div>
+        <div>a₂ (tangent x): <span id="a2Text">—</span></div>
+      </div>
+
+      <div class="note">
+        <span class="pill">Condition</span>
+        Two tangents exist when:
+        <span class="math">p<sub>y</sub> &lt; p<sub>x</sub>² + 2</span>
+        (equivalently <span class="math">Δ &gt; 0</span>).
+      </div>
+    </div>
+
+    <canvas id="tangentChart" width="900" height="420"></canvas>
+
+    <div class="note" id="extraNote" style="display:none;">
+      <h3 style="margin-top:0;">Extra Credit Mode: Two Tangents Intersect → Midpoint Law</h3>
+      <p>
+        Choose two tangency parameters <span class="math">x₀</span> and <span class="math">x₁</span>.
+        Their tangents intersect at <span class="math">S=(x₂,y₂)</span>.
+        The simulation shows the vertical line <span class="math">x=x₂</span> and the chord <span class="math">QR</span>
+        and highlights that:
+      </p>
+      <p class="math">
+        2x₂ = x₀ + x₁  &nbsp;&nbsp; (so x₂ is the midpoint x-coordinate of the chord endpoints)
+      </p>
+      <div class="controls" style="margin-top:12px;">
+        <div class="slider-group">
+          <label>Extra: <strong>x₀</strong>: <span id="x0Val">-1.50</span></label>
+          <input type="range" id="x0Slider" min="-4" max="4" step="0.01" value="-1.50">
+        </div>
+        <div class="slider-group">
+          <label>Extra: <strong>x₁</strong>: <span id="x1Val">1.50</span></label>
+          <input type="range" id="x1Slider" min="-4" max="4" step="0.01" value="1.50">
+        </div>
+
+        <div class="stats">
+          <div>x₂ (intersection): <span id="x2Text">—</span></div>
+          <div>Check: 2x₂ − (x₀+x₁): <span id="checkText">—</span></div>
+          <div>Midpoint x of chord: <span id="midText">—</span></div>
+          <div>Chord endpoints: <span id="qrText">—</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ======= Math helpers =======
+    function f(x){ return x*x + 2; }
+
+    // Tangent at x=a: y = 2a x - a^2 + 2
+    function tangentY(a, x){ return 2*a*x - (a*a) + 2; }
+
+    // From point P=(px,py): solve a^2 - 2px a + (py-2) = 0
+    function tangentParamsFromPoint(px, py){
+      const A = 1;
+      const B = -2*px;
+      const C = (py - 2);
+      const disc = B*B - 4*A*C; // Δ
+      if (disc < 0) return { disc, roots: [] };
+      const s = Math.sqrt(disc);
+      const a1 = (-B - s) / (2*A); // px - sqrt(px^2-(py-2)) (same)
+      const a2 = (-B + s) / (2*A);
+      // order
+      const roots = (a1 <= a2) ? [a1,a2] : [a2,a1];
+      return { disc, roots };
+    }
+
+    // ======= DOM =======
+    const pxSlider = document.getElementById('pxSlider');
+    const pySlider = document.getElementById('pySlider');
+    const pxVal = document.getElementById('pxVal');
+    const pyVal = document.getElementById('pyVal');
+
+    const statusText = document.getElementById('statusText');
+    const discText = document.getElementById('discText');
+    const a1Text = document.getElementById('a1Text');
+    const a2Text = document.getElementById('a2Text');
+
+    const presetPBtn = document.getElementById('presetP');
+    const toggleExtraBtn = document.getElementById('toggleExtra');
+    const extraNote = document.getElementById('extraNote');
+
+    // Extra controls
+    const x0Slider = document.getElementById('x0Slider');
+    const x1Slider = document.getElementById('x1Slider');
+    const x0Val = document.getElementById('x0Val');
+    const x1Val = document.getElementById('x1Val');
+    const x2Text = document.getElementById('x2Text');
+    const checkText = document.getElementById('checkText');
+    const midText = document.getElementById('midText');
+    const qrText = document.getElementById('qrText');
+
+    // ======= Chart setup =======
+    const ctx = document.getElementById('tangentChart').getContext('2d');
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [
+          // Parabola
+          {
+            label: 'Parabola: y = x² + 2',
+            borderColor: '#3498db',
+            borderWidth: 3,
+            data: [],
+            pointRadius: 0,
+            fill: false,
+            tension: 0
+          },
+          // Tangent 1
+          {
+            label: 'Tangent 1',
+            borderColor: '#2ecc71',
+            borderWidth: 2,
+            borderDash: [6, 6],
+            data: [],
+            pointRadius: 0,
+            fill: false,
+            tension: 0
+          },
+          // Tangent 2
+          {
+            label: 'Tangent 2',
+            borderColor: '#27ae60',
+            borderWidth: 2,
+            borderDash: [6, 6],
+            data: [],
+            pointRadius: 0,
+            fill: false,
+            tension: 0
+          },
+          // Point P
+          {
+            label: 'Point P',
+            type: 'scatter',
+            data: [],
+            pointRadius: 6,
+            pointHoverRadius: 7,
+            pointBackgroundColor: '#e74c3c',
+            showLine: false
+          },
+          // Tangency points
+          {
+            label: 'Tangency Points',
+            type: 'scatter',
+            data: [],
+            pointRadius: 6,
+            pointHoverRadius: 7,
+            pointBackgroundColor: '#8e44ad',
+            showLine: false
+          },
+
+          // ===== Extra credit datasets (hidden unless toggled) =====
+          // Tangent at x0
+          {
+            label: 'Extra: Tangent at x₀',
+            borderColor: '#f39c12',
+            borderWidth: 2,
+            data: [],
+            pointRadius: 0,
+            fill: false,
+            tension: 0,
+            hidden: true
+          },
+          // Tangent at x1
+          {
+            label: 'Extra: Tangent at x₁',
+            borderColor: '#d35400',
+            borderWidth: 2,
+            data: [],
+            pointRadius: 0,
+            fill: false,
+            tension: 0,
+            hidden: true
+          },
+          // Chord QR
+          {
+            label: 'Extra: Chord QR',
+            borderColor: '#7f8c8d',
+            borderWidth: 2,
+            borderDash: [4,4],
+            data: [],
+            pointRadius: 0,
+            fill: false,
+            tension: 0,
+            hidden: true
+          },
+          // Intersection S and midpoint M
+          {
+            label: 'Extra: S (intersection) + midpoint',
+            type: 'scatter',
+            data: [],
+            pointRadius: 6,
+            pointBackgroundColor: '#2c3e50',
+            showLine: false,
+            hidden: true
+          },
+          // Vertical line x = x2
+          {
+            label: 'Extra: Vertical line x = x₂',
+            borderColor: '#2c3e50',
+            borderWidth: 1,
+            borderDash: [2,6],
+            data: [],
+            pointRadius: 0,
+            fill: false,
+            tension: 0,
+            hidden: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        animation: false,
+        scales: {
+          x: {
+            type: 'linear',
+            position: 'bottom',
+            min: -5,
+            max: 5,
+            title: { display: true, text: 'x' }
+          },
+          y: {
+            min: -2,
+            max: 12,
+            title: { display: true, text: 'y' }
+          }
+        },
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: { enabled: true }
+        }
+      }
+    });
+
+    function makeParabolaData(xMin=-5, xMax=5, step=0.05){
+      const pts = [];
+      for(let x=xMin; x<=xMax; x+=step){
+        pts.push({x, y: f(x)});
+      }
+      return pts;
+    }
+
+    function makeLineSegmentFromTangent(a, xMin=-5, xMax=5){
+      return [
+        {x: xMin, y: tangentY(a, xMin)},
+        {x: xMax, y: tangentY(a, xMax)}
+      ];
+    }
+
+    function setStatus(px, py, disc, roots){
+      discText.textContent = disc.toFixed(4);
+
+      if (disc < 0){
+        statusText.textContent = "No real tangents (P is above the parabola)";
+        a1Text.textContent = "—";
+        a2Text.textContent = "—";
+        return;
+      }
+      if (Math.abs(disc) < 1e-10){
+        statusText.textContent = "Exactly 1 tangent (P lies on the parabola)";
+        a1Text.textContent = roots[0].toFixed(4);
+        a2Text.textContent = "—";
+        return;
+      }
+      statusText.textContent = "2 tangents (P is below the parabola)";
+      a1Text.textContent = roots[0].toFixed(4);
+      a2Text.textContent = roots[1].toFixed(4);
+    }
+
+    // ===== Extra credit: intersection + midpoint property =====
+    function updateExtra(){
+      const x0 = parseFloat(x0Slider.value);
+      const x1 = parseFloat(x1Slider.value);
+
+      x0Val.textContent = x0.toFixed(2);
+      x1Val.textContent = x1.toFixed(2);
+
+      const Q = { x: x0, y: f(x0) };
+      const R = { x: x1, y: f(x1) };
+
+      // Tangents:
+      // y = 2x0 x - x0^2 + 2
+      // y = 2x1 x - x1^2 + 2
+      // Intersection x2 = (x0 + x1)/2 (when x0 != x1)
+      const x2 = (x0 + x1) / 2;
+
+      // Compute y2 by plugging into either tangent
+      const y2 = (Math.abs(x0 - x1) < 1e-12)
+        ? tangentY(x0, x2)
+        : (2*x0*x2 - x0*x0 + 2);
+
+      const mid = { x: (Q.x + R.x)/2, y: (Q.y + R.y)/2 };
+
+      // Check
+      const check = 2*x2 - (x0 + x1);
+
+      x2Text.textContent = `(${x2.toFixed(4)}, ${y2.toFixed(4)})`;
+      checkText.textContent = check.toExponential(3);
+      midText.textContent = `x_mid = ${mid.x.toFixed(4)} (matches x₂)`;
+      qrText.textContent = `Q=(${Q.x.toFixed(2)},${Q.y.toFixed(2)}), R=(${R.x.toFixed(2)},${R.y.toFixed(2)})`;
+
+      // Update datasets
+      chart.data.datasets[5].data = makeLineSegmentFromTangent(x0); // tangent x0
+      chart.data.datasets[6].data = makeLineSegmentFromTangent(x1); // tangent x1
+      chart.data.datasets[7].data = [Q, R];                         // chord QR
+      chart.data.datasets[8].data = [
+        {x: x2, y: y2},     // S
+        {x: mid.x, y: mid.y} // midpoint of chord (for visual)
+      ];
+
+      // Vertical line x = x2 (draw in visible y-range)
+      const yMin = chart.options.scales.y.min;
+      const yMax = chart.options.scales.y.max;
+      chart.data.datasets[9].data = [{x: x2, y: yMin}, {x: x2, y: yMax}];
+    }
+
+    // ===== Main update =====
+    function update(){
+      const px = parseFloat(pxSlider.value);
+      const py = parseFloat(pySlider.value);
+
+      pxVal.textContent = px.toFixed(2);
+      pyVal.textContent = py.toFixed(2);
+
+      // Parabola
+      chart.data.datasets[0].data = makeParabolaData();
+
+      // Point P
+      chart.data.datasets[3].data = [{x: px, y: py}];
+
+      // Tangents from P
+      const { disc, roots } = tangentParamsFromPoint(px, py);
+      setStatus(px, py, disc, roots);
+
+      // Clear
+      chart.data.datasets[1].data = [];
+      chart.data.datasets[2].data = [];
+      chart.data.datasets[4].data = [];
+
+      if (disc >= 0 && roots.length >= 1){
+        const a1 = roots[0];
+        chart.data.datasets[1].data = makeLineSegmentFromTangent(a1);
+        chart.data.datasets[4].data.push({x: a1, y: f(a1)});
+      }
+      if (disc > 1e-10 && roots.length === 2){
+        const a2 = roots[1];
+        chart.data.datasets[2].data = makeLineSegmentFromTangent(a2);
+        chart.data.datasets[4].data.push({x: a2, y: f(a2)});
+      }
+
+      // If extra mode is on, update it too
+      if (!chart.data.datasets[5].hidden){
+        updateExtra();
+      }
+
+      chart.update();
+    }
+
+    // ===== Extra mode toggle =====
+    let extraOn = false;
+    function setExtraVisibility(isOn){
+      extraOn = isOn;
+      extraNote.style.display = isOn ? "block" : "none";
+
+      // datasets 5..9 are extra
+      for (let i=5; i<=9; i++){
+        chart.data.datasets[i].hidden = !isOn;
+      }
+      update();
+    }
+
+    // ===== Events =====
+    pxSlider.oninput = update;
+    pySlider.oninput = update;
+
+    x0Slider.oninput = () => { if(extraOn) update(); };
+    x1Slider.oninput = () => { if(extraOn) update(); };
+
+    presetPBtn.onclick = () => {
+      pxSlider.value = 0;
+      pySlider.value = 1;
+      update();
+    };
+
+    toggleExtraBtn.onclick = () => setExtraVisibility(!extraOn);
+
+    // Initial state: show the classic point (0,1)
+    pxSlider.value = 0;
+    pySlider.value = 1;
+
+    // Start
+    setExtraVisibility(false);
+    update();
+  </script>
+</body>
+</html>
