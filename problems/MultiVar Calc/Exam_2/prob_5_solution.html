@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="description" content="Vector form of a plane constraint and why velocity is perpendicular to the plane's normal." />
+  <title>Problem 5 — Motion Constrained to a Plane (Vector Form + Orthogonality)</title>
+
+  <!-- MathJax (for LaTeX rendering) -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']], displayMath: [['\\[','\\]']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+  <style>
+    :root{
+      --bg0: #0a0c10;
+      --bg1: #0e1320;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.88);
+      --muted: rgba(255,255,255,.66);
+      --muted2: rgba(255,255,255,.52);
+      --accent: #7c5cff;
+      --accent2: #22d3ee;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+      --radius2: 24px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      --serif: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+    @media (prefers-color-scheme: light) {
+      :root{
+        --bg0: #f7f8fb;
+        --bg1: #eef2ff;
+        --card: rgba(0,0,0,.04);
+        --card2: rgba(0,0,0,.06);
+        --stroke: rgba(0,0,0,.10);
+        --text: rgba(0,0,0,.86);
+        --muted: rgba(0,0,0,.62);
+        --muted2: rgba(0,0,0,.50);
+        --shadow: 0 20px 60px rgba(0,0,0,.12);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(124,92,255,.22), transparent 55%),
+        radial-gradient(900px 700px at 80% 20%, rgba(34,211,238,.20), transparent 55%),
+        radial-gradient(900px 700px at 60% 110%, rgba(52,211,153,.14), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x: hidden;
+      line-height: 1.55;
+    }
+
+    /* Subtle animated grid */
+    .grid{
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .25;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(circle at 30% 15%, black 0%, transparent 60%);
+      animation: drift 14s ease-in-out infinite alternate;
+    }
+    @keyframes drift{
+      from { transform: translate3d(0,0,0); }
+      to   { transform: translate3d(12px, 10px, 0); }
+    }
+
+    header{
+      position: relative;
+      padding: 48px 18px 24px;
+    }
+    .wrap{
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 18px 80px;
+    }
+
+    .hero{
+      display: grid;
+      grid-template-columns: 1.3fr .7fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+    @media (max-width: 920px){
+      .hero{ grid-template-columns: 1fr; }
+    }
+
+    .titleCard{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.05));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      padding: 26px 26px 22px;
+      position: relative;
+      overflow: hidden;
+    }
+    .titleCard:before{
+      content: "";
+      position: absolute;
+      inset: -2px;
+      background: radial-gradient(900px 220px at 30% 10%, rgba(124,92,255,.30), transparent 55%),
+                  radial-gradient(700px 260px at 90% 40%, rgba(34,211,238,.22), transparent 55%);
+      filter: blur(0px);
+      opacity: .9;
+      z-index: 0;
+    }
+    .titleCard > *{ position: relative; z-index: 1; }
+
+    .kicker{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .dot{
+      width: 10px; height: 10px; border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 6px rgba(124,92,255,.12);
+    }
+
+    h1{
+      font-family: var(--serif);
+      margin: 12px 0 8px;
+      font-weight: 700;
+      font-size: clamp(28px, 4vw, 42px);
+      letter-spacing: -.02em;
+      line-height: 1.12;
+    }
+    .subtitle{
+      margin: 0;
+      color: var(--muted);
+      max-width: 70ch;
+    }
+    .meta{
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      color: var(--muted);
+      font-size: 13px;
+      user-select: none;
+      backdrop-filter: blur(8px);
+    }
+    .pill b{ color: var(--text); font-weight: 650; }
+    .pill code{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      opacity: .9;
+    }
+
+    .sideCard{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 14px;
+      overflow: hidden;
+      position: relative;
+    }
+    .sideCard h2{
+      margin: 4px 0 10px;
+      font-size: 14px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .sideCard .mini{
+      display: grid;
+      gap: 10px;
+    }
+    .miniBox{
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      padding: 12px 12px;
+    }
+    .miniBox .label{
+      color: var(--muted2);
+      font-size: 12px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .miniBox .value{
+      margin-top: 6px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    /* Section layout */
+    main{ margin-top: 18px; }
+    .section{
+      margin-top: 18px;
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius2);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .sectionHeader{
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--stroke);
+      background: linear-gradient(90deg, rgba(124,92,255,.10), rgba(34,211,238,.06));
+    }
+    .sectionHeader h3{
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .badge{
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.10);
+      padding: 7px 10px;
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+    }
+    @media (prefers-color-scheme: light){
+      .badge{ background: rgba(255,255,255,.60); }
+    }
+
+    .content{
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+    .grid2{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 860px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .card h4{
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: var(--text);
+      letter-spacing: .02em;
+    }
+    .card p{ margin: 8px 0 0; color: var(--muted); }
+
+    .list{
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+    .list li{ margin: 6px 0; }
+    .list b{ color: var(--text); }
+
+    .callout{
+      border-left: 4px solid var(--accent);
+      background: linear-gradient(90deg, rgba(124,92,255,.16), rgba(255,255,255,.03));
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid var(--stroke);
+    }
+    .callout .title{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    .spark{
+      width: 10px; height: 10px; border-radius: 999px;
+      background: var(--accent2);
+      box-shadow: 0 0 0 6px rgba(34,211,238,.12);
+    }
+    .callout p{ margin: 8px 0 0; color: var(--muted); }
+
+    .mathBlock{
+      border: 1px dashed rgba(255,255,255,.24);
+      background: rgba(0,0,0,.12);
+      border-radius: 16px;
+      padding: 12px 14px;
+      overflow-x: auto;
+    }
+    @media (prefers-color-scheme: light){
+      .mathBlock{ background: rgba(255,255,255,.75); border: 1px dashed rgba(0,0,0,.18); }
+    }
+
+    .stepper{
+      counter-reset: step;
+      display: grid;
+      gap: 12px;
+    }
+    .step{
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 12px;
+      border-radius: var(--radius);
+      background: var(--card);
+      border: 1px solid var(--stroke);
+    }
+    .step:before{
+      counter-increment: step;
+      content: counter(step);
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(124,92,255,.22), rgba(34,211,238,.16));
+      border: 1px solid var(--stroke);
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--text);
+      box-shadow: 0 10px 24px rgba(0,0,0,.20);
+    }
+    .step h5{ margin: 0; font-size: 14px; }
+    .step p{ margin: 6px 0 0; color: var(--muted); }
+
+    .final{
+      border: 1px solid rgba(52,211,153,.35);
+      background: linear-gradient(90deg, rgba(52,211,153,.16), rgba(255,255,255,.03));
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .final .head{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .final .head strong{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      letter-spacing: .02em;
+    }
+    .check{
+      width: 16px; height: 16px;
+      border-radius: 6px;
+      background: var(--good);
+      box-shadow: 0 0 0 6px rgba(52,211,153,.12);
+    }
+    .final .mathBlock{
+      margin-top: 10px;
+      border-style: solid;
+      border-color: rgba(52,211,153,.35);
+    }
+
+    details{
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: var(--card);
+      padding: 10px 12px;
+    }
+    summary{
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 650;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    .chev{
+      width: 22px; height: 22px;
+      border-radius: 8px;
+      border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.10);
+      display: grid;
+      place-items: center;
+      font-family: var(--mono);
+      color: var(--muted);
+    }
+    details[open] .chev{ transform: rotate(90deg); }
+
+    footer{
+      margin-top: 22px;
+      padding: 18px;
+      color: var(--muted2);
+      text-align: center;
+      font-size: 13px;
+    }
+    footer code{ font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+    /* Print-friendly */
+    @media print{
+      .grid{ display:none; }
+      body{ background: #fff; color: #000; }
+      .section, .titleCard, .sideCard{ box-shadow:none; }
+      .badge{ display:none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="grid" aria-hidden="true"></div>
+
+  <header>
+    <div class="wrap">
+      <div class="hero">
+        <section class="titleCard" aria-label="Title">
+          <div class="kicker"><span class="dot" aria-hidden="true"></span>Vector Calculus • Constraints • Geometry of Motion</div>
+          <h1>Problem 5: A Point Moving on a Plane</h1>
+          <p class="subtitle">
+            Express the plane constraint in vector notation, then differentiate to prove the velocity is orthogonal to the plane’s normal vector.
+          </p>
+
+          <div class="meta" role="list">
+            <span class="pill" role="listitem"><b>Plane</b> <code>4x − 3y − 2z = 6</code></span>
+            <span class="pill" role="listitem"><b>Position</b> <code>r(t)=⟨x(t),y(t),z(t)⟩</code></span>
+            <span class="pill" role="listitem"><b>Goal</b> <code>r′(t) ⟂ n</code></span>
+          </div>
+        </section>
+
+        <aside class="sideCard" aria-label="Quick facts">
+          <h2>Quick Facts</h2>
+          <div class="mini">
+            <div class="miniBox">
+              <div class="label">Normal vector</div>
+              <div class="value">\( \vec n=\langle 4,-3,-2\rangle \)</div>
+            </div>
+            <div class="miniBox">
+              <div class="label">Constraint form</div>
+              <div class="value">\( \vec n\cdot \vec r(t)=6 \)</div>
+            </div>
+            <div class="miniBox">
+              <div class="label">After differentiating</div>
+              <div class="value">\( \vec n\cdot \vec r'(t)=0 \Rightarrow \vec r'(t)\perp \vec n \)</div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- PART 1 -->
+    <section class="section" id="part1">
+      <div class="sectionHeader">
+        <h3>PART 1 — Problem Analysis (no solving yet)</h3>
+        <span class="badge">Conceptual Setup</span>
+      </div>
+
+      <div class="content">
+        <div class="grid2">
+          <div class="card">
+            <h4>Restatement (in plain words)</h4>
+            <p>
+              A point \(P(t)\) moves in 3D with position vector \(\vec r(t)\). If it always stays on the plane
+              \(4x-3y-2z=6\), rewrite that condition using vector notation with the plane’s normal vector.
+              Then differentiate the condition to show the velocity \(\vec r'(t)\) is perpendicular to the normal.
+            </p>
+          </div>
+
+          <div class="card">
+            <h4>Given • Unknowns • Must Prove</h4>
+            <ul class="list">
+              <li><b>Given:</b> plane \(4x-3y-2z=6\), position \(\vec r(t)=\langle x(t),y(t),z(t)\rangle\).</li>
+              <li><b>Unknowns:</b> vector constraint equation; relationship between \(\vec r'(t)\) and \(\vec n\).</li>
+              <li><b>Must show:</b> (a) vector form; (b) \(\vec r'(t)\perp \vec n\).</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout">
+          <div class="title"><span class="spark" aria-hidden="true"></span>Why these principles apply</div>
+          <p>
+            For a plane \(Ax+By+Cz=D\), the vector \(\langle A,B,C\rangle\) is normal to the plane (it’s the gradient of the linear function).
+            If the point stays on the plane, the scalar constraint remains constant for all \(t\). Differentiating a constant yields zero,
+            giving a dot-product condition that encodes perpendicularity.
+          </p>
+        </div>
+
+        <details>
+          <summary>
+            Approaches (compare & choose)
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+          <div style="margin-top:10px; color: var(--muted);">
+            <ul class="list">
+              <li><b>Vector-dot approach:</b> write \(\vec n\cdot \vec r(t)=6\), then differentiate \(\Rightarrow \vec n\cdot \vec r'(t)=0\). Cleanest and matches the prompt.</li>
+              <li><b>Component approach:</b> keep \(4x(t)-3y(t)-2z(t)=6\), differentiate to get \(4x'(t)-3y'(t)-2z'(t)=0\), then recognize it as a dot product.</li>
+              <li><b>Geometric approach:</b> velocity is tangent to the plane; normal is perpendicular to the plane; therefore velocity ⟂ normal. Great intuition but still needs an equation-based proof.</li>
+            </ul>
+            <p><b>Best choice:</b> the <b>vector-dot approach</b>—most direct and uses exactly the requested objects (\(\vec r\) and \(\vec n\)).</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- PART 2 -->
+    <section class="section" id="part2">
+      <div class="sectionHeader">
+        <h3>PART 2 — Strategy & Tips (roadmap only)</h3>
+        <span class="badge">Plan + Pitfalls</span>
+      </div>
+
+      <div class="content">
+        <div class="stepper" aria-label="Roadmap steps">
+          <div class="step">
+            <div>
+              <h5>Extract the plane’s normal vector</h5>
+              <p><b>Goal:</b> identify \(\vec n\).<br><b>Tool:</b> \(Ax+By+Cz=D \Rightarrow \vec n=\langle A,B,C\rangle\).</p>
+            </div>
+          </div>
+          <div class="step">
+            <div>
+              <h5>Write \(\vec r(t)\) in components</h5>
+              <p><b>Goal:</b> connect vector form to \(x(t),y(t),z(t)\).<br><b>Tool:</b> \(\vec r(t)=\langle x(t),y(t),z(t)\rangle\).</p>
+            </div>
+          </div>
+          <div class="step">
+            <div>
+              <h5>Convert the plane equation into a dot-product constraint</h5>
+              <p><b>Goal:</b> express “on the plane” as \(\vec n\cdot \vec r(t)=6\).<br><b>Tool:</b> dot product expansion.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div>
+              <h5>Differentiate the constraint with respect to time</h5>
+              <p><b>Goal:</b> relate \(\vec r'(t)\) to \(\vec n\).<br><b>Tool:</b> \(\frac{d}{dt}(\vec n\cdot \vec r)=\vec n\cdot \vec r'\) (since \(\vec n\) constant).</p>
+            </div>
+          </div>
+          <div class="step">
+            <div>
+              <h5>Use orthogonality from dot product</h5>
+              <p><b>Goal:</b> conclude perpendicularity.<br><b>Tool:</b> \(\vec a\cdot \vec b=0 \iff \vec a\perp \vec b\).</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <h4>Common mistakes</h4>
+            <ul class="list">
+              <li>Writing \(\vec n\cdot \vec r(t)=0\) instead of \(6\).</li>
+              <li>Forgetting \(\frac{d}{dt}(6)=0\).</li>
+              <li>Treating \(\vec n\) as time-dependent (it’s fixed for a fixed plane).</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Quick tips</h4>
+            <ul class="list">
+              <li>The coefficients of \(x,y,z\) <b>are</b> the normal’s components.</li>
+              <li>“Stays on the plane” means the constraint holds <b>for all</b> \(t\).</li>
+              <li>Dot product equals zero is your “perpendicular” detector.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 3 -->
+    <section class="section" id="part3">
+      <div class="sectionHeader">
+        <h3>PART 3 — Full Solution</h3>
+        <span class="badge">Derivation + Checks</span>
+      </div>
+
+      <div class="content">
+        <div class="callout">
+          <div class="title"><span class="spark" aria-hidden="true"></span>Physical / geometric intuition</div>
+          <p>
+            If \(P(t)\) is constrained to move <em>on</em> a plane, its instantaneous motion (velocity) must lie <em>within</em> the plane
+            (a tangent direction). A plane’s normal vector is perpendicular to every in-plane direction. So we expect
+            \(\vec r'(t)\) to have no component along \(\vec n\), meaning \(\vec n\cdot \vec r'(t)=0\).
+          </p>
+        </div>
+
+        <div class="card">
+          <h4>(a) Express the plane condition in vector notation</h4>
+
+          <p>
+            The plane is \(4x-3y-2z=6\). For a plane \(Ax+By+Cz=D\), a normal vector is
+            \(\vec n=\langle A,B,C\rangle\). Therefore,
+          </p>
+
+          <div class="mathBlock">
+            \[
+              \vec n=\langle 4,-3,-2\rangle.
+            \]
+          </div>
+
+          <p>
+            The position vector is \(\vec r(t)=\langle x(t),y(t),z(t)\rangle\). Compute the dot product:
+          </p>
+
+          <div class="mathBlock">
+            \[
+              \vec n\cdot \vec r(t)
+              =\langle 4,-3,-2\rangle\cdot \langle x(t),y(t),z(t)\rangle
+              =4x(t)-3y(t)-2z(t).
+            \]
+          </div>
+
+          <p>
+            The statement “\(P(t)\) lies on the plane” means \(4x(t)-3y(t)-2z(t)=6\) for all \(t\). Hence the vector form is:
+          </p>
+
+          <div class="final" role="note" aria-label="Final result for part (a)">
+            <div class="head">
+              <strong><span class="check" aria-hidden="true"></span>Final (a)</strong>
+              <span class="pill"><b>Constraint</b> <code>n·r(t)=6</code></span>
+            </div>
+            <div class="mathBlock">
+              \[
+                \boxed{\;\vec n\cdot \vec r(t)=6,\quad \vec n=\langle 4,-3,-2\rangle\;}
+              \]
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h4>(b) Differentiate to show \( \dfrac{d\vec r}{dt} \perp \vec n \)</h4>
+
+          <p>
+            Start from the constraint obtained in (a), which holds for every time \(t\):
+          </p>
+
+          <div class="mathBlock">
+            \[
+              \vec n\cdot \vec r(t)=6.
+            \]
+          </div>
+
+          <p>
+            Differentiate both sides with respect to time \(t\). The right-hand side is constant:
+          </p>
+
+          <div class="mathBlock">
+            \[
+              \frac{d}{dt}(6)=0.
+            \]
+          </div>
+
+          <p>
+            On the left-hand side, \(\vec n\) is constant (the plane is fixed), so differentiation passes through the dot product:
+          </p>
+
+          <div class="mathBlock">
+            \[
+              \frac{d}{dt}\big(\vec n\cdot \vec r(t)\big)
+              = \vec n\cdot \frac{d\vec r}{dt}.
+            \]
+          </div>
+
+          <p>
+            Therefore we obtain:
+          </p>
+
+          <div class="mathBlock">
+            \[
+              \vec n\cdot \frac{d\vec r}{dt}=0.
+            \]
+          </div>
+
+          <p>
+            A dot product of zero means the vectors are perpendicular. Hence:
+          </p>
+
+          <div class="final" role="note" aria-label="Final result for part (b)">
+            <div class="head">
+              <strong><span class="check" aria-hidden="true"></span>Final (b)</strong>
+              <span class="pill"><b>Orthogonality</b> <code>n·r′(t)=0</code></span>
+            </div>
+            <div class="mathBlock">
+              \[
+                \boxed{\;\vec n\cdot \vec r'(t)=0\;\;\Longrightarrow\;\;\vec r'(t)\perp \vec n.\;}
+              \]
+            </div>
+          </div>
+        </div>
+
+        <details>
+          <summary>
+            Sanity checks (units • limiting cases • interpretation)
+            <span class="chev" aria-hidden="true">›</span>
+          </summary>
+
+          <div style="margin-top:12px; display:grid; gap:12px;">
+            <div class="card">
+              <h4>Units</h4>
+              <p>
+                The plane equation is geometric. If \(x,y,z\) are lengths, the coefficients are dimensionless and \(6\) has length units only
+                if the coefficients carry reciprocal-length units; in standard math geometry, everything is taken dimensionless or consistently scaled.
+                After differentiating, \(\vec r'(t)\) has velocity units (length/time) and \(\vec n\) is constant, so \(\vec n\cdot \vec r'(t)\) has velocity units and can validly equal \(0\).
+              </p>
+            </div>
+
+            <div class="card">
+              <h4>Limiting / special cases</h4>
+              <ul class="list">
+                <li>If the point is stationary, \(\vec r'(t)=\vec 0\), then \(\vec n\cdot \vec r'(t)=0\) holds trivially.</li>
+                <li>Any velocity direction confined to the plane must be orthogonal to \(\vec n\), consistent with \(\vec n\cdot \vec r'(t)=0\).</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h4>Physical / geometric interpretation</h4>
+              <p>
+                \(\vec n\cdot \vec r(t)=6\) says the component of \(\vec r\) along the normal direction is fixed in time. Differentiating gives
+                \(\vec n\cdot \vec r'(t)=0\), meaning the velocity has <b>no normal component</b>—the point cannot “leave” the plane.
+                So the motion is purely tangent to the plane at every instant.
+              </p>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <footer>
+      <div>
+        Built as a clean article module • LaTeX via <code>MathJax</code> • Print-friendly layout included
+      </div>
+    </footer>
+  </main>
+</body>
+</html>

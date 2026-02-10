@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="description" content="Problem 3 (Ladybug on moving VW) and Problem 4 (Matrix/Inverse/Linear system) — full structured solution." />
+  <title>Full Solution — Problem 3 & Problem 4</title>
+
+  <!-- MathJax for LaTeX rendering -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']], displayMath: [['\\[', '\\]'], ['$$', '$$']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg: #0b0f19;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.08);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.68);
+      --faint: rgba(255,255,255,.50);
+      --line: rgba(255,255,255,.14);
+      --accent: #7c5cff;
+      --accent2: #00e5ff;
+      --good: #36d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --shadow: 0 20px 50px rgba(0,0,0,.45);
+      --radius: 18px;
+      --radius2: 26px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f6f7fb;
+        --panel: rgba(0,0,0,.04);
+        --panel2: rgba(0,0,0,.06);
+        --text: rgba(15,23,42,.92);
+        --muted: rgba(15,23,42,.70);
+        --faint: rgba(15,23,42,.50);
+        --line: rgba(15,23,42,.14);
+        --shadow: 0 18px 45px rgba(2,6,23,.15);
+      }
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(124,92,255,.25), transparent 55%),
+        radial-gradient(900px 600px at 85% 25%, rgba(0,229,255,.18), transparent 55%),
+        radial-gradient(1000px 700px at 50% 95%, rgba(54,211,153,.12), transparent 60%),
+        var(--bg);
+      line-height:1.6;
+    }
+
+    a{ color: inherit; }
+    .wrap{
+      width:min(1120px, 92vw);
+      margin: clamp(22px, 4vw, 56px) auto 90px;
+    }
+
+    header.hero{
+      position: relative;
+      padding: clamp(22px, 3.2vw, 38px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    header.hero::before{
+      content:"";
+      position:absolute; inset:-1px;
+      background:
+        radial-gradient(800px 280px at 30% 0%, rgba(124,92,255,.25), transparent 55%),
+        radial-gradient(650px 250px at 75% 20%, rgba(0,229,255,.20), transparent 58%),
+        radial-gradient(650px 250px at 60% 110%, rgba(54,211,153,.14), transparent 55%);
+      pointer-events:none;
+      mix-blend-mode: screen;
+      opacity:.9;
+    }
+    .hero-inner{ position:relative; display:grid; gap:16px; }
+    .kicker{
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+    .pill{
+      padding:6px 10px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      backdrop-filter: blur(8px);
+      font-family: var(--mono);
+      font-size: .85rem;
+      color: var(--muted);
+    }
+    h1{
+      margin:0;
+      font-size: clamp(1.6rem, 2.2vw, 2.25rem);
+      letter-spacing: -0.02em;
+      line-height:1.2;
+    }
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      max-width: 72ch;
+    }
+
+    nav.toc{
+      margin-top: 18px;
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .toc a{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      text-decoration:none;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .toc a:hover{
+      transform: translateY(-2px);
+      border-color: rgba(124,92,255,.45);
+      background: rgba(124,92,255,.10);
+    }
+    .dot{
+      width:10px; height:10px; border-radius:999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 3px rgba(124,92,255,.15);
+      flex: 0 0 auto;
+    }
+    .toc .label{
+      display:flex; flex-direction:column;
+      line-height:1.25;
+    }
+    .toc .label strong{ font-size:.98rem; }
+    .toc .label span{ font-size:.85rem; color: var(--muted); }
+
+    main{
+      margin-top: 26px;
+      display:grid;
+      gap: 18px;
+    }
+
+    section.card{
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position: relative;
+    }
+    section.card .head{
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:flex-start;
+      gap: 14px;
+    }
+    .badge{
+      width:44px; height:44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(124,92,255,.85), rgba(0,229,255,.75));
+      box-shadow: 0 10px 30px rgba(124,92,255,.20);
+      display:grid; place-items:center;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+    .head h2{
+      margin:0;
+      font-size: 1.25rem;
+      letter-spacing: -0.01em;
+    }
+    .head p{
+      margin:6px 0 0;
+      color: var(--muted);
+      max-width: 90ch;
+    }
+
+    .body{
+      padding: 18px 20px 22px;
+      display:grid;
+      gap: 14px;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .panel{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.04);
+      padding: 14px 14px;
+    }
+    .panel h3{
+      margin:0 0 8px;
+      font-size: 1.02rem;
+      letter-spacing:-0.01em;
+    }
+    .panel ul{
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+    .panel li{ margin: 6px 0; }
+
+    .callout{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 14px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      display:grid; gap:10px;
+    }
+    .callout .title{
+      display:flex; align-items:center; gap:10px;
+      font-weight: 750;
+      letter-spacing: -0.01em;
+    }
+    .icon{
+      width:28px; height:28px; border-radius: 10px;
+      display:grid; place-items:center;
+      background: rgba(124,92,255,.14);
+      border:1px solid rgba(124,92,255,.30);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .9rem;
+    }
+    .callout p{ margin:0; color: var(--muted); }
+
+    details{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.03);
+      overflow:hidden;
+    }
+    summary{
+      cursor:pointer;
+      padding: 14px 14px;
+      list-style:none;
+      display:flex; align-items:center; justify-content:space-between;
+      gap: 12px;
+      color: var(--text);
+      font-weight: 700;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    summary .meta{
+      color: var(--muted);
+      font-weight: 600;
+      font-size: .9rem;
+      font-family: var(--mono);
+    }
+    details .content{
+      padding: 0 14px 14px;
+      color: var(--muted);
+    }
+
+    .mathblock{
+      border:1px dashed rgba(124,92,255,.40);
+      background: rgba(124,92,255,.08);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      overflow:auto;
+    }
+
+    .result{
+      border:1px solid rgba(54,211,153,.40);
+      background: rgba(54,211,153,.10);
+      border-radius: var(--radius);
+      padding: 14px 14px;
+      display:grid; gap:8px;
+    }
+    .result .label{
+      display:flex; align-items:center; gap:10px;
+      font-weight: 800;
+    }
+    .result .label .icon{
+      background: rgba(54,211,153,.14);
+      border-color: rgba(54,211,153,.35);
+    }
+
+    .checks{
+      display:grid;
+      gap:10px;
+    }
+    .check{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      background: rgba(255,255,255,.03);
+    }
+    .check strong{ color: var(--text); }
+    .check span{ color: var(--muted); }
+
+    footer{
+      margin-top: 20px;
+      color: var(--muted);
+      text-align:center;
+      font-size: .95rem;
+    }
+    .hr{
+      height:1px;
+      background: var(--line);
+      border:0;
+      margin: 18px 0;
+    }
+
+    .tiny{
+      font-size: .9rem;
+      color: var(--muted);
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{ background:#fff; color:#111; }
+      header.hero, section.card{ box-shadow:none; }
+      .toc{ display:none; }
+      .panel, .callout, details, .result, .check{
+        background:#fff !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header class="hero" id="top">
+      <div class="hero-inner">
+        <div class="kicker">
+          <span class="pill">Expert Tutor Solution</span>
+          <span class="pill">Kinematics + Linear Algebra</span>
+          <span class="pill">MathJax Enabled</span>
+        </div>
+        <h1>Full Structured Solution — Problem 3 &amp; Problem 4</h1>
+        <p class="subtitle">
+          This article follows the required structure (Problem Analysis → Strategy &amp; Tips → Full Solution),
+          with highlighted final results and sanity checks (units, limiting cases, interpretation).
+        </p>
+
+        <nav class="toc" aria-label="Table of contents">
+          <a href="#p3"><span class="dot"></span><span class="label"><strong>Problem 3</strong><span>Ladybug on a moving VW</span></span></a>
+          <a href="#p4"><span class="dot"></span><span class="label"><strong>Problem 4</strong><span>Matrix inverse &amp; system</span></span></a>
+          <a href="#final"><span class="dot"></span><span class="label"><strong>Final Boxed Results</strong><span>Quick answers at a glance</span></span></a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- =========================
+         PROBLEM 3
+    ========================== -->
+    <section class="card" id="p3">
+      <div class="head">
+        <div class="badge">3</div>
+        <div>
+          <h2>Problem 3 — Ladybug walking on a moving VW</h2>
+          <p>
+            The VW surface is the unit semicircle \(x^2+y^2=1\) with \(y\ge 0\).
+            The bug starts at \((1,0)\) at \(t=0\), walks counterclockwise at speed 1 relative to the VW,
+            while the VW moves to the right at speed 10.
+          </p>
+        </div>
+      </div>
+
+      <div class="body">
+        <!-- PART 1 -->
+        <div class="grid2">
+          <div class="panel">
+            <h3>PART 1 — Problem Analysis (no solving yet)</h3>
+            <ul>
+              <li><strong>In words:</strong> Track the bug in the ground frame while it walks along the VW’s semicircle in the VW frame.</li>
+              <li><strong>Given:</strong> semicircle radius \(1\), bug relative speed \(1\), VW speed \(10\) (right).</li>
+              <li><strong>Unknowns:</strong> ground-frame trajectory \((x(t),y(t))\), speed \(v(t)\), where \(v\) is max/min.</li>
+              <li><strong>Find:</strong> (a) parametric formula + position at rear bumper; (b) speed function and its extrema locations.</li>
+            </ul>
+          </div>
+
+          <div class="panel">
+            <h3>Relevant principles</h3>
+            <ul>
+              <li><strong>Galilean velocity addition:</strong> ground velocity = (bug relative) + (VW translation).</li>
+              <li><strong>Arc length on unit circle:</strong> \(s=\theta\) (radians). Unit speed along the arc gives \(\dot\theta=1\).</li>
+              <li><strong>Speed magnitude:</strong> \(v=\|\mathbf r'(t)\|\). Extrema easiest via \(v^2\).</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout">
+          <div class="title"><span class="icon">✓</span>PART 2 — Strategy &amp; Tips (roadmap only)</div>
+          <ul class="tiny" style="margin:0; padding-left: 18px;">
+            <li>Parametrize bug on the VW by angle: \((\cos\theta,\sin\theta)\).</li>
+            <li>Use unit-radius arc length \(s=\theta\) and unit speed: \(\dot\theta=1\Rightarrow\theta(t)=t\).</li>
+            <li>Add the VW translation: \(x=10t+\cos t,\; y=\sin t\).</li>
+            <li>Rear bumper corresponds to \(\theta=\pi\Rightarrow t=\pi\).</li>
+            <li>Differentiate: \(\mathbf v(t)=\langle 10-\sin t,\;\cos t\rangle\).</li>
+            <li>Analyze \(v^2(t)=101-20\sin t\) on \(t\in[0,\pi]\) for max/min.</li>
+          </ul>
+        </div>
+
+        <!-- PART 3 -->
+        <details open>
+          <summary>
+            <span>PART 3 — Full Solution (step-by-step)</span>
+            <span class="meta">Kinematics + parameterization</span>
+          </summary>
+          <div class="content">
+            <div class="callout" style="margin-top: 12px;">
+              <div class="title"><span class="icon">💡</span>Physical intuition</div>
+              <p>
+                In the VW’s frame, the bug simply traces the top half of a unit circle at constant speed 1.
+                In the ground frame, that circular motion is “carried” to the right by the VW at speed 10,
+                producing a translated parametric curve.
+              </p>
+            </div>
+
+            <h3 style="margin-top:14px;">(a) Parametric trajectory and position at the rear bumper</h3>
+
+            <p><strong>1) VW-frame geometry.</strong> On the unit semicircle, use the standard angle parameter \(\theta\):</p>
+            <div class="mathblock">
+              \[
+                x_{\text{rel}}=\cos\theta,\qquad y_{\text{rel}}=\sin\theta,\qquad 0\le\theta\le\pi.
+              \]
+            </div>
+
+            <p><strong>2) Convert “unit speed along the arc” into an angle law.</strong> On a circle of radius 1, arc length satisfies \(s=\theta\).
+              Since the bug’s relative speed is \(ds/dt=1\), we get:</p>
+            <div class="mathblock">
+              \[
+                \frac{ds}{dt}=1,\quad s=\theta\;\Rightarrow\;\frac{d\theta}{dt}=1.
+              \]
+              \[
+                \theta(0)=0\Rightarrow \boxed{\theta(t)=t}.
+              \]
+            </div>
+
+            <p>So the bug’s VW-frame position is:</p>
+            <div class="mathblock">
+              \[
+                (x_{\text{rel}}(t),y_{\text{rel}}(t))=(\cos t,\;\sin t).
+              \]
+            </div>
+
+            <p><strong>3) Add the VW translation (ground frame).</strong> The VW moves right at speed 10, so its displacement is \((10t,0)\):</p>
+            <div class="mathblock">
+              \[
+                \boxed{x(t)=10t+\cos t,\qquad y(t)=\sin t,\qquad 0\le t\le\pi.}
+              \]
+            </div>
+
+            <p><strong>4) Rear bumper event.</strong> Rear bumper corresponds to \(\theta=\pi\), so \(t=\pi\). Then:</p>
+            <div class="mathblock">
+              \[
+                x(\pi)=10\pi+\cos\pi=10\pi-1,\qquad y(\pi)=\sin\pi=0.
+              \]
+              \[
+                \boxed{\mathbf r(\pi)=\langle 10\pi-1,\;0\rangle.}
+              \]
+            </div>
+
+            <div class="checks">
+              <div class="check"><strong>Sanity check (initial condition):</strong> <span>\(\mathbf r(0)=\langle 1,0\rangle\) matches the front bumper.</span></div>
+              <div class="check"><strong>Geometric check:</strong> <span>relative motion stays on the unit semicircle since \(\cos^2 t+\sin^2 t=1\).</span></div>
+            </div>
+
+            <h3 style="margin-top:16px;">(b) Speed and where it is largest/smallest</h3>
+
+            <p><strong>1) Differentiate to get velocity.</strong></p>
+            <div class="mathblock">
+              \[
+                x'(t)=10-\sin t,\qquad y'(t)=\cos t
+              \]
+              \[
+                \mathbf v(t)=\langle 10-\sin t,\;\cos t\rangle.
+              \]
+            </div>
+
+            <p><strong>2) Compute speed squared \(v^2\) (cleaner than \(v\)).</strong></p>
+            <div class="mathblock">
+              \[
+                v^2(t)=(10-\sin t)^2+\cos^2 t
+                =100-20\sin t+\sin^2 t+\cos^2 t
+                =101-20\sin t.
+              \]
+              \[
+                \boxed{v(t)=\sqrt{101-20\sin t}}.
+              \]
+            </div>
+
+            <p><strong>3) Extremes on \(0\le t\le\pi\).</strong> Over this interval, \(\sin t\in[0,1]\). Since
+              \(v^2(t)=101-20\sin t\) decreases as \(\sin t\) increases:</p>
+            <div class="mathblock">
+              \[
+                \sin t=1 \text{ at } t=\frac{\pi}{2}\Rightarrow v_{\min}=\sqrt{101-20}= \sqrt{81}=9.
+              \]
+              \[
+                \sin t=0 \text{ at } t=0,\pi\Rightarrow v_{\max}=\sqrt{101}.
+              \]
+            </div>
+
+            <div class="result">
+              <div class="label"><span class="icon">★</span>Boxed results (Problem 3)</div>
+              <div class="mathblock">
+                \[
+                  \boxed{\mathbf r(t)=\langle 10t+\cos t,\;\sin t\rangle,\quad 0\le t\le\pi}
+                \]
+                \[
+                  \boxed{\mathbf r(\pi)=\langle 10\pi-1,\;0\rangle}
+                \]
+                \[
+                  \boxed{v(t)=\sqrt{101-20\sin t},\quad v_{\min}=9 \text{ at } t=\frac{\pi}{2},\quad v_{\max}=\sqrt{101} \text{ at } t=0,\pi}
+                \]
+              </div>
+            </div>
+
+            <div class="checks">
+              <div class="check"><strong>Units:</strong> <span>Speeds are consistent with the given 10 and 1 (same units).</span></div>
+              <div class="check"><strong>Limiting case:</strong> <span>If VW speed \(\to 0\), then \(v=\sqrt{\sin^2t+\cos^2t}=1\), as expected.</span></div>
+              <div class="check"><strong>Interpretation:</strong> <span>Speed is smallest at the top because the bug’s motion most reduces the rightward component.</span></div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- =========================
+         PROBLEM 4
+    ========================== -->
+    <section class="card" id="p4">
+      <div class="head">
+        <div class="badge">4</div>
+        <div>
+          <h2>Problem 4 — Determinant, inverse entries, solve \(M\mathbf r=\mathbf b(t)\)</h2>
+          <p>
+            Given \(M\) and a partially specified \(M^{-1}\), compute \(\det(M)\), determine \(a,b\),
+            solve the system for \(\mathbf r(t)=\langle x,y,z\rangle\), and compute \(d\mathbf r/dt\).
+          </p>
+        </div>
+      </div>
+
+      <div class="body">
+        <!-- PART 1 -->
+        <div class="grid2">
+          <div class="panel">
+            <h3>PART 1 — Problem Analysis (no solving yet)</h3>
+            <ul>
+              <li><strong>In words:</strong> Use determinant/inverse facts to complete \(M^{-1}\), then solve a linear system depending on \(t\).</li>
+              <li><strong>Given:</strong> \(M\) and \(M^{-1}=\tfrac1{12}(\cdots)\) with unknown \(a,b\).</li>
+              <li><strong>Unknowns:</strong> \(\det(M)\), \(a,b\), \(\mathbf r(t)\), and \(d\mathbf r/dt\).</li>
+              <li><strong>Find:</strong> explicit formulas and a clean derivative vector.</li>
+            </ul>
+          </div>
+
+          <div class="panel">
+            <h3>Relevant principles</h3>
+            <ul>
+              <li><strong>Invertibility:</strong> \(\det(M)\neq 0\) iff \(M^{-1}\) exists.</li>
+              <li><strong>Identity condition:</strong> \(MM^{-1}=I\) determines unknown inverse entries.</li>
+              <li><strong>Solve via inverse:</strong> \(\mathbf r=M^{-1}\mathbf b(t)\).</li>
+              <li><strong>Differentiate:</strong> derivative is componentwise; only \(t\)-terms change.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout">
+          <div class="title"><span class="icon">✓</span>PART 2 — Strategy &amp; Tips (roadmap only)</div>
+          <ul class="tiny" style="margin:0; padding-left: 18px;">
+            <li>Compute \(\det(M)\) by cofactor expansion (or row reduction).</li>
+            <li>Use \(MM^{-1}=I\) to solve for \(a,b\) (mind the factor \(1/12\)).</li>
+            <li>Rewrite the system as \(M\mathbf r=\mathbf b(t)\) with \(\mathbf b(t)=\langle 0,t,3\rangle\).</li>
+            <li>Compute \(\mathbf r(t)=M^{-1}\mathbf b(t)\) via matrix-vector multiplication.</li>
+            <li>Differentiate \(\mathbf r(t)\) componentwise for \(d\mathbf r/dt\).</li>
+          </ul>
+        </div>
+
+        <!-- PART 3 -->
+        <details open>
+          <summary>
+            <span>PART 3 — Full Solution (step-by-step)</span>
+            <span class="meta">Determinant • Inverse • Linear system</span>
+          </summary>
+          <div class="content">
+            <h3 style="margin-top:12px;">(a) Compute \(\det(M)\)</h3>
+
+            <div class="mathblock">
+              \[
+                M=\begin{pmatrix}
+                1&2&3\\
+                3&2&1\\
+                2&-1&-1
+                \end{pmatrix}
+              \]
+            </div>
+
+            <p>Expand along the first row:</p>
+            <div class="mathblock">
+              \[
+              \det(M)
+              =1\begin{vmatrix}2&1\\-1&-1\end{vmatrix}
+              -2\begin{vmatrix}3&1\\2&-1\end{vmatrix}
+              +3\begin{vmatrix}3&2\\2&-1\end{vmatrix}.
+              \]
+            </div>
+
+            <p>Compute the \(2\times2\) determinants:</p>
+            <div class="mathblock">
+              \[
+              \begin{vmatrix}2&1\\-1&-1\end{vmatrix}=2(-1)-1(-1)=-2+1=-1
+              \]
+              \[
+              \begin{vmatrix}3&1\\2&-1\end{vmatrix}=3(-1)-1(2)=-3-2=-5
+              \]
+              \[
+              \begin{vmatrix}3&2\\2&-1\end{vmatrix}=3(-1)-2(2)=-3-4=-7
+              \]
+            </div>
+
+            <p>Substitute back:</p>
+            <div class="mathblock">
+              \[
+              \det(M)=1(-1)-2(-5)+3(-7)=-1+10-21=-12.
+              \]
+              \[
+              \boxed{\det(M)=-12}
+              \]
+            </div>
+
+            <h3 style="margin-top:16px;">(b) Find \(a\) and \(b\) in \(M^{-1}\)</h3>
+
+            <p>We are given:</p>
+            <div class="mathblock">
+              \[
+              M^{-1}=\frac1{12}\begin{pmatrix}
+              1&1&4\\
+              a&7&-8\\
+              b&-5&4
+              \end{pmatrix}.
+              \]
+            </div>
+
+            <p>Using the defining property \(MM^{-1}=I\), the integer matrix \(12M^{-1}\) must be:</p>
+            <div class="mathblock">
+              \[
+              12M^{-1}=
+              \begin{pmatrix}
+              1&1&4\\
+              -5&7&-8\\
+              7&-5&4
+              \end{pmatrix}.
+              \]
+            </div>
+
+            <div class="result">
+              <div class="label"><span class="icon">★</span>Boxed result</div>
+              <div class="mathblock">
+                \[
+                  \boxed{a=-5,\qquad b=7.}
+                \]
+              </div>
+            </div>
+
+            <h3 style="margin-top:16px;">(c) Find \(\mathbf r=\langle x,y,z\rangle\) as a function of \(t\)</h3>
+
+            <p>Write the system in matrix form:</p>
+            <div class="mathblock">
+              \[
+              M\mathbf r=\mathbf b(t),
+              \qquad
+              \mathbf r=\begin{pmatrix}x\\y\\z\end{pmatrix},
+              \quad
+              \mathbf b(t)=\begin{pmatrix}0\\t\\3\end{pmatrix}.
+              \]
+            </div>
+
+            <p>Then \(\mathbf r=M^{-1}\mathbf b(t)\):</p>
+            <div class="mathblock">
+              \[
+              \mathbf r
+              =\frac1{12}\begin{pmatrix}
+              1&1&4\\
+              -5&7&-8\\
+              7&-5&4
+              \end{pmatrix}
+              \begin{pmatrix}0\\t\\3\end{pmatrix}.
+              \]
+            </div>
+
+            <p>Compute each component (matrix–vector multiplication):</p>
+            <div class="mathblock">
+              \[
+              x=\frac1{12}\big(1\cdot0+1\cdot t+4\cdot3\big)=\frac{t+12}{12}=1+\frac{t}{12}
+              \]
+              \[
+              y=\frac1{12}\big((-5)\cdot0+7\cdot t+(-8)\cdot3\big)=\frac{7t-24}{12}=-2+\frac{7t}{12}
+              \]
+              \[
+              z=\frac1{12}\big(7\cdot0+(-5)\cdot t+4\cdot3\big)=\frac{-5t+12}{12}=1-\frac{5t}{12}.
+              \]
+            </div>
+
+            <div class="result">
+              <div class="label"><span class="icon">★</span>Boxed result</div>
+              <div class="mathblock">
+                \[
+                \boxed{\mathbf r(t)=\left\langle 1+\frac{t}{12},\ -2+\frac{7t}{12},\ 1-\frac{5t}{12}\right\rangle.}
+                \]
+              </div>
+            </div>
+
+            <h3 style="margin-top:16px;">(d) Compute \(\dfrac{d\mathbf r}{dt}\)</h3>
+
+            <p>Differentiate componentwise:</p>
+            <div class="mathblock">
+              \[
+              \frac{dx}{dt}=\frac1{12},\qquad
+              \frac{dy}{dt}=\frac7{12},\qquad
+              \frac{dz}{dt}=-\frac5{12}.
+              \]
+            </div>
+
+            <div class="result">
+              <div class="label"><span class="icon">★</span>Boxed result</div>
+              <div class="mathblock">
+                \[
+                \boxed{\frac{d\mathbf r}{dt}=\left\langle \frac1{12},\ \frac7{12},\ -\frac5{12}\right\rangle.}
+                \]
+              </div>
+            </div>
+
+            <div class="checks">
+              <div class="check"><strong>Consistency:</strong> <span>\(\det(M)=-12\neq 0\) confirms the inverse exists.</span></div>
+              <div class="check"><strong>Interpretation:</strong> <span>\(\mathbf r(t)\) is linear in \(t\) because only the RHS depends linearly on \(t\).</span></div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- =========================
+         FINAL BOXED RESULTS
+    ========================== -->
+    <section class="card" id="final">
+      <div class="head">
+        <div class="badge">★</div>
+        <div>
+          <h2>Final Boxed Results (Quick Reference)</h2>
+          <p>All requested final answers in one place, exactly as derived above.</p>
+        </div>
+      </div>
+
+      <div class="body">
+        <div class="grid2">
+          <div class="result">
+            <div class="label"><span class="icon">3</span>Problem 3</div>
+            <div class="mathblock">
+              \[
+                \boxed{\mathbf r(t)=\langle 10t+\cos t,\ \sin t\rangle,\quad 0\le t\le\pi}
+              \]
+              \[
+                \boxed{\mathbf r(\pi)=\langle 10\pi-1,\ 0\rangle}
+              \]
+              \[
+                \boxed{v(t)=\sqrt{101-20\sin t}}
+              \]
+              \[
+                \boxed{v_{\min}=9\ \text{at}\ t=\frac{\pi}{2},\qquad v_{\max}=\sqrt{101}\ \text{at}\ t=0,\pi}
+              \]
+            </div>
+          </div>
+
+          <div class="result">
+            <div class="label"><span class="icon">4</span>Problem 4</div>
+            <div class="mathblock">
+              \[
+                \boxed{\det(M)=-12}
+              \]
+              \[
+                \boxed{a=-5,\quad b=7}
+              \]
+              \[
+                \boxed{\mathbf r(t)=\left\langle 1+\frac{t}{12},\ -2+\frac{7t}{12},\ 1-\frac{5t}{12}\right\rangle}
+              \]
+              \[
+                \boxed{\frac{d\mathbf r}{dt}=\left\langle \frac1{12},\ \frac7{12},\ -\frac5{12}\right\rangle}
+              \]
+            </div>
+          </div>
+        </div>
+
+        <hr class="hr" />
+        <p class="tiny">
+          Tip: If this is embedded into a page with a global stylesheet, you can keep the HTML structure and remove the
+          internal <code style="font-family:var(--mono);">style</code> block—everything will still render, and MathJax will
+          keep the equations crisp.
+        </p>
+      </div>
+    </section>
+
+    <footer>
+      <p>© Your Physics/Math Article — Structured Solution Layout • <a href="#top">Back to top</a></p>
+    </footer>
+  </div>
+</body>
+</html>

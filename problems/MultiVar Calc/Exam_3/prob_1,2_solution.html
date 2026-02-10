@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gradient, Linearization & Topographic Directional Derivatives — Full Solution</title>
+
+  <!-- MathJax for beautiful LaTeX rendering -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']], displayMath: [['\\[','\\]']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg0:#070A12;
+      --bg1:#0B1022;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+      --muted2: rgba(255,255,255,.55);
+      --accent:#7C5CFF;
+      --accent2:#35D2FF;
+      --good:#2FE59D;
+      --warn:#FFC857;
+      --bad:#FF4D6D;
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --radius: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 10% 10%, rgba(124,92,255,.18), transparent 65%),
+        radial-gradient(900px 700px at 90% 20%, rgba(53,210,255,.14), transparent 60%),
+        radial-gradient(900px 700px at 40% 90%, rgba(47,229,157,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      line-height:1.55;
+      overflow-x:hidden;
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding: clamp(18px, 3vw, 36px);
+    }
+
+    /* Header */
+    header.hero{
+      position:relative;
+      padding: 34px 28px;
+      border:1px solid var(--stroke);
+      border-radius: calc(var(--radius) + 6px);
+      background: linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      isolation:isolate;
+    }
+    header.hero::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(650px 450px at 10% 0%, rgba(124,92,255,.35), transparent 60%),
+        radial-gradient(700px 500px at 90% 30%, rgba(53,210,255,.25), transparent 60%);
+      filter: blur(0px);
+      opacity:.55;
+      z-index:-1;
+    }
+    .kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      font-size:12px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .dot{
+      width:10px; height:10px; border-radius:999px;
+      background: conic-gradient(from 90deg, var(--accent), var(--accent2), var(--good), var(--accent));
+      box-shadow: 0 0 0 4px rgba(124,92,255,.12);
+    }
+    h1{
+      margin:10px 0 10px;
+      font-size: clamp(26px, 3vw, 40px);
+      line-height:1.15;
+      letter-spacing:-.02em;
+    }
+    .sub{
+      margin:0;
+      color:var(--muted);
+      max-width:80ch;
+    }
+
+    /* Layout grid */
+    .grid{
+      margin-top: 18px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    /* Cards */
+    .card{
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.05);
+      box-shadow: 0 14px 45px rgba(0,0,0,.25);
+      overflow:hidden;
+    }
+    .card .head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      padding: 18px 18px 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), transparent);
+      border-bottom:1px solid rgba(255,255,255,.07);
+    }
+    .card h2{
+      margin:0;
+      font-size:18px;
+      letter-spacing:-.01em;
+    }
+    .badge{
+      font-size:12px;
+      color:rgba(255,255,255,.85);
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: linear-gradient(135deg, rgba(124,92,255,.22), rgba(53,210,255,.14));
+      white-space:nowrap;
+    }
+    .card .body{
+      padding: 16px 18px 18px;
+    }
+
+    /* Section blocks */
+    .part{
+      position:relative;
+      padding: 14px 14px 14px 16px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      background: rgba(0,0,0,.14);
+      margin: 12px 0 0;
+    }
+    .part + .part{ margin-top: 12px; }
+    .part h3{
+      margin:0 0 10px;
+      font-size:14px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .part ul{ margin:10px 0 0 18px; color:var(--muted); }
+    .part li{ margin:6px 0; }
+
+    /* Math blocks */
+    .mathblock{
+      border:1px dashed rgba(255,255,255,.18);
+      background: rgba(255,255,255,.04);
+      padding: 12px 12px;
+      border-radius: 14px;
+      margin: 12px 0;
+      overflow:auto;
+    }
+    .step{
+      display:grid;
+      grid-template-columns: 32px 1fr;
+      gap:12px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      margin: 10px 0;
+    }
+    .n{
+      width:32px; height:32px;
+      display:grid; place-items:center;
+      border-radius: 11px;
+      background: linear-gradient(135deg, rgba(124,92,255,.35), rgba(53,210,255,.18));
+      border:1px solid rgba(255,255,255,.12);
+      font-family: var(--mono);
+      font-size: 13px;
+      color: rgba(255,255,255,.92);
+    }
+    .step p{ margin:0; color:var(--muted); }
+    .step strong{ color: rgba(255,255,255,.92); }
+
+    /* Final answer highlight */
+    .final{
+      margin-top: 14px;
+      padding: 14px 14px;
+      border-radius: 16px;
+      border:1px solid rgba(47,229,157,.25);
+      background: linear-gradient(135deg, rgba(47,229,157,.14), rgba(53,210,255,.06));
+    }
+    .final h3{
+      margin:0 0 8px;
+      font-size:13px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.85);
+      display:flex; align-items:center; gap:10px;
+    }
+    .chip{
+      font-size:12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.82);
+    }
+
+    /* Sidebar */
+    .side{
+      position:sticky;
+      top: 18px;
+      display:flex;
+      flex-direction:column;
+      gap: 18px;
+    }
+    @media (max-width: 980px){
+      .side{ position:static; }
+    }
+    .toc{
+      padding: 14px 14px;
+      border-radius: var(--radius);
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      box-shadow: 0 14px 45px rgba(0,0,0,.2);
+    }
+    .toc h3{
+      margin:0 0 8px;
+      font-size:13px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: var(--muted);
+    }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      color: rgba(255,255,255,.86);
+      border:1px solid transparent;
+    }
+    .toc a:hover{
+      border-color: rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+    }
+    .note{
+      padding: 14px 14px;
+      border-radius: var(--radius);
+      border:1px solid rgba(255,200,87,.22);
+      background: linear-gradient(135deg, rgba(255,200,87,.12), rgba(255,255,255,.03));
+    }
+    .note h3{
+      margin:0 0 8px;
+      font-size:13px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.86);
+    }
+    .note p{
+      margin:0;
+      color: var(--muted);
+    }
+
+    /* Footer */
+    footer{
+      margin-top: 22px;
+      padding: 18px 0 8px;
+      color: var(--muted2);
+      text-align:center;
+      font-size: 13px;
+    }
+
+    /* Smooth anchor jumps */
+    html{ scroll-behavior:smooth; }
+    .anchor{
+      position:relative;
+      top:-14px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div class="kicker"><span class="dot"></span> Multivariable Calculus • Field Intuition • Topographic Slopes</div>
+      <h1>Gradient, Linearization & Directional Derivatives (Topographic Map)</h1>
+      <p class="sub">
+        A complete, structured solution in three parts: analysis, strategy, and full derivation —
+        written with physics-style intuition (fields, slopes, and local linear models).
+      </p>
+    </header>
+
+    <div class="grid">
+      <!-- MAIN CONTENT -->
+      <main>
+        <!-- PART 1 -->
+        <section class="card" id="part1">
+          <div class="head">
+            <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+            <span class="badge">Concept Map</span>
+          </div>
+          <div class="body">
+            <div class="part">
+              <h3>1) Restate the problems</h3>
+              <ul>
+                <li><strong>Problem 1:</strong> For \(f(x,y)=xy-x^4\),
+                  (a) compute \(\nabla f\) at \(P=(1,1)\);
+                  (b) write a linear (differential) approximation for \(\Delta w\) near \((1,1)\).
+                </li>
+                <li><strong>Problem 2:</strong> Given a contour map for \(h(x,y)\) (feet) with
+                  adjacent contours differing by \(100\ \text{ft}\) and a distance scale:
+                  (a) estimate \(\left.\dfrac{dh}{ds}\right|_P\) in direction of \(\mathbf{i}+\mathbf{j}\);
+                  (b) pick a point \(Q\) with \(h=2200,\ h_x=0,\ h_y<0\) and estimate \(h_y(Q)\).
+                </li>
+              </ul>
+            </div>
+
+            <div class="part">
+              <h3>2) Given vs. unknown</h3>
+              <ul>
+                <li><strong>Given:</strong> \(f(x,y)=xy-x^4\), point \(P=(1,1)\).</li>
+                <li><strong>Given:</strong> contour interval \(\Delta h=100\ \text{ft}\), map scale bar, point \(P\), direction \(\mathbf{i}+\mathbf{j}\).</li>
+                <li><strong>Unknown:</strong> \(\nabla f(1,1)\), linear approximation for \(\Delta w\), directional derivative at \(P\), and an estimate of \(h_y(Q)\).</li>
+              </ul>
+            </div>
+
+            <div class="part">
+              <h3>3) Key principles (why they apply)</h3>
+              <ul>
+                <li><strong>Gradient:</strong> \(\nabla f=\langle f_x,f_y\rangle\) gives steepest increase and feeds directional change via dot product.</li>
+                <li><strong>Linearization:</strong> small changes propagate as \(\Delta w\approx f_x\Delta x+f_y\Delta y\).</li>
+                <li><strong>Contour physics:</strong> each contour crossing is \(\pm 100\ \text{ft}\). Local slope is \(\Delta h/\Delta s\) along a direction.</li>
+                <li><strong>Partial derivative meaning:</strong> \(h_x=0\) means no change when moving in \(x\) (level curve tangent horizontal), and \(h_y<0\) means height decreases as \(y\) increases.</li>
+              </ul>
+            </div>
+
+            <div class="part">
+              <h3>4) Approaches (compare + choose)</h3>
+              <ul>
+                <li><strong>Problem 1:</strong> Direct partial differentiation (exact, fastest).</li>
+                <li><strong>Problem 2:</strong> Use contour spacing + scale (most direct; matches how topographic maps encode slope).</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- PART 2 -->
+        <section class="card" id="part2" style="margin-top:18px;">
+          <div class="head">
+            <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+            <span class="badge">No Algebra Yet</span>
+          </div>
+          <div class="body">
+            <div class="part">
+              <h3>Roadmap</h3>
+
+              <div class="step">
+                <div class="n">1</div>
+                <p><strong>Build \(\nabla f\).</strong> Differentiate: \(f_x, f_y\) using partial derivative rules.</p>
+              </div>
+
+              <div class="step">
+                <div class="n">2</div>
+                <p><strong>Evaluate at \((1,1)\).</strong> Substitute into \(f_x, f_y\) to get \(\nabla f(1,1)\).</p>
+              </div>
+
+              <div class="step">
+                <div class="n">3</div>
+                <p><strong>Linear approximation.</strong> Use \( \Delta w \approx f_x(1,1)\Delta x + f_y(1,1)\Delta y\).</p>
+              </div>
+
+              <div class="step">
+                <div class="n">4</div>
+                <p><strong>Normalize direction.</strong> Convert \(\mathbf{i}+\mathbf{j}\) to unit vector \(\hat{\mathbf{u}}\).</p>
+              </div>
+
+              <div class="step">
+                <div class="n">5</div>
+                <p><strong>Measure \(\Delta s\) from the map.</strong> Along \(\hat{\mathbf{u}}\) from \(P\), measure distance to the next contour using the 1000-ft scale bar.</p>
+              </div>
+
+              <div class="step">
+                <div class="n">6</div>
+                <p><strong>Directional derivative estimate.</strong> Use \(\dfrac{dh}{ds}\approx\dfrac{\Delta h}{\Delta s}\) with \(\Delta h=100\ \text{ft}\).</p>
+              </div>
+
+              <div class="step">
+                <div class="n">7</div>
+                <p><strong>Select \(Q\).</strong> On the 2200-ft contour, pick a point where the contour tangent is horizontal (this enforces \(h_x=0\)). Ensure moving upward decreases height to satisfy \(h_y<0\).</p>
+              </div>
+
+              <div class="step">
+                <div class="n">8</div>
+                <p><strong>Estimate \(h_y(Q)\).</strong> Measure vertical spacing \(\Delta y\) from 2200 to 2100 near \(Q\), then \(h_y\approx \Delta h/\Delta y\) (negative).</p>
+              </div>
+            </div>
+
+            <div class="part">
+              <h3>Common mistakes & quick tips</h3>
+              <ul>
+                <li>Forgetting to make \(\mathbf{i}+\mathbf{j}\) a <strong>unit</strong> vector.</li>
+                <li>Using a non-local spacing between contours (use the nearest contour step near the point).</li>
+                <li>Sign errors: moving toward higher contours \(\Rightarrow\) positive derivative; toward lower \(\Rightarrow\) negative.</li>
+                <li>Mixing “screen up” and “\(+y\)” — by convention, \(\mathbf{j}\) points upward on the page.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- PART 3 -->
+        <section class="card" id="part3" style="margin-top:18px;">
+          <div class="head">
+            <h2>PART 3 — Full Solution</h2>
+            <span class="badge">Intuition → Math → Checks</span>
+          </div>
+          <div class="body">
+            <!-- Problem 1 -->
+            <div class="part" id="prob1">
+              <span class="anchor" id="problem1"></span>
+              <h3>Problem 1 — Gradient & Linearization</h3>
+
+              <p style="margin:0;color:var(--muted);">
+                <strong>Field intuition:</strong> Think of \(f(x,y)\) as a scalar field (like potential).
+                The gradient \(\nabla f\) points in the direction of steepest increase and encodes
+                how sensitive \(f\) is to small changes in \(x\) and \(y\).
+              </p>
+
+              <div class="mathblock">
+                <p style="margin:0;color:var(--muted);"><strong>Given</strong> \(\; f(x,y)=xy-x^4\).</p>
+              </div>
+
+              <div class="step">
+                <div class="n">1</div>
+                <div>
+                  <p><strong>Compute \(f_x\).</strong> Treat \(y\) as constant:</p>
+                  <div class="mathblock">
+                    \[
+                      f_x(x,y)=\frac{\partial}{\partial x}(xy)-\frac{\partial}{\partial x}(x^4)
+                      =y-4x^3.
+                    \]
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="n">2</div>
+                <div>
+                  <p><strong>Compute \(f_y\).</strong> Treat \(x\) as constant:</p>
+                  <div class="mathblock">
+                    \[
+                      f_y(x,y)=\frac{\partial}{\partial y}(xy)-\frac{\partial}{\partial y}(x^4)
+                      =x.
+                    \]
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="n">3</div>
+                <div>
+                  <p><strong>Build the gradient.</strong></p>
+                  <div class="mathblock">
+                    \[
+                      \nabla f(x,y)=\langle f_x,f_y\rangle=\langle y-4x^3,\ x\rangle.
+                    \]
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="n">4</div>
+                <div>
+                  <p><strong>Evaluate at \(P=(1,1)\).</strong></p>
+                  <div class="mathblock">
+                    \[
+                      \nabla f(1,1)=\langle 1-4(1)^3,\ 1\rangle=\langle -3,\ 1\rangle.
+                    \]
+                  </div>
+                </div>
+              </div>
+
+              <div class="final">
+                <h3>Final result <span class="chip">Problem 1(a)</span></h3>
+                <div class="mathblock" style="margin:0;">
+                  \[
+                    \boxed{\nabla f(1,1)=\langle -3,\ 1\rangle}
+                  \]
+                </div>
+              </div>
+
+              <div class="step" style="margin-top:14px;">
+                <div class="n">5</div>
+                <div>
+                  <p><strong>Linear (differential) approximation.</strong> For \(w=f(x,y)\), small changes satisfy</p>
+                  <div class="mathblock">
+                    \[
+                      \Delta w \approx f_x(1,1)\,\Delta x + f_y(1,1)\,\Delta y.
+                    \]
+                  </div>
+                  <p style="margin:0;color:var(--muted);">Substitute \(f_x(1,1)=-3,\; f_y(1,1)=1\).</p>
+                  <div class="mathblock">
+                    \[
+                      \Delta w \approx -3\,\Delta x + \Delta y.
+                    \]
+                  </div>
+                </div>
+              </div>
+
+              <div class="final">
+                <h3>Final result <span class="chip">Problem 1(b)</span></h3>
+                <div class="mathblock" style="margin:0;">
+                  \[
+                    \boxed{\Delta w \approx -3\,\Delta x + \Delta y \quad \text{(near }(1,1)\text{)}}
+                  \]
+                </div>
+              </div>
+
+              <div class="part" style="margin-top:12px;">
+                <h3>Sanity checks</h3>
+                <ul>
+                  <li><strong>Sign:</strong> \(f_x(1,1)=-3\Rightarrow\) increasing \(x\) decreases \(f\) locally.</li>
+                  <li><strong>Direction test:</strong> If \(\Delta y=0\), then \(\Delta w\approx -3\Delta x\); if \(\Delta x=0\), \(\Delta w\approx \Delta y\).</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Problem 2 -->
+            <div class="part" id="prob2" style="margin-top:16px;">
+              <span class="anchor" id="problem2"></span>
+              <h3>Problem 2 — Topographic Directional Derivatives</h3>
+
+              <p style="margin:0;color:var(--muted);">
+                <strong>Field intuition:</strong> \(h(x,y)\) is elevation (feet). Contours are level sets:
+                each line is constant \(h\). The steepness in a direction is “rise over run”:
+                \(\Delta h / \Delta s\).
+              </p>
+
+              <div class="mathblock">
+                <p style="margin:0;color:var(--muted);">
+                  <strong>Map facts:</strong> adjacent contours differ by \(100\ \text{ft}\).
+                  A 1000-ft scale bar is provided for distance conversion.
+                </p>
+              </div>
+
+              <!-- 2(a) -->
+              <div class="step">
+                <div class="n">1</div>
+                <div>
+                  <p><strong>(a) Convert \(\mathbf{i}+\mathbf{j}\) to a unit direction.</strong></p>
+                  <div class="mathblock">
+                    \[
+                      \mathbf{i}+\mathbf{j}=\langle 1,1\rangle,\qquad
+                      \hat{\mathbf{u}}=\frac{\langle 1,1\rangle}{\sqrt{1^2+1^2}}
+                      =\frac{1}{\sqrt2}\langle 1,1\rangle.
+                    \]
+                  </div>
+                  <p style="margin:0;color:var(--muted);">
+                    Moving along \(\hat{\mathbf{u}}\) means moving northeast at 45°.
+                  </p>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="n">2</div>
+                <div>
+                  <p><strong>(a) Estimate rise \(\Delta h\) and run \(\Delta s\) near \(P\).</strong></p>
+                  <p style="margin:8px 0 0;color:var(--muted);">
+                    Along the northeast direction from \(P\), the next contour crossing corresponds to a change of
+                    \(\Delta h \approx +100\ \text{ft}\) (toward higher contours near the hill).
+                  </p>
+                  <p style="margin:8px 0 0;color:var(--muted);">
+                    Using the 1000-ft scale bar, the measured distance from \(P\) to the next contour along that direction is
+                    approximately \(\Delta s \approx 7.0\times 10^2\ \text{ft}\) (about \(702\ \text{ft}\)).
+                  </p>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="n">3</div>
+                <div>
+                  <p><strong>(a) Compute directional derivative as slope.</strong></p>
+                  <div class="mathblock">
+                    \[
+                      \left.\frac{dh}{ds}\right|_{P,\hat{\mathbf{u}}}
+                      \approx \frac{\Delta h}{\Delta s}
+                      =\frac{100\ \text{ft}}{702\ \text{ft}}
+                      \approx 0.1425.
+                    \]
+                  </div>
+                  <div class="mathblock">
+                    \[
+                      \boxed{\left.\frac{dh}{ds}\right|_P \approx 0.1\ \text{ft/ft (to nearest 0.1)}}
+                    \]
+                  </div>
+                </div>
+              </div>
+
+              <div class="part" style="margin-top:12px;">
+                <h3>Sanity checks for (a)</h3>
+                <ul>
+                  <li><strong>Units:</strong> \(\text{ft}/\text{ft}\) (dimensionless slope), correct.</li>
+                  <li><strong>Sign:</strong> positive because the direction heads toward higher elevations.</li>
+                  <li><strong>Meaning:</strong> about 14 ft gained per 100 ft traveled (moderate slope).</li>
+                </ul>
+              </div>
+
+              <!-- 2(b) -->
+              <div class="step" style="margin-top:12px;">
+                <div class="n">4</div>
+                <div>
+                  <p><strong>(b) Choose a point \(Q\) with \(h=2200,\; h_x=0,\; h_y<0\).</strong></p>
+                  <p style="margin:8px 0 0;color:var(--muted);">
+                    Pick \(Q\) on the 2200-ft contour where the contour is locally <strong>horizontal</strong>.
+                    A horizontal tangent means changing \(x\) (moving left/right) stays on the same contour to first order,
+                    so \(h_x(Q)=0\).
+                  </p>
+                  <p style="margin:8px 0 0;color:var(--muted);">
+                    To enforce \(h_y(Q)<0\): moving upward (in \(+y\)) should go to lower elevation. This occurs on the
+                    <strong>upper side</strong> of the hill’s 2200 contour.
+                  </p>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="n">5</div>
+                <div>
+                  <p><strong>(b) Estimate \(h_y(Q)\) by “vertical rise/run”.</strong></p>
+                  <p style="margin:8px 0 0;color:var(--muted);">
+                    Moving upward from \(h=2200\) to the next contour \(h=2100\) gives
+                    \(\Delta h = 2100-2200=-100\ \text{ft}\).
+                    Measure the vertical spacing \(\Delta y\) between these contours near \(Q\) using the scale:
+                    \(\Delta y \approx 1.6\times 10^2\ \text{ft}\) (about \(159\ \text{ft}\)).
+                  </p>
+                  <div class="mathblock">
+                    \[
+                      h_y(Q)\approx \frac{\Delta h}{\Delta y}
+                      =\frac{-100\ \text{ft}}{159\ \text{ft}}
+                      \approx -0.63.
+                    \]
+                  </div>
+                  <div class="mathblock">
+                    \[
+                      \boxed{\left.\frac{\partial h}{\partial y}\right|_Q \approx -0.6\ \text{ft/ft (to nearest 0.1)}}
+                    \]
+                  </div>
+                </div>
+              </div>
+
+              <div class="part" style="margin-top:12px;">
+                <h3>Sanity checks for (b)</h3>
+                <ul>
+                  <li><strong>Units:</strong> \(\text{ft}/\text{ft}\), correct for a slope component.</li>
+                  <li><strong>Sign:</strong> negative matches \(h_y<0\).</li>
+                  <li><strong>Interpretation:</strong> per 1 ft northward, elevation drops about 0.6 ft near \(Q\) (steeper than at \(P\)).</li>
+                </ul>
+              </div>
+
+              <div class="final">
+                <h3>Final results <span class="chip">Problem 2</span></h3>
+                <div class="mathblock" style="margin:0;">
+                  \[
+                    \boxed{\left.\frac{dh}{ds}\right|_P \approx 0.1\ \text{ft/ft}}
+                  \]
+                  \[
+                    \boxed{\text{Choose }Q\text{ on the top of the }2200\text{ contour (horizontal tangent), and }
+                    \left.\frac{\partial h}{\partial y}\right|_Q \approx -0.6\ \text{ft/ft}}
+                  \]
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer>
+          <div style="opacity:.9;">
+            Built as an article-ready solution • Math rendered with MathJax • Styling is self-contained
+          </div>
+        </footer>
+      </main>
+
+      <!-- SIDEBAR -->
+      <aside class="side">
+        <nav class="toc" aria-label="Table of contents">
+          <h3>On this page</h3>
+          <a href="#part1">PART 1 — Problem Analysis</a>
+          <a href="#part2">PART 2 — Strategy & Tips</a>
+          <a href="#part3">PART 3 — Full Solution</a>
+          <a href="#problem1">Problem 1: \(\nabla f\) & \(\Delta w\)</a>
+          <a href="#problem2">Problem 2: \(\dfrac{dh}{ds}\) & \(h_y\)</a>
+        </nav>
+
+        <div class="note">
+          <h3>Teacher’s Note</h3>
+          <p>
+            The map-based numbers are estimates using the provided scale:
+            local contour spacing determines slope. If your measurement of the contour
+            distance differs slightly, your numerical values may vary a bit while staying correct in method.
+          </p>
+        </div>
+
+        <div class="note" style="border-color:rgba(53,210,255,.22);">
+          <h3>Quick Summary</h3>
+          <p>
+            \(\nabla f(1,1)=\langle -3,1\rangle\), \(\Delta w\approx -3\Delta x+\Delta y\),
+            \(\left.\dfrac{dh}{ds}\right|_P\approx 0.1\), and \(\left.h_y\right|_Q\approx -0.6\).
+          </p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

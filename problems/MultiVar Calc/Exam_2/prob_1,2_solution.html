@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Vector Geometry Tutorial — Problems 1 & 2 (Full Solution)</title>
+
+  <!-- MathJax for LaTeX rendering -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']], displayMath: [['\\[', '\\]']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg0:#070A12;
+      --bg1:#0B1020;
+      --card:rgba(255,255,255,.06);
+      --card2:rgba(255,255,255,.085);
+      --stroke:rgba(255,255,255,.12);
+      --stroke2:rgba(255,255,255,.18);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.68);
+      --muted2:rgba(255,255,255,.52);
+      --accent:#7C5CFF;
+      --accent2:#2DE2E6;
+      --good:#2EE59D;
+      --warn:#FFCF5C;
+      --shadow: 0 18px 45px rgba(0,0,0,.45);
+      --shadow2: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg0:#F6F8FF;
+        --bg1:#EEF2FF;
+        --card:rgba(0,0,0,.045);
+        --card2:rgba(0,0,0,.065);
+        --stroke:rgba(0,0,0,.10);
+        --stroke2:rgba(0,0,0,.16);
+        --text:rgba(10,12,20,.92);
+        --muted:rgba(10,12,20,.68);
+        --muted2:rgba(10,12,20,.52);
+        --shadow: 0 20px 55px rgba(30,40,90,.12);
+        --shadow2: 0 10px 30px rgba(30,40,90,.10);
+      }
+    }
+
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1000px 700px at 10% 5%, rgba(124,92,255,.22), transparent 60%),
+        radial-gradient(900px 650px at 90% 10%, rgba(45,226,230,.16), transparent 55%),
+        radial-gradient(900px 650px at 20% 90%, rgba(46,229,157,.12), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    /* subtle animated noise / shimmer */
+    .grain{
+      position:fixed; inset:-80px;
+      pointer-events:none;
+      opacity:.09;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.38'/%3E%3C/svg%3E");
+      mix-blend-mode:overlay;
+      animation: drift 14s linear infinite;
+      transform: translate3d(0,0,0);
+    }
+    @keyframes drift{
+      0%{ transform: translate3d(-2%, -2%, 0); }
+      50%{ transform: translate3d(2%, 1%, 0); }
+      100%{ transform: translate3d(-2%, -2%, 0); }
+    }
+
+    header.hero{
+      position:relative;
+      padding: 64px 18px 22px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .hero-grid{
+      display:grid;
+      grid-template-columns: 1.35fr .9fr;
+      gap: 18px;
+      align-items:stretch;
+    }
+    @media (max-width: 980px){
+      .hero-grid{ grid-template-columns:1fr; }
+    }
+
+    .title-card{
+      background: linear-gradient(135deg, rgba(124,92,255,.18), rgba(45,226,230,.11));
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 22px 18px;
+      overflow:hidden;
+      position:relative;
+    }
+    .title-card:before{
+      content:"";
+      position:absolute; inset:-80px -120px auto auto;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle at 30% 30%, rgba(124,92,255,.35), transparent 60%),
+                  radial-gradient(circle at 70% 70%, rgba(45,226,230,.25), transparent 60%);
+      filter: blur(2px);
+      transform: rotate(20deg);
+      opacity:.9;
+    }
+
+    h1{
+      margin:0 0 8px;
+      font-size: clamp(1.6rem, 1.1rem + 2.2vw, 2.7rem);
+      letter-spacing: -0.02em;
+      line-height: 1.12;
+      position:relative;
+      z-index:1;
+    }
+    .subtitle{
+      margin: 0;
+      color: var(--muted);
+      line-height:1.55;
+      max-width: 62ch;
+      position:relative;
+      z-index:1;
+    }
+
+    .meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top: 14px;
+      position:relative;
+      z-index:1;
+    }
+    .pill{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border:1px solid var(--stroke);
+      color: var(--muted);
+      font-size: .92rem;
+      backdrop-filter: blur(8px);
+    }
+    .dot{
+      width:8px; height:8px;
+      border-radius:50%;
+      background: var(--accent2);
+      box-shadow: 0 0 0 4px rgba(45,226,230,.14);
+      flex:0 0 auto;
+    }
+
+    .toc{
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      padding: 18px 18px 16px;
+      backdrop-filter: blur(10px);
+    }
+    .toc h2{
+      font-size: 1.1rem;
+      margin: 0 0 10px;
+      letter-spacing:-.01em;
+    }
+    .toc a{
+      color: var(--text);
+      text-decoration: none;
+    }
+    .toc a:hover{
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .toc ol{
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    main{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 10px 18px 90px;
+    }
+
+    .section{
+      margin-top: 18px;
+      display:grid;
+      gap: 16px;
+    }
+
+    .panel{
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      padding: 18px 18px 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    .panel-header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      color: var(--muted);
+      font-size:.95rem;
+    }
+    .badge{
+      font-family: var(--mono);
+      font-size: .85rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.07);
+      color: var(--muted);
+    }
+
+    h2{
+      margin: 0 0 8px;
+      font-size: 1.35rem;
+      letter-spacing:-.01em;
+    }
+    h3{
+      margin: 16px 0 6px;
+      font-size: 1.12rem;
+      letter-spacing:-.01em;
+    }
+    p{ margin: 10px 0; color: var(--muted); line-height: 1.75; }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 900px){
+      .grid-2{ grid-template-columns:1fr; }
+    }
+
+    .callout{
+      border-radius: var(--radius2);
+      border:1px solid var(--stroke);
+      background: linear-gradient(135deg, rgba(124,92,255,.12), rgba(46,229,157,.08));
+      padding: 14px 14px 12px;
+    }
+    .callout strong{ color: var(--text); }
+
+    .list{
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+    .list li{ margin: 6px 0; }
+
+    .equations{
+      background: rgba(0,0,0,.18);
+      border:1px solid var(--stroke);
+      border-radius: var(--radius2);
+      padding: 12px 14px;
+      overflow:auto;
+    }
+    @media (prefers-color-scheme: light){
+      .equations{ background: rgba(255,255,255,.55); }
+    }
+
+    .steps{
+      counter-reset: step;
+      display:grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .step{
+      display:grid;
+      grid-template-columns: 42px 1fr;
+      gap: 10px;
+      align-items:flex-start;
+      padding: 12px 12px 10px;
+      border-radius: var(--radius2);
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.055);
+    }
+    .step:before{
+      counter-increment: step;
+      content: counter(step);
+      width: 42px; height: 42px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius: 14px;
+      background: radial-gradient(circle at 30% 30%, rgba(124,92,255,.35), rgba(45,226,230,.18));
+      border:1px solid var(--stroke2);
+      color: var(--text);
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+    }
+
+    .math{
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .result{
+      border-radius: var(--radius2);
+      border: 1px solid rgba(46,229,157,.35);
+      background: linear-gradient(135deg, rgba(46,229,157,.12), rgba(45,226,230,.06));
+      padding: 12px 14px;
+      margin-top: 12px;
+      position:relative;
+      overflow:hidden;
+    }
+    .result:after{
+      content:"";
+      position:absolute;
+      inset:-120px auto auto -140px;
+      width: 280px;
+      height: 280px;
+      background: radial-gradient(circle at 35% 40%, rgba(46,229,157,.35), transparent 60%);
+      opacity:.8;
+      filter: blur(1px);
+      transform: rotate(-12deg);
+    }
+    .result .content{ position:relative; z-index:1; }
+    .result .label{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      color: var(--muted);
+      font-size:.9rem;
+      margin-bottom: 6px;
+    }
+    .check{
+      width:10px;height:10px;border-radius:50%;
+      background: var(--good);
+      box-shadow: 0 0 0 4px rgba(46,229,157,.16);
+    }
+
+    .sanity{
+      display:grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .sanity .mini{
+      border-radius: var(--radius2);
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+      padding: 12px 14px 10px;
+    }
+    .mini h4{
+      margin: 0 0 6px;
+      font-size: 0.98rem;
+      color: var(--text);
+      letter-spacing:-.01em;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .icon{
+      width: 9px; height: 9px;
+      border-radius: 3px;
+      background: var(--warn);
+      box-shadow: 0 0 0 4px rgba(255,207,92,.14);
+    }
+
+    details{
+      border-radius: var(--radius2);
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+      padding: 10px 12px;
+      margin-top: 12px;
+    }
+    summary{
+      cursor:pointer;
+      color: var(--text);
+      font-weight: 700;
+      outline:none;
+      list-style:none;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    summary:before{
+      content:"▸";
+      display:inline-block;
+      margin-right: 10px;
+      transform: translateY(-1px);
+      color: var(--muted);
+    }
+    details[open] summary:before{ content:"▾"; }
+
+    footer{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 22px 18px 50px;
+      color: var(--muted2);
+      text-align:center;
+    }
+    .fine{
+      font-family: var(--mono);
+      font-size: .86rem;
+      opacity:.9;
+    }
+
+    /* smooth anchor scrolling */
+    html{ scroll-behavior: smooth; }
+
+    /* selection glow */
+    ::selection{ background: rgba(124,92,255,.35); }
+
+    /* reduce motion */
+    @media (prefers-reduced-motion: reduce){
+      .grain{ animation:none; }
+      html{ scroll-behavior:auto; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="hero">
+    <div class="hero-grid">
+      <section class="title-card" aria-label="Article Title">
+        <h1>Vector Geometry — Full Worked Solutions (Problems 1 &amp; 2)</h1>
+        <p class="subtitle">
+          A physics-style approach to 3D vectors: displacement vectors, dot products for angles,
+          cross products for areas, and normals for plane equations — with rigorous steps and sanity checks.
+        </p>
+        <div class="meta">
+          <span class="pill"><span class="dot"></span>3D Vectors</span>
+          <span class="pill"><span class="dot" style="background: var(--accent); box-shadow:0 0 0 4px rgba(124,92,255,.14);"></span>Dot &amp; Cross Products</span>
+          <span class="pill"><span class="dot" style="background: var(--good); box-shadow:0 0 0 4px rgba(46,229,157,.14);"></span>Planes &amp; Parallelism</span>
+        </div>
+      </section>
+
+      <nav class="toc" aria-label="Table of contents">
+        <h2>Contents</h2>
+        <ol>
+          <li><a href="#part1">PART 1 — Problem Analysis</a></li>
+          <li><a href="#part2">PART 2 — Strategy &amp; Tips</a></li>
+          <li><a href="#part3">PART 3 — Full Solution</a></li>
+          <li><a href="#final">Final Boxed Answers</a></li>
+        </ol>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- ========================= -->
+    <!-- PART 1 — Problem Analysis -->
+    <!-- ========================= -->
+    <section id="part1" class="section">
+      <article class="panel">
+        <div class="panel-header">
+          <div class="kicker">
+            <span class="badge">PART 1</span>
+            <span>Problem Analysis (no solving yet)</span>
+          </div>
+          <span class="badge">Vectors • Geometry • Physics Lens</span>
+        </div>
+
+        <h2>Rewriting the tasks</h2>
+        <p>
+          We are given points in 3D space and must use vector tools (the same ones used for
+          displacement, work, and torque in physics) to compute:
+          displacement vectors, an angle via dot product, an area via cross product, a plane via a normal vector,
+          and a parallelism test using a dot product with the normal.
+        </p>
+
+        <div class="grid-2">
+          <div class="callout">
+            <h3>Problem 1 (axis points)</h3>
+            <ul class="list">
+              <li>\(P\) is at 1 on the \(x\)-axis \(\Rightarrow P=(1,0,0)\)</li>
+              <li>\(Q\) is at 2 on the \(y\)-axis \(\Rightarrow Q=(0,2,0)\)</li>
+              <li>\(R\) is at 3 on the \(z\)-axis \(\Rightarrow R=(0,0,3)\)</li>
+              <li>Find \(\overrightarrow{QP}\), \(\overrightarrow{QR}\) in \(\hat{\mathbf i},\hat{\mathbf j},\hat{\mathbf k}\)</li>
+              <li>Find \(\cos(\angle PQR)\)</li>
+            </ul>
+          </div>
+
+          <div class="callout">
+            <h3>Problem 2 (given coordinates)</h3>
+            <ul class="list">
+              <li>\(P=(1,1,1)\), \(Q=(0,3,1)\), \(R=(0,1,4)\)</li>
+              <li>Area of \(\triangle PQR\)</li>
+              <li>Plane through \(P,Q,R\): \(ax+by+cz=d\)</li>
+              <li>Check if line through \((1,2,3)\) and \((2,2,0)\) is parallel to the plane</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Relevant principles (and why)</h3>
+        <ul class="list">
+          <li><span class="math">Displacement vectors</span>: \(\overrightarrow{AB}=\mathbf r_B-\mathbf r_A\). Needed to form direction vectors.</li>
+          <li><span class="math">Dot product</span>: \(\mathbf a\cdot\mathbf b=|\mathbf a||\mathbf b|\cos\theta\). Extracts angles from vector directions.</li>
+          <li><span class="math">Cross product</span>: \(|\mathbf a\times\mathbf b|\) gives parallelogram area; half gives triangle area.</li>
+          <li><span class="math">Plane via normal</span>: \(\mathbf n\cdot(\mathbf r-\mathbf r_0)=0\). A plane is defined by a normal and a point.</li>
+          <li><span class="math">Parallel to plane test</span>: line direction \(\mathbf d\) is parallel to plane iff \(\mathbf d\cdot\mathbf n=0\).</li>
+        </ul>
+
+        <h3>Approaches</h3>
+        <ul class="list">
+          <li><strong>Component vector method (best):</strong> compute dot/cross products directly — shortest and least error-prone.</li>
+          <li><strong>Pure geometry method:</strong> lengths + cosine law/Heron’s formula — works but longer and more arithmetic.</li>
+          <li><strong>Linear system for plane:</strong> solve for \(a,b,c,d\) by substitution — valid but cross-product normal is cleaner.</li>
+        </ul>
+
+        <div class="result">
+          <div class="content">
+            <div class="label"><span class="check"></span><span>Chosen method</span></div>
+            <div class="equations">
+              \[
+                \textbf{Use component vectors + dot/cross products.}
+                \quad \text{Direct, systematic, and matches the physics toolkit.}
+              \]
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ========================= -->
+    <!-- PART 2 — Strategy & Tips  -->
+    <!-- ========================= -->
+    <section id="part2" class="section">
+      <article class="panel">
+        <div class="panel-header">
+          <div class="kicker">
+            <span class="badge">PART 2</span>
+            <span>Strategy &amp; Tips (roadmap only)</span>
+          </div>
+          <span class="badge">5–10 Steps • No Algebra Yet</span>
+        </div>
+
+        <h2>Minimal plan</h2>
+
+        <div class="steps">
+          <div class="step">
+            <div>
+              <h3>Write all point coordinates</h3>
+              <p>Goal: convert geometry to vectors. Tool: axis definitions / given coordinates.</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <h3>Form displacement vectors</h3>
+              <p>Goal: \(\overrightarrow{QP}, \overrightarrow{QR}\), etc. Tool: \(\overrightarrow{AB}=\mathbf r_B-\mathbf r_A\).</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <h3>Angle at \(Q\) using dot product</h3>
+              <p>Goal: \(\cos(\angle PQR)\). Tool: \(\cos\theta=\dfrac{\mathbf a\cdot\mathbf b}{|\mathbf a||\mathbf b|}\).</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <h3>Triangle area using cross product</h3>
+              <p>Goal: \(\text{Area}(\triangle PQR)\). Tool: \(\frac12|(\mathbf Q-\mathbf P)\times(\mathbf R-\mathbf P)|\).</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <h3>Plane equation via normal vector</h3>
+              <p>Goal: \(ax+by+cz=d\). Tool: \(\mathbf n=(\mathbf Q-\mathbf P)\times(\mathbf R-\mathbf P)\), then \(\mathbf n\cdot(\mathbf r-\mathbf r_P)=0\).</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <h3>Line direction vector</h3>
+              <p>Goal: direction of line through two points. Tool: \(\mathbf d=\mathbf B-\mathbf A\).</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <h3>Parallelism check</h3>
+              <p>Goal: decide if the line is parallel to plane. Tool: \(\mathbf d\cdot\mathbf n=0\) means parallel.</p>
+            </div>
+          </div>
+        </div>
+
+        <details>
+          <summary>Common mistakes &amp; quick tips</summary>
+          <ul class="list">
+            <li><strong>Vector direction matters:</strong> \(\overrightarrow{QP}=\mathbf P-\mathbf Q\) (not reversed).</li>
+            <li><strong>Angle \(PQR\) is at \(Q\):</strong> use vectors that start at \(Q\): \(\overrightarrow{QP}\) and \(\overrightarrow{QR}\).</li>
+            <li><strong>Triangle area:</strong> cross product gives parallelogram area → multiply by \(\tfrac12\).</li>
+            <li><strong>Line vs plane:</strong> don’t chase “slopes” in 3D—use \(\mathbf d\cdot\mathbf n\).</li>
+          </ul>
+        </details>
+      </article>
+    </section>
+
+    <!-- ========================= -->
+    <!-- PART 3 — Full Solution    -->
+    <!-- ========================= -->
+    <section id="part3" class="section">
+      <article class="panel">
+        <div class="panel-header">
+          <div class="kicker">
+            <span class="badge">PART 3</span>
+            <span>Full Solution</span>
+          </div>
+          <span class="badge">Derivations • Explanations • Checks</span>
+        </div>
+
+        <h2>Physical intuition</h2>
+        <p>
+          In physics terms, each point is a <em>position vector</em>. Vectors like \(\overrightarrow{QP}\) are
+          <em>displacements</em>. The dot product measures directional alignment (like work \(W=\mathbf F\cdot\mathbf d\)),
+          while the cross product measures “spanned area” and produces a perpendicular direction (like torque
+          \(\boldsymbol{\tau}=\mathbf r\times\mathbf F\)).
+        </p>
+
+        <!-- -------- Problem 1 -------- -->
+        <h3 id="p1">Problem 1</h3>
+        <p>
+          Points on axes: \(P=(1,0,0)\), \(Q=(0,2,0)\), \(R=(0,0,3)\).
+        </p>
+
+        <h3>1(a) Compute \(\overrightarrow{QP}\) and \(\overrightarrow{QR}\)</h3>
+        <div class="equations">
+          \[
+            \overrightarrow{AB}=\mathbf r_B-\mathbf r_A
+          \]
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div>
+              <p><strong>Vector \(\overrightarrow{QP}\):</strong></p>
+              <div class="equations">
+                \[
+                \overrightarrow{QP}=\mathbf r_P-\mathbf r_Q=(1,0,0)-(0,2,0)=(1,-2,0)
+                \]
+                \[
+                \Rightarrow\ \overrightarrow{QP}=\hat{\mathbf i}-2\hat{\mathbf j}+0\hat{\mathbf k}
+                \]
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <p><strong>Vector \(\overrightarrow{QR}\):</strong></p>
+              <div class="equations">
+                \[
+                \overrightarrow{QR}=\mathbf r_R-\mathbf r_Q=(0,0,3)-(0,2,0)=(0,-2,3)
+                \]
+                \[
+                \Rightarrow\ \overrightarrow{QR}=0\hat{\mathbf i}-2\hat{\mathbf j}+3\hat{\mathbf k}
+                \]
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result">
+          <div class="content">
+            <div class="label"><span class="check"></span><span>Final (Problem 1a)</span></div>
+            <div class="equations">
+              \[
+                \boxed{\overrightarrow{QP}=\hat{\mathbf i}-2\hat{\mathbf j}}
+                \qquad
+                \boxed{\overrightarrow{QR}=-2\hat{\mathbf j}+3\hat{\mathbf k}}
+              \]
+            </div>
+          </div>
+        </div>
+
+        <h3>1(b) Find \(\cos(\angle PQR)\)</h3>
+        <p>
+          The angle \(PQR\) is at point \(Q\), so we use the two vectors emanating from \(Q\):
+          \(\overrightarrow{QP}\) and \(\overrightarrow{QR}\).
+        </p>
+
+        <div class="equations">
+          \[
+            \cos\theta=\frac{\overrightarrow{QP}\cdot \overrightarrow{QR}}{|\overrightarrow{QP}|\ |\overrightarrow{QR}|}
+          \]
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div>
+              <p><strong>Dot product:</strong></p>
+              <div class="equations">
+                \[
+                \overrightarrow{QP}\cdot\overrightarrow{QR}=(1,-2,0)\cdot(0,-2,3)
+                =1\cdot0+(-2)(-2)+0\cdot3=4
+                \]
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <p><strong>Magnitudes:</strong></p>
+              <div class="equations">
+                \[
+                |\overrightarrow{QP}|=\sqrt{1^2+(-2)^2+0^2}=\sqrt{5}
+                \]
+                \[
+                |\overrightarrow{QR}|=\sqrt{0^2+(-2)^2+3^2}=\sqrt{13}
+                \]
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <p><strong>Cosine of the angle:</strong></p>
+              <div class="equations">
+                \[
+                \cos(\angle PQR)=\frac{4}{\sqrt{5}\sqrt{13}}=\frac{4}{\sqrt{65}}
+                \]
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result">
+          <div class="content">
+            <div class="label"><span class="check"></span><span>Final (Problem 1b)</span></div>
+            <div class="equations">
+              \[
+                \boxed{\cos(\angle PQR)=\frac{4}{\sqrt{65}}}
+              \]
+            </div>
+          </div>
+        </div>
+
+        <div class="sanity">
+          <div class="mini">
+            <h4><span class="icon"></span>Sanity checks</h4>
+            <ul class="list">
+              <li><strong>Units:</strong> dimensionless (ratio of lengths) ✓</li>
+              <li><strong>Range:</strong> \(0<4/\sqrt{65}<1\Rightarrow\) acute angle ✓</li>
+              <li><strong>Interpretation:</strong> positive dot product → vectors point partly in the same direction ✓</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- -------- Problem 2 -------- -->
+        <h3 id="p2" style="margin-top:22px;">Problem 2</h3>
+        <p>
+          Given \(P=(1,1,1)\), \(Q=(0,3,1)\), \(R=(0,1,4)\).
+        </p>
+
+        <h3>2(a) Area of triangle \(PQR\)</h3>
+        <p>
+          Two side vectors from the same vertex span a parallelogram. The cross product magnitude gives that parallelogram’s area,
+          so the triangle area is half.
+        </p>
+        <div class="equations">
+          \[
+          \text{Area}(\triangle PQR)=\frac12\left|(\mathbf Q-\mathbf P)\times(\mathbf R-\mathbf P)\right|
+          \]
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div>
+              <p><strong>Build side vectors from \(P\):</strong></p>
+              <div class="equations">
+                \[
+                \mathbf Q-\mathbf P=(0,3,1)-(1,1,1)=(-1,2,0)
+                \]
+                \[
+                \mathbf R-\mathbf P=(0,1,4)-(1,1,1)=(-1,0,3)
+                \]
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <p><strong>Cross product:</strong></p>
+              <div class="equations">
+                \[
+                (\mathbf Q-\mathbf P)\times(\mathbf R-\mathbf P)=
+                \begin{vmatrix}
+                \hat{\mathbf i} & \hat{\mathbf j} & \hat{\mathbf k}\\
+                -1 & 2 & 0\\
+                -1 & 0 & 3
+                \end{vmatrix}
+                \]
+                \[
+                =\left(2\cdot 3-0\cdot 0\right)\hat{\mathbf i}
+                -\left((-1)\cdot 3-0\cdot(-1)\right)\hat{\mathbf j}
+                +\left((-1)\cdot 0-2\cdot(-1)\right)\hat{\mathbf k}
+                \]
+                \[
+                =(6)\hat{\mathbf i}+(3)\hat{\mathbf j}+(2)\hat{\mathbf k}=(6,3,2)
+                \]
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <p><strong>Magnitude and triangle area:</strong></p>
+              <div class="equations">
+                \[
+                |(6,3,2)|=\sqrt{6^2+3^2+2^2}=\sqrt{36+9+4}=\sqrt{49}=7
+                \]
+                \[
+                \Rightarrow\ \text{Area}=\frac12\cdot 7=\frac{7}{2}
+                \]
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result">
+          <div class="content">
+            <div class="label"><span class="check"></span><span>Final (Problem 2a)</span></div>
+            <div class="equations">
+              \[
+                \boxed{\text{Area}(\triangle PQR)=\frac{7}{2}}
+              \]
+            </div>
+          </div>
+        </div>
+
+        <div class="sanity">
+          <div class="mini">
+            <h4><span class="icon"></span>Sanity checks</h4>
+            <ul class="list">
+              <li><strong>Units:</strong> coordinate units squared ✓</li>
+              <li><strong>Nonzero area:</strong> cross product magnitude \(7\neq 0\Rightarrow\) not collinear ✓</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>2(b) Plane through \(P,Q,R\) in \(ax+by+cz=d\)</h3>
+        <p>
+          The plane’s normal is the same cross product used above:
+          \(\mathbf n=(\mathbf Q-\mathbf P)\times(\mathbf R-\mathbf P)=(6,3,2)\).
+          Then enforce \(\mathbf n\cdot(\mathbf r-\mathbf r_P)=0\).
+        </p>
+
+        <div class="steps">
+          <div class="step">
+            <div>
+              <p><strong>Normal vector:</strong></p>
+              <div class="equations">
+                \[
+                \mathbf n=(6,3,2)
+                \]
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <p><strong>Point-normal form using \(P=(1,1,1)\):</strong></p>
+              <div class="equations">
+                \[
+                (6,3,2)\cdot(x-1,\ y-1,\ z-1)=0
+                \]
+                \[
+                6(x-1)+3(y-1)+2(z-1)=0
+                \]
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <p><strong>Expand to \(ax+by+cz=d\):</strong></p>
+              <div class="equations">
+                \[
+                6x-6+3y-3+2z-2=0
+                \]
+                \[
+                6x+3y+2z=11
+                \]
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result">
+          <div class="content">
+            <div class="label"><span class="check"></span><span>Final (Problem 2b)</span></div>
+            <div class="equations">
+              \[
+                \boxed{6x+3y+2z=11}
+              \]
+            </div>
+          </div>
+        </div>
+
+        <div class="sanity">
+          <div class="mini">
+            <h4><span class="icon"></span>Sanity checks</h4>
+            <ul class="list">
+              <li><strong>Substitute \(P(1,1,1)\):</strong> \(6+3+2=11\) ✓</li>
+              <li><strong>Substitute \(Q(0,3,1)\):</strong> \(0+9+2=11\) ✓</li>
+              <li><strong>Substitute \(R(0,1,4)\):</strong> \(0+3+8=11\) ✓</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>2(c) Is the line through \((1,2,3)\) and \((2,2,0)\) parallel to the plane?</h3>
+        <p>
+          A line is parallel to a plane if its direction vector lies entirely inside the plane, meaning it has
+          no component along the plane’s normal. In symbols: \(\mathbf d\cdot\mathbf n=0\).
+        </p>
+
+        <div class="steps">
+          <div class="step">
+            <div>
+              <p><strong>Direction vector of the line:</strong></p>
+              <div class="equations">
+                \[
+                \mathbf d=(2,2,0)-(1,2,3)=(1,0,-3)
+                \]
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div>
+              <p><strong>Dot with plane normal \(\mathbf n=(6,3,2)\):</strong></p>
+              <div class="equations">
+                \[
+                \mathbf d\cdot\mathbf n=(1,0,-3)\cdot(6,3,2)=1\cdot6+0\cdot3+(-3)\cdot2=6-6=0
+                \]
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="result">
+          <div class="content">
+            <div class="label"><span class="check"></span><span>Final (Problem 2c)</span></div>
+            <div class="equations">
+              \[
+                \boxed{\text{Yes. The line is parallel to the plane because } \mathbf d\cdot\mathbf n=0.}
+              \]
+            </div>
+          </div>
+        </div>
+
+        <div class="sanity">
+          <div class="mini">
+            <h4><span class="icon"></span>Sanity checks</h4>
+            <ul class="list">
+              <li><strong>Units:</strong> dot product is scalar and consistent ✓</li>
+              <li><strong>Interpretation:</strong> if \(\mathbf d\) has no component along \(\mathbf n\), it never “leaves” the plane’s direction space ✓</li>
+            </ul>
+          </div>
+        </div>
+
+      </article>
+    </section>
+
+    <!-- ========================= -->
+    <!-- Final boxed answers       -->
+    <!-- ========================= -->
+    <section id="final" class="section">
+      <article class="panel">
+        <div class="panel-header">
+          <div class="kicker">
+            <span class="badge">FINAL</span>
+            <span>Boxed Results</span>
+          </div>
+          <span class="badge">Quick Reference</span>
+        </div>
+
+        <div class="equations">
+          \[
+          \boxed{\overrightarrow{QP}=\hat{\mathbf i}-2\hat{\mathbf j}}
+          \qquad
+          \boxed{\overrightarrow{QR}=-2\hat{\mathbf j}+3\hat{\mathbf k}}
+          \]
+          \[
+          \boxed{\cos(\angle PQR)=\frac{4}{\sqrt{65}}}
+          \]
+          \[
+          \boxed{\text{Area}(\triangle PQR)=\frac{7}{2}}
+          \qquad
+          \boxed{6x+3y+2z=11}
+          \]
+          \[
+          \boxed{\text{Line through }(1,2,3)\text{ and }(2,2,0)\text{ is parallel to the plane since }(1,0,-3)\cdot(6,3,2)=0.}
+          \]
+        </div>
+
+        <p class="fine">
+          Tip for publishing: this page is self-contained and uses MathJax CDN for LaTeX rendering.
+        </p>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    <div class="fine">
+      Built as an article-ready HTML document • Vector methods: displacement, dot product (angles), cross product (area/normal), plane + parallelism test.
+    </div>
+  </footer>
+</body>
+</html>

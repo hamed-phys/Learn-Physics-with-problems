@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Problem 3 & 4 — Full Structured Solution</title>
+
+  <!-- MathJax (LaTeX rendering) -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg0:#070A12; --bg1:#0B1020; --card:#0E1730; --card2:#0B1329;
+      --txt:#EAF0FF; --muted:#A9B4D0;
+      --acc:#7C5CFF; --acc2:#20E3B2; --warn:#FFB020; --danger:#FF4D6D;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --shadow2: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--txt);
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(124,92,255,.35), transparent 60%),
+        radial-gradient(900px 500px at 85% 25%, rgba(32,227,178,.25), transparent 60%),
+        radial-gradient(900px 500px at 60% 90%, rgba(255,176,32,.18), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    /* Ambient grid */
+    .grid{
+      position:fixed; inset:-2px;
+      background-image:
+        linear-gradient(to right, rgba(255,255,255,.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.05) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(closest-side, rgba(0,0,0,.9), transparent);
+      pointer-events:none;
+      opacity:.25;
+      z-index:0;
+    }
+
+    header{
+      position:relative;
+      z-index:1;
+      padding: 56px 20px 22px;
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+    .hero{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 22px;
+      align-items:stretch;
+    }
+    @media (max-width: 960px){
+      .hero{grid-template-columns:1fr}
+    }
+
+    .badgeRow{display:flex; gap:10px; flex-wrap:wrap; margin: 0 0 16px}
+    .badge{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:8px 12px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(255,255,255,.04);
+      box-shadow: var(--shadow2);
+      font-size: 12.5px;
+      letter-spacing:.2px;
+      color: var(--muted);
+      backdrop-filter: blur(8px);
+    }
+    .dot{
+      width:9px; height:9px; border-radius:50%;
+      background: linear-gradient(90deg, var(--acc), var(--acc2));
+      box-shadow: 0 0 16px rgba(124,92,255,.55);
+    }
+
+    h1{
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.06;
+      letter-spacing: -0.6px;
+    }
+    .sub{
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(14px, 2vw, 16.5px);
+      line-height: 1.55;
+      max-width: 62ch;
+    }
+
+    .heroCard{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        radial-gradient(500px 280px at 30% 30%, rgba(124,92,255,.18), transparent 65%),
+        radial-gradient(420px 260px at 70% 70%, rgba(32,227,178,.14), transparent 60%),
+        rgba(255,255,255,.04);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+      position:relative;
+    }
+    .heroCard h2{
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing:.25px;
+      text-transform: uppercase;
+    }
+    .toc{
+      display:grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .toc a{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      text-decoration:none;
+      color: var(--txt);
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.16);
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+    .toc a:hover{
+      transform: translateY(-1px);
+      border-color: rgba(124,92,255,.45);
+      background: rgba(124,92,255,.12);
+    }
+    .toc small{color:var(--muted)}
+    .toc .pill{
+      font-size: 11px;
+      color: #0a0f1f;
+      background: linear-gradient(90deg, var(--acc), var(--acc2));
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      letter-spacing:.3px;
+      white-space:nowrap;
+    }
+
+    main{
+      position:relative;
+      z-index:1;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 10px 20px 80px;
+    }
+
+    .section{
+      margin-top: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.04);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+    .sectionHeader{
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, rgba(124,92,255,.16), rgba(32,227,178,.10)),
+        rgba(0,0,0,.14);
+    }
+    .sectionHeader h2{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:-.2px;
+    }
+    .sectionHeader p{
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .content{
+      padding: 18px;
+    }
+
+    .parts{
+      display:grid;
+      gap: 14px;
+    }
+    .part{
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius2);
+      background:
+        radial-gradient(600px 240px at 30% 0%, rgba(255,255,255,.06), transparent 60%),
+        rgba(0,0,0,.18);
+      overflow:hidden;
+    }
+    .partHead{
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .partHead h3{
+      margin:0;
+      font-size: 14px;
+      letter-spacing:.2px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .chip b{color:var(--txt)}
+    .partBody{
+      padding: 14px;
+      line-height: 1.62;
+      color: rgba(234,240,255,.92);
+    }
+
+    .cols{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 10px;
+    }
+    @media (max-width: 900px){
+      .cols{grid-template-columns:1fr}
+    }
+
+    .callout{
+      border: 1px solid rgba(124,92,255,.35);
+      background: rgba(124,92,255,.12);
+      border-radius: 14px;
+      padding: 12px 12px;
+      margin: 12px 0;
+    }
+    .callout strong{display:block; margin-bottom:6px}
+    .muted{color:var(--muted)}
+
+    .steps{
+      margin: 10px 0 0;
+      padding:0;
+      list-style:none;
+      display:grid;
+      gap: 10px;
+    }
+    .steps li{
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.20);
+    }
+    .steps li .k{
+      display:inline-block;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(234,240,255,.86);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 4px 8px;
+      border-radius: 10px;
+      margin: 0 0 8px;
+    }
+
+    .mathCard{
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      background: rgba(0,0,0,.20);
+      padding: 12px 12px;
+      overflow:auto;
+      margin: 10px 0;
+    }
+
+    .final{
+      border: 1px solid rgba(32,227,178,.35);
+      background: rgba(32,227,178,.10);
+      border-radius: 16px;
+      padding: 14px;
+      margin: 14px 0 0;
+      position:relative;
+      overflow:hidden;
+    }
+    .final:before{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(500px 180px at 20% 20%, rgba(32,227,178,.18), transparent 60%);
+      pointer-events:none;
+    }
+    .final h4{
+      margin: 0 0 8px;
+      letter-spacing:.2px;
+    }
+    .final .box{
+      position:relative;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.25);
+      padding: 10px 12px;
+      overflow:auto;
+    }
+
+    .checks{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 900px){
+      .checks{grid-template-columns:1fr}
+    }
+    .check{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.20);
+      padding: 12px;
+    }
+    .check h5{
+      margin:0 0 6px;
+      font-size: 13px;
+      letter-spacing:.2px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    footer{
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 26px 20px 60px;
+      color: var(--muted);
+      position:relative;
+      z-index:1;
+      text-align:center;
+    }
+    code.inline{
+      font-family: var(--mono);
+      font-size: .95em;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.25);
+    }
+
+    /* Simple reveal animations */
+    .reveal{opacity:0; transform: translateY(10px); transition: opacity .6s ease, transform .6s ease;}
+    .reveal.on{opacity:1; transform:none;}
+  </style>
+</head>
+
+<body>
+  <div class="grid" aria-hidden="true"></div>
+
+  <header>
+    <div class="hero">
+      <div>
+        <div class="badgeRow">
+          <span class="badge"><span class="dot"></span> Advanced Article Layout</span>
+          <span class="badge">MathJax-enabled</span>
+          <span class="badge">Structured “Tutor Style”</span>
+        </div>
+        <h1>Problem 3 &amp; Problem 4 — Full Solution (Structured)</h1>
+        <p class="sub">
+          This article presents the complete solution in three required parts:
+          <span class="muted">Problem Analysis → Strategy &amp; Tips → Full Solution</span>.
+          All derivations are shown step-by-step, with final results highlighted and sanity checks included.
+        </p>
+      </div>
+
+      <aside class="heroCard">
+        <h2>Quick Navigation</h2>
+        <nav class="toc">
+          <a href="#p3">
+            <span><b>Problem 3</b><br><small>Inverse, linear system, singular case</small></span>
+            <span class="pill">3(a–c)</span>
+          </a>
+          <a href="#p4">
+            <span><b>Problem 4</b><br><small>Ladder midpoint parametrics</small></span>
+            <span class="pill">Parametric</span>
+          </a>
+        </nav>
+        <div class="callout" style="margin-top:14px">
+          <strong>Rendering tip</strong>
+          <div class="muted">
+            Equations are written in LaTeX and rendered by MathJax. If your site already loads MathJax,
+            remove the MathJax script above to avoid double-loading.
+          </div>
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===================== PROBLEM 3 ===================== -->
+    <section id="p3" class="section reveal">
+      <div class="sectionHeader">
+        <h2>Problem 3 — Linear Algebra (15 points)</h2>
+        <p>
+          Given
+          \[
+            A=\begin{pmatrix}1&3&2\\2&0&-1\\1&1&0\end{pmatrix},\quad
+            \det(A)=2,\quad
+            A^{-1}=\frac12\begin{pmatrix}1&a&b\\-1&-2&5\\2&2&-6\end{pmatrix}.
+          \]
+          (a) Find \(a,b\). (b) Solve \(AX=B\) for \(B=(1,-2,1)^T\). (c) Replace \(2\) by \(c\) to form \(M\); find \(c\) making \(M\) singular and a nonzero solution of \(MX=0\).
+        </p>
+      </div>
+
+      <div class="content">
+        <div class="parts">
+          <!-- PART 1 -->
+          <article class="part reveal">
+            <div class="partHead">
+              <h3>PART 1 — Problem Analysis (no solving yet)</h3>
+              <span class="chip"><b>Goal:</b> understand + choose tools</span>
+            </div>
+            <div class="partBody">
+              <p><b>Restatement.</b> We are given a specific \(3\times 3\) matrix \(A\) and a proposed formula for its inverse
+                containing unknown entries \(a\) and \(b\). We must determine those entries, then use the inverse to solve
+                \(AX=B\). Finally, we modify one entry of \(A\) to form \(M\), find the parameter value that makes \(M\) non-invertible,
+                and produce a nontrivial vector in the null space of \(M\).</p>
+
+              <div class="cols">
+                <div class="mathCard">
+                  <b>Given</b>
+                  <ul>
+                    <li>\(A=\begin{pmatrix}1&3&2\\2&0&-1\\1&1&0\end{pmatrix}\)</li>
+                    <li>\(\det(A)=2\neq 0\Rightarrow A\) is invertible</li>
+                    <li>\(A^{-1}=\dfrac12\begin{pmatrix}1&a&b\\-1&-2&5\\2&2&-6\end{pmatrix}\)</li>
+                    <li>\(B=\begin{pmatrix}1\\-2\\1\end{pmatrix}\)</li>
+                  </ul>
+                </div>
+                <div class="mathCard">
+                  <b>Unknowns / What to find</b>
+                  <ul>
+                    <li>(a) \(a,b\)</li>
+                    <li>(b) \(X=(x,y,z)^T\)</li>
+                    <li>(c) \(c\) such that \(\det(M)=0\), and one \(X\neq 0\) with \(MX=0\)</li>
+                  </ul>
+                </div>
+              </div>
+
+              <p><b>Key principles and why they apply.</b></p>
+              <ul>
+                <li><b>Inverse definition:</b> \(AA^{-1}=I\). This directly imposes equations that determine \(a,b\).</li>
+                <li><b>Solving linear systems:</b> If \(A\) is invertible, \(X=A^{-1}B\).</li>
+                <li><b>Singularity:</b> \(M\) is not invertible iff \(\det(M)=0\).</li>
+                <li><b>Orthogonality hint:</b> \(MX=0\) means each row of \(M\) has dot product \(0\) with \(X\).</li>
+              </ul>
+
+              <p><b>Approaches.</b></p>
+              <ul>
+                <li><b>Direct multiplication</b> \(AA^{-1}=I\): fastest for (a), minimal overhead.</li>
+                <li><b>Row reduction</b>: works but longer since the inverse is already almost given.</li>
+                <li><b>Cofactor/adjugate</b>: valid but computation-heavy.</li>
+              </ul>
+
+              <div class="callout">
+                <strong>Chosen approach</strong>
+                Use \(AA^{-1}=I\) to solve for \(a,b\), then compute \(X=A^{-1}B\). For (c) compute \(\det(M)\) in terms of \(c\),
+                then use the orthogonality hint (via a cross product of two rows) to construct a null vector.
+              </div>
+            </div>
+          </article>
+
+          <!-- PART 2 -->
+          <article class="part reveal">
+            <div class="partHead">
+              <h3>PART 2 — Strategy &amp; Tips (roadmap only)</h3>
+              <span class="chip"><b>Focus:</b> clean plan, no algebra</span>
+            </div>
+            <div class="partBody">
+              <ol class="steps">
+                <li>
+                  <div class="k">Step 1</div>
+                  <b>Goal:</b> Lock down \(a,b\).<br>
+                  <span class="muted">Tool:</span> Multiply \(A\) by the proposed \(A^{-1}\) and set the result equal to \(I\).
+                </li>
+                <li>
+                  <div class="k">Step 2</div>
+                  <b>Goal:</b> Solve \(AX=B\).<br>
+                  <span class="muted">Tool:</span> Use \(X=A^{-1}B\) and compute a matrix–vector product.
+                </li>
+                <li>
+                  <div class="k">Step 3</div>
+                  <b>Goal:</b> Find \(c\) making \(M\) singular.<br>
+                  <span class="muted">Tool:</span> Compute \(\det(M)\) as a function of \(c\); set it to zero.
+                </li>
+                <li>
+                  <div class="k">Step 4</div>
+                  <b>Goal:</b> Produce a nonzero solution of \(MX=0\).<br>
+                  <span class="muted">Tool:</span> Interpret rows as vectors \(U,V,W\). Use a cross product \(U\times V\) to get a vector orthogonal to both, then verify orthogonality to the third row.
+                </li>
+              </ol>
+
+              <div class="callout">
+                <strong>Common mistakes</strong>
+                <ul style="margin:8px 0 0">
+                  <li>Forgetting the overall factor \(\tfrac12\) in \(A^{-1}\).</li>
+                  <li>Not enforcing off-diagonal entries of \(AA^{-1}\) to be \(0\).</li>
+                  <li>In part (c), finding a vector orthogonal to two rows but not checking the third.</li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <!-- PART 3 -->
+          <article class="part reveal">
+            <div class="partHead">
+              <h3>PART 3 — Full Solution</h3>
+              <span class="chip"><b>Includes:</b> derivation + checks</span>
+            </div>
+            <div class="partBody">
+              <p><b>Intuition.</b> An inverse matrix “undoes” the action of the original matrix. Therefore, applying \(A\) and then \(A^{-1}\)
+                must return every vector unchanged, which algebraically means \(AA^{-1}=I\). This gives concrete equations that uniquely fix the unknown entries.</p>
+
+              <h4 style="margin:14px 0 8px">3(a) Find \(a\) and \(b\)</h4>
+              <p>Let
+                \[
+                  K=\begin{pmatrix}1&a&b\\-1&-2&5\\2&2&-6\end{pmatrix}
+                  \quad\Rightarrow\quad
+                  A^{-1}=\frac12K.
+                \]
+                Then
+                \[
+                  AA^{-1}=A\left(\frac12K\right)=\frac12(AK).
+                \]
+              </p>
+
+              <p>Compute \(AK\) by row–column dot products.</p>
+
+              <div class="mathCard">
+                <p><b>Row 1 of \(A\):</b> \((1,3,2)\)</p>
+                \[
+                  (1,3,2)\cdot(1,-1,2)=2,\quad
+                  (1,3,2)\cdot(a,-2,2)=a-2,\quad
+                  (1,3,2)\cdot(b,5,-6)=b+3.
+                \]
+                <p>So row 1 of \(AK\) is \((2,\ a-2,\ b+3)\).</p>
+              </div>
+
+              <div class="mathCard">
+                <p><b>Row 2 of \(A\):</b> \((2,0,-1)\)</p>
+                \[
+                  (2,0,-1)\cdot(1,-1,2)=0,\quad
+                  (2,0,-1)\cdot(a,-2,2)=2a-2,\quad
+                  (2,0,-1)\cdot(b,5,-6)=2b+6.
+                \]
+                <p>So row 2 of \(AK\) is \((0,\ 2a-2,\ 2b+6)\).</p>
+              </div>
+
+              <div class="mathCard">
+                <p><b>Row 3 of \(A\):</b> \((1,1,0)\)</p>
+                \[
+                  (1,1,0)\cdot(1,-1,2)=0,\quad
+                  (1,1,0)\cdot(a,-2,2)=a-2,\quad
+                  (1,1,0)\cdot(b,5,-6)=b+5.
+                \]
+                <p>So row 3 of \(AK\) is \((0,\ a-2,\ b+5)\).</p>
+              </div>
+
+              <p>Thus,
+                \[
+                  AK=
+                  \begin{pmatrix}
+                    2 & a-2 & b+3\\
+                    0 & 2a-2 & 2b+6\\
+                    0 & a-2 & b+5
+                  \end{pmatrix}
+                  \quad\Rightarrow\quad
+                  AA^{-1}=\frac12AK=
+                  \begin{pmatrix}
+                    1 & \frac{a-2}{2} & \frac{b+3}{2}\\
+                    0 & a-1 & b+3\\
+                    0 & \frac{a-2}{2} & \frac{b+5}{2}
+                  \end{pmatrix}.
+                \]
+              </p>
+
+              <p>Set \(AA^{-1}=I\). Off-diagonal entries must be \(0\):</p>
+              <div class="mathCard">
+                \[
+                  \frac{a-2}{2}=0\Rightarrow a=2,
+                  \qquad
+                  \frac{b+3}{2}=0\Rightarrow b=-3.
+                \]
+              </div>
+
+              <div class="final">
+                <h4>Final (3a)</h4>
+                <div class="box">
+                  \[
+                    \boxed{a=2,\qquad b=-3.}
+                  \]
+                </div>
+              </div>
+
+              <h4 style="margin:18px 0 8px">3(b) Solve \(AX=B\)</h4>
+              <p>Because \(\det(A)=2\neq 0\), \(A\) is invertible, so
+                \[
+                  X=A^{-1}B.
+                \]
+                Substitute \(a=2,\ b=-3\):
+                \[
+                  A^{-1}=\frac12
+                  \begin{pmatrix}
+                    1&2&-3\\
+                    -1&-2&5\\
+                    2&2&-6
+                  \end{pmatrix}.
+                \]
+              </p>
+
+              <p>Compute \(KB\) first, where \(K=\begin{pmatrix}1&2&-3\\-1&-2&5\\2&2&-6\end{pmatrix}\) and \(B=(1,-2,1)^T\):</p>
+
+              <div class="mathCard">
+                \[
+                  KB=
+                  \begin{pmatrix}
+                    1(1)+2(-2)+(-3)(1)\\
+                    (-1)(1)+(-2)(-2)+5(1)\\
+                    2(1)+2(-2)+(-6)(1)
+                  \end{pmatrix}
+                  =
+                  \begin{pmatrix}
+                    -6\\
+                    8\\
+                    -8
+                  \end{pmatrix}.
+                \]
+                Therefore,
+                \[
+                  X=\frac12(KB)=
+                  \begin{pmatrix}
+                    -3\\
+                    4\\
+                    -4
+                  \end{pmatrix}.
+                \]
+              </div>
+
+              <div class="final">
+                <h4>Final (3b)</h4>
+                <div class="box">
+                  \[
+                    \boxed{X=\begin{pmatrix}-3\\4\\-4\end{pmatrix}
+                    \ \Longrightarrow\ x=-3,\ y=4,\ z=-4.}
+                  \]
+                </div>
+              </div>
+
+              <div class="checks">
+                <div class="check">
+                  <h5>Sanity check</h5>
+                  <div class="muted">Verify \(AX=B\) quickly:</div>
+                  \[
+                    \begin{aligned}
+                    (1,3,2)\cdot(-3,4,-4)&=1\\
+                    (2,0,-1)\cdot(-3,4,-4)&=-2\\
+                    (1,1,0)\cdot(-3,4,-4)&=1
+                    \end{aligned}
+                  \]
+                </div>
+                <div class="check">
+                  <h5>Interpretation</h5>
+                  <div class="muted">
+                    Since \(A\) is invertible, the solution is unique. Multiplying by \(A^{-1}\) is the most direct “undo” operation.
+                  </div>
+                </div>
+                <div class="check">
+                  <h5>Common pitfall</h5>
+                  <div class="muted">Missing the \(\tfrac12\) factor would double every component of \(X\).</div>
+                </div>
+              </div>
+
+              <h4 style="margin:18px 0 8px">3(c) Find \(c\) making \(M\) not invertible, then a nonzero solution of \(MX=0\)</h4>
+              <p>Replace the upper-right entry \(2\) by \(c\):
+                \[
+                  M=\begin{pmatrix}
+                    1&3&c\\
+                    2&0&-1\\
+                    1&1&0
+                  \end{pmatrix}.
+                \]
+              </p>
+
+              <p><b>Compute \(\det(M)\).</b> Expand along the first row:</p>
+              <div class="mathCard">
+                \[
+                  \det(M)=
+                  1\cdot\det\begin{pmatrix}0&-1\\1&0\end{pmatrix}
+                  -3\cdot\det\begin{pmatrix}2&-1\\1&0\end{pmatrix}
+                  +c\cdot\det\begin{pmatrix}2&0\\1&1\end{pmatrix}.
+                \]
+                Evaluate:
+                \[
+                  \det\begin{pmatrix}0&-1\\1&0\end{pmatrix}=1,\quad
+                  \det\begin{pmatrix}2&-1\\1&0\end{pmatrix}=1,\quad
+                  \det\begin{pmatrix}2&0\\1&1\end{pmatrix}=2.
+                \]
+                Hence:
+                \[
+                  \det(M)=1-3(1)+c(2)=2c-2=2(c-1).
+                \]
+              </div>
+
+              <p>\(M\) is not invertible when \(\det(M)=0\):</p>
+              <div class="mathCard">
+                \[
+                  2(c-1)=0\Rightarrow c=1.
+                \]
+              </div>
+
+              <p><b>Now find \(X\neq 0\) with \(MX=0\) for \(c=1\).</b> With \(c=1\), the rows are</p>
+              <div class="mathCard">
+                \[
+                  U=(1,3,1),\quad V=(2,0,-1),\quad W=(1,1,0).
+                \]
+                The hint says \(MX=0\) iff \(X\) is orthogonal to \(U,V,W\).
+                A vector orthogonal to both \(U\) and \(V\) is \(U\times V\):
+                \[
+                  U\times V=
+                  \begin{vmatrix}
+                    \mathbf{i}&\mathbf{j}&\mathbf{k}\\
+                    1&3&1\\
+                    2&0&-1
+                  \end{vmatrix}
+                  =
+                  (-3,3,-6)=3(-1,1,-2).
+                \]
+                Check orthogonality to \(W\):
+                \[
+                  W\cdot(-3,3,-6)=(-3)+3+0=0.
+                \]
+                So a simple nonzero solution is
+                \[
+                  X=(-1,1,-2)^T.
+                \]
+              </div>
+
+              <div class="final">
+                <h4>Final (3c)</h4>
+                <div class="box">
+                  \[
+                    \boxed{c=1,\qquad
+                    X=\begin{pmatrix}-1\\1\\-2\end{pmatrix}\ \text{is a nonzero solution of }MX=0.}
+                  \]
+                </div>
+              </div>
+
+              <div class="checks">
+                <div class="check">
+                  <h5>Sanity check</h5>
+                  <div class="muted">Row dot-products are zero:</div>
+                  \[
+                    U\cdot X=0,\quad V\cdot X=0,\quad W\cdot X=0.
+                  \]
+                </div>
+                <div class="check">
+                  <h5>Meaning</h5>
+                  <div class="muted">
+                    At \(c=1\), the rows become linearly dependent, so the null space is nontrivial.
+                  </div>
+                </div>
+                <div class="check">
+                  <h5>Units</h5>
+                  <div class="muted">
+                    Pure linear algebra here — entries are dimensionless; the check is consistency of equations rather than physical units.
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== PROBLEM 4 ===================== -->
+    <section id="p4" class="section reveal">
+      <div class="sectionHeader">
+        <h2>Problem 4 — Ladder Midpoint Parametric Equations (15 points)</h2>
+        <p>
+          A ladder of length \(L\) rests on the floor and against a vertical wall. As the bottom slides away, the ladder angle
+          with the floor is \(\theta\). Find parametric equations for the midpoint \(P\) using \(\theta\) as the parameter.
+        </p>
+      </div>
+
+      <div class="content">
+        <div class="parts">
+          <!-- PART 1 -->
+          <article class="part reveal">
+            <div class="partHead">
+              <h3>PART 1 — Problem Analysis (no solving yet)</h3>
+              <span class="chip"><b>Model:</b> right-triangle geometry</span>
+            </div>
+            <div class="partBody">
+              <p><b>Restatement.</b> The ladder endpoints always touch the coordinate axes (floor and wall), forming a right triangle.
+                The angle \(\theta\) at the bottom determines the triangle. The midpoint is the average of endpoint coordinates.</p>
+
+              <div class="cols">
+                <div class="mathCard">
+                  <b>Given</b>
+                  <ul>
+                    <li>Fixed ladder length \(L\)</li>
+                    <li>Angle \(\theta\) between ladder and the floor</li>
+                    <li>Wall vertical, floor horizontal (right angle)</li>
+                  </ul>
+                </div>
+                <div class="mathCard">
+                  <b>Find</b>
+                  <ul>
+                    <li>Parametric equations \((x_P(\theta),y_P(\theta))\)</li>
+                  </ul>
+                </div>
+              </div>
+
+              <p><b>Principles.</b> The ladder is the hypotenuse of a right triangle, so
+                \(\cos\theta\) and \(\sin\theta\) give the adjacent and opposite legs relative to \(L\).</p>
+
+              <div class="callout">
+                <strong>Best approach</strong>
+                Place the corner at the origin. Use trig to express the endpoint coordinates, then take the midpoint.
+              </div>
+            </div>
+          </article>
+
+          <!-- PART 2 -->
+          <article class="part reveal">
+            <div class="partHead">
+              <h3>PART 2 — Strategy &amp; Tips (roadmap only)</h3>
+              <span class="chip"><b>Goal:</b> parametric form</span>
+            </div>
+            <div class="partBody">
+              <ol class="steps">
+                <li>
+                  <div class="k">Step 1</div>
+                  <b>Goal:</b> Choose coordinates.<br>
+                  <span class="muted">Tool:</span> Wall = \(y\)-axis, floor = \(x\)-axis.
+                </li>
+                <li>
+                  <div class="k">Step 2</div>
+                  <b>Goal:</b> Write endpoints.<br>
+                  <span class="muted">Tool:</span> Bottom \((x,0)\), top \((0,y)\).
+                </li>
+                <li>
+                  <div class="k">Step 3</div>
+                  <b>Goal:</b> Express \(x,y\) using \(\theta\).<br>
+                  <span class="muted">Tool:</span> \(x=L\cos\theta\), \(y=L\sin\theta\).
+                </li>
+                <li>
+                  <div class="k">Step 4</div>
+                  <b>Goal:</b> Find midpoint \(P\).<br>
+                  <span class="muted">Tool:</span> Midpoint formula.
+                </li>
+              </ol>
+
+              <div class="callout">
+                <strong>Quick tips</strong>
+                <ul style="margin:8px 0 0">
+                  <li>\(\theta\) is measured at the bottom, between ladder and floor.</li>
+                  <li>Physical range: \(0<\theta<\frac{\pi}{2}\).</li>
+                  <li>The midpoint trajectory will be a quarter-circle of radius \(L/2\).</li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <!-- PART 3 -->
+          <article class="part reveal">
+            <div class="partHead">
+              <h3>PART 3 — Full Solution</h3>
+              <span class="chip"><b>Includes:</b> checks + interpretation</span>
+            </div>
+            <div class="partBody">
+              <p><b>Physical intuition.</b> The ladder length stays constant, so all configurations lie on the constraint of a right triangle.
+                Using the angle \(\theta\) automatically satisfies the geometry: trigonometry converts the angle directly into endpoint coordinates.</p>
+
+              <h4 style="margin:14px 0 8px">Coordinate setup</h4>
+              <p>Place the corner at the origin. The ladder touches the floor at \((x,0)\) and the wall at \((0,y)\). The ladder length is \(L\),
+                so it is the hypotenuse of a right triangle.</p>
+
+              <h4 style="margin:14px 0 8px">Use trigonometry</h4>
+              <div class="mathCard">
+                \[
+                  \cos\theta=\frac{\text{adjacent}}{\text{hypotenuse}}=\frac{x}{L}\Rightarrow x=L\cos\theta,
+                  \qquad
+                  \sin\theta=\frac{\text{opposite}}{\text{hypotenuse}}=\frac{y}{L}\Rightarrow y=L\sin\theta.
+                \]
+              </div>
+
+              <h4 style="margin:14px 0 8px">Midpoint of the ladder</h4>
+              <p>The midpoint \(P\) of the segment joining \((x,0)\) and \((0,y)\) is</p>
+              <div class="mathCard">
+                \[
+                  P=\left(\frac{x+0}{2},\frac{0+y}{2}\right)=\left(\frac{x}{2},\frac{y}{2}\right).
+                \]
+                Substitute \(x=L\cos\theta\), \(y=L\sin\theta\):
+                \[
+                  P(\theta)=\left(\frac{L}{2}\cos\theta,\ \frac{L}{2}\sin\theta\right).
+                \]
+              </div>
+
+              <div class="final">
+                <h4>Final (Problem 4)</h4>
+                <div class="box">
+                  \[
+                    \boxed{
+                      x_P(\theta)=\frac{L}{2}\cos\theta,\qquad
+                      y_P(\theta)=\frac{L}{2}\sin\theta,\qquad
+                      0<\theta<\frac{\pi}{2}.
+                    }
+                  \]
+                </div>
+              </div>
+
+              <div class="checks">
+                <div class="check">
+                  <h5>Units</h5>
+                  <div class="muted">
+                    \(L\) is length; \(\sin,\cos\) are unitless → \(x_P,y_P\) have length units.
+                  </div>
+                </div>
+                <div class="check">
+                  <h5>Limiting cases</h5>
+                  <div class="muted">
+                    \(\theta\to 0^+\): \(P\to(\tfrac{L}{2},0)\) (ladder nearly flat).<br>
+                    \(\theta\to \tfrac{\pi}{2}^-\): \(P\to(0,\tfrac{L}{2})\) (ladder nearly vertical).
+                  </div>
+                </div>
+                <div class="check">
+                  <h5>Interpretation</h5>
+                  <div class="muted">
+                    The midpoint traces a quarter-circle:
+                    \[
+                      x_P^2+y_P^2=\left(\frac{L}{2}\right)^2(\cos^2\theta+\sin^2\theta)=\left(\frac{L}{2}\right)^2.
+                    \]
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="reveal">
+    <p>
+      Built as a clean, article-ready HTML page:
+      <span class="muted">responsive layout • accessible structure • MathJax equations • highlighted final answers</span>.
+    </p>
+    <p class="muted">
+      If you want, I can also generate a version with a print stylesheet (A4), auto-numbered equations, or a collapsible Q&amp;A mode.
+    </p>
+  </footer>
+
+  <script>
+    // Reveal-on-scroll (lightweight, no dependencies)
+    const els = [...document.querySelectorAll('.reveal')];
+    const io = new IntersectionObserver((entries)=>{
+      for(const e of entries){
+        if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); }
+      }
+    }, { threshold: 0.12 });
+    els.forEach(el=>io.observe(el));
+  </script>
+</body>
+</html>
