@@ -1,0 +1,1074 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="description" content="Advanced physics solution article: damped oscillators, beats, symmetry matrices, driven transients, and LC analogies." />
+  <title>Problem 1 — Damped Oscillations & Waves (Full Structured Solution)</title>
+
+  <!-- MathJax for beautiful LaTeX -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [["\\(", "\\)"]],
+        displayMath: [["\\[", "\\]"]],
+        processEscapes: true
+      },
+      options: { renderActions: { addMenu: [0, "", ""] } }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.08);
+      --text: rgba(255,255,255,.90);
+      --muted: rgba(255,255,255,.70);
+      --faint: rgba(255,255,255,.55);
+      --stroke: rgba(255,255,255,.12);
+      --stroke2: rgba(255,255,255,.18);
+      --shadow: 0 18px 45px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 24px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    }
+
+    /* Accent palette (no hard-coded single-color style; uses gradient tokens) */
+    :root{
+      --g1: #7c3aed; /* violet */
+      --g2: #06b6d4; /* cyan */
+      --g3: #22c55e; /* green */
+      --g4: #f97316; /* orange */
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f7f8ff;
+        --panel: rgba(0,0,0,.05);
+        --panel2: rgba(0,0,0,.06);
+        --text: rgba(0,0,0,.86);
+        --muted: rgba(0,0,0,.70);
+        --faint: rgba(0,0,0,.55);
+        --stroke: rgba(0,0,0,.12);
+        --stroke2: rgba(0,0,0,.18);
+        --shadow: 0 18px 45px rgba(0,0,0,.12);
+      }
+    }
+
+    *{ box-sizing: border-box; }
+    html, body{ height: 100%; }
+    body{
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background: radial-gradient(1200px 700px at 20% 10%, rgba(124,58,237,.28), transparent 55%),
+                  radial-gradient(900px 600px at 85% 25%, rgba(6,182,212,.20), transparent 55%),
+                  radial-gradient(900px 700px at 55% 95%, rgba(34,197,94,.16), transparent 50%),
+                  var(--bg);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Subtle animated grain + gradient shift */
+    .bgfx{
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: .55;
+      mix-blend-mode: overlay;
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.022) 0 1px, transparent 1px 4px);
+      filter: blur(.2px);
+    }
+    .orb{
+      position: fixed;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      background: conic-gradient(from 180deg, rgba(124,58,237,.55), rgba(6,182,212,.45), rgba(34,197,94,.38), rgba(249,115,22,.34), rgba(124,58,237,.55));
+      filter: blur(28px);
+      opacity: .20;
+      z-index: 0;
+      transform: translate3d(0,0,0);
+      animation: drift 16s ease-in-out infinite alternate;
+    }
+    .orb.one{ top: -180px; left: -180px; }
+    .orb.two{ bottom: -220px; right: -200px; animation-duration: 20s; opacity: .18; }
+    @keyframes drift{
+      from{ transform: translate3d(0,0,0) scale(1); }
+      to{ transform: translate3d(40px,18px,0) scale(1.06); }
+    }
+
+    a{ color: inherit; }
+    .wrap{
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 80px;
+    }
+
+    header.hero{
+      border: 1px solid var(--stroke);
+      background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border-radius: var(--radius2);
+      padding: 28px 22px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: linear-gradient(90deg, rgba(124,58,237,.55), rgba(6,182,212,.35), rgba(34,197,94,.30));
+      opacity:.18;
+      filter: blur(18px);
+      z-index:0;
+    }
+
+    .hero > *{ position: relative; z-index: 1; }
+
+    .kicker{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+    .badge{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke2);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      letter-spacing: .2px;
+      user-select: none;
+    }
+    .title{
+      margin: 10px 0 8px;
+      font-size: clamp(26px, 3.2vw, 40px);
+      line-height: 1.15;
+      letter-spacing: -0.6px;
+    }
+    .subtitle{
+      margin: 0;
+      color: var(--muted);
+      max-width: 76ch;
+    }
+
+    .grid{
+      margin-top: 18px;
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 18px;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card .hd{
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .card .hd h2{
+      margin:0;
+      font-size: 16px;
+      letter-spacing: .2px;
+    }
+    .card .bd{
+      padding: 16px 18px 18px;
+    }
+
+    .toc a{
+      text-decoration: none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      color: var(--muted);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+    }
+    .toc a:hover{
+      background: rgba(255,255,255,.06);
+      border-color: var(--stroke);
+      transform: translateY(-1px);
+      color: var(--text);
+    }
+    .toc a span:last-child{
+      font-family: var(--mono);
+      font-size: 12px;
+      opacity: .75;
+    }
+
+    .pillrow{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .pill{
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size: 13px;
+      user-select:none;
+    }
+
+    /* Section styling */
+    section{
+      margin-top: 18px;
+      scroll-margin-top: 88px;
+    }
+    .sectionTitle{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap: 12px;
+      margin: 0 0 10px;
+    }
+    .sectionTitle h3{
+      margin:0;
+      font-size: 18px;
+      letter-spacing: .2px;
+    }
+    .sectionTitle .mini{
+      color: var(--faint);
+      font-size: 13px;
+      font-family: var(--mono);
+    }
+
+    .cols{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 980px){
+      .cols{ grid-template-columns: 1fr; }
+    }
+
+    .panel{
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      border-radius: 16px;
+      padding: 14px 14px;
+    }
+    .panel h4{
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: var(--text);
+    }
+    ul, ol{
+      margin: 8px 0 0 18px;
+      color: var(--muted);
+    }
+    li{ margin: 4px 0; }
+
+    .callout{
+      margin-top: 14px;
+      border: 1px solid var(--stroke2);
+      background: linear-gradient(135deg, rgba(124,58,237,.18), rgba(6,182,212,.10), rgba(34,197,94,.08));
+      border-radius: 16px;
+      padding: 14px 14px;
+      position: relative;
+      overflow:hidden;
+    }
+    .callout::after{
+      content:"";
+      position:absolute;
+      inset:-40px;
+      background: radial-gradient(circle at 25% 20%, rgba(255,255,255,.12), transparent 55%),
+                  radial-gradient(circle at 80% 70%, rgba(255,255,255,.09), transparent 58%);
+      opacity:.55;
+      filter: blur(14px);
+    }
+    .callout > *{ position: relative; z-index: 1; }
+    .callout .label{
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .3px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .callout .big{
+      font-size: 16px;
+      margin: 0;
+    }
+
+    .math{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.03);
+      overflow-x: auto;
+      margin-top: 10px;
+      color: var(--text);
+    }
+
+    /* Answer boxes */
+    .answer{
+      margin-top: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(34,197,94,.35);
+      background: linear-gradient(180deg, rgba(34,197,94,.14), rgba(255,255,255,.03));
+      padding: 14px 14px;
+    }
+    .answer .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+    }
+    .answer .tag b{
+      color: var(--text);
+      font-weight: 700;
+    }
+    .answer .content{
+      margin: 0;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .checks{
+      margin-top: 10px;
+      border-top: 1px dashed var(--stroke);
+      padding-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Expanders */
+    details{
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.03);
+      border-radius: 16px;
+      padding: 10px 12px;
+      margin-top: 10px;
+    }
+    details summary{
+      cursor:pointer;
+      list-style:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      color: var(--text);
+      font-weight: 600;
+    }
+    details summary::-webkit-details-marker{ display:none; }
+    details summary .hint{
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    details .inner{
+      margin-top: 10px;
+      color: var(--muted);
+    }
+
+    /* Sticky floating controls */
+    .floatbar{
+      position: sticky;
+      top: 12px;
+      z-index: 2;
+      margin: 16px 0 0;
+      display:flex;
+      justify-content:flex-end;
+      gap: 10px;
+      pointer-events: none;
+    }
+    .btn{
+      pointer-events: auto;
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight: 650;
+      letter-spacing: .2px;
+      cursor:pointer;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.09);
+      border-color: var(--stroke2);
+    }
+    .btn:active{ transform: translateY(0); }
+    .btn small{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    footer{
+      margin-top: 20px;
+      color: var(--faint);
+      font-size: 13px;
+      text-align: center;
+      padding: 20px 10px;
+    }
+
+    /* Print */
+    @media print{
+      .bgfx, .orb, .floatbar{ display:none !important; }
+      body{ background: white; color: black; }
+      .card, header.hero{ box-shadow: none; }
+      a{ text-decoration: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bgfx" aria-hidden="true"></div>
+  <div class="orb one" aria-hidden="true"></div>
+  <div class="orb two" aria-hidden="true"></div>
+
+  <main class="wrap">
+    <header class="hero" id="top">
+      <div class="kicker">
+        <span class="badge">Physics • Oscillations</span>
+        <span class="badge">Problem 1 (30 pts)</span>
+        <span class="badge">Structured Solution • A–F</span>
+      </div>
+
+      <h1 class="title">Damped Pendulum, Beats, Symmetry, Driven Transients &amp; LC Analogy</h1>
+      <p class="subtitle">
+        A full, rigorous-but-beginner-friendly solution presented as an article.
+        Includes <strong>Problem Analysis</strong>, <strong>Strategy &amp; Tips</strong>, and <strong>Full Solutions</strong> for parts A–F.
+      </p>
+
+      <div class="pillrow" aria-label="Key topics">
+        <span class="pill">Underdamped vs overdamped</span>
+        <span class="pill">Beat period</span>
+        <span class="pill">Pendulum in fluid</span>
+        <span class="pill">Symmetry matrix</span>
+        <span class="pill">Transient response</span>
+        <span class="pill">LC circuit mapping</span>
+      </div>
+    </header>
+
+    <div class="floatbar" aria-label="Quick actions">
+      <button class="btn" id="btnPrint" type="button" title="Print this article">
+        🖨️ <span>Print</span> <small>PDF-friendly</small>
+      </button>
+      <button class="btn" id="btnTop" type="button" title="Back to top">
+        ⬆️ <span>Top</span> <small>scroll</small>
+      </button>
+    </div>
+
+    <div class="grid">
+      <aside class="card">
+        <div class="hd">
+          <h2>Navigation</h2>
+          <span class="badge">TOC</span>
+        </div>
+        <div class="bd toc" role="navigation" aria-label="Table of contents">
+          <a href="#part1"><span>PART 1 — Problem Analysis</span><span>#1</span></a>
+          <a href="#part2"><span>PART 2 — Strategy &amp; Tips</span><span>#2</span></a>
+          <a href="#part3"><span>PART 3 — Full Solution (A–F)</span><span>#3</span></a>
+          <a href="#A"><span>A) Damping regime</span><span>A</span></a>
+          <a href="#B"><span>B) Beat period</span><span>B</span></a>
+          <a href="#C"><span>C) Underwater vs air frequency</span><span>C</span></a>
+          <a href="#D"><span>D) Symmetry matrix</span><span>D</span></a>
+          <a href="#E"><span>E) Turn-on transient</span><span>E</span></a>
+          <a href="#F"><span>F) LC analogy</span><span>F</span></a>
+        </div>
+      </aside>
+
+      <section class="card">
+        <div class="hd">
+          <h2>Article Snapshot</h2>
+          <span class="badge">Fast read</span>
+        </div>
+        <div class="bd">
+          <div class="callout">
+            <div class="label">Final Answers (boxed summary)</div>
+            <p class="big">
+              <strong>A)</strong> underdamped •
+              <strong>B)</strong> \(T_{\text{beat}}=2\,\text{s}\) •
+              <strong>C)</strong> frequency increases out of water •
+              <strong>D)</strong> \(S=\begin{pmatrix}0&0&-1\\0&-1&0\\-1&0&0\end{pmatrix}\) •
+              <strong>E)</strong> transient + steady-state interference (beats) •
+              <strong>F)</strong> \(m\leftrightarrow L,\; k\leftrightarrow 1/C\)
+            </p>
+          </div>
+
+          <details>
+            <summary>
+              <span>How to use this page</span>
+              <span class="hint">expand</span>
+            </summary>
+            <div class="inner">
+              <ul>
+                <li>Math is rendered with LaTeX (MathJax). If it loads slowly, wait a moment.</li>
+                <li>Each part A–F includes intuition → derivation → boxed result → sanity checks.</li>
+                <li>Use the “Print” button for a clean PDF/handout.</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </section>
+    </div>
+
+    <!-- PART 1 -->
+    <section class="card" id="part1">
+      <div class="hd">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+        <span class="badge">Concept map</span>
+      </div>
+      <div class="bd">
+        <div class="sectionTitle">
+          <h3>1) Restatement</h3>
+          <div class="mini">what is being asked</div>
+        </div>
+        <div class="panel">
+          <p style="margin:0;color:var(--muted)">
+            You must answer six short questions about oscillations:
+            (A) classify damping from a displacement–time plot,
+            (B) compute beat period from two cosines,
+            (C) predict frequency change when removing a pendulum from water,
+            (D) write a symmetry matrix for a coordinate mapping,
+            (E) explain large “erratic” turn-on behavior in a driven underdamped oscillator,
+            (F) map mass–spring parameters to a series LC circuit.
+          </p>
+        </div>
+
+        <div class="sectionTitle" style="margin-top:14px;">
+          <h3>2) Given / Unknowns / Targets</h3>
+          <div class="mini">inputs → outputs</div>
+        </div>
+
+        <div class="cols">
+          <div class="panel">
+            <h4>Given</h4>
+            <ul>
+              <li><strong>A)</strong> displacement vs time graph for a damped pendulum.</li>
+              <li><strong>B)</strong> \(y_1(t)=A\cos(3\pi t)\), \(y_2(t)=A\cos(4\pi t)\), \(A=0.01\text{ cm}\).</li>
+              <li><strong>C)</strong> underwater (underdamped) angular frequency \(\omega_1\).</li>
+              <li><strong>D)</strong> mapping \(x_1\to -x_3,\; x_2\to -x_2,\; x_3\to -x_1\).</li>
+              <li><strong>E)</strong> driven underdamped oscillator switched on at \(t=0\).</li>
+              <li><strong>F)</strong> mechanical oscillator and series \(LC\) obey equivalent ODEs.</li>
+            </ul>
+          </div>
+
+          <div class="panel">
+            <h4>Find</h4>
+            <ul>
+              <li><strong>A)</strong> damping type (under/over/critical).</li>
+              <li><strong>B)</strong> beat period \(T_{\text{beat}}\).</li>
+              <li><strong>C)</strong> whether frequency increases/decreases/same out of water + explanation.</li>
+              <li><strong>D)</strong> symmetry matrix \(S\) such that \(\mathbf{x}'=S\mathbf{x}\).</li>
+              <li><strong>E)</strong> reason for large/erratic transient response at turn-on.</li>
+              <li><strong>F)</strong> electrical equivalents of \(m\) and \(k\).</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="sectionTitle" style="margin-top:14px;">
+          <h3>3) Principles that apply (and why)</h3>
+          <div class="mini">laws → relevance</div>
+        </div>
+        <div class="panel">
+          <ul>
+            <li><strong>Damped oscillations:</strong> underdamped motion crosses equilibrium repeatedly; over/critical do not.</li>
+            <li><strong>Superposition &amp; trig identities:</strong> sum of cosines with close frequencies produces beats.</li>
+            <li><strong>Pendulum in fluids:</strong> buoyancy, drag, and added mass change effective restoring and inertia.</li>
+            <li><strong>Linear algebra for symmetries:</strong> coordinate maps are represented by matrices.</li>
+            <li><strong>Driven response decomposition:</strong> \(x=x_{\text{hom}}+x_{\text{part}}\), with transient interference.</li>
+            <li><strong>ODE equivalence:</strong> match \(\omega_0=\sqrt{k/m}\) to \(\omega_0=1/\sqrt{LC}\).</li>
+          </ul>
+        </div>
+
+        <div class="sectionTitle" style="margin-top:14px;">
+          <h3>4) Candidate approaches (compare)</h3>
+          <div class="mini">choose best</div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <h4>Approach 1 — Canonical ODE solutions</h4>
+            <ul>
+              <li>Use known solution forms for damped/driven oscillators and LC circuits.</li>
+              <li>Strong for A, E, F; supports C.</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <h4>Approach 2 — Direct frequency interpretation</h4>
+            <ul>
+              <li>Read \(\omega\) from cosine arguments; use \(\Delta \omega\) for beats.</li>
+              <li>Fastest and cleanest for B.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout" style="margin-top:14px;">
+          <div class="label">Best approach</div>
+          <p class="big" style="margin:0">
+            Use the <strong>most direct tool per subproblem</strong>:
+            visual damping classification (A), beat-frequency formula (B),
+            physical parameter changes in fluids (C), matrix mapping (D),
+            transient + steady-state decomposition (E), and ODE matching (F).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 2 -->
+    <section class="card" id="part2">
+      <div class="hd">
+        <h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+        <span class="badge">No algebra yet</span>
+      </div>
+      <div class="bd">
+        <div class="cols">
+          <div class="panel">
+            <h4>Minimal roadmap (6 steps)</h4>
+            <ol>
+              <li><strong>A:</strong> check if the plot oscillates (zero crossings) → classify damping regime.</li>
+              <li><strong>B:</strong> identify \(\omega_1,\omega_2\) → compute \(\omega_{\text{beat}}=|\omega_2-\omega_1|\).</li>
+              <li><strong>C:</strong> compare underwater vs air: drag \(\gamma\), buoyancy (effective \(g\)), added mass (effective inertia).</li>
+              <li><strong>D:</strong> write \(\mathbf{x}'\) components as linear combos of \(\mathbf{x}\) → read off \(S\).</li>
+              <li><strong>E:</strong> write response as \(x_{\text{hom}}+x_{\text{part}}\) → explain interference and decay of transient.</li>
+              <li><strong>F:</strong> match \(\omega_0=\sqrt{k/m}\) with \(\omega_0=1/\sqrt{LC}\) → identify analogs.</li>
+            </ol>
+          </div>
+
+          <div class="panel">
+            <h4>Common pitfalls</h4>
+            <ul>
+              <li><strong>A:</strong> critical/overdamped do <em>not</em> oscillate; repeated crossings imply underdamped.</li>
+              <li><strong>B:</strong> distinguish \(\omega\) (rad/s) vs \(f\) (Hz); use the correct beat formula.</li>
+              <li><strong>C:</strong> water changes both restoring and inertia (and increases damping).</li>
+              <li><strong>D:</strong> keep track of the minus signs in the symmetry map.</li>
+              <li><strong>E:</strong> “erratic” is typically transient beating, not chaos.</li>
+              <li><strong>F:</strong> \(k\) corresponds to \(1/C\), not \(C\).</li>
+            </ul>
+          </div>
+        </div>
+
+        <details>
+          <summary>
+            <span>Quick reference formulas (still no derivations)</span>
+            <span class="hint">expand</span>
+          </summary>
+          <div class="inner">
+            <div class="math">
+              \[
+                \text{Underdamped: oscillatory decay}\qquad
+                \omega_{\text{beat}}=|\omega_2-\omega_1|,\quad
+                T_{\text{beat}}=\frac{2\pi}{\omega_{\text{beat}}}
+              \]
+              \[
+                \omega_d=\sqrt{\omega_0^2-\gamma^2},\qquad
+                \omega_0=\sqrt{\frac{k}{m}},\qquad
+                \omega_0=\frac{1}{\sqrt{LC}}
+              \]
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- PART 3 -->
+    <section class="card" id="part3">
+      <div class="hd">
+        <h2>PART 3 — Full Solution</h2>
+        <span class="badge">A–F</span>
+      </div>
+      <div class="bd">
+        <!-- A -->
+        <section id="A">
+          <div class="sectionTitle">
+            <h3>A) Damping type from the displacement–time plot</h3>
+            <div class="mini">classification</div>
+          </div>
+
+          <div class="panel">
+            <h4>Physical intuition</h4>
+            <p style="margin:0;color:var(--muted)">
+              An <strong>underdamped</strong> oscillator continues to oscillate while its amplitude decays.
+              A <strong>critically damped</strong> or <strong>overdamped</strong> oscillator returns to equilibrium
+              without oscillating (no repeated zero crossings).
+            </p>
+          </div>
+
+          <div class="panel" style="margin-top:12px;">
+            <h4>What the graph shows</h4>
+            <ul>
+              <li>The displacement crosses the equilibrium line multiple times.</li>
+              <li>Peaks and troughs shrink in magnitude over time (decaying envelope).</li>
+            </ul>
+            <p style="margin:8px 0 0;color:var(--muted)">
+              That behavior is the hallmark of <strong>underdamped</strong> motion.
+            </p>
+          </div>
+
+          <div class="answer">
+            <div class="tag">✅ <b>Boxed result</b></div>
+            <p class="content">
+              \(\boxed{\text{A) The oscillator is underdamped.}}\)
+            </p>
+            <div class="checks">
+              <strong>Sanity checks:</strong> Underdamped → oscillations with decay ✅; Over/critical → no oscillations ❌.
+            </div>
+          </div>
+        </section>
+
+        <!-- B -->
+        <section id="B" style="margin-top:18px;">
+          <div class="sectionTitle">
+            <h3>B) Beat period of \(y_1(t)+y_2(t)\)</h3>
+            <div class="mini">superposition</div>
+          </div>
+
+          <div class="panel">
+            <h4>Physical intuition</h4>
+            <p style="margin:0;color:var(--muted)">
+              Two close frequencies superpose to produce an amplitude envelope that grows and shrinks:
+              <strong>beats</strong>. The beat rate is governed by the <strong>difference</strong> in frequencies.
+            </p>
+          </div>
+
+          <div class="panel" style="margin-top:12px;">
+            <h4>Step-by-step derivation</h4>
+            <div class="math">
+              \[
+                y_1(t)=A\cos(3\pi t),\qquad y_2(t)=A\cos(4\pi t)
+              \]
+              Identify angular frequencies:
+              \[
+                \omega_1=3\pi\ \text{rad/s},\qquad \omega_2=4\pi\ \text{rad/s}
+              \]
+              Beat angular frequency:
+              \[
+                \omega_{\text{beat}}=|\omega_2-\omega_1|=|4\pi-3\pi|=\pi\ \text{rad/s}
+              \]
+              Beat period:
+              \[
+                T_{\text{beat}}=\frac{2\pi}{\omega_{\text{beat}}}=\frac{2\pi}{\pi}=2\ \text{s}
+              \]
+            </div>
+          </div>
+
+          <div class="answer">
+            <div class="tag">✅ <b>Boxed result</b></div>
+            <p class="content">
+              \(\boxed{\text{B) }T_{\text{beat}}=2~\text{s}.}\)
+            </p>
+            <div class="checks">
+              <strong>Sanity checks:</strong> Units: seconds ✅. If \(\omega_2\to\omega_1\), then \(T_{\text{beat}}\to\infty\) ✅ (beats slow down).
+            </div>
+          </div>
+        </section>
+
+        <!-- C -->
+        <section id="C" style="margin-top:18px;">
+          <div class="sectionTitle">
+            <h3>C) Underwater pendulum frequency vs out of water</h3>
+            <div class="mini">fluids</div>
+          </div>
+
+          <div class="panel">
+            <h4>Physical intuition</h4>
+            <ul>
+              <li><strong>Drag (damping)</strong> is much larger in water → reduces the observed underdamped frequency.</li>
+              <li><strong>Buoyancy</strong> reduces the effective restoring force (effective \(g\) smaller) → lowers frequency.</li>
+              <li><strong>Added mass</strong> (entrained fluid) increases effective inertia → lowers frequency.</li>
+            </ul>
+            <p style="margin:8px 0 0;color:var(--muted)">
+              Removing the system from water reduces all these effects, so the oscillation frequency should <strong>increase</strong>.
+            </p>
+          </div>
+
+          <div class="panel" style="margin-top:12px;">
+            <h4>More formal argument</h4>
+            <div class="math">
+              For an underdamped oscillator:
+              \[
+                \omega_d=\sqrt{\omega_0^2-\gamma^2}
+              \]
+              In water, \(\gamma\) (damping rate) is larger, hence \(\omega_d\) is smaller. Also for a small-angle pendulum:
+              \[
+                \omega_0 \approx \sqrt{\frac{g_{\text{eff}}}{L}}
+              \]
+              Water reduces \(g_{\text{eff}}\) via buoyancy and can increase effective inertia via added mass, both decreasing \(\omega_0\).
+            </div>
+          </div>
+
+          <div class="answer">
+            <div class="tag">✅ <b>Boxed result</b></div>
+            <p class="content">
+              \(\boxed{\text{C) The oscillation frequency increases when taken out of water.}}\)
+            </p>
+            <div class="checks">
+              <strong>Limiting cases:</strong> If \(\gamma\to 0\), \(\omega_d\to\omega_0\) ✅. More damping → smaller \(\omega_d\) ✅.
+              <br/>
+              <strong>Physical interpretation:</strong> less drag + stronger effective restoring + less added inertia → faster oscillations ✅.
+            </div>
+          </div>
+        </section>
+
+        <!-- D -->
+        <section id="D" style="margin-top:18px;">
+          <div class="sectionTitle">
+            <h3>D) Symmetry matrix \(S\) for the 3-mass system</h3>
+            <div class="mini">linear algebra</div>
+          </div>
+
+          <div class="panel">
+            <h4>Physical intuition</h4>
+            <p style="margin:0;color:var(--muted)">
+              A symmetry operation is a linear transformation of the displacement vector
+              \(\mathbf{x}=(x_1,x_2,x_3)^\mathsf{T}\). If \(\mathbf{x}'=S\mathbf{x}\),
+              then each new component \(x_i'\) is a linear combination of \(x_1,x_2,x_3\).
+            </p>
+          </div>
+
+          <div class="panel" style="margin-top:12px;">
+            <h4>Derivation</h4>
+            <div class="math">
+              Given mapping:
+              \[
+                x_1'=-x_3,\quad x_2'=-x_2,\quad x_3'=-x_1
+              \]
+              Write each in coefficient form:
+              \[
+                x_1' = 0\cdot x_1 + 0\cdot x_2 - 1\cdot x_3
+              \]
+              \[
+                x_2' = 0\cdot x_1 - 1\cdot x_2 + 0\cdot x_3
+              \]
+              \[
+                x_3' = -1\cdot x_1 + 0\cdot x_2 + 0\cdot x_3
+              \]
+              Therefore:
+              \[
+                S=
+                \begin{pmatrix}
+                  0 & 0 & -1 \\
+                  0 & -1 & 0 \\
+                  -1 & 0 & 0
+                \end{pmatrix}
+              \]
+            </div>
+          </div>
+
+          <div class="answer">
+            <div class="tag">✅ <b>Boxed result</b></div>
+            <p class="content">
+              \(\boxed{\text{D) }S=\begin{pmatrix}0&0&-1\\0&-1&0\\-1&0&0\end{pmatrix}.}\)
+            </p>
+            <div class="checks">
+              <strong>Check:</strong> \(S(x_1,x_2,x_3)^\mathsf{T}=(-x_3,-x_2,-x_1)^\mathsf{T}\) ✅ matches the mapping.
+            </div>
+          </div>
+        </section>
+
+        <!-- E -->
+        <section id="E" style="margin-top:18px;">
+          <div class="sectionTitle">
+            <h3>E) Why does a driven underdamped oscillator look large/erratic at turn-on?</h3>
+            <div class="mini">transients</div>
+          </div>
+
+          <div class="panel">
+            <h4>Physical intuition</h4>
+            <p style="margin:0;color:var(--muted)">
+              When a drive is switched on, the system does not instantly jump to steady-state.
+              The motion initially contains both the oscillator’s <strong>natural response</strong> and the <strong>forced response</strong>.
+              Their superposition can create temporary amplitude modulation (beats), making motion look “erratic.”
+            </p>
+          </div>
+
+          <div class="panel" style="margin-top:12px;">
+            <h4>Rigorous explanation using solution structure</h4>
+            <div class="math">
+              The driven damped solution can be written as
+              \[
+                x(t)=x_{\text{hom}}(t)+x_{\text{part}}(t).
+              \]
+              Here,
+              \[
+                x_{\text{hom}}(t)\propto e^{-\gamma t}\cos(\omega_d t+\phi)
+              \]
+              is a transient at the system’s (damped) natural frequency \(\omega_d\), while
+              \(x_{\text{part}}(t)\) oscillates at the drive frequency \(\omega\).
+              Right after turn-on, \(x_{\text{hom}}\) is generally nonzero due to mismatched initial conditions,
+              so interference between \(\omega_d\) and \(\omega\) can produce large envelopes.
+              As \(t\) increases, \(e^{-\gamma t}\) decays, leaving only the steady-state.
+            </div>
+          </div>
+
+          <div class="answer">
+            <div class="tag">✅ <b>Boxed result</b></div>
+            <p class="content">
+              \(\boxed{\text{E) The early “erratic” motion is transient (natural) + forced response interference; the transient decays exponentially, leaving steady-state.}}\)
+            </p>
+            <div class="checks">
+              <strong>Limiting cases:</strong> Larger \(\gamma\) → faster decay → shorter “erratic” phase ✅.
+              <br/>
+              <strong>Physical interpretation:</strong> not chaos—just short-lived interference/beating ✅.
+            </div>
+          </div>
+        </section>
+
+        <!-- F -->
+        <section id="F" style="margin-top:18px;">
+          <div class="sectionTitle">
+            <h3>F) Electrical equivalents of \(m\) and \(k\) in a series \(LC\)</h3>
+            <div class="mini">analogy</div>
+          </div>
+
+          <div class="panel">
+            <h4>Physical intuition</h4>
+            <p style="margin:0;color:var(--muted)">
+              Mass–spring oscillations swap kinetic and potential energy.
+              An LC circuit swaps magnetic energy in the inductor and electric energy in the capacitor.
+              Since both are governed by the same type of second-order ODE, parameters map by matching natural frequencies.
+            </p>
+          </div>
+
+          <div class="panel" style="margin-top:12px;">
+            <h4>Derivation by matching \(\omega_0\)</h4>
+            <div class="math">
+              Mechanical:
+              \[
+                \omega_0=\sqrt{\frac{k}{m}}
+              \]
+              Series LC:
+              \[
+                \omega_0=\frac{1}{\sqrt{LC}}
+              \]
+              Matching the forms implies:
+              \[
+                m \leftrightarrow L,\qquad k \leftrightarrow \frac{1}{C}.
+              \]
+            </div>
+          </div>
+
+          <div class="answer">
+            <div class="tag">✅ <b>Boxed result</b></div>
+            <p class="content">
+              \(\boxed{\text{F) } m \leftrightarrow L,\quad k \leftrightarrow \dfrac{1}{C}\ \ (\text{so } C \leftrightarrow 1/k).}\)
+            </p>
+            <div class="checks">
+              <strong>Check via limits:</strong> Larger \(m\) lowers \(\omega_0\); larger \(L\) lowers \(\omega_0\) ✅.
+              Larger \(k\) raises \(\omega_0\); larger \(C\) lowers \(\omega_0\), so \(k\) must map to \(1/C\) ✅.
+            </div>
+          </div>
+        </section>
+
+        <details style="margin-top:18px;">
+          <summary>
+            <span>One-line final answer strip (copy-friendly)</span>
+            <span class="hint">expand</span>
+          </summary>
+          <div class="inner">
+            <div class="math">
+              \[
+                \boxed{
+                  \text{A) underdamped;\;\;
+                  B) }T_{\text{beat}}=2\,\text{s}\boxed{;\;\;
+                  C) frequency increases out of water;\;\;
+                  D) }S=\begin{pmatrix}0&0&-1\\0&-1&0\\-1&0&0\end{pmatrix}\boxed{;\;\;
+                  E) transient + forced interference;\;\;
+                  F) }m\leftrightarrow L,\; k\leftrightarrow 1/C
+                }
+              \]
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <footer>
+      <div>© Your Article • Optimized for web + print • Math rendered via MathJax</div>
+      <div style="margin-top:6px;">Tip: Use the Print button to export a clean PDF for notes or submission.</div>
+    </footer>
+  </main>
+
+  <script>
+    // Smooth scroll to top
+    const btnTop = document.getElementById("btnTop");
+    btnTop?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+    // Print
+    const btnPrint = document.getElementById("btnPrint");
+    btnPrint?.addEventListener("click", () => window.print());
+
+    // Optional: highlight current section in TOC on scroll (lightweight)
+    const tocLinks = [...document.querySelectorAll(".toc a")];
+    const sections = tocLinks
+      .map(a => document.querySelector(a.getAttribute("href")))
+      .filter(Boolean);
+
+    const activate = (id) => {
+      tocLinks.forEach(a => {
+        const href = a.getAttribute("href");
+        const on = href === "#" + id;
+        a.style.background = on ? "rgba(255,255,255,.08)" : "";
+        a.style.borderColor = on ? "var(--stroke2)" : "transparent";
+        a.style.color = on ? "var(--text)" : "";
+      });
+    };
+
+    let ticking = false;
+    window.addEventListener("scroll", () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY + 120;
+        let current = "part1";
+        for (const s of sections) {
+          if (s.offsetTop <= y) current = s.id;
+        }
+        activate(current);
+        ticking = false;
+      });
+    }, { passive: true });
+
+    // Initialize highlight
+    activate("part1");
+  </script>
+</body>
+</html>

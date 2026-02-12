@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Driven Damped Oscillator — Two Base-Excitation Configurations (Full Solution)</title>
+
+  <!-- MathJax for LaTeX -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']], displayMath: [['\\[', '\\]']] },
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg: #070A12;
+      --bg2:#0B1022;
+      --card:#0E1630cc;
+      --card2:#0F1A3Aff;
+      --text:#EAF0FF;
+      --muted:#B7C3E6;
+      --faint:#7F8BB3;
+      --line:#22306A;
+      --accent:#7C5CFF;
+      --accent2:#16E0BD;
+      --warn:#FFB74D;
+      --good:#4DD0E1;
+      --shadow: 0 25px 70px rgba(0,0,0,.55);
+      --radius: 18px;
+      --radius2: 24px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1000px 700px at 15% 10%, rgba(124,92,255,.18) 0%, transparent 60%),
+        radial-gradient(800px 600px at 90% 15%, rgba(22,224,189,.14) 0%, transparent 55%),
+        radial-gradient(900px 700px at 50% 95%, rgba(255,183,77,.08) 0%, transparent 55%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+      overflow-x:hidden;
+    }
+
+    /* Subtle animated noise + grid */
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      background:
+        linear-gradient(to right, rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at 50% 20%, rgba(0,0,0,.95) 0%, rgba(0,0,0,.55) 55%, rgba(0,0,0,.25) 100%);
+      pointer-events:none;
+      opacity:.22;
+    }
+    body::after{
+      content:"";
+      position:fixed; inset:-40%;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)' opacity='.32'/%3E%3C/svg%3E");
+      opacity:.06;
+      mix-blend-mode:overlay;
+      pointer-events:none;
+      animation: drift 18s linear infinite;
+    }
+    @keyframes drift{
+      0%{ transform:translate3d(0,0,0) rotate(0deg); }
+      100%{ transform:translate3d(12%, 8%,0) rotate(6deg); }
+    }
+
+    a{ color:inherit; }
+    .wrap{
+      width:min(1100px, 92vw);
+      margin:0 auto;
+      padding: 42px 0 60px;
+      position:relative;
+    }
+
+    /* HERO */
+    .hero{
+      border-radius: var(--radius2);
+      padding: 28px 26px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .hero::before{
+      content:"";
+      position:absolute;
+      width: 520px; height: 520px;
+      right: -240px; top: -260px;
+      background: radial-gradient(circle at 30% 30%, rgba(124,92,255,.35), transparent 60%);
+      filter: blur(0px);
+      opacity:.9;
+    }
+    .hero::after{
+      content:"";
+      position:absolute;
+      width: 520px; height: 520px;
+      left: -260px; bottom: -260px;
+      background: radial-gradient(circle at 50% 50%, rgba(22,224,189,.28), transparent 60%);
+      opacity:.9;
+    }
+    .hero h1{
+      margin:0 0 10px;
+      font-size: clamp(1.55rem, 1.1rem + 2.2vw, 2.4rem);
+      letter-spacing: .2px;
+      position:relative;
+      z-index:1;
+    }
+    .hero p{
+      margin:0;
+      color:var(--muted);
+      line-height:1.6;
+      position:relative;
+      z-index:1;
+      max-width: 74ch;
+    }
+    .pillrow{
+      margin-top: 18px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      position:relative;
+      z-index:1;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      border-radius: 999px;
+      background: rgba(12,18,38,.6);
+      border: 1px solid rgba(255,255,255,.08);
+      color: var(--muted);
+      font-size: .92rem;
+      backdrop-filter: blur(10px);
+    }
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, var(--accent2), rgba(22,224,189,.1));
+      box-shadow: 0 0 0 4px rgba(22,224,189,.08);
+    }
+    .dot.purple{
+      background: radial-gradient(circle at 30% 30%, var(--accent), rgba(124,92,255,.1));
+      box-shadow: 0 0 0 4px rgba(124,92,255,.08);
+    }
+    .dot.orange{
+      background: radial-gradient(circle at 30% 30%, var(--warn), rgba(255,183,77,.1));
+      box-shadow: 0 0 0 4px rgba(255,183,77,.08);
+    }
+
+    /* Layout */
+    .grid{
+      margin-top: 20px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    @media(min-width: 980px){
+      .grid{
+        grid-template-columns: 0.88fr 1.12fr;
+        align-items:start;
+      }
+    }
+
+    /* Cards */
+    .card{
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 18px 55px rgba(0,0,0,.35);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 16px 18px;
+      background: rgba(8,12,26,.55);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+    }
+    .card .hd h2{
+      margin:0;
+      font-size: 1.05rem;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .badge{
+      font-family: var(--mono);
+      font-size: .8rem;
+      color: rgba(234,240,255,.85);
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(124,92,255,.12);
+      white-space:nowrap;
+    }
+    .card .bd{
+      padding: 16px 18px 18px;
+      color: var(--muted);
+      line-height:1.65;
+    }
+
+    /* Sections */
+    .part-title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin: 0 0 8px;
+      color: var(--text);
+      font-size:1rem;
+    }
+    .step{
+      display:flex;
+      gap: 12px;
+      margin: 12px 0;
+      padding: 12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.07);
+      background: rgba(12,18,38,.45);
+    }
+    .step .n{
+      width: 34px; height: 34px;
+      border-radius: 10px;
+      display:grid;
+      place-items:center;
+      font-weight:700;
+      color: rgba(255,255,255,.92);
+      background: rgba(22,224,189,.12);
+      border: 1px solid rgba(22,224,189,.22);
+      flex: 0 0 auto;
+    }
+    .step .txt{ flex:1; }
+    .step .txt b{ color: var(--text); }
+    .muted{ color: var(--faint); }
+
+    .two-col{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+    @media(min-width: 760px){
+      .two-col{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .callout{
+      border-radius: 16px;
+      padding: 14px 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(124,92,255,.12), rgba(124,92,255,.05));
+      color: var(--muted);
+    }
+    .callout h3{
+      margin: 0 0 8px;
+      color: var(--text);
+      font-size: .98rem;
+      letter-spacing:.2px;
+    }
+
+    .warn{
+      background: linear-gradient(180deg, rgba(255,183,77,.14), rgba(255,183,77,.05));
+      border-color: rgba(255,183,77,.18);
+    }
+
+    /* Equation blocks */
+    .eq{
+      margin: 12px 0;
+      padding: 12px 12px;
+      border-radius: 14px;
+      background: rgba(8,12,26,.45);
+      border: 1px solid rgba(255,255,255,.08);
+      color: var(--text);
+      overflow:auto;
+    }
+    .eq .lbl{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 8px;
+      color: rgba(234,240,255,.92);
+      font-size:.92rem;
+    }
+    .eq code{
+      font-family: var(--mono);
+      color: rgba(234,240,255,.9);
+      font-size: .9rem;
+    }
+    .box{
+      border-radius: 16px;
+      padding: 14px 14px;
+      background: linear-gradient(180deg, rgba(22,224,189,.12), rgba(22,224,189,.05));
+      border: 1px solid rgba(22,224,189,.20);
+      color: var(--text);
+      margin: 14px 0;
+    }
+    .box h3{
+      margin:0 0 8px;
+      font-size: .98rem;
+      letter-spacing:.2px;
+    }
+
+    /* Tabs */
+    .tabs{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin: 0;
+      padding: 0;
+      list-style:none;
+    }
+    .tabbtn{
+      cursor:pointer;
+      user-select:none;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(12,18,38,.55);
+      color: var(--muted);
+      font-weight: 600;
+      transition: transform .12s ease, background .15s ease, border-color .15s ease;
+    }
+    .tabbtn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.18); }
+    .tabbtn[aria-selected="true"]{
+      background: rgba(124,92,255,.16);
+      border-color: rgba(124,92,255,.30);
+      color: rgba(234,240,255,.95);
+    }
+    .tabpanel{ display:none; }
+    .tabpanel.active{ display:block; }
+
+    /* Mini diagram */
+    .diagram{
+      width: 100%;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(8,12,26,.45);
+      border: 1px solid rgba(255,255,255,.08);
+      margin: 10px 0 16px;
+    }
+    .diagram svg{
+      width: 100%;
+      height: auto;
+      display:block;
+    }
+    .legend{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top: 8px;
+      color: var(--faint);
+      font-size: .92rem;
+    }
+    .lg{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .swatch{
+      width: 14px; height: 14px; border-radius: 4px;
+      background: rgba(124,92,255,.65);
+    }
+    .swatch.teal{ background: rgba(22,224,189,.65); }
+    .swatch.gray{ background: rgba(255,255,255,.25); }
+
+    /* Copy buttons */
+    .copy{
+      cursor:pointer;
+      font-family: var(--mono);
+      font-size:.78rem;
+      color: rgba(234,240,255,.88);
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(12,18,38,.55);
+      transition: background .15s ease, transform .12s ease;
+      flex: 0 0 auto;
+    }
+    .copy:hover{ transform: translateY(-1px); background: rgba(12,18,38,.75); }
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(10,14,30,.85);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(234,240,255,.9);
+      font-size: .92rem;
+      box-shadow: var(--shadow);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateX(-50%) translateY(-6px);
+    }
+
+    /* Footer */
+    footer{
+      margin-top: 18px;
+      color: rgba(183,195,230,.75);
+      font-size: .92rem;
+      line-height:1.6;
+    }
+    .hr{
+      height:1px;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,.12), transparent);
+      margin: 18px 0;
+    }
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+    @media(min-width: 520px){
+      .kpi{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+    }
+    .kpi .tile{
+      padding: 12px 12px;
+      border-radius: 16px;
+      background: rgba(12,18,38,.45);
+      border: 1px solid rgba(255,255,255,.07);
+    }
+    .kpi .tile .t{
+      color: rgba(183,195,230,.8);
+      font-size:.82rem;
+      margin-bottom: 6px;
+    }
+    .kpi .tile .v{
+      font-weight: 800;
+      color: rgba(234,240,255,.95);
+      letter-spacing:.2px;
+      font-size: 1.02rem;
+      font-family: var(--mono);
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <header class="hero">
+      <h1>Driven Damped Oscillator — Two Ways to Drive (A-end vs B-end)</h1>
+      <p>
+        We solve a mass–spring–damper oscillator where the drive is imposed by moving an attachment point:
+        either the <b>damper end</b> (point A) or the <b>spring end</b> (point B), with
+        \(s(t)=s_0\cos(\omega_d t)\). The key is that spring forces depend on <b>relative displacement</b>,
+        while damper forces depend on <b>relative velocity</b>.
+      </p>
+
+      <div class="pillrow">
+        <span class="pill"><span class="dot"></span>Base excitation</span>
+        <span class="pill"><span class="dot purple"></span>Phasor steady-state</span>
+        <span class="pill"><span class="dot orange"></span>Resonance + limits</span>
+      </div>
+
+      <div class="kpi" aria-label="Quick reference">
+        <div class="tile">
+          <div class="t">Natural frequency</div>
+          <div class="v">\(\omega_0=\sqrt{k/m}\)</div>
+        </div>
+        <div class="tile">
+          <div class="t">Damping rate</div>
+          <div class="v">\(\gamma=b/m\)</div>
+        </div>
+        <div class="tile">
+          <div class="t">Drive</div>
+          <div class="v">\(s_0,\ \omega_d\)</div>
+        </div>
+        <div class="tile">
+          <div class="t">Output</div>
+          <div class="v">Amplitude \( |X|\)</div>
+        </div>
+      </div>
+    </header>
+
+    <section class="grid">
+      <!-- LEFT: Part 1 + Part 2 -->
+      <article class="card">
+        <div class="hd">
+          <h2>
+            <span class="badge">PART 1</span>
+            Problem Analysis
+          </h2>
+          <button class="copy" data-copy="#analysisText" aria-label="Copy Part 1 text">Copy</button>
+        </div>
+        <div class="bd" id="analysisText">
+          <h3 class="part-title">Rewrite (what’s being asked)</h3>
+          <p>
+            A mass \(m\) sits between a viscous damper (\(b\)) and a spring (\(k\)).
+            The system is driven by prescribing the motion of an attachment point
+            as \(s(t)=s_0\cos(\omega_d t)\), either at the damper end (A) or at the spring end (B).
+            For each drive case, find: the equation of motion, the steady-state amplitude vs frequency,
+            the frequency of maximum amplitude, and low/high-frequency limits.
+          </p>
+
+          <div class="two-col">
+            <div class="callout">
+              <h3>Given</h3>
+              <ul>
+                <li>\(m,\ k,\ b\)</li>
+                <li>\(s(t)=s_0\cos(\omega_d t)\)</li>
+                <li>Two configurations: A-driven or B-driven</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <h3>Unknowns</h3>
+              <ul>
+                <li>Mass displacement \(x(t)\)</li>
+                <li>Steady-state amplitude \( |X(\omega_d)| \)</li>
+                <li>Peak frequency \(\omega_{d,\max}\)</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout warn" style="margin-top:14px;">
+            <h3>Key Physics (why these laws apply)</h3>
+            <ul>
+              <li><b>Newton’s 2nd law:</b> \(m\ddot x=\sum F\) governs the mass dynamics.</li>
+              <li><b>Spring law:</b> \(F_k=-k(x-x_B)\) depends on <i>relative displacement</i>.</li>
+              <li><b>Damper law:</b> \(F_b=-b(\dot x-\dot x_A)\) depends on <i>relative velocity</i>.</li>
+            </ul>
+            <p class="muted" style="margin:8px 0 0;">
+              Tip: Base excitation enters through \(s(t)\) for the spring drive and through \(\dot s(t)\) for the damper drive.
+            </p>
+          </div>
+
+          <h3 class="part-title" style="margin-top:14px;">Approaches</h3>
+          <ol>
+            <li><b>Time-domain force balance</b> to derive the EOM (robust sign control).</li>
+            <li><b>Phasor (complex) method</b> for steady-state amplitude (fast, clean).</li>
+            <li><b>Transfer function/impedance</b> viewpoint (powerful but more abstract).</li>
+          </ol>
+          <p><b>Best approach:</b> derive EOM with Newton + relative motion, then solve steady-state via phasors.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="hd">
+          <h2>
+            <span class="badge">PART 2</span>
+            Strategy & Tips
+          </h2>
+          <button class="copy" data-copy="#strategyText" aria-label="Copy Part 2 text">Copy</button>
+        </div>
+        <div class="bd" id="strategyText">
+          <div class="step">
+            <div class="n">1</div>
+            <div class="txt">
+              <b>Define coordinate</b> \(x(t)\) for the mass in an inertial frame.
+              <div class="muted">Tool: generalized coordinate choice</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">2</div>
+            <div class="txt">
+              <b>Set base motions:</b> A-drive: \(x_A=s(t), x_B=0\). B-drive: \(x_A=0, x_B=s(t)\).
+              <div class="muted">Tool: boundary/attachment conditions</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">3</div>
+            <div class="txt">
+              <b>Write forces via relative motion:</b>
+              \(F_b=-b(\dot x-\dot x_A)\), \(F_k=-k(x-x_B)\).
+              <div class="muted">Tool: constitutive laws</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">4</div>
+            <div class="txt">
+              <b>Apply Newton:</b> \(m\ddot x=F_b+F_k\), rearrange into standard linear ODE.
+              <div class="muted">Tool: Newton’s 2nd law</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">5</div>
+            <div class="txt">
+              <b>Assume steady-state sinusoid</b> using phasors:
+              \(x=\Re\{Xe^{i\omega_dt}\}\), \(s=\Re\{s_0e^{i\omega_dt}\}\).
+              <div class="muted">Tool: phasor algebra</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">6</div>
+            <div class="txt">
+              <b>Solve for \(X\)</b>, take magnitude \(|X|\) → amplitude response.
+              <div class="muted">Tool: complex modulus</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="n">7</div>
+            <div class="txt">
+              <b>Find peak frequency</b> by maximizing \(|X|^2\) (clean derivative).
+              <div class="muted">Tool: calculus on \(|X|^2\)</div>
+            </div>
+          </div>
+          <div class="callout warn" style="margin-top:14px;">
+            <h3>Common mistakes</h3>
+            <ul>
+              <li>Forgetting <b>relative</b> velocity/displacement across damper/spring.</li>
+              <li>Sign errors: always write “force opposes relative motion.”</li>
+              <li>Confusing <b>force drive</b> with <b>base displacement drive</b>.</li>
+              <li>Maximizing \(|X|\) directly instead of \(|X|^2\).</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- PART 3 -->
+    <article class="card" style="margin-top:18px;">
+      <div class="hd">
+        <h2>
+          <span class="badge">PART 3</span>
+          Full Solution (A-drive & B-drive)
+        </h2>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="copy" data-copy="#solutionText" aria-label="Copy Part 3 text">Copy</button>
+        </div>
+      </div>
+
+      <div class="bd" id="solutionText">
+        <div class="diagram" aria-label="Schematic diagrams (stylized)">
+          <svg viewBox="0 0 980 220" role="img" aria-label="Two ways to drive the oscillator">
+            <!-- Case A -->
+            <text x="12" y="28" fill="rgba(234,240,255,.9)" font-size="18" font-weight="700">Case A: drive point A (damper end)</text>
+            <!-- A node -->
+            <circle cx="60" cy="70" r="10" fill="rgba(22,224,189,.75)"/>
+            <text x="52" y="96" fill="rgba(183,195,230,.85)" font-size="14">A</text>
+            <!-- damper -->
+            <rect x="90" y="56" width="90" height="28" rx="10" fill="rgba(255,255,255,.16)" stroke="rgba(255,255,255,.20)"/>
+            <text x="118" y="76" fill="rgba(234,240,255,.85)" font-size="14">b</text>
+            <!-- mass -->
+            <rect x="210" y="48" width="90" height="44" rx="12" fill="rgba(124,92,255,.22)" stroke="rgba(124,92,255,.35)"/>
+            <text x="248" y="76" fill="rgba(234,240,255,.9)" font-size="14">m</text>
+            <!-- spring -->
+            <path d="M310 70
+                     c 20 -20, 40 20, 60 0
+                     c 20 -20, 40 20, 60 0
+                     c 20 -20, 40 20, 60 0
+                     c 20 -20, 40 20, 60 0" fill="none" stroke="rgba(22,224,189,.75)" stroke-width="4" stroke-linecap="round"/>
+            <text x="500" y="76" fill="rgba(234,240,255,.85)" font-size="14">k</text>
+            <!-- B node -->
+            <circle cx="610" cy="70" r="10" fill="rgba(255,255,255,.35)"/>
+            <text x="602" y="96" fill="rgba(183,195,230,.85)" font-size="14">B</text>
+            <!-- drive arrow -->
+            <path d="M35 140 L125 140" stroke="rgba(22,224,189,.75)" stroke-width="4" stroke-linecap="round"/>
+            <path d="M125 140 l-16 -10 l0 20 z" fill="rgba(22,224,189,.75)"/>
+            <text x="14" y="165" fill="rgba(183,195,230,.85)" font-size="14">\(x_A=s(t)\)</text>
+
+            <!-- divider -->
+            <line x1="0" y1="190" x2="980" y2="190" stroke="rgba(255,255,255,.10)"/>
+
+            <!-- Case B -->
+            <text x="12" y="214" fill="rgba(234,240,255,.9)" font-size="18" font-weight="700">Case B: drive point B (spring end)</text>
+          </svg>
+
+          <div class="legend">
+            <div class="lg"><span class="swatch teal"></span>spring \(k\)</div>
+            <div class="lg"><span class="swatch"></span>mass \(m\)</div>
+            <div class="lg"><span class="swatch gray"></span>fixed/neutral node</div>
+          </div>
+        </div>
+
+        <h3 class="part-title">Physical intuition</h3>
+        <p>
+          The spring “cares” about <b>relative displacement</b> \((x-x_B)\), while the damper “cares” about
+          <b>relative velocity</b> \((\dot x-\dot x_A)\). Therefore:
+        </p>
+        <ul>
+          <li><b>Drive at B (spring end):</b> directly injects displacement mismatch \(\Rightarrow\) strong low-frequency response (\(x\approx s\)).</li>
+          <li><b>Drive at A (damper end):</b> injects only through \(\dot s\) \(\Rightarrow\) weak low-frequency response (\(|X|\to 0\) as \(\omega_d\to 0\)).</li>
+        </ul>
+
+        <div class="eq">
+          <div class="lbl">
+            <span>Shared definitions</span>
+            <button class="copy" data-copy="#defs" aria-label="Copy definitions">Copy</button>
+          </div>
+          <div id="defs">
+            \[
+              \omega_0=\sqrt{\frac{k}{m}},\qquad \gamma=\frac{b}{m},\qquad s(t)=s_0\cos(\omega_d t).
+            \]
+          </div>
+        </div>
+
+        <!-- Tabs for Case A and Case B -->
+        <div style="margin: 10px 0 8px;">
+          <ul class="tabs" role="tablist" aria-label="Case selector">
+            <li><button class="tabbtn" role="tab" aria-selected="true" aria-controls="panelA" id="tabA">Case A: drive at A</button></li>
+            <li><button class="tabbtn" role="tab" aria-selected="false" aria-controls="panelB" id="tabB">Case B: drive at B</button></li>
+          </ul>
+        </div>
+
+        <!-- Panel A -->
+        <section id="panelA" class="tabpanel active" role="tabpanel" aria-labelledby="tabA">
+          <div class="box">
+            <h3>(a) Equation of motion</h3>
+            <p>
+              Forces on the mass:
+              damper \(F_b=-b(\dot x-\dot x_A)\), spring \(F_k=-k(x-x_B)\).
+              For Case A, \(x_A=s(t)\), \(x_B=0\).
+            </p>
+            <div class="eq">
+              <div class="lbl"><span>Derivation</span></div>
+              \[
+              \begin{aligned}
+                F_b &= -b(\dot x-\dot s),\\
+                F_k &= -kx,\\
+                m\ddot x &= F_b+F_k = -b(\dot x-\dot s)-kx.
+              \end{aligned}
+              \]
+            </div>
+            <div class="eq">
+              <div class="lbl"><span>Final ODE (Case A)</span></div>
+              \[
+                \boxed{m\ddot x+b\dot x+kx=b\dot s(t)}.
+              \]
+            </div>
+          </div>
+
+          <div class="box">
+            <h3>(b) Steady-state amplitude</h3>
+            <p>
+              Use phasors:
+              \(s(t)=\Re\{s_0 e^{i\omega_d t}\}\Rightarrow \dot s(t)=\Re\{i\omega_d s_0 e^{i\omega_d t}\}\),
+              and \(x(t)=\Re\{X e^{i\omega_d t}\}\).
+            </p>
+            <div class="eq">
+              <div class="lbl"><span>Phasor substitution</span></div>
+              \[
+              \begin{aligned}
+                \dot x &\to i\omega_d X,\quad \ddot x\to -\omega_d^2 X,\\
+                (-m\omega_d^2+i b\omega_d+k)X &= i b\omega_d s_0.
+              \end{aligned}
+              \]
+            </div>
+            <div class="eq">
+              <div class="lbl"><span>Complex amplitude</span></div>
+              \[
+                X=\frac{i b\omega_d s_0}{k-m\omega_d^2+i b\omega_d}.
+              \]
+            </div>
+            <div class="eq">
+              <div class="lbl"><span>Amplitude (magnitude)</span></div>
+              \[
+                \boxed{
+                |X_A(\omega_d)|=\frac{b\,\omega_d\, s_0}{\sqrt{(k-m\omega_d^2)^2+(b\omega_d)^2}}
+                }.
+              \]
+            </div>
+            <p class="muted">
+              Sketch: starts at 0 as \(\omega_d\to 0\), peaks near resonance, then falls \(\sim 1/\omega_d\).
+            </p>
+          </div>
+
+          <div class="box">
+            <h3>(c) Frequency where amplitude is maximal</h3>
+            <p>
+              Maximize \(|X_A|^2\) (easier than \(|X_A|\)). The peak occurs at:
+            </p>
+            <div class="eq">
+              <div class="lbl"><span>Peak frequency</span></div>
+              \[
+                \boxed{\omega_{d,\max}^{(A)}=\omega_0=\sqrt{\frac{k}{m}}}.
+              \]
+            </div>
+          </div>
+
+          <div class="box">
+            <h3>(d) Limiting behavior</h3>
+            <div class="eq">
+              <div class="lbl"><span>Low frequency \(\omega_d\ll\omega_0\)</span></div>
+              \[
+                |X_A|\approx \frac{b\omega_d s_0}{k}
+                =\left(\frac{b}{k}\right)\omega_d s_0
+                \quad\Rightarrow\quad \boxed{|X_A|\propto \omega_d,\ |X_A|\to 0}.
+              \]
+            </div>
+            <div class="eq">
+              <div class="lbl"><span>High frequency \(\omega_d\gg\omega_0\)</span></div>
+              \[
+                |X_A|\approx \frac{b\omega_d s_0}{m\omega_d^2}
+                =\frac{b}{m}\frac{s_0}{\omega_d}
+                \quad\Rightarrow\quad \boxed{|X_A|\sim \frac{\gamma s_0}{\omega_d}}.
+              \]
+            </div>
+          </div>
+        </section>
+
+        <!-- Panel B -->
+        <section id="panelB" class="tabpanel" role="tabpanel" aria-labelledby="tabB">
+          <div class="box">
+            <h3>(a) Equation of motion</h3>
+            <p>
+              For Case B, \(x_A=0\), \(x_B=s(t)\). The damper is to a fixed wall, the spring sees the moving base.
+            </p>
+            <div class="eq">
+              <div class="lbl"><span>Derivation</span></div>
+              \[
+              \begin{aligned}
+                F_b &= -b(\dot x-0)=-b\dot x,\\
+                F_k &= -k(x-s),\\
+                m\ddot x &= -b\dot x-k(x-s).
+              \end{aligned}
+              \]
+            </div>
+            <div class="eq">
+              <div class="lbl"><span>Final ODE (Case B)</span></div>
+              \[
+                \boxed{m\ddot x+b\dot x+kx=ks(t)}.
+              \]
+            </div>
+          </div>
+
+          <div class="box">
+            <h3>(b) Steady-state amplitude</h3>
+            <p>
+              With phasors \(x=\Re\{Xe^{i\omega_dt}\}\), \(s=\Re\{s_0e^{i\omega_dt}\}\), we get:
+            </p>
+            <div class="eq">
+              <div class="lbl"><span>Phasor equation</span></div>
+              \[
+                (-m\omega_d^2+i b\omega_d+k)X = k s_0.
+              \]
+            </div>
+            <div class="eq">
+              <div class="lbl"><span>Complex amplitude</span></div>
+              \[
+                X=\frac{k s_0}{k-m\omega_d^2+i b\omega_d}.
+              \]
+            </div>
+            <div class="eq">
+              <div class="lbl"><span>Amplitude (magnitude)</span></div>
+              \[
+                \boxed{
+                |X_B(\omega_d)|=\frac{k\, s_0}{\sqrt{(k-m\omega_d^2)^2+(b\omega_d)^2}}
+                }.
+              \]
+            </div>
+            <p class="muted">
+              Sketch: \(|X_B|\to s_0\) as \(\omega_d\to 0\), peaks near (slightly below) \(\omega_0\), then falls \(\sim 1/\omega_d^2\).
+            </p>
+          </div>
+
+          <div class="box">
+            <h3>(c) Frequency where amplitude is maximal</h3>
+            <p>
+              Since the numerator is constant, maximize \(|X_B|\) by minimizing
+              \((k-m\omega_d^2)^2+(b\omega_d)^2\). The result is:
+            </p>
+            <div class="eq">
+              <div class="lbl"><span>Peak frequency</span></div>
+              \[
+                \boxed{
+                \omega_{d,\max}^{(B)}=\sqrt{\omega_0^2-\frac{1}{2}\left(\frac{b}{m}\right)^2}
+                =\sqrt{\frac{k}{m}-\frac{b^2}{2m^2}}
+                }.
+              \]
+            </div>
+          </div>
+
+          <div class="box">
+            <h3>(d) Limiting behavior</h3>
+            <div class="eq">
+              <div class="lbl"><span>Low frequency \(\omega_d\ll\omega_0\)</span></div>
+              \[
+                |X_B|\approx \frac{k s_0}{k}=s_0
+                \quad\Rightarrow\quad \boxed{|X_B|\to s_0\ \text{(mass follows base)}}.
+              \]
+            </div>
+            <div class="eq">
+              <div class="lbl"><span>High frequency \(\omega_d\gg\omega_0\)</span></div>
+              \[
+                |X_B|\approx \frac{k s_0}{m\omega_d^2}
+                = s_0\left(\frac{\omega_0}{\omega_d}\right)^2
+                \quad\Rightarrow\quad \boxed{|X_B|\sim \frac{s_0\omega_0^2}{\omega_d^2}}.
+              \]
+            </div>
+          </div>
+        </section>
+
+        <div class="box">
+          <h3>Final boxed summary (both cases)</h3>
+
+          <div class="eq">
+            <div class="lbl"><span>Equations of motion</span></div>
+            \[
+              \boxed{\text{A-drive: } m\ddot x+b\dot x+kx=b\dot s(t)}
+              \qquad
+              \boxed{\text{B-drive: } m\ddot x+b\dot x+kx=ks(t)}.
+            \]
+          </div>
+
+          <div class="eq">
+            <div class="lbl"><span>Amplitudes</span></div>
+            \[
+              \boxed{
+              |X_A|=\frac{b\omega_d s_0}{\sqrt{(k-m\omega_d^2)^2+(b\omega_d)^2}}
+              }
+              \qquad
+              \boxed{
+              |X_B|=\frac{k s_0}{\sqrt{(k-m\omega_d^2)^2+(b\omega_d)^2}}
+              }.
+            \]
+          </div>
+
+          <div class="eq">
+            <div class="lbl"><span>Peak frequencies</span></div>
+            \[
+              \boxed{\omega_{d,\max}^{(A)}=\omega_0}
+              \qquad
+              \boxed{\omega_{d,\max}^{(B)}=\sqrt{\omega_0^2-\frac{1}{2}\left(\frac{b}{m}\right)^2}}.
+            \]
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <h3>Sanity checks</h3>
+          <ul>
+            <li><b>Units:</b> Both amplitudes \(|X|\) have units of meters (numerator is force, denominator is stiffness).</li>
+            <li><b>Low-\(\omega\) physics:</b> A-drive \(|X_A|\to 0\) because forcing is via \(\dot s\); B-drive \(|X_B|\to s_0\) (quasi-static following).</li>
+            <li><b>High-\(\omega\) physics:</b> inertia dominates; A-drive falls \(\sim 1/\omega\), B-drive falls \(\sim 1/\omega^2\).</li>
+          </ul>
+        </div>
+
+        <footer>
+          <div class="hr"></div>
+          <p>
+            This article is optimized for embedding: it’s self-contained, responsive, and uses MathJax for clean equations.
+            You can remove the tab switcher if you prefer both cases visible at once.
+          </p>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">Copied ✔</div>
+
+  <script>
+    // Tabs
+    const tabA = document.getElementById('tabA');
+    const tabB = document.getElementById('tabB');
+    const panelA = document.getElementById('panelA');
+    const panelB = document.getElementById('panelB');
+
+    function selectTab(which){
+      const isA = which === 'A';
+      tabA.setAttribute('aria-selected', String(isA));
+      tabB.setAttribute('aria-selected', String(!isA));
+      panelA.classList.toggle('active', isA);
+      panelB.classList.toggle('active', !isA);
+    }
+
+    tabA.addEventListener('click', () => selectTab('A'));
+    tabB.addEventListener('click', () => selectTab('B'));
+
+    // Copy-to-clipboard
+    const toast = document.getElementById('toast');
+    function showToast(msg="Copied ✔"){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(()=>toast.classList.remove('show'), 1200);
+    }
+
+    document.querySelectorAll('[data-copy]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const sel = btn.getAttribute('data-copy');
+        const el = document.querySelector(sel);
+        if(!el){ showToast("Nothing to copy"); return; }
+        const text = el.innerText.trim();
+        try{
+          await navigator.clipboard.writeText(text);
+          showToast();
+        }catch(e){
+          // fallback
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          showToast();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

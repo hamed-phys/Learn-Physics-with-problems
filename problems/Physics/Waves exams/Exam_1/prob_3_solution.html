@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Coupled Pendulum & Spring Oscillators — Full Solution (Problem 3)</title>
+
+  <!-- =========================
+       Advanced, self-contained article page
+       - Dark/light theme
+       - Sticky ToC
+       - Math rendered via MathJax
+       - Subtle animations + progress bar
+       - Copy buttons for equations/sections
+       - Print-friendly styling
+       ========================= -->
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --bg2:#0f1630;
+      --card:#0f1a3a;
+      --card2:#0d1530;
+      --text:#e8ecff;
+      --muted:#a9b1d6;
+      --line: rgba(232,236,255,.12);
+      --accent:#7aa2f7;
+      --accent2:#2ac3de;
+      --good:#9ece6a;
+      --warn:#e0af68;
+      --bad:#f7768e;
+      --shadow: 0 12px 32px rgba(0,0,0,.35);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    [data-theme="light"]{
+      --bg: #f6f7fb;
+      --bg2:#ffffff;
+      --card:#ffffff;
+      --card2:#ffffff;
+      --text:#0f172a;
+      --muted:#475569;
+      --line: rgba(15,23,42,.12);
+      --accent:#2563eb;
+      --accent2:#0891b2;
+      --good:#16a34a;
+      --warn:#b45309;
+      --bad:#dc2626;
+      --shadow: 0 10px 24px rgba(2,6,23,.12);
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{ height:100%; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 800px at 20% -10%, rgba(122,162,247,.25), transparent 55%),
+                  radial-gradient(900px 600px at 120% 10%, rgba(42,195,222,.18), transparent 55%),
+                  linear-gradient(180deg, var(--bg), var(--bg2));
+      color:var(--text);
+      line-height:1.65;
+    }
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+    .wrap{
+      display:grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap:22px;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 28px 18px 80px;
+    }
+    header.hero{
+      grid-column: 1 / -1;
+      position:relative;
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(135deg, rgba(122,162,247,.18), rgba(42,195,222,.12)),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .hero-inner{
+      padding: 26px 22px 22px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+      align-items:center;
+    }
+    .hero h1{
+      margin:0 0 10px;
+      font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+      letter-spacing:.2px;
+    }
+    .hero p{
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+    .meta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 14px;
+    }
+    .chip{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.10);
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size:.88rem;
+      color: var(--muted);
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+    }
+    [data-theme="light"] .chip{ background: rgba(2,6,23,.03); }
+
+    .tools{
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.12);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-weight: 600;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    [data-theme="light"] .btn{ background: rgba(2,6,23,.03); }
+    .btn:hover{ transform: translateY(-1px); border-color: rgba(122,162,247,.35); }
+    .btn:active{ transform: translateY(0px); }
+    .btn svg{ width:18px; height:18px; opacity:.9; }
+    .btn.small{ padding: 7px 10px; font-size:.9rem; border-radius: 10px; }
+
+    /* Progress bar */
+    .progress{
+      position: fixed;
+      top:0; left:0; right:0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transform-origin: 0 50%;
+      transform: scaleX(0);
+      z-index: 1000;
+    }
+
+    /* Sidebar ToC */
+    aside{
+      position: sticky;
+      top: 18px;
+      height: fit-content;
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .toc-head{
+      padding: 16px 16px 12px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .toc-head h2{
+      margin:0;
+      font-size: 1rem;
+      letter-spacing:.2px;
+    }
+    .toc{
+      padding: 10px 10px 14px;
+      max-height: calc(100vh - 120px);
+      overflow:auto;
+    }
+    .toc a{
+      display:block;
+      padding: 9px 10px;
+      border-radius: 12px;
+      color: var(--muted);
+      border:1px solid transparent;
+      transition: background .15s ease, border-color .15s ease, color .15s ease;
+      font-size: .95rem;
+    }
+    .toc a:hover{
+      background: rgba(122,162,247,.10);
+      border-color: rgba(122,162,247,.20);
+      color: var(--text);
+      text-decoration:none;
+    }
+    .toc a.active{
+      background: rgba(42,195,222,.10);
+      border-color: rgba(42,195,222,.24);
+      color: var(--text);
+    }
+    .toc .sub{
+      margin-left: 10px;
+      padding-left: 10px;
+      border-left: 1px dashed var(--line);
+    }
+
+    /* Main content */
+    main{
+      min-width: 0;
+    }
+    section.card{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+      padding: 20px 18px;
+      margin: 0 0 18px;
+      position:relative;
+      overflow:hidden;
+    }
+    section.card::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(600px 180px at 10% 0%, rgba(122,162,247,.12), transparent 60%),
+        radial-gradient(540px 180px at 90% 0%, rgba(42,195,222,.10), transparent 60%);
+      pointer-events:none;
+      filter: blur(0px);
+    }
+    .content{
+      position:relative;
+    }
+    h2{
+      margin: 0 0 12px;
+      font-size: 1.35rem;
+      letter-spacing:.2px;
+    }
+    h3{
+      margin: 18px 0 10px;
+      font-size: 1.1rem;
+      letter-spacing:.15px;
+    }
+    p{ margin: 10px 0; }
+    ul, ol{ margin: 10px 0 10px 22px; }
+    li{ margin: 6px 0; color: var(--muted); }
+    li b, p b{ color: var(--text); }
+    .callout{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.12);
+      border-radius: 16px;
+      padding: 14px 14px;
+      margin: 12px 0;
+      color: var(--muted);
+    }
+    [data-theme="light"] .callout{ background: rgba(2,6,23,.03); }
+    .callout.good{ border-color: rgba(158,206,106,.35); }
+    .callout.warn{ border-color: rgba(224,175,104,.35); }
+    .callout.bad { border-color: rgba(247,118,142,.35); }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+      aside{ position: relative; top:0; }
+      .hero-inner{ grid-template-columns: 1fr; }
+      .tools{ justify-content:flex-start; }
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    /* Equation blocks & copy */
+    .eq{
+      margin: 12px 0;
+      padding: 12px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0,0,0,.10);
+      position: relative;
+      overflow:hidden;
+    }
+    [data-theme="light"] .eq{ background: rgba(2,6,23,.03); }
+    .eq .copy{
+      position:absolute;
+      top:10px; right:10px;
+      z-index:2;
+    }
+    .eq .label{
+      font-family: var(--mono);
+      font-size: .78rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      letter-spacing:.2px;
+      opacity:.95;
+    }
+    .kbd{
+      font-family: var(--mono);
+      font-size: .85rem;
+      padding: 2px 7px;
+      border-radius: 9px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.12);
+      color: var(--muted);
+    }
+    [data-theme="light"] .kbd{ background: rgba(2,6,23,.03); }
+
+    /* Code-ish inline */
+    code{
+      font-family: var(--mono);
+      font-size: .92em;
+      padding: 2px 6px;
+      border-radius: 10px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.10);
+      color: var(--text);
+    }
+    [data-theme="light"] code{ background: rgba(2,6,23,.03); }
+
+    /* “Boxed” results */
+    .boxed{
+      border:1px solid rgba(122,162,247,.35);
+      background: linear-gradient(135deg, rgba(122,162,247,.12), rgba(42,195,222,.08));
+      border-radius: 16px;
+      padding: 14px 14px;
+      margin: 12px 0;
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+    }
+    .boxed h4{
+      margin:0 0 6px;
+      font-size: 1rem;
+      letter-spacing:.2px;
+    }
+    .small{
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    /* Print styles */
+    @media print{
+      .progress, .tools, aside, .eq .copy{ display:none !important; }
+      body{ background:#fff !important; color:#000 !important; }
+      section.card{ box-shadow:none !important; background:#fff !important; }
+      a{ color:#000 !important; text-decoration:underline !important; }
+      .chip{ background:#fff !important; }
+    }
+
+    /* Smooth reveal animation */
+    .reveal{ opacity:0; transform: translateY(8px); transition: opacity .5s ease, transform .5s ease; }
+    .reveal.in{ opacity:1; transform: translateY(0px); }
+
+    footer{
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: .95rem;
+      text-align:center;
+    }
+  </style>
+
+  <!-- MathJax for LaTeX -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']], displayMath: [['\\[','\\]'], ['$$','$$']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+
+<body>
+  <div class="progress" id="progress"></div>
+
+  <div class="wrap" id="top">
+    <header class="hero reveal">
+      <div class="hero-inner">
+        <div>
+          <h1>Coupled Pendulum & Ideal Spring Oscillators — Problem 3 (Full Solution)</h1>
+          <p>
+            A rigorous, beginner-friendly derivation of the coupled equations, matrices, normal modes, mode shapes,
+            and the released-frame extension — presented as a polished article with interactive navigation.
+          </p>
+          <div class="meta">
+            <span class="chip">⏱️ Linear small-oscillation theory</span>
+            <span class="chip">🧩 Normal modes via eigenvectors</span>
+            <span class="chip">📌 Includes fixed-frame + free-frame cases</span>
+          </div>
+        </div>
+        <div class="tools">
+          <button class="btn" id="themeBtn" type="button" title="Toggle theme">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 3a1 1 0 0 1 1 1v1.5a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 18.5a1 1 0 0 1 1 1V21a1 1 0 1 1-2 0v-1.5a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M4 11a1 1 0 0 1 1-1h1.5a1 1 0 1 1 0 2H5a1 1 0 0 1-1-1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M18.5 11a1 1 0 0 1 1-1H21a1 1 0 1 1 0 2h-1.5a1 1 0 0 1-1-1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M7.05 7.05a1 1 0 0 1 1.41 0l.85.85a1 1 0 1 1-1.41 1.41l-.85-.85a1 1 0 0 1 0-1.41Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M15.69 15.69a1 1 0 0 1 1.41 0l.85.85a1 1 0 1 1-1.41 1.41l-.85-.85a1 1 0 0 1 0-1.41Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M7.05 16.95a1 1 0 0 1 0-1.41l.85-.85a1 1 0 1 1 1.41 1.41l-.85.85a1 1 0 0 1-1.41 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M15.69 8.31a1 1 0 0 1 0-1.41l.85-.85a1 1 0 1 1 1.41 1.41l-.85.85a1 1 0 0 1-1.41 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Theme
+          </button>
+
+          <button class="btn" type="button" onclick="window.print()" title="Print / Save as PDF">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 8V4h10v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M7 17h10v3H7v-3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M6 17H4a2 2 0 0 1-2-2v-5a3 3 0 0 1 3-3h14a3 3 0 0 1 3 3v5a2 2 0 0 1-2 2h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M18 11h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            Print
+          </button>
+
+          <a class="btn" href="#sanity" title="Jump to sanity checks">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+            Sanity Checks
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <aside class="reveal">
+      <div class="toc-head">
+        <h2>Contents</h2>
+        <button class="btn small" type="button" id="copyLinkBtn" title="Copy page link">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Link
+        </button>
+      </div>
+      <nav class="toc" id="toc">
+        <a href="#part1">PART 1 — Problem Analysis</a>
+        <div class="sub">
+          <a href="#p1-rewrite">Rewrite + givens</a>
+          <a href="#p1-principles">Principles + approaches</a>
+          <a href="#p1-best">Best approach</a>
+        </div>
+        <a href="#part2">PART 2 — Strategy & Tips</a>
+        <div class="sub">
+          <a href="#p2-plan">Roadmap</a>
+          <a href="#p2-mistakes">Common mistakes</a>
+        </div>
+        <a href="#part3">PART 3 — Full Solution</a>
+        <div class="sub">
+          <a href="#a"> (a) Fixed-frame EOM</a>
+          <a href="#b"> (b) \(M^{-1}K\)</a>
+          <a href="#c"> (c) Frequencies</a>
+          <a href="#d"> (d) Mode shapes</a>
+          <a href="#e"> (e) General motion</a>
+          <a href="#f"> (f) Free-frame EOM</a>
+          <a href="#g"> (g) Three mode sketches</a>
+          <a href="#sanity"> Sanity checks</a>
+        </div>
+        <a href="#top">Back to top</a>
+      </nav>
+    </aside>
+
+    <main>
+      <!-- PART 1 -->
+      <section class="card reveal" id="part1">
+        <div class="content">
+          <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+          <h3 id="p1-rewrite">Rewrite the problem clearly</h3>
+          <p>
+            Two identical pendulum bobs (each mass \(m\), length \(L\)) execute <b>small horizontal oscillations</b>.
+            Each bob is connected to the frame by an outer spring of constant \(K\), and the bobs are connected to each other by a coupling spring of constant \(\alpha K\).
+            Displacements \(x_1, x_2, x_3\) are measured from <b>static equilibrium</b>.
+            First the frame is fixed \((x_3=0)\), then it is released so \(x_3\) is free.
+          </p>
+
+          <div class="grid2">
+            <div class="callout">
+              <b>Given:</b>
+              <ul>
+                <li>Bob masses: \(m, m\)</li>
+                <li>Frame mass: \(2m\)</li>
+                <li>Pendulum length: \(L\)</li>
+                <li>Springs: outer \(K\), coupling \(\alpha K\)</li>
+                <li>Gravity \(g\); small oscillations; no damping; horizontal motion only</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <b>Find:</b>
+              <ul>
+                <li>(a)–(e) Fixed-frame equations, matrices, \(\omega\)’s, mode shapes, general solution</li>
+                <li>(f) Free-frame 3-DOF coupled EOM (no solving)</li>
+                <li>(g) Qualitative description (sketch in words) of three normal modes</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3 id="p1-principles">Relevant principles (and why)</h3>
+          <ul>
+            <li><b>Small-angle pendulum linearization:</b> for small angles, horizontal restoring from gravity is linear and behaves like an effective spring \(k_g=mg/L\).</li>
+            <li><b>Hooke’s law:</b> ideal springs give linear forces proportional to extension.</li>
+            <li><b>Newton/Lagrange:</b> coupled linear ODEs can be written as \(M\ddot{\mathbf x}+K\mathbf x=0\), then normal modes follow from an eigenvalue problem.</li>
+          </ul>
+
+          <h3 id="p1-best">Approaches + best choice</h3>
+          <div class="callout good">
+            <b>Candidate approaches:</b>
+            <ol>
+              <li><b>Force balance (Newton):</b> direct and intuitive; watch signs carefully.</li>
+              <li><b>Lagrangian:</b> systematic; naturally produces \(M\) and \(K\).</li>
+              <li><b>Matrix eigenmodes:</b> fast after building \(M,K\); symmetry simplifies eigenvectors.</li>
+            </ol>
+            <p class="small">
+              <b>Chosen:</b> Use Newton to write EOM quickly, then the matrix eigenvalue method to extract \(\omega\) and mode shapes cleanly.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- PART 2 -->
+      <section class="card reveal" id="part2">
+        <div class="content">
+          <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+          <h3 id="p2-plan">Minimal roadmap (5–10 steps)</h3>
+          <ol>
+            <li><b>Linearize pendulum restoring force</b> → use \(k_g=mg/L\).</li>
+            <li><b>Write spring extensions</b> (fixed frame: use \(x_1, x_2\); moving frame: use \(x_i-x_3\)).</li>
+            <li><b>Apply Newton’s 2nd law</b> to each bob to obtain coupled ODEs.</li>
+            <li><b>Identify \(M\) and \(K\)</b> so the system is \(M\ddot{\mathbf x}+K\mathbf x=0\).</li>
+            <li><b>Compute \(M^{-1}K\)</b>; solve \(\omega^2\) as its eigenvalues.</li>
+            <li><b>Use symmetry</b> to read eigenvectors \((1,1)\) and \((1,-1)\) for the fixed-frame 2×2 case.</li>
+            <li><b>Write the general solution</b> as a superposition of the two normal modes.</li>
+            <li><b>Free-frame:</b> repeat force logic with relative coordinates; add the frame’s equation \(2m\ddot x_3=\sum F\).</li>
+            <li><b>Qualitatively classify 3 modes</b> (including a rigid translation mode with \(\omega=0\)).</li>
+          </ol>
+
+          <h3 id="p2-mistakes">Common mistakes + quick tips</h3>
+          <div class="callout warn">
+            <ul>
+              <li><b>Gravity term:</b> don’t forget the effective spring \(k_g=mg/L\) (not \(mg\)).</li>
+              <li><b>Moving frame:</b> outer springs and gravity depend on \((x_i-x_3)\), not \(x_i\).</li>
+              <li><b>Coupling spring signs:</b> forces involve \((x_2-x_1)\) and act oppositely on the two bobs.</li>
+              <li><b>Mode intuition:</b> in-phase \((1,1)\) stretches the coupling spring minimally; out-of-phase \((1,-1)\) stretches it strongly.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- PART 3 -->
+      <section class="card reveal" id="part3">
+        <div class="content">
+          <h2>PART 3 — Full Solution</h2>
+
+          <div class="callout">
+            <b>Physical intuition:</b> each bob experiences (i) gravity acting like a linear spring \(k_g=mg/L\) about equilibrium, and (ii) ideal spring forces.
+            With the frame fixed, symmetry yields two natural patterns: in-phase and out-of-phase.
+            With the frame free, an additional rigid translation mode appears (no internal deformation → \(\omega=0\)).
+          </div>
+
+          <!-- (a) -->
+          <h3 id="a">(a) Fixed frame \((x_3=0)\): coupled equations of motion</h3>
+
+          <div class="eq" data-copy="kg">
+            <div class="label">Small-angle gravity → effective spring</div>
+            <button class="btn small copy" type="button" data-copybtn="kg">Copy</button>
+            <div class="math">
+              \[
+                x \approx L\theta,\qquad F_{g,x}\approx -mg\,\theta = -\frac{mg}{L}x \equiv -k_g x,\quad k_g=\frac{mg}{L}.
+              \]
+            </div>
+          </div>
+
+          <p><b>Spring forces (fixed anchors):</b></p>
+          <ul>
+            <li>Left outer spring on mass 1: \(F_{L\to1}=-Kx_1\)</li>
+            <li>Right outer spring on mass 2: \(F_{R\to2}=-Kx_2\)</li>
+            <li>Coupling spring extension: \(\Delta=(x_2-x_1)\) with stiffness \(\alpha K\)</li>
+          </ul>
+
+          <div class="eq" data-copy="eom2">
+            <div class="label">Newton’s 2nd law for each bob</div>
+            <button class="btn small copy" type="button" data-copybtn="eom2">Copy</button>
+            <div class="math">
+              \[
+              \begin{aligned}
+              m\ddot x_1 &= -Kx_1 + \alpha K(x_2-x_1) - k_g x_1,\\
+              m\ddot x_2 &= -Kx_2 + \alpha K(x_1-x_2) - k_g x_2.
+              \end{aligned}
+              \]
+            </div>
+          </div>
+
+          <div class="boxed">
+            <h4>Coupled EOM (fixed frame)</h4>
+            \[
+            \boxed{
+            \begin{aligned}
+            m\ddot x_1 + \Big(K(1+\alpha)+\frac{mg}{L}\Big)x_1 - \alpha K x_2 &= 0,\\[4pt]
+            m\ddot x_2 + \Big(K(1+\alpha)+\frac{mg}{L}\Big)x_2 - \alpha K x_1 &= 0.
+            \end{aligned}}
+            \]
+          </div>
+
+          <!-- (b) -->
+          <h3 id="b">(b) The \(2\times2\) matrix \(M^{-1}K\)</h3>
+
+          <div class="eq" data-copy="MK">
+            <div class="label">Matrix form \(M\ddot{\mathbf x}+K\mathbf x=0\)</div>
+            <button class="btn small copy" type="button" data-copybtn="MK">Copy</button>
+            <div class="math">
+              \[
+              \mathbf x=\begin{bmatrix}x_1\\x_2\end{bmatrix},\quad
+              M=\begin{bmatrix}m&0\\0&m\end{bmatrix},\quad
+              K=\begin{bmatrix}
+              K(1+\alpha)+\frac{mg}{L} & -\alpha K\\[4pt]
+              -\alpha K & K(1+\alpha)+\frac{mg}{L}
+              \end{bmatrix}.
+              \]
+            </div>
+          </div>
+
+          <div class="boxed">
+            <h4>\(M^{-1}K\)</h4>
+            \[
+            \boxed{
+            M^{-1}K=\frac{1}{m}
+            \begin{bmatrix}
+            K(1+\alpha)+\frac{mg}{L} & -\alpha K\\[4pt]
+            -\alpha K & K(1+\alpha)+\frac{mg}{L}
+            \end{bmatrix}}
+            \]
+          </div>
+
+          <!-- (c) -->
+          <h3 id="c">(c) Solve for the two normal-mode frequencies</h3>
+
+          <p>
+            Assume \(\mathbf x(t)=\mathbf A e^{i\omega t}\). Then
+            \((-\omega^2 M+K)\mathbf A=0 \Rightarrow \omega^2\mathbf A=(M^{-1}K)\mathbf A\).
+            So the eigenvalues of \(M^{-1}K\) are \(\omega^2\).
+          </p>
+
+          <div class="eq" data-copy="freqs">
+            <div class="label">Eigenvalues for symmetric 2×2 with off-diagonal \(-\alpha K\)</div>
+            <button class="btn small copy" type="button" data-copybtn="freqs">Copy</button>
+            <div class="math">
+              \[
+              \omega_1^2=\frac{K+\frac{mg}{L}}{m},\qquad
+              \omega_2^2=\frac{K(1+2\alpha)+\frac{mg}{L}}{m}.
+              \]
+            </div>
+          </div>
+
+          <div class="boxed">
+            <h4>Normal-mode frequencies</h4>
+            \[
+            \boxed{
+            \omega_1=\sqrt{\frac{K+\frac{mg}{L}}{m}},
+            \qquad
+            \omega_2=\sqrt{\frac{K(1+2\alpha)+\frac{mg}{L}}{m}}.}
+            \]
+          </div>
+
+          <!-- (d) -->
+          <h3 id="d">(d) Amplitude ratios (mode shapes) + motion description</h3>
+
+          <div class="grid2">
+            <div class="callout good">
+              <b>Mode 1 (in-phase)</b><br/>
+              Eigenvector \((1,1)\) ⇒ \(\dfrac{A_2}{A_1}=+1\).<br/>
+              <span class="small">
+                The coupling spring sees little stretch because \(x_2-x_1\approx 0\).
+                Lower frequency.
+              </span>
+            </div>
+            <div class="callout good">
+              <b>Mode 2 (out-of-phase)</b><br/>
+              Eigenvector \((1,-1)\) ⇒ \(\dfrac{A_2}{A_1}=-1\).<br/>
+              <span class="small">
+                The coupling spring stretches strongly because \(x_2-x_1\) is large.
+                Higher frequency.
+              </span>
+            </div>
+          </div>
+
+          <div class="boxed">
+            <h4>Amplitude ratios</h4>
+            \[
+            \boxed{\text{Mode 1: } x_1=x_2 \quad (A_2/A_1=+1),\qquad
+                   \text{Mode 2: } x_1=-x_2 \quad (A_2/A_1=-1).}
+            \]
+          </div>
+
+          <!-- (e) -->
+          <h3 id="e">(e) General motion in terms of normal modes</h3>
+          <p>
+            Decompose motion into the two eigenvectors:
+            \(\mathbf x = q_1(t)\begin{bmatrix}1\\1\end{bmatrix} + q_2(t)\begin{bmatrix}1\\-1\end{bmatrix}\),
+            where \(q_1,q_2\) each satisfy SHO equations with frequencies \(\omega_1,\omega_2\).
+          </p>
+
+          <div class="eq" data-copy="gensol">
+            <div class="label">General solution (four constants)</div>
+            <button class="btn small copy" type="button" data-copybtn="gensol">Copy</button>
+            <div class="math">
+              \[
+              \begin{aligned}
+              x_1(t)&=A_1\cos(\omega_1 t+\phi_1)+A_2\cos(\omega_2 t+\phi_2),\\
+              x_2(t)&=A_1\cos(\omega_1 t+\phi_1)-A_2\cos(\omega_2 t+\phi_2).
+              \end{aligned}
+              \]
+            </div>
+          </div>
+
+          <!-- (f) -->
+          <h3 id="f">(f) Frame released: coupled EOM for \(x_1,x_2,x_3\) (no solving)</h3>
+
+          <p>
+            When the frame moves, the relevant deformations are <b>relative</b> to the frame:
+            outer springs and gravity act on the offsets \((x_i-x_3)\), while the coupling spring depends on \((x_2-x_1)\).
+          </p>
+
+          <div class="eq" data-copy="eom3">
+            <div class="label">3-DOF coupled equations (no diagonalization)</div>
+            <button class="btn small copy" type="button" data-copybtn="eom3">Copy</button>
+            <div class="math">
+              \[
+              \begin{aligned}
+              m\ddot x_1 &= -(K+k_g)(x_1-x_3)+\alpha K(x_2-x_1),\\[4pt]
+              m\ddot x_2 &= -(K+k_g)(x_2-x_3)+\alpha K(x_1-x_2),\\[4pt]
+              2m\ddot x_3 &= (K+k_g)\big[(x_1-x_3)+(x_2-x_3)\big],
+              \end{aligned}
+              \qquad k_g=\frac{mg}{L}.
+              \]
+            </div>
+          </div>
+
+          <div class="boxed">
+            <h4>Key structural insight</h4>
+            <p class="small" style="margin:0;">
+              The frame feels only forces transmitted through the <b>outer</b> spring-and-pendulum connections.
+              The middle coupling spring is internal to the two bobs and does not act directly on the frame.
+            </p>
+          </div>
+
+          <!-- (g) -->
+          <h3 id="g">(g) Describe the three normal modes (sketch in words)</h3>
+
+          <div class="callout">
+            <p style="margin-top:0;">
+              With the frame free, there is <b>no external horizontal restoring force</b> on the whole system,
+              so one mode is a rigid translation with \(\omega=0\).
+            </p>
+            <ol>
+              <li>
+                <b>Rigid translation (zero-frequency):</b> \(x_1=x_2=x_3\).
+                No spring stretches, and each bob remains under its moving suspension point.
+              </li>
+              <li>
+                <b>Antisymmetric bob mode (frame ~ stationary):</b> \(x_1\approx -x_2,\; x_3\approx 0\).
+                Net force on the frame cancels; coupling spring stretches strongly.
+              </li>
+              <li>
+                <b>Symmetric bob-vs-frame mode:</b> \(x_1=x_2\) while \(x_3\) moves oppositely.
+                Outer connections deform together, so the frame “recoils.”
+              </li>
+            </ol>
+          </div>
+
+          <!-- Sanity checks -->
+          <h3 id="sanity">Sanity checks</h3>
+
+          <div class="grid2">
+            <div class="callout good">
+              <b>Units</b>
+              <ul>
+                <li>\(K\) has units N/m.</li>
+                <li>\(\dfrac{mg}{L}\) has units N/m → consistent with an effective spring constant.</li>
+                <li>\(\omega^2 \sim (K/m)\) → s\(^{-2}\).</li>
+              </ul>
+            </div>
+            <div class="callout good">
+              <b>Limiting cases (fixed frame)</b>
+              <ul>
+                <li>\(\alpha\to 0\): two identical uncoupled oscillators → \(\omega_1=\omega_2=\sqrt{\dfrac{K+mg/L}{m}}\).</li>
+                <li>\(K\to 0\): pure pendulums → \(\omega_1=\omega_2=\sqrt{g/L}\).</li>
+                <li>\(\alpha\) large: out-of-phase mode rises in frequency (coupling spring stretches most).</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="boxed">
+            <h4>Final takeaway</h4>
+            <p class="small" style="margin:0;">
+              Fixed frame: two modes — in-phase (lower) and out-of-phase (higher).
+              Free frame: add a rigid-translation mode (\(\omega=0\)) plus two internal modes (antisymmetric and symmetric-with-recoil).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="reveal">
+        <p>
+          Tip: Use <span class="kbd">Ctrl</span> + <span class="kbd">F</span> to search.  
+          Use the “Copy” buttons to grab equations instantly.
+        </p>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // ---------- Theme toggle with persistence ----------
+    const themeBtn = document.getElementById('themeBtn');
+    const saved = localStorage.getItem('article-theme');
+    if(saved){ document.documentElement.setAttribute('data-theme', saved); }
+
+    themeBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('article-theme', next);
+    });
+
+    // ---------- Scroll progress ----------
+    const progress = document.getElementById('progress');
+    const updateProgress = () => {
+      const h = document.documentElement;
+      const scrollTop = h.scrollTop || document.body.scrollTop;
+      const scrollHeight = h.scrollHeight - h.clientHeight;
+      const p = scrollHeight > 0 ? (scrollTop / scrollHeight) : 0;
+      progress.style.transform = `scaleX(${p})`;
+    };
+    document.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+
+    // ---------- Active ToC highlighting ----------
+    const toc = document.getElementById('toc');
+    const links = Array.from(toc.querySelectorAll('a[href^="#"]'));
+    const targets = links
+      .map(a => document.querySelector(a.getAttribute('href')))
+      .filter(Boolean);
+
+    const setActive = () => {
+      let best = null;
+      let bestTop = -Infinity;
+      for(const el of targets){
+        const r = el.getBoundingClientRect();
+        if(r.top < 120 && r.top > bestTop){
+          bestTop = r.top;
+          best = el;
+        }
+      }
+      links.forEach(a => a.classList.remove('active'));
+      if(best){
+        const a = toc.querySelector(`a[href="#${best.id}"]`);
+        if(a) a.classList.add('active');
+      }
+    };
+    document.addEventListener('scroll', setActive, { passive: true });
+    setActive();
+
+    // ---------- Copy page link ----------
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    copyLinkBtn.addEventListener('click', async () => {
+      try{
+        await navigator.clipboard.writeText(window.location.href);
+        copyLinkBtn.textContent = "Copied!";
+        setTimeout(()=> copyLinkBtn.textContent="Link", 900);
+      }catch(e){
+        alert("Clipboard blocked. You can copy the URL from the address bar.");
+      }
+    });
+
+    // ---------- Copy equation blocks ----------
+    const eqBlocks = document.querySelectorAll('.eq');
+    const store = {};
+    eqBlocks.forEach(eq => {
+      const key = eq.getAttribute('data-copy');
+      const tex = eq.querySelector('.math')?.innerText?.trim() || '';
+      store[key] = tex;
+    });
+
+    document.querySelectorAll('[data-copybtn]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const key = btn.getAttribute('data-copybtn');
+        const text = store[key] || '';
+        try{
+          await navigator.clipboard.writeText(text);
+          const old = btn.textContent;
+          btn.textContent = "Copied ✓";
+          setTimeout(()=> btn.textContent = old, 900);
+        }catch(e){
+          alert("Clipboard blocked. Select and copy manually.");
+        }
+      });
+    });
+
+    // ---------- Reveal animation ----------
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if(en.isIntersecting){
+          en.target.classList.add('in');
+          obs.unobserve(en.target);
+        }
+      });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  </script>
+</body>
+</html>

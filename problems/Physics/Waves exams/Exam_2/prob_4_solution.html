@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Problem 4 — Vibrating String with Mixed Boundary Conditions (Full Solution)</title>
+
+  <!-- MathJax for LaTeX rendering -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']], displayMath: [['\\[','\\]']] },
+      options: { renderActions: { addMenu: [] } }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg0:#070A12;
+      --bg1:#0B1020;
+      --card:#0E1630cc;
+      --card2:#0D142Bcc;
+      --border:#2A3866;
+      --text:#EAF0FF;
+      --muted:#B5C3FF;
+      --muted2:#8FA4E8;
+      --accent:#7C5CFF;
+      --accent2:#2FE1D6;
+      --warn:#FFCC66;
+      --ok:#62E58D;
+      --shadow: 0 20px 70px rgba(0,0,0,.45);
+      --radius: 20px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    /* Light mode overrides (auto via color-scheme) */
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg0:#F6F8FF;
+        --bg1:#EEF2FF;
+        --card:#FFFFFFcc;
+        --card2:#FFFFFFcc;
+        --border:#D7DFFF;
+        --text:#101426;
+        --muted:#35406E;
+        --muted2:#5463A6;
+        --shadow: 0 20px 70px rgba(10,14,30,.12);
+      }
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 900px at 15% 10%, rgba(124,92,255,.25), transparent 60%),
+        radial-gradient(1000px 800px at 85% 20%, rgba(47,225,214,.18), transparent 55%),
+        radial-gradient(1200px 900px at 50% 110%, rgba(124,92,255,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    a{ color:inherit; text-decoration: none; }
+    .wrap{ max-width: 1100px; margin: 0 auto; padding: 28px 18px 80px; }
+
+    /* Top hero */
+    .hero{
+      position: relative;
+      padding: 28px 22px 18px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .hero::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(700px 260px at 20% 0%, rgba(124,92,255,.30), transparent 60%),
+        radial-gradient(600px 240px at 90% 10%, rgba(47,225,214,.22), transparent 60%);
+      filter: blur(12px);
+      opacity:.85;
+      pointer-events:none;
+    }
+    .hero > *{ position: relative; z-index:1; }
+
+    .badgeRow{
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;
+    }
+    .badges{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(10,14,30,.18);
+      font-size: 12.5px;
+      letter-spacing:.25px;
+      color: var(--muted);
+    }
+    .badge .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 4px rgba(124,92,255,.15);
+    }
+
+    .hero h1{
+      margin: 14px 0 6px;
+      font-size: clamp(22px, 2.4vw + 10px, 40px);
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+    }
+    .hero p{
+      margin: 0;
+      color: var(--muted);
+      max-width: 72ch;
+      line-height: 1.65;
+      font-size: 15.5px;
+    }
+
+    .toc{
+      margin-top: 18px;
+      display:flex; flex-wrap:wrap; gap:10px;
+    }
+    .chip{
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size: 13px;
+      transition: transform .15s ease, background .15s ease;
+    }
+    .chip:hover{ transform: translateY(-1px); background: rgba(255,255,255,.07); }
+
+    /* Layout grid */
+    .grid{
+      margin-top: 18px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    /* Cards */
+    .card{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding: 16px 18px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex; gap:12px; align-items:flex-start; justify-content:space-between;
+    }
+    .cardHeader h2{
+      margin:0;
+      font-size: 17px;
+      letter-spacing:-0.01em;
+    }
+    .cardHeader .sub{
+      margin: 3px 0 0;
+      font-size: 13px;
+      color: var(--muted2);
+      line-height:1.45;
+    }
+    .cardBody{ padding: 18px; }
+
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+    }
+    .kpi .tile{
+      border:1px solid rgba(255,255,255,.06);
+      background: rgba(10,14,30,.18);
+      border-radius: 16px;
+      padding: 12px 12px 10px;
+      min-height: 76px;
+    }
+    .tile .label{
+      color: var(--muted2);
+      font-size: 12px;
+      letter-spacing:.3px;
+      text-transform: uppercase;
+    }
+    .tile .value{
+      margin-top: 6px;
+      font-family: var(--mono);
+      font-size: 13.5px;
+      color: var(--text);
+      line-height:1.45;
+      word-break: break-word;
+    }
+
+    /* Sections */
+    .sectionTitle{
+      display:flex; align-items:center; gap:10px;
+      margin: 0 0 14px;
+      font-size: 15.5px;
+      color: var(--text);
+      letter-spacing:-0.01em;
+    }
+    .sectionTitle .pill{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+    }
+
+    .prose{
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.75;
+    }
+    .prose strong{ color: var(--text); }
+    .prose ul{ margin: 10px 0 0 18px; }
+    .prose li{ margin: 6px 0; }
+    .prose code{
+      font-family: var(--mono);
+      font-size: .95em;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(10,14,30,.20);
+      color: var(--text);
+    }
+
+    /* Equation blocks */
+    .eq{
+      margin: 14px 0;
+      padding: 14px 14px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(124,92,255,.10), rgba(47,225,214,.06));
+      overflow-x:auto;
+    }
+
+    /* Callouts */
+    .callout{
+      margin: 14px 0;
+      padding: 14px 14px 12px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(10,14,30,.18);
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+    }
+    .callout .icon{
+      width: 34px; height: 34px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+    }
+    .callout .title{
+      margin: 0;
+      font-size: 14px;
+      color: var(--text);
+      letter-spacing:-0.01em;
+    }
+    .callout .text{
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .ok{ color: var(--ok); }
+    .warn{ color: var(--warn); }
+
+    /* Accordion (details) */
+    details{
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      border-radius: 16px;
+      overflow:hidden;
+      margin: 12px 0;
+    }
+    details summary{
+      cursor:pointer;
+      list-style:none;
+      padding: 12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      color: var(--text);
+      user-select:none;
+    }
+    details summary::-webkit-details-marker{ display:none; }
+    details summary .hint{
+      color: var(--muted2);
+      font-size: 13px;
+      font-family: var(--mono);
+    }
+    details .content{ padding: 0 14px 14px; color: var(--muted); line-height:1.75; font-size: 14.5px; }
+
+    /* Right rail sticky */
+    .sticky{ position: sticky; top: 16px; }
+    @media (max-width: 980px){ .sticky{ position: relative; top:auto; } }
+
+    /* Footer */
+    footer{
+      margin-top: 18px;
+      color: var(--muted2);
+      font-size: 12.5px;
+      text-align:center;
+      opacity:.9;
+    }
+
+    /* Subtle separators */
+    .hr{
+      height:1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.10), transparent);
+      margin: 14px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header class="hero" id="top">
+      <div class="badgeRow">
+        <div class="badges">
+          <span class="badge"><span class="dot"></span> Vibrating String • Mixed BC</span>
+          <span class="badge">Small-angle approximation</span>
+          <span class="badge">Released from rest</span>
+        </div>
+        <span class="badge" title="Section order matches your requested format">PART 1 → PART 2 → PART 3</span>
+      </div>
+
+      <h1>Problem 4 — Normal Modes & Mode Amplitudes for a String with a Sliding Ring</h1>
+      <p>
+        A taut string of length \(L\), tension \(T\), and linear mass density \(\rho_L\) is initially held in a “step” shape
+        and released from rest at \(t=0\). The left end is fixed; the right end passes through a massless ring that slides freely
+        in the transverse direction. This article provides a complete, structured solution: analysis → roadmap → full derivation,
+        including the unexcited modes.
+      </p>
+
+      <nav class="toc" aria-label="Table of contents">
+        <a class="chip" href="#part1">PART 1 — Problem Analysis</a>
+        <a class="chip" href="#part2">PART 2 — Strategy & Tips</a>
+        <a class="chip" href="#part3">PART 3 — Full Solution</a>
+        <a class="chip" href="#results">Final Boxed Results</a>
+      </nav>
+    </header>
+
+    <main class="grid">
+      <!-- Left column -->
+      <section>
+        <!-- PART 1 -->
+        <article class="card" id="part1">
+          <div class="cardHeader">
+            <div>
+              <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+              <p class="sub">Restate the setup, list givens/unknowns, identify laws, compare approaches, choose the best.</p>
+            </div>
+            <div class="badge" style="white-space:nowrap;">30 pts</div>
+          </div>
+          <div class="cardBody">
+            <h3 class="sectionTitle"><span class="pill">1</span> Restate the problem</h3>
+            <div class="prose">
+              We study transverse vibrations \(\psi(x,t)\) of a taut string (\(0\le x\le L\)). The string can move only along
+              \(\hat y\) with small slope everywhere. The left end is clamped at a wall (\(x=0\)). The right end (\(x=L\)) is attached
+              to a <strong>massless, frictionless ring</strong> that can slide up/down, so the end is not fixed in \(y\) but the ring
+              cannot supply a transverse force. Gravity is ignored. The string is released from rest at \(t=0\) from the “step” shape:
+              \[
+                \psi(x,0)=\begin{cases}
+                0, & 0\le x<\tfrac{5L}{7},\\
+                H, & \tfrac{5L}{7}\le x\le L,
+                \end{cases}
+                \qquad \dot{\psi}(x,0)=0.
+              \]
+              We must (a) write the boundary conditions, (b) give the 3 lowest normal modes and \(\omega_n\), (c) compute the
+              amplitude \(a_n\) of the \(n^\text{th}\) mode for the initial shape, and (d) determine which modes are not excited.
+            </div>
+
+            <div class="hr"></div>
+
+            <h3 class="sectionTitle"><span class="pill">2</span> Given, unknowns, and targets</h3>
+            <div class="kpi" role="list">
+              <div class="tile" role="listitem">
+                <div class="label">Given</div>
+                <div class="value">\(T,\ \rho_L,\ L,\ H;\) small-angle; gravity ignored; release from rest</div>
+              </div>
+              <div class="tile" role="listitem">
+                <div class="label">Unknowns</div>
+                <div class="value">\(\psi(x,t)\), BCs at \(0,L\), \(X_n(x)\), \(k_n\), \(\omega_n\), \(a_n\), unexcited \(n\)</div>
+              </div>
+              <div class="tile" role="listitem">
+                <div class="label">Find/Prove</div>
+                <div class="value">(a) BCs; (b) lowest 3 modes + \(\omega_n\); (c) \(a_n(H,n)\); (d) which \(a_n=0\)</div>
+              </div>
+              <div class="tile" role="listitem">
+                <div class="label">Model</div>
+                <div class="value">1D wave equation with mixed (Dirichlet/Neumann) boundary conditions</div>
+              </div>
+            </div>
+
+            <div class="hr"></div>
+
+            <h3 class="sectionTitle"><span class="pill">3</span> Principles & why they apply</h3>
+            <div class="prose">
+              <ul>
+                <li>
+                  <strong>Wave equation (taut string):</strong> Small slopes imply nearly constant tension magnitude \(T\) and linear dynamics, so
+                  \(\psi\) obeys \(\psi_{tt}=v^2\psi_{xx}\) with \(v=\sqrt{T/\rho_L}\).
+                </li>
+                <li>
+                  <strong>Boundary conditions from constraints:</strong> the fixed wall enforces \(\psi(0,t)=0\).
+                  The ring is free to slide and massless, so it cannot sustain transverse force; thus the transverse component
+                  of tension at \(x=L\) must vanish, giving \(\psi_x(L,t)=0\).
+                </li>
+                <li>
+                  <strong>Normal modes & orthogonality:</strong> linear PDE + linear BCs → Sturm–Liouville eigenfunctions.
+                  Expand the initial shape in these eigenfunctions to obtain \(a_n\).
+                </li>
+              </ul>
+            </div>
+
+            <details>
+              <summary>
+                <span>Why does the ring imply \(\psi_x(L,t)=0\)?</span>
+                <span class="hint">Tap to expand</span>
+              </summary>
+              <div class="content">
+                At the endpoint, the string tension acts along the tangent. For small slope,
+                the transverse force is \(F_y \approx T \sin\theta \approx T\tan\theta \approx T\,\psi_x\).
+                A massless, frictionless ring cannot provide a net vertical reaction force, so \(F_y=0\) at the ring → \(\psi_x(L,t)=0\).
+              </div>
+            </details>
+
+            <div class="hr"></div>
+
+            <h3 class="sectionTitle"><span class="pill">4</span> Candidate approaches & best choice</h3>
+            <div class="prose">
+              <ul>
+                <li><strong>Separation of variables + eigenfunction expansion:</strong> systematic; directly yields \(X_n\), \(\omega_n\), and \(a_n\).</li>
+                <li><strong>Method of images:</strong> can convert mixed BC to an extended Fourier series but is easier to misapply.</li>
+                <li><strong>Pure symmetry arguments:</strong> can predict some missing modes but not the full coefficient formula.</li>
+              </ul>
+              <strong>Best approach:</strong> separation of variables + orthogonality (most rigorous and clean for parts a–d).
+            </div>
+          </div>
+        </article>
+
+        <!-- PART 2 -->
+        <article class="card" id="part2" style="margin-top:18px;">
+          <div class="cardHeader">
+            <div>
+              <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+              <p class="sub">Minimal plan (5–10 steps), goals + key tools, plus common pitfalls.</p>
+            </div>
+            <div class="badge">Roadmap</div>
+          </div>
+          <div class="cardBody">
+            <div class="prose">
+              <ol>
+                <li><strong>Write the PDE and wave speed</strong> — use \(\psi_{tt}=v^2\psi_{xx}\), \(v=\sqrt{T/\rho_L}\).</li>
+                <li><strong>Translate physical constraints into BCs</strong> — fixed end: \(\psi(0,t)=0\); ring/free end: \(\psi_x(L,t)=0\).</li>
+                <li><strong>Separate variables</strong> — assume \(\psi=X(x)G(t)\); obtain \(X''+k^2X=0\) and \(G''+\omega^2G=0\).</li>
+                <li><strong>Apply BCs to quantize \(k\)</strong> — enforce \(X(0)=0\), \(X'(L)=0\) → discrete \(k_n\).</li>
+                <li><strong>Write the normal-mode expansion</strong> — \(\psi=\sum (a_n\cos\omega_nt+b_n\sin\omega_nt)X_n\).</li>
+                <li><strong>Use “released from rest”</strong> — \(\dot\psi(x,0)=0\Rightarrow b_n=0\).</li>
+                <li><strong>Project initial shape</strong> — compute \(a_n\) via orthogonality: \(a_n\propto\int_0^L f(x)X_n(x)\,dx\).</li>
+                <li><strong>Identify unexcited modes</strong> — solve the integer condition when \(a_n=0\).</li>
+              </ol>
+            </div>
+
+            <div class="callout">
+              <div class="icon" aria-hidden="true">
+                <!-- small SVG lightning -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M13 2L3 14h7l-1 8 12-14h-7l-1-6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <p class="title">Common mistakes (avoid these)</p>
+                <p class="text">
+                  <span class="warn">•</span> Don’t set \(\psi(L,t)=0\): the ring end is <em>not</em> fixed.
+                  <span class="warn">•</span> Mixed BCs produce <strong>half-integer</strong> modes \(k_nL=(2n-1)\pi/2\).
+                  <span class="warn">•</span> Normalize correctly: \(\int_0^L \sin^2(k_nx)\,dx=L/2\).
+                  <span class="warn">•</span> The step causes Gibbs overshoot near \(x=5L/7\) — normal and expected.
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- PART 3 -->
+        <article class="card" id="part3" style="margin-top:18px;">
+          <div class="cardHeader">
+            <div>
+              <h2>PART 3 — Full Solution</h2>
+              <p class="sub">Intuition → detailed derivation → boxed results → sanity checks (units, limits, interpretation).</p>
+            </div>
+            <div class="badge">Derivation</div>
+          </div>
+
+          <div class="cardBody">
+            <h3 class="sectionTitle"><span class="pill">Intuition</span> What to expect physically</h3>
+            <div class="prose">
+              A fixed end at \(x=0\) forces a node: \(\psi(0,t)=0\). A frictionless sliding ring at \(x=L\) cannot exert a vertical reaction force,
+              so the endpoint must have zero transverse force, which under small-slope conditions means zero slope: \(\psi_x(L,t)=0\).
+              This fixed/free combination supports standing waves with a quarter-wave condition, producing half-integer \(k\) values.
+              The initial displacement is a step, so many modes are excited, but some vanish by exact cancellation in the projection integral.
+            </div>
+
+            <div class="hr"></div>
+
+            <h3 class="sectionTitle"><span class="pill">(a)</span> Boundary conditions</h3>
+            <div class="prose">
+              <strong>Left end fixed:</strong>
+              \[
+                \boxed{\psi(0,t)=0.}
+              \]
+              <strong>Right end on a massless, frictionless ring:</strong> transverse force must vanish.
+              For small angles, \(F_y \approx T\,\psi_x(L,t)\). So
+              \[
+                \boxed{\psi_x(L,t)=0.}
+              \]
+            </div>
+
+            <div class="hr"></div>
+
+            <h3 class="sectionTitle"><span class="pill">(b)</span> Normal modes and the three lowest frequencies</h3>
+
+            <div class="prose">
+              The wave equation is
+              \[
+                \psi_{tt}=v^2\psi_{xx},\qquad v=\sqrt{\frac{T}{\rho_L}}.
+              \]
+              Use \(\psi=X(x)G(t)\). Then
+              \[
+                \frac{G''}{v^2G}=\frac{X''}{X}=-k^2
+                \quad\Rightarrow\quad
+                X''+k^2X=0,\ \ G''+\omega^2G=0,\ \ \omega=vk.
+              \]
+              Solve \(X''+k^2X=0\Rightarrow X=A\sin(kx)+B\cos(kx)\).
+              Apply \(X(0)=0\Rightarrow B=0\), so \(X=A\sin(kx)\).
+              Apply \(X'(L)=0\Rightarrow Ak\cos(kL)=0\Rightarrow \cos(kL)=0\).
+              Hence
+              \[
+                kL=\left(n-\tfrac12\right)\pi,\quad n=1,2,3,\dots
+              \]
+              \[
+                \boxed{k_n=\frac{(2n-1)\pi}{2L}},\qquad
+                \boxed{\omega_n=vk_n=\frac{(2n-1)\pi}{2L}\sqrt{\frac{T}{\rho_L}}}
+              \]
+              with mode shapes
+              \[
+                \boxed{X_n(x)=\sin\!\left(\frac{(2n-1)\pi}{2L}x\right)}.
+              \]
+            </div>
+
+            <details>
+              <summary>
+                <span>Three lowest mode shapes (as \(\psi\) vs. \(x\))</span>
+                <span class="hint">Tap to expand</span>
+              </summary>
+              <div class="content">
+                \(n=1:\ X_1(x)=\sin(\pi x/2L)\), \(\omega_1=\frac{\pi}{2L}\sqrt{T/\rho_L}\).<br>
+                \(n=2:\ X_2(x)=\sin(3\pi x/2L)\), \(\omega_2=\frac{3\pi}{2L}\sqrt{T/\rho_L}\).<br>
+                \(n=3:\ X_3(x)=\sin(5\pi x/2L)\), \(\omega_3=\frac{5\pi}{2L}\sqrt{T/\rho_L}\).<br>
+                Each has a node at \(x=0\) and zero slope at \(x=L\).
+              </div>
+            </details>
+
+            <div class="hr"></div>
+
+            <h3 class="sectionTitle"><span class="pill">(c)</span> Mode amplitudes \(a_n\) for the step initial shape</h3>
+            <div class="prose">
+              The initial shape from the figure is a step: the top segment has length \(2L/7\), so it occupies \(x\in[5L/7,\,L]\). Thus
+              \[
+                f(x)=\psi(x,0)=
+                \begin{cases}
+                  0, & 0\le x<\tfrac{5L}{7},\\[4pt]
+                  H, & \tfrac{5L}{7}\le x\le L,
+                \end{cases}
+                \qquad \dot\psi(x,0)=0.
+              \]
+              Expand in eigenmodes:
+              \[
+                \psi(x,t)=\sum_{n=1}^\infty\big[a_n\cos(\omega_nt)+b_n\sin(\omega_nt)\big]X_n(x).
+              \]
+              Since the string is released from rest, \(\dot\psi(x,0)=0\) implies
+              \[
+                \boxed{b_n=0\ \text{for all }n.}
+              \]
+              So \(f(x)=\sum a_nX_n(x)\). Use orthogonality:
+              \[
+                \int_0^L X_nX_m\,dx=
+                \begin{cases}
+                0,&n\ne m,\\
+                \frac{L}{2},&n=m,
+                \end{cases}
+                \quad\text{for }X_n=\sin(k_nx).
+              \]
+              Multiply by \(X_n\) and integrate:
+              \[
+                \int_0^L f(x)X_n(x)\,dx=a_n\int_0^L X_n^2(x)\,dx=a_n\frac{L}{2}
+                \quad\Rightarrow\quad
+                a_n=\frac{2}{L}\int_0^L f(x)\sin(k_nx)\,dx.
+              \]
+              Because \(f(x)=H\) only on \([5L/7,L]\),
+              \[
+                a_n=\frac{2H}{L}\int_{5L/7}^{L}\sin(k_nx)\,dx
+                =\frac{2H}{L}\left[\frac{-\cos(k_nx)}{k_n}\right]_{5L/7}^{L}.
+              \]
+              So
+              \[
+                a_n=\frac{2H}{Lk_n}\Big(\cos(k_n\tfrac{5L}{7})-\cos(k_nL)\Big).
+              \]
+              But \(\cos(k_nL)=0\) from the quantization condition, hence
+              \[
+                a_n=\frac{2H}{Lk_n}\cos\!\left(\frac{5k_nL}{7}\right).
+              \]
+              Substitute \(k_nL=\frac{(2n-1)\pi}{2}\) and \(Lk_n=\frac{(2n-1)\pi}{2}\):
+              \[
+                \boxed{
+                a_n=\frac{4H}{(2n-1)\pi}\,
+                \cos\!\left(\frac{5(2n-1)\pi}{14}\right)
+                \qquad (n=1,2,3,\dots)
+                }.
+              \]
+            </div>
+
+            <div class="hr"></div>
+
+            <h3 class="sectionTitle"><span class="pill">(d)</span> Which modes are not excited?</h3>
+            <div class="prose">
+              A mode is not excited when \(a_n=0\), i.e.
+              \[
+                \cos\!\left(\frac{5(2n-1)\pi}{14}\right)=0.
+              \]
+              This happens when the argument equals \(\frac{\pi}{2}+m\pi\):
+              \[
+                \frac{5(2n-1)\pi}{14}=\left(m+\tfrac12\right)\pi
+                \Rightarrow
+                5(2n-1)=14m+7.
+              \]
+              Solve:
+              \[
+                10n-5=14m+7 \Rightarrow 10n=14m+12 \Rightarrow 5n=7m+6.
+              \]
+              Integer solutions require \(m\equiv 2\ (\mathrm{mod}\ 5)\), so \(m=2+5p\), \(p=0,1,2,\dots\). Then
+              \[
+                n=\frac{7(2+5p)+6}{5}=4+7p.
+              \]
+              Therefore
+              \[
+                \boxed{\text{Unexcited modes: }n=4,\,11,\,18,\,25,\dots\ \ (\text{i.e. }n=4+7p).}
+              \]
+            </div>
+          </div>
+        </article>
+
+        <!-- Final results -->
+        <article class="card" id="results" style="margin-top:18px;">
+          <div class="cardHeader">
+            <div>
+              <h2>Final Boxed Results</h2>
+              <p class="sub">Everything you need at a glance.</p>
+            </div>
+            <div class="badge">Summary</div>
+          </div>
+          <div class="cardBody">
+            <div class="eq">
+              \[
+              \boxed{\psi_{tt}=v^2\psi_{xx}},\qquad
+              \boxed{v=\sqrt{\frac{T}{\rho_L}}}
+              \]
+            </div>
+
+            <div class="eq">
+              \[
+              \boxed{\psi(0,t)=0},\qquad
+              \boxed{\psi_x(L,t)=0}
+              \]
+            </div>
+
+            <div class="eq">
+              \[
+              \boxed{k_n=\frac{(2n-1)\pi}{2L}},\qquad
+              \boxed{\omega_n=\frac{(2n-1)\pi}{2L}\sqrt{\frac{T}{\rho_L}}}
+              \]
+              \[
+              \boxed{X_n(x)=\sin\!\left(\frac{(2n-1)\pi}{2L}x\right)}
+              \]
+            </div>
+
+            <div class="eq">
+              \[
+              \boxed{
+              a_n=\frac{4H}{(2n-1)\pi}\,
+              \cos\!\left(\frac{5(2n-1)\pi}{14}\right)
+              }
+              \]
+              \[
+              \boxed{b_n=0\ \text{(released from rest)}}
+              \]
+            </div>
+
+            <div class="eq">
+              \[
+              \boxed{\text{Unexcited modes: }n=4+7p,\ \ p=0,1,2,\dots}
+              \]
+            </div>
+
+            <div class="callout">
+              <div class="icon" aria-hidden="true">
+                <!-- check circle -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 12l2 2 4-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.4"/>
+                </svg>
+              </div>
+              <div>
+                <p class="title">Sanity checks</p>
+                <p class="text">
+                  <span class="ok">•</span> Units: \(v\) in m/s, \(\omega_n\) in 1/s, \(a_n\) in meters (same as \(H\)).<br>
+                  <span class="ok">•</span> Limits: \(H\to0\Rightarrow a_n\to0\). Large \(n\): \(a_n\sim 1/(2n-1)\) typical of a step.<br>
+                  <span class="ok">•</span> Interpretation: fixed end → node; sliding ring → zero slope (no transverse force).
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- Right column (sticky rail) -->
+      <aside class="sticky" aria-label="Quick reference">
+        <div class="card">
+          <div class="cardHeader">
+            <div>
+              <h2>Quick Reference</h2>
+              <p class="sub">Copy-friendly key formulas and a “what matters” checklist.</p>
+            </div>
+            <div class="badge">Cheat sheet</div>
+          </div>
+          <div class="cardBody">
+            <div class="prose">
+              <p><strong>Wave speed</strong></p>
+              <div class="eq">\[ v=\sqrt{\frac{T}{\rho_L}} \]</div>
+
+              <p><strong>Boundary conditions</strong></p>
+              <div class="eq">\[ \psi(0,t)=0,\quad \psi_x(L,t)=0 \]</div>
+
+              <p><strong>Eigenvalues & frequencies</strong></p>
+              <div class="eq">\[ k_n=\frac{(2n-1)\pi}{2L},\quad \omega_n=vk_n \]</div>
+
+              <p><strong>Amplitude for step \(f(x)\)</strong></p>
+              <div class="eq">\[
+                a_n=\frac{4H}{(2n-1)\pi}\cos\!\left(\frac{5(2n-1)\pi}{14}\right)
+              \]</div>
+
+              <details>
+                <summary>
+                  <span>Checklist</span>
+                  <span class="hint">Tap</span>
+                </summary>
+                <div class="content">
+                  <ul>
+                    <li>Use mixed BCs: Dirichlet at 0, Neumann at L.</li>
+                    <li>Quantization gives half-integers \((2n-1)\).</li>
+                    <li>Released from rest ⇒ sine-time terms vanish.</li>
+                    <li>Unexcited modes satisfy \(n=4+7p\).</li>
+                  </ul>
+                </div>
+              </details>
+
+              <div class="hr"></div>
+
+              <p style="margin:0;">
+                <a class="chip" href="#top" style="display:inline-block;">↑ Back to top</a>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <footer>
+          Built for clean embedding • Math rendered by MathJax • Responsive layout
+        </footer>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

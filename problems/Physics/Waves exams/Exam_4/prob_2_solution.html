@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driven String (Massless Loop) — Full Solution</title>
+
+  <!-- MathJax for LaTeX rendering -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.09);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+      --faint: rgba(255,255,255,.55);
+      --line: rgba(255,255,255,.14);
+      --accent: #7cf7d4;
+      --accent2:#8aa9ff;
+      --warn: #ffd37c;
+      --good: #7cff9c;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% 10%, rgba(124,247,212,.18), transparent 60%),
+        radial-gradient(1000px 700px at 80% 0%, rgba(138,169,255,.18), transparent 55%),
+        radial-gradient(900px 900px at 70% 90%, rgba(255,211,124,.12), transparent 60%),
+        linear-gradient(180deg, #070a14, #0b1020 55%, #070a14);
+      overflow-x: hidden;
+    }
+
+    /* Subtle animated noise overlay */
+    .noise{
+      pointer-events:none;
+      position: fixed;
+      inset: 0;
+      opacity: .06;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+      animation: drift 8s linear infinite;
+    }
+    @keyframes drift{ from{ transform: translate3d(0,0,0);} to{ transform: translate3d(-40px, 30px, 0);} }
+
+    a{ color: var(--accent); text-decoration: none; }
+    a:hover{ text-decoration: underline; }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 70px;
+    }
+
+    header.hero{
+      position: relative;
+      margin: 10px 0 20px;
+      padding: 26px 22px;
+      border-radius: calc(var(--radius) + 8px);
+      background: linear-gradient(135deg, rgba(124,247,212,.13), rgba(138,169,255,.10), rgba(255,211,124,.08));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    header.hero::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(650px 280px at 20% 10%, rgba(124,247,212,.28), transparent 55%),
+                  radial-gradient(600px 300px at 80% 40%, rgba(138,169,255,.26), transparent 60%),
+                  radial-gradient(550px 320px at 60% 95%, rgba(255,211,124,.18), transparent 55%);
+      filter: blur(14px);
+      opacity: .9;
+    }
+
+    header.hero > * { position: relative; z-index: 1; }
+
+    .kicker{
+      display:flex; align-items:center; gap:10px;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .dot{
+      width: 10px; height: 10px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fff, var(--accent));
+      box-shadow: 0 0 22px rgba(124,247,212,.55);
+    }
+
+    h1{
+      margin: 0 0 8px;
+      font-size: clamp(26px, 3.5vw, 42px);
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+    }
+    .subtitle{
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(14px, 1.45vw, 18px);
+      line-height: 1.55;
+      max-width: 78ch;
+    }
+
+    .meta{
+      margin-top: 16px;
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .pill{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      display:flex; align-items:center; gap:8px;
+      backdrop-filter: blur(6px);
+    }
+    .pill b{ color: var(--text); font-weight: 650; }
+    .pill code{ font-family: var(--mono); font-size: 12px; color: var(--text); }
+
+    .grid{
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    @media (min-width: 980px){
+      .grid{
+        grid-template-columns: 360px 1fr;
+        align-items: start;
+      }
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      border-radius: var(--radius);
+      padding: 16px;
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 10px 40px rgba(0,0,0,.25);
+      backdrop-filter: blur(10px);
+    }
+    nav.toc h2{
+      margin: 0 0 10px;
+      font-size: 14px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .toc a{
+      display: block;
+      padding: 9px 10px;
+      border-radius: 12px;
+      color: var(--text);
+      border: 1px solid transparent;
+      background: transparent;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+      font-size: 14px;
+    }
+    .toc a:hover{
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.12);
+      transform: translateX(2px);
+      text-decoration: none;
+    }
+    .toc .small{
+      padding-left: 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    main article{
+      border-radius: var(--radius);
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 14px 50px rgba(0,0,0,.30);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .section{
+      padding: 18px 18px;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+    .section:first-child{ border-top: none; }
+
+    .section h2{
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+      display:flex; align-items:center; gap:10px;
+    }
+    .badge{
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      color: var(--muted);
+      background: rgba(255,255,255,.06);
+    }
+
+    .section p{
+      margin: 10px 0;
+      color: var(--muted);
+      line-height: 1.75;
+      max-width: 95ch;
+    }
+
+    .cols{
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (min-width: 880px){
+      .cols{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .card{
+      padding: 14px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .card h3{
+      margin: 0 0 8px;
+      font-size: 15px;
+      color: var(--text);
+      display:flex; align-items:center; gap:10px;
+    }
+    .card ul{
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .card li{ margin: 6px 0; }
+
+    .math{
+      margin: 12px 0;
+      padding: 12px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+      overflow-x: auto;
+      color: var(--text);
+    }
+
+    details{
+      border-radius: 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 10px 12px;
+    }
+    details + details{ margin-top: 10px; }
+    summary{
+      cursor: pointer;
+      user-select: none;
+      font-weight: 650;
+      color: var(--text);
+      display:flex; align-items:center; justify-content: space-between;
+      gap: 12px;
+      list-style: none;
+    }
+    summary::-webkit-details-marker{ display: none; }
+    .chev{
+      width: 10px; height: 10px;
+      border-right: 2px solid rgba(255,255,255,.75);
+      border-bottom: 2px solid rgba(255,255,255,.75);
+      transform: rotate(-45deg);
+      transition: transform .18s ease;
+      flex: 0 0 auto;
+      opacity: .85;
+    }
+    details[open] .chev{ transform: rotate(45deg); }
+    details .content{
+      margin-top: 10px;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .callout{
+      border-radius: 18px;
+      padding: 14px 14px;
+      background: linear-gradient(135deg, rgba(124,247,212,.11), rgba(138,169,255,.08));
+      border: 1px solid rgba(255,255,255,.14);
+      position: relative;
+      overflow: hidden;
+    }
+    .callout::after{
+      content:"";
+      position:absolute;
+      inset:-30%;
+      background: radial-gradient(circle at 30% 30%, rgba(124,247,212,.18), transparent 45%),
+                  radial-gradient(circle at 70% 60%, rgba(138,169,255,.16), transparent 45%);
+      filter: blur(16px);
+      opacity: .65;
+    }
+    .callout > * { position: relative; z-index: 1; }
+    .callout h3{ margin: 0 0 8px; font-size: 16px; }
+    .callout p{ margin: 0; color: var(--muted); }
+
+    .result{
+      margin-top: 12px;
+      border-radius: 18px;
+      padding: 14px 14px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.12);
+      position: relative;
+    }
+    .result .label{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      margin-bottom: 8px;
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .spark{
+      width: 10px; height: 10px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fff, var(--good));
+      box-shadow: 0 0 22px rgba(124,255,156,.45);
+    }
+
+    code.inline{
+      font-family: var(--mono);
+      font-size: .94em;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.88);
+    }
+
+    footer{
+      margin-top: 18px;
+      color: var(--faint);
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    /* Tiny animated “wave” header ornament */
+    .ornament{
+      margin-top: 14px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 10px;
+    }
+    .ornament svg{ width: 100%; height: 86px; display:block; }
+    .ornament .hint{
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .hint span{ display:inline-flex; gap:8px; align-items:center; }
+    .swatch{
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 20px rgba(124,247,212,.5);
+    }
+    .swatch.b{ background: var(--accent2); box-shadow: 0 0 20px rgba(138,169,255,.5); }
+  </style>
+</head>
+
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <header class="hero" id="top">
+      <div class="kicker"><span class="dot"></span> Physics Article • Waves on a String</div>
+      <h1>Driven String with a Massless Loop at \(x=0\)</h1>
+      <p class="subtitle">
+        A sinusoidal force \(F(t)=F_0\sin(\omega t)\) drives a frictionless, massless loop attached to a long taut string.
+        In steady state, the system launches a <b>single outgoing transverse harmonic wave</b> toward \(+x\).
+        Below is a complete solution with rigorous but beginner-friendly reasoning.
+      </p>
+
+      <div class="meta">
+        <div class="pill"><b>Given</b> \(T,\ \mu,\ F_0,\ \omega\)</div>
+        <div class="pill"><b>Wave speed</b> <code>v = √(T/μ)</code></div>
+        <div class="pill"><b>No reflections</b> outgoing-wave condition</div>
+      </div>
+
+      <div class="ornament" aria-hidden="true">
+        <svg viewBox="0 0 900 140" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1">
+              <stop offset="0" stop-color="rgba(124,247,212,.9)"/>
+              <stop offset="1" stop-color="rgba(138,169,255,.9)"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2.5" result="b"/>
+              <feMerge>
+                <feMergeNode in="b"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+
+          <!-- baseline -->
+          <path d="M0 75 H900" stroke="rgba(255,255,255,.14)" stroke-width="2" fill="none"/>
+          <!-- animated wave -->
+          <path id="wavePath"
+                d="M0 75 C 90 25, 180 125, 270 75 S 450 25, 540 75 S 720 125, 900 75"
+                stroke="url(#g1)" stroke-width="4" fill="none" filter="url(#glow)">
+            <animate attributeName="d" dur="3.2s" repeatCount="indefinite"
+              values="
+              M0 75 C 90 25, 180 125, 270 75 S 450 25, 540 75 S 720 125, 900 75;
+              M0 75 C 90 125, 180 25, 270 75 S 450 125, 540 75 S 720 25, 900 75;
+              M0 75 C 90 25, 180 125, 270 75 S 450 25, 540 75 S 720 125, 900 75
+              " />
+          </path>
+        </svg>
+        <div class="hint">
+          <span><i class="swatch"></i> outgoing wave: \(e^{i(\omega t-kx)}\)</span>
+          <span><i class="swatch b"></i> boundary force: \(T\,y_x(0,t)=F(t)\)</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- TOC -->
+      <nav class="toc" aria-label="Table of contents">
+        <h2>Contents</h2>
+        <a href="#part1">PART 1 — Problem Analysis</a>
+        <a class="small" href="#p1-rewrite">• Restate + givens/unknowns</a>
+        <a class="small" href="#p1-principles">• Principles + approaches</a>
+
+        <a href="#part2">PART 2 — Strategy & Tips</a>
+        <a class="small" href="#p2-plan">• Roadmap (no algebra)</a>
+        <a class="small" href="#p2-mistakes">• Common mistakes</a>
+
+        <a href="#part3">PART 3 — Full Solution</a>
+        <a class="small" href="#a-boundary">• (a) Boundary conditions</a>
+        <a class="small" href="#b-freq-lambda">• (b) Frequency + wavelength</a>
+        <a class="small" href="#c-amplitude">• (c) Amplitude</a>
+        <a class="small" href="#checks">• Sanity checks</a>
+
+        <a href="#top" style="margin-top:10px;">↑ Back to top</a>
+      </nav>
+
+      <!-- ARTICLE -->
+      <main>
+        <article>
+          <!-- PART 1 -->
+          <section class="section" id="part1">
+            <h2>PART 1 — Problem Analysis <span class="badge">no solving yet</span></h2>
+
+            <div class="cols" id="p1-rewrite">
+              <div class="card">
+                <h3>1) Restate the problem</h3>
+                <p style="margin:0;color:var(--muted);line-height:1.75;">
+                  A very long string (effectively semi-infinite) with tension \(T\) and linear density \(\mu\) is
+                  attached to a small <b>massless</b> loop at \(x=0\). The loop can slide vertically without friction.
+                  A vertical drive \(F(t)=F_0\sin(\omega t)\) acts on the loop, creating a steady-state transverse wave traveling toward \(+x\).
+                  Reflections are ignored.
+                </p>
+              </div>
+
+              <div class="card">
+                <h3>2) Givens, unknowns, goals</h3>
+                <ul>
+                  <li><b>Given:</b> \(T,\ \mu,\ F_0,\ \omega\)</li>
+                  <li><b>Unknowns:</b> boundary condition(s) at \(x=0\), \(\lambda\), \(f\), amplitude \(A\)</li>
+                  <li><b>Find:</b>
+                    <ul>
+                      <li>(a) boundary conditions in terms of given parameters</li>
+                      <li>(b) wave frequency and wavelength</li>
+                      <li>(c) wave amplitude</li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="cols" id="p1-principles">
+              <div class="card">
+                <h3>3) Physics principles (and why)</h3>
+                <ul>
+                  <li><b>Wave equation for a taut string:</b> small transverse oscillations on a uniform string lead to
+                    \(\partial_{tt}y=v^2\partial_{xx}y\) with \(v=\sqrt{T/\mu}\).</li>
+                  <li><b>Massless boundary force balance:</b> with \(m=0\), the loop cannot have a net vertical force:
+                    external drive must be balanced by the string’s vertical force component.</li>
+                  <li><b>Outgoing-wave condition:</b> “string is very long” \(\Rightarrow\) no reflected wave returns, so only a \(+x\)-traveling wave remains in steady state.</li>
+                </ul>
+              </div>
+
+              <div class="card">
+                <h3>4) Candidate approaches</h3>
+                <ul>
+                  <li><b>Traveling-wave ansatz:</b> assume \(y=A\cos(\omega t-kx+\phi)\), apply boundary force balance; fastest here.</li>
+                  <li><b>Complex phasors:</b> use \(y=\Re\{\tilde A e^{i(\omega t-kx)}\}\), solve boundary condition cleanly with phases.</li>
+                  <li><b>Power/energy check:</b> match input power to power carried by the wave; excellent consistency test.</li>
+                </ul>
+                <p style="margin:10px 0 0;color:var(--muted);">
+                  <b>Chosen:</b> traveling-wave + boundary force balance (directly matches the “outgoing steady-state harmonic wave” statement).
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- PART 2 -->
+          <section class="section" id="part2">
+            <h2>PART 2 — Strategy & Tips <span class="badge">roadmap only</span></h2>
+
+            <div class="card" id="p2-plan">
+              <h3>Minimal roadmap (5–10 steps, no algebra)</h3>
+              <ul>
+                <li><b>Step 1:</b> Write wave speed \(v=\sqrt{T/\mu}\). <span class="badge">tool: string waves</span></li>
+                <li><b>Step 2:</b> Use an outgoing harmonic wave \(y(x,t)=A\cos(\omega t-kx+\phi)\). <span class="badge">tool: boundary condition (no reflection)</span></li>
+                <li><b>Step 3:</b> Compute the endpoint transverse force from the string via small-slope geometry (\(\sim T\,\partial_xy\)).</li>
+                <li><b>Step 4:</b> Apply massless-loop force balance at \(x=0\): external force equals string’s transverse component.</li>
+                <li><b>Step 5:</b> Match sinusoidal time dependence to determine phase \(\phi\).</li>
+                <li><b>Step 6:</b> Match amplitudes to solve for \(A\).</li>
+                <li><b>Step 7:</b> Use \(\omega=vk\) to get \(k\) and \(\lambda=2\pi/k\) in terms of \(T,\mu,\omega\).</li>
+              </ul>
+            </div>
+
+            <div class="cols" id="p2-mistakes">
+              <div class="card">
+                <h3>Common mistakes</h3>
+                <ul>
+                  <li>Using \(T\,\partial_t y\) instead of \(T\,\partial_x y\) for the boundary force.</li>
+                  <li>Including a reflected wave even though reflections are ignored.</li>
+                  <li>Forgetting phase: \(\sin\) vs \(\cos\) differences matter when matching time dependence.</li>
+                </ul>
+              </div>
+              <div class="card">
+                <h3>Quick tips</h3>
+                <ul>
+                  <li>The drive fixes the wave’s frequency: the string doesn’t “choose” a different \(\omega\) in steady forced response.</li>
+                  <li>Think “mechanical impedance”: heavier or tighter strings tend to reduce displacement amplitude for the same force.</li>
+                  <li>Always check units for the final amplitude \(A\) (must be length).</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- PART 3 -->
+          <section class="section" id="part3">
+            <h2>PART 3 — Full Solution <span class="badge">intuition → math → final</span></h2>
+
+            <div class="callout">
+              <h3>Physical intuition</h3>
+              <p>
+                The loop is <b>massless</b>, so it cannot sustain a nonzero net force: at every instant,
+                the applied force \(F(t)\) is balanced by the string’s transverse pull.
+                That transverse pull is created by tension acting along a slightly tilted string, so it is proportional to the <b>slope</b> \(\partial_xy\) at \(x=0\).
+                With no reflections, the system launches a single outgoing sinusoidal wave whose amplitude is set by this force–slope balance.
+              </p>
+            </div>
+
+            <!-- (a) -->
+            <div class="section" id="a-boundary" style="padding: 0; border-top: none;">
+              <div class="section">
+                <h2>(a) Boundary conditions at \(x=0\) <span class="badge">derived from force balance</span></h2>
+
+                <details open>
+                  <summary>
+                    Endpoint transverse force from the string (small-slope)
+                    <span class="chev" aria-hidden="true"></span>
+                  </summary>
+                  <div class="content">
+                    <p>
+                      For small transverse displacements, the string makes a small angle \(\theta\) with the horizontal such that
+                      \(\tan\theta \approx \theta \approx \partial_xy\).
+                      The tension \(T\) points along the string, so its vertical component at the endpoint is approximately
+                      \[
+                        T\sin\theta \approx T\theta \approx T\,\frac{\partial y}{\partial x}.
+                      \]
+                      This is the (leading-order) transverse force exerted by the string.
+                    </p>
+                  </div>
+                </details>
+
+                <details open>
+                  <summary>
+                    Massless loop ⇒ instantaneous force balance
+                    <span class="chev" aria-hidden="true"></span>
+                  </summary>
+                  <div class="content">
+                    <p>
+                      Since the loop is massless and frictionless, Newton’s 2nd law gives
+                      \(\sum F_y = m a_y = 0\) at all times. Therefore the external drive must be balanced by the string’s transverse force at \(x=0\):
+                    </p>
+                    <div class="math">
+                      \[
+                        \boxed{\,T\frac{\partial y}{\partial x}(0,t)=F_0\sin(\omega t)\,}
+                      \]
+                    </div>
+                    <p>
+                      (Any sign difference is just a convention for what you call “positive” transverse direction; the physics is the same.)
+                    </p>
+                  </div>
+                </details>
+
+                <details>
+                  <summary>
+                    Outgoing-wave (no reflection) condition
+                    <span class="chev" aria-hidden="true"></span>
+                  </summary>
+                  <div class="content">
+                    <p>
+                      The string is so long that reflected pulses do not return, so the steady-state solution contains only a wave traveling toward \(+x\).
+                      In other words, you do <b>not</b> include a reflected \(\cos(\omega t + kx)\) term.
+                    </p>
+                    <div class="math">
+                      \[
+                        y(x,t)\ \text{contains only}\ \text{a }(+x)\text{-traveling component.}
+                      \]
+                    </div>
+                  </div>
+                </details>
+
+              </div>
+            </div>
+
+            <!-- (b) -->
+            <div class="section" id="b-freq-lambda">
+              <h2>(b) Frequency and wavelength <span class="badge">string dispersion</span></h2>
+
+              <p>
+                For a uniform string under tension \(T\) and mass density \(\mu\), the wave speed is
+                \[
+                  v=\sqrt{\frac{T}{\mu}}.
+                \]
+                In steady forced response, the wave oscillates at the <b>driving frequency</b>, so the angular frequency is \(\omega\) and
+                \[
+                  f=\frac{\omega}{2\pi}.
+                \]
+              </p>
+
+              <p>
+                The (nondispersive) dispersion relation for transverse waves on a taut string is
+                \[
+                  \omega = v k \quad\Rightarrow\quad k=\frac{\omega}{v}.
+                \]
+                Therefore
+                \[
+                  k = \omega\sqrt{\frac{\mu}{T}},\qquad
+                  \lambda=\frac{2\pi}{k}=\frac{2\pi v}{\omega}
+                  =\frac{2\pi}{\omega}\sqrt{\frac{T}{\mu}}.
+                \]
+              </p>
+
+              <div class="result">
+                <div class="label"><span class="spark"></span> Final result</div>
+                <div class="math">
+                  \[
+                    \boxed{
+                      f=\frac{\omega}{2\pi},\qquad
+                      \lambda=\frac{2\pi}{\omega}\sqrt{\frac{T}{\mu}},\qquad
+                      k=\omega\sqrt{\frac{\mu}{T}}
+                    }
+                  \]
+                </div>
+              </div>
+            </div>
+
+            <!-- (c) -->
+            <div class="section" id="c-amplitude">
+              <h2>(c) Amplitude of the outgoing steady-state wave <span class="badge">match boundary slope</span></h2>
+
+              <details open>
+                <summary>
+                  1) Choose an outgoing traveling wave
+                  <span class="chev" aria-hidden="true"></span>
+                </summary>
+                <div class="content">
+                  <p>
+                    With no reflections, use a single \(+x\)-traveling harmonic wave:
+                  </p>
+                  <div class="math">
+                    \[
+                      y(x,t)=A\cos(\omega t-kx+\phi),
+                    \]
+                  </div>
+                  <p>
+                    where \(A\) is the displacement amplitude and \(\phi\) is a constant phase.
+                  </p>
+                </div>
+              </details>
+
+              <details open>
+                <summary>
+                  2) Compute the endpoint slope \(\partial_xy(0,t)\)
+                  <span class="chev" aria-hidden="true"></span>
+                </summary>
+                <div class="content">
+                  <p>
+                    Differentiate with respect to \(x\):
+                  </p>
+                  <div class="math">
+                    \[
+                      \frac{\partial y}{\partial x}
+                      = A\frac{\partial}{\partial x}\cos(\omega t-kx+\phi)
+                      = A\big(-\sin(\omega t-kx+\phi)\big)(-k)
+                      = Ak\sin(\omega t-kx+\phi).
+                    \]
+                  </div>
+                  <p>
+                    At \(x=0\):
+                  </p>
+                  <div class="math">
+                    \[
+                      \frac{\partial y}{\partial x}(0,t)=Ak\sin(\omega t+\phi).
+                    \]
+                  </div>
+                </div>
+              </details>
+
+              <details open>
+                <summary>
+                  3) Apply the boundary condition \(T\,y_x(0,t)=F_0\sin(\omega t)\)
+                  <span class="chev" aria-hidden="true"></span>
+                </summary>
+                <div class="content">
+                  <p>
+                    Substitute the endpoint slope into the boundary condition:
+                  </p>
+                  <div class="math">
+                    \[
+                      T\left[Ak\sin(\omega t+\phi)\right]=F_0\sin(\omega t).
+                    \]
+                  </div>
+                  <p>
+                    For equality at all times, match the sinusoidal time dependence and amplitude:
+                  </p>
+                  <div class="math">
+                    \[
+                      \phi=0\ (\text{mod }2\pi),\qquad TAk=F_0 \ \Rightarrow\ A=\frac{F_0}{Tk}.
+                    \]
+                  </div>
+                </div>
+              </details>
+
+              <details open>
+                <summary>
+                  4) Eliminate \(k\) using \(\omega=vk\) and \(v=\sqrt{T/\mu}\)
+                  <span class="chev" aria-hidden="true"></span>
+                </summary>
+                <div class="content">
+                  <p>
+                    Using \(k=\omega/v\),
+                  </p>
+                  <div class="math">
+                    \[
+                      A=\frac{F_0}{T(\omega/v)}=\frac{F_0\,v}{T\omega}.
+                    \]
+                  </div>
+                  <p>
+                    Substitute \(v=\sqrt{T/\mu}\):
+                  </p>
+                  <div class="math">
+                    \[
+                      A=\frac{F_0}{\omega}\frac{\sqrt{T/\mu}}{T}
+                      =\frac{F_0}{\omega\sqrt{T\mu}}.
+                    \]
+                  </div>
+
+                  <div class="result">
+                    <div class="label"><span class="spark"></span> Final amplitude</div>
+                    <div class="math">
+                      \[
+                        \boxed{\,A=\frac{F_0}{\omega\sqrt{T\mu}}\,}
+                      \]
+                    </div>
+                  </div>
+
+                  <p>
+                    One clean final form for the outgoing wave is:
+                  </p>
+                  <div class="math">
+                    \[
+                      \boxed{
+                        y(x,t)=\frac{F_0}{\omega\sqrt{T\mu}}\cos(\omega t-kx),
+                        \qquad
+                        k=\omega\sqrt{\frac{\mu}{T}}
+                      }.
+                    \]
+                  </div>
+                </div>
+              </details>
+            </div>
+
+            <!-- Sanity checks -->
+            <div class="section" id="checks">
+              <h2>Sanity checks <span class="badge">units • limits • meaning</span></h2>
+
+              <div class="cols">
+                <div class="card">
+                  <h3>1) Units</h3>
+                  <p style="margin:0;color:var(--muted);line-height:1.75;">
+                    Check \(A=\dfrac{F_0}{\omega\sqrt{T\mu}}\):
+                    \(F_0\) has units N \(=\text{kg·m/s}^2\).
+                    \(T\mu\) has units \((\text{kg·m/s}^2)(\text{kg/m})=\text{kg}^2/\text{s}^2\),
+                    so \(\sqrt{T\mu}\) has units \(\text{kg/s}\).
+                    Then \(\omega\sqrt{T\mu}\) has units \((1/\text{s})(\text{kg/s})=\text{kg/s}^2\).
+                    Therefore \(A\) has units \(\text{m}\). ✅
+                  </p>
+                </div>
+
+                <div class="card">
+                  <h3>2) Limiting behavior</h3>
+                  <ul>
+                    <li>\(T\uparrow \Rightarrow \sqrt{T\mu}\uparrow \Rightarrow A\downarrow\): tighter string moves less.</li>
+                    <li>\(\mu\uparrow \Rightarrow \sqrt{T\mu}\uparrow \Rightarrow A\downarrow\): heavier string responds less.</li>
+                    <li>\(\omega\uparrow \Rightarrow A\propto 1/\omega\): faster driving gives smaller displacement amplitude for the same force.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="callout" style="margin-top:12px;">
+                <h3>3) Physical interpretation</h3>
+                <p>
+                  The drive sets the endpoint <b>slope</b> via <span class="inline code">T y_x(0,t)=F(t)</span>.
+                  A traveling wave has \(y_x \sim kA\), so the amplitude scales like \(A\sim F_0/(Tk)\).
+                  Higher frequency means larger \(k\), hence smaller \(A\). This is the signature of a radiation-like boundary condition on a semi-infinite string.
+                </p>
+              </div>
+            </div>
+
+          </section>
+        </article>
+
+        <footer>
+          <div>
+            Tip: If you want an extra consistency check, compute average power flow down the string and compare it to the average input power \( \langle F(t)\,\dot y(0,t)\rangle \).
+          </div>
+        </footer>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Smooth scroll for internal anchors
+    document.addEventListener('click', (e) => {
+      const a = e.target.closest('a[href^="#"]');
+      if (!a) return;
+      const id = a.getAttribute('href');
+      const el = document.querySelector(id);
+      if (!el) return;
+      e.preventDefault();
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      history.pushState(null, '', id);
+    });
+  </script>
+</body>
+</html>
