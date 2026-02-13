@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Boundary Conditions in a Pipe — Closed–Open Acoustic Standing Waves</title>
+  <meta name="description" content="A rigorous, beginner-friendly solution to pressure standing waves in a closed–open pipe with interactive canvas visualizations (no external libraries)." />
+  <style>
+    /* ---------- Design Tokens (dark/light friendly) ---------- */
+    :root{
+      --bg: #0b0f17;
+      --bg2:#0f1626;
+      --card:#101a2f;
+      --card2:#0f1a33;
+      --text:#e7ecf6;
+      --muted:#b6c2de;
+      --muted2:#93a4c9;
+      --line:#223154;
+      --line2:#2a3c68;
+      --accent:#8dd3ff;
+      --accent2:#a6ffcb;
+      --warn:#ffd38d;
+      --good:#8bffb2;
+      --bad:#ff8da1;
+      --shadow: rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+      --radius: 18px;
+      --radius2: 24px;
+      --maxw: 1080px;
+      --ease: cubic-bezier(.2,.9,.2,1);
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f6f8fc;
+        --bg2:#eef3ff;
+        --card:#ffffff;
+        --card2:#fbfcff;
+        --text:#10172a;
+        --muted:#3b4a6a;
+        --muted2:#4a5d86;
+        --line:#dde4f3;
+        --line2:#d3ddf2;
+        --accent:#0066ff;
+        --accent2:#00a86b;
+        --warn:#a86400;
+        --good:#0b7a3a;
+        --bad:#b00020;
+        --shadow: rgba(16,23,42,.10);
+      }
+    }
+
+    /* ---------- Base ---------- */
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% -10%, rgba(141,211,255,.18), transparent 55%),
+        radial-gradient(1000px 700px at 90% 10%, rgba(166,255,203,.14), transparent 55%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      line-height:1.6;
+      overflow-x:hidden;
+    }
+    a{ color:inherit; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+    a:hover{ opacity:.92; }
+    ::selection{ background: rgba(141,211,255,.35); }
+
+    /* ---------- Layout ---------- */
+    header{
+      padding: 44px 18px 18px;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+    }
+    .wrap{
+      max-width: var(--maxw);
+      margin: 0 auto;
+    }
+    .hero{
+      display:grid;
+      grid-template-columns: 1.3fr .7fr;
+      gap: 18px;
+      align-items: end;
+    }
+    @media (max-width: 920px){
+      .hero{ grid-template-columns: 1fr; }
+    }
+    .title{
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .kicker{
+      display:inline-flex;
+      gap:10px;
+      align-items:center;
+      font-weight:650;
+      letter-spacing:.06em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      font-size:.85rem;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:99px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 6px rgba(141,211,255,.12);
+      flex: 0 0 auto;
+      animation: pulse 2.6s var(--ease) infinite;
+    }
+    @keyframes pulse{
+      0%,100%{ transform: scale(1); box-shadow: 0 0 0 6px rgba(141,211,255,.12); }
+      50%{ transform: scale(1.12); box-shadow: 0 0 0 10px rgba(166,255,203,.12); }
+    }
+    h1{
+      font-family: var(--serif);
+      letter-spacing:.01em;
+      line-height:1.15;
+      font-size: clamp(2.0rem, 3.4vw, 3.1rem);
+      margin:0;
+    }
+    .sub{
+      color: var(--muted);
+      max-width: 62ch;
+      margin:0;
+      font-size: 1.04rem;
+    }
+    .meta{
+      display:flex;
+      flex-wrap: wrap;
+      gap:10px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .chip{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+      padding: 9px 12px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: .92rem;
+      box-shadow: 0 6px 18px var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    main{
+      padding: 18px 18px 56px;
+    }
+
+    /* ---------- Cards & Typography ---------- */
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0));
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: 0 12px 36px var(--shadow);
+      overflow:hidden;
+      position: relative;
+    }
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(700px 240px at 30% 0%, rgba(141,211,255,.18), transparent 60%);
+      pointer-events:none;
+      opacity:.75;
+    }
+    .card > .pad{
+      padding: 18px 18px 16px;
+      position: relative;
+      z-index: 1;
+    }
+    h2{
+      margin: 0 0 10px;
+      font-size: 1.35rem;
+      letter-spacing:.01em;
+    }
+    h3{
+      margin: 18px 0 10px;
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+    p{ margin: 10px 0; color: var(--text); }
+    .muted{ color: var(--muted); }
+    .small{ font-size:.95rem; }
+    ul{ margin: 10px 0 10px 18px; }
+    li{ margin: 6px 0; }
+
+    /* ---------- Callouts ---------- */
+    .callout{
+      border:1px solid var(--line2);
+      border-radius: var(--radius);
+      padding: 14px 14px 12px;
+      margin: 12px 0;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0));
+      position: relative;
+      overflow:hidden;
+    }
+    .callout::after{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      background: radial-gradient(500px 180px at 20% 0%, rgba(166,255,203,.16), transparent 60%);
+      opacity:.65;
+      pointer-events:none;
+    }
+    .callout > *{ position: relative; z-index:1; }
+    .callout strong{ color: var(--accent2); }
+    .callout.warn strong{ color: var(--warn); }
+    .callout.good strong{ color: var(--good); }
+    .callout.bad strong{ color: var(--bad); }
+
+    /* ---------- Equation styling (no MathJax) ---------- */
+    .eq{
+      font-family: var(--mono);
+      background: linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.05));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 12px;
+      margin: 12px 0;
+      overflow-x:auto;
+      color: var(--text);
+    }
+    @media (prefers-color-scheme: light){
+      .eq{
+        background: linear-gradient(180deg, rgba(0,50,120,.06), rgba(0,0,0,0));
+      }
+    }
+    .eq .sym{ color: var(--accent); font-weight:650; }
+    .eq .dim{ color: var(--muted2); }
+    .eq .box{
+      display:inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      border:1px solid var(--line2);
+      background: rgba(141,211,255,.08);
+      margin: 0 2px;
+      white-space: nowrap;
+    }
+
+    /* ---------- Figures / Canvas ---------- */
+    figure{
+      margin: 0;
+      border-top: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0));
+      padding: 14px;
+    }
+    figcaption{
+      color: var(--muted);
+      font-size: .92rem;
+      margin-top: 10px;
+    }
+    canvas{
+      width: 100%;
+      height: auto;
+      display:block;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.06));
+    }
+    @media (prefers-color-scheme: light){
+      canvas{
+        background: linear-gradient(180deg, rgba(0,100,255,.06), rgba(255,255,255,.0));
+      }
+    }
+
+    /* ---------- Controls ---------- */
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 640px){
+      .controls{ grid-template-columns: 1fr; }
+    }
+    .control{
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+      border-radius: var(--radius);
+      padding: 12px 12px 10px;
+      box-shadow: 0 10px 24px var(--shadow);
+    }
+    label{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: .95rem;
+      margin-bottom: 6px;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+    .btnrow{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    button{
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(141,211,255,.18), rgba(255,255,255,0));
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor:pointer;
+      font-weight:650;
+      letter-spacing:.01em;
+      transition: transform .18s var(--ease), box-shadow .18s var(--ease), opacity .18s var(--ease);
+      box-shadow: 0 10px 22px var(--shadow);
+    }
+    button:hover{ transform: translateY(-1px); }
+    button:active{ transform: translateY(0px) scale(.99); opacity:.95; }
+    button.secondary{
+      background: linear-gradient(180deg, rgba(166,255,203,.18), rgba(255,255,255,0));
+    }
+
+    /* ---------- Table ---------- */
+    table{
+      width:100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      border-radius: 14px;
+      overflow:hidden;
+      border:1px solid var(--line);
+    }
+    th,td{
+      padding: 10px 10px;
+      border-bottom:1px solid var(--line);
+      text-align:left;
+      vertical-align: top;
+      font-size: .96rem;
+    }
+    th{
+      background: rgba(141,211,255,.10);
+      color: var(--text);
+      font-weight: 700;
+    }
+    tr:last-child td{ border-bottom:none; }
+    .num{ font-family: var(--mono); }
+
+    /* ---------- Final Answer Box ---------- */
+    .final{
+      border:1px solid var(--line2);
+      background:
+        radial-gradient(900px 260px at 10% 0%, rgba(141,211,255,.22), transparent 58%),
+        radial-gradient(700px 220px at 90% 10%, rgba(166,255,203,.18), transparent 58%),
+        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+      border-radius: var(--radius2);
+      padding: 16px 16px 14px;
+      box-shadow: 0 14px 40px var(--shadow);
+    }
+    .final h2{ margin:0 0 8px; }
+    .final .eq{ margin: 10px 0; }
+
+    /* ---------- Footer ---------- */
+    footer{
+      margin-top: 28px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    /* ---------- Reduced motion ---------- */
+    @media (prefers-reduced-motion: reduce){
+      *{ animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap hero">
+      <div class="title">
+        <div class="kicker"><span class="dot" aria-hidden="true"></span>Acoustics • Boundary Conditions • Standing Waves</div>
+        <h1>Boundary Conditions in a Pipe (Closed–Open): Full Solution + Interactive Visualizations</h1>
+        <p class="sub">
+          We solve the 1D acoustic wave equation for <em>pressure overpressure</em> in an air-filled pipe of length <span class="num">L</span>,
+          closed at <span class="num">z = 0</span> and open at <span class="num">z = L</span>.
+          You’ll see the exact mode shapes, allowed frequencies, and a live plot you can control.
+        </p>
+      </div>
+
+      <div class="meta" aria-label="Article metadata">
+        <div class="chip"><span class="num">p(z,t)</span> satisfies the wave equation</div>
+        <div class="chip">Closed end: <span class="num">∂p/∂z = 0</span></div>
+        <div class="chip">Open end: <span class="num">p = 0</span></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+
+      <!-- Quick Summary -->
+      <section class="card" aria-labelledby="quick-summary">
+        <div class="pad">
+          <h2 id="quick-summary">Quick Summary</h2>
+          <p class="muted">
+            A closed–open pipe enforces a <strong>pressure antinode</strong> at the closed end and a <strong>pressure node</strong> at the open end.
+            That forces the allowed standing waves to be <strong>odd quarter-waves</strong>.
+          </p>
+
+          <div class="callout good">
+            <p><strong>Key results (all modes):</strong></p>
+            <div class="eq" role="group" aria-label="Key formulas">
+              <div><span class="sym">Wave speed</span>: <span class="box">v ≈ 343 m/s</span> (air at ~20°C)</div>
+              <div style="margin-top:8px;">
+                <span class="sym">Allowed wavenumbers</span>:
+                <span class="box">κₙ = (2n−1)π / (2L)</span> &nbsp; (n = 1,2,3,…)
+              </div>
+              <div style="margin-top:8px;">
+                <span class="sym">Angular frequencies</span>:
+                <span class="box">ωₙ = v κₙ = (2n−1)πv / (2L)</span>
+              </div>
+              <div style="margin-top:8px;">
+                <span class="sym">Frequencies</span>:
+                <span class="box">fₙ = ωₙ/(2π) = (2n−1)v / (4L)</span>
+              </div>
+              <div style="margin-top:8px;">
+                <span class="sym">Mode shape (pressure)</span>:
+                <span class="box">pₙ(z,t) = p₀ cos(κₙ z) cos(ωₙ t)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid">
+
+        <!-- LEFT: Explanation (structured like your original solution) -->
+        <article class="card" aria-labelledby="full-solution">
+          <div class="pad">
+            <h2 id="full-solution">Full Explanation (Rigorous + Beginner-Friendly)</h2>
+
+            <section aria-labelledby="part-a">
+              <h3 id="part-a">(a) Meaning of <span class="num">v</span> and its approximate value</h3>
+              <p>
+                The 1D wave equation
+                <span class="eq"><span class="sym">∂²p/∂z²</span> = (1/<span class="sym">v²</span>) <span class="sym">∂²p/∂t²</span></span>
+                describes how small <strong>pressure disturbances</strong> propagate along the pipe.
+                The constant <span class="num">v</span> is the <strong>speed of sound</strong> in air.
+              </p>
+              <div class="callout">
+                <p><strong>Typical value:</strong> at room temperature (~20&nbsp;°C),
+                  <span class="num">v ≈ 343&nbsp;m/s</span>.
+                </p>
+              </div>
+            </section>
+
+            <section aria-labelledby="part-b">
+              <h3 id="part-b">(b) Determine <span class="num">A, B, k, ω</span> using the given form and boundary/initial data</h3>
+
+              <p>
+                The problem suggests the standing-wave form:
+              </p>
+              <div class="eq" role="group" aria-label="Assumed form">
+                <div><span class="sym">p(z,t)</span> = [ <span class="sym">A</span> cosh(<span class="sym">kz</span>) + <span class="sym">B</span> sinh(<span class="sym">kz</span>) ] cos(<span class="sym">ωt</span>)</div>
+              </div>
+
+              <div class="callout warn">
+                <p>
+                  <strong>Important subtlety:</strong> physical pipe resonances are oscillatory in space (sines/cosines).
+                  The cosh/sinh form becomes oscillatory when <span class="num">k</span> is <strong>imaginary</strong>.
+                  We’ll see that the wave equation forces exactly that for real frequencies.
+                </p>
+              </div>
+
+              <h3>Step 1 — Plug into the wave equation</h3>
+              <p>
+                Differentiate the assumed form twice in space and time. The common factor
+                <span class="num">[A cosh(kz)+B sinh(kz)] cos(ωt)</span> cancels (for a nontrivial solution), yielding:
+              </p>
+              <div class="eq" role="group" aria-label="Dispersion relationship">
+                <div><span class="sym">k²</span> = − <span class="sym">ω²</span> / <span class="sym">v²</span></div>
+              </div>
+              <p>
+                For a real oscillation frequency <span class="num">ω</span>, this implies <span class="num">k</span> must be purely imaginary.
+                Write:
+              </p>
+              <div class="eq" role="group" aria-label="Imaginary k substitution">
+                <div><span class="sym">k</span> = i<span class="sym">κ</span>, with <span class="sym">κ</span> real and positive ⇒ <span class="sym">ω</span> = v<span class="sym">κ</span></div>
+              </div>
+              <p class="muted small">
+                Using identities cosh(iκz)=cos(κz) and sinh(iκz)=i sin(κz), the spatial shape is sinusoidal as expected.
+              </p>
+
+              <h3>Step 2 — Apply boundary conditions (closed at <span class="num">z=0</span>, open at <span class="num">z=L</span>)</h3>
+              <p>
+                We must translate “closed” and “open” into mathematical conditions on <span class="num">p(z,t)</span>.
+              </p>
+              <div class="callout">
+                <p>
+                  <strong>Closed end (z=0):</strong> air cannot move ⇒ particle velocity <span class="num">u=0</span>.
+                  In acoustics, <span class="num">u</span> is proportional to the <strong>negative pressure gradient</strong>,
+                  so <span class="num">u=0 ⇒ ∂p/∂z = 0</span>.
+                </p>
+                <p style="margin-top:8px;">
+                  <strong>Open end (z=L):</strong> pressure equals ambient atmospheric pressure ⇒ overpressure <span class="num">p=0</span>.
+                </p>
+              </div>
+
+              <p>
+                First impose the closed-end condition <span class="num">∂p/∂z(0,t)=0</span>. Differentiating:
+              </p>
+              <div class="eq" role="group" aria-label="dpdz">
+                <div><span class="sym">∂p/∂z</span> = [ A k sinh(kz) + B k cosh(kz) ] cos(ωt)</div>
+                <div style="margin-top:8px;">
+                  At <span class="sym">z=0</span>: sinh(0)=0, cosh(0)=1 ⇒ <span class="box">∂p/∂z(0,t) = Bk cos(ωt)</span>
+                </div>
+              </div>
+              <p>
+                For this to be zero for all <span class="num">t</span>, and for a nontrivial mode with <span class="num">k ≠ 0</span>, we must have:
+              </p>
+              <div class="eq" role="group" aria-label="B equals zero">
+                <div><span class="box">B = 0</span></div>
+              </div>
+
+              <p>
+                Now impose the open-end condition <span class="num">p(L,t)=0</span>. With <span class="num">B=0</span>:
+              </p>
+              <div class="eq" role="group" aria-label="Open end boundary condition">
+                <div><span class="sym">p(L,t)</span> = A cosh(kL) cos(ωt) = 0 for all t</div>
+              </div>
+              <p>
+                For a nontrivial oscillation (A≠0), this requires:
+              </p>
+              <div class="eq" role="group" aria-label="cosh(kL) equals zero">
+                <div><span class="sym">cosh(kL)</span> = 0</div>
+              </div>
+              <p>
+                Substitute <span class="num">k=iκ</span>:
+              </p>
+              <div class="eq" role="group" aria-label="cos condition">
+                <div>cosh(iκL) = cos(κL) = 0 ⇒ <span class="box">κL = (2n−1)π/2</span></div>
+              </div>
+              <p>
+                Therefore the allowed spatial wavenumbers and angular frequencies are:
+              </p>
+              <div class="eq" role="group" aria-label="kappa and omega">
+                <div><span class="box">κₙ = (2n−1)π / (2L)</span>, n=1,2,3,…</div>
+                <div style="margin-top:8px;"><span class="box">ωₙ = vκₙ = (2n−1)πv / (2L)</span></div>
+                <div style="margin-top:8px;"><span class="box">kₙ = iκₙ = i(2n−1)π / (2L)</span></div>
+              </div>
+
+              <h3>Step 3 — Use the initial condition <span class="num">p(0,0)=p₀</span> to find <span class="num">A</span></h3>
+              <p>
+                Evaluate the given form at <span class="num">z=0</span> and <span class="num">t=0</span>:
+              </p>
+              <div class="eq" role="group" aria-label="Initial condition evaluation">
+                <div>p(0,0) = [A cosh(0) + B sinh(0)] cos(0) = A</div>
+              </div>
+              <p>
+                Since <span class="num">p(0,0)=p₀</span>, we get:
+              </p>
+              <div class="eq" role="group" aria-label="A equals p0">
+                <div><span class="box">A = p₀</span> and (from above) <span class="box">B = 0</span></div>
+              </div>
+
+              <div class="callout good">
+                <p><strong>Final mode solution (pressure):</strong></p>
+                <div class="eq" role="group" aria-label="Final mode solution">
+                  <div><span class="box">pₙ(z,t) = p₀ cos(κₙ z) cos(ωₙ t)</span></div>
+                  <div style="margin-top:8px;">with <span class="box">κₙ = (2n−1)π/(2L)</span> and <span class="box">ωₙ = vκₙ</span>.</div>
+                </div>
+              </div>
+            </section>
+
+            <section aria-labelledby="part-c">
+              <h3 id="part-c">(c) Numerical frequencies and wavelengths for <span class="num">L = 0.5 m</span></h3>
+              <p>
+                Convert angular frequency to ordinary frequency:
+                <span class="num">fₙ = ωₙ/(2π)</span>.
+                Using <span class="num">ωₙ = (2n−1)πv/(2L)</span>:
+              </p>
+              <div class="eq" role="group" aria-label="fn formula">
+                <div><span class="box">fₙ = (2n−1)v/(4L)</span></div>
+              </div>
+
+              <p>
+                With <span class="num">v ≈ 343 m/s</span> and <span class="num">L = 0.5 m</span>, we have <span class="num">4L = 2</span>.
+              </p>
+
+              <table aria-label="Frequencies and wavelengths table">
+                <thead>
+                  <tr>
+                    <th>Mode</th>
+                    <th>Frequency <span class="muted">(Hz)</span></th>
+                    <th>Wavelength <span class="muted">(m)</span></th>
+                    <th>Interpretation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>n = 1</strong> (fundamental)</td>
+                    <td class="num">f₁ = v/(4L) ≈ 343/2 ≈ 171.5</td>
+                    <td class="num">λ₁ = v/f₁ ≈ 2.00</td>
+                    <td>Quarter-wave: <span class="num">L = λ₁/4</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>n = 2</strong> (next allowed)</td>
+                    <td class="num">f₂ = 3v/(4L) ≈ 514.5</td>
+                    <td class="num">λ₂ = v/f₂ ≈ 0.667</td>
+                    <td>Three-quarter-wave: <span class="num">L = 3λ₂/4</span></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="callout">
+                <p>
+                  <strong>Why only odd multiples?</strong> The boundary pair (pressure antinode at closed end + pressure node at open end)
+                  fits <span class="num">1/4, 3/4, 5/4, …</span> of a wavelength inside the pipe.
+                </p>
+              </div>
+
+              <h3>Sanity checks</h3>
+              <ul>
+                <li><strong>Units:</strong> <span class="num">f ~ v/L</span> gives (m/s)/m = 1/s = Hz ✔</li>
+                <li><strong>Limiting behavior:</strong> longer <span class="num">L</span> → smaller <span class="num">f</span> (lower pitch) ✔</li>
+                <li><strong>Physical meaning:</strong> closed end is a pressure antinode; open end is a pressure node ✔</li>
+              </ul>
+            </section>
+          </div>
+        </article>
+
+        <!-- RIGHT: Visualizations + interactive controls -->
+        <aside class="card" aria-labelledby="viz">
+          <div class="pad">
+            <h2 id="viz">Visualizations (Canvas, No Libraries)</h2>
+            <p class="muted">
+              Use the slider to change the pipe length <span class="num">L</span> and watch the resonant frequencies and mode shape update.
+              The plots use <span class="num">v = 343 m/s</span>.
+            </p>
+
+            <!-- Controls -->
+            <div class="controls" role="group" aria-label="Interactive controls">
+              <div class="control">
+                <label for="lenSlider">
+                  <span>Pipe length <strong>L</strong> (m)</span>
+                  <span class="num" id="lenVal">0.50</span>
+                </label>
+                <input
+                  id="lenSlider"
+                  type="range"
+                  min="0.20"
+                  max="1.50"
+                  step="0.01"
+                  value="0.50"
+                  aria-label="Pipe length slider in meters"
+                />
+                <p class="muted small" style="margin:8px 0 0;">
+                  Tip: Longer pipe → lower fundamental frequency.
+                </p>
+              </div>
+
+              <div class="control">
+                <label for="modeSelect">
+                  <span>Mode <strong>n</strong> (odd quarter-wave)</span>
+                  <span class="num" id="modeVal">1</span>
+                </label>
+                <input
+                  id="modeSelect"
+                  type="range"
+                  min="1"
+                  max="4"
+                  step="1"
+                  value="1"
+                  aria-label="Mode number slider (n=1..4)"
+                />
+                <p class="muted small" style="margin:8px 0 0;">
+                  n=1 gives the fundamental; n=2 gives the next allowed mode (3× fundamental), etc.
+                </p>
+              </div>
+            </div>
+
+            <div class="btnrow" aria-label="Animation controls">
+              <button id="toggleAnim" type="button" aria-label="Toggle animation">Start animation</button>
+              <button id="reset" type="button" class="secondary" aria-label="Reset controls">Reset</button>
+            </div>
+
+            <!-- Figure 1: Physical setup diagram -->
+            <figure>
+              <canvas id="setupCanvas" width="820" height="420" aria-label="Diagram of a closed-open pipe with boundary conditions"></canvas>
+              <figcaption>
+                <strong>Diagram:</strong> A pipe along the <span class="num">z</span>-axis from <span class="num">0</span> (closed) to <span class="num">L</span> (open).
+                Closed end enforces <span class="num">∂p/∂z=0</span> (velocity node), open end enforces <span class="num">p=0</span>.
+              </figcaption>
+            </figure>
+
+            <!-- Figure 2: Mode shape plot -->
+            <figure>
+              <canvas id="modeCanvas" width="820" height="520" aria-label="Plot of pressure mode shape p(z) along the pipe"></canvas>
+              <figcaption>
+                <strong>Plot:</strong> Pressure mode shape <span class="num">p(z)/p₀ = cos(κₙ z)</span> with <span class="num">κₙ=(2n−1)π/(2L)</span>.
+                Axes show <span class="num">z</span> (m) and normalized pressure.
+              </figcaption>
+            </figure>
+
+            <!-- Figure 3: Frequency spectrum plot -->
+            <figure>
+              <canvas id="freqCanvas" width="820" height="520" aria-label="Frequency plot showing resonant frequencies versus mode index"></canvas>
+              <figcaption>
+                <strong>Graph:</strong> Resonant frequencies <span class="num">fₙ=(2n−1)v/(4L)</span> for the first several modes.
+                Includes gridlines, labeled axes, units, and a title.
+              </figcaption>
+            </figure>
+
+            <div class="callout">
+              <p class="small">
+                <strong>Live computed values:</strong><br/>
+                <span class="num">v = 343 m/s</span><br/>
+                Fundamental: <span class="num" id="f1Text">171.5 Hz</span>, <span class="num" id="lam1Text">2.00 m</span><br/>
+                Next allowed: <span class="num" id="f2Text">514.5 Hz</span>, <span class="num" id="lam2Text">0.667 m</span>
+              </p>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Final Answer Box -->
+      <section class="final" aria-labelledby="final-answer" style="margin-top:18px;">
+        <h2 id="final-answer">Final Answer (Boxed)</h2>
+
+        <div class="eq" role="group" aria-label="Final answers">
+          <div><span class="sym">(a)</span> <span class="box">v</span> is the speed of sound in air; <span class="box">v ≈ 343 m/s</span> (room temperature).</div>
+
+          <div style="margin-top:10px;"><span class="sym">(b)</span> With
+            <span class="box">p(z,t) = [A cosh(kz) + B sinh(kz)] cos(ωt)</span>,
+            closed end at <span class="num">z=0</span> gives <span class="box">∂p/∂z(0,t)=0 ⇒ B=0</span>.
+            Open end at <span class="num">z=L</span> gives <span class="box">p(L,t)=0 ⇒ cosh(kL)=0</span>.
+            For physical oscillations let <span class="box">k=iκ</span>, so <span class="box">cos(κL)=0</span>.
+          </div>
+
+          <div style="margin-top:10px;">
+            <span class="box">κₙ=(2n−1)π/(2L)</span>, <span class="box">ωₙ=vκₙ=(2n−1)πv/(2L)</span>,
+            <span class="box">kₙ=iκₙ</span>.
+            Initial condition <span class="num">p(0,0)=p₀</span> gives <span class="box">A=p₀</span>.
+          </div>
+
+          <div style="margin-top:10px;">
+            Equivalent real form:
+            <span class="box">pₙ(z,t)=p₀ cos(κₙ z) cos(ωₙ t)</span>.
+          </div>
+
+          <div style="margin-top:10px;"><span class="sym">(c)</span> <span class="box">fₙ=ωₙ/(2π)=(2n−1)v/(4L)</span>, <span class="box">λₙ=v/fₙ=4L/(2n−1)</span>.
+            For <span class="box">L=0.5 m</span>:
+            <span class="box">f₁≈171.5 Hz, λ₁≈2.00 m</span>;
+            <span class="box">f₂≈514.5 Hz, λ₂≈0.667 m</span>.
+          </div>
+        </div>
+
+        <div class="callout">
+          <p class="small">
+            <strong>Sanity checks:</strong> (i) Units: <span class="num">v/L</span> is 1/s (Hz). (ii) Larger <span class="num">L</span> lowers <span class="num">f</span>.
+            (iii) Closed end is a pressure antinode (slope zero), open end is a pressure node (pressure zero).
+          </p>
+        </div>
+      </section>
+
+      <footer class="wrap" aria-label="Footer">
+        <p>
+          Built as a single self-contained HTML article. Visualizations drawn with <span class="num">&lt;canvas&gt;</span> and vanilla JavaScript (no external libraries).
+          Accessible controls include ARIA labels and high-contrast styling.
+        </p>
+      </footer>
+
+    </div>
+  </main>
+
+  <script>
+    (function(){
+      "use strict";
+
+      // -------------------- Constants & State --------------------
+      const v = 343; // m/s (speed of sound in air)
+      const p0 = 1;  // normalized amplitude for plots (p/p0)
+      let L = 0.50;  // meters (interactive)
+      let n = 1;     // mode index (1..4)
+      let anim = false;
+      let t0 = performance.now();
+      let phase = 0;
+
+      // Canvas references
+      const setupCanvas = document.getElementById("setupCanvas");
+      const modeCanvas  = document.getElementById("modeCanvas");
+      const freqCanvas  = document.getElementById("freqCanvas");
+
+      const sCtx = setupCanvas.getContext("2d");
+      const mCtx = modeCanvas.getContext("2d");
+      const fCtx = freqCanvas.getContext("2d");
+
+      // Controls
+      const lenSlider = document.getElementById("lenSlider");
+      const modeSelect = document.getElementById("modeSelect");
+      const lenVal = document.getElementById("lenVal");
+      const modeVal = document.getElementById("modeVal");
+      const toggleAnim = document.getElementById("toggleAnim");
+      const resetBtn = document.getElementById("reset");
+
+      // Live text outputs
+      const f1Text = document.getElementById("f1Text");
+      const f2Text = document.getElementById("f2Text");
+      const lam1Text = document.getElementById("lam1Text");
+      const lam2Text = document.getElementById("lam2Text");
+
+      // -------------------- Helpers --------------------
+      function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
+      function fmt(x, digits=2){
+        const p = Math.pow(10, digits);
+        return (Math.round(x*p)/p).toFixed(digits);
+      }
+
+      function kappaFor(nVal, LVal){
+        return ( (2*nVal - 1) * Math.PI ) / (2 * LVal);
+      }
+      function omegaFor(nVal, LVal){
+        return v * kappaFor(nVal, LVal);
+      }
+      function freqFor(nVal, LVal){
+        return omegaFor(nVal, LVal) / (2*Math.PI);
+      }
+      function lambdaFor(nVal, LVal){
+        // λ = 2π/κ = 4L/(2n-1)
+        return 4*LVal/(2*nVal - 1);
+      }
+
+      // Determine drawing colors from computed style (keeps dark/light friendly)
+      const css = getComputedStyle(document.documentElement);
+      function col(name){ return css.getPropertyValue(name).trim(); }
+
+      // Crisp lines on high-DPI displays
+      function fitCanvas(canvas, ctx){
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const w = Math.max(320, Math.floor(rect.width));
+        const h = Math.floor(rect.height * (canvas.height / canvas.width)); // preserve aspect-ish
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+        return {w, h};
+      }
+
+      function drawRoundedRect(ctx, x,y,w,h,r){
+        const rr = Math.min(r, w/2, h/2);
+        ctx.beginPath();
+        ctx.moveTo(x+rr, y);
+        ctx.arcTo(x+w, y, x+w, y+h, rr);
+        ctx.arcTo(x+w, y+h, x, y+h, rr);
+        ctx.arcTo(x, y+h, x, y, rr);
+        ctx.arcTo(x, y, x+w, y, rr);
+        ctx.closePath();
+      }
+
+      function drawGrid(ctx, x0,y0,w,h, xTicks, yTicks, color){
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.55;
+        for(let i=0;i<=xTicks;i++){
+          const x = x0 + (w*i/xTicks);
+          ctx.beginPath();
+          ctx.moveTo(x, y0);
+          ctx.lineTo(x, y0+h);
+          ctx.stroke();
+        }
+        for(let j=0;j<=yTicks;j++){
+          const y = y0 + (h*j/yTicks);
+          ctx.beginPath();
+          ctx.moveTo(x0, y);
+          ctx.lineTo(x0+w, y);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function axes(ctx, x0,y0,w,h, xLabel,yLabel,title){
+        ctx.save();
+        ctx.fillStyle = col("--text");
+        ctx.strokeStyle = col("--line2");
+        ctx.lineWidth = 1.3;
+
+        // axis lines
+        ctx.beginPath();
+        ctx.moveTo(x0, y0+h);
+        ctx.lineTo(x0+w, y0+h);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x0, y0+h);
+        ctx.stroke();
+
+        // labels
+        ctx.font = "600 13px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--muted");
+        ctx.fillText(xLabel, x0 + w - ctx.measureText(xLabel).width, y0+h+28);
+        ctx.save();
+        ctx.translate(x0-40, y0+8);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText(yLabel, 0, 0);
+        ctx.restore();
+
+        // title
+        ctx.font = "700 15px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--text");
+        ctx.fillText(title, x0, y0-14);
+
+        ctx.restore();
+      }
+
+      function drawLegend(ctx, items, x, y){
+        ctx.save();
+        ctx.font = "600 12px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--muted");
+        let yy = y;
+        items.forEach(it=>{
+          ctx.fillStyle = it.color;
+          ctx.fillRect(x, yy-9, 14, 3);
+          ctx.fillStyle = col("--muted");
+          ctx.fillText(it.label, x+20, yy-2);
+          yy += 18;
+        });
+        ctx.restore();
+      }
+
+      // -------------------- Drawing: Setup Diagram --------------------
+      function drawSetup(){
+        const {w,h} = fitCanvas(setupCanvas, sCtx);
+        const ctx = sCtx;
+        ctx.clearRect(0,0,w,h);
+
+        // Background panel
+        ctx.save();
+        drawRoundedRect(ctx, 10, 10, w-20, h-20, 16);
+        ctx.fillStyle = "rgba(255,255,255,0.03)";
+        ctx.fill();
+        ctx.strokeStyle = col("--line");
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+
+        const pad = 56;
+        const x0 = pad;
+        const x1 = w - pad;
+        const yMid = Math.round(h*0.56);
+
+        // Pipe body
+        const pipeH = 64;
+        const y0 = yMid - pipeH/2;
+
+        ctx.save();
+        drawRoundedRect(ctx, x0, y0, x1-x0, pipeH, 20);
+        ctx.fillStyle = "rgba(141,211,255,0.06)";
+        ctx.fill();
+        ctx.strokeStyle = col("--line2");
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        ctx.restore();
+
+        // Closed end (wall)
+        ctx.save();
+        ctx.fillStyle = col("--accent");
+        ctx.globalAlpha = 0.9;
+        ctx.fillRect(x0-6, y0-4, 10, pipeH+8);
+        ctx.restore();
+
+        // Open end (opening)
+        ctx.save();
+        ctx.strokeStyle = col("--accent2");
+        ctx.lineWidth = 4;
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath();
+        ctx.moveTo(x1+2, y0+6);
+        ctx.lineTo(x1+2, y0+pipeH-6);
+        ctx.stroke();
+        ctx.restore();
+
+        // z-axis arrow
+        ctx.save();
+        ctx.strokeStyle = col("--muted2");
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0+pipeH+42);
+        ctx.lineTo(x1, y0+pipeH+42);
+        ctx.stroke();
+        // arrowhead
+        ctx.beginPath();
+        ctx.moveTo(x1, y0+pipeH+42);
+        ctx.lineTo(x1-10, y0+pipeH+36);
+        ctx.lineTo(x1-10, y0+pipeH+48);
+        ctx.closePath();
+        ctx.fillStyle = col("--muted2");
+        ctx.fill();
+
+        ctx.font = "700 13px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--muted");
+        ctx.fillText("z (m)", x1-42, y0+pipeH+32);
+        ctx.restore();
+
+        // labels: z=0 and z=L
+        ctx.save();
+        ctx.font = "700 13px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--text");
+        ctx.fillText("z = 0 (closed)", x0-10, y0-14);
+        ctx.fillText("z = L (open)", x1-70, y0-14);
+        ctx.restore();
+
+        // Boundary condition callouts
+        ctx.save();
+        ctx.font = "600 12px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--muted");
+        ctx.fillText("Closed end ⇒ u = 0 ⇒ ∂p/∂z = 0 (pressure antinode)", x0, y0+pipeH+18);
+
+        const openText = "Open end ⇒ p = 0 (pressure node)";
+        const tw = ctx.measureText(openText).width;
+        ctx.fillText(openText, x1 - tw, y0+pipeH+18);
+        ctx.restore();
+
+        // Draw a stylized pressure envelope in the pipe (current mode n)
+        const kappa = kappaFor(n, L);
+        ctx.save();
+        ctx.strokeStyle = col("--accent2");
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.9;
+
+        // Map z in [0,L] to x in [x0,x1]
+        const samples = 180;
+        const amp = 22;
+        ctx.beginPath();
+        for(let i=0;i<=samples;i++){
+          const z = (L*i)/samples;
+          const x = x0 + (x1-x0)*(z/L);
+          const val = Math.abs(Math.cos(kappa*z)); // envelope magnitude
+          const y = yMid - val*amp;
+          if(i===0) ctx.moveTo(x,y);
+          else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+
+        ctx.beginPath();
+        for(let i=0;i<=samples;i++){
+          const z = (L*i)/samples;
+          const x = x0 + (x1-x0)*(z/L);
+          const val = Math.abs(Math.cos(kappa*z));
+          const y = yMid + val*amp;
+          if(i===0) ctx.moveTo(x,y);
+          else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // Title inside canvas
+        ctx.save();
+        ctx.font = "800 16px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--text");
+        ctx.fillText("Physical Setup: Closed–Open Pipe", 24, 36);
+
+        ctx.font = "600 12px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--muted");
+        ctx.fillText("Envelope shows |cos(κₙ z)| (pressure magnitude) for the selected mode.", 24, 56);
+        ctx.restore();
+
+        // Length annotation
+        ctx.save();
+        ctx.strokeStyle = col("--muted2");
+        ctx.lineWidth = 1.6;
+        ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        ctx.moveTo(x0, y0-8);
+        ctx.lineTo(x1, y0-8);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // markers
+        ctx.beginPath(); ctx.arc(x0, y0-8, 3, 0, Math.PI*2); ctx.fillStyle = col("--muted2"); ctx.fill();
+        ctx.beginPath(); ctx.arc(x1, y0-8, 3, 0, Math.PI*2); ctx.fill();
+
+        const Llabel = "L = " + fmt(L,2) + " m";
+        ctx.font = "700 13px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--muted");
+        const lw = ctx.measureText(Llabel).width;
+        ctx.fillText(Llabel, (x0+x1)/2 - lw/2, y0-16);
+        ctx.restore();
+      }
+
+      // -------------------- Drawing: Mode Shape Plot --------------------
+      function drawModeShape(){
+        const {w,h} = fitCanvas(modeCanvas, mCtx);
+        const ctx = mCtx;
+        ctx.clearRect(0,0,w,h);
+
+        const margin = {l:70, r:22, t:52, b:58};
+        const plot = {x:margin.l, y:margin.t, w:w-margin.l-margin.r, h:h-margin.t-margin.b};
+
+        // panel
+        ctx.save();
+        drawRoundedRect(ctx, 10, 10, w-20, h-20, 16);
+        ctx.fillStyle = "rgba(255,255,255,0.03)";
+        ctx.fill();
+        ctx.strokeStyle = col("--line");
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+
+        // grid
+        drawGrid(ctx, plot.x, plot.y, plot.w, plot.h, 8, 6, col("--line"));
+
+        // axes
+        axes(ctx, plot.x, plot.y, plot.w, plot.h, "z (m)", "p(z)/p₀ (dimensionless)", "Mode Shape: p(z)/p₀ = cos(κₙ z)");
+
+        // y-axis ticks labels (-1..1)
+        ctx.save();
+        ctx.font = "600 12px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--muted");
+        for(let j=0;j<=6;j++){
+          const y = plot.y + plot.h*(j/6);
+          const val = 1 - 2*(j/6);
+          const label = (Math.abs(val) < 1e-9) ? "0" : (val>0? "+" : "") + fmt(val,2);
+          ctx.fillText(label, 16, y+4);
+        }
+        // x ticks labels
+        for(let i=0;i<=8;i++){
+          const x = plot.x + plot.w*(i/8);
+          const z = L*(i/8);
+          const label = fmt(z,2);
+          const tw = ctx.measureText(label).width;
+          ctx.fillText(label, x - tw/2, plot.y+plot.h+22);
+        }
+        ctx.restore();
+
+        // draw curve p(z)/p0 = cos(kappa z) * cos(omega t) if anim, else cos(kappa z)
+        const kappa = kappaFor(n, L);
+        const omega = omegaFor(n, L);
+
+        const timeFactor = anim ? Math.cos(omega * phase) : 1.0;
+
+        function X(z){ return plot.x + plot.w*(z/L); }
+        function Y(val){ // val in [-1,1]
+          return plot.y + plot.h*( (1 - (val))/2 );
+        }
+
+        // highlight boundaries
+        ctx.save();
+        ctx.strokeStyle = col("--accent2");
+        ctx.globalAlpha = 0.9;
+        ctx.lineWidth = 2;
+        // z=0 vertical line
+        ctx.beginPath();
+        ctx.moveTo(plot.x, plot.y);
+        ctx.lineTo(plot.x, plot.y+plot.h);
+        ctx.stroke();
+        // z=L vertical line
+        ctx.beginPath();
+        ctx.moveTo(plot.x+plot.w, plot.y);
+        ctx.lineTo(plot.x+plot.w, plot.y+plot.h);
+        ctx.stroke();
+        ctx.restore();
+
+        // main curve
+        ctx.save();
+        ctx.strokeStyle = col("--accent");
+        ctx.lineWidth = 2.6;
+        ctx.globalAlpha = 0.95;
+        ctx.beginPath();
+        const N = 600;
+        for(let i=0;i<=N;i++){
+          const z = L*(i/N);
+          const val = p0 * Math.cos(kappa*z) * timeFactor;
+          const x = X(z);
+          const y = Y(val);
+          if(i===0) ctx.moveTo(x,y);
+          else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // axis line y=0
+        ctx.save();
+        ctx.strokeStyle = col("--line2");
+        ctx.lineWidth = 1.4;
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath();
+        ctx.moveTo(plot.x, Y(0));
+        ctx.lineTo(plot.x+plot.w, Y(0));
+        ctx.stroke();
+        ctx.restore();
+
+        // annotate boundary conditions
+        ctx.save();
+        ctx.font = "700 12px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--muted");
+
+        // at z=0: dp/dz=0 (slope zero)
+        ctx.fillText("Closed end (z=0): ∂p/∂z = 0", plot.x+6, plot.y+18);
+        // at z=L: p=0
+        const t2 = "Open end (z=L): p = 0";
+        const t2w = ctx.measureText(t2).width;
+        ctx.fillText(t2, plot.x+plot.w - t2w - 6, plot.y+18);
+
+        // mode info
+        const f = freqFor(n, L);
+        const lam = lambdaFor(n, L);
+        const info = `n=${n} ⇒ κₙ=(2n−1)π/(2L),  fₙ=${fmt(f,1)} Hz,  λₙ=${fmt(lam,3)} m`;
+        ctx.font = "600 12px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--text");
+        ctx.fillText(info, plot.x, plot.y+plot.h+44);
+        ctx.restore();
+
+        // legend
+        drawLegend(ctx, [
+          {label: anim ? "p(z,t)/p₀ at current time" : "p(z)/p₀ (snapshot)", color: col("--accent")},
+          {label: "Boundary markers", color: col("--accent2")}
+        ], plot.x+10, plot.y+plot.h-18);
+      }
+
+      // -------------------- Drawing: Frequency Plot --------------------
+      function drawFrequencies(){
+        const {w,h} = fitCanvas(freqCanvas, fCtx);
+        const ctx = fCtx;
+        ctx.clearRect(0,0,w,h);
+
+        const margin = {l:70, r:22, t:52, b:58};
+        const plot = {x:margin.l, y:margin.t, w:w-margin.l-margin.r, h:h-margin.t-margin.b};
+
+        // panel
+        ctx.save();
+        drawRoundedRect(ctx, 10, 10, w-20, h-20, 16);
+        ctx.fillStyle = "rgba(255,255,255,0.03)";
+        ctx.fill();
+        ctx.strokeStyle = col("--line");
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+
+        // compute first few modes
+        const maxModes = 7;
+        const freqs = [];
+        for(let i=1;i<=maxModes;i++){
+          freqs.push(freqFor(i, L)); // i corresponds to n
+        }
+        const fMax = Math.max(...freqs) * 1.10;
+
+        // grid
+        drawGrid(ctx, plot.x, plot.y, plot.w, plot.h, maxModes, 6, col("--line"));
+
+        // axes
+        axes(ctx, plot.x, plot.y, plot.w, plot.h, "Mode index n", "Frequency fₙ (Hz)", "Resonant Frequencies: fₙ = (2n−1)v/(4L)");
+
+        function Xn(i){ // i from 1..maxModes
+          return plot.x + plot.w*((i-0.5)/maxModes);
+        }
+        function Yf(f){
+          return plot.y + plot.h*(1 - (f/fMax));
+        }
+
+        // y tick labels
+        ctx.save();
+        ctx.font = "600 12px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--muted");
+        for(let j=0;j<=6;j++){
+          const fTick = fMax*(j/6);
+          const y = Yf(fTick);
+          const label = fmt(fTick, 0);
+          ctx.fillText(label, 18, y+4);
+        }
+        // x tick labels
+        for(let i=1;i<=maxModes;i++){
+          const x = Xn(i);
+          const label = String(i);
+          const tw = ctx.measureText(label).width;
+          ctx.fillText(label, x - tw/2, plot.y+plot.h+22);
+        }
+        ctx.restore();
+
+        // draw bars/points
+        ctx.save();
+        ctx.lineWidth = 2;
+        for(let i=1;i<=maxModes;i++){
+          const f = freqs[i-1];
+          const x = Xn(i);
+          const y = Yf(f);
+
+          // stem
+          ctx.strokeStyle = col("--line2");
+          ctx.globalAlpha = 0.85;
+          ctx.beginPath();
+          ctx.moveTo(x, plot.y+plot.h);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+
+          // point
+          const isSelected = (i === n);
+          ctx.fillStyle = isSelected ? col("--accent2") : col("--accent");
+          ctx.globalAlpha = 0.95;
+          ctx.beginPath();
+          ctx.arc(x, y, isSelected ? 6 : 5, 0, Math.PI*2);
+          ctx.fill();
+
+          // label f
+          ctx.font = (isSelected ? "800 12px " : "700 12px ") + col("--sans").replace(/"/g,'');
+          ctx.fillStyle = col("--text");
+          const txt = fmt(f,1) + " Hz";
+          const tw = ctx.measureText(txt).width;
+          ctx.fillText(txt, x - tw/2, y - 10);
+        }
+        ctx.restore();
+
+        // legend / notes
+        ctx.save();
+        ctx.font = "600 12px " + col("--sans").replace(/"/g,'');
+        ctx.fillStyle = col("--muted");
+        ctx.fillText(`Using v = ${v} m/s and current L = ${fmt(L,2)} m`, plot.x, plot.y+plot.h+44);
+        ctx.restore();
+
+        drawLegend(ctx, [
+          {label: "Modes fₙ", color: col("--accent")},
+          {label: "Selected mode", color: col("--accent2")}
+        ], plot.x+10, plot.y+plot.h-18);
+      }
+
+      // -------------------- Live Values Panel --------------------
+      function updateLiveText(){
+        // Fundamental n=1 and next allowed n=2 at current L
+        const f1 = freqFor(1, L);
+        const f2 = freqFor(2, L);
+        const lam1 = lambdaFor(1, L);
+        const lam2 = lambdaFor(2, L);
+
+        f1Text.textContent = fmt(f1,1) + " Hz";
+        f2Text.textContent = fmt(f2,1) + " Hz";
+        lam1Text.textContent = fmt(lam1,2) + " m";
+        lam2Text.textContent = fmt(lam2,3) + " m";
+      }
+
+      // -------------------- Render Loop --------------------
+      function render(now){
+        const dt = (now - t0) / 1000;
+        t0 = now;
+        if(anim){
+          // advance phase in seconds; we store phase in seconds (not radians), so omega*phase is rad.
+          // clamp dt for stability on tab switches
+          phase += clamp(dt, 0, 0.05);
+        }
+
+        drawSetup();
+        drawModeShape();
+        drawFrequencies();
+        updateLiveText();
+
+        if(anim) requestAnimationFrame(render);
+      }
+
+      function redrawOnce(){
+        // one-shot redraw when not animating
+        drawSetup();
+        drawModeShape();
+        drawFrequencies();
+        updateLiveText();
+      }
+
+      // -------------------- Event Wiring --------------------
+      function syncUI(){
+        lenVal.textContent = fmt(L,2);
+        modeVal.textContent = String(n);
+      }
+
+      lenSlider.addEventListener("input", ()=>{
+        L = parseFloat(lenSlider.value);
+        syncUI();
+        redrawOnce();
+      });
+
+      modeSelect.addEventListener("input", ()=>{
+        n = parseInt(modeSelect.value, 10);
+        syncUI();
+        redrawOnce();
+      });
+
+      toggleAnim.addEventListener("click", ()=>{
+        anim = !anim;
+        toggleAnim.textContent = anim ? "Stop animation" : "Start animation";
+        if(anim){
+          t0 = performance.now();
+          requestAnimationFrame(render);
+        }else{
+          redrawOnce();
+        }
+      });
+
+      resetBtn.addEventListener("click", ()=>{
+        L = 0.50;
+        n = 1;
+        phase = 0;
+        anim = false;
+        lenSlider.value = String(L);
+        modeSelect.value = String(n);
+        toggleAnim.textContent = "Start animation";
+        syncUI();
+        redrawOnce();
+      });
+
+      window.addEventListener("resize", ()=>{
+        // Refit canvases on resize
+        redrawOnce();
+      });
+
+      // -------------------- Init --------------------
+      syncUI();
+      redrawOnce();
+
+    })();
+  </script>
+</body>
+</html>

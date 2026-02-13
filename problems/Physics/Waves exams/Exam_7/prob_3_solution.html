@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Five-Slit Grating on Glass: Phase, Intensity, and Patterns (with Interactive Plots)</title>
+  <meta name="description" content="A complete, beginner-friendly yet rigorous solution to a 5-slit grating problem in glass, including interactive visualizations (no external libraries)." />
+  <style>
+    :root{
+      --bg: #0b1020;
+      --bg2:#0f1730;
+      --card:#101a3a;
+      --text:#e9eefc;
+      --muted:#b8c0dd;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line: rgba(255,255,255,.12);
+      --shadow: 0 14px 45px rgba(0,0,0,.45);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+      --radius: 18px;
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f7f8ff;
+        --bg2:#eef2ff;
+        --card:#ffffff;
+        --text:#121633;
+        --muted:#4b5563;
+        --accent:#0284c7;
+        --accent2:#7c3aed;
+        --good:#059669;
+        --warn:#b45309;
+        --bad:#be123c;
+        --line: rgba(17,24,39,.12);
+        --shadow: 0 14px 45px rgba(2,6,23,.12);
+      }
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 700px at 18% -10%, rgba(125,211,252,.18), transparent 55%),
+        radial-gradient(900px 600px at 85% 0%, rgba(167,139,250,.16), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      color:var(--text);
+      line-height:1.65;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    a{color:var(--accent); text-decoration: none}
+    a:hover{text-decoration: underline}
+
+    header{
+      position:relative;
+      overflow:hidden;
+      border-bottom:1px solid var(--line);
+      padding: clamp(22px, 3.4vw, 42px) 18px;
+    }
+    .wrap{
+      max-width: 1120px;
+      margin:0 auto;
+    }
+    .hero{
+      display:grid;
+      gap: 18px;
+      align-items: end;
+      grid-template-columns: 1.2fr .8fr;
+    }
+    @media (max-width: 960px){
+      .hero{grid-template-columns:1fr}
+    }
+    h1{
+      font-size: clamp(26px, 3.2vw, 44px);
+      letter-spacing: -0.02em;
+      line-height:1.15;
+      margin:0 0 6px 0;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size: clamp(14px, 1.4vw, 17px);
+    }
+    .pillrow{
+      display:flex; flex-wrap:wrap; gap:10px; margin-top:14px;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:13px;
+      color:var(--muted);
+      backdrop-filter: blur(10px);
+    }
+    @media (prefers-color-scheme: light){
+      .pill{ background: rgba(2,6,23,.03); }
+    }
+
+    .heroCard{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+      padding: 14px 14px 10px 14px;
+      position:relative;
+      isolation:isolate;
+    }
+    @media (prefers-color-scheme: light){
+      .heroCard{ background: linear-gradient(180deg, rgba(2,6,23,.03), rgba(2,6,23,.015)); }
+    }
+    .heroCard:before{
+      content:"";
+      position:absolute; inset:-1px;
+      border-radius: var(--radius);
+      background: radial-gradient(550px 220px at 20% 0%, rgba(125,211,252,.22), transparent 60%),
+                  radial-gradient(520px 200px at 85% 15%, rgba(167,139,250,.20), transparent 60%);
+      z-index:-1;
+      opacity:.8;
+    }
+    .miniTitle{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:8px;
+    }
+    .miniTitle h2{
+      font-size: 14px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin:0;
+      color: var(--muted);
+    }
+    .kbd{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 8px;
+      border:1px solid var(--line);
+      border-radius: 10px;
+      color: var(--muted);
+      background: rgba(255,255,255,.04);
+    }
+
+    main{padding: 18px 18px 44px}
+    section{
+      margin-top: 18px;
+    }
+
+    .grid{
+      display:grid;
+      gap: 16px;
+      grid-template-columns: 1.1fr .9fr;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .card{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.03);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    @media (prefers-color-scheme: light){
+      .card{ background: rgba(2,6,23,.02); }
+    }
+
+    h2{
+      margin: 0 0 10px 0;
+      font-size: 22px;
+      letter-spacing: -0.01em;
+    }
+    h3{
+      margin: 18px 0 10px 0;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+    }
+    p{margin: 0 0 10px 0; color: var(--text)}
+    .muted{color: var(--muted)}
+    ul{margin:8px 0 12px 20px}
+    li{margin: 4px 0}
+
+    .callout{
+      border-left: 4px solid var(--accent);
+      padding: 12px 12px 12px 14px;
+      background: linear-gradient(90deg, rgba(125,211,252,.13), rgba(125,211,252,.02));
+      border-radius: 14px;
+      margin: 12px 0;
+    }
+    .callout.warn{ border-left-color: var(--warn);
+      background: linear-gradient(90deg, rgba(251,191,36,.16), rgba(251,191,36,.02));}
+    .callout.good{ border-left-color: var(--good);
+      background: linear-gradient(90deg, rgba(52,211,153,.16), rgba(52,211,153,.02));}
+    .callout.bad{ border-left-color: var(--bad);
+      background: linear-gradient(90deg, rgba(251,113,133,.16), rgba(251,113,133,.02));}
+
+    .eq{
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: 1.55;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.16);
+      overflow:auto;
+      margin: 10px 0;
+      white-space: pre;
+    }
+    @media (prefers-color-scheme: light){
+      .eq{ background: rgba(2,6,23,.04); }
+    }
+
+    .eq .box{
+      display:inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      border: 1px dashed rgba(125,211,252,.55);
+      background: rgba(125,211,252,.10);
+      margin: 2px 0;
+    }
+
+    .finalBox{
+      border: 1px solid rgba(125,211,252,.45);
+      background: radial-gradient(800px 340px at 18% 0%, rgba(125,211,252,.18), transparent 60%),
+                  radial-gradient(740px 320px at 85% 15%, rgba(167,139,250,.14), transparent 60%),
+                  rgba(255,255,255,.03);
+      border-radius: var(--radius);
+      padding: 16px 16px 14px;
+      position:relative;
+    }
+    .finalBox h3{margin-top:0}
+    .tagRow{
+      display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;
+    }
+    .tag{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      color:var(--muted);
+      background: rgba(255,255,255,.04);
+    }
+
+    figure{
+      margin:0;
+    }
+    figcaption{
+      margin-top:8px;
+      color:var(--muted);
+      font-size: 13px;
+    }
+
+    canvas{
+      width: 100%;
+      height: auto;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      display:block;
+    }
+    @media (prefers-color-scheme: light){
+      canvas{ background: rgba(2,6,23,.03); }
+    }
+
+    .controls{
+      display:grid;
+      gap: 12px;
+      grid-template-columns: 1fr 1fr;
+      margin-top: 12px;
+    }
+    @media (max-width: 640px){
+      .controls{grid-template-columns:1fr}
+    }
+    .control{
+      border:1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,.03);
+    }
+    @media (prefers-color-scheme: light){
+      .control{ background: rgba(2,6,23,.02); }
+    }
+    .control label{
+      display:flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .control .val{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      white-space: nowrap;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+    .btnRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+    }
+    button{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-weight: 600;
+    }
+    button:hover{ transform: translateY(-1px); border-color: rgba(125,211,252,.45); background: rgba(125,211,252,.08) }
+    button:active{ transform: translateY(0px); }
+    button[aria-pressed="true"]{
+      border-color: rgba(125,211,252,.55);
+      background: rgba(125,211,252,.12);
+    }
+
+    .twoCols{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 840px){
+      .twoCols{grid-template-columns:1fr}
+    }
+
+    .small{
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    footer{
+      border-top: 1px solid var(--line);
+      padding: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Subtle animated accent line */
+    .spark{
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(125,211,252,.75), rgba(167,139,250,.75), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 5.5s ease-in-out infinite;
+      border-radius: 999px;
+      margin: 10px 0 0;
+      opacity: .85;
+    }
+    @keyframes shimmer{
+      0%{ background-position: 0% 50% }
+      50%{ background-position: 100% 50% }
+      100%{ background-position: 0% 50% }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap hero">
+      <div>
+        <h1>Five-Slit Grating on Glass — Phase Difference, Interference Pattern, and a Live Plot</h1>
+        <p class="subtitle">
+          A complete, structured solution (rigorous but beginner-friendly) with two canvas visualizations:
+          a geometry diagram and an interactive intensity plot (no external libraries).
+        </p>
+        <div class="pillrow" aria-label="Article highlights">
+          <span class="pill">Fraunhofer (far-field) multi-slit interference</span>
+          <span class="pill">Wave number in glass: <span class="kbd">k = 2πn/λ</span></span>
+          <span class="pill">5 slits vs 3 slits comparison</span>
+          <span class="pill">Interactive control: θ slider + N toggle</span>
+        </div>
+        <div class="spark" aria-hidden="true"></div>
+      </div>
+
+      <aside class="heroCard" aria-label="Quick Summary card">
+        <div class="miniTitle">
+          <h2>Quick Summary</h2>
+          <span class="kbd">δ, I(ψ), maxima & minima</span>
+        </div>
+        <p class="muted" style="margin:0 0 10px 0">
+          Adjacent slits pick up a constant phase step <strong>δ</strong>. The total field is a geometric phasor sum,
+          giving a <strong>sharp interference pattern</strong> whose peaks get taller and narrower as the number of slits increases.
+        </p>
+
+        <div class="eq" role="note" aria-label="Quick summary equations">
+<span class="box">Phase step:</span>   δ(θ,ψ) = (2π n d / λ) · (sinψ − sinθ)
+
+<span class="box">Intensity (N slits):</span>
+I_N(ψ) = I₁ · [ sin(Nδ/2) / sin(δ/2) ]²
+
+<span class="box">Principal maxima:</span>   δ = 2πm  ⇒  sinψ = sinθ + m(λ/(nd))
+
+<span class="box">First minima about m=0:</span>
+N=5: sinψ = sinθ ± (1/5)(λ/(nd))
+N=3: sinψ = sinθ ± (1/3)(λ/(nd))
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <article aria-label="Full solution article">
+
+        <section class="grid" aria-label="Problem and Visuals">
+          <div class="card">
+            <h2>Problem (Restated Clearly)</h2>
+            <p>
+              A simple grating with <strong>5 long, narrow slits</strong> (spacing <strong>d</strong>) sits on a glass block
+              of refractive index <strong>n</strong>. A monochromatic <strong>plane wave inside the glass</strong> hits the grating
+              at incident angle <strong>θ</strong> (sign matters). Far away, you observe the transmitted light at an angle <strong>ψ</strong>
+              from the grating normal (the <strong>z</strong>-axis). The vacuum wavelength is <strong>λ</strong>.
+            </p>
+            <ul>
+              <li>Slits are extremely narrow ⇒ ignore the single-slit envelope (treat each slit as a point source).</li>
+              <li>Screen is very far ⇒ Fraunhofer (far-field) approximation applies.</li>
+            </ul>
+
+            <div class="callout good">
+              <strong>Key idea:</strong> Adjacent slits differ by a constant phase step <strong>δ</strong>.
+              Once δ is known, the entire multi-slit pattern follows from a geometric series sum.
+            </div>
+
+            <h3>Given</h3>
+            <ul>
+              <li>Number of slits: <strong>N = 5</strong> (later <strong>N = 3</strong> when slits 1 and 5 are blocked)</li>
+              <li>Spacing: <strong>d</strong></li>
+              <li>Index in glass: <strong>n</strong></li>
+              <li>Vacuum wavelength: <strong>λ</strong></li>
+              <li>Incident angle inside glass: <strong>θ</strong></li>
+              <li>Observation angle: <strong>ψ</strong></li>
+            </ul>
+
+            <h3>Unknowns / What we must find</h3>
+            <ul>
+              <li>(a) For θ=0: show δ = (2π n d / λ) sinψ</li>
+              <li>(b) For general θ: find δ(θ,ψ)</li>
+              <li>(c) Write I(ψ) for N=5</li>
+              <li>(d) Identify first maxima/minima and sketch I vs sinψ</li>
+              <li>(e) Write I(ψ) for N=3 (slits 2–4)</li>
+              <li>(f) Compare the new maxima/minima locations and peak height</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h2>Visualization 1 — Geometry Diagram (Canvas)</h2>
+            <p class="muted">
+              This sketch shows the slit line, the incident plane wave inside glass at angle <span class="kbd">θ</span>,
+              and the observation direction at <span class="kbd">ψ</span>. The phase step is proportional to the difference
+              of transverse (y) components of the incoming and outgoing wavevectors.
+            </p>
+
+            <figure>
+              <canvas id="setupCanvas" width="980" height="560" aria-label="Canvas diagram of grating geometry"></canvas>
+              <figcaption>
+                Diagram: slit array along <strong>y</strong>, normal along <strong>z</strong>. Phase step between adjacent slits:
+                δ = (k<sub>out,y</sub> − k<sub>in,y</sub>) d with k = 2πn/λ.
+              </figcaption>
+            </figure>
+
+            <div class="controls" aria-label="Interactive controls for geometry and plot">
+              <div class="control">
+                <label for="thetaSlider">
+                  Incident angle θ (inside glass)
+                  <span class="val" id="thetaVal">0.00°</span>
+                </label>
+                <input id="thetaSlider" type="range" min="-40" max="40" step="0.1"
+                       value="0" aria-label="Incident angle theta slider">
+                <div class="small">Sign matters: positive θ shifts the central maximum to larger sinψ.</div>
+              </div>
+
+              <div class="control">
+                <label for="ndOverLambdaSlider">
+                  Scale: (n d / λ)
+                  <span class="val" id="ndOverLambdaVal">5.00</span>
+                </label>
+                <input id="ndOverLambdaSlider" type="range" min="1" max="20" step="0.01"
+                       value="5" aria-label="n d over lambda slider">
+                <div class="small">Controls fringe spacing: larger (nd/λ) ⇒ more rapid oscillations vs sinψ.</div>
+              </div>
+            </div>
+
+            <div class="btnRow" aria-label="Toggle number of slits">
+              <button id="btnN5" aria-pressed="true" aria-label="Show 5-slit pattern">Show N = 5 (all slits)</button>
+              <button id="btnN3" aria-pressed="false" aria-label="Show 3-slit pattern">Show N = 3 (slits 2–4)</button>
+              <button id="btnOverlay" aria-pressed="false" aria-label="Overlay both patterns">Overlay N=5 & N=3</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" aria-label="Part-by-part solution">
+          <h2>Full Solution (Step-by-step, with Intuition + Math)</h2>
+
+          <h3>Physical Intuition</h3>
+          <p>
+            Each slit emits a coherent wave. In the far field, the path (and therefore phase) differences from
+            one slit to the next are essentially constant because the screen is very far away. That constant
+            phase increment is <strong>δ</strong>. When δ is a multiple of 2π, all contributions align and you get a bright
+            <strong>principal maximum</strong>. When they cancel, you get a <strong>minimum</strong>.
+          </p>
+          <div class="callout">
+            <strong>Core strategy:</strong> (1) find δ, (2) sum phasors for N slits, (3) square magnitude to get intensity,
+            (4) extract maxima/minima from the sine factors.
+          </div>
+
+          <h3>(a) Special case θ = 0: derive δ</h3>
+          <p>
+            First, remember the wave number in glass (as used in the problem’s part (a), which explicitly contains <strong>n</strong>):
+          </p>
+          <div class="eq" aria-label="Wave number in glass">
+k = 2π / λ_medium = 2π / (λ/n) = 2πn/λ
+          </div>
+
+          <p>
+            With θ = 0, the incident plane wave reaches all slits in phase. The only phase difference between adjacent slits
+            comes from propagation toward the observation direction ψ. Adjacent slits are separated by distance <strong>d</strong>
+            along the grating, so the path difference is the projection of that separation along the outgoing direction:
+          </p>
+
+          <div class="eq" aria-label="Phase difference for theta equals zero">
+Path difference between adjacent slits (θ=0):  Δℓ = d sinψ
+Phase difference:  δ = k Δℓ = (2πn/λ) d sinψ
+⇒ <span class="box">δ = (2π n d / λ) sinψ</span>
+          </div>
+
+          <div class="callout good">
+            <strong>Check:</strong> δ increases with d, with n, and with sinψ — exactly what you expect for larger separation,
+            higher optical density (shorter wavelength in medium), and larger diffraction angle.
+          </div>
+
+          <h3>(b) General θ: derive δ(θ, ψ) with correct sign</h3>
+          <p>
+            When θ ≠ 0, adjacent slits are illuminated with a phase offset because the incident wavefront intersects them at different times.
+            A robust way to keep signs straight is:
+          </p>
+          <div class="eq" aria-label="Wavevector phase rule">
+For slit-to-slit separation Δr = d ŷ,
+
+δ = (k_out − k_in) · Δr
+  = d (k_out,y − k_in,y)
+          </div>
+
+          <p>
+            For angles measured from the normal (z-axis), the y-components are:
+            k<sub>out,y</sub> = k sinψ and k<sub>in,y</sub> = k sinθ (θ’s sign matters).
+            Therefore:
+          </p>
+
+          <div class="eq" aria-label="General phase difference">
+δ = d k (sinψ − sinθ)
+  = (2πn/λ) d (sinψ − sinθ)
+
+<span class="box">δ(θ,ψ) = (2π n d / λ) (sinψ − sinθ)</span>
+          </div>
+
+          <div class="callout warn">
+            <strong>Sign sanity-check:</strong> Setting θ → 0 immediately reproduces part (a).
+            If your δ doesn’t reduce to that, the sign convention is wrong.
+          </div>
+
+          <h3>(c) Intensity I(ψ) for N = 5 slits</h3>
+          <p>
+            Because each slit is narrow, treat each as emitting the same complex field amplitude E₁ at the screen.
+            Adjacent slits differ by a phase factor e^{iδ}. Summing fields (superposition):
+          </p>
+
+          <div class="eq" aria-label="Field sum for N slits">
+E(ψ) = E₁ Σ_{m=0}^{N−1} e^{i m δ}
+     = E₁ (1 + e^{iδ} + e^{i2δ} + ... + e^{i(N−1)δ})
+          </div>
+
+          <p>
+            This is a geometric series, whose magnitude yields the standard multi-slit factor:
+          </p>
+
+          <div class="eq" aria-label="Intensity formula for N slits">
+Σ_{m=0}^{N−1} e^{i m δ}
+= e^{i(N−1)δ/2} · [ sin(Nδ/2) / sin(δ/2) ]
+
+I_N(ψ) ∝ |E(ψ)|²
+⇒ <span class="box">I_N(ψ) = I₁ [ sin(Nδ/2) / sin(δ/2) ]²</span>
+          </div>
+
+          <p>
+            For this problem’s 5-slit grating:
+          </p>
+          <div class="eq" aria-label="Intensity for five slits">
+<span class="box">I_5(ψ) = I₁ [ sin(5δ/2) / sin(δ/2) ]²</span>
+with δ = (2π n d / λ)(sinψ − sinθ)
+          </div>
+
+          <h3>(d) Sketch I vs sinψ; locate first maxima and minima</h3>
+          <div class="twoCols">
+            <div>
+              <p>
+                <strong>Principal maxima</strong> occur when all slits add in phase:
+                δ = 2πm, m ∈ ℤ. Converting to sinψ:
+              </p>
+              <div class="eq" aria-label="Principal maxima locations">
+δ = 2πm
+(2π n d / λ)(sinψ − sinθ) = 2πm
+⇒ <span class="box">sinψ = sinθ + m (λ/(n d))</span>
+              </div>
+
+              <p>
+                The central maximum (m=0) is at sinψ = sinθ.
+                The first-order maxima are at sinψ = sinθ ± (λ/(nd)).
+              </p>
+              <div class="callout good">
+                <strong>Peak height:</strong> At a principal maximum, E adds coherently: E_max = N E₁ ⇒ I_max = N² I₁.
+                For N=5: <strong>I_max,5 = 25 I₁</strong>.
+              </div>
+            </div>
+
+            <div>
+              <p>
+                <strong>Minima</strong> occur when the numerator vanishes:
+                sin(Nδ/2)=0, but excluding the points where δ=2πm (those are maxima).
+              </p>
+              <div class="eq" aria-label="Minima locations for N equal five">
+sin(5δ/2)=0 ⇒ 5δ/2 = πp ⇒ δ = (2πp)/5
+Exclude p multiple of 5 (those correspond to δ=2πm).
+
+⇒ <span class="box">sinψ = sinθ + (p/5)(λ/(n d))</span>,  p = ±1, ±2, ±3, ±4, ...
+              </div>
+              <p>
+                The <strong>first minima around the central maximum</strong> are p = ±1:
+                sinψ = sinθ ± (1/5)(λ/(nd)). These define the central peak’s width.
+              </p>
+            </div>
+          </div>
+
+          <h3>(e) Block slits 1 and 5 → only slits 2–4 (N = 3)</h3>
+          <p>
+            With only three equally spaced slits open, the same derivation holds with N=3:
+          </p>
+
+          <div class="eq" aria-label="Intensity for three slits">
+<span class="box">I_3(ψ) = I₁ [ sin(3δ/2) / sin(δ/2) ]²</span>
+with δ = (2π n d / λ)(sinψ − sinθ)
+          </div>
+
+          <p>
+            Principal maxima still satisfy δ = 2πm, so their locations are unchanged:
+            sinψ = sinθ + m(λ/(nd)).
+          </p>
+
+          <h3>(f) Compare N=5 and N=3: new maxima/minima and peak magnitude</h3>
+          <div class="twoCols">
+            <div>
+              <p><strong>First minima locations</strong> for N=3:</p>
+              <div class="eq" aria-label="First minima for N equal three">
+sin(3δ/2)=0 ⇒ δ = (2πp)/3 (exclude δ=2πm)
+First minima about m=0: p = ±1
+
+(2π n d / λ)(sinψ − sinθ) = ±2π/3
+⇒ <span class="box">sinψ = sinθ ± (1/3)(λ/(n d))</span>
+              </div>
+              <div class="callout warn">
+                <strong>Width effect:</strong> The first minima move farther from the peak center (1/3 vs 1/5),
+                so the central peak becomes <strong>wider</strong> when you reduce the number of slits.
+              </div>
+            </div>
+
+            <div>
+              <p><strong>Peak magnitude change</strong>:</p>
+              <div class="eq" aria-label="Peak intensity comparison">
+At principal maxima: I_max = N² I₁
+
+N=5: I_max,5 = 25 I₁
+N=3: I_max,3 =  9 I₁
+
+⇒ <span class="box">I_max,3 / I_max,5 = 9/25</span>
+              </div>
+              <div class="callout good">
+                <strong>Interpretation:</strong> Fewer coherent sources ⇒ smaller constructive sum and broader lobes.
+                More sources ⇒ sharper, taller principal maxima and more pronounced side-lobe structure.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" aria-label="Final answers">
+          <h2>Final Answer (Boxed)</h2>
+          <div class="finalBox" role="group" aria-label="Final boxed results">
+            <h3 style="margin-bottom:8px">Core Results</h3>
+            <div class="eq" aria-label="Final boxed equations">
+<span class="box">Phase step between adjacent slits:</span>
+δ(θ,ψ) = (2π n d / λ) (sinψ − sinθ)
+
+<span class="box">Intensity for N identical narrow slits:</span>
+I_N(ψ) = I₁ · [ sin(Nδ/2) / sin(δ/2) ]²
+
+<span class="box">For 5 slits:</span>
+I_5(ψ) = I₁ · [ sin(5δ/2) / sin(δ/2) ]²
+
+<span class="box">For 3 slits (slits 2–4 open):</span>
+I_3(ψ) = I₁ · [ sin(3δ/2) / sin(δ/2) ]²
+
+<span class="box">Principal maxima (both cases):</span>
+δ = 2πm  ⇒  sinψ = sinθ + m(λ/(nd))
+
+<span class="box">First minima about central maximum (m=0):</span>
+N=5: sinψ = sinθ ± (1/5)(λ/(nd))
+N=3: sinψ = sinθ ± (1/3)(λ/(nd))
+
+<span class="box">Peak heights:</span>
+I_max,5 = 25 I₁ ;  I_max,3 = 9 I₁ ;  I_max,3/I_max,5 = 9/25
+            </div>
+            <div class="tagRow" aria-label="Key takeaways tags">
+              <span class="tag">δ is dimensionless</span>
+              <span class="tag">k = 2πn/λ</span>
+              <span class="tag">Maxima at δ=2πm</span>
+              <span class="tag">First zeros at p/N</span>
+              <span class="tag">I_max ∝ N²</span>
+            </div>
+          </div>
+
+          <div class="callout">
+            <strong>Sanity checks:</strong>
+            <ul>
+              <li><strong>Units:</strong> (nd/λ) is dimensionless ⇒ δ is dimensionless.</li>
+              <li><strong>θ → 0:</strong> δ → (2πnd/λ) sinψ (matches part a).</li>
+              <li><strong>d → 0:</strong> δ → 0 ⇒ all slits add with I_max = N²I₁.</li>
+              <li><strong>More slits:</strong> peaks get taller (∝N²) and narrower (first zero at ∝1/N).</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="card" aria-label="Interactive plot section">
+          <h2>Visualization 2 — Interactive Intensity Plot: I vs sinψ</h2>
+          <p class="muted">
+            The plot below draws <strong>I(ψ)/I₁</strong> as a function of <strong>sinψ</strong>.
+            Use the controls to adjust θ and the scale (nd/λ), and to switch between N=5, N=3, or an overlay.
+            The plot also marks the predicted locations of:
+            <strong>central maximum</strong>, <strong>first minima</strong>, and <strong>first-order maxima</strong>.
+          </p>
+
+          <figure>
+            <canvas id="plotCanvas" width="1100" height="560" aria-label="Canvas plot of normalized intensity vs sin(psi)"></canvas>
+            <figcaption>
+              Title, axes, gridlines, and labeled markers are drawn directly in canvas. Vertical guides show:
+              sinψ = sinθ (central), sinθ ± (1/N)(λ/(nd)) (first minima), and sinθ ± (λ/(nd)) (first maxima).
+            </figcaption>
+          </figure>
+
+          <div class="callout bad" style="margin-top:14px">
+            <strong>Numerical note:</strong> The expression [sin(Nδ/2)/sin(δ/2)]² has removable “0/0” points at principal maxima (δ=2πm).
+            The code handles this by using the limiting value N² at those points.
+          </div>
+        </section>
+
+      </article>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="muted">
+        Built as a single, self-contained HTML article. All drawings and interactivity are native (<code>&lt;canvas&gt;</code> + vanilla JS).
+        Designed for accessibility (ARIA labels), responsive layout, and light/dark-friendly styling.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function(){
+      // =========================
+      // Utility helpers
+      // =========================
+      const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+      const deg2rad = (d) => d * Math.PI / 180;
+      const pretty = (x, digits=2) => {
+        const s = (Math.abs(x) < 1e-12) ? 0 : x;
+        return s.toFixed(digits);
+      };
+
+      // =========================
+      // State
+      // =========================
+      const state = {
+        thetaDeg: 0.0,      // θ in degrees
+        ndOverLambda: 5.0,  // (n d / λ)
+        mode: "N5",         // "N5" | "N3" | "Overlay"
+      };
+
+      // UI elements
+      const thetaSlider = document.getElementById("thetaSlider");
+      const ndOverLambdaSlider = document.getElementById("ndOverLambdaSlider");
+      const thetaVal = document.getElementById("thetaVal");
+      const ndOverLambdaVal = document.getElementById("ndOverLambdaVal");
+      const btnN5 = document.getElementById("btnN5");
+      const btnN3 = document.getElementById("btnN3");
+      const btnOverlay = document.getElementById("btnOverlay");
+
+      // Canvases
+      const setupCanvas = document.getElementById("setupCanvas");
+      const setupCtx = setupCanvas.getContext("2d");
+      const plotCanvas = document.getElementById("plotCanvas");
+      const plotCtx = plotCanvas.getContext("2d");
+
+      // Color palette (computed from CSS variables)
+      function cssVar(name){
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      }
+      function palette(){
+        return {
+          text: cssVar("--text"),
+          muted: cssVar("--muted"),
+          line: cssVar("--line"),
+          accent: cssVar("--accent"),
+          accent2: cssVar("--accent2"),
+          good: cssVar("--good"),
+          warn: cssVar("--warn"),
+          bad: cssVar("--bad"),
+          bgPlot: "rgba(0,0,0,0)", // canvas already has background via CSS
+        };
+      }
+
+      // =========================
+      // Physics functions
+      // =========================
+      // δ = (2π n d / λ) (sinψ − sinθ) = 2π (nd/λ) (sinψ − sinθ)
+      function deltaFromSinPsi(sinPsi, thetaDeg, ndOverLambda){
+        const sinTheta = Math.sin(deg2rad(thetaDeg));
+        return 2*Math.PI * ndOverLambda * (sinPsi - sinTheta);
+      }
+
+      // Normalized intensity I_N/I1 = [sin(Nδ/2)/sin(δ/2)]^2
+      function intensityNorm(N, delta){
+        const half = delta/2;
+        const denom = Math.sin(half);
+        const numer = Math.sin(N*half);
+        // Handle removable singularities near denom ~ 0 (principal maxima)
+        if (Math.abs(denom) < 1e-9){
+          return N*N; // limit
+        }
+        const ratio = numer/denom;
+        return ratio*ratio;
+      }
+
+      // =========================
+      // Drawing primitives
+      // =========================
+      function clearCanvas(ctx, w, h){
+        ctx.clearRect(0,0,w,h);
+      }
+
+      function setFont(ctx, sizePx, weight=600, family="system-ui"){
+        ctx.font = `${weight} ${sizePx}px ${family}`;
+      }
+
+      function drawRoundedRect(ctx, x,y,w,h,r){
+        const rr = Math.min(r, w/2, h/2);
+        ctx.beginPath();
+        ctx.moveTo(x+rr, y);
+        ctx.arcTo(x+w, y, x+w, y+h, rr);
+        ctx.arcTo(x+w, y+h, x, y+h, rr);
+        ctx.arcTo(x, y+h, x, y, rr);
+        ctx.arcTo(x, y, x+w, y, rr);
+        ctx.closePath();
+      }
+
+      function arrow(ctx, x1,y1,x2,y2, head=10){
+        const dx = x2-x1, dy = y2-y1;
+        const a = Math.atan2(dy,dx);
+        ctx.beginPath();
+        ctx.moveTo(x1,y1);
+        ctx.lineTo(x2,y2);
+        ctx.stroke();
+        // head
+        ctx.beginPath();
+        ctx.moveTo(x2,y2);
+        ctx.lineTo(x2 - head*Math.cos(a - Math.PI/7), y2 - head*Math.sin(a - Math.PI/7));
+        ctx.lineTo(x2 - head*Math.cos(a + Math.PI/7), y2 - head*Math.sin(a + Math.PI/7));
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // =========================
+      // Diagram (setupCanvas)
+      // =========================
+      function drawSetup(){
+        const P = palette();
+        const w = setupCanvas.width, h = setupCanvas.height;
+        clearCanvas(setupCtx, w, h);
+
+        // Layout
+        const pad = 36;
+        const midX = Math.round(w*0.52);
+        const glassX0 = pad, glassX1 = midX - 10;
+        const vacX0 = midX + 10, vacX1 = w - pad;
+
+        // Background panels
+        setupCtx.save();
+        setupCtx.globalAlpha = 1.0;
+
+        // Glass region
+        setupCtx.fillStyle = "rgba(125,211,252,0.06)";
+        drawRoundedRect(setupCtx, glassX0, pad, glassX1-glassX0, h-2*pad, 18);
+        setupCtx.fill();
+
+        // Vacuum region
+        setupCtx.fillStyle = "rgba(167,139,250,0.05)";
+        drawRoundedRect(setupCtx, vacX0, pad, vacX1-vacX0, h-2*pad, 18);
+        setupCtx.fill();
+
+        // Divider (grating plane at z=0)
+        setupCtx.strokeStyle = P.line;
+        setupCtx.lineWidth = 2;
+        setupCtx.beginPath();
+        setupCtx.moveTo(midX, pad);
+        setupCtx.lineTo(midX, h-pad);
+        setupCtx.stroke();
+
+        // Labels
+        setupCtx.fillStyle = P.muted;
+        setFont(setupCtx, 14, 700, "system-ui");
+        setupCtx.fillText("Glass (index n)", glassX0 + 16, pad + 22);
+        setupCtx.fillText("Vacuum", vacX0 + 16, pad + 22);
+
+        // Axes near center
+        const originX = midX + 0;
+        const originY = Math.round(h*0.56);
+
+        // y-axis (vertical on canvas) for slit direction and z-axis (horizontal) normal
+        setupCtx.strokeStyle = P.line;
+        setupCtx.lineWidth = 2;
+        setupCtx.fillStyle = P.text;
+
+        // z axis arrow to the right
+        setupCtx.strokeStyle = "rgba(255,255,255,0.35)";
+        setupCtx.fillStyle = "rgba(255,255,255,0.35)";
+        arrow(setupCtx, originX, originY, originX + 160, originY, 10);
+
+        // y axis arrow up
+        arrow(setupCtx, originX, originY, originX, originY - 150, 10);
+
+        setupCtx.fillStyle = P.muted;
+        setFont(setupCtx, 12, 700, "ui-monospace");
+        setupCtx.fillText("z (normal)", originX + 92, originY - 10);
+        setupCtx.fillText("y (slit array)", originX + 8, originY - 130);
+
+        // Slits: 5 narrow slits along y at the divider
+        const slitCount = 5;
+        const dPix = 38; // visual spacing (not the actual d)
+        const slitLen = 16;
+        const slitThickness = 5;
+
+        const centerSlitIndex = 2; // 0..4, center at 2
+        for(let i=0; i<slitCount; i++){
+          const y = originY + (i-centerSlitIndex) * dPix;
+          setupCtx.strokeStyle = "rgba(255,255,255,0.60)";
+          setupCtx.lineWidth = slitThickness;
+          setupCtx.beginPath();
+          setupCtx.moveTo(midX, y - slitLen);
+          setupCtx.lineTo(midX, y + slitLen);
+          setupCtx.stroke();
+
+          // numbering
+          setupCtx.fillStyle = P.muted;
+          setFont(setupCtx, 12, 800, "ui-monospace");
+          setupCtx.fillText(String(i+1), midX + 10, y + 4);
+        }
+
+        // Draw spacing bracket for d
+        const topY = originY - (centerSlitIndex - 0)*dPix;
+        const y1 = originY - dPix; // slit 2
+        const y2 = originY;        // slit 3
+        setupCtx.strokeStyle = "rgba(125,211,252,0.70)";
+        setupCtx.lineWidth = 2;
+        setupCtx.beginPath();
+        setupCtx.moveTo(midX + 42, y1);
+        setupCtx.lineTo(midX + 60, y1);
+        setupCtx.lineTo(midX + 60, y2);
+        setupCtx.lineTo(midX + 42, y2);
+        setupCtx.stroke();
+
+        setupCtx.fillStyle = "rgba(125,211,252,0.85)";
+        setFont(setupCtx, 12, 800, "ui-monospace");
+        setupCtx.fillText("d", midX + 66, (y1+y2)/2 + 4);
+
+        // Incoming plane wave (inside glass) at angle theta to z axis
+        const theta = deg2rad(state.thetaDeg);
+        // On canvas: z to right, y up. A wave traveling toward +z with upward/downward y component.
+        // We'll represent a direction vector pointing to the right with angle theta measured from z toward +y:
+        const dirIn = { x: Math.cos(theta), y: -Math.sin(theta) }; // y axis is inverted in canvas coords; up is negative
+        // Draw multiple rays
+        setupCtx.strokeStyle = "rgba(125,211,252,0.75)";
+        setupCtx.fillStyle = "rgba(125,211,252,0.75)";
+        setupCtx.lineWidth = 2;
+
+        const rayStartX = glassX0 + 40;
+        for(let k=0; k<5; k++){
+          const ry = originY + (k-2)*dPix;
+          const x1 = rayStartX;
+          const y1r = ry + 50*dirIn.y;
+          const x2 = midX - 12;
+          const y2r = y1r + (x2-x1)*(dirIn.y/dirIn.x);
+          arrow(setupCtx, x1, y1r, x2, y2r, 9);
+        }
+
+        // Outgoing observation ray at angle psi (we'll pick a representative psi for diagram, slightly above z)
+        // This is conceptual; the actual psi is the plot variable.
+        const psiDemo = deg2rad(18);
+        const dirOut = { x: Math.cos(psiDemo), y: -Math.sin(psiDemo) };
+        setupCtx.strokeStyle = "rgba(167,139,250,0.8)";
+        setupCtx.fillStyle = "rgba(167,139,250,0.8)";
+        setupCtx.setLineDash([8,6]);
+        setupCtx.lineWidth = 2.2;
+        arrow(setupCtx, midX + 12, originY, vacX1 - 50, originY + (vacX1 - 62 - (midX+12))*(dirOut.y/dirOut.x), 10);
+        setupCtx.setLineDash([]);
+
+        // Angle arcs (theta and psi)
+        // Arc for theta between +z axis and incoming direction (draw on glass side)
+        function drawAngleArc(ctx, cx, cy, r, a0, a1, color, label, labelPos){
+          ctx.save();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, a0, a1, a1<a0);
+          ctx.stroke();
+          ctx.fillStyle = color;
+          setFont(ctx, 12, 800, "ui-monospace");
+          ctx.fillText(label, labelPos.x, labelPos.y);
+          ctx.restore();
+        }
+
+        // In canvas coords, +z axis is to the right = angle 0.
+        // Incoming direction has angle = -theta in math coords, but with y inverted it effectively matches theta display.
+        // We'll draw a small arc showing theta.
+        const arcR = 28;
+        const thetaArcStart = 0;
+        const thetaArcEnd = -theta; // because y inverted
+        drawAngleArc(setupCtx, midX - 36, originY, arcR, thetaArcStart, thetaArcEnd, "rgba(125,211,252,0.9)", "θ", {x: midX - 54, y: originY - 10});
+
+        // Psi arc on vacuum side (demo psi)
+        const psiArcStart = 0;
+        const psiArcEnd = -psiDemo;
+        drawAngleArc(setupCtx, midX + 36, originY, arcR, psiArcStart, psiArcEnd, "rgba(167,139,250,0.95)", "ψ", {x: midX + 58, y: originY - 10});
+
+        // Title and equation summary
+        setupCtx.fillStyle = P.text;
+        setFont(setupCtx, 18, 800, "system-ui");
+        setupCtx.fillText("Geometry for Phase Step δ", pad + 10, h - pad + 6);
+
+        setupCtx.fillStyle = P.muted;
+        setFont(setupCtx, 12, 700, "ui-monospace");
+        const sinTheta = Math.sin(theta);
+        setupCtx.fillText(`δ = 2π (nd/λ) (sinψ − sinθ)   with sinθ = ${pretty(sinTheta,3)}`, pad + 10, h - pad + 26);
+
+        setupCtx.restore();
+      }
+
+      // =========================
+      // Plot (plotCanvas): I/I1 vs sinψ
+      // =========================
+      function drawPlot(){
+        const P = palette();
+        const w = plotCanvas.width, h = plotCanvas.height;
+        clearCanvas(plotCtx, w, h);
+
+        // Plot area
+        const margin = {l: 78, r: 24, t: 60, b: 70};
+        const x0 = margin.l, x1 = w - margin.r;
+        const y0 = h - margin.b, y1 = margin.t;
+
+        // Axes ranges
+        const xMin = -1.0, xMax = 1.0; // sinψ
+        // We will auto-scale y based on N and overlay mode but cap a bit for visibility
+        const Nprimary = (state.mode === "N3") ? 3 : 5;
+        const yCap = (state.mode === "Overlay") ? 28 : (Nprimary*Nprimary + 3); // keep readable
+        const yMin = 0;
+        const yMax = yCap;
+
+        // Mapping
+        const xToPx = x => x0 + (x - xMin) * (x1 - x0) / (xMax - xMin);
+        const yToPx = y => y0 - (y - yMin) * (y0 - y1) / (yMax - yMin);
+
+        // Grid
+        plotCtx.save();
+        plotCtx.strokeStyle = "rgba(255,255,255,0.10)";
+        plotCtx.lineWidth = 1;
+
+        // vertical gridlines at -1..1 step 0.2
+        for(let xv=-1; xv<=1.0001; xv+=0.2){
+          const xp = xToPx(xv);
+          plotCtx.beginPath();
+          plotCtx.moveTo(xp, y0);
+          plotCtx.lineTo(xp, y1);
+          plotCtx.stroke();
+        }
+        // horizontal gridlines at integer steps
+        const yStep = 2;
+        for(let yv=0; yv<=yMax+1e-9; yv+=yStep){
+          const yp = yToPx(yv);
+          plotCtx.beginPath();
+          plotCtx.moveTo(x0, yp);
+          plotCtx.lineTo(x1, yp);
+          plotCtx.stroke();
+        }
+
+        // Axes
+        plotCtx.strokeStyle = "rgba(255,255,255,0.42)";
+        plotCtx.lineWidth = 2;
+        plotCtx.beginPath();
+        plotCtx.moveTo(x0, y0);
+        plotCtx.lineTo(x1, y0);
+        plotCtx.stroke();
+
+        plotCtx.beginPath();
+        plotCtx.moveTo(x0, y0);
+        plotCtx.lineTo(x0, y1);
+        plotCtx.stroke();
+
+        // Ticks + labels
+        plotCtx.fillStyle = P.muted;
+        setFont(plotCtx, 12, 700, "ui-monospace");
+
+        // x ticks
+        for(let xv=-1; xv<=1.0001; xv+=0.5){
+          const xp = xToPx(xv);
+          plotCtx.strokeStyle = "rgba(255,255,255,0.35)";
+          plotCtx.lineWidth = 2;
+          plotCtx.beginPath();
+          plotCtx.moveTo(xp, y0);
+          plotCtx.lineTo(xp, y0+6);
+          plotCtx.stroke();
+          plotCtx.fillText(xv.toFixed(1), xp-10, y0+24);
+        }
+
+        // y ticks
+        for(let yv=0; yv<=yMax+1e-9; yv+=5){
+          const yp = yToPx(yv);
+          plotCtx.strokeStyle = "rgba(255,255,255,0.35)";
+          plotCtx.lineWidth = 2;
+          plotCtx.beginPath();
+          plotCtx.moveTo(x0-6, yp);
+          plotCtx.lineTo(x0, yp);
+          plotCtx.stroke();
+          plotCtx.fillText(String(yv), x0-34, yp+4);
+        }
+
+        // Titles
+        plotCtx.fillStyle = P.text;
+        setFont(plotCtx, 18, 800, "system-ui");
+        plotCtx.fillText("Normalized Intensity Pattern", x0, 30);
+
+        plotCtx.fillStyle = P.muted;
+        setFont(plotCtx, 12, 700, "system-ui");
+        const sinTheta = Math.sin(deg2rad(state.thetaDeg));
+        plotCtx.fillText(`Plot of I(ψ)/I₁ vs sinψ   |   θ = ${pretty(state.thetaDeg,1)}° (sinθ = ${pretty(sinTheta,3)})   |   nd/λ = ${pretty(state.ndOverLambda,2)}`, x0, 50);
+
+        // Axis labels
+        plotCtx.fillStyle = P.text;
+        setFont(plotCtx, 13, 800, "system-ui");
+        plotCtx.fillText("sinψ  (dimensionless)", (x0+x1)/2 - 78, h-24);
+
+        plotCtx.save();
+        plotCtx.translate(20, (y0+y1)/2 + 60);
+        plotCtx.rotate(-Math.PI/2);
+        plotCtx.fillText("I(ψ) / I₁  (dimensionless)", 0, 0);
+        plotCtx.restore();
+
+        // Draw curves
+        const samples = 1600;
+
+        function plotCurve(N, color, dashed=false){
+          plotCtx.save();
+          plotCtx.strokeStyle = color;
+          plotCtx.lineWidth = 2.25;
+          if(dashed) plotCtx.setLineDash([8,6]);
+          plotCtx.beginPath();
+          for(let i=0;i<=samples;i++){
+            const x = xMin + (xMax-xMin)*i/samples; // x = sinψ
+            const del = deltaFromSinPsi(x, state.thetaDeg, state.ndOverLambda);
+            const I = intensityNorm(N, del);
+            const y = clamp(I, 0, yMax);
+            const xp = xToPx(x), yp = yToPx(y);
+            if(i===0) plotCtx.moveTo(xp, yp);
+            else plotCtx.lineTo(xp, yp);
+          }
+          plotCtx.stroke();
+          plotCtx.restore();
+        }
+
+        // Choose colors (no external lib)
+        const c5 = "rgba(125,211,252,0.95)";
+        const c3 = "rgba(167,139,250,0.95)";
+
+        if(state.mode === "N5"){
+          plotCurve(5, c5, false);
+        }else if(state.mode === "N3"){
+          plotCurve(3, c3, false);
+        }else{
+          plotCurve(5, c5, false);
+          plotCurve(3, c3, true);
+        }
+
+        // Legend
+        plotCtx.save();
+        const legX = x1 - 250, legY = y1 + 10;
+        plotCtx.fillStyle = "rgba(0,0,0,0.18)";
+        drawRoundedRect(plotCtx, legX, legY, 236, 52, 14);
+        plotCtx.fill();
+        plotCtx.strokeStyle = P.line;
+        plotCtx.lineWidth = 1;
+        plotCtx.stroke();
+
+        // line samples
+        plotCtx.lineWidth = 3;
+        plotCtx.strokeStyle = c5;
+        plotCtx.beginPath(); plotCtx.moveTo(legX+14, legY+18); plotCtx.lineTo(legX+54, legY+18); plotCtx.stroke();
+        plotCtx.strokeStyle = c3;
+        plotCtx.setLineDash([8,6]);
+        plotCtx.beginPath(); plotCtx.moveTo(legX+14, legY+36); plotCtx.lineTo(legX+54, legY+36); plotCtx.stroke();
+        plotCtx.setLineDash([]);
+
+        plotCtx.fillStyle = P.text;
+        setFont(plotCtx, 12, 800, "system-ui");
+        plotCtx.fillText("N=5  (solid)", legX+64, legY+22);
+        plotCtx.fillText("N=3  (dashed)", legX+64, legY+40);
+        plotCtx.restore();
+
+        // Marker guides for central maximum, first minima, and first-order maxima
+        function vLine(x, color, label, yText){
+          const xp = xToPx(x);
+          plotCtx.save();
+          plotCtx.strokeStyle = color;
+          plotCtx.lineWidth = 2;
+          plotCtx.setLineDash([5,6]);
+          plotCtx.beginPath();
+          plotCtx.moveTo(xp, y0);
+          plotCtx.lineTo(xp, y1);
+          plotCtx.stroke();
+          plotCtx.setLineDash([]);
+
+          plotCtx.fillStyle = color;
+          setFont(plotCtx, 12, 800, "ui-monospace");
+          plotCtx.fillText(label, xp+6, yText);
+          plotCtx.restore();
+        }
+
+        const g = 1/state.ndOverLambda; // λ/(nd)
+        const xC = sinTheta;            // central maximum at sinψ = sinθ
+        const Nmin = (state.mode === "N3") ? 3 : 5;
+
+        // Always show central
+        vLine(xC, "rgba(52,211,153,0.95)", "central: sinψ = sinθ", y1 + 88);
+
+        // Show first minima for the selected N (or both in overlay)
+        if(state.mode !== "Overlay"){
+          const xMin1 = xC - (1/Nmin)*g;
+          const xMin2 = xC + (1/Nmin)*g;
+          vLine(xMin1, "rgba(251,191,36,0.95)", `1st min: sinθ − (1/${Nmin})·(λ/nd)`, y1 + 108);
+          vLine(xMin2, "rgba(251,191,36,0.95)", `1st min: sinθ + (1/${Nmin})·(λ/nd)`, y1 + 128);
+        } else {
+          // Both N=5 and N=3 first minima
+          const xMin5a = xC - (1/5)*g, xMin5b = xC + (1/5)*g;
+          const xMin3a = xC - (1/3)*g, xMin3b = xC + (1/3)*g;
+          vLine(xMin5a, "rgba(251,191,36,0.92)", "N=5 min", y1 + 108);
+          vLine(xMin5b, "rgba(251,191,36,0.92)", "N=5 min", y1 + 128);
+          vLine(xMin3a, "rgba(251,113,133,0.92)", "N=3 min", y1 + 108);
+          vLine(xMin3b, "rgba(251,113,133,0.92)", "N=3 min", y1 + 128);
+        }
+
+        // First-order maxima (m = ±1): sinψ = sinθ ± λ/(nd)
+        const xM1 = xC - g;
+        const xM2 = xC + g;
+        vLine(xM1, "rgba(125,211,252,0.75)", "m=−1 max", y1 + 68);
+        vLine(xM2, "rgba(125,211,252,0.75)", "m=+1 max", y1 + 68);
+
+        // Keep labels from spilling too far: (optional) draw small boundary warning if beyond [-1,1]
+        const outLeft = Math.min(xC - g, xC - (1/3)*g, xC - (1/5)*g) < -1.0;
+        const outRight = Math.max(xC + g, xC + (1/3)*g, xC + (1/5)*g) > 1.0;
+        if(outLeft || outRight){
+          plotCtx.save();
+          plotCtx.fillStyle = "rgba(251,113,133,0.9)";
+          setFont(plotCtx, 12, 900, "system-ui");
+          plotCtx.fillText("Some guides fall outside sinψ ∈ [−1, 1] for these settings.", x0, y1 + 18);
+          plotCtx.restore();
+        }
+
+        plotCtx.restore();
+      }
+
+      // =========================
+      // UI Updates
+      // =========================
+      function setMode(mode){
+        state.mode = mode;
+        btnN5.setAttribute("aria-pressed", mode==="N5" ? "true":"false");
+        btnN3.setAttribute("aria-pressed", mode==="N3" ? "true":"false");
+        btnOverlay.setAttribute("aria-pressed", mode==="Overlay" ? "true":"false");
+        redrawAll();
+      }
+
+      function syncUI(){
+        thetaVal.textContent = `${pretty(state.thetaDeg,2)}°`;
+        ndOverLambdaVal.textContent = `${pretty(state.ndOverLambda,2)}`;
+      }
+
+      function redrawAll(){
+        syncUI();
+        drawSetup();
+        drawPlot();
+      }
+
+      // =========================
+      // Event listeners
+      // =========================
+      thetaSlider.addEventListener("input", () => {
+        state.thetaDeg = parseFloat(thetaSlider.value);
+        redrawAll();
+      });
+
+      ndOverLambdaSlider.addEventListener("input", () => {
+        state.ndOverLambda = parseFloat(ndOverLambdaSlider.value);
+        redrawAll();
+      });
+
+      btnN5.addEventListener("click", () => setMode("N5"));
+      btnN3.addEventListener("click", () => setMode("N3"));
+      btnOverlay.addEventListener("click", () => setMode("Overlay"));
+
+      // =========================
+      // Initial render
+      // =========================
+      redrawAll();
+
+      // Optional: redraw on resize for crispness is not needed because canvas is fixed pixel size.
+      // If you want responsive pixel density: you can scale by devicePixelRatio.
+      // We'll do a light DPR adjustment for sharpness.
+      function applyDPR(canvas, ctx){
+        const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+        const cssW = canvas.clientWidth;
+        const cssH = canvas.clientHeight;
+        if(cssW && cssH){
+          const newW = Math.round(cssW * dpr);
+          const newH = Math.round(cssH * dpr);
+          if(canvas.width !== newW || canvas.height !== newH){
+            canvas.width = newW;
+            canvas.height = newH;
+            ctx.setTransform(dpr,0,0,dpr,0,0);
+          }
+        }
+      }
+
+      // DPR adjustment: we’ll update both canvases after layout is stable.
+      // Then re-render.
+      setTimeout(() => {
+        applyDPR(setupCanvas, setupCtx);
+        applyDPR(plotCanvas, plotCtx);
+        redrawAll();
+      }, 50);
+
+      window.addEventListener("resize", () => {
+        applyDPR(setupCanvas, setupCtx);
+        applyDPR(plotCanvas, plotCtx);
+        redrawAll();
+      });
+    })();
+  </script>
+</body>
+</html>

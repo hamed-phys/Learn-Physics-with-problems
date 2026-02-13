@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Rolling Wheel + Spring: Simple Harmonic Oscillator (Energy Method)</title>
+  <style>
+    :root{
+      --bg: #0b1020;
+      --card: rgba(255,255,255,0.06);
+      --card2: rgba(255,255,255,0.09);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.72);
+      --muted2: rgba(255,255,255,0.62);
+      --line: rgba(255,255,255,0.18);
+      --accent: #7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 18px 45px rgba(0,0,0,0.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+      --radius: 18px;
+      --radius2: 24px;
+      --max: 1120px;
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f7f8fc;
+        --card: rgba(0,0,0,0.04);
+        --card2: rgba(0,0,0,0.06);
+        --text: rgba(6,10,20,0.92);
+        --muted: rgba(6,10,20,0.72);
+        --muted2: rgba(6,10,20,0.60);
+        --line: rgba(6,10,20,0.14);
+        --shadow: 0 16px 42px rgba(0,0,0,0.12);
+      }
+    }
+
+    *{ box-sizing:border-box; }
+    html, body { height:100%; }
+    body{
+      margin:0;
+      background:
+        radial-gradient(1100px 700px at 20% 10%, rgba(167,139,250,0.22), transparent 55%),
+        radial-gradient(900px 600px at 80% 20%, rgba(125,211,252,0.20), transparent 55%),
+        radial-gradient(900px 900px at 60% 85%, rgba(52,211,153,0.12), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      font-family:var(--sans);
+      line-height:1.6;
+      overflow-x:hidden;
+    }
+
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    .wrap{
+      max-width:var(--max);
+      margin:0 auto;
+      padding: 28px 18px 70px;
+    }
+
+    header.hero{
+      position:relative;
+      padding: 26px 22px 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      background: linear-gradient(135deg, rgba(125,211,252,0.10), rgba(167,139,250,0.10), rgba(52,211,153,0.06));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    header.hero::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(600px 300px at 20% 0%, rgba(125,211,252,0.18), transparent 60%),
+        radial-gradient(650px 380px at 90% 30%, rgba(167,139,250,0.16), transparent 60%);
+      filter: blur(12px);
+      opacity:0.9;
+      pointer-events:none;
+    }
+    header.hero > *{ position:relative; z-index:1; }
+
+    .kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.06);
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.2px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: linear-gradient(120deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 6px rgba(125,211,252,0.10);
+    }
+
+    h1{
+      margin: 14px 0 6px;
+      font-size: clamp(1.6rem, 2.6vw + 1rem, 2.65rem);
+      letter-spacing:-0.02em;
+      line-height:1.15;
+      font-weight: 780;
+    }
+    .subtitle{
+      margin:0;
+      max-width: 82ch;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .meta{
+      margin-top:14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .pill{
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      color: var(--muted2);
+      font-size: 13px;
+    }
+
+    main{
+      margin-top: 22px;
+      display:grid;
+      grid-template-columns: 1.35fr 0.65fr;
+      gap: 18px;
+      align-items:start;
+    }
+
+    @media (max-width: 980px){
+      main{ grid-template-columns: 1fr; }
+    }
+
+    section.card, article.card{
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,0.045);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .inner{
+      padding: 18px 18px 16px;
+    }
+    .card h2{
+      margin:0 0 10px;
+      font-size: 1.22rem;
+      letter-spacing: -0.01em;
+    }
+    .card h3{
+      margin: 18px 0 8px;
+      font-size: 1.04rem;
+      letter-spacing:-0.01em;
+    }
+    .lead{
+      margin-top:0;
+      color: var(--muted);
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 820px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .callout{
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--accent);
+      background: rgba(125,211,252,0.07);
+      border-radius: 14px;
+      padding: 12px 12px;
+      color: var(--muted);
+    }
+    .callout strong{ color: var(--text); }
+    .callout.warn{ border-left-color: var(--warn); background: rgba(251,191,36,0.08); }
+    .callout.good{ border-left-color: var(--good); background: rgba(52,211,153,0.08); }
+    .callout.bad{ border-left-color: var(--bad); background: rgba(251,113,133,0.08); }
+
+    .eq{
+      margin: 10px 0;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      font-family: var(--mono);
+      overflow-x:auto;
+    }
+    .eq .tag{
+      display:inline-block;
+      margin-bottom: 8px;
+      padding: 3px 8px;
+      border-radius:999px;
+      background: rgba(167,139,250,0.14);
+      border: 1px solid rgba(167,139,250,0.25);
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 12px;
+      letter-spacing:0.2px;
+    }
+    .eq code{
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .eq .block code{
+      display:block;
+      white-space: pre;
+      line-height: 1.5;
+    }
+
+    .steps{
+      counter-reset: step;
+      margin: 0;
+      padding-left: 0;
+      list-style:none;
+      display:grid;
+      gap:10px;
+    }
+    .steps li{
+      counter-increment: step;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      border-radius: 14px;
+      padding: 12px 12px;
+    }
+    .steps li::before{
+      content: counter(step);
+      display:inline-grid;
+      place-items:center;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      margin-right: 10px;
+      background: linear-gradient(135deg, rgba(125,211,252,0.18), rgba(167,139,250,0.18));
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-weight: 700;
+      font-family: var(--mono);
+      float:left;
+    }
+    .steps b{ color: var(--text); }
+    .steps p{ margin: 0; color: var(--muted); }
+
+    figure{
+      margin:0;
+      padding:0;
+    }
+    figure .fighead{
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:10px;
+    }
+    figure .fighead h3{ margin:0; font-size: 1.02rem; }
+    figure .fighead .hint{ color: var(--muted2); font-size: 12.5px; }
+    figure .figbody{ padding: 12px 12px 12px; }
+    canvas{
+      width: 100%;
+      height: auto;
+      display:block;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.12);
+    }
+    @media (prefers-color-scheme: light){
+      canvas{ background: rgba(255,255,255,0.50); }
+    }
+
+    .controls{
+      display:grid;
+      gap:12px;
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+    }
+    .controls .row{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+    }
+    .controls label{
+      font-size: 13.5px;
+      color: var(--muted);
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .controls input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+    .controls .value{
+      font-family: var(--mono);
+      color: var(--text);
+      font-size: 13px;
+      padding: 4px 8px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      min-width: 92px;
+      text-align:right;
+    }
+    .btns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-start;
+    }
+    button{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 650;
+      letter-spacing: 0.2px;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    button:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.09); }
+    button:active{ transform: translateY(0px); }
+
+    .summaryBox{
+      border: 1px solid rgba(52,211,153,0.28);
+      background: linear-gradient(135deg, rgba(52,211,153,0.10), rgba(125,211,252,0.08));
+      border-radius: var(--radius2);
+      padding: 14px 14px;
+    }
+    .summaryBox h2{ margin:0 0 10px; }
+    .summaryBox ul{
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+    .summaryBox li{ margin: 6px 0; }
+    .final{
+      border: 1px solid rgba(167,139,250,0.30);
+      background: linear-gradient(135deg, rgba(167,139,250,0.12), rgba(125,211,252,0.08));
+      border-radius: var(--radius2);
+      padding: 14px 14px;
+    }
+    .final h2{ margin:0 0 10px; }
+    .final .big{
+      font-family: var(--mono);
+      font-size: 1.05rem;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      overflow-x:auto;
+    }
+    .asideStack{
+      display:grid;
+      gap: 18px;
+    }
+
+    .mini{
+      font-size: 13.5px;
+      color: var(--muted);
+    }
+    .mini code{
+      font-family: var(--mono);
+      color: var(--text);
+      font-size: 12.8px;
+    }
+
+    .divider{
+      height:1px;
+      background: var(--line);
+      margin: 14px 0;
+    }
+
+    /* subtle motion */
+    @media (prefers-reduced-motion: no-preference){
+      .floaty{
+        animation: floaty 7s ease-in-out infinite;
+      }
+      @keyframes floaty{
+        0%,100%{ transform: translateY(0px); }
+        50%{ transform: translateY(-4px); }
+      }
+      .glow{
+        position: relative;
+      }
+      .glow::after{
+        content:"";
+        position:absolute;
+        inset:-2px;
+        border-radius: inherit;
+        background: radial-gradient(500px 150px at 30% 20%, rgba(125,211,252,0.25), transparent 60%),
+                    radial-gradient(480px 160px at 75% 40%, rgba(167,139,250,0.20), transparent 60%);
+        filter: blur(16px);
+        opacity:0.45;
+        z-index:-1;
+      }
+    }
+
+    footer{
+      margin-top: 18px;
+      padding: 16px 10px 0;
+      color: var(--muted2);
+      font-size: 13px;
+      text-align:center;
+    }
+
+    .sr-only{
+      position:absolute;
+      width:1px; height:1px;
+      padding:0; margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      white-space:nowrap;
+      border:0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header class="hero glow">
+      <div class="kicker"><span class="dot" aria-hidden="true"></span> Physics Tutor Article • Rolling Oscillator • Energy Method</div>
+      <h1>Wheel on a Spring (Rolling Without Slipping): A Simple Harmonic Oscillator with Rotation</h1>
+      <p class="subtitle">
+        A wheel attached to a spring oscillates horizontally. Because it rolls without slipping, translation and rotation
+        are coupled — increasing the effective inertia and lowering the oscillation frequency.
+      </p>
+      <div class="meta" aria-label="Key concepts">
+        <span class="pill">Conservation of Energy</span>
+        <span class="pill">Rolling Constraint: v = Rω</span>
+        <span class="pill">Moment of Inertia: I = MR²</span>
+        <span class="pill">SHM: ẍ + ω²x = 0</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- LEFT / MAIN CONTENT -->
+      <article class="card">
+        <div class="inner">
+          <section aria-labelledby="analysis-title">
+            <h2 id="analysis-title">PART 1 — Problem Analysis (no solving yet)</h2>
+
+            <h3>Problem restatement</h3>
+            <p class="lead">
+              A wheel (mass <b>M</b>, radius <b>R</b>) is connected at its hub to a spring (constant <b>k</b>) and rolls
+              <b>without slipping</b> on a horizontal surface. The wheel’s center of mass position is <b>x(t)</b>, measured
+              from equilibrium at <b>x = 0</b>. Given the wheel’s moment of inertia about its axle is <b>I = MR²</b>,
+              (a) write the total energy, (b) use energy conservation to derive the equation of motion, and (c) find the
+              angular frequency of small oscillations.
+            </p>
+
+            <div class="grid2">
+              <div class="callout">
+                <strong>Given</strong>
+                <ul>
+                  <li>Spring constant: <code>k</code></li>
+                  <li>Wheel mass: <code>M</code></li>
+                  <li>Wheel radius: <code>R</code></li>
+                  <li>Rolling without slipping</li>
+                  <li>Moment of inertia: <code>I = MR²</code></li>
+                  <li>Equilibrium: <code>x = 0</code></li>
+                </ul>
+              </div>
+              <div class="callout">
+                <strong>Find</strong>
+                <ul>
+                  <li>Total energy <code>E(x, ẋ)</code></li>
+                  <li>Equation of motion for <code>x(t)</code></li>
+                  <li>Angular frequency <code>ω</code></li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>Relevant principles (and why they apply)</h3>
+            <ul class="mini">
+              <li>
+                <b>Conservation of mechanical energy:</b> with ideal rolling and no dissipative forces, static friction does
+                no net work (contact point is instantaneously at rest), so <code>E = T + U</code> is conserved.
+              </li>
+              <li>
+                <b>Rolling constraint:</b> rolling without slipping ties translation to rotation:
+                <code>v = ẋ = Rω</code>, letting us eliminate <code>ω</code> in favor of <code>ẋ</code>.
+              </li>
+              <li>
+                <b>Spring potential:</b> the spring is conservative: <code>U(x) = ½kx²</code>.
+              </li>
+            </ul>
+
+            <h3>Candidate approaches</h3>
+            <div class="grid2">
+              <div class="callout good">
+                <strong>Energy method (best here)</strong>
+                <p class="mini">
+                  Build <code>E = T_trans + T_rot + U</code>, apply <code>ẋ = Rω</code>, then use <code>dE/dt = 0</code>.
+                  Directly matches the prompt and is compact.
+                </p>
+              </div>
+              <div class="callout">
+                <strong>Newton + torque + constraint</strong>
+                <p class="mini">
+                  Use <code>ΣF = Mẍ</code>, <code>Στ = Iα</code>, and <code>ẍ = Rα</code>.
+                  More steps, but shows explicitly how friction enforces rolling.
+                </p>
+              </div>
+            </div>
+
+            <p class="callout">
+              <strong>Chosen approach:</strong> the <b>energy method</b>, because the system is conservative (ideal rolling + spring),
+              and the rolling constraint cleanly converts rotational kinetic energy into an expression in <code>ẋ</code>.
+            </p>
+          </section>
+
+          <div class="divider" role="separator" aria-hidden="true"></div>
+
+          <section aria-labelledby="strategy-title">
+            <h2 id="strategy-title">PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+
+            <ol class="steps" aria-label="Roadmap steps">
+              <li>
+                <p><b>Write spring potential energy</b><br/>
+                Goal: express stored elastic energy.<br/>
+                Tool: <code>U(x) = ½kx²</code>.</p>
+              </li>
+              <li>
+                <p><b>Write translational kinetic energy</b><br/>
+                Goal: energy of center-of-mass motion.<br/>
+                Tool: <code>T_trans = ½M ẋ²</code>.</p>
+              </li>
+              <li>
+                <p><b>Write rotational kinetic energy</b><br/>
+                Goal: energy in wheel spin.<br/>
+                Tool: <code>T_rot = ½Iω²</code> with <code>I = MR²</code>.</p>
+              </li>
+              <li>
+                <p><b>Apply rolling constraint</b><br/>
+                Goal: eliminate <code>ω</code> in favor of <code>ẋ</code>.<br/>
+                Tool: <code>ẋ = Rω ⇒ ω = ẋ/R</code>.</p>
+              </li>
+              <li>
+                <p><b>Form total energy</b><br/>
+                Goal: obtain conserved quantity.<br/>
+                Tool: <code>E = T_trans + T_rot + U</code>.</p>
+              </li>
+              <li>
+                <p><b>Differentiate and enforce conservation</b><br/>
+                Goal: derive the equation of motion.<br/>
+                Tool: <code>dE/dt = 0</code>.</p>
+              </li>
+              <li>
+                <p><b>Match to SHM form</b><br/>
+                Goal: identify <code>ω</code>.<br/>
+                Tool: compare to <code>ẍ + ω²x = 0</code>.</p>
+              </li>
+            </ol>
+
+            <div class="grid2" style="margin-top:14px;">
+              <div class="callout warn">
+                <strong>Common mistakes</strong>
+                <ul class="mini">
+                  <li>Forgetting <b>rotational</b> kinetic energy.</li>
+                  <li>Using the wrong inertia (problem states <code>I = MR²</code>).</li>
+                  <li>Mixing up rolling relations; use <code>ẋ = Rω</code>.</li>
+                  <li>Assuming friction dissipates energy — for <b>pure rolling</b>, it does no net work.</li>
+                </ul>
+              </div>
+              <div class="callout good">
+                <strong>Quick tips</strong>
+                <ul class="mini">
+                  <li>Rolling adds an effective inertia term <code>I/R²</code>.</li>
+                  <li>Think “block on spring” but with <b>effective mass</b> <code>M + I/R²</code>.</li>
+                  <li>Check units: <code>ω</code> must be in <code>s⁻¹</code>.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <div class="divider" role="separator" aria-hidden="true"></div>
+
+          <section aria-labelledby="solution-title">
+            <h2 id="solution-title">PART 3 — Full Solution</h2>
+
+            <h3>Physical intuition</h3>
+            <p class="lead">
+              The spring provides a restoring force like an ordinary mass–spring oscillator, but because the wheel must roll
+              without slipping, the motion “splits” energy into translation and rotation. That extra rotational inertia makes the
+              oscillator behave as if it were heavier, so it oscillates more slowly than a sliding block of mass <code>M</code>.
+            </p>
+
+            <h3>(a) Total mechanical energy <code>E</code></h3>
+
+            <div class="eq" role="note" aria-label="Energy components">
+              <span class="tag">Step 1 — Potential energy</span>
+              <div class="block"><code>U(x) = ½ k x²</code></div>
+            </div>
+
+            <div class="eq" role="note" aria-label="Translational kinetic energy">
+              <span class="tag">Step 2 — Translational kinetic energy</span>
+              <div class="block"><code>T_trans = ½ M ẋ²</code></div>
+            </div>
+
+            <div class="eq" role="note" aria-label="Rotational kinetic energy">
+              <span class="tag">Step 3 — Rotational kinetic energy</span>
+              <div class="block"><code>T_rot = ½ I ω²,  with  I = M R²</code></div>
+            </div>
+
+            <div class="eq" role="note" aria-label="Rolling constraint">
+              <span class="tag">Step 4 — Rolling without slipping constraint</span>
+              <div class="block"><code>ẋ = R ω  ⇒  ω = ẋ / R</code></div>
+            </div>
+
+            <p>
+              Substitute <code>ω = ẋ/R</code> into the rotational kinetic energy:
+            </p>
+
+            <div class="eq" role="note" aria-label="Rotational energy after substitution">
+              <span class="tag">Compute T_rot in terms of ẋ</span>
+              <div class="block"><code>
+T_rot = ½ (M R²) (ẋ/R)²
+      = ½ M ẋ²
+              </code></div>
+            </div>
+
+            <p>
+              Therefore the total energy is:
+            </p>
+
+            <div class="eq" role="note" aria-label="Total energy">
+              <span class="tag">Total mechanical energy</span>
+              <div class="block"><code>
+E = T_trans + T_rot + U
+  = (½ M ẋ²) + (½ M ẋ²) + (½ k x²)
+  = M ẋ² + ½ k x²
+              </code></div>
+            </div>
+
+            <div class="callout good">
+              <strong>Key insight:</strong> The kinetic energy equals <code>½(2M) ẋ²</code>, so the wheel behaves like a block
+              with <b>effective mass</b> <code>M_eff = 2M</code>.
+            </div>
+
+            <h3>(b) Equation of motion from energy conservation</h3>
+            <p>
+              With ideal rolling and no losses, energy is conserved:
+              <code>dE/dt = 0</code>.
+              Start from
+              <code>E = M ẋ² + ½ k x²</code>
+              and differentiate with respect to time:
+            </p>
+
+            <div class="eq" role="note" aria-label="Differentiate energy">
+              <span class="tag">Differentiate E(t)</span>
+              <div class="block"><code>
+dE/dt = d/dt (M ẋ²) + d/dt (½ k x²)
+      = 2M ẋ ẍ + k x ẋ
+              </code></div>
+            </div>
+
+            <p>
+              Factor out <code>ẋ</code>:
+            </p>
+
+            <div class="eq" role="note" aria-label="Factor x dot">
+              <span class="tag">Factor</span>
+              <div class="block"><code>
+0 = dE/dt = ẋ (2M ẍ + k x)
+              </code></div>
+            </div>
+
+            <p>
+              For general motion, <code>ẋ</code> is not always zero, so the physically meaningful condition is:
+            </p>
+
+            <div class="eq" role="note" aria-label="Equation of motion">
+              <span class="tag">Equation of motion</span>
+              <div class="block"><code>
+2M ẍ + k x = 0
+⇒ ẍ + (k/(2M)) x = 0
+              </code></div>
+            </div>
+
+            <h3>(c) Angular frequency of oscillations</h3>
+            <p>
+              Compare to the standard SHM form <code>ẍ + ω² x = 0</code>. Hence:
+            </p>
+
+            <div class="eq" role="note" aria-label="Angular frequency">
+              <span class="tag">Angular frequency</span>
+              <div class="block"><code>
+ω² = k/(2M)  ⇒  ω = √(k/(2M))
+              </code></div>
+            </div>
+
+            <h3>Sanity checks</h3>
+
+            <div class="grid2">
+              <div class="callout">
+                <strong>Units</strong>
+                <p class="mini">
+                  <code>k</code> has units <code>N/m = kg·s⁻²</code>. Then <code>k/M</code> has units <code>s⁻²</code>,
+                  so <code>ω = √(k/(2M))</code> has units <code>s⁻¹</code>. ✔
+                </p>
+              </div>
+              <div class="callout">
+                <strong>Limiting cases</strong>
+                <ul class="mini">
+                  <li><code>k → 0</code> ⇒ <code>ω → 0</code> (no restoring force). ✔</li>
+                  <li><code>M → ∞</code> ⇒ <code>ω → 0</code> (very heavy wheel). ✔</li>
+                  <li>Compared to sliding block: <code>√(k/M)</code> vs rolling: <code>√(k/(2M))</code> (slower). ✔</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="callout good">
+              <strong>Physical interpretation:</strong> rolling adds rotational inertia in the form
+              <code>M_eff = M + I/R²</code>. With <code>I = MR²</code>,
+              <code>M_eff = M + (MR²)/R² = 2M</code>.
+            </div>
+
+          </section>
+        </div>
+      </article>
+
+      <!-- RIGHT / ASIDE -->
+      <aside class="asideStack" aria-label="Summary and visualizations">
+        <section class="summaryBox floaty" aria-labelledby="quick-summary">
+          <h2 id="quick-summary">Quick Summary</h2>
+          <ul>
+            <li>Rolling constraint: <code>ẋ = Rω</code> couples translation + rotation.</li>
+            <li>Total energy: <code>E = M ẋ² + ½ k x²</code> (effective mass <code>2M</code>).</li>
+            <li>Equation of motion: <code>ẍ + (k/(2M)) x = 0</code>.</li>
+            <li>Angular frequency: <code>ω = √(k/(2M))</code>.</li>
+          </ul>
+        </section>
+
+        <section class="final glow" aria-labelledby="final-answer">
+          <h2 id="final-answer">Final Answer</h2>
+          <div class="big" aria-label="Final boxed results">
+            E(x, ẋ) = M ẋ² + ½ k x²<br/>
+            2M ẍ + kx = 0  ⇔  ẍ + (k/(2M)) x = 0<br/>
+            ω = √(k/(2M))
+          </div>
+          <p class="mini" style="margin:10px 0 0;">
+            The wheel oscillates like a mass–spring system with <code>M_eff = 2M</code>.
+          </p>
+        </section>
+
+        <figure class="card" aria-labelledby="setup-title">
+          <div class="fighead">
+            <h3 id="setup-title">Visualization 1 — Physical Setup</h3>
+            <div class="hint">Spring + rolling wheel diagram</div>
+          </div>
+          <div class="figbody">
+            <canvas id="setupCanvas" width="760" height="420" role="img"
+                    aria-label="Diagram of a wheel attached to a spring rolling on a surface."></canvas>
+            <div class="mini" style="margin-top:10px;">
+              The wheel’s center at position <code>x(t)</code> rolls without slipping, so <code>ẋ = Rω</code>.
+            </div>
+          </div>
+        </figure>
+
+        <figure class="card" aria-labelledby="plot-title">
+          <div class="fighead">
+            <h3 id="plot-title">Visualization 2 — SHM Time Plot</h3>
+            <div class="hint">Interactive: change k, M, A</div>
+          </div>
+          <div class="figbody">
+            <canvas id="plotCanvas" width="760" height="460" role="img"
+                    aria-label="Graph of displacement and energies versus time with axes and gridlines."></canvas>
+
+            <div class="controls" aria-label="Interactive controls for the plot">
+              <div class="row">
+                <label for="kSlider">
+                  <span>Spring constant <b>k</b> (N/m)</span>
+                  <span class="value" id="kVal">20.0</span>
+                </label>
+                <input id="kSlider" type="range" min="2" max="80" step="0.5" value="20"
+                       aria-label="Spring constant k slider">
+              </div>
+
+              <div class="row">
+                <label for="mSlider">
+                  <span>Wheel mass <b>M</b> (kg)</span>
+                  <span class="value" id="mVal">2.00</span>
+                </label>
+                <input id="mSlider" type="range" min="0.5" max="10" step="0.1" value="2"
+                       aria-label="Wheel mass M slider">
+              </div>
+
+              <div class="row">
+                <label for="aSlider">
+                  <span>Amplitude <b>A</b> (m)</span>
+                  <span class="value" id="aVal">0.20</span>
+                </label>
+                <input id="aSlider" type="range" min="0.02" max="0.6" step="0.01" value="0.20"
+                       aria-label="Amplitude A slider">
+              </div>
+
+              <div class="row">
+                <label for="rSlider">
+                  <span>Radius <b>R</b> (m) <span class="mini">(affects rolling speed in diagram)</span></span>
+                  <span class="value" id="rVal">0.30</span>
+                </label>
+                <input id="rSlider" type="range" min="0.10" max="0.60" step="0.01" value="0.30"
+                       aria-label="Radius R slider">
+              </div>
+
+              <div class="btns" aria-label="Animation controls">
+                <button id="playBtn" type="button" aria-label="Play or pause animation">Play</button>
+                <button id="resetBtn" type="button" aria-label="Reset animation">Reset</button>
+              </div>
+
+              <div class="callout" style="margin:0;">
+                <strong>Live computed:</strong>
+                <div class="mini">
+                  <div>Angular frequency: <code id="omegaOut">—</code> rad/s</div>
+                  <div>Period: <code id="periodOut">—</code> s</div>
+                  <div>Total energy (from amplitude): <code id="energyOut">—</code> J</div>
+                  <div class="mini" style="margin-top:6px;color:var(--muted2);">
+                    Using <code>E = ½kA²</code> (since at turning point <code>x=A, ẋ=0</code>).
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mini" style="margin-top:10px;">
+              Plot shows <b>x(t)</b> and energy components: spring <code>U</code>, translational <code>T_trans</code>,
+              rotational <code>T_rot</code>. For this wheel, <code>T_trans = T_rot</code> at every instant because <code>I = MR²</code>.
+            </div>
+          </div>
+        </figure>
+      </aside>
+    </main>
+
+    <footer>
+      <div>© Physics Article • Self-contained HTML • Canvas visualizations with no external libraries</div>
+      <div class="mini">Accessibility: high contrast, ARIA-labeled controls, and descriptive canvas labels.</div>
+    </footer>
+  </div>
+
+  <script>
+    (function(){
+      "use strict";
+
+      // -----------------------------
+      // Helpers
+      // -----------------------------
+      const qs = (sel) => document.querySelector(sel);
+
+      function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
+      // Device pixel ratio aware canvas sizing
+      function fitCanvas(canvas){
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        const cssW = Math.max(320, rect.width);
+        // preserve aspect ratio from intrinsic attribute
+        const aspect = canvas.height / canvas.width;
+        const cssH = cssW * aspect;
+        canvas.style.height = cssH + "px";
+        const w = Math.round(cssW * dpr);
+        const h = Math.round(cssH * dpr);
+        if(canvas.width !== w || canvas.height !== h){
+          canvas.width = w; canvas.height = h;
+        }
+        return {w, h, dpr};
+      }
+
+      function lerp(a,b,t){ return a + (b-a)*t; }
+
+      function fmt(x, digits=3){
+        if(!isFinite(x)) return "—";
+        const abs = Math.abs(x);
+        if(abs !== 0 && (abs < 1e-3 || abs >= 1e4)) return x.toExponential(2);
+        return x.toFixed(digits);
+      }
+
+      // Get theme-aware colors by sampling CSS variables
+      function cssVar(name){
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      }
+
+      // Parse rgba/hex-ish to workable canvas stroke style (just return string)
+      function col(name){ return cssVar(name) || name; }
+
+      // -----------------------------
+      // Model (Physics)
+      // -----------------------------
+      // Given wheel inertia I = M R^2 and rolling xdot = R*omega
+      // Total energy: E = M xdot^2 + 1/2 k x^2
+      // EOM: xddot + (k/(2M)) x = 0 => omega = sqrt(k/(2M))
+
+      const state = {
+        k: 20.0,     // N/m
+        M: 2.0,      // kg
+        A: 0.20,     // m
+        R: 0.30,     // m
+        t: 0,
+        playing: false,
+        // time window for plot (seconds)
+        tMax: 6.0
+      };
+
+      function omega(){
+        return Math.sqrt(state.k/(2*state.M));
+      }
+
+      function period(){
+        const w = omega();
+        return (w > 0) ? (2*Math.PI/w) : Infinity;
+      }
+
+      // We choose a phase so x(0)=A, xdot(0)=0
+      function xOfT(t){
+        return state.A * Math.cos(omega()*t);
+      }
+      function xdotOfT(t){
+        return -state.A * omega() * Math.sin(omega()*t);
+      }
+
+      function energiesAt(t){
+        const x = xOfT(t);
+        const xd = xdotOfT(t);
+        const U = 0.5*state.k*x*x;
+        const Ttrans = 0.5*state.M*xd*xd;
+        // Trot = 1/2 I w^2 = 1/2 (MR^2)(xd/R)^2 = 1/2 M xd^2 = Ttrans
+        const Trot = Ttrans;
+        const Etot = Ttrans + Trot + U;
+        return {x, xd, U, Ttrans, Trot, Etot};
+      }
+
+      function totalEnergyFromAmplitude(){
+        // turning point: x=A, xdot=0 => E = 1/2 k A^2
+        return 0.5*state.k*state.A*state.A;
+      }
+
+      // -----------------------------
+      // UI bindings
+      // -----------------------------
+      const kSlider = qs("#kSlider");
+      const mSlider = qs("#mSlider");
+      const aSlider = qs("#aSlider");
+      const rSlider = qs("#rSlider");
+
+      const kVal = qs("#kVal");
+      const mVal = qs("#mVal");
+      const aVal = qs("#aVal");
+      const rVal = qs("#rVal");
+
+      const omegaOut = qs("#omegaOut");
+      const periodOut = qs("#periodOut");
+      const energyOut = qs("#energyOut");
+
+      const playBtn = qs("#playBtn");
+      const resetBtn = qs("#resetBtn");
+
+      function updateReadouts(){
+        kVal.textContent = fmt(state.k, 1);
+        mVal.textContent = fmt(state.M, 2);
+        aVal.textContent = fmt(state.A, 2);
+        rVal.textContent = fmt(state.R, 2);
+
+        const w = omega();
+        const T = period();
+        omegaOut.textContent = fmt(w, 4);
+        periodOut.textContent = fmt(T, 4);
+        energyOut.textContent = fmt(totalEnergyFromAmplitude(), 4);
+      }
+
+      function syncFromSliders(){
+        state.k = parseFloat(kSlider.value);
+        state.M = parseFloat(mSlider.value);
+        state.A = parseFloat(aSlider.value);
+        state.R = parseFloat(rSlider.value);
+
+        // Keep plot window reasonable: show ~2.5 periods (clamped)
+        const T = period();
+        state.tMax = clamp(2.6*T, 2.5, 14.0);
+
+        updateReadouts();
+        drawAll();
+      }
+
+      kSlider.addEventListener("input", syncFromSliders);
+      mSlider.addEventListener("input", syncFromSliders);
+      aSlider.addEventListener("input", syncFromSliders);
+      rSlider.addEventListener("input", syncFromSliders);
+
+      playBtn.addEventListener("click", () => {
+        state.playing = !state.playing;
+        playBtn.textContent = state.playing ? "Pause" : "Play";
+      });
+
+      resetBtn.addEventListener("click", () => {
+        state.t = 0;
+        state.playing = false;
+        playBtn.textContent = "Play";
+        drawAll();
+      });
+
+      // -----------------------------
+      // Drawing: setup diagram
+      // -----------------------------
+      const setupCanvas = qs("#setupCanvas");
+      const plotCanvas = qs("#plotCanvas");
+
+      function drawSetup(){
+        const {w, h} = fitCanvas(setupCanvas);
+        const ctx = setupCanvas.getContext("2d");
+
+        // Colors (theme-aware)
+        const text = col("--text");
+        const muted = col("--muted");
+        const line = col("--line");
+        const accent = col("--accent");
+        const accent2 = col("--accent2");
+        const good = col("--good");
+
+        // Clear
+        ctx.clearRect(0,0,w,h);
+
+        // Background panel
+        ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,0.03)";
+        ctx.fillRect(0,0,w,h);
+        ctx.restore();
+
+        // Layout
+        const pad = 26;
+        const groundY = h*0.78;
+        const wallX = pad + 10;
+
+        // Ground
+        ctx.save();
+        ctx.strokeStyle = line;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(pad, groundY);
+        ctx.lineTo(w-pad, groundY);
+        ctx.stroke();
+
+        // Ground hatch
+        ctx.globalAlpha = 0.55;
+        ctx.lineWidth = 1;
+        for(let x=pad; x<w-pad; x+=16){
+          ctx.beginPath();
+          ctx.moveTo(x, groundY);
+          ctx.lineTo(x-10, groundY+10);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Wall
+        ctx.save();
+        ctx.strokeStyle = line;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(wallX, pad);
+        ctx.lineTo(wallX, groundY+18);
+        ctx.stroke();
+        // Wall hatch
+        ctx.globalAlpha = 0.55;
+        ctx.lineWidth = 1;
+        for(let y=pad+8; y<groundY+18; y+=16){
+          ctx.beginPath();
+          ctx.moveTo(wallX, y);
+          ctx.lineTo(wallX-12, y+8);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Define wheel position based on current time (for diagram motion)
+        const t = state.t;
+        const x = xOfT(t);
+        const xd = xdotOfT(t);
+        const wAng = (state.R > 0) ? (xd/state.R) : 0;
+
+        // Map x (meters) -> pixels
+        const xRange = Math.max(0.25, state.A*1.25);
+        const centerX0 = w*0.62; // equilibrium hub position
+        const pxPerM = (w*0.28)/xRange;
+        const hubX = centerX0 + x*pxPerM;
+
+        // Wheel geometry
+        const wheelR = clamp(state.R, 0.10, 0.60) * (w*0.12/0.30); // scale relative to R=0.30 baseline
+        const hubY = groundY - wheelR;
+        const wheelCx = clamp(hubX, wallX + 180, w - pad - 70);
+
+        // Spring anchor and hub connection
+        const springStartX = wallX + 6;
+        const springEndX = wheelCx - wheelR - 18;
+        const springY = hubY;
+
+        // Spring (coiled polyline)
+        ctx.save();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 3;
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+
+        // Straight lead
+        ctx.beginPath();
+        ctx.moveTo(springStartX, springY);
+        ctx.lineTo(springStartX+28, springY);
+        ctx.stroke();
+
+        // Coil
+        const coilStart = springStartX + 28;
+        const coilEnd = springEndX - 22;
+        const coils = 9;
+        const amp = 16;
+        const len = Math.max(40, coilEnd - coilStart);
+        const step = len / (coils*2);
+
+        ctx.beginPath();
+        ctx.moveTo(coilStart, springY);
+        for(let i=0; i<coils*2; i++){
+          const xx = coilStart + (i+1)*step;
+          const yy = springY + (i%2===0 ? -amp : amp);
+          ctx.lineTo(xx, yy);
+        }
+        ctx.lineTo(coilEnd, springY);
+        ctx.stroke();
+
+        // Straight tail
+        ctx.beginPath();
+        ctx.moveTo(coilEnd, springY);
+        ctx.lineTo(springEndX, springY);
+        ctx.stroke();
+        ctx.restore();
+
+        // Connection rod to hub
+        ctx.save();
+        ctx.strokeStyle = line;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(springEndX, springY);
+        ctx.lineTo(wheelCx, hubY);
+        ctx.stroke();
+        ctx.restore();
+
+        // Wheel
+        ctx.save();
+        // Rim
+        ctx.strokeStyle = accent2;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(wheelCx, hubY, wheelR, 0, Math.PI*2);
+        ctx.stroke();
+
+        // Fill
+        ctx.fillStyle = "rgba(167,139,250,0.08)";
+        ctx.beginPath();
+        ctx.arc(wheelCx, hubY, wheelR-2, 0, Math.PI*2);
+        ctx.fill();
+
+        // Spokes (stylized)
+        ctx.strokeStyle = "rgba(255,255,255,0.55)";
+        ctx.lineWidth = 2;
+        const spokeN = 6;
+        const theta0 = -omega()*t; // visual rotation (not necessarily exact; good depiction)
+        for(let i=0;i<spokeN;i++){
+          const th = theta0 + i*(2*Math.PI/spokeN);
+          ctx.beginPath();
+          ctx.moveTo(wheelCx, hubY);
+          ctx.lineTo(wheelCx + (wheelR-10)*Math.cos(th), hubY + (wheelR-10)*Math.sin(th));
+          ctx.stroke();
+        }
+
+        // Hub
+        ctx.fillStyle = good;
+        ctx.beginPath();
+        ctx.arc(wheelCx, hubY, 7, 0, Math.PI*2);
+        ctx.fill();
+
+        // Contact point marker
+        ctx.fillStyle = "rgba(255,255,255,0.72)";
+        ctx.beginPath();
+        ctx.arc(wheelCx, groundY, 4, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.restore();
+
+        // Labels and axes for x
+        ctx.save();
+        ctx.font = "600 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.fillStyle = text;
+
+        // Equilibrium marker at x=0
+        const eqX = centerX0;
+        ctx.strokeStyle = line;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6,6]);
+        ctx.beginPath();
+        ctx.moveTo(eqX, pad+14);
+        ctx.lineTo(eqX, groundY+10);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillText("equilibrium (x = 0)", eqX - 58, pad+10);
+
+        // x(t) arrow
+        const arrowY = groundY + 34;
+        const startX = eqX;
+        const endX = wheelCx;
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(startX, arrowY);
+        ctx.lineTo(endX, arrowY);
+        ctx.stroke();
+
+        // Arrowheads
+        function arrowHead(x1,y1,x2,y2){
+          const ang = Math.atan2(y2-y1, x2-x1);
+          const L = 10;
+          ctx.beginPath();
+          ctx.moveTo(x2,y2);
+          ctx.lineTo(x2 - L*Math.cos(ang-0.45), y2 - L*Math.sin(ang-0.45));
+          ctx.lineTo(x2 - L*Math.cos(ang+0.45), y2 - L*Math.sin(ang+0.45));
+          ctx.closePath();
+          ctx.fillStyle = accent;
+          ctx.fill();
+        }
+        arrowHead(startX,arrowY,endX,arrowY);
+
+        ctx.fillStyle = text;
+        ctx.fillText("x(t)", lerp(startX,endX,0.5)-12, arrowY-10);
+
+        // Rolling constraint label
+        ctx.fillStyle = muted;
+        ctx.font = "500 13px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+        ctx.fillText("rolling:  ẋ = Rω", pad+14, groundY+62);
+
+        // Parameters
+        ctx.font = "500 13px ui-sans-serif, system-ui";
+        ctx.fillStyle = muted;
+        const wStr = fmt(omega(), 4);
+        ctx.fillText(`k = ${fmt(state.k,1)} N/m   M = ${fmt(state.M,2)} kg   R = ${fmt(state.R,2)} m   ω = ${wStr} rad/s`, pad+14, pad+28);
+
+        // Axis "x" direction arrow
+        ctx.strokeStyle = line;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(pad+14, pad+54);
+        ctx.lineTo(pad+90, pad+54);
+        ctx.stroke();
+        arrowHead(pad+14, pad+54, pad+90, pad+54);
+        ctx.fillStyle = muted;
+        ctx.fillText("x →", pad+96, pad+59);
+
+        ctx.restore();
+      }
+
+      // -----------------------------
+      // Drawing: time plot on canvas
+      // -----------------------------
+      function drawPlot(){
+        const {w, h} = fitCanvas(plotCanvas);
+        const ctx = plotCanvas.getContext("2d");
+
+        const text = col("--text");
+        const muted = col("--muted");
+        const muted2 = col("--muted2");
+        const line = col("--line");
+        const accent = col("--accent");
+        const accent2 = col("--accent2");
+        const good = col("--good");
+        const warn = col("--warn");
+
+        ctx.clearRect(0,0,w,h);
+
+        // Panel background
+        ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,0.03)";
+        ctx.fillRect(0,0,w,h);
+        ctx.restore();
+
+        // Plot area margins
+        const m = {l: 62, r: 18, t: 48, b: 58};
+        const pw = w - m.l - m.r;
+        const ph = h - m.t - m.b;
+
+        // Time window
+        const t0 = 0;
+        const t1 = state.tMax;
+
+        // We will plot x(t) on left y-axis (meters) and energies on right y-axis (J).
+        // Scale for x: [-A, A] with padding.
+        const A = Math.max(0.02, state.A);
+        const yxMin = -1.15*A;
+        const yxMax =  1.15*A;
+
+        // Energy scale: from 0 to ~Etot with padding
+        const E0 = totalEnergyFromAmplitude(); // should equal conserved total energy
+        const yEmin = 0;
+        const yEmax = Math.max(1e-6, 1.15*E0);
+
+        // Mapping functions
+        const X = (t) => m.l + (t - t0) * (pw/(t1 - t0));
+        const Yx = (x) => m.t + (yxMax - x) * (ph/(yxMax - yxMin));
+        const YE = (E) => m.t + (yEmax - E) * (ph/(yEmax - yEmin));
+
+        // Gridlines
+        ctx.save();
+        ctx.strokeStyle = line;
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.65;
+
+        // vertical gridlines (time)
+        const vN = 10;
+        for(let i=0;i<=vN;i++){
+          const tt = t0 + i*(t1-t0)/vN;
+          const xx = X(tt);
+          ctx.beginPath();
+          ctx.moveTo(xx, m.t);
+          ctx.lineTo(xx, m.t+ph);
+          ctx.stroke();
+        }
+
+        // horizontal gridlines (use x-axis scale)
+        const hN = 8;
+        for(let j=0;j<=hN;j++){
+          const yy = m.t + j*(ph/hN);
+          ctx.beginPath();
+          ctx.moveTo(m.l, yy);
+          ctx.lineTo(m.l+pw, yy);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Axes
+        ctx.save();
+        ctx.strokeStyle = line;
+        ctx.lineWidth = 2;
+        // y-axis
+        ctx.beginPath();
+        ctx.moveTo(m.l, m.t);
+        ctx.lineTo(m.l, m.t+ph);
+        ctx.stroke();
+        // x-axis
+        ctx.beginPath();
+        ctx.moveTo(m.l, m.t+ph);
+        ctx.lineTo(m.l+pw, m.t+ph);
+        ctx.stroke();
+        ctx.restore();
+
+        // Title
+        ctx.save();
+        ctx.fillStyle = text;
+        ctx.font = "800 16px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.fillText("Rolling SHM: x(t) and Energy Components vs Time", m.l, 24);
+        ctx.fillStyle = muted2;
+        ctx.font = "500 12.5px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.fillText("Model: I = MR², rolling ẋ = Rω ⇒ ω = √(k/(2M)),  E = Mẋ² + ½kx²", m.l, 40);
+        ctx.restore();
+
+        // Axis labels
+        ctx.save();
+        ctx.fillStyle = muted;
+        ctx.font = "600 12px ui-sans-serif, system-ui";
+        ctx.fillText("time t (s)", m.l + pw/2 - 24, m.t+ph+42);
+
+        // Left label (x)
+        ctx.save();
+        ctx.translate(18, m.t + ph/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillStyle = muted;
+        ctx.font = "600 12px ui-sans-serif, system-ui";
+        ctx.fillText("displacement x (m)", 0, 0);
+        ctx.restore();
+
+        // Right label (Energy)
+        ctx.save();
+        ctx.translate(w-16, m.t + ph/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillStyle = muted;
+        ctx.font = "600 12px ui-sans-serif, system-ui";
+        ctx.fillText("energy (J)", 0, 0);
+        ctx.restore();
+        ctx.restore();
+
+        // Ticks & tick labels
+        ctx.save();
+        ctx.fillStyle = muted2;
+        ctx.font = "500 11.5px ui-sans-serif, system-ui";
+        // x ticks
+        for(let i=0;i<=vN;i++){
+          const tt = t0 + i*(t1-t0)/vN;
+          const xx = X(tt);
+          ctx.beginPath();
+          ctx.strokeStyle = line;
+          ctx.lineWidth = 1.5;
+          ctx.moveTo(xx, m.t+ph);
+          ctx.lineTo(xx, m.t+ph+6);
+          ctx.stroke();
+          ctx.fillText(fmt(tt,1), xx-10, m.t+ph+20);
+        }
+        // left y ticks (x)
+        const yTicks = 6;
+        for(let j=0;j<=yTicks;j++){
+          const val = yxMin + j*(yxMax-yxMin)/yTicks;
+          const yy = Yx(val);
+          ctx.beginPath();
+          ctx.strokeStyle = line;
+          ctx.lineWidth = 1.5;
+          ctx.moveTo(m.l-6, yy);
+          ctx.lineTo(m.l, yy);
+          ctx.stroke();
+          ctx.fillText(fmt(val,2), 10, yy+4);
+        }
+        // right y ticks (Energy)
+        for(let j=0;j<=yTicks;j++){
+          const val = yEmin + j*(yEmax-yEmin)/yTicks;
+          const yy = YE(val);
+          ctx.beginPath();
+          ctx.strokeStyle = line;
+          ctx.lineWidth = 1.5;
+          ctx.moveTo(m.l+pw, yy);
+          ctx.lineTo(m.l+pw+6, yy);
+          ctx.stroke();
+          ctx.fillText(fmt(val,2), m.l+pw+10, yy+4);
+        }
+        ctx.restore();
+
+        // Draw curves
+        // We will sample many points
+        const N = 900;
+        const dt = (t1-t0)/(N-1);
+
+        // x(t)
+        ctx.save();
+        ctx.lineWidth = 2.7;
+        ctx.strokeStyle = accent;
+        ctx.beginPath();
+        for(let i=0;i<N;i++){
+          const t = t0 + i*dt;
+          const x = xOfT(t);
+          const px = X(t);
+          const py = Yx(x);
+          if(i===0) ctx.moveTo(px,py);
+          else ctx.lineTo(px,py);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // U(t), Ttrans(t), Trot(t), Etot(t) on energy axis
+        function drawEnergyCurve(color, getter, width=2.0, dash=null){
+          ctx.save();
+          ctx.lineWidth = width;
+          ctx.strokeStyle = color;
+          if(dash) ctx.setLineDash(dash);
+          ctx.beginPath();
+          for(let i=0;i<N;i++){
+            const t = t0 + i*dt;
+            const e = getter(energiesAt(t));
+            const px = X(t);
+            const py = YE(e);
+            if(i===0) ctx.moveTo(px,py);
+            else ctx.lineTo(px,py);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+        }
+
+        drawEnergyCurve(good,   (d)=>d.U,     2.2, null);          // U
+        drawEnergyCurve(warn,   (d)=>d.Ttrans,2.2, [7,6]);         // Ttrans
+        drawEnergyCurve(accent2,(d)=>d.Trot,  2.2, [2,6]);         // Trot
+        drawEnergyCurve(text,   (d)=>d.Etot,  2.6, [12,6]);        // Etot
+
+        // Legend
+        const lx = m.l + 10;
+        const ly = m.t + 10;
+        const lw = 215;
+        const lh = 110;
+
+        ctx.save();
+        ctx.fillStyle = "rgba(0,0,0,0.20)";
+        // in light mode, black tint may look odd; blend with line
+        ctx.fillRect(lx, ly, lw, lh);
+        ctx.strokeStyle = line;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(lx, ly, lw, lh);
+
+        ctx.font = "700 12px ui-sans-serif, system-ui";
+        ctx.fillStyle = text;
+        ctx.fillText("Legend", lx+10, ly+18);
+
+        function legendItem(y, color, label, dash){
+          // sample line
+          ctx.save();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 3;
+          if(dash) ctx.setLineDash(dash);
+          ctx.beginPath();
+          ctx.moveTo(lx+10, y);
+          ctx.lineTo(lx+46, y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+
+          ctx.fillStyle = muted;
+          ctx.font = "600 12px ui-sans-serif, system-ui";
+          ctx.fillText(label, lx+56, y+4);
+        }
+
+        legendItem(ly+36, accent,  "x(t) [m] (left axis)", null);
+        legendItem(ly+56, good,    "U(t) = ½kx² [J]", null);
+        legendItem(ly+76, warn,    "T_trans(t) = ½M ẋ² [J]", [7,6]);
+        legendItem(ly+96, accent2, "T_rot(t) = ½Iω² = ½M ẋ² [J]", [2,6]);
+
+        // Total energy label
+        ctx.save();
+        ctx.strokeStyle = text;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([12,6]);
+        ctx.beginPath();
+        ctx.moveTo(lx+10, ly+112);
+        ctx.lineTo(lx+46, ly+112);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+        ctx.fillStyle = muted;
+        ctx.font = "600 12px ui-sans-serif, system-ui";
+        ctx.fillText("E_total (constant) [J]", lx+56, ly+116);
+
+        ctx.restore();
+
+        // Current time marker (if playing)
+        const tCur = clamp(state.t, t0, t1);
+        const xCur = xOfT(tCur);
+        const eCur = energiesAt(tCur);
+
+        ctx.save();
+        const xpx = X(tCur);
+        ctx.strokeStyle = line;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6,6]);
+        ctx.beginPath();
+        ctx.moveTo(xpx, m.t);
+        ctx.lineTo(xpx, m.t+ph);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Marker for x(t)
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.arc(xpx, Yx(xCur), 5, 0, Math.PI*2);
+        ctx.fill();
+
+        // Marker for U(t)
+        ctx.fillStyle = good;
+        ctx.beginPath();
+        ctx.arc(xpx, YE(eCur.U), 4.6, 0, Math.PI*2);
+        ctx.fill();
+
+        // Marker for Ttrans
+        ctx.fillStyle = warn;
+        ctx.beginPath();
+        ctx.arc(xpx, YE(eCur.Ttrans), 4.6, 0, Math.PI*2);
+        ctx.fill();
+
+        // Marker for Trot
+        ctx.fillStyle = accent2;
+        ctx.beginPath();
+        ctx.arc(xpx, YE(eCur.Trot), 4.6, 0, Math.PI*2);
+        ctx.fill();
+
+        // Marker for Etot
+        ctx.fillStyle = text;
+        ctx.beginPath();
+        ctx.arc(xpx, YE(eCur.Etot), 4.6, 0, Math.PI*2);
+        ctx.fill();
+
+        // Small readout box
+        const bx = m.l + pw - 260;
+        const by = m.t + 10;
+        const bw = 250;
+        const bh = 96;
+
+        ctx.fillStyle = "rgba(0,0,0,0.20)";
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.strokeStyle = line;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(bx, by, bw, bh);
+
+        ctx.fillStyle = text;
+        ctx.font = "700 12px ui-sans-serif, system-ui";
+        ctx.fillText("Live values", bx+10, by+18);
+
+        ctx.fillStyle = muted;
+        ctx.font = "600 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+        ctx.fillText(`t = ${fmt(tCur,3)} s`, bx+10, by+38);
+        ctx.fillText(`x = ${fmt(xCur,3)} m`, bx+10, by+56);
+        ctx.fillText(`U = ${fmt(eCur.U,3)} J`, bx+10, by+74);
+        ctx.fillText(`T_trans = ${fmt(eCur.Ttrans,3)} J`, bx+120, by+56);
+        ctx.fillText(`T_rot = ${fmt(eCur.Trot,3)} J`, bx+120, by+74);
+
+        ctx.restore();
+
+        // Corner note: ω and E_total
+        ctx.save();
+        ctx.fillStyle = muted2;
+        ctx.font = "600 12px ui-sans-serif, system-ui";
+        const wNum = omega();
+        ctx.fillText(`ω = √(k/(2M)) = ${fmt(wNum,4)} rad/s`, m.l, m.t+ph+20);
+        ctx.fillText(`E_total = ½kA² = ${fmt(totalEnergyFromAmplitude(),4)} J`, m.l+260, m.t+ph+20);
+        ctx.restore();
+      }
+
+      function drawAll(){
+        drawSetup();
+        drawPlot();
+      }
+
+      // -----------------------------
+      // Animation loop
+      // -----------------------------
+      let last = performance.now();
+      function tick(now){
+        const dt = (now - last)/1000;
+        last = now;
+
+        if(state.playing){
+          // advance time; keep it within the plot window for nicer viewing
+          state.t += dt;
+          const tMax = state.tMax;
+          if(state.t > tMax) state.t -= tMax; // wrap
+          drawAll();
+        }
+        requestAnimationFrame(tick);
+      }
+
+      // Resize handling
+      let resizeTimer = null;
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => drawAll(), 120);
+      });
+
+      // Initialize
+      updateReadouts();
+      drawAll();
+      requestAnimationFrame(tick);
+
+      // Also ensure slider sync sets derived window
+      syncFromSliders();
+    })();
+  </script>
+</body>
+</html>

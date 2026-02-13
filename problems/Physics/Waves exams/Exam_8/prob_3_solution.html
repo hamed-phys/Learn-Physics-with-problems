@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Driven Coupled Oscillators on a Taut String — Full Solution + Interactive Visualizations</title>
+  <meta name="description" content="Expert-level, beginner-friendly solution to driven coupled oscillators (two beads on a massless string) with interactive plots and diagram (no external libraries)." />
+  <style>
+    :root{
+      --bg: #0b1020;
+      --surface: rgba(255,255,255,0.06);
+      --surface2: rgba(255,255,255,0.09);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.72);
+      --faint: rgba(255,255,255,0.52);
+      --accent: #7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --grid: rgba(255,255,255,0.08);
+      --shadow: 0 18px 45px rgba(0,0,0,0.45);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    /* Light mode friendly (auto) */
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f7fafc;
+        --surface: rgba(2,6,23,0.05);
+        --surface2: rgba(2,6,23,0.08);
+        --text: rgba(2,6,23,0.92);
+        --muted: rgba(2,6,23,0.72);
+        --faint: rgba(2,6,23,0.55);
+        --grid: rgba(2,6,23,0.09);
+        --shadow: 0 18px 45px rgba(2,6,23,0.14);
+      }
+    }
+
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1100px 600px at 15% 5%, rgba(125,211,252,0.15), transparent 60%),
+        radial-gradient(900px 520px at 85% 10%, rgba(167,139,250,0.12), transparent 55%),
+        radial-gradient(800px 480px at 50% 90%, rgba(52,211,153,0.10), transparent 60%),
+        var(--bg);
+      line-height: 1.55;
+    }
+
+    a{ color: var(--accent); text-decoration: none; }
+    a:hover{ text-decoration: underline; }
+
+    header{
+      position: relative;
+      overflow: hidden;
+      padding: 56px 18px 22px;
+    }
+
+    .wrap{
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 12px 60px;
+    }
+
+    .hero{
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+    @media (max-width: 980px){
+      .hero{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, var(--surface), transparent 160%);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    @media (prefers-color-scheme: light){
+      .card{ border-color: rgba(2,6,23,0.10); }
+    }
+
+    .heroText{
+      padding: 22px 22px 18px;
+    }
+    .kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(125,211,252,0.12);
+      border: 1px solid rgba(125,211,252,0.25);
+      color: var(--text);
+      font-weight: 650;
+      letter-spacing: 0.2px;
+      font-size: 13px;
+    }
+    .kdot{
+      width: 9px; height: 9px; border-radius: 99px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(125,211,252,0.18);
+    }
+
+    h1{
+      margin: 14px 0 10px;
+      font-size: clamp(28px, 3.2vw, 44px);
+      line-height: 1.07;
+      letter-spacing: -0.02em;
+    }
+    .sub{
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 15.5px;
+    }
+    .metaRow{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px 12px;
+      align-items:center;
+      margin-top: 10px;
+      color: var(--faint);
+      font-size: 13px;
+    }
+    .pill{
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    @media (prefers-color-scheme: light){
+      .pill{ background: rgba(2,6,23,0.04); border-color: rgba(2,6,23,0.08); }
+    }
+
+    .heroViz{
+      padding: 14px;
+      display:flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .vizHeader{
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    @media (prefers-color-scheme: light){
+      .vizHeader{ background: rgba(2,6,23,0.04); border-color: rgba(2,6,23,0.08); }
+    }
+    .vizHeader strong{ font-size: 13px; letter-spacing: 0.2px; }
+    .vizHeader span{ font-size: 12px; color: var(--muted); }
+
+    canvas{
+      width: 100%;
+      height: auto;
+      display:block;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    @media (prefers-color-scheme: light){
+      canvas{ background: rgba(2,6,23,0.03); border-color: rgba(2,6,23,0.10); }
+    }
+
+    main{
+      padding: 12px 0 30px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    section{
+      margin-top: 18px;
+    }
+
+    .sectionTitle{
+      display:flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 10px 0 10px;
+    }
+    h2{
+      margin: 0;
+      font-size: clamp(20px, 2.0vw, 28px);
+      letter-spacing: -0.01em;
+    }
+    .tag{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      padding: 6px 9px;
+      border: 1px dashed rgba(255,255,255,0.18);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      white-space: nowrap;
+    }
+    @media (prefers-color-scheme: light){
+      .tag{ border-color: rgba(2,6,23,0.18); background: rgba(2,6,23,0.03); }
+    }
+
+    .content{
+      padding: 18px 18px 16px;
+    }
+
+    .callout{
+      border-radius: 16px;
+      padding: 14px 14px 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      margin: 12px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .callout::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: radial-gradient(700px 240px at 10% 0%, rgba(125,211,252,0.10), transparent 60%);
+      pointer-events:none;
+    }
+    @media (prefers-color-scheme: light){
+      .callout{ border-color: rgba(2,6,23,0.10); background: rgba(2,6,23,0.03); }
+    }
+    .callout h3{
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+    .callout p{ margin: 0; color: var(--muted); }
+
+    .callout.good::before{ background: radial-gradient(700px 240px at 10% 0%, rgba(52,211,153,0.12), transparent 60%); }
+    .callout.warn::before{ background: radial-gradient(700px 240px at 10% 0%, rgba(251,191,36,0.14), transparent 60%); }
+    .callout.bad::before{ background: radial-gradient(700px 240px at 10% 0%, rgba(251,113,133,0.14), transparent 60%); }
+
+    ul,ol{ margin: 8px 0 10px 20px; color: var(--muted); }
+    li{ margin: 4px 0; }
+
+    .eq{
+      margin: 12px 0;
+      padding: 12px 12px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: linear-gradient(180deg, rgba(0,0,0,0.20), rgba(0,0,0,0.06));
+      font-family: var(--mono);
+      font-size: 13px;
+      color: rgba(255,255,255,0.90);
+      overflow-x: auto;
+      position: relative;
+    }
+    @media (prefers-color-scheme: light){
+      .eq{
+        background: linear-gradient(180deg, rgba(2,6,23,0.06), rgba(2,6,23,0.02));
+        color: rgba(2,6,23,0.92);
+        border-color: rgba(2,6,23,0.10);
+      }
+    }
+    .eq .label{
+      display:inline-block;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 8px;
+      letter-spacing: 0.2px;
+    }
+    .eq code{
+      display:block;
+      white-space: pre;
+      line-height: 1.35;
+    }
+
+    .finalBox{
+      border-radius: 18px;
+      padding: 16px 16px 14px;
+      border: 1px solid rgba(125,211,252,0.28);
+      background: linear-gradient(180deg, rgba(125,211,252,0.10), rgba(167,139,250,0.06));
+      box-shadow: 0 14px 35px rgba(0,0,0,0.25);
+    }
+    @media (prefers-color-scheme: light){
+      .finalBox{ box-shadow: 0 14px 35px rgba(2,6,23,0.12); }
+    }
+    .finalBox h3{
+      margin:0 0 8px;
+      font-size: 16px;
+      letter-spacing: 0.2px;
+    }
+    .finalBox p{
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 650px){
+      .twoCol{ grid-template-columns: 1fr; }
+    }
+
+    .mini{
+      padding: 12px 12px 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.05);
+    }
+    @media (prefers-color-scheme: light){
+      .mini{ border-color: rgba(2,6,23,0.10); background: rgba(2,6,23,0.03); }
+    }
+    .mini strong{ display:block; margin-bottom: 6px; }
+    .mini span{ color: var(--muted); }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: end;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+    }
+    @media (max-width: 750px){
+      .controls{ grid-template-columns: 1fr; }
+    }
+    @media (prefers-color-scheme: light){
+      .controls{ border-color: rgba(2,6,23,0.10); background: rgba(2,6,23,0.03); }
+    }
+    label{
+      display:block;
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    input[type="range"]{
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    .valueLine{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--faint);
+      margin-top: 6px;
+    }
+    button{
+      cursor: pointer;
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06));
+      color: var(--text);
+      padding: 11px 12px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      transition: transform 0.08s ease, border-color 0.2s ease;
+    }
+    button:hover{ transform: translateY(-1px); border-color: rgba(125,211,252,0.30); }
+    button:active{ transform: translateY(0px) scale(0.99); }
+
+    .sr-only{
+      position:absolute;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      white-space:nowrap;
+      border:0;
+    }
+
+    /* Subtle entrance animation */
+    @media (prefers-reduced-motion: no-preference){
+      .fadeIn{
+        opacity: 0;
+        transform: translateY(8px);
+        animation: in 0.7s ease forwards;
+      }
+      .delay1{ animation-delay: 0.05s; }
+      .delay2{ animation-delay: 0.12s; }
+      .delay3{ animation-delay: 0.18s; }
+      @keyframes in{
+        to{ opacity:1; transform: translateY(0); }
+      }
+    }
+
+    footer{
+      margin-top: 22px;
+      padding: 16px 0 30px;
+      color: var(--faint);
+      font-size: 12.5px;
+    }
+    .footRow{
+      display:flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.10);
+    }
+    @media (prefers-color-scheme: light){
+      .footRow{ border-top-color: rgba(2,6,23,0.10); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="hero">
+        <div class="card heroText fadeIn delay1">
+          <div class="kicker"><span class="kdot" aria-hidden="true"></span> Driven Coupled Oscillators • Two beads on a taut string</div>
+          <h1>Full Solution + Interactive Visualization</h1>
+          <p class="sub">
+            Two identical beads of mass <span class="pill">M</span> are attached to a massless string of length <span class="pill">3L</span> under tension <span class="pill">&tau;</span>.
+            The left end is fixed; the right end is driven by
+            <span class="pill">h(t)=h<sub>0</sub> cos(&omega;t)</span>.
+            We derive the equations of motion, normal-mode frequencies, the steady-state driven amplitudes, and the correct phase-aware sketches.
+          </p>
+          <div class="metaRow">
+            <span class="pill">Small-angle (linear) string approximation</span>
+            <span class="pill">No damping (ideal resonances)</span>
+            <span class="pill">2-DOF coupled oscillator</span>
+          </div>
+        </div>
+
+        <div class="card heroViz fadeIn delay2">
+          <div class="vizHeader">
+            <div>
+              <strong>Interactive Setup Diagram</strong><br />
+              <span>Drag the drive frequency slider below to animate motion</span>
+            </div>
+            <div class="tag">canvas • no libraries</div>
+          </div>
+          <figure style="margin:0;">
+            <canvas id="setupCanvas" width="780" height="420" role="img" aria-label="Diagram of string with two beads and driven end."></canvas>
+            <figcaption style="padding:10px 4px 0; color: var(--muted); font-size: 12.5px;">
+              Schematic: three equal segments of length L. Wall at left (y=0). Beads at x=L and x=2L with displacements y<sub>1</sub>(t), y<sub>2</sub>(t). Driven end at x=3L with h(t).
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <article class="card content fadeIn delay3">
+      <section aria-labelledby="quick-summary">
+        <div class="sectionTitle">
+          <h2 id="quick-summary">Quick Summary</h2>
+          <span class="tag">what you should remember</span>
+        </div>
+
+        <div class="twoCol">
+          <div class="mini">
+            <strong>Equations of motion (forced)</strong>
+            <span>
+              Using small slopes, each bead feels a net vertical force
+              F<sub>y</sub>=&tau;(slope<sub>right</sub> − slope<sub>left</sub>).
+              This yields two coupled linear ODEs.
+            </span>
+          </div>
+          <div class="mini">
+            <strong>Normal modes (undriven)</strong>
+            <span>
+              In-phase mode: &Omega;<sub>1</sub>=&radic;(&tau;/(ML)).
+              Out-of-phase mode: &Omega;<sub>2</sub>=&radic;(3&tau;/(ML)).
+              With no damping, resonance at &omega;=&Omega;<sub>1</sub>, &Omega;<sub>2</sub>.
+            </span>
+          </div>
+        </div>
+
+        <div class="finalBox" style="margin-top: 12px;">
+          <h3>Final Answer (boxed results)</h3>
+          <div class="eq" style="margin: 10px 0 0;">
+            <div class="label">EOM (with h(t)=h<sub>0</sub>cos(&omega;t))</div>
+            <code>M ÿ₁ = (τ/L)(y₂ − 2y₁)
+M ÿ₂ = (τ/L)(y₁ − 2y₂ + h₀ cos(ωt))</code>
+          </div>
+          <div class="eq" style="margin: 10px 0 0;">
+            <div class="label">Normal-mode angular frequencies</div>
+            <code>Ω₁ = √(τ/(M L))   (in-phase)
+Ω₂ = √(3τ/(M L))  (out-of-phase)</code>
+          </div>
+          <div class="eq" style="margin: 10px 0 0;">
+            <div class="label">Steady-state driven amplitudes (real, sign = phase vs driver)</div>
+            <code>Let Ω₁² = τ/(ML), Ω₂² = 3Ω₁².
+
+Y₁(ω) = [Ω₁⁴ / ((ω²−Ω₁²)(ω²−Ω₂²))] h₀
+Y₂(ω) = [Ω₁²(2Ω₁²−ω²) / ((ω²−Ω₁²)(ω²−Ω₂²))] h₀
+
+At ω=0:  Y₁(0)=h₀/3,  Y₂(0)=2h₀/3.</code>
+          </div>
+          <p style="margin-top:10px;">
+            The sign of <span class="pill">Y</span> indicates whether a bead is in phase (+) or out of phase (−) with the driver.
+            Without damping the response diverges at resonances (vertical asymptotes).
+          </p>
+        </div>
+      </section>
+
+      <section aria-labelledby="part1">
+        <div class="sectionTitle">
+          <h2 id="part1">PART 1 — Problem Analysis (no solving yet)</h2>
+          <span class="tag">setup • variables • principles</span>
+        </div>
+
+        <div class="callout">
+          <h3>Restatement</h3>
+          <p>
+            A massless string under tension &tau; is split into three equal segments of length L.
+            Two beads of mass M sit at the internal nodes (x=L and x=2L).
+            The left end is fixed (transverse displacement 0), while the right end is driven with
+            h(t)=h<sub>0</sub>cos(&omega;t). Find EOM, normal modes, driven amplitudes, and phase-aware sketches.
+          </p>
+        </div>
+
+        <div class="twoCol">
+          <div class="callout good">
+            <h3>Given</h3>
+            <ul>
+              <li>Two identical masses: M</li>
+              <li>Uniform tension: &tau;</li>
+              <li>String length: 3L, segments each length L</li>
+              <li>Left boundary: y<sub>0</sub>(t)=0</li>
+              <li>Right boundary: y<sub>3</sub>(t)=h(t)=h<sub>0</sub>cos(&omega;t)</li>
+              <li>No damping, small transverse motion</li>
+            </ul>
+          </div>
+          <div class="callout warn">
+            <h3>Unknowns / Targets</h3>
+            <ul>
+              <li>Bead displacements: y<sub>1</sub>(t), y<sub>2</sub>(t)</li>
+              <li>Normal-mode frequencies: &Omega;<sub>1</sub>, &Omega;<sub>2</sub></li>
+              <li>Steady-state amplitudes vs &omega;: Y<sub>1</sub>(&omega;), Y<sub>2</sub>(&omega;)</li>
+              <li>Values at &omega;=0 and qualitative amplitude sketches</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout">
+          <h3>Why these principles apply</h3>
+          <p>
+            Because displacements are small, each string segment is approximately straight and its slope is
+            (Δy)/L. The vertical component of tension is then linear in slope, so the net vertical force on a bead is
+            &tau;(slope<sub>right</sub>−slope<sub>left</sub>). Each bead is a point mass, so Newton’s second law gives coupled
+            linear ODEs. Normal modes come from the corresponding eigenvalue problem, and forced steady-state response comes from
+            solving the linear system in the frequency domain.
+          </p>
+        </div>
+
+        <div class="callout">
+          <h3>Candidate approaches</h3>
+          <ul>
+            <li><strong>Direct slope-force method</strong>: compute slopes on each segment and use F=&tau;Δ(slope). Fastest and most direct here.</li>
+            <li><strong>Lagrangian (energy) method</strong>: write kinetic energy of beads and effective potential from segment slopes; systematic and sign-safe.</li>
+            <li><strong>Mode-projection method</strong>: find modes first, then project forcing; insightful for resonance structure but longer for 2 DOF.</li>
+          </ul>
+          <p style="margin-top:6px;color:var(--muted);">
+            We use the <strong>direct slope-force</strong> method because it minimizes setup overhead and leads immediately to the matrix form needed for (b)–(c).
+          </p>
+        </div>
+      </section>
+
+      <section aria-labelledby="part2">
+        <div class="sectionTitle">
+          <h2 id="part2">PART 2 — Strategy & Tips (roadmap only)</h2>
+          <span class="tag">plan • pitfalls</span>
+        </div>
+
+        <ol>
+          <li><strong>Define node displacements</strong>: y<sub>0</sub>=0, y<sub>1</sub>(t), y<sub>2</sub>(t), y<sub>3</sub>=h(t).</li>
+          <li><strong>Write slopes</strong> on each segment: s<sub>01</sub>=(y<sub>1</sub>−y<sub>0</sub>)/L, s<sub>12</sub>=(y<sub>2</sub>−y<sub>1</sub>)/L, s<sub>23</sub>=(y<sub>3</sub>−y<sub>2</sub>)/L.</li>
+          <li><strong>Compute net vertical force</strong> on bead i: F<sub>y,i</sub>=&tau;(slope<sub>right</sub> − slope<sub>left</sub>).</li>
+          <li><strong>Apply Newton’s law</strong>: M ÿ<sub>i</sub>=F<sub>y,i</sub> → coupled ODEs.</li>
+          <li><strong>Normal modes</strong>: set h=0, try y<sub>i</sub>=a<sub>i</sub>e^{i&Omega;t}, solve determinant=0 for &Omega;.</li>
+          <li><strong>Forced response</strong>: use complex amplitudes y<sub>i</sub>=Re{Y<sub>i</sub>e^{i&omega;t}} and solve the linear algebra problem.</li>
+          <li><strong>Check &omega;→0</strong>: should reproduce a static straight-line shape (y<sub>1</sub>=h<sub>0</sub>/3, y<sub>2</sub>=2h<sub>0</sub>/3).</li>
+          <li><strong>Sketch</strong>: mark asymptotes at &Omega;<sub>1</sub>, &Omega;<sub>2</sub>; track sign changes (phase flips) across resonances and at the zero of Y<sub>2</sub>.</li>
+        </ol>
+
+        <div class="callout bad">
+          <h3>Common mistakes</h3>
+          <ul>
+            <li>Sign errors in F=&tau;(slope<sub>right</sub>−slope<sub>left</sub>).</li>
+            <li>Forgetting boundary conditions: y<sub>0</sub>=0 and y<sub>3</sub>=h(t) are crucial.</li>
+            <li>Mixing natural frequency (&Omega;) with drive frequency (&omega;).</li>
+            <li>Expecting finite peaks without damping (ideal model predicts divergence).</li>
+          </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="part3">
+        <div class="sectionTitle">
+          <h2 id="part3">PART 3 — Full Solution</h2>
+          <span class="tag">intuition → derivation → results</span>
+        </div>
+
+        <div class="callout">
+          <h3>Physical intuition</h3>
+          <p>
+            Tension tries to straighten each string segment. With small slopes, each segment acts like a linear “spring”
+            between adjacent nodes. Each bead feels the difference of the vertical components of tension from its neighboring segments,
+            making a classic two-mass coupled oscillator. The drive shakes the endpoint, injecting energy. When the drive matches a normal mode,
+            the ideal (undamped) solution diverges (resonance).
+          </p>
+        </div>
+
+        <section aria-labelledby="a">
+          <h3 id="a" style="margin: 8px 0 6px;">(a) Equations of motion</h3>
+          <p style="color: var(--muted); margin: 0 0 10px;">
+            Let y<sub>0</sub>(t)=0 at the wall, y<sub>1</sub>(t) and y<sub>2</sub>(t) at the beads, and y<sub>3</sub>(t)=h(t) at the driven end.
+            For small deflections, each segment is straight and has slope (Δy)/L.
+          </p>
+
+          <div class="eq">
+            <div class="label">Slopes of the three segments</div>
+            <code>s₀₁ = (y₁ − y₀)/L = y₁/L
+s₁₂ = (y₂ − y₁)/L
+s₂₃ = (y₃ − y₂)/L = (h(t) − y₂)/L</code>
+          </div>
+
+          <p style="color: var(--muted); margin: 0 0 10px;">
+            The net vertical force on a bead is the tension times the slope difference across it:
+            F<sub>y</sub>=&tau;(slope<sub>right</sub> − slope<sub>left</sub>).
+          </p>
+
+          <div class="eq">
+            <div class="label">Bead 1: M ÿ₁ = τ (s₁₂ − s₀₁)</div>
+            <code>F₁ = τ[(y₂ − y₁)/L − (y₁)/L] = (τ/L)(y₂ − 2y₁)
+⇒ M ÿ₁ = (τ/L)(y₂ − 2y₁)</code>
+          </div>
+
+          <div class="eq">
+            <div class="label">Bead 2: M ÿ₂ = τ (s₂₃ − s₁₂)</div>
+            <code>F₂ = τ[(h − y₂)/L − (y₂ − y₁)/L] = (τ/L)(h + y₁ − 2y₂)
+⇒ M ÿ₂ = (τ/L)(y₁ − 2y₂ + h(t))</code>
+          </div>
+
+          <div class="finalBox">
+            <h3>Answer (a)</h3>
+            <div class="eq" style="margin: 10px 0 0;">
+              <div class="label">Coupled driven equations of motion</div>
+              <code>M ÿ₁ = (τ/L)(y₂ − 2y₁)
+M ÿ₂ = (τ/L)(y₁ − 2y₂ + h₀ cos(ωt))</code>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="b" style="margin-top: 14px;">
+          <h3 id="b" style="margin: 8px 0 6px;">(b) Normal-mode angular frequencies</h3>
+          <p style="color: var(--muted); margin: 0 0 10px;">
+            Set the drive to zero (h=0) to find the system’s intrinsic oscillations. Define k=&tau;/L (effective “spring constant” scale).
+          </p>
+
+          <div class="eq">
+            <div class="label">Undriven system (h=0), with k=τ/L</div>
+            <code>M ÿ₁ = k(y₂ − 2y₁)
+M ÿ₂ = k(y₁ − 2y₂)</code>
+          </div>
+
+          <p style="color: var(--muted); margin: 0 0 10px;">
+            Try harmonic solutions y<sub>i</sub>(t)=a<sub>i</sub>e^{i&Omega;t} ⇒ ÿ<sub>i</sub>=−&Omega;<sup>2</sup>y<sub>i</sub>.
+          </p>
+
+          <div class="eq">
+            <div class="label">Matrix eigenvalue form</div>
+            <code>Let a = (a₁, a₂)ᵀ.
+(τ/L) [ -2  1 ] a = -MΩ² a
+      [  1 -2 ]
+
+Eigenvalues of [-2 1; 1 -2] are λ₁=-1 (mode (1,1)) and λ₂=-3 (mode (1,-1)).
+So: (τ/L)λ = -MΩ².</code>
+          </div>
+
+          <div class="finalBox">
+            <h3>Answer (b)</h3>
+            <div class="eq" style="margin: 10px 0 0;">
+              <div class="label">Normal modes</div>
+              <code>Ω₁² = τ/(ML)   ⇒ Ω₁ = √(τ/(ML))   (in-phase: a₁=a₂)
+Ω₂² = 3τ/(ML)  ⇒ Ω₂ = √(3τ/(ML))  (out-of-phase: a₁=-a₂)</code>
+            </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="c" style="margin-top: 14px;">
+          <h3 id="c" style="margin: 8px 0 6px;">(c) Steady-state amplitudes vs drive frequency &omega;</h3>
+          <p style="color: var(--muted); margin: 0 0 10px;">
+            In linear systems, a sinusoidal drive produces a steady sinusoidal response at the same frequency.
+            Use complex amplitudes:
+            y<sub>i</sub>(t)=Re{Y<sub>i</sub>e^{i&omega;t}}, h(t)=Re{h<sub>0</sub>e^{i&omega;t}}.
+            Then ÿ<sub>i</sub>→−&omega;<sup>2</sup>Y<sub>i</sub>.
+          </p>
+
+          <div class="eq">
+            <div class="label">Frequency-domain linear system (define k=τ/L)</div>
+            <code>From M ÿ₁ = k(y₂ − 2y₁):
+(2k − Mω²)Y₁ − kY₂ = 0
+
+From M ÿ₂ = k(y₁ − 2y₂ + h₀cosωt):
+−kY₁ + (2k − Mω²)Y₂ = k h₀</code>
+          </div>
+
+          <p style="color: var(--muted); margin: 0 0 10px;">
+            Solving yields Y<sub>1</sub>(ω), Y<sub>2</sub>(ω). It’s convenient to rewrite the result using
+            &Omega;<sub>1</sub><sup>2</sup>=&tau;/(ML) and &Omega;<sub>2</sub><sup>2</sup>=3&Omega;<sub>1</sub><sup>2</sup>.
+          </p>
+
+          <div class="finalBox">
+            <h3>Answer (c)</h3>
+            <div class="eq" style="margin: 10px 0 0;">
+              <div class="label">Steady-state amplitudes (sign indicates phase vs driver)</div>
+              <code>Let Ω₁² = τ/(ML),  Ω₂² = 3Ω₁².
+
+Y₁(ω) = [Ω₁⁴ / ((ω²−Ω₁²)(ω²−Ω₂²))] h₀
+
+Y₂(ω) = [Ω₁²(2Ω₁²−ω²) / ((ω²−Ω₁²)(ω²−Ω₂²))] h₀</code>
+            </div>
+            <div class="eq" style="margin: 10px 0 0;">
+              <div class="label">Static limit (ω=0) — matches a straight line from 0 to h₀ over 3 segments</div>
+              <code>Y₁(0) = h₀/3
+Y₂(0) = 2h₀/3</code>
+            </div>
+          </div>
+
+          <div class="callout good">
+            <h3>Phase landmarks for sketches</h3>
+            <p>
+              Resonances at &omega;=&Omega;<sub>1</sub> and &omega;=&Omega;<sub>2</sub> (vertical asymptotes, ideal model).
+              Additionally, Y<sub>2</sub> has a <strong>zero</strong> when 2&Omega;<sub>1</sub><sup>2</sup>−&omega;<sup>2</sup>=0 ⇒ &omega;=√2 &Omega;<sub>1</sub>,
+              where bead #2 flips phase relative to the driver without diverging.
+            </p>
+          </div>
+        </section>
+
+        <section aria-labelledby="d" style="margin-top: 14px;">
+          <h3 id="d" style="margin: 8px 0 6px;">(d) Sketch of amplitudes vs &omega; (with sign)</h3>
+          <p style="color: var(--muted); margin: 0 0 10px;">
+            With no damping, the ideal steady-state amplitude diverges at the normal-mode frequencies.
+            In between, the sign encodes phase (positive = in phase with the driver, negative = out of phase).
+            The interactive plot below draws Y<sub>1</sub>/h<sub>0</sub and Y<sub>2</sub>/h<sub>0</sub vs the normalized frequency
+            r=&omega;/&Omega;<sub>1</sub and highlights the resonances and the zero of Y<sub>2</sub>.
+          </p>
+        </section>
+      </section>
+    </article>
+
+    <section class="grid" aria-label="Interactive visualizations section">
+      <article class="card content fadeIn">
+        <div class="sectionTitle">
+          <h2>Interactive Plot: Amplitudes vs Driving Frequency</h2>
+          <span class="tag">axes • grid • title • legend</span>
+        </div>
+
+        <div class="controls" aria-label="Plot controls">
+          <div>
+            <label for="freqSlider">Drive frequency ratio r = &omega;/&Omega;<sub>1</sub> (moves the marker)</label>
+            <input id="freqSlider" aria-label="Drive frequency ratio slider" type="range" min="0" max="3.2" step="0.002" value="0.4" />
+            <div class="valueLine">
+              <span id="freqRead">r = 0.400</span>
+              <span id="omegaRead">&omega; = 0.400 &Omega;<sub>1</sub></span>
+            </div>
+          </div>
+
+          <div>
+            <label for="h0Slider">Drive amplitude h<sub>0</sub> (scales the marker height)</label>
+            <input id="h0Slider" aria-label="Drive amplitude slider" type="range" min="0.2" max="2.0" step="0.01" value="1.0" />
+            <div class="valueLine">
+              <span id="h0Read">h₀ = 1.00 (arb. units)</span>
+              <span id="yReads">Y₁ = …, Y₂ = …</span>
+            </div>
+            <button id="toggleAnimBtn" aria-label="Toggle animation button">▶ Toggle Time Animation (diagram)</button>
+          </div>
+        </div>
+
+        <figure style="margin: 12px 0 0;">
+          <canvas id="plotCanvas" width="980" height="560" role="img" aria-label="Plot of steady-state amplitudes Y1 and Y2 versus normalized driving frequency r."></canvas>
+          <figcaption style="padding:10px 4px 0; color: var(--muted); font-size: 12.5px;">
+            Plot shows the ideal undamped response. Vertical dashed lines mark resonances at r=1 and r=√3, and the dotted line marks the zero crossing of Y<sub>2</sub> at r=√2.
+          </figcaption>
+        </figure>
+      </article>
+
+      <article class="card content fadeIn">
+        <div class="sectionTitle">
+          <h2>Diagram & Motion: Driven Shape at a Chosen Frequency</h2>
+          <span class="tag">canvas • animation • accessibility</span>
+        </div>
+
+        <div class="callout">
+          <h3>What you’re seeing</h3>
+          <p>
+            At a selected frequency ratio r=&omega;/&Omega;<sub>1</sub>, the beads respond with steady-state amplitudes
+            Y<sub>1</sub>(r), Y<sub>2</sub>(r). The diagram animates the instantaneous motion:
+            y<sub>1</sub>(t)=Y<sub>1</sub>cos(&omega;t), y<sub>2</sub>(t)=Y<sub>2</sub>cos(&omega;t), h(t)=h<sub>0</sub>cos(&omega;t).
+            The sign of Y indicates whether the bead is in-phase or out-of-phase with the drive.
+          </p>
+        </div>
+
+        <figure style="margin: 0;">
+          <canvas id="shapeCanvas" width="980" height="560" role="img" aria-label="Animated driven shape of the string with beads at x=L and x=2L."></canvas>
+          <figcaption style="padding:10px 4px 0; color: var(--muted); font-size: 12.5px;">
+            The string is drawn as three straight segments between nodes (0, y<sub>0</sub>=0), (L, y<sub>1</sub>), (2L, y<sub>2</sub>), (3L, h).
+            Motion is exaggerated for visibility. (Near resonance the ideal undamped model diverges.)
+          </figcaption>
+        </figure>
+
+        <div class="callout warn">
+          <h3>Important note (no damping)</h3>
+          <p>
+            The analytic steady-state amplitude becomes unbounded at r=1 and r=√3. In real systems damping limits the peak.
+            In the visuals, we clamp amplitudes to keep the plot readable and the animation stable, while still showing the correct
+            sign changes and resonance locations.
+          </p>
+        </div>
+
+        <div class="callout good">
+          <h3>Sanity checks built into the model</h3>
+          <ul>
+            <li><strong>Units:</strong> &Omega;<sub>1</sub><sup>2</sup>=&tau;/(ML) has units 1/s²; amplitudes scale with h<sub>0</sub>.</li>
+            <li><strong>Static limit:</strong> at r=0, Y<sub>1</sub>/h<sub>0</sub=1/3 and Y<sub>2</sub>/h<sub>0</sub=2/3.</li>
+            <li><strong>High-frequency:</strong> Y<sub>1</sub>→0⁺ ~ 1/&omega;⁴ and Y<sub>2</sub>→0⁻ ~ −1/&omega;².</li>
+          </ul>
+        </div>
+      </article>
+    </section>
+
+    <footer>
+      <div class="footRow">
+        <div>
+          <strong style="color:var(--text);">Tip:</strong>
+          If you want physically realistic finite peaks, add a small damping term (e.g., +b ẏ) and re-solve in the frequency domain.
+        </div>
+        <div>
+          <span class="pill">Accessible: ARIA labels • contrast • responsive</span>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    (() => {
+      // ---------- Math model (dimensionless frequency r = ω/Ω1) ----------
+      // Using derived formulas in normalized form:
+      // Y1/h0 = 1 / [ (r^2 - 1)(r^2 - 3) ]
+      // Y2/h0 = (2 - r^2) / [ (r^2 - 1)(r^2 - 3) ]
+      // (Because Ω2^2 = 3Ω1^2)
+      function y1OverH0(r){
+        const d = (r*r - 1) * (r*r - 3);
+        return 1 / d;
+      }
+      function y2OverH0(r){
+        const d = (r*r - 1) * (r*r - 3);
+        return (2 - r*r) / d;
+      }
+
+      // Clamp for visualization (avoid infinity near resonance)
+      function clamp(v, maxAbs){
+        if (!isFinite(v)) return Math.sign(v) * maxAbs;
+        if (v > maxAbs) return maxAbs;
+        if (v < -maxAbs) return -maxAbs;
+        return v;
+      }
+
+      // ---------- Canvas utilities ----------
+      function dprScale(canvas, ctx){
+        const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.round(rect.width * dpr);
+        const h = Math.round((rect.height || (rect.width * (canvas.height/canvas.width))) * dpr);
+        // If the canvas has intrinsic width/height set, keep aspect ratio by using its attributes
+        const targetW = Math.round(canvas.width * dpr);
+        const targetH = Math.round(canvas.height * dpr);
+        // Prefer intrinsic pixel size to avoid CSS-only scaling blur:
+        canvas.style.height = "auto";
+        canvas.style.width = "100%";
+        if (canvas.width !== targetW || canvas.height !== targetH){
+          canvas.width = targetW;
+          canvas.height = targetH;
+        }
+        ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+        return { dpr };
+      }
+
+      function getThemeColors(){
+        const cs = getComputedStyle(document.documentElement);
+        return {
+          text: cs.getPropertyValue('--text').trim() || 'rgba(255,255,255,0.92)',
+          muted: cs.getPropertyValue('--muted').trim() || 'rgba(255,255,255,0.72)',
+          faint: cs.getPropertyValue('--faint').trim() || 'rgba(255,255,255,0.52)',
+          grid: cs.getPropertyValue('--grid').trim() || 'rgba(255,255,255,0.08)',
+          accent: cs.getPropertyValue('--accent').trim() || '#7dd3fc',
+          accent2: cs.getPropertyValue('--accent2').trim() || '#a78bfa',
+          good: cs.getPropertyValue('--good').trim() || '#34d399',
+          warn: cs.getPropertyValue('--warn').trim() || '#fbbf24',
+          bad: cs.getPropertyValue('--bad').trim() || '#fb7185'
+        };
+      }
+
+      function drawRoundedRect(ctx, x,y,w,h,r){
+        const rr = Math.min(r, w/2, h/2);
+        ctx.beginPath();
+        ctx.moveTo(x+rr,y);
+        ctx.arcTo(x+w,y,x+w,y+h,rr);
+        ctx.arcTo(x+w,y+h,x,y+h,rr);
+        ctx.arcTo(x,y+h,x,y,rr);
+        ctx.arcTo(x,y,x+w,y,rr);
+        ctx.closePath();
+      }
+
+      // ---------- Plot canvas (amplitudes vs r) ----------
+      const plotCanvas = document.getElementById('plotCanvas');
+      const plotCtx = plotCanvas.getContext('2d');
+
+      function drawPlot(rMarker, h0){
+        const colors = getThemeColors();
+        dprScale(plotCanvas, plotCtx);
+
+        const W = plotCanvas.clientWidth;
+        const H = Math.round(W * (560/980)); // keep aspect from attributes
+        plotCanvas.style.height = H + "px";
+
+        // After CSS height updated, rescale precisely:
+        dprScale(plotCanvas, plotCtx);
+
+        const ctx = plotCtx;
+        ctx.clearRect(0,0,W,H);
+
+        // Layout
+        const pad = { l: 64, r: 18, t: 50, b: 58 };
+        const gx0 = pad.l, gy0 = pad.t;
+        const gw = W - pad.l - pad.r;
+        const gh = H - pad.t - pad.b;
+
+        // Axes ranges
+        const rMin = 0.0, rMax = 3.2;
+        // y range for plot: show a reasonable window; clamp actual function
+        const yMin = -3.0, yMax = 3.0; // dimensionless Y/h0
+        const clampAbs = 50; // internal clamp for near resonance then mapped into y-limits by clipping
+
+        // Helpers
+        const xOf = (r) => gx0 + (r - rMin) / (rMax - rMin) * gw;
+        const yOf = (y) => gy0 + (yMax - y) / (yMax - yMin) * gh;
+
+        // Background panel
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "rgba(0,0,0,0.12)";
+        drawRoundedRect(ctx, gx0, gy0, gw, gh, 14);
+        ctx.fill();
+        ctx.restore();
+
+        // Gridlines
+        ctx.save();
+        ctx.strokeStyle = colors.grid;
+        ctx.lineWidth = 1;
+        // vertical grid
+        const xTicks = 8;
+        for(let i=0;i<=xTicks;i++){
+          const r = rMin + i*(rMax-rMin)/xTicks;
+          const x = xOf(r);
+          ctx.beginPath();
+          ctx.moveTo(x, gy0);
+          ctx.lineTo(x, gy0+gh);
+          ctx.stroke();
+        }
+        // horizontal grid
+        const yTicks = 6;
+        for(let j=0;j<=yTicks;j++){
+          const y = yMin + j*(yMax-yMin)/yTicks;
+          const yy = yOf(y);
+          ctx.beginPath();
+          ctx.moveTo(gx0, yy);
+          ctx.lineTo(gx0+gw, yy);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Axes
+        ctx.save();
+        ctx.strokeStyle = colors.faint;
+        ctx.lineWidth = 1.25;
+        ctx.beginPath();
+        ctx.moveTo(gx0, gy0+gh);
+        ctx.lineTo(gx0+gw, gy0+gh);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(gx0, gy0);
+        ctx.lineTo(gx0, gy0+gh);
+        ctx.stroke();
+        ctx.restore();
+
+        // Title
+        ctx.save();
+        ctx.fillStyle = colors.text;
+        ctx.font = "700 16px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText("Steady-State Amplitudes vs Driving Frequency", gx0, 24);
+        ctx.fillStyle = colors.muted;
+        ctx.font = "12.5px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText("Plotting Y₁/h₀ and Y₂/h₀ vs r = ω/Ω₁ (sign indicates phase).", gx0, 40);
+        ctx.restore();
+
+        // Axis labels
+        ctx.save();
+        ctx.fillStyle = colors.muted;
+        ctx.font = "12.5px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText("r = ω/Ω₁", gx0 + gw - 54, gy0 + gh + 38);
+        ctx.save();
+        ctx.translate(18, gy0 + gh/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText("Amplitude (Y/h₀)", 0, 0);
+        ctx.restore();
+        ctx.restore();
+
+        // Tick labels
+        ctx.save();
+        ctx.fillStyle = colors.faint;
+        ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+        // x
+        for(let i=0;i<=xTicks;i++){
+          const r = rMin + i*(rMax-rMin)/xTicks;
+          const x = xOf(r);
+          const txt = r.toFixed(1);
+          ctx.fillText(txt, x-10, gy0+gh+18);
+        }
+        // y
+        for(let j=0;j<=yTicks;j++){
+          const y = yMin + j*(yMax-yMin)/yTicks;
+          const yy = yOf(y);
+          ctx.fillText(y.toFixed(1), gx0-38, yy+4);
+        }
+        ctx.restore();
+
+        // Resonance & zero markers
+        const r1 = 1.0;           // Ω1
+        const r2 = Math.sqrt(3);  // Ω2 / Ω1
+        const rZero = Math.sqrt(2); // zero of Y2
+        function vLine(r, style, label){
+          const x = xOf(r);
+          ctx.save();
+          ctx.strokeStyle = style.color;
+          ctx.setLineDash(style.dash || []);
+          ctx.lineWidth = style.w || 1.5;
+          ctx.beginPath();
+          ctx.moveTo(x, gy0);
+          ctx.lineTo(x, gy0+gh);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = style.color;
+          ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+          ctx.fillText(label, x+6, gy0+14);
+          ctx.restore();
+        }
+        vLine(r1, {color: colors.warn, dash:[7,5], w:1.6}, "r=1 (Ω₁)");
+        vLine(r2, {color: colors.warn, dash:[7,5], w:1.6}, "r=√3 (Ω₂)");
+        vLine(rZero, {color: colors.good, dash:[2,6], w:1.4}, "r=√2 (Y₂=0)");
+
+        // Plot curves (clipped to panel)
+        ctx.save();
+        drawRoundedRect(ctx, gx0, gy0, gw, gh, 14);
+        ctx.clip();
+
+        // Draw curve function helper
+        function drawCurve(color, fn){
+          ctx.beginPath();
+          let started = false;
+          const N = 1400;
+          for(let i=0;i<=N;i++){
+            const r = rMin + (rMax-rMin)*i/N;
+            let y = fn(r);
+            y = clamp(y, clampAbs);
+            // To prevent connecting across singularities, break near resonances
+            const near = (Math.abs(r-r1) < 0.006) || (Math.abs(r-r2) < 0.006);
+            if (near || !isFinite(y)){
+              started = false;
+              continue;
+            }
+            // Clip within yMin..yMax (still draw for out-of-range by clamping to boundary)
+            let yPlot = y;
+            if (yPlot > yMax) yPlot = yMax;
+            if (yPlot < yMin) yPlot = yMin;
+            const x = xOf(r);
+            const yy = yOf(yPlot);
+            if(!started){
+              ctx.moveTo(x, yy);
+              started = true;
+            } else {
+              ctx.lineTo(x, yy);
+            }
+          }
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2.2;
+          ctx.stroke();
+        }
+
+        // Y1/h0 and Y2/h0
+        drawCurve(colors.accent, y1OverH0);
+        drawCurve(colors.accent2, y2OverH0);
+
+        // Zero line (y=0)
+        ctx.save();
+        ctx.strokeStyle = colors.grid;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(gx0, yOf(0));
+        ctx.lineTo(gx0+gw, yOf(0));
+        ctx.stroke();
+        ctx.restore();
+
+        // Marker at rMarker
+        const r = Math.max(rMin, Math.min(rMax, rMarker));
+        let y1 = clamp(y1OverH0(r), clampAbs);
+        let y2 = clamp(y2OverH0(r), clampAbs);
+        // clamp to visible y range for marker
+        const y1v = Math.max(yMin, Math.min(yMax, y1));
+        const y2v = Math.max(yMin, Math.min(yMax, y2));
+        const xM = xOf(r);
+
+        // marker lines
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,255,255,0.20)";
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([5,5]);
+        ctx.beginPath();
+        ctx.moveTo(xM, gy0);
+        ctx.lineTo(xM, gy0+gh);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        function drawPoint(yVal, color){
+          const yy = yOf(yVal);
+          ctx.save();
+          ctx.fillStyle = color;
+          ctx.strokeStyle = "rgba(0,0,0,0.35)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(xM, yy, 6, 0, Math.PI*2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        }
+        drawPoint(y1v, colors.accent);
+        drawPoint(y2v, colors.accent2);
+
+        ctx.restore(); // end clip
+
+        // Legend
+        ctx.save();
+        const lx = gx0 + 14, ly = gy0 + 14;
+        ctx.fillStyle = "rgba(0,0,0,0.18)";
+        drawRoundedRect(ctx, lx, ly, 192, 60, 12);
+        ctx.fill();
+        ctx.strokeStyle = colors.grid;
+        ctx.stroke();
+
+        ctx.font = "12.5px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillStyle = colors.text;
+        ctx.fillText("Legend", lx+12, ly+18);
+
+        // lines
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = colors.accent;
+        ctx.beginPath(); ctx.moveTo(lx+12, ly+32); ctx.lineTo(lx+52, ly+32); ctx.stroke();
+        ctx.fillStyle = colors.muted;
+        ctx.fillText("Y₁/h₀ (bead #1)", lx+60, ly+36);
+
+        ctx.strokeStyle = colors.accent2;
+        ctx.beginPath(); ctx.moveTo(lx+12, ly+50); ctx.lineTo(lx+52, ly+50); ctx.stroke();
+        ctx.fillStyle = colors.muted;
+        ctx.fillText("Y₂/h₀ (bead #2)", lx+60, ly+54);
+
+        ctx.restore();
+
+        // Marker readouts (scaled by h0)
+        const Y1 = y1OverH0(r) * h0;
+        const Y2 = y2OverH0(r) * h0;
+        return { Y1, Y2, y1Over: y1OverH0(r), y2Over: y2OverH0(r) };
+      }
+
+      // ---------- Setup diagram + animated driven shape ----------
+      const setupCanvas = document.getElementById('setupCanvas');
+      const setupCtx = setupCanvas.getContext('2d');
+
+      const shapeCanvas = document.getElementById('shapeCanvas');
+      const shapeCtx = shapeCanvas.getContext('2d');
+
+      function drawSetupStatic(){
+        const colors = getThemeColors();
+        dprScale(setupCanvas, setupCtx);
+
+        const W = setupCanvas.clientWidth;
+        const H = Math.round(W * (420/780));
+        setupCanvas.style.height = H + "px";
+        dprScale(setupCanvas, setupCtx);
+
+        const ctx = setupCtx;
+        ctx.clearRect(0,0,W,H);
+
+        // Geometry
+        const pad = { l: 42, r: 24, t: 30, b: 34 };
+        const x0 = pad.l, yMid = Math.round(H*0.62);
+        const x3 = W - pad.r;
+        const total = x3 - x0;
+
+        const x1 = x0 + total/3;
+        const x2 = x0 + 2*total/3;
+
+        // baseline
+        ctx.save();
+        ctx.strokeStyle = colors.grid;
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([6,6]);
+        ctx.beginPath();
+        ctx.moveTo(x0, yMid);
+        ctx.lineTo(x3, yMid);
+        ctx.stroke();
+        ctx.restore();
+
+        // Wall
+        ctx.save();
+        ctx.strokeStyle = colors.faint;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(x0-14, yMid-70);
+        ctx.lineTo(x0-14, yMid+40);
+        ctx.stroke();
+        ctx.restore();
+
+        // Labels
+        ctx.save();
+        ctx.fillStyle = colors.muted;
+        ctx.font = "12.5px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText("wall (y₀=0)", x0-30, yMid+58);
+        ctx.restore();
+
+        // Segment length labels
+        function arrow(xa, xb, y, label){
+          ctx.save();
+          ctx.strokeStyle = colors.faint;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(xa, y);
+          ctx.lineTo(xb, y);
+          ctx.stroke();
+          // arrowheads
+          const ah = 6;
+          ctx.beginPath();
+          ctx.moveTo(xa, y); ctx.lineTo(xa+ah, y-ah); ctx.lineTo(xa+ah, y+ah); ctx.closePath();
+          ctx.fillStyle = colors.faint; ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(xb, y); ctx.lineTo(xb-ah, y-ah); ctx.lineTo(xb-ah, y+ah); ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = colors.muted;
+          ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+          ctx.fillText(label, (xa+xb)/2 - 6, y-10);
+          ctx.restore();
+        }
+        arrow(x0, x1, yMid+28, "L");
+        arrow(x1, x2, yMid+28, "L");
+        arrow(x2, x3, yMid+28, "L");
+
+        // Beads
+        function bead(x,y, label){
+          ctx.save();
+          ctx.fillStyle = colors.accent2;
+          ctx.strokeStyle = "rgba(0,0,0,0.35)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x,y, 13, 0, Math.PI*2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = colors.text;
+          ctx.font = "700 12.5px " + getComputedStyle(document.body).fontFamily;
+          ctx.fillText(label, x-6, y+4);
+          ctx.restore();
+        }
+        bead(x1, yMid-30, "1");
+        bead(x2, yMid-52, "2");
+
+        // String (illustrative static tilt)
+        const y0 = yMid, y1 = yMid-30, y2 = yMid-52, y3 = yMid-88;
+        ctx.save();
+        ctx.strokeStyle = colors.accent;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x3, y3);
+        ctx.stroke();
+        ctx.restore();
+
+        // Displacement arrows
+        function upArrow(x, yBase, yTop, label){
+          ctx.save();
+          ctx.strokeStyle = colors.good;
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(x, yBase);
+          ctx.lineTo(x, yTop);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(x, yTop);
+          ctx.lineTo(x-6, yTop+10);
+          ctx.lineTo(x+6, yTop+10);
+          ctx.closePath();
+          ctx.fillStyle = colors.good;
+          ctx.fill();
+          ctx.fillStyle = colors.muted;
+          ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+          ctx.fillText(label, x+8, (yBase+yTop)/2);
+          ctx.restore();
+        }
+        upArrow(x1, yMid, y1, "y₁(t)");
+        upArrow(x2, yMid, y2, "y₂(t)");
+        upArrow(x3, yMid, y3, "h(t)");
+
+        // Title
+        ctx.save();
+        ctx.fillStyle = colors.text;
+        ctx.font = "700 14px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText("Driven coupled oscillators on a taut string (schematic)", x0, 20);
+        ctx.restore();
+      }
+
+      function drawDrivenShape(r, h0, t, showTitle){
+        const colors = getThemeColors();
+        dprScale(shapeCanvas, shapeCtx);
+
+        const W = shapeCanvas.clientWidth;
+        const H = Math.round(W * (560/980));
+        shapeCanvas.style.height = H + "px";
+        dprScale(shapeCanvas, shapeCtx);
+
+        const ctx = shapeCtx;
+        ctx.clearRect(0,0,W,H);
+
+        // Layout
+        const pad = { l: 54, r: 20, t: 44, b: 52 };
+        const x0 = pad.l;
+        const x3 = W - pad.r;
+        const total = x3 - x0;
+        const x1 = x0 + total/3;
+        const x2 = x0 + 2*total/3;
+
+        const yMid = Math.round(H*0.68);
+
+        // Compute amplitudes (dimensionless) and instantaneous positions
+        // Avoid infinite near resonance: clamp for animation.
+        const clampAnim = 1.8; // clamp in units of h0 for display
+        const A1 = clamp(y1OverH0(r), 12) * h0; // unbounded analytic, clamp somewhat
+        const A2 = clamp(y2OverH0(r), 12) * h0;
+
+        // Drive and response: y(t)=A cos(ωt). Here ω is not needed, only phase, take ωt = t.
+        const phase = t;
+        const h = h0 * Math.cos(phase);
+        const y1 = clamp(A1 * Math.cos(phase), clampAnim*h0*3);
+        const y2 = clamp(A2 * Math.cos(phase), clampAnim*h0*3);
+
+        // Scale displacements to pixels
+        const pxPerUnit = Math.min(90, H*0.18); // visual scale
+        const Y0 = yMid;
+        const Y1 = yMid - y1 * pxPerUnit;
+        const Y2 = yMid - y2 * pxPerUnit;
+        const Y3 = yMid - h  * pxPerUnit;
+
+        // Background panel
+        ctx.save();
+        ctx.fillStyle = "rgba(0,0,0,0.10)";
+        drawRoundedRect(ctx, pad.l-18, pad.t-16, (W - pad.l - pad.r)+36, (H - pad.t - pad.b)+30, 16);
+        ctx.fill();
+        ctx.restore();
+
+        // Gridline baseline
+        ctx.save();
+        ctx.strokeStyle = colors.grid;
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([6,6]);
+        ctx.beginPath();
+        ctx.moveTo(x0, yMid);
+        ctx.lineTo(x3, yMid);
+        ctx.stroke();
+        ctx.restore();
+
+        // Wall
+        ctx.save();
+        ctx.strokeStyle = colors.faint;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(x0-20, yMid-110);
+        ctx.lineTo(x0-20, yMid+60);
+        ctx.stroke();
+        ctx.restore();
+
+        // String segments
+        ctx.save();
+        ctx.strokeStyle = colors.accent;
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.moveTo(x0, Y0);
+        ctx.lineTo(x1, Y1);
+        ctx.lineTo(x2, Y2);
+        ctx.lineTo(x3, Y3);
+        ctx.stroke();
+        ctx.restore();
+
+        // Beads
+        function bead(x,y, color, label){
+          ctx.save();
+          ctx.fillStyle = color;
+          ctx.strokeStyle = "rgba(0,0,0,0.35)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x,y, 14, 0, Math.PI*2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = colors.text;
+          ctx.font = "700 12.5px " + getComputedStyle(document.body).fontFamily;
+          ctx.fillText(label, x-6, y+4);
+          ctx.restore();
+        }
+        bead(x1, Y1, colors.accent2, "1");
+        bead(x2, Y2, colors.accent2, "2");
+
+        // Driven endpoint marker
+        ctx.save();
+        ctx.fillStyle = colors.warn;
+        ctx.strokeStyle = "rgba(0,0,0,0.35)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.rect(x3-6, Y3-6, 12, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        // Labels and readouts
+        ctx.save();
+        ctx.fillStyle = colors.text;
+        ctx.font = "700 15px " + getComputedStyle(document.body).fontFamily;
+        if (showTitle) ctx.fillText("Instantaneous driven shape (exaggerated)", pad.l, 24);
+
+        ctx.fillStyle = colors.muted;
+        ctx.font = "12.5px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText("baseline y=0", x0+6, yMid+18);
+
+        // Segment labels
+        ctx.fillText("L", (x0+x1)/2 - 4, yMid+38);
+        ctx.fillText("L", (x1+x2)/2 - 4, yMid+38);
+        ctx.fillText("L", (x2+x3)/2 - 4, yMid+38);
+
+        // Values panel
+        const boxW = 300, boxH = 86;
+        const bx = W - pad.r - boxW, by = pad.t - 2;
+        ctx.fillStyle = "rgba(0,0,0,0.16)";
+        drawRoundedRect(ctx, bx, by, boxW, boxH, 14);
+        ctx.fill();
+        ctx.strokeStyle = colors.grid;
+        ctx.stroke();
+
+        const y1h = y1OverH0(r);
+        const y2h = y2OverH0(r);
+        ctx.fillStyle = colors.text;
+        ctx.font = "700 12.8px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText(`r = ω/Ω₁ = ${r.toFixed(3)}`, bx+12, by+22);
+        ctx.fillStyle = colors.muted;
+        ctx.font = "12.4px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText(`Y₁/h₀ = ${formatSigned(y1h)}  (${phaseWord(y1h)})`, bx+12, by+44);
+        ctx.fillText(`Y₂/h₀ = ${formatSigned(y2h)}  (${phaseWord(y2h)})`, bx+12, by+64);
+        ctx.fillText(`h(t)=h₀cos(ωt),  t→ phase`, bx+12, by+82);
+
+        ctx.restore();
+
+        // Axes-like vertical scale indicator
+        ctx.save();
+        ctx.strokeStyle = colors.faint;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(pad.l-26, yMid-90);
+        ctx.lineTo(pad.l-26, yMid+90);
+        ctx.stroke();
+        ctx.fillStyle = colors.faint;
+        ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText("+y", pad.l-46, yMid-82);
+        ctx.fillText("-y", pad.l-46, yMid+92);
+        ctx.restore();
+      }
+
+      function formatSigned(v){
+        if (!isFinite(v)) return (v>0?"+∞":"-∞");
+        const s = (v>=0?"+":"");
+        // Avoid scientific notation unless huge
+        const av = Math.abs(v);
+        if (av > 9999) return s + v.toExponential(2);
+        return s + v.toFixed(4);
+      }
+      function phaseWord(v){
+        if (!isFinite(v)) return "resonant";
+        return v >= 0 ? "in phase" : "out of phase";
+      }
+
+      // ---------- Wire up controls ----------
+      const freqSlider = document.getElementById('freqSlider');
+      const h0Slider = document.getElementById('h0Slider');
+      const freqRead = document.getElementById('freqRead');
+      const omegaRead = document.getElementById('omegaRead');
+      const h0Read = document.getElementById('h0Read');
+      const yReads = document.getElementById('yReads');
+      const toggleAnimBtn = document.getElementById('toggleAnimBtn');
+
+      let animOn = true;
+      let t0 = performance.now();
+
+      function updateAll(){
+        const r = parseFloat(freqSlider.value);
+        const h0 = parseFloat(h0Slider.value);
+
+        freqRead.textContent = `r = ${r.toFixed(3)}`;
+        omegaRead.innerHTML = `&omega; = ${r.toFixed(3)} &Omega;<sub>1</sub>`;
+        h0Read.textContent = `h₀ = ${h0.toFixed(2)} (arb. units)`;
+
+        const res = drawPlot(r, h0);
+
+        // Display Y1, Y2 (in units of h0) and absolute (arb.)
+        const y1h = y1OverH0(r);
+        const y2h = y2OverH0(r);
+        const Y1 = y1h * h0;
+        const Y2 = y2h * h0;
+
+        const clampLabel = (v) => {
+          if (!isFinite(v)) return (v>0?"+∞":"-∞");
+          const av = Math.abs(v);
+          if (av > 9999) return (v>=0?"+":"") + v.toExponential(2);
+          return (v>=0?"+":"") + v.toFixed(3);
+        };
+
+        yReads.innerHTML =
+          `Y₁/h₀=${clampLabel(y1h)} (${phaseWord(y1h)}), ` +
+          `Y₂/h₀=${clampLabel(y2h)} (${phaseWord(y2h)})`;
+
+        // Update the static setup diagram too (it doesn't depend on slider, but repaint keeps it crisp)
+        drawSetupStatic();
+
+        // Draw one frame of shape (if anim off, freeze at current t)
+        const t = animOn ? (performance.now() - t0) * 0.0022 : (lastFrozenT || 0);
+        drawDrivenShape(r, h0, t, true);
+      }
+
+      let lastFrozenT = 0;
+      toggleAnimBtn.addEventListener('click', () => {
+        animOn = !animOn;
+        if (!animOn){
+          lastFrozenT = (performance.now() - t0) * 0.0022;
+          toggleAnimBtn.textContent = "▶ Resume Time Animation (diagram)";
+        } else {
+          t0 = performance.now() - (lastFrozenT/0.0022);
+          toggleAnimBtn.textContent = "▶ Toggle Time Animation (diagram)";
+        }
+        updateAll();
+      });
+
+      freqSlider.addEventListener('input', updateAll);
+      h0Slider.addEventListener('input', updateAll);
+
+      // ---------- Animation loop (only for shape, plot is redrawn on input) ----------
+      function loop(){
+        const r = parseFloat(freqSlider.value);
+        const h0 = parseFloat(h0Slider.value);
+
+        if (animOn){
+          const t = (performance.now() - t0) * 0.0022;
+          drawDrivenShape(r, h0, t, true);
+        }
+        requestAnimationFrame(loop);
+      }
+
+      // Initial render
+      drawSetupStatic();
+      updateAll();
+      requestAnimationFrame(loop);
+
+      // Redraw on resize
+      let resizeTimer = null;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          drawSetupStatic();
+          updateAll();
+        }, 120);
+      });
+    })();
+  </script>
+</body>
+</html>
