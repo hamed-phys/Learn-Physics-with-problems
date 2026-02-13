@@ -1,0 +1,1174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="description" content="Problem 3 (Optics & Waves): structured analysis, roadmap, and full solution with boxed results, sanity checks, and qualitative plots." />
+  <title>Problem 3 — Optics & Waves (Full Structured Solution)</title>
+
+  <!-- MathJax for LaTeX -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(','\\)'], ['$', '$']],
+        displayMath: [['\\[','\\]']]
+      },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg:#070a12;
+      --bg2:#0b1221;
+      --card:rgba(255,255,255,.06);
+      --card2:rgba(255,255,255,.09);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.70);
+      --faint:rgba(255,255,255,.55);
+      --line:rgba(255,255,255,.12);
+      --shadow:0 20px 70px rgba(0,0,0,.45);
+      --shadow2:0 10px 35px rgba(0,0,0,.35);
+
+      --a:#22c55e; /* green */
+      --b:#60a5fa; /* blue */
+      --c:#f59e0b; /* amber */
+      --d:#a78bfa; /* purple */
+      --e:#fb7185; /* rose */
+
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+
+      --r:18px;
+      --r2:26px;
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f6f7fb;
+        --bg2:#ffffff;
+        --card:rgba(15,23,42,.05);
+        --card2:rgba(15,23,42,.07);
+        --text:rgba(15,23,42,.92);
+        --muted:rgba(15,23,42,.72);
+        --faint:rgba(15,23,42,.55);
+        --line:rgba(15,23,42,.14);
+        --shadow:0 18px 70px rgba(2,6,23,.14);
+        --shadow2:0 10px 35px rgba(2,6,23,.12);
+      }
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1100px 700px at 20% 10%, color-mix(in srgb, var(--b) 28%, transparent) 0%, transparent 58%),
+        radial-gradient(900px 650px at 82% 25%, color-mix(in srgb, var(--d) 24%, transparent) 0%, transparent 62%),
+        radial-gradient(900px 650px at 55% 92%, color-mix(in srgb, var(--a) 18%, transparent) 0%, transparent 65%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      overflow-x:hidden;
+    }
+
+    /* subtle grain overlay */
+    .grain{
+      pointer-events:none;
+      position:fixed; inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+      opacity:.16;
+      animation: drift 11s linear infinite;
+    }
+    @keyframes drift{
+      0%{ transform:translate3d(0,0,0); }
+      100%{ transform:translate3d(-90px,55px,0); }
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    .wrap{
+      width:min(1120px, calc(100% - 40px));
+      margin: 38px auto 90px;
+      position:relative;
+      z-index:1;
+    }
+
+    /* Hero */
+    header.hero{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, var(--card2), var(--card));
+      box-shadow:var(--shadow);
+      border-radius:var(--r2);
+      padding: 28px 26px;
+      position:relative;
+      overflow:hidden;
+    }
+    header.hero::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(760px 280px at 18% 12%, color-mix(in srgb, var(--b) 35%, transparent), transparent 72%),
+        radial-gradient(700px 340px at 84% 22%, color-mix(in srgb, var(--d) 35%, transparent), transparent 74%),
+        radial-gradient(640px 280px at 45% 95%, color-mix(in srgb, var(--a) 25%, transparent), transparent 76%);
+      filter: blur(18px);
+      opacity:.65;
+      z-index:0;
+    }
+    header.hero > *{ position:relative; z-index:1; }
+
+    .kicker{
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+      color:var(--muted);
+      font-size:13px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      border:1px solid var(--line);
+      padding:7px 11px;
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      box-shadow:var(--shadow2);
+      backdrop-filter: blur(10px);
+    }
+    .dot{
+      width:9px; height:9px; border-radius:999px;
+      background:var(--b);
+      box-shadow:0 0 0 4px color-mix(in srgb, var(--b) 20%, transparent);
+    }
+
+    h1.title{
+      margin:14px 0 6px;
+      font-size: clamp(24px, 3.4vw, 42px);
+      line-height:1.1;
+      letter-spacing:-.02em;
+    }
+    p.subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.7;
+      max-width: 84ch;
+    }
+
+    .meta{
+      margin-top: 18px;
+      display:flex; flex-wrap:wrap; gap:10px;
+      color:var(--faint);
+      font-size:13px;
+    }
+    .meta code{
+      font-family:var(--mono);
+      font-size:12px;
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--line);
+      padding:3px 7px;
+      border-radius:8px;
+      color:var(--muted);
+    }
+
+    /* TOC */
+    nav.toc{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+    }
+    @media (max-width: 900px){
+      nav.toc{ grid-template-columns:1fr; }
+    }
+    .tocCard{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius:var(--r);
+      box-shadow:var(--shadow2);
+      padding:14px;
+    }
+    .tocHead{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .tocHead h3{
+      margin:0;
+      font-size:14px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .tocLinks{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 560px){
+      .tocLinks{ grid-template-columns:1fr; }
+    }
+    .tocLinks a{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 12px;
+      background:rgba(255,255,255,.03);
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      display:flex; justify-content:space-between; align-items:center;
+      gap:10px;
+      min-height:44px;
+    }
+    .tocLinks a:hover{
+      transform:translateY(-2px);
+      background:rgba(255,255,255,.06);
+      border-color: color-mix(in srgb, var(--b) 55%, var(--line));
+    }
+    .tocLinks .label{ display:flex; flex-direction:column; gap:3px; }
+    .tocLinks .label b{ font-size:14px; color:var(--text); }
+    .tocLinks .label span{ font-size:12px; color:var(--muted); }
+    .tocLinks .arrow{
+      width:34px; height:34px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      display:grid; place-items:center;
+      background:rgba(255,255,255,.03);
+      flex:0 0 auto;
+    }
+
+    /* Cards */
+    main{ margin-top:20px; display:grid; gap:16px; }
+
+    section.card{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius:var(--r2);
+      box-shadow:var(--shadow2);
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding:16px 18px;
+      display:flex; align-items:flex-start; justify-content:space-between;
+      gap:14px;
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    }
+    .cardHeader h2{
+      margin:0;
+      font-size:16px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .badge{
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--line);
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.03);
+      white-space:nowrap;
+    }
+    .content{
+      padding:18px 18px 20px;
+      display:grid;
+      gap:14px;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 900px){
+      .grid2{ grid-template-columns:1fr; }
+    }
+
+    .panel{
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      padding:14px;
+      background:rgba(255,255,255,.03);
+    }
+    .panel h3{
+      margin:0 0 8px;
+      font-size:13px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .panel p, .panel li{
+      color:var(--text);
+      line-height:1.72;
+      font-size:14px;
+    }
+    .panel ul{ margin:8px 0 0; padding-left:18px; }
+    .panel li{ margin:4px 0; }
+
+    .callout{
+      border-left:4px solid var(--b);
+      background: color-mix(in srgb, var(--b) 12%, rgba(255,255,255,.03));
+      padding:12px;
+      border-radius:14px;
+      border:1px solid color-mix(in srgb, var(--b) 30%, var(--line));
+    }
+
+    /* Equation box with copy */
+    .mathBox{
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      padding:12px;
+      background:
+        radial-gradient(520px 220px at 15% 20%, color-mix(in srgb, var(--a) 18%, transparent), transparent 65%),
+        radial-gradient(520px 240px at 85% 60%, color-mix(in srgb, var(--d) 16%, transparent), transparent 68%),
+        rgba(255,255,255,.03);
+      overflow:auto;
+    }
+    .mathBox .label{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .mathBox .copyBtn{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--muted);
+      border-radius:12px;
+      padding:6px 10px;
+      font:12px var(--mono);
+      cursor:pointer;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .mathBox .copyBtn:hover{
+      transform:translateY(-1px);
+      background:rgba(255,255,255,.06);
+      border-color: color-mix(in srgb, var(--a) 55%, var(--line));
+    }
+
+    /* Steps */
+    .steps{
+      counter-reset: step;
+      display:grid;
+      gap:10px;
+      margin:0;
+      padding:0;
+      list-style:none;
+    }
+    .steps li{
+      counter-increment: step;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(255,255,255,.03);
+      padding:12px;
+      display:grid;
+      grid-template-columns: 44px 1fr;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .steps li::before{
+      content: counter(step);
+      width:40px; height:40px;
+      border-radius:14px;
+      display:grid; place-items:center;
+      background: color-mix(in srgb, var(--b) 18%, rgba(255,255,255,.03));
+      border:1px solid color-mix(in srgb, var(--b) 35%, var(--line));
+      color:var(--text);
+      font:700 14px var(--mono);
+    }
+    .steps b{ display:block; margin-bottom:4px; font-size:14px; }
+    .steps span{ color:var(--muted); font-size:13px; line-height:1.65; }
+
+    /* Result + sanity */
+    .result{
+      border:1px solid color-mix(in srgb, var(--a) 38%, var(--line));
+      background: color-mix(in srgb, var(--a) 12%, rgba(255,255,255,.03));
+      border-radius:var(--r);
+      padding:14px;
+    }
+    .result h3{
+      margin:0 0 8px;
+      font-size:13px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .sanity{
+      border:1px solid color-mix(in srgb, var(--c) 34%, var(--line));
+      background: color-mix(in srgb, var(--c) 10%, rgba(255,255,255,.03));
+      border-radius:var(--r);
+      padding:14px;
+    }
+    .sanity h3{
+      margin:0 0 8px;
+      font-size:13px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+
+    /* Plots */
+    .plotWrap{
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      padding:12px;
+      background:rgba(255,255,255,.03);
+      overflow:hidden;
+    }
+    .plotTitle{
+      display:flex; justify-content:space-between; align-items:baseline;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .plotTitle b{ font-size:14px; }
+    .plotTitle span{ font:12px var(--mono); color:var(--muted); }
+    svg{ width:100%; height:auto; display:block; }
+    .axis{ stroke:var(--line); stroke-width:2; }
+    .grid{ stroke: color-mix(in srgb, var(--line) 60%, transparent); stroke-width:1; }
+    .curve1{ stroke:var(--b); stroke-width:3; fill:none; }
+    .curve2{ stroke:var(--a); stroke-width:3; fill:none; }
+    .asym{ stroke: color-mix(in srgb, var(--a) 55%, var(--line)); stroke-dasharray: 7 7; stroke-width:2; }
+    .note{ fill:var(--muted); font:12px var(--mono); }
+
+    details{
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      background:rgba(255,255,255,.03);
+      padding:10px 12px;
+    }
+    summary{
+      cursor:pointer;
+      font-weight:650;
+      color:var(--text);
+      list-style:none;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    details p{ margin:10px 0 0; color:var(--muted); line-height:1.7; font-size:14px; }
+
+    /* Floating progress + quick actions */
+    .floatBar{
+      position: fixed;
+      left: 16px;
+      bottom: 16px;
+      z-index: 5;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(12px);
+    }
+    @media (max-width: 900px){
+      .floatBar{ left: 10px; right:10px; justify-content:space-between; }
+    }
+    .barBtn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font: 12px var(--mono);
+      cursor:pointer;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      white-space:nowrap;
+    }
+    .barBtn:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.06);
+      border-color: color-mix(in srgb, var(--b) 55%, var(--line));
+    }
+    .progressWrap{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 260px;
+    }
+    @media (max-width: 520px){
+      .progressWrap{ display:none; }
+    }
+    .progressTrack{
+      width: 180px; height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid var(--line);
+      overflow:hidden;
+    }
+    .progressFill{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, var(--b), var(--a));
+      border-radius: 999px;
+      transition: width .15s ease;
+    }
+    .progressLabel{
+      font: 12px var(--mono);
+      color: var(--muted);
+    }
+
+    footer{
+      margin-top:18px;
+      color:var(--muted);
+      font-size:13px;
+      text-align:center;
+      opacity:.9;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- floating bar -->
+  <div class="floatBar" aria-label="Quick actions">
+    <button class="barBtn" type="button" id="btnTop">↑ Top</button>
+    <button class="barBtn" type="button" id="btnCopyAll">Copy all answers</button>
+    <div class="progressWrap" aria-hidden="true">
+      <div class="progressTrack"><div class="progressFill" id="progressFill"></div></div>
+      <div class="progressLabel" id="progressLabel">0%</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <header class="hero" id="top">
+      <div class="kicker">
+        <span class="pill"><span class="dot"></span> Physics Article</span>
+        <span class="pill">Problem 3 • 16 pts</span>
+        <span class="pill">Optical Fiber • Polarization • Dispersion</span>
+      </div>
+
+      <h1 class="title">Problem 3 — Optics & Waves (Full Structured Solution)</h1>
+      <p class="subtitle">
+        Complete solution in the required order:
+        <b>Part 1</b> (analysis, laws, approaches),
+        <b>Part 2</b> (roadmap & common mistakes, no algebra),
+        <b>Part 3</b> (intuition, full derivations, boxed final answers, sanity checks).
+      </p>
+
+      <div class="meta">
+        <span>Math: <code>MathJax</code></span>
+        <span>UX: <code>Copy buttons</code> • <code>Progress</code> • <code>Responsive</code></span>
+        <span>Extras: <code>Qualitative plots</code> • <code>Sanity checks</code></span>
+      </div>
+
+      <nav class="toc" aria-label="Table of contents">
+        <div class="tocCard">
+          <div class="tocHead">
+            <h3>Jump to</h3>
+            <span class="badge">TOC</span>
+          </div>
+          <div class="tocLinks">
+            <a href="#part1"><span class="label"><b>Part 1</b><span>Problem Analysis</span></span><span class="arrow">↘</span></a>
+            <a href="#part2"><span class="label"><b>Part 2</b><span>Strategy & Tips</span></span><span class="arrow">↘</span></a>
+            <a href="#part3"><span class="label"><b>Part 3</b><span>Full Solution</span></span><span class="arrow">↘</span></a>
+            <a href="#final"><span class="label"><b>Final</b><span>All boxed answers</span></span><span class="arrow">↘</span></a>
+          </div>
+        </div>
+
+        <div class="tocCard">
+          <div class="tocHead">
+            <h3>Problems</h3>
+            <span class="badge">3(a) • 3(b) • 3(c)</span>
+          </div>
+          <div class="panel" style="margin:0;">
+            <ul style="margin:0; padding-left:18px;">
+              <li><b>3(a)</b> Acceptance angle \(\theta_{\max}\) for guided propagation in an optical fiber.</li>
+              <li><b>3(b)</b> Liquid refractive index \(n\) from Brewster polarization + geometry.</li>
+              <li><b>3(c)</b> Propagation range; compute/plot \(v_p(\omega)\) and \(v_g(\omega)\).</li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <!-- ============================ PART 1 ============================ -->
+      <section class="card" id="part1">
+        <div class="cardHeader">
+          <h2>Part 1 — Problem Analysis (no solving yet)</h2>
+          <span class="badge">What’s given • What’s asked • Which laws</span>
+        </div>
+
+        <div class="content">
+          <div class="grid2">
+            <div class="panel">
+              <h3>3(a) Optical fiber acceptance angle</h3>
+              <p>
+                <b>Restate:</b> Light in an external medium of index \(n_a\) enters the flat end of a fiber.
+                The fiber has a <b>core</b> (solid rod) with index \(n_f\) surrounded by <b>cladding</b> with index \(n_c\).
+                Find the <b>largest entrance angle</b> \(\theta\) (relative to the fiber axis) such that the ray remains in the core
+                (i.e., guided by total internal reflection at the core–cladding boundary).
+              </p>
+              <ul>
+                <li><b>Given:</b> \(n_a,\; n_f,\; n_c\)</li>
+                <li><b>Unknown:</b> \(\theta_{\max}\)</li>
+                <li><b>Must find:</b> Entrance-angle limit for guiding</li>
+              </ul>
+            </div>
+
+            <div class="panel">
+              <h3>3(a) Principles & why they apply</h3>
+              <ul>
+                <li><b>Snell’s law</b> at the entrance face relates \(\theta\) to the internal core angle \(\theta_f\).</li>
+                <li><b>Total internal reflection</b> at core–cladding provides confinement; requires incidence ≥ critical angle.</li>
+                <li><b>Geometry</b> converts “angle to axis” into “angle to boundary normal.”</li>
+              </ul>
+
+              <details>
+                <summary>Approach comparison</summary>
+                <p>
+                  <b>Ray optics + Snell + TIR</b>: simplest and intended; yields numerical aperture form directly.<br/>
+                  <b>Numerical aperture shortcut</b>: equivalent if you know NA definition.<br/>
+                  <b>Waveguide mode analysis</b>: overkill for this exam-style prompt.
+                </p>
+              </details>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="panel">
+              <h3>3(b) Brewster polarization</h3>
+              <p>
+                <b>Restate:</b> Unpolarized light in vacuum reflects from a liquid surface (index \(n\)).
+                The reflected beam hits a screen 25 cm away at a height of 20 cm and is observed to be <b>100% polarized</b>.
+                Determine \(n\).
+              </p>
+              <ul>
+                <li><b>Given:</b> \(n_1=1\) (vacuum), geometry: run \(25\text{ cm}\), rise \(20\text{ cm}\)</li>
+                <li><b>Unknown:</b> \(n\)</li>
+                <li><b>Must find:</b> Use Brewster condition (perfect polarization) + geometry</li>
+              </ul>
+            </div>
+
+            <div class="panel">
+              <h3>3(b) Principles & why they apply</h3>
+              <ul>
+                <li><b>Brewster’s angle</b>: reflected light becomes fully polarized only at Brewster incidence.</li>
+                <li><b>Reflection geometry</b>: the screen position gives the reflected-ray direction.</li>
+                <li><b>Law of reflection</b>: incidence angle equals reflection angle (both from the normal).</li>
+              </ul>
+
+              <details>
+                <summary>Approach comparison</summary>
+                <p>
+                  (i) Geometry → \(\theta_B\) → \(n=\tan\theta_B\) (shortest).<br/>
+                  (ii) Use \(\theta_B+\theta_t=90^\circ\) and Snell (works but longer).
+                </p>
+              </details>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="panel">
+              <h3>3(c) Dispersion relation</h3>
+              <p>
+                <b>Restate:</b> Waves satisfy \(\omega^2=\omega_0^2 + A^2k^2\). (i) Find the range of \(\omega\)
+                for which waves propagate. (ii) Compute \(v_{\text{phase}}\) and \(v_{\text{group}}\), and sketch each as a function of \(\omega\).
+              </p>
+              <ul>
+                <li><b>Given:</b> \(\omega_0\), \(A\) real; dispersion relation</li>
+                <li><b>Unknown:</b> allowed \(\omega\); \(v_p(\omega)\), \(v_g(\omega)\)</li>
+                <li><b>Must find:</b> require real \(k\); use definitions \(v_p=\omega/k\), \(v_g=d\omega/dk\)</li>
+              </ul>
+            </div>
+
+            <div class="panel">
+              <h3>3(c) Principles & why they apply</h3>
+              <ul>
+                <li><b>Propagation condition:</b> traveling waves require <b>real</b> wave number \(k\).</li>
+                <li><b>Phase velocity:</b> \(v_p=\omega/k\) measures phase-front speed.</li>
+                <li><b>Group velocity:</b> \(v_g=d\omega/dk\) measures wave-packet/envelope speed (energy/information in many contexts).</li>
+              </ul>
+
+              <details>
+                <summary>Approach comparison</summary>
+                <p>
+                  (i) Solve \(k(\omega)\) then compute \(v_p(\omega)\) and rewrite \(v_g\) in terms of \(\omega\).<br/>
+                  (ii) Differentiate \(\omega(k)\) first (nice for \(v_g\)), then invert for plotting.
+                </p>
+              </details>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================ PART 2 ============================ -->
+      <section class="card" id="part2">
+        <div class="cardHeader">
+          <h2>Part 2 — Strategy & Tips (roadmap only)</h2>
+          <span class="badge">5–10 steps max • No algebra</span>
+        </div>
+
+        <div class="content">
+          <div class="grid2">
+            <div class="panel">
+              <h3>3(a) Step-by-step plan</h3>
+              <ol class="steps">
+                <li><div><b>Refraction at entry</b><span>Use Snell’s law to relate \(\theta\) (in air) to \(\theta_f\) (in core).</span></div></li>
+                <li><div><b>Incidence on side wall</b><span>Use geometry to relate \(\theta_f\) to incidence angle \(\phi\) at core–cladding boundary.</span></div></li>
+                <li><div><b>Guiding requirement</b><span>Impose total internal reflection: incidence ≥ critical angle (\(\sin\phi_c=n_c/n_f\)).</span></div></li>
+                <li><div><b>Compute \(\theta_{f,\max}\)</b><span>Convert TIR condition into a maximum permissible \(\theta_f\).</span></div></li>
+                <li><div><b>Compute \(\theta_{\max}\)</b><span>Plug \(\theta_{f,\max}\) back into Snell to get \(\theta_{\max}\) in terms of \(n_a,n_f,n_c\).</span></div></li>
+              </ol>
+            </div>
+
+            <div class="panel">
+              <h3>3(a) Common mistakes + tips</h3>
+              <ul>
+                <li>Angle confusion: \(\theta_f\) is to the axis; TIR uses angle to the normal.</li>
+                <li>Assuming guidance even if \(n_f\le n_c\) (TIR would fail).</li>
+                <li>Dropping \(n_a\) in the final entrance-cone formula.</li>
+              </ul>
+              <div class="callout"><b>Tip:</b> At the side wall, \(\sin(90^\circ-\theta_f)=\cos\theta_f\).</div>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="panel">
+              <h3>3(b) Step-by-step plan</h3>
+              <ol class="steps">
+                <li><div><b>Extract ray angle from geometry</b><span>Use \(\tan\alpha = \text{rise}/\text{run}=20/25\).</span></div></li>
+                <li><div><b>Convert to incidence angle</b><span>Normal is vertical; find \(\theta_B\) from \(\alpha\).</span></div></li>
+                <li><div><b>Apply Brewster condition</b><span>For vacuum→liquid: \(n=\tan\theta_B\).</span></div></li>
+              </ol>
+            </div>
+
+            <div class="panel">
+              <h3>3(b) Common mistakes + tips</h3>
+              <ul>
+                <li>Brewster angle is from the <b>normal</b>, not from the surface.</li>
+                <li>Forgetting reflection angle equals incidence angle.</li>
+                <li>Using \(\tan\alpha\) where \(\tan\theta_B\) is needed (here they are reciprocals).</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="panel">
+              <h3>3(c) Step-by-step plan</h3>
+              <ol class="steps">
+                <li><div><b>Find propagation range</b><span>Solve for \(k^2(\omega)\); require real \(k\).</span></div></li>
+                <li><div><b>Compute \(v_p(\omega)\)</b><span>Use \(v_p=\omega/k\).</span></div></li>
+                <li><div><b>Compute \(v_g(\omega)\)</b><span>Differentiate: \(v_g=d\omega/dk\), then express in \(\omega\).</span></div></li>
+                <li><div><b>Sketch with limits</b><span>Use \(\omega\to\omega_0^+\) and \(\omega\to\infty\) to shape curves.</span></div></li>
+              </ol>
+            </div>
+
+            <div class="panel">
+              <h3>3(c) Common mistakes + tips</h3>
+              <ul>
+                <li>Calling evanescent (\(k\) imaginary) behavior “propagation.”</li>
+                <li>Confusing \(v_p\) and \(v_g\): definitions matter.</li>
+                <li>Not checking units: \(A\) must have units of speed.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================ PART 3 ============================ -->
+      <section class="card" id="part3">
+        <div class="cardHeader">
+          <h2>Part 3 — Full Solution</h2>
+          <span class="badge">Intuition → Derivation → Box → Checks</span>
+        </div>
+
+        <div class="content">
+          <!-- 3(a) -->
+          <div class="panel" id="sol3a">
+            <h3>3(a) Maximum entrance angle \(\theta_{\max}\)</h3>
+
+            <div class="callout">
+              <b>Physical intuition:</b> A larger entrance angle makes the internal ray steeper. At the side wall that reduces
+              the incidence angle measured from the normal; once it falls below the critical angle, total internal reflection fails and the ray leaks into the cladding.
+            </div>
+
+            <p><b>Step 1 — Snell’s law at the entrance face (external medium → core):</b><br/>
+              The entrance-face normal is along the fiber axis. Let \(\theta\) be the ray angle in air relative to the axis, and \(\theta_f\) the ray angle inside the core relative to the axis. Then
+            </p>
+
+            <div class="mathBox" data-copy="n_a\sin\theta = n_f\sin\theta_f">
+              <div class="label"><span>Entrance Snell</span><button class="copyBtn" type="button">Copy</button></div>
+              \[
+                n_a\sin\theta = n_f\sin\theta_f.
+              \]
+            </div>
+
+            <p><b>Step 2 — Geometry at the core–cladding boundary (side wall):</b><br/>
+              The side wall is parallel to the axis, so its normal is perpendicular to the axis.
+              If the ray makes angle \(\theta_f\) to the axis, then its angle to the side-wall normal is
+              \(\phi = 90^\circ-\theta_f\). Thus \(\sin\phi=\cos\theta_f\).
+            </p>
+
+            <p><b>Step 3 — Total internal reflection condition:</b><br/>
+              For core (\(n_f\)) to cladding (\(n_c\)), the critical angle satisfies
+              \(\sin\phi_c=\dfrac{n_c}{n_f}\) (assuming \(n_f>n_c\)). Guided propagation requires \(\phi\ge\phi_c\), i.e.
+            </p>
+
+            <div class="mathBox" data-copy="\cos\theta_f \ge \frac{n_c}{n_f}">
+              <div class="label"><span>TIR criterion</span><button class="copyBtn" type="button">Copy</button></div>
+              \[
+                \sin\phi=\cos\theta_f \ge \frac{n_c}{n_f}.
+              \]
+            </div>
+
+            <p><b>Step 4 — Convert to a maximum internal angle:</b><br/>
+              From \(\cos\theta_f \ge \dfrac{n_c}{n_f}\), we get
+              \(\sin^2\theta_f \le 1 - \left(\dfrac{n_c}{n_f}\right)^2\),
+              hence
+            </p>
+
+            <div class="mathBox" data-copy="\sin\theta_{f,\max}=\sqrt{1-\left(\frac{n_c}{n_f}\right)^2}">
+              <div class="label"><span>Max internal tilt</span><button class="copyBtn" type="button">Copy</button></div>
+              \[
+                \sin\theta_{f,\max}=\sqrt{1-\left(\frac{n_c}{n_f}\right)^2}.
+              \]
+            </div>
+
+            <p><b>Step 5 — Convert back to entrance angle:</b><br/>
+              Insert \(\sin\theta_{f,\max}\) into entrance Snell:
+            </p>
+
+            <div class="result">
+              <h3>Final (3a)</h3>
+              \[
+                \boxed{\;\theta_{\max}=\sin^{-1}\!\left(\frac{\sqrt{n_f^{\,2}-n_c^{\,2}}}{n_a}\right)\;}
+              \]
+            </div>
+
+            <div class="sanity">
+              <h3>Sanity checks (3a)</h3>
+              <ul>
+                <li><b>Units:</b> argument of \(\sin^{-1}\) is dimensionless.</li>
+                <li><b>Limit \(n_f\to n_c\):</b> \(\sqrt{n_f^2-n_c^2}\to 0\Rightarrow \theta_{\max}\to 0\) (no guiding).</li>
+                <li><b>Interpretation:</b> \(\sqrt{n_f^2-n_c^2}\) is the numerical aperture up to the factor \(1/n_a\).</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 3(b) -->
+          <div class="panel" id="sol3b">
+            <h3>3(b) Refractive index of the liquid</h3>
+
+            <div class="callout">
+              <b>Physical intuition:</b> At Brewster incidence, the reflected beam is purely \(s\)-polarized because the \(p\)-polarized reflection coefficient vanishes. The “100% polarized” observation tells us the incidence angle is exactly Brewster’s angle.
+            </div>
+
+            <p><b>Step 1 — Use geometry to get the reflected-ray direction:</b><br/>
+              The ray hits the screen after going 25 cm horizontally and rising 20 cm, so the angle \(\alpha\) above the horizontal satisfies
+              \[
+                \tan\alpha=\frac{20}{25}=0.8.
+              \]
+            </p>
+
+            <p><b>Step 2 — Convert to Brewster angle (measured from the normal):</b><br/>
+              The surface is horizontal, so its normal is vertical. Therefore the angle from the normal is
+              \(\theta_B = 90^\circ-\alpha\). Using \(\tan(90^\circ-\alpha)=\cot\alpha\),
+              \[
+                \tan\theta_B=\frac{1}{\tan\alpha}=\frac{1}{0.8}=1.25.
+              \]
+            </p>
+
+            <p><b>Step 3 — Brewster relation for vacuum → liquid:</b><br/>
+              For incidence from \(n_1=1\) into \(n_2=n\),
+              \[
+                \tan\theta_B=\frac{n_2}{n_1}=n.
+              \]
+              Therefore \(n=1.25\).
+            </p>
+
+            <div class="result">
+              <h3>Final (3b)</h3>
+              \[
+                \boxed{\;n=1.25\;}
+              \]
+            </div>
+
+            <div class="sanity">
+              <h3>Sanity checks (3b)</h3>
+              <ul>
+                <li><b>Units:</b> refractive index is dimensionless.</li>
+                <li><b>Plausible magnitude:</b> many liquids lie near 1.3; 1.25 is realistic.</li>
+                <li><b>Geometry consistency:</b> steeper reflected ray (larger rise/run) → smaller \(\theta_B\) → smaller \(n\) (matches \(\tan\theta_B=n\)).</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- 3(c) -->
+          <div class="panel" id="sol3c">
+            <h3>3(c) Dispersion: propagation, phase velocity, group velocity</h3>
+
+            <div class="callout">
+              <b>Physical intuition:</b> \(\omega_0\) acts like a cutoff. Below it, the wave cannot form a traveling pattern.
+              Above it, waves propagate; near cutoff the group velocity becomes small while the phase velocity becomes large.
+            </div>
+
+            <p><b>(i) Propagation range:</b><br/>
+              Start from
+              \(\omega^2=\omega_0^2 + A^2k^2\). Rearranging,
+              \[
+                k^2=\frac{\omega^2-\omega_0^2}{A^2}.
+              \]
+              Propagation requires real \(k\), so \(\omega^2-\omega_0^2\ge0\). For \(\omega\ge0\), this means \(\omega\ge\omega_0\).
+            </p>
+
+            <div class="result">
+              <h3>Final (3c-i)</h3>
+              \[
+                \boxed{\;\text{Waves propagate for }\omega\ge\omega_0\ \text{ and are evanescent for }\omega<\omega_0.\;}
+              \]
+            </div>
+
+            <p><b>(ii) Compute \(v_p\) and \(v_g\):</b></p>
+
+            <p><b>Step 1 — Express \(k(\omega)\) (for \(\omega\ge\omega_0\)):</b></p>
+            <div class="mathBox" data-copy="k(\omega)=\frac{1}{A}\sqrt{\omega^2-\omega_0^2}\quad(\omega\ge\omega_0)">
+              <div class="label"><span>Wavenumber</span><button class="copyBtn" type="button">Copy</button></div>
+              \[
+                k(\omega)=\frac{1}{A}\sqrt{\omega^2-\omega_0^2}\qquad(\omega\ge\omega_0).
+              \]
+            </div>
+
+            <p><b>Step 2 — Phase velocity \(v_p=\omega/k\):</b></p>
+            <div class="mathBox" data-copy="v_p(\omega)=A\,\frac{\omega}{\sqrt{\omega^2-\omega_0^2}},\quad \omega\ge\omega_0">
+              <div class="label"><span>Phase velocity</span><button class="copyBtn" type="button">Copy</button></div>
+              \[
+                v_p(\omega)=A\,\frac{\omega}{\sqrt{\omega^2-\omega_0^2}},\quad \omega\ge\omega_0.
+              \]
+            </div>
+
+            <p><b>Step 3 — Group velocity \(v_g=d\omega/dk\):</b><br/>
+              Treat \(\omega(k)=\sqrt{\omega_0^2+A^2k^2}\). Then
+              \[
+                v_g=\frac{d\omega}{dk}=\frac{A^2k}{\omega}.
+              \]
+              Substitute \(k(\omega)\) to express it in terms of \(\omega\):
+            </p>
+
+            <div class="mathBox" data-copy="v_g(\omega)=A\,\frac{\sqrt{\omega^2-\omega_0^2}}{\omega}=A\sqrt{1-\frac{\omega_0^2}{\omega^2}},\quad \omega\ge\omega_0">
+              <div class="label"><span>Group velocity</span><button class="copyBtn" type="button">Copy</button></div>
+              \[
+                v_g(\omega)=A\,\frac{\sqrt{\omega^2-\omega_0^2}}{\omega}
+                =A\sqrt{1-\frac{\omega_0^2}{\omega^2}},\quad \omega\ge\omega_0.
+              \]
+            </div>
+
+            <div class="result">
+              <h3>Final (3c-ii)</h3>
+              \[
+                \boxed{\;
+                v_p(\omega)=A\,\frac{\omega}{\sqrt{\omega^2-\omega_0^2}},\qquad
+                v_g(\omega)=A\,\frac{\sqrt{\omega^2-\omega_0^2}}{\omega}
+                =A\sqrt{1-\frac{\omega_0^2}{\omega^2}},\quad \omega\ge\omega_0
+                \;}
+              \]
+            </div>
+
+            <div class="grid2">
+              <div class="plotWrap">
+                <div class="plotTitle">
+                  <b>Qualitative sketch: \(v_p(\omega)\)</b>
+                  <span>\(\omega\to\omega_0^+\): \(\infty\) • \(\omega\to\infty\): \(A\)</span>
+                </div>
+                <svg viewBox="0 0 560 320" role="img" aria-label="vp vs omega">
+                  <g>
+                    <g>
+                      <line class="grid" x1="60" y1="30" x2="60" y2="270"/>
+                      <line class="grid" x1="120" y1="30" x2="120" y2="270"/>
+                      <line class="grid" x1="180" y1="30" x2="180" y2="270"/>
+                      <line class="grid" x1="240" y1="30" x2="240" y2="270"/>
+                      <line class="grid" x1="300" y1="30" x2="300" y2="270"/>
+                      <line class="grid" x1="360" y1="30" x2="360" y2="270"/>
+                      <line class="grid" x1="420" y1="30" x2="420" y2="270"/>
+                      <line class="grid" x1="480" y1="30" x2="480" y2="270"/>
+                      <line class="grid" x1="540" y1="30" x2="540" y2="270"/>
+                    </g>
+                    <g>
+                      <line class="grid" x1="50" y1="70" x2="550" y2="70"/>
+                      <line class="grid" x1="50" y1="110" x2="550" y2="110"/>
+                      <line class="grid" x1="50" y1="150" x2="550" y2="150"/>
+                      <line class="grid" x1="50" y1="190" x2="550" y2="190"/>
+                      <line class="grid" x1="50" y1="230" x2="550" y2="230"/>
+                    </g>
+                  </g>
+                  <line class="axis" x1="50" y1="270" x2="550" y2="270"/>
+                  <line class="axis" x1="50" y1="270" x2="50" y2="30"/>
+
+                  <line class="asym" x1="50" y1="230" x2="550" y2="230"/>
+                  <path class="curve1"
+                        d="M 80 40
+                           C 95 75, 110 120, 140 160
+                           C 200 220, 320 228, 550 230" />
+                  <text class="note" x="440" y="222">asymptote: \(A\)</text>
+                  <text class="note" x="58" y="48">\(\omega_0\)</text>
+                  <text class="note" x="535" y="292">\(\omega\)</text>
+                  <text class="note" x="10" y="40" transform="rotate(-90 12,40)">\(v_p\)</text>
+                </svg>
+              </div>
+
+              <div class="plotWrap">
+                <div class="plotTitle">
+                  <b>Qualitative sketch: \(v_g(\omega)\)</b>
+                  <span>\(\omega=\omega_0\): 0 • \(\omega\to\infty\): \(A\)</span>
+                </div>
+                <svg viewBox="0 0 560 320" role="img" aria-label="vg vs omega">
+                  <g>
+                    <g>
+                      <line class="grid" x1="60" y1="30" x2="60" y2="270"/>
+                      <line class="grid" x1="120" y1="30" x2="120" y2="270"/>
+                      <line class="grid" x1="180" y1="30" x2="180" y2="270"/>
+                      <line class="grid" x1="240" y1="30" x2="240" y2="270"/>
+                      <line class="grid" x1="300" y1="30" x2="300" y2="270"/>
+                      <line class="grid" x1="360" y1="30" x2="360" y2="270"/>
+                      <line class="grid" x1="420" y1="30" x2="420" y2="270"/>
+                      <line class="grid" x1="480" y1="30" x2="480" y2="270"/>
+                      <line class="grid" x1="540" y1="30" x2="540" y2="270"/>
+                    </g>
+                    <g>
+                      <line class="grid" x1="50" y1="70" x2="550" y2="70"/>
+                      <line class="grid" x1="50" y1="110" x2="550" y2="110"/>
+                      <line class="grid" x1="50" y1="150" x2="550" y2="150"/>
+                      <line class="grid" x1="50" y1="190" x2="550" y2="190"/>
+                      <line class="grid" x1="50" y1="230" x2="550" y2="230"/>
+                    </g>
+                  </g>
+                  <line class="axis" x1="50" y1="270" x2="550" y2="270"/>
+                  <line class="axis" x1="50" y1="270" x2="50" y2="30"/>
+
+                  <line class="asym" x1="50" y1="70" x2="550" y2="70"/>
+                  <path class="curve2"
+                        d="M 80 270
+                           C 105 250, 135 190, 190 140
+                           C 270 85, 390 72, 550 70" />
+                  <text class="note" x="440" y="62">asymptote: \(A\)</text>
+                  <text class="note" x="58" y="285">\(\omega_0\)</text>
+                  <text class="note" x="535" y="292">\(\omega\)</text>
+                  <text class="note" x="10" y="40" transform="rotate(-90 12,40)">\(v_g\)</text>
+                </svg>
+              </div>
+            </div>
+
+            <div class="sanity">
+              <h3>Sanity checks (3c)</h3>
+              <ul>
+                <li><b>Units:</b> \(A\) has units of speed, so \(v_p\) and \(v_g\) are speeds.</li>
+                <li><b>Near cutoff:</b> \(\omega\to\omega_0^+\Rightarrow v_g\to 0\) and \(v_p\to\infty\).</li>
+                <li><b>High frequency:</b> \(\omega\to\infty\Rightarrow v_p\to A\), \(v_g\to A\).</li>
+                <li><b>Extra algebra check:</b> \(v_p v_g = A^2\).</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Final snapshot -->
+          <div class="panel" id="final">
+            <h3>All final answers (copy-ready)</h3>
+            <div class="mathBox" id="allAnswers" data-copy="\theta_{\max}=\sin^{-1}\!\left(\frac{\sqrt{n_f^{\,2}-n_c^{\,2}}}{n_a}\right)\ ;\ n=1.25\ ;\ \omega\ge\omega_0\ ;\ v_p(\omega)=A\frac{\omega}{\sqrt{\omega^2-\omega_0^2}}\ ;\ v_g(\omega)=A\frac{\sqrt{\omega^2-\omega_0^2}}{\omega}=A\sqrt{1-\frac{\omega_0^2}{\omega^2}}">
+              <div class="label"><span>Boxed results</span><button class="copyBtn" type="button">Copy</button></div>
+              \[
+                \boxed{\;\theta_{\max}=\sin^{-1}\!\left(\frac{\sqrt{n_f^{\,2}-n_c^{\,2}}}{n_a}\right)\;}
+              \]
+              \[
+                \boxed{\;n=1.25\;}
+              \]
+              \[
+                \boxed{\;\omega\ge\omega_0\;}
+              \]
+              \[
+                \boxed{\;v_p(\omega)=A\,\frac{\omega}{\sqrt{\omega^2-\omega_0^2}},\quad
+                v_g(\omega)=A\,\frac{\sqrt{\omega^2-\omega_0^2}}{\omega}
+                =A\sqrt{1-\frac{\omega_0^2}{\omega^2}}\;,\ \omega\ge\omega_0\;}
+              \]
+            </div>
+
+            <p style="margin:0; color:var(--muted);">
+              If your website already includes MathJax, remove the two MathJax script tags from the <code>&lt;head&gt;</code>.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+      <footer>
+        <a href="#top" class="pill" style="display:inline-flex;">↑ Back to top</a>
+        <div style="margin-top:10px;">Responsive • Copy-friendly • Math-ready • Article-safe</div>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // Copy-to-clipboard for each mathBox
+    (function(){
+      const boxes = document.querySelectorAll('.mathBox[data-copy]');
+      boxes.forEach(box => {
+        const btn = box.querySelector('.copyBtn');
+        const text = box.getAttribute('data-copy') || '';
+        if(!btn) return;
+
+        btn.addEventListener('click', async () => {
+          try{
+            await navigator.clipboard.writeText(text);
+            const old = btn.textContent;
+            btn.textContent = 'Copied ✓';
+            btn.style.borderColor = 'color-mix(in srgb, var(--a) 55%, var(--line))';
+            setTimeout(() => {
+              btn.textContent = old;
+              btn.style.borderColor = '';
+            }, 900);
+          }catch(e){
+            btn.textContent = 'Copy failed';
+            setTimeout(() => btn.textContent = 'Copy', 900);
+          }
+        });
+      });
+    })();
+
+    // Floating: scroll progress
+    (function(){
+      const fill = document.getElementById('progressFill');
+      const label = document.getElementById('progressLabel');
+      function update(){
+        const doc = document.documentElement;
+        const scrollTop = doc.scrollTop || document.body.scrollTop;
+        const height = (doc.scrollHeight - doc.clientHeight) || 1;
+        const p = Math.max(0, Math.min(1, scrollTop / height));
+        const pct = Math.round(p * 100);
+        if(fill) fill.style.width = pct + '%';
+        if(label) label.textContent = pct + '%';
+      }
+      update();
+      window.addEventListener('scroll', update, { passive:true });
+      window.addEventListener('resize', update);
+    })();
+
+    // Floating: buttons
+    (function(){
+      const btnTop = document.getElementById('btnTop');
+      const btnCopyAll = document.getElementById('btnCopyAll');
+      const all = document.getElementById('allAnswers');
+
+      btnTop?.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      btnCopyAll?.addEventListener('click', async () => {
+        const text = all?.getAttribute('data-copy') || '';
+        try{
+          await navigator.clipboard.writeText(text);
+          const old = btnCopyAll.textContent;
+          btnCopyAll.textContent = 'Copied ✓';
+          setTimeout(() => btnCopyAll.textContent = old, 900);
+        }catch(e){
+          btnCopyAll.textContent = 'Copy failed';
+          setTimeout(() => btnCopyAll.textContent = 'Copy all answers', 900);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

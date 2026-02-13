@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Problem 2 — Two Beads on a Taut String (Normal Modes)</title>
+
+  <!-- SEO / Sharing -->
+  <meta name="description" content="Expert-level, beginner-friendly solution: equations of motion, M^{-1}K, normal modes, and time response for two beads on a taut string." />
+  <meta property="og:title" content="Two Beads on a Taut String — Full Solution" />
+  <meta property="og:description" content="Equations of motion, normal modes, frequencies, and initial-value solution with checks." />
+  <meta property="og:type" content="article" />
+
+  <!-- MathJax for LaTeX -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']], displayMath: [['\\[','\\]'], ['$$','$$']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.09);
+      --text: rgba(255,255,255,0.90);
+      --muted: rgba(255,255,255,0.68);
+      --faint: rgba(255,255,255,0.45);
+      --accent: #86b7ff;
+      --accent2: #7fffd4;
+      --warn: #ffd166;
+      --ok: #7CFF7C;
+      --danger: #ff6b6b;
+      --border: rgba(255,255,255,0.12);
+      --shadow: 0 20px 60px rgba(0,0,0,0.45);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    }
+    [data-theme="light"]{
+      --bg: #f6f7fb;
+      --panel: rgba(0,0,0,0.04);
+      --panel2: rgba(0,0,0,0.06);
+      --text: rgba(0,0,0,0.88);
+      --muted: rgba(0,0,0,0.62);
+      --faint: rgba(0,0,0,0.40);
+      --border: rgba(0,0,0,0.10);
+      --shadow: 0 18px 50px rgba(0,0,0,0.12);
+      --accent: #1f6feb;
+      --accent2: #0aa37f;
+      --warn: #b7791f;
+      --ok: #147a2a;
+      --danger: #b00020;
+    }
+
+    *{ box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin: 0;
+      font-family: var(--sans);
+      background:
+        radial-gradient(1200px 600px at 10% 10%, rgba(134,183,255,0.18), transparent 55%),
+        radial-gradient(900px 500px at 85% 20%, rgba(127,255,212,0.12), transparent 55%),
+        radial-gradient(800px 500px at 50% 90%, rgba(255,209,102,0.10), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      letter-spacing: 0.2px;
+    }
+
+    /* Layout */
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 18px 80px;
+    }
+
+    header.hero{
+      position: relative;
+      border-radius: calc(var(--radius) + 8px);
+      padding: 28px 22px;
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    header.hero::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(500px 220px at 18% 0%, rgba(134,183,255,0.25), transparent 60%),
+        radial-gradient(420px 240px at 85% 15%, rgba(127,255,212,0.20), transparent 55%),
+        radial-gradient(500px 280px at 60% 120%, rgba(255,209,102,0.16), transparent 60%);
+      filter: blur(12px);
+      pointer-events:none;
+      opacity: 0.85;
+    }
+    header.hero > * { position: relative; z-index: 1; }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(134,183,255,0.12);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .badge b{ color: var(--text); font-weight: 650; }
+    .controls{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+    .btn{
+      appearance:none;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+    }
+    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.10); }
+    .btn:active{ transform: translateY(0px) scale(0.98); }
+    .btn .dot{
+      width: 10px; height: 10px; border-radius: 999px; display:inline-block;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(134,183,255,0.18);
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    h1{
+      margin: 14px 0 8px;
+      font-size: clamp(26px, 3.5vw, 38px);
+      line-height: 1.15;
+      letter-spacing: -0.6px;
+    }
+    .subtitle{
+      margin: 0 0 16px;
+      color: var(--muted);
+      max-width: 78ch;
+    }
+    .meta{
+      display:flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--faint);
+      font-size: 13px;
+    }
+    .meta span{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px dashed var(--border);
+      background: rgba(255,255,255,0.03);
+    }
+    .meta i{
+      width: 8px; height: 8px; border-radius: 999px; display:inline-block;
+      background: var(--accent2);
+      opacity: 0.85;
+    }
+
+    /* Content grid */
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 18px;
+    }
+    @media (min-width: 980px){
+      .grid{
+        grid-template-columns: 320px 1fr;
+        align-items:start;
+      }
+      .toc{ position: sticky; top: 16px; }
+    }
+
+    /* Panels */
+    .panel{
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      box-shadow: 0 14px 40px rgba(0,0,0,0.18);
+      overflow: hidden;
+    }
+    .panel .hd{
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+    }
+    .panel .hd h2{
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .panel .bd{ padding: 16px; }
+
+    /* TOC */
+    .toc a{
+      display:block;
+      padding: 10px 12px;
+      border-radius: 12px;
+      color: var(--text);
+      text-decoration: none;
+      border: 1px solid transparent;
+      transition: background 120ms ease, border-color 120ms ease;
+    }
+    .toc a:hover{
+      background: rgba(134,183,255,0.10);
+      border-color: rgba(134,183,255,0.25);
+    }
+    .toc small{ color: var(--muted); display:block; margin-top: 2px; }
+    .toc .group{ display:flex; flex-direction:column; gap: 8px; }
+    .toc .note{
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    /* Typography */
+    .content h2{
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: -0.2px;
+    }
+    .content h3{
+      margin: 16px 0 8px;
+      font-size: 16px;
+      letter-spacing: -0.15px;
+      color: var(--text);
+    }
+    .content p{ margin: 10px 0; color: var(--text); }
+    .content ul, .content ol{ margin: 10px 0 10px 20px; color: var(--text); }
+    .content li{ margin: 6px 0; }
+    .content hr{
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 18px 0;
+    }
+
+    /* Callouts */
+    .callout{
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 14px 14px;
+      background: rgba(255,255,255,0.04);
+      margin: 14px 0;
+    }
+    .callout strong{ color: var(--text); }
+    .callout .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      font-size: 12px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .pill{
+      display:inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      font-size: 12px;
+      margin: 0 6px 6px 0;
+    }
+
+    /* Equation blocks */
+    .eq{
+      border-radius: 14px;
+      border: 1px dashed var(--border);
+      background: rgba(0,0,0,0.12);
+      padding: 12px 12px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    [data-theme="light"] .eq{
+      background: rgba(0,0,0,0.03);
+    }
+
+    /* Boxed final results */
+    .result{
+      border-radius: 18px;
+      border: 1px solid rgba(127,255,212,0.35);
+      background: linear-gradient(180deg, rgba(127,255,212,0.10), rgba(127,255,212,0.04));
+      padding: 14px 14px;
+      margin: 14px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .result::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(400px 220px at 20% 30%, rgba(127,255,212,0.18), transparent 60%);
+      filter: blur(10px);
+      opacity: 0.8;
+      pointer-events:none;
+    }
+    .result > *{ position: relative; z-index: 1; }
+    .result .label{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .spark{
+      width: 10px; height: 10px; border-radius: 999px;
+      background: var(--accent2);
+      box-shadow: 0 0 0 5px rgba(127,255,212,0.12);
+    }
+
+    /* Collapsible details */
+    details{
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      padding: 12px 12px;
+      margin: 12px 0;
+    }
+    summary{
+      cursor:pointer;
+      font-weight: 750;
+      color: var(--text);
+      list-style: none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    summary .chev{
+      width: 26px; height: 26px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      flex: 0 0 auto;
+    }
+    details[open] summary .chev{ transform: rotate(180deg); transition: transform 160ms ease; }
+
+    /* Footer */
+    footer{
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align:center;
+      padding: 18px 0 0;
+    }
+
+    /* Print */
+    @media print{
+      body{ background: #fff; color: #000; }
+      header.hero, .panel{ box-shadow: none; }
+      .btn, .toc{ display:none !important; }
+      .panel{ border-color: #ddd; }
+      .eq{ background: #fff; }
+      .result{ border-color: #666; }
+    }
+  </style>
+</head>
+
+<body data-theme="dark">
+  <div class="wrap">
+    <header class="hero" id="top">
+      <div class="topbar">
+        <div class="badge" aria-label="Article badge">
+          <span style="font-family:var(--mono); opacity:0.9;">PHYS</span>
+          <b>Normal Modes</b>
+          <span style="opacity:0.75;">·</span>
+          <span>Two beads on a taut string</span>
+        </div>
+
+        <div class="controls">
+          <button class="btn" type="button" id="themeBtn" aria-label="Toggle theme">
+            <span class="dot" aria-hidden="true"></span>
+            Toggle theme
+          </button>
+          <button class="btn" type="button" id="copyLinkBtn" aria-label="Copy link to this article">
+            Copy link
+          </button>
+          <button class="btn" type="button" onclick="window.print()" aria-label="Print article">
+            Print / PDF
+          </button>
+        </div>
+      </div>
+
+      <h1>Problem 2 (15 pts): Two beads on a taut string</h1>
+      <p class="subtitle">
+        Full, structured solution (rigorous but beginner-friendly): equations of motion, matrix \(M^{-1}K\),
+        normal mode shapes and frequencies, and the time-domain response for the bead initially at equilibrium.
+      </p>
+
+      <div class="meta">
+        <span><i></i>Small oscillations</span>
+        <span><i></i>Gravity neglected</span>
+        <span><i></i>Massless string, tension \(T\)</span>
+        <span><i></i>Segment lengths \(2L,\,L,\,2L\)</span>
+      </div>
+    </header>
+
+    <section class="grid" aria-label="Article layout">
+      <!-- TOC -->
+      <aside class="panel toc" aria-label="Table of contents">
+        <div class="hd"><h2>Contents</h2></div>
+        <div class="bd">
+          <nav class="group" aria-label="On-page navigation">
+            <a href="#part1">
+              Part 1 — Problem Analysis
+              <small>Restate · givens/unknowns · laws · approaches</small>
+            </a>
+            <a href="#part2">
+              Part 2 — Strategy & Tips
+              <small>Roadmap · common mistakes</small>
+            </a>
+            <a href="#part3">
+              Part 3 — Full Solution
+              <small>Intuition · derivation · results · checks</small>
+            </a>
+            <a href="#a">
+              (a) Equations of motion & \(M^{-1}K\)
+              <small>Linearized tension forces</small>
+            </a>
+            <a href="#b">
+              (b) Normal modes & \(\omega\)
+              <small>Symmetry eigenvectors</small>
+            </a>
+            <a href="#c">
+              (c) Initial-value response \(y_1(t)\)
+              <small>Modal superposition</small>
+            </a>
+            <a href="#checks">
+              Sanity checks
+              <small>Units · limits · interpretation</small>
+            </a>
+          </nav>
+
+          <div class="note">
+            <b style="color:var(--text);">Tip:</b> Use the browser’s find feature for keywords like
+            <span class="pill">slope</span><span class="pill">eigenvalue</span><span class="pill">mode</span>.
+          </div>
+        </div>
+      </aside>
+
+      <!-- Content -->
+      <main class="panel content" aria-label="Main article content">
+        <div class="hd">
+          <h2>Article</h2>
+          <span style="color:var(--muted); font-size:12px;">Scroll · Expand details · Print-ready</span>
+        </div>
+        <div class="bd">
+          <!-- PART 1 -->
+          <section id="part1">
+            <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+            <h3>1) Restate the problem (in my own words)</h3>
+            <p>
+              Two identical beads (\(m_1=m_2=m\)) lie on a taut, massless string of total length \(5L\) fixed at both ends.
+              The beads divide the string into three straight segments of lengths \(2L\), \(L\), and \(2L\).
+              With large constant tension \(T\), we neglect gravity and study <b>small transverse oscillations</b>:
+              the bead displacements are \(y_1(t)\) and \(y_2(t)\).
+            </p>
+            <p>
+              Tasks:
+              (a) derive the linear equations of motion and identify \(M^{-1}K\);
+              (b) find normal mode shapes and angular frequencies; and
+              (c) with \(y_1(0)=0\), \(y_2(0)=A\), \(\dot y_1(0)=\dot y_2(0)=0\), find \(y_1(t)\).
+            </p>
+
+            <h3>2) Given quantities</h3>
+            <ul>
+              <li>Masses: \(m_1=m_2=m\)</li>
+              <li>Tension: \(T\) (constant)</li>
+              <li>Segment lengths: left \(2L\), middle \(L\), right \(2L\)</li>
+              <li>Small oscillations in \(y\); gravity ignored</li>
+            </ul>
+
+            <h3>3) Unknowns</h3>
+            <ul>
+              <li>Displacements \(y_1(t)\), \(y_2(t)\)</li>
+              <li>Normal mode shapes (eigenvectors)</li>
+              <li>Normal mode frequencies \(\omega_1,\omega_2\)</li>
+              <li>Requested: explicit \(y_1(t)\) for the stated initial condition</li>
+            </ul>
+
+            <h3>4) Relevant physics principles (and why they apply)</h3>
+            <div class="callout">
+              <div class="tag"><span class="pill">Linearization</span><span class="pill">Tension force</span><span class="pill">Eigenmodes</span></div>
+              <ul>
+                <li>
+                  <b>Small-angle approximation:</b> each string segment is almost horizontal, so
+                  \(\sin\theta \approx \tan\theta \approx \Delta y/\Delta x\). This makes forces linear in \(y_1,y_2\).
+                </li>
+                <li>
+                  <b>Restoring force from tension:</b> vertical components of tension from adjacent segments pull each bead back toward equilibrium.
+                </li>
+                <li>
+                  <b>Newton’s 2nd law:</b> \(m\ddot y_i = \sum F_{y,i}\) for each bead.
+                </li>
+                <li>
+                  <b>Normal modes:</b> a linear coupled system \(M\ddot{\mathbf y}+K\mathbf y=0\) is solved via
+                  \((K-\omega^2 M)\mathbf a=0\).
+                </li>
+              </ul>
+            </div>
+
+            <h3>5) Candidate approaches</h3>
+            <ol>
+              <li><b>Direct forces from slopes (Newton):</b> compute slopes of segments and vertical tension components → quickest to \(M^{-1}K\).</li>
+              <li><b>Lagrangian/energy method:</b> write kinetic energy of beads and effective potential from tension → systematic, great for complex variants.</li>
+              <li><b>Symmetry-first mode guessing:</b> use mirror symmetry to guess eigenvectors \((1,1)\), \((1,-1)\) → fast for mode shapes.</li>
+            </ol>
+
+            <h3>6) Best approach</h3>
+            <p>
+              We’ll use <b>Newton + small-slope geometry</b> to get the equations and matrices cleanly, then use <b>symmetry</b>
+              to identify eigenvectors quickly and compute \(\omega\).
+            </p>
+          </section>
+
+          <hr />
+
+          <!-- PART 2 -->
+          <section id="part2">
+            <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+            <ol>
+              <li>
+                <b>Define variables:</b> set bead displacements \(y_1(t)\), \(y_2(t)\).
+                <br /><span style="color:var(--muted)">Tool:</span> small oscillations, linear regime.
+              </li>
+              <li>
+                <b>Write segment slopes:</b> express each segment’s slope using \(\Delta y/\Delta x\) with lengths \(2L, L, 2L\).
+                <br /><span style="color:var(--muted)">Tool:</span> geometry.
+              </li>
+              <li>
+                <b>Compute vertical tension forces:</b> for each bead, sum vertical components from its two adjacent segments.
+                <br /><span style="color:var(--muted)">Tool:</span> \(F_y \approx T\,(\text{slope})\) with correct sign.
+              </li>
+              <li>
+                <b>Apply Newton’s law:</b> \(m\ddot y_i = \sum F_{y,i}\) to get two coupled linear ODEs.
+                <br /><span style="color:var(--muted)">Tool:</span> dynamics.
+              </li>
+              <li>
+                <b>Matrix form:</b> rewrite as \(M\ddot{\mathbf y}+K\mathbf y=0\) and compute \(M^{-1}K\).
+                <br /><span style="color:var(--muted)">Tool:</span> linear algebra.
+              </li>
+              <li>
+                <b>Normal modes:</b> solve eigenproblem of \(M^{-1}K\) to get \(\omega^2\) and eigenvectors.
+                <br /><span style="color:var(--muted)">Tool:</span> eigenvalues/eigenvectors.
+              </li>
+              <li>
+                <b>Initial conditions:</b> expand \(\mathbf y(t)\) as a sum of mode vectors with cosine time factors (since initial velocities are zero).
+                <br /><span style="color:var(--muted)">Tool:</span> superposition.
+              </li>
+              <li>
+                <b>Extract \(y_1(t)\):</b> read off the first component from the modal sum.
+              </li>
+            </ol>
+
+            <details>
+              <summary>
+                Common mistakes (click to expand)
+                <span class="chev" aria-hidden="true">⌄</span>
+              </summary>
+              <ul>
+                <li><b>Sign errors:</b> tension pulls along the segment toward the neighboring point; track the direction carefully.</li>
+                <li><b>Wrong segment length in slopes:</b> left/right use \(2L\), middle uses \(L\).</li>
+                <li><b>Dropping \(m\):</b> remember \(\omega^2\) comes from eigenvalues of \(M^{-1}K\), not \(K\) alone.</li>
+                <li><b>Mode confusion:</b> symmetric \((1,1)\) vs antisymmetric \((1,-1)\) is determined by mirror symmetry.</li>
+              </ul>
+            </details>
+          </section>
+
+          <hr />
+
+          <!-- PART 3 -->
+          <section id="part3">
+            <h2>PART 3 — Full Solution</h2>
+
+            <h3>Physical intuition</h3>
+            <p>
+              Each bead is a junction of two taut segments. A vertical displacement tilts the segments, and
+              the tension’s vertical components pull the bead back. Because the geometry is symmetric about the center:
+            </p>
+            <ul>
+              <li><b>Symmetric mode</b> \(y_1=y_2\): the middle segment has little slope → weaker restoring force → lower \(\omega\).</li>
+              <li><b>Antisymmetric mode</b> \(y_1=-y_2\): the middle segment slope is large → stronger restoring force → higher \(\omega\).</li>
+            </ul>
+
+            <!-- (a) -->
+            <section id="a">
+              <h3>(a) Equations of motion and matrix \(M^{-1}K\)</h3>
+
+              <p>
+                Let the fixed ends have transverse displacement \(0\). In the small-slope limit, each segment is straight and
+                \(\tan\theta \approx \Delta y/\Delta x\). Compute the slopes:
+              </p>
+
+              <div class="eq">
+                \[
+                s_L = \frac{y_1-0}{2L}=\frac{y_1}{2L},\qquad
+                s_M = \frac{y_2-y_1}{L},\qquad
+                s_R = \frac{0-y_2}{2L}=-\frac{y_2}{2L}.
+                \]
+              </div>
+
+              <p>
+                The vertical force contribution from a segment on a bead is \(F_y \approx T(\text{slope})\), with sign set by the pull direction.
+              </p>
+
+              <details>
+                <summary>
+                  Force bookkeeping (signs) — expand
+                  <span class="chev" aria-hidden="true">⌄</span>
+                </summary>
+                <ul>
+                  <li>
+                    <b>Bead 1:</b> left segment pulls toward the left wall → vertical component \(-T\,\frac{y_1}{2L}\).
+                    Middle segment pulls toward bead 2 → \(+T\,\frac{y_2-y_1}{L}\).
+                  </li>
+                  <li>
+                    <b>Bead 2:</b> middle segment pulls toward bead 1 → \(+T\,\frac{y_1-y_2}{L}\).
+                    Right segment pulls toward the right wall → \(-T\,\frac{y_2}{2L}\).
+                  </li>
+                </ul>
+              </details>
+
+              <p><b>Newton’s 2nd law</b> for each bead gives:</p>
+
+              <div class="eq">
+                \[
+                m\ddot y_1 = T\frac{y_2-y_1}{L} - T\frac{y_1}{2L}
+                = \frac{T}{L}\left(y_2-\frac{3}{2}y_1\right),
+                \]
+                \[
+                m\ddot y_2 = T\frac{y_1-y_2}{L} - T\frac{y_2}{2L}
+                = \frac{T}{L}\left(y_1-\frac{3}{2}y_2\right).
+                \]
+              </div>
+
+              <p>
+                Rearranging into the standard coupled-oscillator form \(M\ddot{\mathbf y}+K\mathbf y=0\) with
+                \(\mathbf y=(y_1,y_2)^T\):
+              </p>
+
+              <div class="eq">
+                \[
+                m\ddot y_1+\frac{T}{L}\left(\frac{3}{2}y_1-y_2\right)=0,\qquad
+                m\ddot y_2+\frac{T}{L}\left(\frac{3}{2}y_2-y_1\right)=0.
+                \]
+              </div>
+
+              <div class="eq">
+                \[
+                M=m\begin{pmatrix}1&0\\0&1\end{pmatrix},\qquad
+                K=\frac{T}{L}\begin{pmatrix}\frac{3}{2}&-1\\-1&\frac{3}{2}\end{pmatrix}.
+                \]
+              </div>
+
+              <div class="result">
+                <div class="label"><span class="spark" aria-hidden="true"></span> Boxed result</div>
+                <div class="eq" style="margin:0;">
+                  \[
+                  M^{-1}K=\frac{T}{mL}\begin{pmatrix}\frac{3}{2}&-1\\-1&\frac{3}{2}\end{pmatrix}.
+                  \]
+                </div>
+              </div>
+            </section>
+
+            <!-- (b) -->
+            <section id="b">
+              <h3>(b) Normal mode shapes and angular frequencies</h3>
+
+              <p>
+                Normal modes satisfy \((M^{-1}K)\mathbf a=\omega^2\mathbf a\). The matrix is symmetric and invariant under swapping
+                beads 1 and 2, so the eigenvectors are the symmetric and antisymmetric combinations:
+              </p>
+
+              <div class="callout">
+                <div class="tag"><span class="pill">Symmetry</span><span class="pill">Eigenvectors</span></div>
+                <p style="margin:0;">
+                  \(\mathbf a_1=(1,1)\) (symmetric) and \(\mathbf a_2=(1,-1)\) (antisymmetric).
+                </p>
+              </div>
+
+              <p><b>Symmetric mode</b> \(\mathbf a_1=(1,1)\):</p>
+              <div class="eq">
+                \[
+                \begin{pmatrix}\frac{3}{2}&-1\\-1&\frac{3}{2}\end{pmatrix}\!\begin{pmatrix}1\\1\end{pmatrix}
+                =\begin{pmatrix}\frac{1}{2}\\\frac{1}{2}\end{pmatrix}
+                =\left(\frac{1}{2}\right)\begin{pmatrix}1\\1\end{pmatrix}.
+                \]
+                \[
+                \Rightarrow\quad \omega_1^2=\frac{T}{mL}\cdot\frac{1}{2}=\frac{T}{2mL}
+                \quad\Rightarrow\quad \omega_1=\sqrt{\frac{T}{2mL}}.
+                \]
+              </div>
+
+              <p><b>Antisymmetric mode</b> \(\mathbf a_2=(1,-1)\):</p>
+              <div class="eq">
+                \[
+                \begin{pmatrix}\frac{3}{2}&-1\\-1&\frac{3}{2}\end{pmatrix}\!\begin{pmatrix}1\\-1\end{pmatrix}
+                =\begin{pmatrix}\frac{5}{2}\\-\frac{5}{2}\end{pmatrix}
+                =\left(\frac{5}{2}\right)\begin{pmatrix}1\\-1\end{pmatrix}.
+                \]
+                \[
+                \Rightarrow\quad \omega_2^2=\frac{T}{mL}\cdot\frac{5}{2}=\frac{5T}{2mL}
+                \quad\Rightarrow\quad \omega_2=\sqrt{\frac{5T}{2mL}}.
+                \]
+              </div>
+
+              <div class="result">
+                <div class="label"><span class="spark" aria-hidden="true"></span> Boxed results</div>
+                <p style="margin:0 0 10px;">
+                  <b>Mode shapes:</b> \(y_1=y_2\) (low) and \(y_1=-y_2\) (high).
+                </p>
+                <div class="eq" style="margin:0;">
+                  \[
+                  \omega_1=\sqrt{\frac{T}{2mL}},\qquad
+                  \omega_2=\sqrt{\frac{5T}{2mL}}.
+                  \]
+                </div>
+              </div>
+            </section>
+
+            <!-- (c) -->
+            <section id="c">
+              <h3>(c) Initial conditions and the displacement \(y_1(t)\)</h3>
+
+              <p>
+                With zero initial velocities, each normal coordinate oscillates as a cosine. Write the superposition:
+              </p>
+
+              <div class="eq">
+                \[
+                \mathbf y(t)=c_1(1,1)\cos(\omega_1 t)+c_2(1,-1)\cos(\omega_2 t).
+                \]
+              </div>
+
+              <p>
+                Apply \(\mathbf y(0)=(y_1(0),y_2(0))^T=(0,A)^T\):
+              </p>
+
+              <div class="eq">
+                \[
+                c_1(1,1)+c_2(1,-1)=(c_1+c_2,\;c_1-c_2)=(0,\;A).
+                \]
+                \[
+                \Rightarrow\quad c_1+c_2=0,\quad c_1-c_2=A
+                \Rightarrow\quad c_1=\frac{A}{2},\;\;c_2=-\frac{A}{2}.
+                \]
+              </div>
+
+              <p>
+                Therefore, the bead that started at equilibrium (\(y_1(0)=0\)) moves as:
+              </p>
+
+              <div class="result">
+                <div class="label"><span class="spark" aria-hidden="true"></span> Final boxed answer</div>
+                <div class="eq" style="margin:0;">
+                  \[
+                  y_1(t)=\frac{A}{2}\left[\cos\!\Big(\sqrt{\tfrac{T}{2mL}}\,t\Big)-\cos\!\Big(\sqrt{\tfrac{5T}{2mL}}\,t\Big)\right].
+                  \]
+                </div>
+              </div>
+
+              <details>
+                <summary>
+                  (Optional) Also \(y_2(t)\) — expand
+                  <span class="chev" aria-hidden="true">⌄</span>
+                </summary>
+                <div class="eq">
+                  \[
+                  y_2(t)=\frac{A}{2}\left[\cos(\omega_1 t)+\cos(\omega_2 t)\right].
+                  \]
+                </div>
+              </details>
+            </section>
+
+            <!-- Checks -->
+            <section id="checks">
+              <h3>Sanity checks</h3>
+
+              <div class="callout">
+                <div class="tag"><span class="pill">Units</span><span class="pill">Limits</span><span class="pill">Meaning</span></div>
+
+                <p><b>Units:</b> \(\omega^2 \sim T/(mL)\).
+                  Since \(T\) has units \(N = kg\cdot m/s^2\), then
+                  \(\frac{T}{mL} = \frac{kg\cdot m/s^2}{kg\cdot m}=1/s^2\), so \(\omega\) is \(1/s\). ✅
+                </p>
+
+                <p><b>Limiting cases:</b></p>
+                <ul>
+                  <li>\(T\uparrow \Rightarrow \omega_{1,2}\uparrow\): stiffer string → faster oscillations. ✅</li>
+                  <li>\(m\uparrow \Rightarrow \omega_{1,2}\downarrow\): heavier beads → slower. ✅</li>
+                  <li>\(\omega_2/\omega_1=\sqrt{5}>1\): antisymmetric mode is higher frequency because the middle segment tilts more. ✅</li>
+                </ul>
+
+                <p><b>Physical interpretation:</b>
+                  The initial condition excites both modes, producing a difference of cosines in \(y_1(t)\),
+                  i.e., an interference/“beating-like” exchange of motion between beads. ✅
+                </p>
+              </div>
+            </section>
+          </section>
+
+          <hr />
+
+          <div class="callout" role="note" aria-label="Copy-friendly summary">
+            <div class="tag"><span class="pill">Quick Summary</span></div>
+            <p style="margin:0;">
+              \[
+              M^{-1}K=\frac{T}{mL}\begin{pmatrix}\frac{3}{2}&-1\\-1&\frac{3}{2}\end{pmatrix},\quad
+              \omega_1=\sqrt{\frac{T}{2mL}},\ \omega_2=\sqrt{\frac{5T}{2mL}},
+              \]
+              \[
+              y_1(t)=\frac{A}{2}\Big[\cos(\omega_1 t)-\cos(\omega_2 t)\Big].
+              \]
+            </p>
+          </div>
+
+          <footer>
+            <p style="margin:0;">
+              Built for article embedding · responsive · print-friendly · LaTeX via MathJax
+              · <a href="#top" style="color:var(--accent); text-decoration:none;">Back to top</a>
+            </p>
+          </footer>
+        </div>
+      </main>
+    </section>
+  </div>
+
+  <script>
+    (function(){
+      const root = document.body;
+      const themeBtn = document.getElementById('themeBtn');
+      const copyLinkBtn = document.getElementById('copyLinkBtn');
+
+      // Load saved theme
+      const saved = localStorage.getItem('articleTheme');
+      if(saved === 'light' || saved === 'dark'){
+        root.setAttribute('data-theme', saved);
+      }
+
+      themeBtn.addEventListener('click', () => {
+        const current = root.getAttribute('data-theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        localStorage.setItem('articleTheme', next);
+      });
+
+      copyLinkBtn.addEventListener('click', async () => {
+        try{
+          await navigator.clipboard.writeText(window.location.href);
+          copyLinkBtn.textContent = 'Copied ✓';
+          setTimeout(() => copyLinkBtn.textContent = 'Copy link', 1000);
+        }catch(e){
+          // fallback
+          const tmp = document.createElement('textarea');
+          tmp.value = window.location.href;
+          document.body.appendChild(tmp);
+          tmp.select();
+          document.execCommand('copy');
+          document.body.removeChild(tmp);
+          copyLinkBtn.textContent = 'Copied ✓';
+          setTimeout(() => copyLinkBtn.textContent = 'Copy link', 1000);
+        }
+      });
+
+      // Smooth scroll (respect reduced motion)
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if(!prefersReduced){
+        document.querySelectorAll('a[href^="#"]').forEach(a=>{
+          a.addEventListener('click', (ev)=>{
+            const id = a.getAttribute('href').slice(1);
+            const target = document.getElementById(id);
+            if(target){
+              ev.preventDefault();
+              target.scrollIntoView({behavior:'smooth', block:'start'});
+              history.replaceState(null, '', '#' + id);
+            }
+          });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Coupled Oscillators (Constant-Tension Band) — Full Structured Solution</title>
+
+  <!-- SEO / Sharing -->
+  <meta name="description" content="Advanced article-style solution: analysis, roadmap, full derivation, normal modes, and sanity checks for a constant-tension coupled oscillator system." />
+  <meta property="og:title" content="Coupled Oscillators — Normal Modes (Full Solution)" />
+  <meta property="og:description" content="Problem Analysis → Strategy → Full Solution → Boxed Results → Sanity Checks + Mode Sketches." />
+  <meta property="og:type" content="article" />
+
+  <!-- KaTeX for math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b0f18;
+      --bg2:#0f1626;
+      --card:rgba(14,21,36,.58);
+      --ink:#e9eefc;
+      --muted:#a8b3d6;
+      --line:#26324f;
+      --accent:#7aa2ff;
+      --accent2:#a78bfa;
+      --good:#2dd4bf;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+
+      --shadow:0 18px 60px rgba(0,0,0,.35);
+      --shadow2:0 10px 30px rgba(0,0,0,.25);
+      --radius:18px;
+
+      --mono:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f6f8ff;
+        --bg2:#ffffff;
+        --card:rgba(255,255,255,.76);
+        --ink:#0e1630;
+        --muted:#4a587e;
+        --line:#e3e8ff;
+        --accent:#355cff;
+        --accent2:#7c3aed;
+        --shadow:0 18px 60px rgba(35,60,140,.14);
+        --shadow2:0 10px 30px rgba(35,60,140,.10);
+      }
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(122,162,255,.22), transparent 55%),
+        radial-gradient(1100px 700px at 85% 20%, rgba(167,139,250,.18), transparent 55%),
+        radial-gradient(900px 600px at 60% 90%, rgba(45,212,191,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      line-height:1.55;
+      overflow-x:hidden;
+    }
+
+    /* Subtle animated grid */
+    .grid{
+      position:fixed; inset:0;
+      pointer-events:none;
+      opacity:.10;
+      background-image:
+        linear-gradient(to right, var(--line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+      background-size:42px 42px;
+      mask-image: radial-gradient(circle at 40% 10%, rgba(0,0,0,1) 0%, rgba(0,0,0,.55) 38%, rgba(0,0,0,0) 75%);
+      animation:drift 18s linear infinite;
+    }
+    @keyframes drift{
+      0%{ transform:translate3d(0,0,0); }
+      100%{ transform:translate3d(-42px,-42px,0); }
+    }
+
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    .wrap{
+      max-width:1120px;
+      margin:0 auto;
+      padding:28px 18px 96px;
+    }
+
+    header.hero{
+      border:1px solid var(--line);
+      border-radius:calc(var(--radius) + 10px);
+      background:
+        linear-gradient(135deg, rgba(122,162,255,.14), rgba(167,139,250,.10)),
+        rgba(14,21,36,.55);
+      box-shadow:var(--shadow);
+      padding:26px 22px 18px;
+      overflow:hidden;
+      position:relative;
+    }
+    header.hero::after{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(500px 260px at 10% 0%, rgba(122,162,255,.18), transparent 60%),
+        radial-gradient(520px 260px at 95% 10%, rgba(167,139,250,.14), transparent 65%);
+      pointer-events:none;
+      opacity:.9;
+    }
+    header.hero > *{ position:relative; }
+
+    .badge-row{
+      display:flex; flex-wrap:wrap;
+      gap:10px; align-items:center;
+      margin-bottom:12px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:rgba(10,15,25,.35);
+      color:var(--muted);
+      font-size:13px;
+      letter-spacing:.2px;
+      backdrop-filter:blur(10px);
+    }
+    .dot{
+      width:8px; height:8px; border-radius:50%;
+      background:linear-gradient(90deg, var(--accent), var(--accent2));
+      box-shadow:0 0 0 3px rgba(122,162,255,.15);
+    }
+
+    h1{
+      margin:0 0 8px;
+      font-size:clamp(22px, 2.7vw, 36px);
+      line-height:1.15;
+      letter-spacing:-0.02em;
+    }
+    .sub{
+      margin:0 0 14px;
+      color:var(--muted);
+      max-width:78ch;
+      font-size:15.7px;
+    }
+
+    .hero-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+    .btn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:650;
+      font-size:14px;
+      color:var(--ink);
+      background:linear-gradient(135deg, rgba(122,162,255,.95), rgba(167,139,250,.95));
+      box-shadow:var(--shadow2);
+      transition:transform .15s ease, filter .15s ease;
+    }
+    .btn:hover{ transform:translateY(-1px); filter:brightness(1.06); }
+    .btn.secondary{
+      background:rgba(10,15,25,.45);
+      border:1px solid var(--line);
+      color:var(--ink);
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:16px;
+      margin-top:18px;
+    }
+    @media (min-width: 980px){
+      .layout{ grid-template-columns:350px 1fr; }
+    }
+
+    aside.toc{
+      position:sticky;
+      top:16px;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:rgba(14,21,36,.55);
+      box-shadow:var(--shadow2);
+      padding:14px 14px 10px;
+      backdrop-filter:blur(10px);
+      height:fit-content;
+    }
+    .toc h2{
+      margin:0 0 8px;
+      font-size:14px;
+      color:var(--muted);
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+    .toc nav{ display:flex; flex-direction:column; gap:6px; }
+    .toc a{
+      display:flex; align-items:center; gap:10px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid transparent;
+      color:var(--ink);
+      font-size:14.5px;
+      transition: background .15s ease, border-color .15s ease;
+    }
+    .toc a:hover{
+      background:rgba(122,162,255,.10);
+      border-color:rgba(122,162,255,.22);
+      text-decoration:none;
+    }
+    .toc .k{
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--muted);
+      padding:2px 6px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:rgba(10,15,25,.25);
+    }
+
+    main article{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    section.card{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:var(--card);
+      box-shadow:var(--shadow2);
+      padding:16px 16px 12px;
+      backdrop-filter:blur(10px);
+      position:relative;
+      overflow:hidden;
+    }
+    section.card::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(420px 220px at 20% 0%, rgba(122,162,255,.15), transparent 60%),
+        radial-gradient(380px 240px at 85% 10%, rgba(167,139,250,.12), transparent 65%);
+      opacity:.86;
+      pointer-events:none;
+    }
+    section.card > *{ position:relative; }
+
+    .title-row{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    h2{
+      margin:0;
+      font-size:18px;
+      letter-spacing:-0.01em;
+    }
+    .pill{
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--line);
+      background:rgba(10,15,25,.25);
+      padding:5px 10px;
+      border-radius:999px;
+      font-family:var(--mono);
+    }
+
+    .cols{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+    @media (min-width: 860px){
+      .cols{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .panel{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(10,15,25,.25);
+      padding:12px;
+    }
+    .panel h3{
+      margin:0 0 8px;
+      font-size:14.5px;
+      color:var(--muted);
+      letter-spacing:.02em;
+      text-transform:uppercase;
+    }
+    ul{ margin:8px 0 0 18px; }
+    li{ margin:6px 0; }
+    .muted{ color:var(--muted); }
+
+    /* inline math "fallback" style until KaTeX renders */
+    .inline-math{
+      font-family:var(--mono);
+      padding:1px 6px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      background:rgba(10,15,25,.25);
+      display:inline-block;
+      white-space:nowrap;
+    }
+
+    .steps{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      counter-reset: step;
+    }
+    .step{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(10,15,25,.25);
+      padding:12px;
+      position:relative;
+    }
+    .step::before{
+      counter-increment:step;
+      content:counter(step);
+      position:absolute;
+      top:10px;
+      right:10px;
+      font-family:var(--mono);
+      font-weight:800;
+      font-size:12px;
+      color:rgba(122,162,255,.9);
+      border:1px solid rgba(122,162,255,.25);
+      background:rgba(122,162,255,.08);
+      border-radius:10px;
+      padding:3px 8px;
+    }
+    .step b{ display:block; margin-bottom:4px; }
+
+    .eq{
+      margin:10px 0;
+      padding:12px;
+      border:1px dashed rgba(122,162,255,.35);
+      border-radius:14px;
+      background:rgba(122,162,255,.07);
+      overflow-x:auto;
+    }
+
+    .callout{
+      border:1px solid var(--line);
+      border-left:4px solid var(--accent);
+      border-radius:14px;
+      background:rgba(10,15,25,.25);
+      padding:12px;
+      margin:10px 0;
+    }
+    .callout .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin-bottom:6px;
+      font-size:12px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.07em;
+    }
+    .tag .icon{
+      width:18px; height:18px;
+      display:grid; place-items:center;
+      border-radius:6px;
+      border:1px solid var(--line);
+      background:rgba(10,15,25,.25);
+      font-family:var(--mono);
+      font-weight:800;
+      color:rgba(122,162,255,.9);
+    }
+    .danger{ border-left-color:var(--bad); }
+    .danger .icon{ color:rgba(251,113,133,.95); }
+    .ok{ border-left-color:var(--good); }
+    .ok .icon{ color:rgba(45,212,191,.95); }
+    .warn{ border-left-color:var(--warn); }
+    .warn .icon{ color:rgba(251,191,36,.95); }
+
+    .result{
+      border:1px solid rgba(45,212,191,.35);
+      background:rgba(45,212,191,.08);
+      border-radius:16px;
+      padding:14px;
+      margin-top:10px;
+      overflow-x:auto;
+    }
+    .result h3{
+      margin:0 0 6px;
+      font-size:14.5px;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+      color:rgba(45,212,191,.95);
+    }
+
+    /* Mode sketches */
+    .mode-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+      margin-top:10px;
+    }
+    @media (min-width: 860px){
+      .mode-grid{ grid-template-columns:1fr 1fr; }
+    }
+    .mode{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(10,15,25,.25);
+      padding:12px;
+      overflow:hidden;
+    }
+    .mode h4{
+      margin:0 0 6px;
+      font-size:14px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .sketch{
+      position:relative;
+      height:220px;
+      border-radius:12px;
+      border:1px solid rgba(122,162,255,.18);
+      background:
+        radial-gradient(260px 150px at 30% 20%, rgba(122,162,255,.10), transparent 60%),
+        radial-gradient(250px 150px at 75% 30%, rgba(167,139,250,.10), transparent 60%),
+        rgba(10,15,25,.20);
+    }
+    .wall{
+      position:absolute;
+      top:18px; bottom:18px;
+      width:22px;
+      border-radius:10px;
+      border:1px solid rgba(233,238,252,.20);
+      background:rgba(233,238,252,.08);
+    }
+    .wall.left{ left:14px; }
+    .wall.right{ right:14px; }
+
+    .mass{
+      position:absolute;
+      width:44px; height:44px;
+      border-radius:999px;
+      display:grid; place-items:center;
+      border:1px solid rgba(233,238,252,.22);
+      background:rgba(233,238,252,.10);
+      font-family:var(--mono);
+      font-weight:800;
+      color:var(--ink);
+      box-shadow:0 10px 22px rgba(0,0,0,.25);
+    }
+    .mass.top{ top:48px; left:58%; transform:translateX(-50%); }
+    .mass.bot{ top:132px; left:48%; transform:translateX(-50%); }
+
+    .spring{
+      position:absolute;
+      height:10px;
+      border-radius:999px;
+      border:1px dashed rgba(233,238,252,.20);
+      background:linear-gradient(90deg, rgba(122,162,255,0), rgba(122,162,255,.30), rgba(122,162,255,0));
+    }
+    .spring.left{ top:150px; left:36px; width:34%; }
+    .spring.right{ top:70px; right:36px; width:34%; }
+
+    .band{
+      position:absolute;
+      width:2px;
+      background:rgba(233,238,252,.25);
+      left:54%;
+      top:92px;
+      height:90px;
+      transform-origin:top;
+      border-radius:999px;
+    }
+
+    .arrow{
+      position:absolute;
+      height:2px;
+      background:rgba(45,212,191,.85);
+      border-radius:999px;
+    }
+    .arrow::after{
+      content:"";
+      position:absolute;
+      right:-4px; top:-3px;
+      border-left:8px solid rgba(45,212,191,.85);
+      border-top:4px solid transparent;
+      border-bottom:4px solid transparent;
+    }
+    .arrow.left::after{
+      right:auto; left:-4px;
+      border-left:none;
+      border-right:8px solid rgba(45,212,191,.85);
+    }
+
+    .foot{
+      margin-top:18px;
+      color:var(--muted);
+      font-size:13px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      justify-content:space-between;
+      align-items:center;
+      padding-top:12px;
+      border-top:1px solid var(--line);
+    }
+    .kbd{
+      font-family:var(--mono);
+      border:1px solid var(--line);
+      padding:2px 6px;
+      border-radius:8px;
+      background:rgba(10,15,25,.20);
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    /* Print-friendly */
+    @media print{
+      .grid, aside.toc, .hero-actions{ display:none !important; }
+      body{ background:#fff; color:#000; }
+      section.card, header.hero{ box-shadow:none; background:#fff; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="grid" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <header class="hero" id="top">
+      <div class="badge-row">
+        <span class="badge"><span class="dot"></span> Coupled Oscillators • 2 DOF</span>
+        <span class="badge">Tension: <span class="kbd">T = 2kL</span></span>
+        <span class="badge">Small: <span class="kbd">x₁,x₂ ≪ L</span></span>
+      </div>
+
+      <h1>Coupled Oscillators with a Constant-Tension Band</h1>
+      <p class="sub">
+        Full, structured solution as an article: <b>PART 1</b> (Analysis), <b>PART 2</b> (Roadmap),
+        <b>PART 3</b> (Full Derivation), plus boxed final answers, sanity checks, and exam-ready mode sketches.
+      </p>
+
+      <div class="hero-actions">
+        <button class="btn" data-jump="#part1">PART 1</button>
+        <button class="btn secondary" data-jump="#part2">PART 2</button>
+        <button class="btn secondary" data-jump="#part3">PART 3</button>
+        <button class="btn secondary" data-jump="#results">Final Results</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="toc" aria-label="Table of contents">
+        <h2>Contents</h2>
+        <nav>
+          <a href="#part1"><span class="k">1</span> PART 1 — Problem Analysis</a>
+          <a href="#part2"><span class="k">2</span> PART 2 — Strategy & Tips</a>
+          <a href="#part3"><span class="k">3</span> PART 3 — Full Solution</a>
+          <a href="#results"><span class="k">★</span> Boxed Final Results</a>
+          <a href="#sanity"><span class="k">✓</span> Sanity Checks</a>
+          <a href="#modes"><span class="k">⇄</span> Mode Sketches</a>
+        </nav>
+
+        <div class="callout warn" style="margin-top:12px;">
+          <div class="tag"><span class="icon">!</span> Key Insight</div>
+          <div class="muted">
+            Constant tension <span class="inline-math">T</span> produces an effective coupling stiffness
+            <span class="inline-math">k_c=\frac{T}{L}=2k</span> because the horizontal component is
+            proportional to <span class="inline-math">x_2-x_1</span>.
+          </div>
+        </div>
+      </aside>
+
+      <main>
+        <article>
+
+          <!-- PART 1 -->
+          <section class="card" id="part1">
+            <div class="title-row">
+              <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+              <span class="pill">Interpretation</span>
+            </div>
+
+            <div class="cols">
+              <div class="panel">
+                <h3>Restated problem</h3>
+                <p class="muted" style="margin:0;">
+                  Two masses move only along <span class="inline-math">x</span>. The lower mass is
+                  <span class="inline-math">2m</span> and is attached to the left wall with a spring
+                  constant <span class="inline-math">2k</span>. The upper mass is <span class="inline-math">m</span>
+                  and is attached to the right wall with spring constant <span class="inline-math">k</span>.
+                  A vertical band of length <span class="inline-math">L</span> couples the masses and stays at
+                  constant tension <span class="inline-math">T=2kL</span>. At equilibrium, both masses share the
+                  same <span class="inline-math">x</span>-position and both springs are un-stretched. For small
+                  displacements <span class="inline-math">x_1,x_2\ll L</span>, the tension remains constant.
+                  Find: (a) coupled ODEs, (b) normal mode frequencies, (c) normal mode shapes.
+                </p>
+              </div>
+
+              <div class="panel">
+                <h3>Given / unknowns / targets</h3>
+                <ul>
+                  <li><b>Given:</b> masses <span class="inline-math">2m</span>, <span class="inline-math">m</span>;
+                      springs <span class="inline-math">2k</span>, <span class="inline-math">k</span>;
+                      band length <span class="inline-math">L</span>; tension <span class="inline-math">T=2kL</span>;
+                      1D motion; no friction, no gravity.</li>
+                  <li><b>Unknown:</b> <span class="inline-math">x_1(t)</span>, <span class="inline-math">x_2(t)</span>,
+                      normal frequencies <span class="inline-math">\omega</span>, mode ratios.</li>
+                  <li><b>Find:</b> equations of motion, <span class="inline-math">\omega_1,\omega_2</span>, and eigenvectors.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="cols">
+              <div class="panel">
+                <h3>Principles (why they apply)</h3>
+                <ul>
+                  <li><b>Newton’s 2nd law:</b> motion constrained to <span class="inline-math">x</span> so
+                    <span class="inline-math">\sum F_x = m\ddot{x}</span>.</li>
+                  <li><b>Hooke’s law:</b> springs give linear restoring forces about equilibrium.</li>
+                  <li><b>Small-angle band coupling:</b> band force magnitude is <span class="inline-math">T</span> along the band, hence its
+                    horizontal component is linear in <span class="inline-math">(x_2-x_1)/L</span> for small displacements.</li>
+                </ul>
+              </div>
+
+              <div class="panel">
+                <h3>Approaches (compare)</h3>
+                <ul>
+                  <li><b>Force + geometry:</b> clearest for handling constant tension and signs.</li>
+                  <li><b>Lagrangian:</b> elegant, but needs careful linearized potential for band.</li>
+                  <li><b>Matrix:</b> fastest after building <span class="inline-math">M</span> and <span class="inline-math">K</span>.</li>
+                </ul>
+                <p class="muted" style="margin:8px 0 0;">
+                  <b>Choice:</b> force method for maximum transparency.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- PART 2 -->
+          <section class="card" id="part2">
+            <div class="title-row">
+              <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+              <span class="pill">5–10 steps</span>
+            </div>
+
+            <div class="steps">
+              <div class="step"><b>Define coordinates</b> Goal: set \(x_1,x_2\) from equilibrium. Tool: sign convention (+ right).</div>
+              <div class="step"><b>Wall spring forces</b> Goal: write restoring forces. Tool: Hooke’s law.</div>
+              <div class="step"><b>Band coupling</b> Goal: linearize horizontal component. Tool: \(F_x \approx T(x_2-x_1)/L\).</div>
+              <div class="step"><b>Newton’s law</b> Goal: obtain coupled ODEs. Tool: \(\sum F_x=m\ddot{x}\).</div>
+              <div class="step"><b>Normal-mode ansatz</b> Goal: turn ODEs into algebra. Tool: \(x_i=A_i e^{i\omega t}\).</div>
+              <div class="step"><b>Determinant condition</b> Goal: find \(\omega\). Tool: nontrivial solution ⇒ det = 0.</div>
+              <div class="step"><b>Mode shapes</b> Goal: compute \(B/A\). Tool: substitute each \(\omega\) back.</div>
+              <div class="step"><b>Sketch</b> Goal: show relative motion. Tool: sign/magnitude of \(B/A\).</div>
+            </div>
+
+            <div class="callout danger" style="margin-top:12px;">
+              <div class="tag"><span class="icon">×</span> Common mistakes</div>
+              <ul style="margin:6px 0 0 18px;">
+                <li>Sign errors in coupling: forces must be equal and opposite.</li>
+                <li>Forgetting one mass is \(2m\) (changes inertia).</li>
+                <li>Missing \(k_c=T/L\) (the band acts like a coupling spring).</li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- PART 3 -->
+          <section class="card" id="part3">
+            <div class="title-row">
+              <h2>PART 3 — Full Solution</h2>
+              <span class="pill">Derivation</span>
+            </div>
+
+            <div class="callout ok">
+              <div class="tag"><span class="icon">✓</span> Physical intuition</div>
+              <div class="muted">
+                If \(x_1=x_2\), the band stays nearly vertical, giving almost no horizontal restoring force:
+                that produces a lower-frequency in-phase mode. If the masses move oppositely, the band tilts and
+                its horizontal component becomes large, making the restoring effect stronger and the frequency higher.
+              </div>
+            </div>
+
+            <h3 style="margin:10px 0 0; font-size:16px;">(2.a) Coupled differential equations</h3>
+
+            <div class="panel">
+              <h3>Wall spring forces</h3>
+              <div class="eq"><span class="inline-math">F_{\text{wall on }1}=-2k\,x_1,\qquad F_{\text{wall on }2}=-k\,x_2.</span></div>
+            </div>
+
+            <div class="panel">
+              <h3>Band coupling (small-angle)</h3>
+              <p class="muted" style="margin:0;">
+                Relative horizontal displacement is \(\Delta x=x_2-x_1\).
+                For \(|\Delta x|\ll L\), the band’s horizontal component is linear.
+              </p>
+              <div class="eq">
+                <span class="inline-math">
+                  k_c=\frac{T}{L}=\frac{2kL}{L}=2k,\quad
+                  F_{\text{band on }1,x}=-k_c(x_1-x_2),\quad
+                  F_{\text{band on }2,x}=-k_c(x_2-x_1).
+                </span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <h3>Newton’s 2nd law for each mass</h3>
+              <div class="eq">
+                <span class="inline-math">
+                  2m\,\ddot{x}_1 = -2k x_1 -2k(x_1-x_2)
+                  \Rightarrow
+                  2m\,\ddot{x}_1 +4k x_1 -2k x_2=0.
+                </span>
+              </div>
+              <div class="eq">
+                <span class="inline-math">
+                  m\,\ddot{x}_2 = -k x_2 -2k(x_2-x_1)
+                  \Rightarrow
+                  m\,\ddot{x}_2 +3k x_2 -2k x_1=0.
+                </span>
+              </div>
+
+              <div class="result" id="eoms">
+                <h3>Equations of motion</h3>
+                <div class="katex-block">
+                  \[
+                  \boxed{
+                  \begin{aligned}
+                  2m\,\ddot x_1 +4k\,x_1 -2k\,x_2 &= 0,\\
+                  m\,\ddot x_2 +3k\,x_2 -2k\,x_1 &= 0.
+                  \end{aligned}}
+                  \]
+                </div>
+              </div>
+            </div>
+
+            <h3 style="margin:12px 0 0; font-size:16px;">(2.b) Normal mode frequencies</h3>
+
+            <div class="panel">
+              <h3>Normal-mode ansatz and eigenvalue condition</h3>
+              <p class="muted" style="margin:0;">
+                Assume \(x_1=Ae^{i\omega t}\), \(x_2=Be^{i\omega t}\) so \(\ddot{x}=-\omega^2 x\).
+              </p>
+
+              <div class="eq">
+                <span class="inline-math">
+                  (4k-2m\omega^2)A-2kB=0,\qquad -2kA+(3k-m\omega^2)B=0.
+                </span>
+              </div>
+
+              <p class="muted" style="margin:0;">For nontrivial \((A,B)\), determinant must vanish:</p>
+
+              <div class="eq">
+                <span class="inline-math">
+                  (4k-2m\omega^2)(3k-m\omega^2)-4k^2=0.
+                </span>
+              </div>
+
+              <p class="muted" style="margin:0;">Let \(\lambda=m\omega^2\):</p>
+
+              <div class="eq">
+                <span class="inline-math">
+                  (4k-2\lambda)(3k-\lambda)-4k^2=0
+                  \Rightarrow
+                  \lambda^2-5k\lambda+4k^2=0.
+                </span>
+              </div>
+
+              <div class="eq">
+                <span class="inline-math">
+                  \lambda=\frac{5k\pm\sqrt{25k^2-16k^2}}{2}
+                  =\frac{5k\pm 3k}{2}
+                  \Rightarrow
+                  \lambda_1=4k,\;\lambda_2=k.
+                </span>
+              </div>
+
+              <div class="result" id="results">
+                <h3>Normal mode frequencies</h3>
+                <div class="katex-block">
+                  \[
+                  \boxed{
+                  \omega_1^2=\frac{4k}{m},\ \omega_2^2=\frac{k}{m}
+                  \quad\Rightarrow\quad
+                  \omega_1=2\sqrt{\frac{k}{m}},\ \omega_2=\sqrt{\frac{k}{m}} }
+                  \]
+                </div>
+              </div>
+            </div>
+
+            <h3 style="margin:12px 0 0; font-size:16px;">(2.c) Normal modes (mode shapes)</h3>
+
+            <div class="panel">
+              <h3>Amplitude ratios</h3>
+              <p class="muted" style="margin:0;">
+                Use \((4k-2m\omega^2)A-2kB=0\) to find \(B/A\).
+              </p>
+
+              <div class="cols" style="margin-top:10px;">
+                <div class="panel">
+                  <h3>Low-frequency mode \(\omega_2^2=k/m\)</h3>
+                  <div class="eq"><span class="inline-math">m\omega^2=k \Rightarrow (4k-2k)A-2kB=0 \Rightarrow B=A.</span></div>
+                  <p class="muted" style="margin:0;"><b>Shape:</b> \((x_1,x_2)\propto(1,1)\) (in phase, equal amplitudes).</p>
+                </div>
+                <div class="panel">
+                  <h3>High-frequency mode \(\omega_1^2=4k/m\)</h3>
+                  <div class="eq"><span class="inline-math">m\omega^2=4k \Rightarrow (4k-8k)A-2kB=0 \Rightarrow B=-2A.</span></div>
+                  <p class="muted" style="margin:0;"><b>Shape:</b> \((x_1,x_2)\propto(1,-2)\) (out of phase; top moves 2×).</p>
+                </div>
+              </div>
+
+              <div class="result">
+                <h3>Mode vectors</h3>
+                <div class="katex-block">
+                  \[
+                  \boxed{
+                  \text{Mode at }\omega_2:\ (x_1,x_2)\propto(1,1),\qquad
+                  \text{Mode at }\omega_1:\ (x_1,x_2)\propto(1,-2).
+                  }
+                  \]
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- SANITY -->
+          <section class="card" id="sanity">
+            <div class="title-row">
+              <h2>Sanity Checks</h2>
+              <span class="pill">Units • limits • meaning</span>
+            </div>
+
+            <div class="cols">
+              <div class="panel">
+                <h3>Units</h3>
+                <p class="muted" style="margin:0;">
+                  \(k/m\) has units \(\text{s}^{-2}\), so \(\sqrt{k/m}\) has units \(\text{s}^{-1}\). Correct for angular frequency.
+                </p>
+              </div>
+              <div class="panel">
+                <h3>Limiting / interpretation</h3>
+                <ul>
+                  <li>Coupling stiffness \(k_c=T/L=2k\) grows with tension → stronger coupling → higher frequency mode.</li>
+                  <li>In-phase mode \(x_1=x_2\) keeps band vertical → coupling force ~ 0 → lower frequency.</li>
+                  <li>Out-of-phase mode tilts band → large horizontal component → higher frequency.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- MODES -->
+          <section class="card" id="modes">
+            <div class="title-row">
+              <h2>Mode Sketches (direction + relative magnitude)</h2>
+              <span class="pill">Exam-ready</span>
+            </div>
+
+            <div class="callout warn">
+              <div class="tag"><span class="icon">!</span> Drawing guide</div>
+              <div class="muted">
+                <ul style="margin:6px 0 0 18px;">
+                  <li><b>(1,1)</b>: both arrows same direction, same length.</li>
+                  <li><b>(1,-2)</b>: arrows opposite; top arrow twice the length of the bottom arrow.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="mode-grid">
+              <div class="mode">
+                <h4>Low-frequency mode \((1,1)\)</h4>
+                <div class="sketch" aria-label="Low mode sketch">
+                  <div class="wall left"></div><div class="wall right"></div>
+                  <div class="spring left"></div><div class="spring right"></div>
+                  <div class="band" style="transform:rotate(0deg)"></div>
+                  <div class="mass top">m</div><div class="mass bot">2m</div>
+                  <div class="arrow" style="top:70px; left:62%; width:58px;"></div>
+                  <div class="arrow" style="top:154px; left:52%; width:58px;"></div>
+                </div>
+              </div>
+
+              <div class="mode">
+                <h4>High-frequency mode \((1,-2)\)</h4>
+                <div class="sketch" aria-label="High mode sketch">
+                  <div class="wall left"></div><div class="wall right"></div>
+                  <div class="spring left"></div><div class="spring right"></div>
+                  <div class="band" style="transform:rotate(10deg)"></div>
+                  <div class="mass top">m</div><div class="mass bot">2m</div>
+                  <div class="arrow" style="top:70px; left:60%; width:92px;"></div>
+                  <div class="arrow left" style="top:154px; left:48%; width:46px;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="foot">
+              <div>© Article-ready • HTML + CSS + KaTeX</div>
+              <div class="muted">Print tip: open browser print → “Save as PDF”.</div>
+            </div>
+          </section>
+
+        </article>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Smooth scroll for buttons
+    document.querySelectorAll("[data-jump]").forEach(btn=>{
+      btn.addEventListener("click", () => {
+        const target = document.querySelector(btn.getAttribute("data-jump"));
+        if(target) target.scrollIntoView({behavior:"smooth", block:"start"});
+      });
+    });
+
+    // KaTeX auto-render for \\( \\) and \\[ \\]
+    window.addEventListener("DOMContentLoaded", () => {
+      if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+          delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "\\(", right: "\\)", display: false}
+          ],
+          throwOnError: false
+        });
+      }
+    });
+  </script>
+</body>
+</html>

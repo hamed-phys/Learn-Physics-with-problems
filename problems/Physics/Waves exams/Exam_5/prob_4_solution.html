@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="description" content="Advanced physics solution: N-slit Fraunhofer diffraction, deducing N and d/D from intensity pattern, plus D→0 limit." />
+  <title>Problem 4 — N-Slit Interference (Fraunhofer): Full Structured Solution</title>
+
+  <!-- MathJax for beautiful equations -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <style>
+    :root{
+      --bg: #070A12;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.045);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.68);
+      --soft: rgba(255,255,255,.12);
+      --soft2: rgba(255,255,255,.18);
+      --accent: #7C5CFF;
+      --accent2:#00E5FF;
+      --good:#29f27a;
+      --warn:#ffcc66;
+      --bad:#ff5a6e;
+      --shadow: 0 14px 38px rgba(0,0,0,.45);
+      --radius: 18px;
+      --radius2: 26px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    /* Light mode auto */
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#F7F8FF;
+        --card: rgba(0,0,0,.05);
+        --card2: rgba(0,0,0,.035);
+        --text: rgba(0,0,0,.88);
+        --muted: rgba(0,0,0,.62);
+        --soft: rgba(0,0,0,.10);
+        --soft2: rgba(0,0,0,.18);
+        --shadow: 0 12px 28px rgba(0,0,0,.12);
+      }
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 18% 10%, rgba(124,92,255,.22), transparent 60%),
+        radial-gradient(900px 540px at 82% 24%, rgba(0,229,255,.16), transparent 55%),
+        radial-gradient(1200px 900px at 60% 110%, rgba(41,242,122,.10), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.02), transparent 28%),
+        var(--bg);
+      overflow-x:hidden;
+    }
+
+    a{color:inherit}
+    .wrap{
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 38px 18px 64px;
+    }
+
+    /* Decorative top header */
+    header.hero{
+      position:relative;
+      padding: 28px 22px 22px;
+      border-radius: var(--radius2);
+      background: linear-gradient(135deg, rgba(124,92,255,.18), rgba(0,229,255,.10));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    header.hero::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(600px 260px at 30% 10%, rgba(255,255,255,.16), transparent 60%),
+        radial-gradient(450px 240px at 90% 0%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(520px 320px at 70% 120%, rgba(255,255,255,.08), transparent 55%);
+      filter: blur(6px);
+      opacity:.65;
+      pointer-events:none;
+    }
+    .hero-grid{
+      position:relative;
+      display:grid;
+      grid-template-columns: 1.4fr .8fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 840px){
+      .hero-grid{grid-template-columns:1fr}
+    }
+
+    .title{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      z-index:1;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      width:max-content;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: .3px;
+      color: var(--muted);
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 4px rgba(124,92,255,.15);
+      flex: 0 0 auto;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(26px, 3.3vw, 40px);
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+    }
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height:1.6;
+      max-width: 62ch;
+    }
+
+    .meta{
+      position:relative;
+      z-index:1;
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+    }
+    .meta-card{
+      border-radius: var(--radius);
+      padding: 14px 14px 12px;
+      background: rgba(0,0,0,.16);
+      border: 1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .meta-card h3{
+      margin:0 0 10px;
+      font-size: 12px;
+      font-family: var(--mono);
+      letter-spacing: .35px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items:center;
+      padding: 9px 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      margin-bottom: 10px;
+    }
+    .kv:last-child{margin-bottom:0}
+    .kv .k{color:var(--muted); font-size: 13px}
+    .kv .v{font-family: var(--mono); font-size: 13px}
+
+    /* Section styling */
+    section{
+      margin-top: 22px;
+      padding: 18px;
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+    }
+    section .head{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      gap: 12px;
+      align-items:flex-end;
+      margin-bottom: 14px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.14);
+      color: var(--muted);
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+    .pill svg{opacity:.85}
+    h2{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:-0.01em;
+    }
+    .content{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 16px;
+    }
+    @media (max-width: 900px){
+      .content{grid-template-columns:1fr}
+    }
+
+    .card{
+      border-radius: var(--radius);
+      background: var(--card2);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 14px;
+    }
+    .card h3{
+      margin:0 0 10px;
+      font-size: 13px;
+      font-family: var(--mono);
+      letter-spacing: .35px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    ul{margin: 10px 0 0; padding-left: 18px}
+    li{margin: 7px 0; color: var(--text)}
+    li small{color: var(--muted)}
+    .note{
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(255,255,255,.18);
+      color: var(--muted);
+      background: rgba(0,0,0,.12);
+    }
+
+    /* Steps timeline */
+    .steps{
+      display:grid;
+      gap: 12px;
+    }
+    .step{
+      display:grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items:flex-start;
+      padding: 12px;
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .num{
+      width: 34px; height: 34px;
+      border-radius: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: var(--mono);
+      font-size: 13px;
+      background: linear-gradient(135deg, rgba(124,92,255,.22), rgba(0,229,255,.16));
+      border: 1px solid rgba(255,255,255,.16);
+      color: var(--text);
+      box-shadow: 0 10px 20px rgba(0,0,0,.25);
+      flex: 0 0 auto;
+    }
+    .step b{display:block; margin-bottom: 4px}
+    .step .tools{color:var(--muted); font-size: 13px}
+    .step code{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.12);
+      white-space: nowrap;
+    }
+
+    /* Derivation blocks */
+    .derive{
+      display:grid;
+      gap: 12px;
+    }
+    .derive .blk{
+      padding: 14px;
+      border-radius: var(--radius);
+      background: rgba(0,0,0,.12);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .derive .blk .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.14);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    .derive p{margin: 8px 0; color: var(--text); line-height:1.65}
+    .derive p em{color: var(--muted)}
+    .eq{
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.12);
+      overflow:auto;
+    }
+
+    /* Answer callouts */
+    .answers{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 860px){ .answers{grid-template-columns:1fr} }
+    .ans{
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.14);
+      background:
+        radial-gradient(380px 120px at 20% 15%, rgba(124,92,255,.22), transparent 65%),
+        radial-gradient(320px 140px at 85% 10%, rgba(0,229,255,.16), transparent 62%),
+        rgba(255,255,255,.06);
+      box-shadow: 0 14px 28px rgba(0,0,0,.28);
+    }
+    .ans h3{
+      margin:0 0 10px;
+      font-size: 12px;
+      letter-spacing:.35px;
+      text-transform: uppercase;
+      font-family: var(--mono);
+      color: var(--muted);
+    }
+    .ans .big{
+      font-size: 18px;
+      font-family: var(--mono);
+      line-height:1.25;
+      letter-spacing:-.01em;
+    }
+    .ans .small{
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.55;
+    }
+
+    /* Sanity checks */
+    .checks{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 860px){ .checks{grid-template-columns:1fr} }
+    .check{
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+    }
+    .check .hdr{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .chip{
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-family: var(--mono);
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.14);
+      color: var(--muted);
+    }
+    .check p{margin:0; color:var(--muted); line-height:1.6}
+
+    /* Interactive plot area */
+    .plot-wrap{
+      margin-top: 16px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .plot-card{
+      border-radius: var(--radius2);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.14);
+      overflow:hidden;
+      box-shadow: var(--shadow);
+    }
+    .plot-head{
+      padding: 12px 14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+    }
+    .plot-head .left{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .plot-head .left b{
+      font-size: 13px;
+      letter-spacing:.2px;
+    }
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      align-items:center;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+    .toggle{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      cursor:pointer;
+      user-select:none;
+    }
+    .toggle input{accent-color: var(--accent)}
+    .canvas{
+      width: 100%;
+      height: 320px;
+      display:block;
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 55%);
+    }
+    .caption{
+      padding: 10px 14px 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.6;
+    }
+    .caption code{font-family: var(--mono); font-size: 12px; padding:2px 6px; border-radius: 10px; background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10)}
+    .foot{
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height:1.7;
+      text-align:center;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff;color:#000}
+      header.hero, section{box-shadow:none}
+      .plot-card{box-shadow:none}
+      .toggle{display:none}
+      .badge{background:#eee;border-color:#ddd;color:#333}
+      .meta-card{background:#f5f5f5;border-color:#ddd}
+      .ans, .card, .check, .step, .derive .blk{background:#f7f7f7;border-color:#ddd}
+      :root{--text:#000;--muted:#333}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div class="hero-grid">
+        <div class="title">
+          <div class="badge">
+            <span class="dot" aria-hidden="true"></span>
+            <span>PHYSICS • Fraunhofer Diffraction • N-Slit Interference</span>
+          </div>
+          <h1>Problem 4 — Deduce <span style="color:var(--accent2)">N</span> and <span style="color:var(--accent2)">d/D</span> from an N-Slit Intensity Pattern</h1>
+          <p class="subtitle">
+            A monochromatic beam illuminates <b>N identical slits</b> of width <b>D</b> and spacing <b>d</b>.
+            From the plotted far-field intensity versus <b>sin(θ)</b>, we deduce (a) <b>N</b>, (b) <b>d/D</b>,
+            and (c) the new pattern when <b>D → 0</b> while keeping the <b>central maximum unchanged</b>.
+          </p>
+        </div>
+
+        <div class="meta">
+          <div class="meta-card">
+            <h3>Final Answers (Preview)</h3>
+            <div class="kv"><div class="k">(4.a) Number of slits</div><div class="v">N = 5</div></div>
+            <div class="kv"><div class="k">(4.b) Geometry ratio</div><div class="v">d/D ≈ 2.4 (≈ 2.5)</div></div>
+            <div class="kv"><div class="k">(4.c) Limit D → 0</div><div class="v">Envelope → flat; same comb (rescaled)</div></div>
+          </div>
+          <div class="meta-card">
+            <h3>Key Model</h3>
+            <div class="kv"><div class="k">Fraunhofer intensity</div><div class="v">sinc² × interference²</div></div>
+            <div class="kv"><div class="k">Envelope variable</div><div class="v">α = πD sinθ / λ</div></div>
+            <div class="kv"><div class="k">Interference variable</div><div class="v">β = πd sinθ / λ</div></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- PART 1 -->
+    <section id="part1">
+      <div class="head">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+        <div class="pill" title="Structure required by the prompt">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 12h6M9 16h6M9 8h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M6 4h12a2 2 0 0 1 2 2v14l-3-2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+          <span>Analysis</span>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="card">
+          <h3>Restate the problem</h3>
+          <p style="margin:0; line-height:1.7; color:var(--text)">
+            A plane monochromatic wave illuminates <b>N equally spaced slits</b> (width <b>D</b>, spacing <b>d</b>).
+            In the far field, the intensity pattern shows sharp interference peaks under a broader diffraction envelope.
+            From the plot, determine <b>N</b> and the ratio <b>d/D</b>. Then predict how the pattern changes when
+            <b>D → 0</b>, while the source intensity is increased so that the <b>central maximum remains unchanged</b>.
+          </p>
+          <div class="note">
+            <b>What the plot encodes:</b> the sharp comb reveals <b>N</b>, while the broad envelope reveals <b>D</b> relative to <b>d</b>.
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Given / Unknowns / Targets</h3>
+          <ul>
+            <li><b>Given:</b> far-field (Fraunhofer) pattern vs <code>sin(θ)</code>; identical slits; spacing <code>d</code>, width <code>D</code>.</li>
+            <li><b>Unknowns:</b> <code>N</code>, <code>d/D</code>.</li>
+            <li><b>Find:</b> (4.a) <code>N</code>; (4.b) <code>d/D</code>; (4.c) new pattern as <code>D→0</code> with same central height.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Relevant principles (and why)</h3>
+          <ul>
+            <li><b>Fraunhofer diffraction:</b> screen is far → angular intensity is Fourier-transform-like.</li>
+            <li><b>Superposition + equal spacing:</b> phasor sum of N coherent sources creates a strong interference factor.</li>
+            <li><b>Finite slit width:</b> each slit diffracts → single-slit <code>sinc²</code> envelope multiplies the N-slit comb.</li>
+          </ul>
+          <div class="eq">
+            $$I(\theta)=I_0\left(\frac{\sin\alpha}{\alpha}\right)^2\left(\frac{\sin(N\beta)}{\sin\beta}\right)^2,\quad
+            \alpha=\frac{\pi D\sin\theta}{\lambda},\quad \beta=\frac{\pi d\sin\theta}{\lambda}.$$
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Candidate approaches</h3>
+          <ul>
+            <li><b>Peak-counting:</b> between principal maxima there are <b>N−2</b> secondary maxima → fastest for <code>N</code>.</li>
+            <li><b>Envelope-zero comparison:</b> match the first single-slit minimum to an interference order → gives <code>d/D</code>.</li>
+            <li><b>Full curve fit:</b> fit the full formula numerically → accurate but unnecessary for this exam-style deduction.</li>
+          </ul>
+          <div class="note">
+            <b>Chosen:</b> Peak-counting + envelope-zero comparison (directly uses the plot’s structure).
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 2 -->
+    <section id="part2">
+      <div class="head">
+        <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+        <div class="pill">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                  stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M12 6a6 6 0 1 1 0 12a6 6 0 0 1 0-12Z" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+          <span>Roadmap</span>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="card">
+          <h3>Minimal plan (5–10 steps)</h3>
+          <div class="steps">
+            <div class="step">
+              <div class="num">1</div>
+              <div>
+                <b>Identify principal maxima</b>
+                <div class="tools">Goal: locate tall, narrow peaks. Tool: visual recognition of the main interference peaks.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="num">2</div>
+              <div>
+                <b>Count secondary maxima between two neighboring principal peaks</b>
+                <div class="tools">Goal: determine <code>N</code>. Tool: rule <code>#(secondary)=N−2</code>.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="num">3</div>
+              <div>
+                <b>Locate the first deep envelope minimum</b>
+                <div class="tools">Goal: estimate where the single-slit envelope first goes (near) zero. Tool: observe strongest suppression.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="num">4</div>
+              <div>
+                <b>Measure that minimum in units of principal-peak spacing</b>
+                <div class="tools">Goal: convert angle position to an interference order <code>m</code>. Tool: principal maxima spacing corresponds to Δm=1.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="num">5</div>
+              <div>
+                <b>Convert to <code>d/D</code></b>
+                <div class="tools">Goal: use <code>m≈d/D</code> for the first envelope zero. Tool: compare <code>D sinθ=λ</code> and <code>d sinθ=mλ</code>.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="num">6</div>
+              <div>
+                <b>Apply the limit <code>D→0</code></b>
+                <div class="tools">Goal: remove the envelope. Tool: <code>(sinα/α)²→1</code>.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="num">7</div>
+              <div>
+                <b>Rescale intensity so the central maximum is unchanged</b>
+                <div class="tools">Goal: match <code>I(0)</code>. Tool: overall multiplicative factor (shape unchanged).</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Common mistakes & quick tips</h3>
+          <ul>
+            <li><b>Mistake:</b> counting principal peaks for <code>N</code>. <small>Tip: count the small bumps between two tall peaks → that equals <code>N−2</code>.</small></li>
+            <li><b>Mistake:</b> expecting the envelope minimum to be perfectly zero. <small>Tip: use the deepest dip location; printed plots often don’t hit exact zero.</small></li>
+            <li><b>Mistake:</b> thinking off-center principal peaks must shrink even as <code>D→0</code>. <small>Tip: when <code>D→0</code>, envelope flattens; after rescaling, principal peaks become equal-height.</small></li>
+          </ul>
+          <div class="note">
+            <b>Rule-of-thumb:</b> The envelope’s first zero occurs at an interference order roughly <code>m ≈ d/D</code>.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 3 -->
+    <section id="part3">
+      <div class="head">
+        <h2>PART 3 — Full Solution</h2>
+        <div class="pill">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 19V5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M14 3v6h6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            <path d="M7 12h10M7 16h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span>Derivation</span>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="card">
+          <h3>Physical intuition</h3>
+          <p style="margin:0; line-height:1.75; color:var(--text)">
+            The observed pattern is a <b>sharp interference comb</b> (from <b>N</b> coherent, equally spaced slits)
+            multiplied by a <b>broad single-slit diffraction envelope</b> (from each slit’s finite width <b>D</b>).
+            The comb encodes <b>N</b> through the number of small maxima between main peaks; the envelope encodes <b>d/D</b>
+            by showing how many main peaks fit before the intensity is suppressed by the first diffraction minimum.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Core model (Fraunhofer)</h3>
+          <div class="eq">
+            $$I(\theta)=I_0\left(\frac{\sin\alpha}{\alpha}\right)^2\left(\frac{\sin(N\beta)}{\sin\beta}\right)^2,$$
+            $$\alpha=\frac{\pi D\sin\theta}{\lambda},\qquad \beta=\frac{\pi d\sin\theta}{\lambda}.$$
+          </div>
+          <div class="note">
+            <b>Interpretation:</b> <code>sinc²</code> controls the wide envelope; the <code>sin(Nβ)/sinβ</code> factor creates sharp peaks.
+          </div>
+        </div>
+      </div>
+
+      <div class="derive" style="margin-top:16px;">
+        <div class="blk">
+          <div class="tag">Step A — Deduce <b>N</b> (Problem 4.a)</div>
+          <p>
+            For an <b>N-slit</b> interference factor
+            $$\left(\frac{\sin(N\beta)}{\sin\beta}\right)^2,$$
+            the <b>principal maxima</b> occur when all slit contributions are in phase:
+            $$\beta=m\pi \quad \Rightarrow \quad d\sin\theta=m\lambda.$$
+          </p>
+          <p>
+            A standard and very useful counting result:
+            <b>between two adjacent principal maxima, there are exactly</b>
+            $$N-2\ \text{secondary maxima}.$$
+            This happens because the numerator’s oscillation structure creates <b>N−1 internal minima</b> within one principal-peak interval, leaving <b>N−2</b> small maxima between them.
+          </p>
+          <p>
+            From the plotted pattern, between two neighboring tall principal peaks we see <b>3</b> small maxima.
+            Therefore:
+          </p>
+          <div class="eq">
+            $$N-2 = 3 \quad \Rightarrow \quad N = 5.$$
+          </div>
+        </div>
+
+        <div class="blk">
+          <div class="tag">Step B — Deduce <b>d/D</b> (Problem 4.b)</div>
+          <p>
+            The <b>single-slit</b> envelope factor is:
+            $$\left(\frac{\sin\alpha}{\alpha}\right)^2,\quad \alpha=\frac{\pi D\sin\theta}{\lambda}.$$
+            Its minima occur when:
+            $$\alpha=p\pi \ (p=\pm1,\pm2,\dots)\ \Rightarrow\ D\sin\theta = p\lambda.$$
+            The <b>first</b> envelope zero is at:
+            $$\sin\theta_{\text{env,1}}=\frac{\lambda}{D}.$$
+          </p>
+          <p>
+            The interference principal maxima occur at:
+            $$d\sin\theta_m = m\lambda \ \Rightarrow\ \sin\theta_m=\frac{m\lambda}{d}.$$
+            Compare the envelope first-zero angle to the spacing of interference orders:
+            $$m_* \equiv \frac{\sin\theta_{\text{env,1}}}{\lambda/d}
+            =\frac{\lambda/D}{\lambda/d}=\frac{d}{D}.$$
+          </p>
+          <p>
+            From the plot, the first strong envelope suppression (deep dip) lies between the <b>m=2</b> and <b>m=3</b> principal maxima,
+            around <b>2.4</b> spacings from the center. Hence:
+          </p>
+          <div class="eq">
+            $$\frac{d}{D}\approx 2.4 \quad (\text{roughly } 2.5,\text{ but clearly }2<d/D<3).$$
+          </div>
+        </div>
+
+        <div class="blk">
+          <div class="tag">Step C — Limit <b>D → 0</b> with unchanged central maximum (Problem 4.c)</div>
+          <p>
+            As <b>D → 0</b> we have \(\alpha=\pi D\sin\theta/\lambda \to 0\), so
+            $$\frac{\sin\alpha}{\alpha}\to 1 \quad \Rightarrow\quad \left(\frac{\sin\alpha}{\alpha}\right)^2\to 1.$$
+            That means the <b>diffraction envelope disappears</b>, leaving only the N-slit interference comb:
+            $$I(\theta)\propto \left(\frac{\sin(N\beta)}{\sin\beta}\right)^2.$$
+          </p>
+          <p>
+            At \(\theta=0\), \(\beta\to 0\) and the ratio tends to \(N\), so
+            $$I(0)\propto N^2.$$
+            The problem states we increase the source intensity so that the <b>central maximum stays unchanged</b>.
+            This just multiplies the entire curve by a constant (it does <em>not</em> change the angular structure).
+          </p>
+          <p>
+            <b>Qualitative drawing instruction:</b> On top of the dashed original curve, draw the same sharp peak pattern but with a <b>flat envelope</b>.
+            After rescaling to match \(I(0)\), the principal peaks are <b>no longer suppressed</b> at larger angles—so principal maxima become nearly <b>equal-height</b>.
+          </p>
+        </div>
+      </div>
+
+      <div class="answers" aria-label="Final boxed answers">
+        <div class="ans">
+          <h3>(4.a) Final result</h3>
+          <div class="big">$$\boxed{N=5}$$</div>
+          <div class="small">Because there are <b>3 secondary maxima</b> between adjacent principal maxima: \(N-2=3\).</div>
+        </div>
+        <div class="ans">
+          <h3>(4.b) Final result</h3>
+          <div class="big">$$\boxed{\dfrac{d}{D}\approx 2.4\ (\approx 2.5)}$$</div>
+          <div class="small">First single-slit minimum occurs at interference order \(m_*\approx d/D\), located between \(m=2\) and \(m=3\).</div>
+        </div>
+        <div class="ans">
+          <h3>(4.c) Final result</h3>
+          <div class="big">$$\boxed{D\to 0:\ \text{envelope}\to 1,\ \text{same comb, rescaled so }I(0)\text{ unchanged}}$$</div>
+          <div class="small">Remove the dashed broad envelope; keep identical peak spacing and secondary-peak count; scale intensity to match the center.</div>
+        </div>
+      </div>
+
+      <div class="checks" aria-label="Sanity checks">
+        <div class="check">
+          <div class="hdr">
+            <b>Units</b>
+            <span class="chip">Consistency</span>
+          </div>
+          <p>\(N\) is dimensionless; \(d/D\) is dimensionless. The arguments \(\alpha,\beta\) are dimensionless → OK.</p>
+        </div>
+        <div class="check">
+          <div class="hdr">
+            <b>Limiting cases</b>
+            <span class="chip">Behavior</span>
+          </div>
+          <p>If \(N=2\), there would be \(N-2=0\) secondary maxima (none). The plot shows several → \(N>2\). As \(D\to 0\), the envelope flattens → matches prediction.</p>
+        </div>
+        <div class="check">
+          <div class="hdr">
+            <b>Physical meaning</b>
+            <span class="chip">Interpretation</span>
+          </div>
+          <p>\(N\) controls how “sharp” the comb is and how many small peaks appear between main ones. \(d/D\) controls how many main peaks fit under the central diffraction lobe.</p>
+        </div>
+      </div>
+
+      <!-- Bonus: a small interactive visualization (article-safe, no external libs) -->
+      <div class="plot-wrap">
+        <div class="plot-card">
+          <div class="plot-head">
+            <div class="left">
+              <span class="dot" aria-hidden="true"></span>
+              <b>Interactive Sketch — Original vs. D→0 (Rescaled)</b>
+            </div>
+            <div class="controls">
+              <label class="toggle" title="Show the single-slit envelope (original)">
+                <input id="showEnvelope" type="checkbox" checked />
+                <span>Envelope</span>
+              </label>
+              <label class="toggle" title="Show N-slit comb with D→0 (flat envelope)">
+                <input id="showD0" type="checkbox" checked />
+                <span>D→0</span>
+              </label>
+              <span style="opacity:.85;">N=<span id="nVal">5</span></span>
+              <span style="opacity:.85;">d/D≈<span id="ratioVal">2.4</span></span>
+            </div>
+          </div>
+
+          <canvas id="plot" class="canvas" width="1200" height="520" aria-label="Intensity plot canvas"></canvas>
+          <div class="caption">
+            This canvas draws an <em>idealized</em> N-slit Fraunhofer model:
+            <code>I(θ) ∝ sinc²(α) · (sin(Nβ)/sinβ)²</code>.
+            It illustrates (i) a dashed “original” curve with envelope, and (ii) a “D→0” curve where the envelope is flat and the whole curve is rescaled so <code>I(0)</code> matches.
+          </div>
+        </div>
+      </div>
+
+      <p class="foot">
+        Article-ready layout • MathJax equations • Responsive & print-friendly • No framework dependencies
+      </p>
+    </section>
+  </div>
+
+  <script>
+    // Lightweight interactive sketch (no external libraries).
+    // We use dimensionless x = sin(theta) and choose λ=1 units.
+    // Parameters chosen to match the deduced values qualitatively:
+    // N = 5 and d/D ≈ 2.4. We pick D=1 and d=2.4 (in λ units).
+    // Then α = π D x, β = π d x.
+
+    (function(){
+      const canvas = document.getElementById('plot');
+      const ctx = canvas.getContext('2d', { alpha: true });
+
+      const showEnvelope = document.getElementById('showEnvelope');
+      const showD0 = document.getElementById('showD0');
+
+      const N = 5;
+      const D = 1.0;
+      const d = 2.4; // ratio d/D
+      document.getElementById('nVal').textContent = N;
+      document.getElementById('ratioVal').textContent = d.toFixed(1);
+
+      // Plot window in x = sin(theta)
+      const xmin = -2.0;
+      const xmax =  2.0;
+
+      function sinc(u){
+        if (Math.abs(u) < 1e-8) return 1;
+        return Math.sin(u)/u;
+      }
+
+      function combFactor(beta){
+        // (sin(Nβ)/sinβ)^2 with safe handling near zeros
+        const s = Math.sin(beta);
+        if (Math.abs(s) < 1e-8){
+          // limit β→mπ gives N^2
+          return N*N;
+        }
+        const val = Math.sin(N*beta)/s;
+        return val*val;
+      }
+
+      function I_original(x){
+        const alpha = Math.PI * D * x;  // λ=1
+        const beta  = Math.PI * d * x;
+        const env = sinc(alpha);        // single-slit amplitude
+        return (env*env) * combFactor(beta);
+      }
+
+      function I_D0(x){
+        // D->0 => envelope -> 1
+        const beta  = Math.PI * d * x;
+        return combFactor(beta);
+      }
+
+      // Rescale D->0 curve so its central maximum equals original central maximum:
+      // I_original(0) = 1 * N^2. I_D0(0) = N^2. So scaling is 1 here,
+      // but we keep it explicit for clarity and robustness.
+      const scale = I_original(0) / I_D0(0);
+
+      function clear(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+      }
+
+      function drawAxes(){
+        const W = canvas.width, H = canvas.height;
+        const pad = 60;
+
+        // soft grid
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--soft2') || 'rgba(255,255,255,.18)';
+        ctx.lineWidth = 1;
+
+        const gx = 8, gy = 6;
+        for(let i=0;i<=gx;i++){
+          const x = pad + (W-2*pad)*i/gx;
+          ctx.beginPath(); ctx.moveTo(x, pad-10); ctx.lineTo(x, H-pad+10); ctx.stroke();
+        }
+        for(let j=0;j<=gy;j++){
+          const y = pad + (H-2*pad)*j/gy;
+          ctx.beginPath(); ctx.moveTo(pad-10, y); ctx.lineTo(W-pad+10, y); ctx.stroke();
+        }
+        ctx.restore();
+
+        // axes
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.strokeStyle = 'rgba(255,255,255,.55)';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(pad, H-pad);
+        ctx.lineTo(W-pad, H-pad);
+        ctx.moveTo(pad, pad);
+        ctx.lineTo(pad, H-pad);
+        ctx.stroke();
+
+        // labels
+        ctx.fillStyle = 'rgba(255,255,255,.70)';
+        ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace';
+        ctx.fillText('sin(θ)', W/2 - 22, H-22);
+        ctx.save();
+        ctx.translate(22, H/2 + 18);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText('Intensity (arb.)', 0, 0);
+        ctx.restore();
+        ctx.restore();
+      }
+
+      function drawCurve(fn, style){
+        const W = canvas.width, H = canvas.height;
+        const pad = 60;
+
+        // Sample points
+        const nPts = 2200;
+        let xs = new Array(nPts);
+        let ys = new Array(nPts);
+        let ymax = 0;
+
+        for(let i=0;i<nPts;i++){
+          const x = xmin + (xmax-xmin)*i/(nPts-1);
+          const y = fn(x);
+          xs[i]=x; ys[i]=y;
+          if (isFinite(y) && y>ymax) ymax=y;
+        }
+
+        // robust y-scale: focus on principal peaks; cap extreme spikes
+        const yCap = ymax; // in this model the maxima are finite
+        const yMaxPlot = Math.max(1, yCap);
+
+        ctx.save();
+        ctx.strokeStyle = style.stroke;
+        ctx.lineWidth = style.width;
+        ctx.setLineDash(style.dash || []);
+        ctx.globalAlpha = style.alpha ?? 1;
+
+        ctx.beginPath();
+        for(let i=0;i<nPts;i++){
+          const x = xs[i];
+          const y = Math.min(ys[i], yMaxPlot);
+
+          const X = pad + (x - xmin) * (W - 2*pad) / (xmax - xmin);
+          const Y = (H - pad) - (y / yMaxPlot) * (H - 2*pad);
+
+          if(i===0) ctx.moveTo(X,Y);
+          else ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        return yMaxPlot;
+      }
+
+      function drawEnvelopeOnly(){
+        const W = canvas.width, H = canvas.height;
+        const pad = 60;
+
+        // Envelope = sinc^2(alpha) with alpha = pi D x
+        const nPts = 900;
+        let ymax = 1; // envelope max is 1
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,.32)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8,6]);
+        ctx.beginPath();
+        for(let i=0;i<nPts;i++){
+          const x = xmin + (xmax-xmin)*i/(nPts-1);
+          const alpha = Math.PI * D * x;
+          const y = Math.pow(sinc(alpha),2);
+
+          const X = pad + (x - xmin) * (W - 2*pad) / (xmax - xmin);
+          const Y = (H - pad) - (y / ymax) * (H - 2*pad);
+
+          if(i===0) ctx.moveTo(X,Y);
+          else ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function render(){
+        clear();
+        drawAxes();
+
+        // Draw envelope guide (optional)
+        if(showEnvelope.checked){
+          drawEnvelopeOnly();
+        }
+
+        // Original curve (with envelope) — dashed
+        if(showEnvelope.checked){
+          drawCurve(I_original, {
+            stroke: 'rgba(124,92,255,.85)',
+            width: 2.2,
+            dash: [10,8],
+            alpha: 0.95
+          });
+        }
+
+        // D->0 curve (flat envelope) — solid
+        if(showD0.checked){
+          drawCurve((x)=> scale*I_D0(x), {
+            stroke: 'rgba(0,229,255,.85)',
+            width: 2.2,
+            dash: [],
+            alpha: 0.95
+          });
+        }
+
+        // Legend
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,.78)';
+        ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace';
+        const lx = 72, ly = 78;
+
+        // legend box
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = 'rgba(0,0,0,.28)';
+        ctx.strokeStyle = 'rgba(255,255,255,.14)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(lx-12, ly-34, 320, 86, 14);
+        ctx.fill(); ctx.stroke();
+
+        // items
+        let y = ly;
+        if(showEnvelope.checked){
+          // envelope
+          ctx.strokeStyle = 'rgba(255,255,255,.32)';
+          ctx.setLineDash([8,6]);
+          ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(lx+42, y); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(255,255,255,.78)';
+          ctx.fillText('Envelope  sinc²(α)', lx+54, y+4);
+          y += 22;
+
+          // original
+          ctx.strokeStyle = 'rgba(124,92,255,.85)';
+          ctx.setLineDash([10,8]);
+          ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(lx+42, y); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(255,255,255,.78)';
+          ctx.fillText('Original  I ∝ sinc²·comb', lx+54, y+4);
+          y += 22;
+        }
+
+        if(showD0.checked){
+          // D0
+          ctx.strokeStyle = 'rgba(0,229,255,.85)';
+          ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(lx+42, y); ctx.stroke();
+          ctx.fillStyle = 'rgba(255,255,255,.78)';
+          ctx.fillText('D→0  (flat envelope), rescaled', lx+54, y+4);
+        }
+
+        ctx.restore();
+      }
+
+      // polyfill for roundRect if needed
+      if(!CanvasRenderingContext2D.prototype.roundRect){
+        CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+          const rr = Math.min(r, w/2, h/2);
+          this.beginPath();
+          this.moveTo(x+rr, y);
+          this.arcTo(x+w, y, x+w, y+h, rr);
+          this.arcTo(x+w, y+h, x, y+h, rr);
+          this.arcTo(x, y+h, x, y, rr);
+          this.arcTo(x, y, x+w, y, rr);
+          this.closePath();
+          return this;
+        }
+      }
+
+      showEnvelope.addEventListener('change', render);
+      showD0.addEventListener('change', render);
+
+      // Initial draw
+      render();
+      window.addEventListener('resize', () => {
+        // keep crispness on resize (if your layout changes canvas size)
+        // Here canvas is fixed; so we just redraw.
+        render();
+      });
+    })();
+  </script>
+</body>
+</html>

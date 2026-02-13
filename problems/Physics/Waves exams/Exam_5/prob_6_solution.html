@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="An expert-level, article-ready solution: radiation from an oscillating charge on a spring (far-field E, Larmor power, decay times)." />
+  <meta name="theme-color" content="#0b1022" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Oscillating Charge Radiation — Full Structured Solution</title>
+
+  <!-- MathJax (remove if your site already loads MathJax) -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)'], ['$', '$']], displayMath: [['\\[','\\]']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <!-- Article styles: advanced but portable -->
+  <style>
+    :root{
+      --bg0:#070915; --bg1:#0b1022; --bg2:#0b1535;
+      --card:rgba(255,255,255,.06);
+      --card2:rgba(255,255,255,.09);
+      --stroke:rgba(255,255,255,.14);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.72);
+      --faint:rgba(255,255,255,.55);
+
+      --violet:#7c3aed;
+      --cyan:#06b6d4;
+      --green:#22c55e;
+      --amber:#f59e0b;
+      --rose:#fb7185;
+
+      --shadow:0 22px 60px rgba(0,0,0,.55);
+      --radius:18px;
+      --mono: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+      --sans: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif;
+
+      --max: 1120px;
+      --pad: 18px;
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg0:#f7f8ff; --bg1:#edf1ff; --bg2:#e6ebff;
+        --card:rgba(0,0,0,.035);
+        --card2:rgba(0,0,0,.055);
+        --stroke:rgba(0,0,0,.12);
+        --text:rgba(0,0,0,.86);
+        --muted:rgba(0,0,0,.68);
+        --faint:rgba(0,0,0,.52);
+        --shadow:0 22px 60px rgba(0,0,0,.12);
+      }
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(900px 520px at 20% 10%, color-mix(in oklab, var(--violet) 25%, transparent), transparent 60%),
+        radial-gradient(900px 520px at 78% 18%, color-mix(in oklab, var(--cyan) 18%, transparent), transparent 60%),
+        radial-gradient(900px 520px at 55% 85%, color-mix(in oklab, var(--green) 14%, transparent), transparent 60%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
+
+    /* Ambient animated noise layer */
+    .noise{
+      position:fixed; inset:0;
+      pointer-events:none;
+      opacity:.075;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='280' height='280' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E");
+      animation: drift 16s linear infinite;
+    }
+    @keyframes drift{ from{transform:translate3d(0,0,0);} to{transform:translate3d(-90px,70px,0);} }
+
+    a{ color: inherit; }
+
+    /* Top progress bar (reading progress) */
+    .progress{
+      position:fixed; top:0; left:0; height:3px; width:0%;
+      background: linear-gradient(90deg, var(--violet), var(--cyan), var(--green));
+      z-index: 1000;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+
+    header.hero{
+      max-width: var(--max);
+      margin: 36px auto 16px;
+      padding: 0 var(--pad);
+    }
+    .hero-grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+    @media (max-width: 960px){
+      .hero-grid{ grid-template-columns: 1fr; }
+    }
+
+    .glass{
+      background: linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.03));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    .glass::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(520px 240px at 20% 15%, color-mix(in oklab, var(--violet) 34%, transparent), transparent 62%),
+        radial-gradient(520px 240px at 80% 25%, color-mix(in oklab, var(--cyan) 26%, transparent), transparent 62%),
+        radial-gradient(520px 240px at 50% 90%, color-mix(in oklab, var(--green) 18%, transparent), transparent 62%);
+      filter: blur(18px);
+      opacity:.75;
+      z-index:0;
+    }
+    .glass > *{ position:relative; z-index:1; }
+
+    .hero-main{ padding: 22px 22px 18px; }
+    .hero-aside{ padding: 14px 14px 12px; }
+
+    .kicker{
+      display:flex; flex-wrap:wrap;
+      gap: 10px;
+      align-items:center;
+      color: var(--muted);
+      font-weight: 650;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .spark{
+      width: 10px; height: 10px; border-radius: 4px;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      box-shadow: 0 0 0 3px rgba(124,58,237,.15);
+    }
+
+    h1{
+      margin: 10px 0 8px;
+      font-size: clamp(28px, 3.25vw, 46px);
+      line-height: 1.06;
+      letter-spacing: -0.02em;
+    }
+    .subtitle{
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.65;
+      max-width: 72ch;
+      font-size: 15.5px;
+    }
+
+    .meta{
+      display:flex; flex-wrap:wrap; gap: 10px;
+      margin-top: 14px;
+    }
+
+    .toc-title{
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: .02em;
+    }
+    .toc{
+      list-style:none;
+      padding:0;
+      margin:0;
+      display:grid;
+      gap: 10px;
+    }
+    .toc a{
+      text-decoration:none;
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+    }
+    .toc a:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.07);
+      border-color: rgba(255,255,255,.22);
+    }
+    .badge{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      color: var(--muted);
+      background: rgba(255,255,255,.04);
+      white-space: nowrap;
+    }
+
+    main{
+      max-width: var(--max);
+      margin: 0 auto 90px;
+      padding: 0 var(--pad) 40px;
+    }
+
+    section.block{
+      margin-top: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.03));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .block-head{
+      padding: 16px 18px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .block-head h2{
+      margin:0;
+      font-size: 16px;
+      letter-spacing: .01em;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .block-body{ padding: 18px; }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 900px){
+      .grid-2{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: rgba(255,255,255,.045);
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      padding: 14px 14px 12px;
+    }
+    .card h3{
+      margin:0 0 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .card p, .card li{
+      line-height: 1.65;
+      font-size: 15px;
+      color: var(--text);
+    }
+    ul.clean{
+      margin: 10px 0 0;
+      padding: 0 0 0 18px;
+    }
+    ul.clean li{ margin: 6px 0; }
+
+    .mathbox{
+      margin: 12px 0;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.18);
+      background:
+        radial-gradient(260px 140px at 15% 20%, rgba(124,58,237,.16), transparent 60%),
+        radial-gradient(260px 140px at 85% 40%, rgba(6,182,212,.12), transparent 60%),
+        rgba(255,255,255,.035);
+      overflow-x:auto;
+    }
+
+    .steps{
+      counter-reset: s;
+      list-style:none;
+      padding:0;
+      margin: 0;
+      display:grid;
+      gap: 10px;
+    }
+    .steps li{
+      counter-increment: s;
+      display:grid;
+      grid-template-columns: 50px 1fr;
+      gap: 12px;
+      align-items:start;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+    }
+    .steps li::before{
+      content: counter(s);
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      display:grid;
+      place-items:center;
+      font-family: var(--mono);
+      font-weight: 800;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,.38), rgba(255,255,255,.04)),
+        linear-gradient(135deg, rgba(124,58,237,.55), rgba(6,182,212,.32));
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 12px 28px rgba(0,0,0,.25);
+    }
+
+    .callout{
+      border-radius: 16px;
+      padding: 12px 14px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      margin: 10px 0;
+    }
+    .callout strong{ color: rgba(255,255,255,.95); }
+    .callout small{ color: var(--muted); }
+
+    .result{
+      border-radius: 18px;
+      border: 1px solid rgba(34,197,94,.35);
+      background:
+        radial-gradient(300px 160px at 20% 20%, rgba(34,197,94,.18), transparent 60%),
+        rgba(255,255,255,.03);
+      padding: 14px 14px 12px;
+      margin: 12px 0;
+    }
+    .result h4{
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: rgba(255,255,255,.90);
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .spark2{
+      width: 12px; height: 12px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      box-shadow: 0 0 0 3px rgba(34,197,94,.14);
+    }
+
+    .sanity{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 900px){ .sanity{ grid-template-columns: 1fr; } }
+    .tile{
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      padding: 12px 12px 10px;
+    }
+    .tile h4{
+      margin:0 0 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    details{
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.04);
+      overflow:hidden;
+    }
+    details summary{
+      cursor:pointer;
+      padding: 12px 14px;
+      list-style:none;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      user-select:none;
+      font-weight: 700;
+    }
+    details summary::-webkit-details-marker{ display:none; }
+    details .inner{ padding: 0 14px 14px; color: var(--muted); line-height: 1.65; }
+
+    code.inline{
+      font-family: var(--mono);
+      font-size: 12.5px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      white-space: nowrap;
+    }
+
+    footer{
+      max-width: var(--max);
+      margin: 0 auto 28px;
+      padding: 0 var(--pad);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      flex-wrap:wrap;
+      gap: 10px;
+      color: var(--muted);
+    }
+    footer a{
+      text-decoration:none;
+      border-bottom: 1px dashed rgba(255,255,255,.25);
+      color: var(--muted);
+    }
+    footer a:hover{ color: var(--text); border-bottom-color: rgba(255,255,255,.45); }
+
+    .fab{
+      position:fixed;
+      right: 16px;
+      bottom: 16px;
+      display:grid;
+      gap: 10px;
+      z-index: 900;
+    }
+    .btn{
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      cursor:pointer;
+      box-shadow: 0 18px 40px rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.085);
+      border-color: rgba(255,255,255,.22);
+    }
+
+    /* Print friendly */
+    @media print{
+      .noise,.fab,.progress{ display:none !important; }
+      body{ background: #fff !important; color: #000 !important; }
+      .glass,.block{ box-shadow:none !important; }
+      .card,.mathbox,.result,.tile{ border-color: rgba(0,0,0,.18) !important; }
+      a{ color:#000 !important; text-decoration:none !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="progress" id="progress"></div>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="hero" id="top">
+    <div class="hero-grid">
+      <section class="glass hero-main" aria-label="Article header">
+        <div class="kicker">
+          <span class="pill"><span class="spark" aria-hidden="true"></span> Physics • EM Radiation</span>
+          <span class="pill">Far-field • Larmor • Dipole Pattern</span>
+          <span class="pill">Article-ready</span>
+        </div>
+
+        <h1>Radiation from an Oscillating Charge on a Spring</h1>
+
+        <p class="subtitle">
+          A point charge \(+Q\) (mass \(M\)) attached to a spring (constant \(k\)) oscillates along the \(x\)-axis.
+          We derive the far-zone radiated electric field in the \(x\text{–}z\) plane, compute the total time-averaged
+          power radiated, and estimate the amplitude decay time to \(A/e\) using both a rough and refined model.
+        </p>
+
+        <div class="meta">
+          <span class="pill">Motion: \(x(t)=A\cos(\omega t)\)</span>
+          <span class="pill">\(\omega=\sqrt{k/M}\)</span>
+          <span class="pill">Radiation zone: \(R\gg A\)</span>
+          <span class="pill">Retarded time: \(t_{\rm ret}=t-\frac{R}{c}\)</span>
+        </div>
+      </section>
+
+      <aside class="glass hero-aside" aria-label="Table of contents">
+        <h3 class="toc-title">Navigation</h3>
+        <ul class="toc">
+          <li><a href="#part1">PART 1 — Problem Analysis <span class="badge">Concepts</span></a></li>
+          <li><a href="#part2">PART 2 — Strategy & Tips <span class="badge">Roadmap</span></a></li>
+          <li><a href="#part3">PART 3 — Full Solution <span class="badge">Derivation</span></a></li>
+          <li><a href="#sanity">Sanity Checks <span class="badge">Verify</span></a></li>
+        </ul>
+        <div style="height:10px"></div>
+        <div class="callout" style="margin:0">
+          <strong>Site tip:</strong><br>
+          <small>If your website already includes MathJax, remove the MathJax scripts above to avoid duplicates.</small>
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <main>
+    <!-- PART 1 -->
+    <section class="block" id="part1">
+      <div class="block-head">
+        <h2><span class="badge">PART 1</span> Problem Analysis (no solving yet)</h2>
+        <span class="badge">Setup</span>
+      </div>
+
+      <div class="block-body grid-2">
+        <article class="card">
+          <h3>Rewrite the problem</h3>
+          <p>
+            A charge \(+Q\) of mass \(M\) is attached to a spring along the \(x\)-axis. The equilibrium point is the origin.
+            The charge is displaced to \(x=A\) and released from rest at \(t=0\). Assume the charge is point-like and damping is very small.
+            In the far field (\(R\gg A\)), determine:
+          </p>
+          <ul class="clean">
+            <li>(6.a) the radiated electric field in an arbitrary direction in the \(x\text{–}z\) plane,</li>
+            <li>(6.b) the total time-averaged radiated power,</li>
+            <li>(6.c) a rough time for amplitude to drop to \(A/e\) assuming radiated power is approximately constant, and whether that is realistic,</li>
+            <li>(6.d) a refined time using \(dA/dt=(dA/dE)(dE/dt)\) with cycle-averaged power.</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h3>Given / Unknowns / What to find</h3>
+          <p><strong>Given:</strong> \(Q,\,M,\,k,\,A\), far-field distance \(R\gg A\), motion along \(x\), weak damping.</p>
+          <p><strong>Unknowns:</strong> \(\mathbf E_{\rm rad}(R,\theta,t)\), \(\langle P\rangle\), and decay time(s) \(t_{1/e}\).</p>
+          <p><strong>Goal:</strong> derive explicit formulas, then check units/limits and interpret physically.</p>
+          <div class="mathbox">
+            \[
+              \omega=\sqrt{\frac{k}{M}},\qquad
+              t_{\rm ret}=t-\frac{R}{c}.
+            \]
+          </div>
+        </article>
+
+        <article class="card">
+          <h3>Key principles (and why)</h3>
+          <ul class="clean">
+            <li><strong>SHO dynamics:</strong> spring force \(-kx\) → sinusoidal motion to leading order.</li>
+            <li><strong>Radiation from acceleration:</strong> accelerated charges emit EM radiation; far field depends on \(\mathbf a(t_{\rm ret})\).</li>
+            <li><strong>Radiation-zone fields:</strong> keep only \(1/R\) terms; near-field terms fall faster with \(R\).</li>
+            <li><strong>Larmor formula:</strong> total radiated power for nonrelativistic motion scales as \(a^2\).</li>
+            <li><strong>Energy–amplitude relation:</strong> \(E=\frac12kA^2\) connects radiated loss to amplitude decay.</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <h3>Approaches & best choice</h3>
+          <ul class="clean">
+            <li><strong>A:</strong> Use \(\mathbf E_{\rm rad}=\frac{Q}{4\pi\varepsilon_0c^2}\frac{\mathbf n\times(\mathbf n\times\mathbf a)}{R}\) + Larmor power.</li>
+            <li><strong>B:</strong> Dipole method: \(p(t)=Qx(t)\), \(\mathbf E\propto \ddot{\mathbf p}\), \(P\propto \ddot p^2\).</li>
+            <li><strong>C:</strong> Full Liénard–Wiechert (relativistic) — unnecessary unless \(v\sim c\).</li>
+          </ul>
+          <div class="callout">
+            <strong>Best:</strong> Approach A is the most direct: it yields \(\mathbf E_{\rm rad}\) immediately and feeds power + decay estimates cleanly.
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- PART 2 -->
+    <section class="block" id="part2">
+      <div class="block-head">
+        <h2><span class="badge">PART 2</span> Strategy & Tips (roadmap only)</h2>
+        <span class="badge">Plan</span>
+      </div>
+
+      <div class="block-body">
+        <ol class="steps">
+          <li>
+            <div>
+              <p style="margin:0 0 6px"><strong>Write the leading-order trajectory \(x(t)\)</strong></p>
+              <p style="margin:0;color:var(--muted)">Goal: model motion with weak damping. Tool: \(\omega=\sqrt{k/M}\), initial conditions.</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <p style="margin:0 0 6px"><strong>Compute acceleration \(\mathbf a(t)\)</strong></p>
+              <p style="margin:0;color:var(--muted)">Goal: radiation source term. Tool: \(\mathbf a=\ddot x\,\hat{\mathbf x}\).</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <p style="margin:0 0 6px"><strong>Define observer direction in \(x\text{–}z\) plane</strong></p>
+              <p style="margin:0;color:var(--muted)">Goal: get angular dependence. Tool: \(\mathbf n(\theta)=\cos\theta\,\hat{\mathbf x}+\sin\theta\,\hat{\mathbf z}\).</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <p style="margin:0 0 6px"><strong>Apply far-zone radiation field formula</strong></p>
+              <p style="margin:0;color:var(--muted)">Goal: \(\mathbf E_{\rm rad}(R,\theta,t)\). Tool: \(\mathbf n\times(\mathbf n\times\mathbf a)\), \(t_{\rm ret}=t-R/c\).</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <p style="margin:0 0 6px"><strong>Compute \(\langle P\rangle\) via Larmor and cycle average</strong></p>
+              <p style="margin:0;color:var(--muted)">Goal: total time-averaged power. Tool: \(P=\frac{Q^2a^2}{6\pi\varepsilon_0c^3}\), \(\langle\cos^2\rangle=\frac12\).</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <p style="margin:0 0 6px"><strong>Rough decay time using constant \(\langle P\rangle\)</strong></p>
+              <p style="margin:0;color:var(--muted)">Goal: quick \(t_{1/e}\). Tool: \(E=\frac12kA^2\), \(t\approx \Delta E/\langle P\rangle\).</p>
+            </div>
+          </li>
+          <li>
+            <div>
+              <p style="margin:0 0 6px"><strong>Refined decay time using \(dE/dt=-\langle P(A)\rangle\)</strong></p>
+              <p style="margin:0;color:var(--muted)">Goal: solve for \(A(t)\). Tool: \(dA/dt=(dA/dE)(dE/dt)\), exponential decay.</p>
+            </div>
+          </li>
+        </ol>
+
+        <div class="grid-2" style="margin-top:14px">
+          <details>
+            <summary>Common mistakes <span class="badge">Avoid</span></summary>
+            <div class="inner">
+              <ul class="clean">
+                <li>Forgetting the <strong>retarded time</strong> \(t_{\rm ret}=t-R/c\).</li>
+                <li>Mixing near-field (\(\propto 1/R^2,1/R^3\)) with radiation field (\(\propto 1/R\)).</li>
+                <li>Using the wrong angle: dipole radiation is zero on-axis and maximal broadside.</li>
+                <li>Assuming constant power in (6.c) even though \(\langle P\rangle\propto A^2\).</li>
+              </ul>
+            </div>
+          </details>
+
+          <details>
+            <summary>Speed tips <span class="badge">Hints</span></summary>
+            <div class="inner">
+              <ul class="clean">
+                <li>Use \(\mathbf n\times(\mathbf n\times\mathbf a)=\mathbf a-(\mathbf n\cdot\mathbf a)\mathbf n\).</li>
+                <li>For SHM: \(\langle\cos^2\rangle=\frac12\).</li>
+                <li>Remember scalings: \(a\sim\omega^2A\), so \(\langle P\rangle\sim A^2\omega^4\).</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 3 -->
+    <section class="block" id="part3">
+      <div class="block-head">
+        <h2><span class="badge">PART 3</span> Full Solution</h2>
+        <span class="badge">Final</span>
+      </div>
+
+      <div class="block-body">
+        <article class="card">
+          <h3>Physical intuition</h3>
+          <p>
+            An accelerating charge emits electromagnetic radiation. In the far field the radiation is transverse, falls like \(1/R\),
+            and forms a dipole-like angular pattern. Since the charge oscillates along \(x\), the radiation vanishes along the \(x\)-axis
+            and is strongest for observers perpendicular to \(x\).
+          </p>
+        </article>
+
+        <div class="grid-2" style="margin-top:14px">
+          <article class="card">
+            <h3>Step 0: Motion and acceleration</h3>
+            <p>With weak damping, take the leading-order SHM solution with \(x(0)=A\), \(\dot x(0)=0\).</p>
+            <div class="mathbox">
+              \[
+                \omega=\sqrt{\frac{k}{M}},\qquad x(t)=A\cos(\omega t).
+              \]
+              \[
+                \ddot x(t)=-A\omega^2\cos(\omega t).
+              \]
+              \[
+                \mathbf a(t)=\ddot x(t)\,\hat{\mathbf x}=-A\omega^2\cos(\omega t)\,\hat{\mathbf x}.
+              \]
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>Step 1: Observation direction in \(x\text{–}z\) plane</h3>
+            <p>Let \(\theta\) be the angle from \(+x\) toward \(+z\). Then:</p>
+            <div class="mathbox">
+              \[
+                \mathbf n=\cos\theta\,\hat{\mathbf x}+\sin\theta\,\hat{\mathbf z},
+                \qquad t_{\rm ret}=t-\frac{R}{c}.
+              \]
+            </div>
+          </article>
+        </div>
+
+        <!-- (6.a) -->
+        <section class="result">
+          <h4><span class="spark2" aria-hidden="true"></span> (6.a) Radiated electric field in the far zone</h4>
+          <p style="margin:0;color:var(--muted);line-height:1.65">
+            Nonrelativistic radiation-zone electric field:
+          </p>
+          <div class="mathbox">
+            \[
+              \mathbf E_{\rm rad}(\mathbf r,t)=
+              \frac{Q}{4\pi\varepsilon_0c^2}\frac{\mathbf n\times(\mathbf n\times\mathbf a(t_{\rm ret}))}{R}.
+            \]
+          </div>
+
+          <p style="margin:0 0 8px;color:var(--muted)">
+            Use \(\mathbf n\times(\mathbf n\times\mathbf a)=\mathbf a-(\mathbf n\cdot\mathbf a)\mathbf n\).
+            Here \(\mathbf a(t_{\rm ret})=a_x(t_{\rm ret})\hat{\mathbf x}\) with \(a_x(t_{\rm ret})=-A\omega^2\cos(\omega t_{\rm ret})\).
+          </p>
+
+          <div class="mathbox">
+            \[
+              \mathbf n\cdot\mathbf a=a_x\cos\theta
+              \quad\Rightarrow\quad
+              \mathbf n\times(\mathbf n\times\mathbf a)=
+              a_x\Big(\sin^2\theta\,\hat{\mathbf x}-\sin\theta\cos\theta\,\hat{\mathbf z}\Big).
+            \]
+          </div>
+
+          <div class="mathbox">
+            \[
+              \boxed{
+              \mathbf E_{\rm rad}(R,\theta,t)=
+              \frac{Q}{4\pi\varepsilon_0c^2}\frac{a_x(t_{\rm ret})}{R}
+              \Big(\sin^2\theta\,\hat{\mathbf x}-\sin\theta\cos\theta\,\hat{\mathbf z}\Big)
+              }
+            \]
+            \[
+              \boxed{
+              \mathbf E_{\rm rad}(R,\theta,t)=
+              -\frac{Q A\omega^2}{4\pi\varepsilon_0c^2}\frac{\cos\!\big(\omega(t-R/c)\big)}{R}
+              \Big(\sin^2\theta\,\hat{\mathbf x}-\sin\theta\cos\theta\,\hat{\mathbf z}\Big)
+              }
+            \]
+          </div>
+
+          <div class="callout">
+            <strong>Angular behavior:</strong>
+            <small>
+              The radiated field is transverse and has a dipole pattern: zero at \(\theta=0\) (along \(x\)) and maximal at \(\theta=\pi/2\) (along \(z\)).
+            </small>
+          </div>
+        </section>
+
+        <!-- (6.b) -->
+        <section class="result">
+          <h4><span class="spark2" aria-hidden="true"></span> (6.b) Total time-averaged power radiated</h4>
+          <p style="margin:0;color:var(--muted);line-height:1.65">
+            Use Larmor’s formula for nonrelativistic radiation and average over one cycle.
+          </p>
+          <div class="mathbox">
+            \[
+              P(t)=\frac{Q^2a^2(t)}{6\pi\varepsilon_0c^3},
+              \qquad a(t)=A\omega^2\cos(\omega t).
+            \]
+            \[
+              \langle a^2\rangle=A^2\omega^4\langle\cos^2\rangle=\frac12A^2\omega^4.
+            \]
+          </div>
+          <div class="mathbox">
+            \[
+              \boxed{
+              \langle P\rangle=\frac{Q^2A^2\omega^4}{12\pi\varepsilon_0c^3}
+              }
+              \qquad
+              \boxed{
+              \langle P\rangle=
+              \frac{Q^2A^2}{12\pi\varepsilon_0c^3}\frac{k^2}{M^2}
+              \ \ (\omega^2=k/M)
+              }
+            \]
+          </div>
+        </section>
+
+        <!-- (6.c) -->
+        <section class="result">
+          <h4><span class="spark2" aria-hidden="true"></span> (6.c) Rough time to reduce amplitude to \(A/e\) (constant power)</h4>
+          <p style="margin:0;color:var(--muted);line-height:1.65">
+            For a SHO, the energy at amplitude \(A\) is \(E=\tfrac12kA^2\). If the time-averaged radiated power does not change appreciably,
+            estimate \(t\approx\Delta E/\langle P\rangle_0\).
+          </p>
+
+          <div class="mathbox">
+            \[
+              E_i=\frac12kA^2,\quad
+              E_f=\frac12k\left(\frac{A}{e}\right)^2=\frac{E_i}{e^2},\quad
+              \Delta E=E_i\left(1-e^{-2}\right).
+            \]
+          </div>
+
+          <div class="mathbox">
+            \[
+              t_{\rm rough}\approx\frac{\Delta E}{\langle P\rangle_0}
+              =
+              \frac{\frac12kA^2(1-e^{-2})}{\frac{Q^2A^2\omega^4}{12\pi\varepsilon_0c^3}}.
+            \]
+          </div>
+
+          <div class="mathbox">
+            \[
+              \boxed{
+              t_{\rm rough}\approx(1-e^{-2})\frac{6\pi\varepsilon_0c^3\,k}{Q^2\omega^4}
+              }
+              \qquad
+              \boxed{
+              t_{\rm rough}\approx(1-e^{-2})\frac{6\pi\varepsilon_0c^3\,M^2}{Q^2k}
+              }
+            \]
+          </div>
+
+          <div class="callout">
+            <strong>Is the assumption realistic?</strong><br>
+            <small>
+              Typically no. Because \(\langle P\rangle\propto A^2\), the radiated power decreases as the amplitude shrinks.
+              The constant-power estimate therefore <strong>underestimates</strong> the true decay time.
+            </small>
+          </div>
+        </section>
+
+        <!-- (6.d) -->
+        <section class="result">
+          <h4><span class="spark2" aria-hidden="true"></span> (6.d) Refined estimate using \(dA/dt=(dA/dE)(dE/dt)\)</h4>
+          <p style="margin:0;color:var(--muted);line-height:1.65">
+            Use the amplitude dependence of the cycle-averaged radiated power and convert the energy-loss equation into a differential equation for \(A(t)\).
+          </p>
+
+          <div class="mathbox">
+            \[
+              E(A)=\frac12kA^2
+              \Rightarrow
+              \frac{dA}{dE}=\frac{1}{kA}.
+            \]
+            \[
+              \langle P(A)\rangle=\frac{Q^2\omega^4}{12\pi\varepsilon_0c^3}A^2
+              \Rightarrow
+              \frac{dE}{dt}=-\langle P(A)\rangle.
+            \]
+          </div>
+
+          <div class="mathbox">
+            \[
+              \frac{dA}{dt}=\frac{dA}{dE}\frac{dE}{dt}
+              =
+              \frac{1}{kA}\left(-\frac{Q^2\omega^4}{12\pi\varepsilon_0c^3}A^2\right)
+              =-\gamma A,
+            \]
+            \[
+              \gamma=\frac{Q^2\omega^4}{12\pi\varepsilon_0c^3\,k}.
+            \]
+            \[
+              A(t)=A_0e^{-\gamma t}.
+            \]
+          </div>
+
+          <div class="mathbox">
+            \[
+              A(t_{1/e})=\frac{A_0}{e}\Rightarrow t_{1/e}=\frac{1}{\gamma}.
+            \]
+            \[
+              \boxed{
+              t_{1/e}=\frac{12\pi\varepsilon_0c^3\,k}{Q^2\omega^4}
+              }
+              \qquad
+              \boxed{
+              t_{1/e}=\frac{12\pi\varepsilon_0c^3\,M^2}{Q^2k}
+              }
+            \]
+          </div>
+
+          <div class="callout">
+            <strong>Comparison:</strong><br>
+            <small>
+              \(t_{\rm rough}\approx 0.432\,t_{1/e}\). The refined time is longer because power decreases as \(A^2\) during damping.
+            </small>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- Sanity Checks -->
+    <section class="block" id="sanity">
+      <div class="block-head">
+        <h2>Sanity Checks</h2>
+        <span class="badge">Units • Limits • Meaning</span>
+      </div>
+
+      <div class="block-body">
+        <div class="sanity">
+          <div class="tile">
+            <h4>Units</h4>
+            <p style="margin:0;color:var(--muted);line-height:1.65">
+              \(\mathbf E_{\rm rad}\sim \dfrac{Q a}{\varepsilon_0c^2R}\Rightarrow\) V/m.
+              Larmor \(P\Rightarrow\) W. \(t_{1/e}\sim \dfrac{\varepsilon_0c^3M^2}{Q^2k}\Rightarrow\) s.
+            </p>
+          </div>
+
+          <div class="tile">
+            <h4>Limiting cases</h4>
+            <p style="margin:0;color:var(--muted);line-height:1.65">
+              \(Q\to0\Rightarrow\) no radiation, \(t_{1/e}\to\infty\).
+              \(A\to0\Rightarrow\) no motion, \(\langle P\rangle\to0\).
+              \(\theta=0\Rightarrow \mathbf E_{\rm rad}=0\) (dipole null).
+            </p>
+          </div>
+
+          <div class="tile">
+            <h4>Physical interpretation</h4>
+            <p style="margin:0;color:var(--muted);line-height:1.65">
+              Dipole-like radiation about the \(x\)-axis: maximum broadside, zero on-axis.
+              Because \(\langle P\rangle\propto A^2\), the refined model gives exponential amplitude decay \(A(t)=A_0e^{-\gamma t}\).
+            </p>
+          </div>
+        </div>
+
+        <details style="margin-top:14px">
+          <summary>Optional: radiation-zone magnetic field <span class="badge">Extra</span></summary>
+          <div class="inner">
+            In the radiation zone,
+            \[
+              \mathbf B_{\rm rad}=\frac{1}{c}\,\mathbf n\times \mathbf E_{\rm rad},
+            \]
+            and \(\mathbf E_{\rm rad}\perp \mathbf B_{\rm rad}\perp \mathbf n\).
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>© <span id="year"></span> • Oscillating Charge Radiation — article module</div>
+    <div>
+      <a href="#top">Back to top</a> &nbsp;•&nbsp;
+      <a href="#part3">Jump to solution</a>
+    </div>
+  </footer>
+
+  <div class="fab" aria-label="Tools">
+    <button class="btn" id="btnTop" type="button" title="Scroll to top">Top</button>
+    <button class="btn" id="btnPrint" type="button" title="Print / Save as PDF">Print</button>
+  </div>
+
+  <script>
+    // Year
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // Smooth scrolling for internal anchors
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener("click", (e) => {
+        const id = a.getAttribute("href");
+        const el = document.querySelector(id);
+        if (!el) return;
+        e.preventDefault();
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        history.pushState(null, "", id);
+      });
+    });
+
+    // Floating buttons
+    document.getElementById("btnTop").addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    document.getElementById("btnPrint").addEventListener("click", () => window.print());
+
+    // Reading progress bar
+    const bar = document.getElementById("progress");
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const scrollTop = doc.scrollTop || document.body.scrollTop;
+      const height = (doc.scrollHeight - doc.clientHeight) || 1;
+      const p = Math.min(100, Math.max(0, (scrollTop / height) * 100));
+      bar.style.width = p.toFixed(2) + "%";
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  </script>
+</body>
+</html>
