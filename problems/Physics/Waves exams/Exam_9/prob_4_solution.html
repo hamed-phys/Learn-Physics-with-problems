@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Glass Prism — Fresnel Reflection, Total Internal Reflection, and Polarization</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#0f1733;
+      --card2:#0c1430;
+      --text:#eaf0ff;
+      --muted:#b9c6ffcc;
+      --line:#ffffff1a;
+      --accent:#8be9fd;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 18px 45px rgba(0,0,0,.35);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(139,233,253,.12), transparent 60%),
+        radial-gradient(900px 700px at 90% 30%, rgba(167,139,250,.10), transparent 60%),
+        radial-gradient(800px 500px at 50% 90%, rgba(52,211,153,.08), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      font-family:var(--sans);
+      line-height:1.55;
+    }
+
+    header{
+      position:relative;
+      padding: clamp(18px, 3vw, 36px);
+      border-bottom:1px solid var(--line);
+      overflow:hidden;
+    }
+    header .hero{
+      display:grid;
+      grid-template-columns: 1.25fr .9fr;
+      gap: 18px;
+      align-items:start;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    @media (max-width: 980px){
+      header .hero{grid-template-columns: 1fr; }
+    }
+    h1{
+      font-size: clamp(24px, 3.2vw, 40px);
+      letter-spacing:-.02em;
+      margin:0 0 10px 0;
+    }
+    .subtitle{
+      color:var(--muted);
+      font-size: clamp(14px, 1.5vw, 16px);
+      margin:0 0 14px 0;
+      max-width: 70ch;
+    }
+
+    .metaRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:10px;
+      align-items:center;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius:999px;
+      padding:7px 12px;
+      font-size:13px;
+      color: var(--muted);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      backdrop-filter: blur(6px);
+    }
+    .dot{
+      width:8px;height:8px;border-radius:999px;background:var(--accent);
+      box-shadow: 0 0 0 5px rgba(139,233,253,.12);
+    }
+
+    main{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: clamp(16px, 2.8vw, 28px);
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns:1fr;}
+    }
+
+    /* Sticky TOC */
+    nav.toc{
+      position:sticky;
+      top:12px;
+      align-self:start;
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: var(--shadow);
+      padding: 14px 14px 12px;
+      overflow:hidden;
+    }
+    @media (max-width: 980px){
+      nav.toc{position:relative; top:auto;}
+    }
+    nav.toc h2{
+      margin:0 0 10px 0;
+      font-size: 14px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color: var(--muted);
+    }
+    nav.toc a{
+      display:block;
+      padding: 9px 10px;
+      margin: 6px 0;
+      text-decoration:none;
+      color: var(--text);
+      border-radius: 12px;
+      border:1px solid transparent;
+      background: rgba(255,255,255,.02);
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size: 14px;
+    }
+    nav.toc a:hover{
+      transform: translateY(-1px);
+      background: rgba(139,233,253,.07);
+      border-color: rgba(139,233,253,.22);
+    }
+    nav.toc .small{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top:10px;
+      border-top: 1px dashed rgba(255,255,255,.15);
+      padding-top:10px;
+    }
+
+    article{
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+      min-width:0;
+    }
+
+    section.card{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+      padding: clamp(14px, 2vw, 20px);
+      position:relative;
+      overflow:hidden;
+      animation: floatIn .35s ease both;
+    }
+    @keyframes floatIn{
+      from{opacity:0; transform: translateY(6px)}
+      to{opacity:1; transform: translateY(0)}
+    }
+    section.card h3{
+      margin:0 0 10px 0;
+      font-size: 18px;
+      letter-spacing:-.01em;
+    }
+    section.card h4{
+      margin:14px 0 8px 0;
+      font-size: 15px;
+      color: var(--muted);
+      letter-spacing:.02em;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 780px){
+      .grid2{grid-template-columns:1fr;}
+    }
+
+    .callout{
+      border:1px solid rgba(139,233,253,.22);
+      background: linear-gradient(180deg, rgba(139,233,253,.10), rgba(139,233,253,.04));
+      border-radius: 16px;
+      padding: 12px 12px;
+    }
+    .callout.warn{
+      border-color: rgba(251,191,36,.25);
+      background: linear-gradient(180deg, rgba(251,191,36,.12), rgba(251,191,36,.04));
+    }
+    .callout.good{
+      border-color: rgba(52,211,153,.25);
+      background: linear-gradient(180deg, rgba(52,211,153,.12), rgba(52,211,153,.04));
+    }
+    .callout.bad{
+      border-color: rgba(251,113,133,.25);
+      background: linear-gradient(180deg, rgba(251,113,133,.12), rgba(251,113,133,.04));
+    }
+    .callout .title{
+      font-weight:700;
+      margin-bottom:6px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .badge{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.16);
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+    }
+
+    ul{margin:10px 0 0 20px}
+    li{margin:6px 0}
+    .eq{
+      font-family: var(--mono);
+      font-size: 13px;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      padding: 10px 10px;
+      overflow:auto;
+      position:relative;
+    }
+
+    .copyBtn{
+      position:absolute;
+      top:8px;
+      right:8px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 12px;
+      padding:6px 10px;
+      font-size:12px;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .copyBtn:hover{
+      transform: translateY(-1px);
+      background: rgba(139,233,253,.10);
+      border-color: rgba(139,233,253,.25);
+    }
+    .copyBtn:active{transform: translateY(0px) scale(.98)}
+    .copyToast{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      background: rgba(0,0,0,.7);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius: 14px;
+      padding:10px 12px;
+      color: var(--text);
+      font-size: 13px;
+      opacity:0;
+      transform: translateY(8px);
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      z-index: 99;
+      backdrop-filter: blur(10px);
+    }
+    .copyToast.show{opacity:1; transform: translateY(0)}
+
+    figure{
+      margin:0;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      border-radius: var(--radius);
+      overflow:hidden;
+    }
+    figcaption{
+      padding:10px 12px;
+      border-top:1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .canvasWrap{
+      width:100%;
+      aspect-ratio: 16/9;
+      position:relative;
+    }
+    canvas{
+      width:100%;
+      height:100%;
+      display:block;
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items:end;
+      margin-top: 8px;
+    }
+    @media (max-width: 780px){
+      .controls{grid-template-columns:1fr;}
+    }
+    .control{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      border-radius: 16px;
+      padding: 10px 12px;
+    }
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .control input[type="range"]{width:100%}
+    .readout{
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--text);
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top: 8px;
+    }
+    .readout span{
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.25);
+    }
+
+    .finalBox{
+      border:1px solid rgba(52,211,153,.28);
+      background: linear-gradient(180deg, rgba(52,211,153,.12), rgba(52,211,153,.04));
+      border-radius: 18px;
+      padding: 14px 14px;
+      position:relative;
+    }
+    .finalBox h4{margin:0 0 10px 0; color: var(--text)}
+    .finalList{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 780px){
+      .finalList{grid-template-columns:1fr;}
+    }
+    .kv{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      border-radius: 16px;
+      padding: 10px 12px;
+    }
+    .kv .k{color: var(--muted); font-size: 12px; margin-bottom:4px}
+    .kv .v{font-family: var(--mono); font-size: 13px}
+
+    footer{
+      max-width:1200px;
+      margin: 0 auto;
+      padding: 18px 28px 36px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff; color:#000}
+      nav.toc{display:none}
+      section.card{box-shadow:none; background:#fff; border-color:#ddd}
+      .eq, figure{border-color:#ddd; background:#fff}
+      .copyBtn{display:none}
+      header{border-bottom:1px solid #ddd}
+      .callout{border-color:#ddd; background:#fff}
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="hero">
+    <div>
+      <h1>Glass Prism: Fresnel Reflection, Total Internal Reflection, and Polarization</h1>
+      <p class="subtitle">
+        We track a circularly polarized beam of intensity <span class="badge">I₀</span> as it hits a right-isosceles
+        glass prism (<span class="badge">n = 1.5</span>) surrounded by air. We compute reflected/transmitted intensity
+        percentages at each surface and discuss what happens to polarization—especially under total internal reflection.
+      </p>
+      <div class="metaRow">
+        <div class="pill"><span class="dot"></span> Lossless interfaces (no absorption)</div>
+        <div class="pill"><span class="dot" style="background:var(--accent2);box-shadow:0 0 0 5px rgba(167,139,250,.12)"></span> Fresnel coefficients</div>
+        <div class="pill"><span class="dot" style="background:var(--good);box-shadow:0 0 0 5px rgba(52,211,153,.12)"></span> TIR at AC for n=1.5</div>
+      </div>
+    </div>
+
+    <section class="card" style="margin:0">
+      <h3 id="quick">Quick Summary</h3>
+      <ul>
+        <li>At <b>AB (normal incidence air→glass)</b>: reflected fraction <b>R = 4%</b>, transmitted into glass <b>T = 96%</b>.</li>
+        <li>The light reflected from <b>AB</b> remains <b>circularly polarized</b> in magnitude balance (but <b>handedness flips</b> because the propagation direction reverses).</li>
+        <li>Energy conservation at AB: <b>R + T = 1</b> for a lossless interface (verified explicitly).</li>
+        <li>At <b>AC</b>: internal incidence angle is <b>45°</b>. Since the critical angle is <b>θc ≈ 41.8°</b>, we get <b>total internal reflection</b>: <b>100% reflected</b>, <b>0% transmitted</b>.</li>
+        <li>At <b>BC (normal incidence glass→air)</b>: reflected fraction <b>4%</b>, transmitted to air <b>96%</b> of what arrives at BC.</li>
+        <li>Relative to the original <b>I₀</b>: intensity exiting at BC is <b>0.96×0.96 = 0.9216 I₀</b>.</li>
+      </ul>
+    </section>
+  </div>
+</header>
+
+<main>
+  <nav class="toc" aria-label="Table of contents">
+    <h2>On this page</h2>
+    <a href="#interactive">Interactive Visuals</a>
+    <a href="#part1">PART 1 — Problem Analysis</a>
+    <a href="#part2">PART 2 — Strategy & Tips</a>
+    <a href="#part3">PART 3 — Full Solution</a>
+    <a href="#final">Final Boxed Results</a>
+    <div class="small">
+      Tip: use the slider to explore how changing <b>n</b> affects the critical angle, reflectance, and phase shifts.
+    </div>
+  </nav>
+
+  <article>
+    <section class="card" id="interactive">
+      <h3>Interactive Visualizations (Canvas)</h3>
+      <div class="controls">
+        <div class="control">
+          <label>
+            <span>Glass refractive index <b>n</b> (air fixed at 1.0)</span>
+            <span class="badge" id="nVal">1.50</span>
+          </label>
+          <input id="nSlider" type="range" min="1.10" max="1.90" step="0.01" value="1.50" />
+          <div class="readout" id="readout">
+            <span id="thetaC">θc: —</span>
+            <span id="R_AB">R(AB): —</span>
+            <span id="T_AB">T(AB): —</span>
+            <span id="R_AC">R(AC): —</span>
+            <span id="T_AC">T(AC): —</span>
+            <span id="R_BC">R(BC): —</span>
+            <span id="T_BC">T(BC): —</span>
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <div class="title">What the visuals show <span class="badge">live</span></div>
+          <ul>
+            <li><b>Diagram</b>: prism geometry + ray path + whether AC is refracting or in TIR.</li>
+            <li><b>Main plot</b>: Fresnel reflectance vs incidence angle for <b>glass→air</b> (s &amp; p).</li>
+            <li><b>Secondary plot</b>: phase difference Δφ = φp − φs in the <b>TIR region</b> (drives polarization change).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px">
+        <figure>
+          <div class="canvasWrap">
+            <canvas id="cDiagram"></canvas>
+          </div>
+          <figcaption>
+            Labeled prism setup. Default is the problem’s value <b>n = 1.5</b>. The internal incidence at AC is fixed by geometry at <b>45°</b>.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <div class="canvasWrap">
+            <canvas id="cMain"></canvas>
+          </div>
+          <figcaption>
+            Main plot: Fresnel reflectance <b>R(θ)</b> for <b>glass→air</b>. The vertical marker shows <b>θ = 45°</b> (the prism’s AC incidence).
+          </figcaption>
+        </figure>
+      </div>
+
+      <figure style="margin-top:12px">
+        <div class="canvasWrap" style="aspect-ratio: 21/9;">
+          <canvas id="cSecondary"></canvas>
+        </div>
+        <figcaption>
+          Secondary plot: in total internal reflection, |r| = 1 but the <b>phase shifts differ</b> for s and p polarization. The phase difference Δφ converts circular polarization into <b>elliptical</b> in general.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section class="card" id="part1">
+      <h3>PART 1 — Problem Analysis (no solving yet)</h3>
+
+      <h4>1) Restate the problem</h4>
+      <p>
+        A circularly polarized light beam of intensity <span class="badge">I₀</span> hits face <b>AB</b> of a right-isosceles glass prism
+        at <b>normal incidence</b>. The prism is surrounded by air and has refractive index <span class="badge">n = 1.5</span>.
+        The triangle has angles 45°–45°–90° with the right angle at <b>B</b>. After entering the prism, the beam reaches face <b>AC</b>,
+        reflects/refracts there, and any reflected portion then reaches face <b>BC</b>.
+        We must find intensity percentages reflected/transmitted at each interaction and discuss polarization.
+      </p>
+
+      <div class="grid2">
+        <div class="callout">
+          <div class="title">Given quantities <span class="badge">inputs</span></div>
+          <ul>
+            <li>Incident intensity: <b>I₀</b></li>
+            <li>Polarization: <b>circular</b> (equal s &amp; p amplitudes with ±90° phase)</li>
+            <li>Refractive indices: air <b>nₐ = 1.0</b>, glass <b>n = 1.5</b></li>
+            <li>Geometry: ∠ABC = 90°, other angles = 45°; faces AB, BC, AC are perpendicular to the page</li>
+            <li>Incidence at AB: <b>θ = 0°</b> (normal incidence)</li>
+          </ul>
+        </div>
+
+        <div class="callout">
+          <div class="title">Unknowns <span class="badge">outputs</span></div>
+          <ul>
+            <li>(a) % intensity reflected at AB</li>
+            <li>(b) whether that reflected light is still circularly polarized</li>
+            <li>(c) show intensities (reflected + transmitted into glass) sum to I₀</li>
+            <li>(d) at AC: % reflected and % transmitted to air + relevant angles</li>
+            <li>(e) at BC: % reflected and % transmitted to air + relevant angles</li>
+          </ul>
+        </div>
+      </div>
+
+      <h4>2) Physical principles/laws and why they apply</h4>
+      <ul>
+        <li><b>Snell’s law</b> (refraction angles): applies at each interface because wavevector components parallel to the interface must match.</li>
+        <li><b>Fresnel equations</b> (reflection/transmission amplitudes): apply because boundary conditions require continuity of tangential E and H fields.</li>
+        <li><b>Energy conservation</b> at a lossless interface: with no absorption, the incident power splits into reflected + transmitted.</li>
+        <li><b>Total internal reflection (TIR)</b>: can occur for glass→air when θ exceeds the critical angle; then transmission becomes evanescent.</li>
+        <li><b>Polarization/Jones vectors</b>: circular polarization depends on equal orthogonal components and a ±90° relative phase; Fresnel coefficients can change amplitudes and phases differently for s and p.</li>
+      </ul>
+
+      <h4>3) Candidate approaches</h4>
+      <div class="grid2">
+        <div class="callout">
+          <div class="title">Approach A: Direct Fresnel + Snell (best)</div>
+          <ul>
+            <li>Use normal-incidence Fresnel coefficients at AB and BC.</li>
+            <li>Use geometry to get θ at AC (45°), then check critical angle and apply TIR logic.</li>
+            <li>Track intensities multiplicatively (each surface acts on the beam arriving there).</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <div class="title">Approach B: Impedance method</div>
+          <ul>
+            <li>Relate reflectance to wave impedance mismatch.</li>
+            <li>Equivalent to Fresnel at normal incidence; less direct for oblique/TIR phase analysis.</li>
+          </ul>
+        </div>
+      </div>
+      <p>
+        <b>Chosen approach:</b> Approach A, because it cleanly handles both normal incidence (AB, BC) and oblique incidence/TIR (AC),
+        and naturally incorporates polarization effects (different s/p phases under TIR).
+      </p>
+    </section>
+
+    <section class="card" id="part2">
+      <h3>PART 2 — Strategy & Tips (roadmap only)</h3>
+
+      <h4>Minimal step-by-step plan (no algebra yet)</h4>
+      <ol>
+        <li><b>AB interface:</b> identify θ = 0° and use normal-incidence Fresnel reflectance to get R<sub>AB</sub> and T<sub>AB</sub>.</li>
+        <li><b>Polarization at AB:</b> note that at normal incidence s and p have the same reflection coefficient → relative phase unchanged.</li>
+        <li><b>Energy check at AB:</b> use the lossless-interface identity R + T = 1 (with the correct power transmission factor).</li>
+        <li><b>Geometry to AC:</b> determine incidence angle at AC from prism angles (ray inside travels horizontally; AC is at 45°).</li>
+        <li><b>TIR test at AC:</b> compute θ<sub>c</sub> = arcsin(n<sub>air</sub>/n<sub>glass</sub>) and compare to θ<sub>i</sub>.</li>
+        <li><b>AC reflection/transmission:</b> if θ<sub>i</sub> &gt; θ<sub>c</sub>, conclude 100% reflected and no propagating transmitted beam (only evanescent).</li>
+        <li><b>Ray direction after AC:</b> apply equal-angle reflection to find where the reflected ray goes (it heads toward BC).</li>
+        <li><b>BC interface:</b> normal incidence again → use normal-incidence Fresnel to get R<sub>BC</sub>, T<sub>BC</sub>, then multiply by the intensity arriving at BC.</li>
+      </ol>
+
+      <div class="grid2">
+        <div class="callout warn">
+          <div class="title">Common mistakes</div>
+          <ul>
+            <li>Using amplitude coefficients (r, t) directly as intensity without the proper power factor for transmission.</li>
+            <li>Forgetting that at AC the incidence is from <b>glass→air</b>, so a <b>critical angle</b> may exist.</li>
+            <li>Assuming polarization always stays circular; under TIR, s and p pick up <b>different phases</b> → elliptical.</li>
+          </ul>
+        </div>
+        <div class="callout good">
+          <div class="title">Quick tips</div>
+          <ul>
+            <li>Circular polarization = equal orthogonal amplitudes + ±90° phase.</li>
+            <li>At <b>normal incidence</b>: s = p, so polarization shape is preserved (up to overall phase).</li>
+            <li>At <b>TIR</b>: |r| = 1 but phase depends on polarization → polarization generally changes.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="part3">
+      <h3>PART 3 — Full Solution</h3>
+
+      <h4>Physical intuition first</h4>
+      <p>
+        At a clean air–glass boundary, some light reflects due to refractive-index mismatch. At normal incidence,
+        the interface does not “prefer” s or p polarization, so the beam’s circularity is not distorted (only an overall phase and the
+        reversal of propagation direction matter). Inside the prism, the beam hits the hypotenuse at 45°. Since glass has a higher index than air,
+        the critical angle is less than 45° for n=1.5, so the beam undergoes <b>total internal reflection</b> at AC—no power escapes there.
+        The reflected beam then travels down to BC and partially exits into air.
+      </p>
+
+      <h4>Define symbols (used consistently)</h4>
+      <ul>
+        <li>n<sub>1</sub>, n<sub>2</sub>: refractive indices of incident and transmitted media.</li>
+        <li>θ<sub>i</sub>, θ<sub>t</sub>: incidence and transmission angles (measured from the normal).</li>
+        <li>r, t: Fresnel amplitude reflection/transmission coefficients.</li>
+        <li>R = |r|²: power reflectance. T: power transmittance (includes impedance/angle factor).</li>
+        <li>n<sub>a</sub> = 1.0 (air), n = 1.5 (glass), I₀: initial incident intensity.</li>
+      </ul>
+
+      <h4>(a) Percentage of light reflected from AB (air → glass, normal incidence)</h4>
+      <p>
+        At normal incidence, the Fresnel amplitude reflection coefficient is
+      </p>
+      <div class="eq" data-copy="r = (n1 - n2)/(n1 + n2)
+R = |r|^2 = ((n1 - n2)/(n1 + n2))^2
+T = 1 - R = 4 n1 n2/(n1 + n2)^2">
+        <button class="copyBtn" data-copy-btn>Copy</button>
+        r = (n₁ − n₂)/(n₁ + n₂)<br/>
+        R = |r|² = ((n₁ − n₂)/(n₁ + n₂))²<br/>
+        T = 1 − R = 4 n₁ n₂/(n₁ + n₂)²  &nbsp;&nbsp; (lossless, normal incidence)
+      </div>
+      <p>
+        Here n₁ = n<sub>a</sub> = 1.0 and n₂ = n = 1.5:
+      </p>
+      <div class="eq" data-copy="n1=1.0, n2=1.5
+r=(1.0-1.5)/(1.0+1.5)=-0.2
+R=r^2=0.04 = 4%
+T=0.96 = 96%">
+        <button class="copyBtn" data-copy-btn>Copy</button>
+        r = (1.0 − 1.5)/(1.0 + 1.5) = −0.2<br/>
+        R = (0.2)² = 0.04 = <b>4%</b><br/>
+        T = 1 − 0.04 = <b>96%</b>
+      </div>
+      <p><b>Answer (a):</b> <b>4%</b> of the incident intensity is reflected from AB.</p>
+
+      <h4>(b) Is the reflected light from AB still circularly polarized?</h4>
+      <p>
+        Circular polarization can be viewed as equal-magnitude orthogonal components (call them x and y, or equivalently s and p at the interface)
+        with a ±90° phase difference. At <b>normal incidence</b>, the Fresnel reflection coefficient is the same for s and p, including its phase
+        (here it is simply a real negative number, giving an overall π phase shift):
+      </p>
+      <ul>
+        <li>Both orthogonal components are multiplied by the same factor <b>r = −0.2</b> → equal magnitudes remain equal.</li>
+        <li>Their relative phase (±90°) is unchanged → the polarization state remains circular in shape.</li>
+      </ul>
+      <div class="callout warn">
+        <div class="title">Important nuance: handedness</div>
+        <p style="margin:0">
+          On reflection, the propagation direction reverses. A wave that was “right-hand circular” relative to its original propagation direction
+          becomes “left-hand circular” relative to the new propagation direction (and vice-versa). The field still traces a circle; the sense of rotation
+          is reversed when referenced to the direction of travel.
+        </p>
+      </div>
+      <p><b>Answer (b):</b> Yes, it remains <b>circular</b> (equal components, same relative phase), but its <b>handedness flips</b> because the beam reverses direction.</p>
+
+      <h4>(c) Show that reflected + transmitted intensities at AB sum to I₀</h4>
+      <p>
+        For a lossless interface at normal incidence, the power coefficients are
+      </p>
+      <div class="eq" data-copy="R = ((n1 - n2)/(n1 + n2))^2
+T = 4 n1 n2/(n1 + n2)^2
+R + T = (n1 - n2)^2/(n1 + n2)^2 + 4 n1 n2/(n1 + n2)^2
+      = (n1^2 - 2 n1 n2 + n2^2 + 4 n1 n2)/(n1 + n2)^2
+      = (n1^2 + 2 n1 n2 + n2^2)/(n1 + n2)^2
+      = 1">
+        <button class="copyBtn" data-copy-btn>Copy</button>
+        R + T = (n₁ − n₂)²/(n₁ + n₂)² + 4 n₁ n₂/(n₁ + n₂)²<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;= (n₁² − 2n₁n₂ + n₂² + 4n₁n₂)/(n₁ + n₂)²<br/>
+        &nbsp;&nbsp;&nbsp;&nbsp;= (n₁² + 2n₁n₂ + n₂²)/(n₁ + n₂)² = (n₁ + n₂)²/(n₁ + n₂)² = 1
+      </div>
+      <p>
+        Therefore, if the incident intensity is I₀, the reflected intensity is R I₀ and the transmitted (into glass) is T I₀, and
+        <b>R I₀ + T I₀ = (R+T) I₀ = I₀</b>.
+      </p>
+      <p><b>Answer (c):</b> The reflected and transmitted intensities at AB sum to <b>I₀</b>.</p>
+
+      <h4>Geometry to reach AC</h4>
+      <p>
+        The light enters at AB with normal incidence, so inside the glass it travels straight horizontally (to the right).
+        In a 45°–45°–90° triangle, the face AC is at 45° to the horizontal. Therefore, the normal to AC is at 45° to the horizontal,
+        so the incidence angle at AC is
+      </p>
+      <div class="eq" data-copy="Inside glass, ray is horizontal.
+Surface AC is at 45° to horizontal ⇒ its normal is at 45°.
+Thus θi(AC) = 45° (measured from the normal).">
+        <button class="copyBtn" data-copy-btn>Copy</button>
+        θᵢ(AC) = 45°
+      </div>
+
+      <h4>(d) At AC: percent reflected and percent transmitted into air, with angles</h4>
+      <p>
+        Here the wave is incident from glass (n = 1.5) to air (n<sub>a</sub> = 1.0) at θᵢ = 45°. First compute the critical angle:
+      </p>
+      <div class="eq" data-copy="Critical angle (glass→air):
+sin θc = n_air / n_glass = 1.0/1.5
+θc = arcsin(2/3) ≈ 41.81°">
+        <button class="copyBtn" data-copy-btn>Copy</button>
+        sin θc = nₐ / n = 1.0 / 1.5 = 2/3<br/>
+        θc = arcsin(2/3) ≈ <b>41.81°</b>
+      </div>
+      <p>
+        Since θᵢ = 45° &gt; θc, the condition for <b>total internal reflection</b> is satisfied.
+      </p>
+      <div class="callout good">
+        <div class="title">TIR conclusion at AC</div>
+        <ul style="margin:8px 0 0 18px">
+          <li><b>Reflected power:</b> 100% (R = 1) back into the glass.</li>
+          <li><b>Transmitted power:</b> 0% as a propagating beam (only an evanescent field exists in air).</li>
+          <li><b>Angles:</b> reflection angle equals incidence angle: θ<sub>r</sub> = θ<sub>i</sub> = 45°.</li>
+        </ul>
+      </div>
+      <p>
+        <b>Answer (d):</b> <b>100%</b> of the light arriving at AC is reflected; <b>0%</b> emerges into air as a traveling wave. The reflection angle is <b>45°</b>.
+      </p>
+
+      <h4>(e) Reflected from AC then incident on BC: percent reflected and percent transmitted into air, with angles</h4>
+      <p>
+        A horizontal ray reflecting from a 45° surface turns by 90°, so after reflecting at AC it travels <b>straight downward</b> and hits BC.
+        Since BC is horizontal, its normal is vertical—so this is <b>normal incidence</b> at BC.
+      </p>
+      <p>
+        For normal incidence from glass (n = 1.5) to air (n<sub>a</sub> = 1.0), the reflectance magnitude is the same as before:
+      </p>
+      <div class="eq" data-copy="At BC (glass→air, normal incidence):
+r=(n - n_air)/(n + n_air)=(1.5-1.0)/(1.5+1.0)=0.2
+R=0.04=4%
+T=0.96=96%">
+        <button class="copyBtn" data-copy-btn>Copy</button>
+        r = (1.5 − 1.0)/(1.5 + 1.0) = 0.2<br/>
+        R = 0.04 = <b>4%</b><br/>
+        T = 0.96 = <b>96%</b>
+      </div>
+      <p>
+        The intensity that arrives at BC equals the intensity transmitted through AB (because AC was TIR):
+      </p>
+      <div class="eq" data-copy="I_in_to_glass = T_AB * I0 = 0.96 I0
+I_arrive_BC = 0.96 I0 (since AC is TIR)">
+        <button class="copyBtn" data-copy-btn>Copy</button>
+        I arriving at BC = T<sub>AB</sub> I₀ = 0.96 I₀
+      </div>
+      <p>
+        Therefore, the intensity that <b>emerges into air</b> at BC and the intensity <b>reflected back</b> into the glass at BC are:
+      </p>
+      <div class="eq" data-copy="I_exit_at_BC = T_BC * I_arrive_BC = 0.96*(0.96 I0)=0.9216 I0
+I_reflect_at_BC = R_BC * I_arrive_BC = 0.04*(0.96 I0)=0.0384 I0">
+        <button class="copyBtn" data-copy-btn>Copy</button>
+        I<sub>exit,BC</sub> = T<sub>BC</sub>·(0.96 I₀) = 0.96·0.96 I₀ = <b>0.9216 I₀</b><br/>
+        I<sub>refl,BC</sub> = R<sub>BC</sub>·(0.96 I₀) = 0.04·0.96 I₀ = <b>0.0384 I₀</b>
+      </div>
+      <p><b>Answer (e):</b> At BC, of the light incident on BC, <b>4%</b> reflects and <b>96%</b> transmits into air (at θ = 0°). Relative to I₀, <b>0.9216 I₀</b> exits at BC.</p>
+
+      <h4>Sanity checks</h4>
+      <div class="grid2">
+        <div class="callout">
+          <div class="title">Units</div>
+          <ul>
+            <li>R and T are dimensionless fractions (or percentages).</li>
+            <li>Intensities scale as I = (fraction)·I₀, so units match I₀.</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <div class="title">Limiting cases</div>
+          <ul>
+            <li>If n → 1, then r → 0 ⇒ R → 0 and T → 1 (no interface mismatch).</li>
+            <li>If n becomes very large, R at normal incidence approaches 1 (strong mismatch).</li>
+            <li>If θᵢ at AC drops below θc, TIR disappears and some power refracts out (see slider).</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout warn" style="margin-top:12px">
+        <div class="title">Physical interpretation (polarization)</div>
+        <p style="margin:0">
+          At AB and BC (normal incidence), s and p behave identically → circular polarization shape is preserved (up to overall phase/handedness).
+          At AC under TIR, |r| = 1 but the phase shifts for s and p differ, so a circular state generally becomes <b>elliptical</b> after that reflection.
+          The secondary plot visualizes this phase difference Δφ.
+        </p>
+      </div>
+    </section>
+
+    <section class="card" id="final">
+      <h3>Final Boxed Results</h3>
+
+      <div class="finalBox">
+        <button class="copyBtn" data-copy-btn data-copy="For n_air=1.0, n_glass=1.5, I0 incident:
+
+(a) At AB (air→glass, normal incidence): R_AB=4%, T_AB=96%. Reflected intensity =0.04 I0, transmitted into glass =0.96 I0.
+
+(b) Reflected from AB is still circular in shape (s and p affected equally); handedness flips due to reversal of propagation direction.
+
+(c) Energy split at AB: R+T=1 ⇒ (0.04+0.96)I0=I0.
+
+(d) At AC (glass→air): θi=45°. Critical angle θc=arcsin(1/1.5)=41.81°. Since 45°>θc ⇒ total internal reflection:
+R_AC=100%, T_AC=0% (no propagating transmitted beam). θr=45°.
+
+(e) At BC (glass→air, normal incidence): R_BC=4%, T_BC=96% of what arrives.
+Arriving intensity at BC =0.96 I0 ⇒ exiting into air =0.96*0.96 I0=0.9216 I0; reflected at BC =0.04*0.96 I0=0.0384 I0.">
+          Copy final answers
+        </button>
+        <h4>Numerical results for the given prism (n = 1.5, air = 1.0)</h4>
+
+        <div class="finalList">
+          <div class="kv">
+            <div class="k">(a) AB reflectance</div>
+            <div class="v">R_AB = 0.04 = 4%</div>
+          </div>
+          <div class="kv">
+            <div class="k">(a) AB transmittance</div>
+            <div class="v">T_AB = 0.96 = 96%</div>
+          </div>
+          <div class="kv">
+            <div class="k">(d) AC incidence / critical</div>
+            <div class="v">θ_i(AC)=45°, θ_c≈41.81° ⇒ TIR</div>
+          </div>
+          <div class="kv">
+            <div class="k">(d) AC split</div>
+            <div class="v">R_AC = 1 (100%), T_AC = 0</div>
+          </div>
+          <div class="kv">
+            <div class="k">(e) BC split (of arriving)</div>
+            <div class="v">R_BC = 4%, T_BC = 96%</div>
+          </div>
+          <div class="kv">
+            <div class="k">(e) Exit intensity vs I0</div>
+            <div class="v">I_exit,BC = 0.9216 I0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </article>
+</main>
+
+<footer>
+  <p>
+    Built as a self-contained HTML article (no external libraries). Interactive plots use Fresnel equations for s/p polarization and show how
+    total internal reflection depends on refractive index.
+  </p>
+</footer>
+
+<div class="copyToast" id="copyToast">Copied.</div>
+
+<script>
+/* =========================
+   Utilities: Copy buttons
+========================= */
+(function(){
+  const toast = document.getElementById('copyToast');
+  function showToast(msg="Copied."){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>toast.classList.remove('show'), 1100);
+  }
+
+  function copyText(text){
+    if(!text) return;
+    navigator.clipboard.writeText(text).then(()=>showToast("Copied to clipboard."))
+    .catch(()=>showToast("Copy failed (browser permissions)."));
+  }
+
+  document.addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-copy-btn]');
+    if(!btn) return;
+    const parentEq = btn.closest('.eq');
+    const explicit = btn.getAttribute('data-copy');
+    if(explicit){
+      copyText(explicit);
+      return;
+    }
+    if(parentEq && parentEq.getAttribute('data-copy')){
+      copyText(parentEq.getAttribute('data-copy'));
+      return;
+    }
+    // fallback: copy visible text content
+    const t = (parentEq ? parentEq.textContent : btn.textContent).replace(/Copy\s*/g,'').trim();
+    copyText(t);
+  });
+})();
+
+/* =========================
+   Math: Complex numbers
+========================= */
+class C {
+  constructor(re, im=0){ this.re=re; this.im=im; }
+  add(o){ return new C(this.re+o.re, this.im+o.im); }
+  sub(o){ return new C(this.re-o.re, this.im-o.im); }
+  mul(o){
+    return new C(this.re*o.re - this.im*o.im, this.re*o.im + this.im*o.re);
+  }
+  div(o){
+    const d = o.re*o.re + o.im*o.im;
+    return new C((this.re*o.re + this.im*o.im)/d, (this.im*o.re - this.re*o.im)/d);
+  }
+  abs(){ return Math.hypot(this.re, this.im); }
+  arg(){ return Math.atan2(this.im, this.re); }
+  conj(){ return new C(this.re, -this.im); }
+  static fromReal(x){ return new C(x,0); }
+}
+
+/* =========================
+   Fresnel (power coefficients)
+   - supports complex cos(theta_t) under TIR
+========================= */
+function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+function deg2rad(d){ return d*Math.PI/180; }
+function rad2deg(r){ return r*180/Math.PI; }
+
+function fresnel(n1, n2, thetaIrad){
+  // thetaI from normal, in medium 1
+  const sI = Math.sin(thetaIrad);
+  const cI = Math.cos(thetaIrad);
+
+  // Snell: n1 sinθi = n2 sinθt
+  const sT = (n1/n2)*sI;
+
+  let cT; // complex
+  if(Math.abs(sT) <= 1){
+    cT = C.fromReal(Math.sqrt(1 - sT*sT));
+  } else {
+    // total internal reflection: cosθt = i*sqrt(sT^2 - 1)
+    const k = Math.sqrt(sT*sT - 1);
+    cT = new C(0, k);
+  }
+
+  const N1cI = C.fromReal(n1*cI);
+  const N2cT = cT.mul(C.fromReal(n2));
+
+  // r_s = (n1 cI - n2 cT)/(n1 cI + n2 cT)
+  const rs = N1cI.sub(N2cT).div(N1cI.add(N2cT));
+
+  // r_p = (n2 cI - n1 cT)/(n2 cI + n1 cT)
+  const N2cI = C.fromReal(n2*cI);
+  const N1cT = cT.mul(C.fromReal(n1));
+  const rp = N2cI.sub(N1cT).div(N2cI.add(N1cT));
+
+  const Rs = rs.abs()**2;
+  const Rp = rp.abs()**2;
+
+  // Transmission: use t and power factor when propagating
+  let Ts=0, Tp=0, thetaTrad=null;
+  if(Math.abs(sT) <= 1){
+    thetaTrad = Math.asin(clamp(sT,-1,1));
+    // t_s = 2 n1 cI / (n1 cI + n2 cT)
+    const ts = C.fromReal(2*n1*cI).div(N1cI.add(N2cT));
+    // t_p = 2 n1 cI / (n2 cI + n1 cT)
+    const tp = C.fromReal(2*n1*cI).div(N2cI.add(N1cT));
+
+    // Power factor: (n2 cosθt)/(n1 cosθi) * |t|^2
+    const factor = (n2*Math.cos(thetaTrad))/(n1*cI);
+    Ts = factor * (ts.abs()**2);
+    Tp = factor * (tp.abs()**2);
+  } else {
+    // Under TIR, no propagating transmission
+    Ts = 0; Tp = 0;
+  }
+
+  return {
+    rs, rp, Rs, Rp, Ts, Tp, thetaTrad, sT
+  };
+}
+
+function unpolarizedOrCircularR(Rs, Rp){ return 0.5*(Rs + Rp); }
+function unpolarizedOrCircularT(Ts, Tp){ return 0.5*(Ts + Tp); }
+
+/* =========================
+   Canvas helpers (HiDPI + axes)
+========================= */
+function fitCanvas(canvas){
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(2, Math.floor(rect.width * dpr));
+  const h = Math.max(2, Math.floor(rect.height * dpr));
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w; canvas.height = h;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  return {ctx, dpr, w: rect.width, h: rect.height};
+}
+
+function drawPanelTitle(ctx, x, y, title){
+  ctx.save();
+  ctx.font = "600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillStyle = "rgba(234,240,255,.92)";
+  ctx.fillText(title, x, y);
+  ctx.restore();
+}
+
+function drawAxes(ctx, box, xLabel, yLabel, xMin, xMax, yMin, yMax, options={}){
+  const {x, y, w, h} = box;
+  const padL = options.padL ?? 56;
+  const padR = options.padR ?? 18;
+  const padT = options.padT ?? 28;
+  const padB = options.padB ?? 44;
+  const ix = x + padL, iy = y + padT, iw = w - padL - padR, ih = h - padT - padB;
+
+  // background
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,.18)";
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = "rgba(255,255,255,.10)";
+  ctx.strokeRect(x+.5, y+.5, w-1, h-1);
+
+  // gridlines + ticks
+  const nGX = options.gridX ?? 8;
+  const nGY = options.gridY ?? 6;
+
+  ctx.strokeStyle = "rgba(255,255,255,.08)";
+  ctx.lineWidth = 1;
+
+  for(let i=0;i<=nGX;i++){
+    const gx = ix + (iw*i)/nGX;
+    ctx.beginPath(); ctx.moveTo(gx, iy); ctx.lineTo(gx, iy+ih); ctx.stroke();
+  }
+  for(let j=0;j<=nGY;j++){
+    const gy = iy + (ih*j)/nGY;
+    ctx.beginPath(); ctx.moveTo(ix, gy); ctx.lineTo(ix+iw, gy); ctx.stroke();
+  }
+
+  // axes
+  ctx.strokeStyle = "rgba(255,255,255,.22)";
+  ctx.beginPath();
+  ctx.moveTo(ix, iy); ctx.lineTo(ix, iy+ih);
+  ctx.lineTo(ix+iw, iy+ih);
+  ctx.stroke();
+
+  // tick labels
+  ctx.fillStyle = "rgba(234,240,255,.78)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+
+  for(let i=0;i<=nGX;i++){
+    const t = xMin + (xMax-xMin)*i/nGX;
+    const gx = ix + (iw*i)/nGX;
+    const s = (options.xFmt ? options.xFmt(t) : t.toFixed(0));
+    ctx.fillText(s, gx-10, iy+ih+18);
+  }
+  for(let j=0;j<=nGY;j++){
+    const t = yMax - (yMax-yMin)*j/nGY;
+    const gy = iy + (ih*j)/nGY;
+    const s = (options.yFmt ? options.yFmt(t) : t.toFixed(2));
+    ctx.fillText(s, ix-48, gy+4);
+  }
+
+  // labels
+  ctx.save();
+  ctx.fillStyle = "rgba(234,240,255,.85)";
+  ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText(xLabel, ix + iw/2 - ctx.measureText(xLabel).width/2, iy+ih+36);
+
+  ctx.translate(ix-52, iy+ih/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, -ctx.measureText(yLabel).width/2, 0);
+  ctx.restore();
+
+  // return transforms
+  const x2px = (X)=> ix + (X-xMin)*iw/(xMax-xMin);
+  const y2px = (Y)=> iy + (yMax-Y)*ih/(yMax-yMin);
+
+  ctx.restore();
+  return {plot:{x:ix,y:iy,w:iw,h:ih}, x2px, y2px};
+}
+
+function drawLegend(ctx, items, x, y){
+  ctx.save();
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  let yy = y;
+  for(const it of items){
+    ctx.fillStyle = "rgba(0,0,0,.35)";
+    const w = ctx.measureText(it.label).width + 48;
+    ctx.fillRect(x, yy-14, w, 22);
+    ctx.strokeStyle = "rgba(255,255,255,.12)";
+    ctx.strokeRect(x+.5, yy-13.5, w-1, 21);
+    ctx.strokeStyle = it.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x+10, yy-4); ctx.lineTo(x+28, yy-4); ctx.stroke();
+    ctx.fillStyle = "rgba(234,240,255,.9)";
+    ctx.fillText(it.label, x+34, yy);
+    yy += 26;
+  }
+  ctx.restore();
+}
+
+/* =========================
+   Drawing: Diagram
+========================= */
+function drawDiagram(canvas, nGlass){
+  const {ctx, w, h} = fitCanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+
+  // panel background
+  ctx.fillStyle = "rgba(0,0,0,.16)";
+  ctx.fillRect(0,0,w,h);
+  drawPanelTitle(ctx, 14, 18, "Diagram: Prism geometry + ray path");
+
+  // coordinate system in panel
+  const margin = 24;
+  const X0 = margin, Y0 = margin+10;
+  const W = w - 2*margin, H = h - 2*margin - 10;
+
+  // Prism vertices in normalized local coords (right isosceles with right angle at B)
+  // We'll place B bottom-left, A top-left, C bottom-right
+  const s = Math.min(W*0.62, H*0.78);
+  const B = {x: X0 + W*0.22, y: Y0 + H*0.78};
+  const A = {x: B.x, y: B.y - s};
+  const C = {x: B.x + s, y: B.y};
+
+  // draw prism
+  ctx.save();
+  ctx.strokeStyle = "rgba(234,240,255,.85)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(A.x, A.y);
+  ctx.lineTo(B.x, B.y);
+  ctx.lineTo(C.x, C.y);
+  ctx.closePath();
+  ctx.stroke();
+
+  // face labels
+  ctx.fillStyle = "rgba(234,240,255,.92)";
+  ctx.font = "600 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText("A", A.x - 14, A.y - 6);
+  ctx.fillText("B", B.x - 14, B.y + 18);
+  ctx.fillText("C", C.x + 6, C.y + 18);
+
+  // edges labels
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  ctx.fillStyle = "rgba(185,198,255,.92)";
+  ctx.fillText("AB", (A.x+B.x)/2 - 26, (A.y+B.y)/2);
+  ctx.fillText("BC", (B.x+C.x)/2 - 8, (B.y+C.y)/2 + 18);
+  ctx.fillText("AC", (A.x+C.x)/2 + 8, (A.y+C.y)/2 - 4);
+
+  // incoming ray to AB (normal incidence)
+  const midAB = {x: A.x, y:(A.y+B.y)/2};
+  ctx.strokeStyle = "rgba(139,233,253,.95)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(midAB.x - 90, midAB.y);
+  ctx.lineTo(midAB.x, midAB.y);
+  ctx.stroke();
+
+  // arrow head
+  drawArrowHead(ctx, midAB.x, midAB.y, 0, "rgba(139,233,253,.95)");
+
+  // inside ray (horizontal) until AC
+  const hitAC = intersectRayWithSegment(
+    {x: midAB.x+1, y: midAB.y}, // start inside
+    {x: 1, y: 0},               // direction right
+    A, C
+  );
+
+  ctx.strokeStyle = "rgba(139,233,253,.9)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(midAB.x, midAB.y);
+  if(hitAC){
+    ctx.lineTo(hitAC.x, hitAC.y);
+  } else {
+    ctx.lineTo(midAB.x + 160, midAB.y);
+  }
+  ctx.stroke();
+
+  // normal at AC & angle label
+  if(hitAC){
+    const nHat = normalize({x: 1, y: 1}); // normal to line with slope -1
+    const nLen = 70;
+    ctx.strokeStyle = "rgba(255,255,255,.35)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6,6]);
+    ctx.beginPath();
+    ctx.moveTo(hitAC.x - nHat.x*nLen, hitAC.y - nHat.y*nLen);
+    ctx.lineTo(hitAC.x + nHat.x*nLen, hitAC.y + nHat.y*nLen);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Determine TIR?
+    const thetaI = deg2rad(45);
+    const thetaC = (nGlass>1) ? Math.asin(1/nGlass) : Math.PI/2;
+    const isTIR = thetaI > thetaC;
+
+    // reflected ray from AC: should go downward
+    const reflDir = {x: 0, y: 1}; // down in screen coords (y+ is down)
+    const endDown = {x: hitAC.x, y: hitAC.y + 140};
+    ctx.strokeStyle = isTIR ? "rgba(52,211,153,.95)" : "rgba(251,191,36,.95)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(hitAC.x, hitAC.y);
+    ctx.lineTo(endDown.x, endDown.y);
+    ctx.stroke();
+    drawArrowHead(ctx, endDown.x, endDown.y, Math.PI/2, isTIR ? "rgba(52,211,153,.95)" : "rgba(251,191,36,.95)");
+
+    // if not TIR, draw transmitted ray into air (approx direction by Snell)
+    if(!isTIR){
+      const fr = fresnel(nGlass, 1.0, thetaI);
+      const thetaT = fr.thetaTrad || 0;
+      // transmitted direction in air: measured from normal, on other side
+      // normal points ~ (1,1). We'll build direction by rotating -?:
+      // We'll use local basis: normal (toward air) nHat, tangent tHat along AC
+      const tHat = normalize({x: 1, y: -1}); // along AC
+      // incident is along +x. For transmission, direction is: d = nHat*cos + tHat*sin (sign chosen to go out)
+      const dOut = {
+        x: nHat.x*Math.cos(thetaT) + tHat.x*Math.sin(thetaT),
+        y: nHat.y*Math.cos(thetaT) + tHat.y*Math.sin(thetaT),
+      };
+      const endOut = {x: hitAC.x + dOut.x*150, y: hitAC.y + dOut.y*150};
+      ctx.strokeStyle = "rgba(251,191,36,.95)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(hitAC.x, hitAC.y);
+      ctx.lineTo(endOut.x, endOut.y);
+      ctx.stroke();
+      drawArrowHead(ctx, endOut.x, endOut.y, Math.atan2(dOut.y, dOut.x), "rgba(251,191,36,.95)");
+    }
+
+    // angle annotation text
+    ctx.fillStyle = "rgba(234,240,255,.9)";
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+    const tcDeg = rad2deg(thetaC);
+    ctx.fillText("θi(AC)=45°", hitAC.x + 10, hitAC.y - 10);
+    ctx.fillText("θc=" + tcDeg.toFixed(2) + "°", hitAC.x + 10, hitAC.y + 10);
+    ctx.fillStyle = isTIR ? "rgba(52,211,153,.95)" : "rgba(251,191,36,.95)";
+    ctx.font = "700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.fillText(isTIR ? "TIR at AC" : "Refraction at AC", hitAC.x + 10, hitAC.y + 30);
+
+    // BC interaction label
+    ctx.fillStyle = "rgba(185,198,255,.92)";
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+    ctx.fillText("BC: normal incidence", B.x + 10, B.y + 40);
+
+    // annotate indices
+    ctx.fillStyle = "rgba(185,198,255,.92)";
+    ctx.fillText("air: n=1.00", B.x - 110, A.y + 14);
+    ctx.fillText("glass: n=" + nGlass.toFixed(2), B.x + 10, A.y + 14);
+  }
+
+  ctx.restore();
+}
+
+function drawArrowHead(ctx, x, y, angle, color){
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.lineTo(-10,-5);
+  ctx.lineTo(-10,5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+// Ray/segment intersection (2D)
+function intersectRayWithSegment(p, d, a, b){
+  // p + t d intersects a + u (b-a) with t>=0 and u in [0,1]
+  const v = {x: b.x-a.x, y: b.y-a.y};
+  const denom = d.x*v.y - d.y*v.x;
+  if(Math.abs(denom) < 1e-9) return null;
+  const ap = {x: a.x - p.x, y: a.y - p.y};
+  const t = (ap.x*v.y - ap.y*v.x)/denom;
+  const u = (ap.x*d.y - ap.y*d.x)/denom;
+  if(t >= 0 && u >= 0 && u <= 1){
+    return {x: p.x + t*d.x, y: p.y + t*d.y};
+  }
+  return null;
+}
+function normalize(v){
+  const m = Math.hypot(v.x, v.y) || 1;
+  return {x:v.x/m, y:v.y/m};
+}
+
+/* =========================
+   Drawing: Main plot R(theta) for glass→air
+========================= */
+function drawMainPlot(canvas, nGlass){
+  const {ctx, w, h} = fitCanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+
+  drawPanelTitle(ctx, 14, 18, "Main plot: Reflectance vs incidence angle (glass→air)");
+
+  const box = {x: 10, y: 26, w: w-20, h: h-36};
+  const xMin = 0, xMax = 89.9;   // degrees
+  const yMin = 0, yMax = 1.05;   // reflectance
+
+  const ax = drawAxes(ctx, box, "Incidence angle θ (deg)", "Reflectance R (fraction)", xMin, xMax, yMin, yMax,
+    { gridX: 9, gridY: 7, xFmt:(t)=>t.toFixed(0), yFmt:(t)=>t.toFixed(2) }
+  );
+
+  // compute curves
+  const N = 600;
+  const ptsS = [];
+  const ptsP = [];
+  for(let i=0;i<N;i++){
+    const th = xMin + (xMax-xMin)*i/(N-1);
+    const fr = fresnel(nGlass, 1.0, deg2rad(th));
+    ptsS.push({x: th, y: fr.Rs});
+    ptsP.push({x: th, y: fr.Rp});
+  }
+
+  // draw curves
+  function strokeCurve(pts, color){
+    const {x2px,y2px} = ax;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    pts.forEach((p,idx)=>{
+      const X = x2px(p.x), Y = y2px(p.y);
+      if(idx===0) ctx.moveTo(X,Y);
+      else ctx.lineTo(X,Y);
+    });
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  strokeCurve(ptsS, "rgba(139,233,253,.95)"); // s
+  strokeCurve(ptsP, "rgba(167,139,250,.95)"); // p
+
+  // critical angle marker
+  const thetaC = (nGlass>1) ? rad2deg(Math.asin(1/nGlass)) : 90;
+  const xC = ax.x2px(thetaC);
+  ctx.save();
+  ctx.strokeStyle = "rgba(52,211,153,.85)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6,6]);
+  ctx.beginPath();
+  ctx.moveTo(xC, ax.plot.y);
+  ctx.lineTo(xC, ax.plot.y + ax.plot.h);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(52,211,153,.95)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  ctx.fillText("θc", xC + 6, ax.plot.y + 16);
+  ctx.restore();
+
+  // prism AC incidence marker (45°)
+  const x45 = ax.x2px(45);
+  ctx.save();
+  ctx.strokeStyle = "rgba(251,191,36,.9)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x45, ax.plot.y);
+  ctx.lineTo(x45, ax.plot.y + ax.plot.h);
+  ctx.stroke();
+  ctx.fillStyle = "rgba(251,191,36,.95)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  ctx.fillText("45°", x45 + 6, ax.plot.y + 32);
+  ctx.restore();
+
+  drawLegend(ctx, [
+    {label:"R_s (s-pol)", color:"rgba(139,233,253,.95)"},
+    {label:"R_p (p-pol)", color:"rgba(167,139,250,.95)"},
+    {label:"θc (TIR starts)", color:"rgba(52,211,153,.85)"},
+    {label:"θ=45° (AC incidence)", color:"rgba(251,191,36,.9)"}
+  ], ax.plot.x + 10, ax.plot.y + 18);
+}
+
+/* =========================
+   Drawing: Secondary plot Δφ under TIR
+========================= */
+function drawSecondaryPlot(canvas, nGlass){
+  const {ctx, w, h} = fitCanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+
+  drawPanelTitle(ctx, 14, 18, "Secondary plot: Phase difference Δφ = φp − φs (TIR region)");
+
+  const box = {x: 10, y: 26, w: w-20, h: h-36};
+  const thetaC = (nGlass>1) ? rad2deg(Math.asin(1/nGlass)) : 90;
+  const xMin = thetaC;
+  const xMax = 89.9;
+  const yMin = -Math.PI, yMax = Math.PI;
+
+  const ax = drawAxes(ctx, box, "Incidence angle θ (deg)", "Δφ (rad)", xMin, xMax, yMin, yMax,
+    { gridX: 8, gridY: 6, xFmt:(t)=>t.toFixed(0), yFmt:(t)=>t.toFixed(2) }
+  );
+
+  // If no TIR region, show note
+  if(thetaC >= 89.8){
+    ctx.save();
+    ctx.fillStyle = "rgba(234,240,255,.85)";
+    ctx.font = "600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.fillText("No TIR region for this n (θc ~ 90°). Increase n to see TIR phases.", ax.plot.x + 10, ax.plot.y + 30);
+    ctx.restore();
+    return;
+  }
+
+  const N = 500;
+  const pts = [];
+  for(let i=0;i<N;i++){
+    const th = xMin + (xMax-xMin)*i/(N-1);
+    const fr = fresnel(nGlass, 1.0, deg2rad(th));
+    const phis = fr.rs.arg(); // phase
+    const phip = fr.rp.arg();
+    // unwrap to [-pi,pi] difference
+    let dphi = phip - phis;
+    while(dphi > Math.PI) dphi -= 2*Math.PI;
+    while(dphi < -Math.PI) dphi += 2*Math.PI;
+    pts.push({x: th, y: dphi});
+  }
+
+  // draw curve
+  ctx.save();
+  ctx.strokeStyle = "rgba(52,211,153,.95)";
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  pts.forEach((p,idx)=>{
+    const X = ax.x2px(p.x), Y = ax.y2px(p.y);
+    if(idx===0) ctx.moveTo(X,Y);
+    else ctx.lineTo(X,Y);
+  });
+  ctx.stroke();
+  ctx.restore();
+
+  // 45° marker if within region
+  if(45 >= xMin && 45 <= xMax){
+    const x45 = ax.x2px(45);
+    ctx.save();
+    ctx.strokeStyle = "rgba(251,191,36,.9)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x45, ax.plot.y);
+    ctx.lineTo(x45, ax.plot.y + ax.plot.h);
+    ctx.stroke();
+
+    const fr45 = fresnel(nGlass, 1.0, deg2rad(45));
+    let dphi45 = fr45.rp.arg() - fr45.rs.arg();
+    while(dphi45 > Math.PI) dphi45 -= 2*Math.PI;
+    while(dphi45 < -Math.PI) dphi45 += 2*Math.PI;
+
+    ctx.fillStyle = "rgba(251,191,36,.95)";
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+    ctx.fillText("θ=45°", x45 + 6, ax.plot.y + 18);
+
+    // point
+    ctx.fillStyle = "rgba(251,191,36,.95)";
+    ctx.beginPath();
+    ctx.arc(x45, ax.y2px(dphi45), 4.2, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.fillText("Δφ(45°)≈" + dphi45.toFixed(3), x45 + 6, ax.y2px(dphi45) - 8);
+    ctx.restore();
+  }
+
+  drawLegend(ctx, [
+    {label:"Δφ in TIR (φp−φs)", color:"rgba(52,211,153,.95)"},
+    {label:"θ=45° marker", color:"rgba(251,191,36,.9)"}
+  ], ax.plot.x + 10, ax.plot.y + 18);
+}
+
+/* =========================
+   Update readout + plots
+========================= */
+function updateAll(){
+  const nGlass = parseFloat(document.getElementById('nSlider').value);
+  document.getElementById('nVal').textContent = nGlass.toFixed(2);
+
+  // Problem surfaces:
+  // AB: air->glass normal incidence
+  const frAB = fresnel(1.0, nGlass, 0);
+  const RAB = unpolarizedOrCircularR(frAB.Rs, frAB.Rp);
+  const TAB = unpolarizedOrCircularT(frAB.Ts, frAB.Tp);
+
+  // AC: glass->air incidence fixed 45° by geometry
+  const thetaAC = deg2rad(45);
+  const frAC = fresnel(nGlass, 1.0, thetaAC);
+  const RAC = unpolarizedOrCircularR(frAC.Rs, frAC.Rp);
+  const TAC = unpolarizedOrCircularT(frAC.Ts, frAC.Tp);
+
+  // BC: glass->air normal incidence
+  const frBC = fresnel(nGlass, 1.0, 0);
+  const RBC = unpolarizedOrCircularR(frBC.Rs, frBC.Rp);
+  const TBC = unpolarizedOrCircularT(frBC.Ts, frBC.Tp);
+
+  // critical angle
+  let thetaC = NaN;
+  if(nGlass > 1){
+    thetaC = Math.asin(1/nGlass);
+  } else {
+    thetaC = Math.PI/2;
+  }
+
+  // Update readout
+  const fmtPct = (x)=> (100*x).toFixed(2) + "%";
+  document.getElementById('thetaC').textContent = "θc: " + rad2deg(thetaC).toFixed(2) + "°";
+  document.getElementById('R_AB').textContent = "R(AB): " + fmtPct(RAB);
+  document.getElementById('T_AB').textContent = "T(AB): " + fmtPct(TAB);
+  document.getElementById('R_AC').textContent = "R(AC): " + fmtPct(RAC);
+  document.getElementById('T_AC').textContent = "T(AC): " + fmtPct(TAC);
+  document.getElementById('R_BC').textContent = "R(BC): " + fmtPct(RBC);
+  document.getElementById('T_BC').textContent = "T(BC): " + fmtPct(TBC);
+
+  // Draw visuals
+  drawDiagram(document.getElementById('cDiagram'), nGlass);
+  drawMainPlot(document.getElementById('cMain'), nGlass);
+  drawSecondaryPlot(document.getElementById('cSecondary'), nGlass);
+}
+
+// Resize observer for responsive redraw
+let ro;
+(function init(){
+  const slider = document.getElementById('nSlider');
+  slider.addEventListener('input', updateAll);
+
+  // redraw on resize
+  ro = new ResizeObserver(()=>updateAll());
+  ['cDiagram','cMain','cSecondary'].forEach(id=>{
+    ro.observe(document.getElementById(id));
+  });
+  window.addEventListener('resize', ()=>updateAll(), {passive:true});
+  updateAll();
+})();
+</script>
+</body>
+</html>

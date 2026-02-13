@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Oscillating String (Fixed Ends) — Energy, Motion, Recurrence</title>
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.085);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.70);
+      --faint: rgba(255,255,255,0.55);
+      --border: rgba(255,255,255,0.14);
+      --accent: #7dd3fc;
+      --accent2:#a7f3d0;
+      --warn:#fbbf24;
+      --ok:#86efac;
+      --bad:#fb7185;
+      --shadow: 0 18px 60px rgba(0,0,0,0.35);
+      --radius: 18px;
+      --radius2: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(125,211,252,0.18), transparent 60%),
+        radial-gradient(900px 600px at 85% 20%, rgba(167,243,208,0.14), transparent 55%),
+        radial-gradient(900px 700px at 40% 95%, rgba(251,191,36,0.10), transparent 60%),
+        linear-gradient(180deg, #070a12 0%, #0b1020 40%, #070a12 100%);
+      color: var(--text);
+      line-height: 1.55;
+      overflow-x:hidden;
+    }
+
+    a{ color: var(--accent); text-decoration: none; }
+    a:hover{ text-decoration: underline; }
+
+    header.hero{
+      padding: 34px 18px 18px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .heroCard{
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.04));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position: relative;
+    }
+    .heroCard::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(700px 200px at 10% 20%, rgba(125,211,252,0.25), transparent 60%),
+        radial-gradient(600px 220px at 80% 10%, rgba(167,243,208,0.16), transparent 55%),
+        linear-gradient(120deg, rgba(255,255,255,0.05), transparent 40%);
+      filter: blur(0px);
+      pointer-events:none;
+      opacity:0.85;
+    }
+    .heroInner{
+      position: relative;
+      padding: 22px 22px 20px;
+      display:grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      .heroInner{ grid-template-columns: 1fr; }
+    }
+
+    h1{
+      margin: 0 0 8px;
+      font-size: clamp(1.35rem, 2.2vw, 2.05rem);
+      letter-spacing: 0.2px;
+    }
+    .subtitle{
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+    .metaRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .pill{
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.22);
+      padding: 6px 10px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      backdrop-filter: blur(8px);
+    }
+
+    .quick{
+      border: 1px solid rgba(125,211,252,0.25);
+      background: rgba(125,211,252,0.08);
+      border-radius: var(--radius2);
+      padding: 14px 14px 12px;
+    }
+    .quick h2{
+      margin:0 0 8px;
+      font-size: 0.98rem;
+      letter-spacing: 0.2px;
+      color: rgba(255,255,255,0.92);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .spark{
+      width: 10px; height: 10px; border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(125,211,252,0.18);
+    }
+    .quick ul{
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+    .quick li{ margin: 6px 0; }
+
+    main{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 18px 40px;
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap: 16px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+      border-radius: var(--radius);
+      padding: 14px 14px 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+      backdrop-filter: blur(10px);
+    }
+    @media (max-width: 980px){
+      nav.toc{ position: relative; top: 0; }
+    }
+    .tocTitle{
+      font-size: 0.92rem;
+      color: rgba(255,255,255,0.88);
+      margin: 0 0 8px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .tocTitle span{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+    }
+    .tocDot{
+      width:9px; height:9px; border-radius:999px;
+      background: var(--accent2);
+      box-shadow: 0 0 0 4px rgba(167,243,208,0.15);
+    }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      margin: 4px 0;
+      color: var(--muted);
+      border: 1px solid transparent;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+      will-change: transform;
+    }
+    .toc a:hover{
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.10);
+      transform: translateX(2px);
+      text-decoration:none;
+    }
+
+    section.card{
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.035));
+      border-radius: var(--radius);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.24);
+      padding: 18px 18px 16px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow:hidden;
+    }
+    section.card::after{
+      content:"";
+      position:absolute; inset:auto -30% -80% -30%;
+      height: 180px;
+      background: radial-gradient(closest-side, rgba(125,211,252,0.12), transparent 70%);
+      transform: rotate(-4deg);
+      pointer-events:none;
+      opacity:0.9;
+    }
+
+    h2.part{
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+      letter-spacing: 0.2px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .badge{
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.86);
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(125,211,252,0.22);
+      background: rgba(125,211,252,0.08);
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .callout{
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.20);
+      border-radius: var(--radius2);
+      padding: 12px 12px 10px;
+      position: relative;
+      z-index: 1;
+    }
+    .callout h3{
+      margin: 0 0 8px;
+      font-size: 0.98rem;
+      color: rgba(255,255,255,0.90);
+    }
+    .callout ul{
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+    .callout li{ margin: 6px 0; }
+
+    .eq{
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(0,0,0,0.25);
+      border-radius: 14px;
+      padding: 10px 10px 10px;
+      margin: 10px 0;
+      display:flex;
+      gap: 10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      position: relative;
+      z-index: 1;
+    }
+    .eq pre{
+      margin: 0;
+      font-family: var(--mono);
+      font-size: 0.93rem;
+      color: rgba(255,255,255,0.92);
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.45;
+      flex: 1 1 360px;
+    }
+    .copyBtn{
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.88);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: 0.86rem;
+      cursor:pointer;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+      user-select:none;
+    }
+    .copyBtn:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.10); }
+    .copyBtn:active{ transform: translateY(0px); }
+    .copyBtn.good{ border-color: rgba(134,239,172,0.35); background: rgba(134,239,172,0.10); }
+    .copyBtn.bad{ border-color: rgba(251,113,133,0.35); background: rgba(251,113,133,0.10); }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 12px;
+      align-items:start;
+      margin-top: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    @media (max-width: 980px){
+      .controls{ grid-template-columns: 1fr; }
+    }
+    .ctrlCard{
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.20);
+      border-radius: var(--radius2);
+      padding: 12px 12px 10px;
+    }
+    .ctrlCard h3{
+      margin: 0 0 8px;
+      font-size: 0.98rem;
+      color: rgba(255,255,255,0.90);
+    }
+    .ctrlRow{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items:center;
+      margin: 8px 0;
+    }
+    .ctrlRow label{
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .ctrlRow output{
+      font-family: var(--mono);
+      color: rgba(255,255,255,0.90);
+      font-size: 0.90rem;
+      padding: 4px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.04);
+      min-width: 120px;
+      text-align:right;
+    }
+    input[type="range"]{
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    select{
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.25);
+      color: rgba(255,255,255,0.90);
+      outline:none;
+    }
+
+    figure.viz{
+      margin: 12px 0 0;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: var(--radius);
+      background: rgba(0,0,0,0.22);
+      overflow:hidden;
+      position: relative;
+      z-index: 1;
+    }
+    .canvasWrap{
+      width: 100%;
+      height: min(340px, 52vw);
+      position: relative;
+    }
+    @media (max-width: 520px){
+      .canvasWrap{ height: 58vw; }
+    }
+    canvas{
+      width: 100%;
+      height: 100%;
+      display:block;
+    }
+    figcaption{
+      padding: 10px 12px 12px;
+      color: var(--muted);
+      font-size: 0.90rem;
+      border-top: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .boxed{
+      border: 1px solid rgba(167,243,208,0.26);
+      background: rgba(167,243,208,0.08);
+      border-radius: var(--radius2);
+      padding: 12px 12px 10px;
+      margin: 10px 0;
+      position: relative;
+      z-index: 1;
+    }
+    .boxed h3{
+      margin: 0 0 8px;
+      font-size: 1.02rem;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .boxed .mark{
+      width: 10px; height:10px; border-radius:999px;
+      background: var(--accent2);
+      box-shadow: 0 0 0 4px rgba(167,243,208,0.16);
+    }
+
+    .small{
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .hr{
+      height:1px;
+      background: rgba(255,255,255,0.10);
+      margin: 12px 0;
+    }
+
+    footer{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 18px 28px;
+      color: var(--faint);
+      font-size: 0.90rem;
+    }
+
+    /* subtle entrance */
+    .fadeIn{
+      animation: rise 520ms ease both;
+    }
+    @keyframes rise{
+      from{ opacity:0; transform: translateY(8px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{ background:#fff; color:#000; }
+      nav.toc{ display:none; }
+      .heroCard, section.card, figure.viz{ box-shadow:none; background:#fff; }
+      .pill, .badge, .copyBtn{ display:none !important; }
+      .eq, .callout, .ctrlCard, .boxed{ background:#fff; }
+      canvas{ display:none; }
+      figcaption::before{ content:"(Interactive canvas hidden in print) "; color:#555; }
+      a{ color:#000; text-decoration:underline; }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="hero fadeIn">
+    <div class="heroCard">
+      <div class="heroInner">
+        <div>
+          <h1>Problem 3: Oscillating String (Fixed Ends)</h1>
+          <p class="subtitle">
+            A string of length <span class="mono">L</span>, tension <span class="mono">T</span>, and linear mass density <span class="mono">μ</span>
+            is clamped at <span class="mono">x=0</span> and <span class="mono">x=L</span>.
+            At <span class="mono">t=0</span> it is released from rest with
+            <span class="mono">y(x,0)=2 sin(2πx/L) + 3 sin(πx/L)</span>.
+          </p>
+          <div class="metaRow">
+            <span class="pill">Wave speed: <span class="mono">v = √(T/μ)</span></span>
+            <span class="pill">Fixed ends: <span class="mono">y(0,t)=y(L,t)=0</span></span>
+            <span class="pill">Initial velocity: <span class="mono">∂y/∂t(x,0)=0</span></span>
+          </div>
+        </div>
+
+        <aside class="quick">
+          <h2><span class="spark"></span>Quick Summary</h2>
+          <ul>
+            <li>Total energy at <span class="mono">t=0</span> is purely elastic (no kinetic): <span class="mono">E(0)= (25π²T)/(4L)</span>.</li>
+            <li>Motion is a superposition of normal modes with cosine time factors (released from rest).</li>
+            <li><span class="mono">ωₙ = nπv/L</span> with <span class="mono">v=√(T/μ)</span>.</li>
+            <li>Displacement: <span class="mono">y(x,t)=3 sin(πx/L)cos(ω₁t)+2 sin(2πx/L)cos(ω₂t)</span>.</li>
+            <li>Same shape as <span class="mono">t=0</span> first reappears at <span class="mono">t = 2L/v = 2L√(μ/T)</span>.</li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+  </header>
+
+  <main class="fadeIn">
+    <div class="layout">
+      <nav class="toc" aria-label="Table of contents">
+        <div class="tocTitle">
+          <span><span class="tocDot"></span>Mini Table of Contents</span>
+          <span class="badge">sticky</span>
+        </div>
+        <a href="#viz">Interactive Visualizations</a>
+        <a href="#part1">PART 1 — Problem Analysis</a>
+        <a href="#part2">PART 2 — Strategy & Tips</a>
+        <a href="#part3">PART 3 — Full Solution</a>
+        <a href="#final">Final Answers (Boxed)</a>
+      </nav>
+
+      <article>
+        <!-- ========================= VISUALS ========================= -->
+        <section id="viz" class="card">
+          <h2 class="part"><span class="badge">Interactive</span> Visualizations (setup + solution behavior)</h2>
+
+          <div class="controls">
+            <div class="ctrlCard">
+              <h3>Interactive controls (updates ALL plots)</h3>
+
+              <div class="ctrlRow">
+                <label for="Tslider"><span class="mono">T</span> (tension, N)</label>
+                <output id="Tout">50.0 N</output>
+              </div>
+              <input id="Tslider" type="range" min="5" max="200" step="1" value="50" />
+
+              <div class="ctrlRow">
+                <label for="muslider"><span class="mono">μ</span> (mass/length, kg/m)</label>
+                <output id="muout">0.010 kg/m</output>
+              </div>
+              <input id="muslider" type="range" min="0.002" max="0.050" step="0.001" value="0.010" />
+
+              <div class="ctrlRow">
+                <label for="Lslider"><span class="mono">L</span> (length, m)</label>
+                <output id="Lout">1.000 m</output>
+              </div>
+              <input id="Lslider" type="range" min="0.40" max="3.00" step="0.01" value="1.00" />
+
+              <div class="hr"></div>
+
+              <div class="ctrlRow">
+                <label for="tslider"><span class="mono">t</span> (time, s)</label>
+                <output id="tout">0.000 s</output>
+              </div>
+              <input id="tslider" type="range" min="0" max="1" step="0.001" value="0" />
+
+              <div class="ctrlRow">
+                <label for="viewSel">Main plot view</label>
+                <select id="viewSel">
+                  <option value="y">Displacement y(x,t)</option>
+                  <option value="mode1">Mode n=1 only</option>
+                  <option value="mode2">Mode n=2 only</option>
+                </select>
+              </div>
+
+              <p class="small">
+                <strong>Example values for plotting:</strong> you can change <span class="mono">T, μ, L</span> above.
+                The mathematical answers in the solution remain symbolic.
+              </p>
+            </div>
+
+            <div class="ctrlCard">
+              <h3>Live computed quantities</h3>
+              <div class="eq" style="margin-top:8px;">
+                <pre id="liveText">v = √(T/μ) = 70.711 m/s
+ω₁ = πv/L = 222.144 rad/s
+ω₂ = 2πv/L = 444.288 rad/s
+E(0) = (25π²T)/(4L) = 3084.25 J (example numeric)</pre>
+                <button class="copyBtn" id="copyLive" data-copy-target="liveText">Copy</button>
+              </div>
+
+              <div class="callout">
+                <h3>What the plots show</h3>
+                <ul>
+                  <li><strong>Diagram:</strong> fixed ends + initial shape.</li>
+                  <li><strong>Main plot:</strong> y(x,t) along the string (meters).</li>
+                  <li><strong>Energy plot:</strong> K(t) and U(t) exchange while total stays constant.</li>
+                  <li><strong>Correlation sweep:</strong> “how similar” the shape is to t=0; peaks at exact recurrence times.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <figure class="viz">
+              <div class="canvasWrap"><canvas id="cSetup" aria-label="Setup diagram canvas"></canvas></div>
+              <figcaption>
+                <strong>Canvas 1:</strong> Physical setup (string clamped at both ends) and the initial displacement profile.
+              </figcaption>
+            </figure>
+
+            <figure class="viz">
+              <div class="canvasWrap"><canvas id="cMain" aria-label="Main plot canvas"></canvas></div>
+              <figcaption>
+                <strong>Canvas 2:</strong> Main quantitative plot — displacement profile <span class="mono">y(x,t)</span> along <span class="mono">x∈[0,L]</span>.
+              </figcaption>
+            </figure>
+
+            <figure class="viz">
+              <div class="canvasWrap"><canvas id="cEnergy" aria-label="Energy plot canvas"></canvas></div>
+              <figcaption>
+                <strong>Canvas 3:</strong> Secondary plot — kinetic energy <span class="mono">K(t)</span> and potential energy <span class="mono">U(t)</span> (J),
+                showing conservation <span class="mono">K+U=E</span>.
+              </figcaption>
+            </figure>
+
+            <figure class="viz">
+              <div class="canvasWrap"><canvas id="cCorr" aria-label="Correlation sweep canvas"></canvas></div>
+              <figcaption>
+                <strong>Canvas 4:</strong> Parameter-sweep style plot — shape correlation <span class="mono">C(t)</span> vs time.
+                When <span class="mono">C(t)=1</span>, the string has exactly the same shape as at <span class="mono">t=0</span>.
+              </figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <!-- ========================= PART 1 ========================= -->
+        <section id="part1" class="card">
+          <h2 class="part"><span class="badge">PART 1</span> Problem Analysis (no solving yet)</h2>
+
+          <div class="callout">
+            <h3>Restate the problem (in my own words)</h3>
+            <p class="small">
+              A stretched string of length <span class="mono">L</span> is fixed at both ends. At time <span class="mono">t=0</span>,
+              it is released from rest from a specified initial shape:
+              <span class="mono">y(x,0)=2 sin(2πx/L)+3 sin(πx/L)</span>.
+              We must (a) compute the total energy at <span class="mono">t=0</span>, (b) find <span class="mono">y(x,t)</span> for later times,
+              and (c) determine the first time the string exactly regains the <em>same spatial shape</em> as at <span class="mono">t=0</span>.
+            </p>
+          </div>
+
+          <div class="grid2">
+            <div class="callout">
+              <h3>Given quantities</h3>
+              <ul>
+                <li>String tension: <span class="mono">T</span></li>
+                <li>Mass per unit length: <span class="mono">μ</span></li>
+                <li>Length: <span class="mono">L</span></li>
+                <li>Boundary conditions (clamped ends): <span class="mono">y(0,t)=0</span>, <span class="mono">y(L,t)=0</span></li>
+                <li>Initial displacement: <span class="mono">y(x,0)=2 sin(2πx/L)+3 sin(πx/L)</span></li>
+                <li>Initial velocity: <span class="mono">∂y/∂t(x,0)=0</span> (released from rest)</li>
+              </ul>
+            </div>
+
+            <div class="callout">
+              <h3>Unknowns / what must be found</h3>
+              <ul>
+                <li>(a) Total energy <span class="mono">E</span> at <span class="mono">t=0</span></li>
+                <li>(b) Displacement function <span class="mono">y(x,t)</span> for all <span class="mono">t</span></li>
+                <li>(c) Smallest <span class="mono">t&gt;0</span> such that the shape equals the initial shape: <span class="mono">y(x,t)=y(x,0)</span> for all <span class="mono">x</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout">
+            <h3>Relevant physical principles (and why they apply)</h3>
+            <ul>
+              <li><strong>Wave equation for a taut string:</strong> small transverse oscillations satisfy
+                <span class="mono">∂²y/∂t² = (T/μ) ∂²y/∂x²</span>,
+                because the restoring force comes from tension and inertia comes from the mass density.</li>
+              <li><strong>Normal modes + boundary conditions:</strong> fixed ends enforce sine spatial eigenfunctions
+                <span class="mono">sin(nπx/L)</span> which form an orthogonal basis on <span class="mono">[0,L]</span>.</li>
+              <li><strong>Energy conservation:</strong> in the ideal string (no damping), total mechanical energy is constant and is
+                <span class="mono">E = ∫(½μ(∂y/∂t)² + ½T(∂y/∂x)²) dx</span>.</li>
+            </ul>
+          </div>
+
+          <div class="grid2">
+            <div class="callout">
+              <h3>Possible approaches (2–3) and comparison</h3>
+              <ul>
+                <li><strong>Normal-mode expansion (Fourier sine series):</strong> best for fixed ends; coefficients evolve with simple cos/sin in time.</li>
+                <li><strong>d’Alembert traveling waves + reflections:</strong> possible but more bookkeeping with reflections at both ends.</li>
+                <li><strong>Energy via mode orthogonality:</strong> once in modes, energies add cleanly because modes are orthogonal.</li>
+              </ul>
+            </div>
+
+            <div class="callout">
+              <h3>Best approach (and why)</h3>
+              <p class="small">
+                Use <strong>normal modes</strong>: the initial shape is already a sum of two eigenmodes
+                (<span class="mono">n=1</span> and <span class="mono">n=2</span>). That makes (b) nearly immediate, simplifies (a) via orthogonality,
+                and makes (c) a clean frequency-commensurability question.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================= PART 2 ========================= -->
+        <section id="part2" class="card">
+          <h2 class="part"><span class="badge">PART 2</span> Strategy & Tips (roadmap only)</h2>
+
+          <div class="callout">
+            <h3>Roadmap (no algebra yet)</h3>
+            <ol class="small" style="margin:0; padding-left: 18px; color: var(--muted);">
+              <li>
+                <strong>Identify eigenmodes</strong> for a string with fixed ends.<br>
+                Goal: know spatial basis functions. Tool: boundary conditions → <span class="mono">sin(nπx/L)</span>.
+              </li>
+              <li>
+                <strong>Read off the mode amplitudes</strong> from the given initial shape.<br>
+                Goal: determine which <span class="mono">n</span> are present and their amplitudes.
+              </li>
+              <li>
+                <strong>Write the time-dependence</strong> from the wave equation solution for each mode.<br>
+                Goal: get <span class="mono">y(x,t)</span>. Tool: <span class="mono">ωₙ = nπv/L</span>, with <span class="mono">v=√(T/μ)</span>.
+              </li>
+              <li>
+                <strong>Use the initial-velocity condition</strong> to choose cosine vs sine in time.<br>
+                Goal: enforce “released from rest”. Tool: <span class="mono">∂y/∂t(x,0)=0</span> ⇒ cosine-only factors.
+              </li>
+              <li>
+                <strong>Compute energy at t=0</strong> using the string energy functional.<br>
+                Goal: <span class="mono">E(0)=∫½T(∂y/∂x)² dx</span> because kinetic is zero.
+              </li>
+              <li>
+                <strong>Exploit orthogonality</strong> to drop cross terms.<br>
+                Goal: simplify the integral. Tool: orthogonality of <span class="mono">cos(nπx/L)</span> over <span class="mono">[0,L]</span>.
+              </li>
+              <li>
+                <strong>Recurrence time</strong>: demand the shape matches exactly the initial shape.<br>
+                Goal: solve for smallest <span class="mono">t&gt;0</span> with both mode time-factors returning to 1.
+              </li>
+            </ol>
+          </div>
+
+          <div class="callout">
+            <h3>Common mistakes + quick tips</h3>
+            <ul>
+              <li><strong>Mixing up mode numbers:</strong> fixed-end modes are <span class="mono">sin(nπx/L)</span>; here <span class="mono">sin(πx/L)</span> is <span class="mono">n=1</span> and <span class="mono">sin(2πx/L)</span> is <span class="mono">n=2</span>.</li>
+              <li><strong>Forgetting energy form:</strong> for a string, potential energy uses slope:
+                <span class="mono">U = ∫ (½T)(∂y/∂x)² dx</span>, not <span class="mono">½ky²</span>.</li>
+              <li><strong>Recurrence condition:</strong> “same shape” means the coefficients of each sine mode must match simultaneously — not just the period of one mode.</li>
+              <li><strong>Units check:</strong> <span class="mono">T</span> is N, so <span class="mono">T/L</span> is N/m, and multiplying by a dimensionless factor yields Joules (since N·m = J).</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- ========================= PART 3 ========================= -->
+        <section id="part3" class="card">
+          <h2 class="part"><span class="badge">PART 3</span> Full Solution</h2>
+
+          <div class="callout">
+            <h3>Physical intuition (before math)</h3>
+            <p class="small">
+              The initial shape is a sum of two standing-wave patterns that already satisfy the fixed-end conditions.
+              Because the string is released from rest, each mode starts at maximum displacement and zero velocity,
+              so it oscillates like a simple harmonic oscillator with a cosine in time.
+              Energy sloshes between kinetic and elastic (slope) energy, but the total stays constant.
+              The string’s shape repeats exactly only when <em>both</em> mode phases return to their starting values simultaneously.
+            </p>
+          </div>
+
+          <div class="eq">
+            <pre id="eqWave">Wave speed and mode frequencies:
+v = √(T/μ)
+ωₙ = (nπv)/L   for n = 1,2,3,...</pre>
+            <button class="copyBtn" data-copy-target="eqWave">Copy</button>
+          </div>
+
+          <div class="callout">
+            <h3>Step 1 — Recognize the normal modes present</h3>
+            <p class="small">
+              For a string clamped at <span class="mono">x=0</span> and <span class="mono">x=L</span>, the spatial eigenfunctions are
+              <span class="mono">sin(nπx/L)</span>.
+              The given initial shape is
+            </p>
+            <div class="eq">
+              <pre id="eqInit">y(x,0) = 2 sin(2πx/L) + 3 sin(πx/L).</pre>
+              <button class="copyBtn" data-copy-target="eqInit">Copy</button>
+            </div>
+            <p class="small">
+              So we have exactly two modes: <span class="mono">n=1</span> with amplitude <span class="mono">A₁=3</span>, and <span class="mono">n=2</span> with amplitude <span class="mono">A₂=2</span>.
+            </p>
+          </div>
+
+          <div class="callout">
+            <h3>Step 2 — Use the “released from rest” condition to get time dependence</h3>
+            <p class="small">
+              A general fixed-end solution is a sum of standing waves:
+              <span class="mono">y(x,t)=∑[Aₙ cos(ωₙ t) + Bₙ sin(ωₙ t)] sin(nπx/L)</span>.
+              The initial velocity is zero everywhere:
+              <span class="mono">∂y/∂t(x,0)=0</span>.
+              Differentiating gives terms proportional to <span class="mono">Bₙ ωₙ</span> at <span class="mono">t=0</span>, so we must have <span class="mono">Bₙ=0</span> for all modes present.
+            </p>
+          </div>
+
+          <div class="eq">
+            <pre id="eqYxt">Displacement for all times:
+y(x,t) = 3 sin(πx/L) cos(ω₁ t) + 2 sin(2πx/L) cos(ω₂ t),
+where ω₁ = (πv)/L and ω₂ = (2πv)/L, v = √(T/μ).</pre>
+            <button class="copyBtn" data-copy-target="eqYxt">Copy</button>
+          </div>
+
+          <div class="callout">
+            <h3>(a) Total energy at t = 0</h3>
+            <p class="small">
+              The energy density of an ideal string is the sum of kinetic and potential (elastic) parts:
+            </p>
+            <div class="eq">
+              <pre id="eqEnergyDef">E = ∫₀ᴸ [ ½ μ (∂y/∂t)² + ½ T (∂y/∂x)² ] dx.</pre>
+              <button class="copyBtn" data-copy-target="eqEnergyDef">Copy</button>
+            </div>
+            <p class="small">
+              At <span class="mono">t=0</span> the string is at rest, so <span class="mono">∂y/∂t(x,0)=0</span> and the kinetic term vanishes:
+              <span class="mono">E(0) = (T/2) ∫₀ᴸ (∂y/∂x (x,0))² dx</span>.
+            </p>
+
+            <p class="small"><strong>Compute the slope</strong> at <span class="mono">t=0</span>:</p>
+            <div class="eq">
+              <pre id="eqSlope">y(x,0) = 3 sin(πx/L) + 2 sin(2πx/L)
+
+∂y/∂x (x,0) = 3 (π/L) cos(πx/L) + 2 (2π/L) cos(2πx/L)
+            = (3π/L) cos(πx/L) + (4π/L) cos(2πx/L).</pre>
+              <button class="copyBtn" data-copy-target="eqSlope">Copy</button>
+            </div>
+
+            <p class="small">
+              Now square and integrate. The key simplification is orthogonality:
+              <span class="mono">∫₀ᴸ cos(nπx/L) cos(mπx/L) dx = 0</span> for <span class="mono">n≠m</span>,
+              and <span class="mono">∫₀ᴸ cos²(nπx/L) dx = L/2</span>.
+              Therefore the cross term between <span class="mono">cos(πx/L)</span> and <span class="mono">cos(2πx/L)</span> integrates to zero, leaving only the two squares.
+            </p>
+
+            <div class="eq">
+              <pre id="eqE0Steps">E(0) = (T/2) ∫₀ᴸ [ (3π/L) cos(πx/L) + (4π/L) cos(2πx/L) ]² dx
+     = (T/2) { (3π/L)² ∫₀ᴸ cos²(πx/L) dx  + (4π/L)² ∫₀ᴸ cos²(2πx/L) dx }
+     = (T/2) { (9π²/L²)(L/2) + (16π²/L²)(L/2) }
+     = (T/2) * (L/2) * (25π²/L²)
+     = (25π²T)/(4L).</pre>
+              <button class="copyBtn" data-copy-target="eqE0Steps">Copy</button>
+            </div>
+
+            <div class="boxed" id="finalE">
+              <h3><span class="mark"></span>Result (a): total energy at t = 0</h3>
+              <div class="eq" style="margin:8px 0 0;">
+                <pre id="eqE0Final">E(0) = (25 π² T) / (4 L).</pre>
+                <button class="copyBtn" data-copy-target="eqE0Final">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout">
+            <h3>(b) Displacement y(x,t)</h3>
+            <p class="small">
+              Because the initial shape is already expressed as a sum of fixed-end eigenmodes, we attach the correct mode frequencies and
+              cosine time dependence (released from rest). Using <span class="mono">v=√(T/μ)</span>,
+              <span class="mono">ω₁=πv/L</span> and <span class="mono">ω₂=2πv/L</span>. Thus:
+            </p>
+
+            <div class="boxed" id="finalY">
+              <h3><span class="mark"></span>Result (b): displacement for all times</h3>
+              <div class="eq" style="margin:8px 0 0;">
+                <pre id="eqYFinal">y(x,t) = 3 sin(πx/L) cos( (π √(T/μ) / L) t )
+       + 2 sin(2πx/L) cos( (2π √(T/μ) / L) t ).</pre>
+                <button class="copyBtn" data-copy-target="eqYFinal">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout">
+            <h3>(c) First time the string has exactly the same shape as at t = 0</h3>
+            <p class="small">
+              “Same shape as at <span class="mono">t=0</span>” means:
+              <span class="mono">y(x,t) = y(x,0)</span> for every <span class="mono">x</span>.
+              Since the sine modes are independent, the coefficient of each mode must match its initial value simultaneously.
+              At <span class="mono">t=0</span>, both cosine factors equal 1. So we require:
+            </p>
+
+            <div class="eq">
+              <pre id="eqRecCond">cos(ω₁ t) = 1   and   cos(ω₂ t) = 1,
+with ω₂ = 2 ω₁.</pre>
+              <button class="copyBtn" data-copy-target="eqRecCond">Copy</button>
+            </div>
+
+            <p class="small">
+              The condition <span class="mono">cos(ω₁ t)=1</span> occurs when <span class="mono">ω₁ t = 2πm</span> for integer <span class="mono">m</span>.
+              Then automatically <span class="mono">ω₂ t = 2ω₁ t = 4πm</span>, which also gives <span class="mono">cos(ω₂ t)=1</span>.
+              The smallest positive time is <span class="mono">m=1</span>:
+            </p>
+
+            <div class="eq">
+              <pre id="eqRecTime">t₁ = 2π / ω₁
+   = 2π / (πv/L)
+   = 2L / v
+   = 2L √(μ/T).</pre>
+              <button class="copyBtn" data-copy-target="eqRecTime">Copy</button>
+            </div>
+
+            <div class="boxed" id="finalRec">
+              <h3><span class="mark"></span>Result (c): first exact recurrence time</h3>
+              <div class="eq" style="margin:8px 0 0;">
+                <pre id="eqRecFinal">t_first_same_shape = 2L / √(T/μ) = 2L √(μ/T).</pre>
+                <button class="copyBtn" data-copy-target="eqRecFinal">Copy</button>
+              </div>
+              <p class="small" style="margin:8px 0 0;">
+                It <em>does</em> happen because the two frequencies are commensurate (<span class="mono">ω₂=2ω₁</span>), so their phases realign exactly.
+              </p>
+            </div>
+          </div>
+
+          <div class="callout">
+            <h3>Sanity checks</h3>
+            <ul>
+              <li><strong>Units:</strong> <span class="mono">E(0) = (25π²T)/(4L)</span> has units (N)/(m) × (dimensionless) × m²? More directly:
+                tension <span class="mono">T</span> multiplies <span class="mono">∫(∂y/∂x)² dx</span>. Since <span class="mono">∂y/∂x</span> is dimensionless and <span class="mono">dx</span> is meters, the integral has meters, so <span class="mono">T × m</span> = Joules. ✔</li>
+              <li><strong>Limiting case:</strong> If <span class="mono">T</span> increases, wave speed increases and recurrence time
+                <span class="mono">t=2L√(μ/T)</span> decreases. Faster oscillations → quicker repeats. ✔</li>
+              <li><strong>Physical interpretation:</strong> Each mode is an independent harmonic oscillator (in time) with fixed spatial shape.
+                Energy stays constant but swaps between kinetic and potential; the plots above show that exchange clearly. ✔</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- ========================= FINAL ANSWERS ========================= -->
+        <section id="final" class="card">
+          <h2 class="part"><span class="badge">Boxed</span> Final Answers (copy-ready)</h2>
+
+          <div class="boxed">
+            <h3><span class="mark"></span>(a) Total energy at t = 0</h3>
+            <div class="eq">
+              <pre id="ansA">E(0) = (25 π² T) / (4 L).</pre>
+              <button class="copyBtn" data-copy-target="ansA">Copy</button>
+            </div>
+          </div>
+
+          <div class="boxed">
+            <h3><span class="mark"></span>(b) Displacement y(x,t)</h3>
+            <div class="eq">
+              <pre id="ansB">y(x,t) = 3 sin(πx/L) cos( (π √(T/μ) / L) t )
+       + 2 sin(2πx/L) cos( (2π √(T/μ) / L) t ).</pre>
+              <button class="copyBtn" data-copy-target="ansB">Copy</button>
+            </div>
+          </div>
+
+          <div class="boxed">
+            <h3><span class="mark"></span>(c) First time with the same shape as t = 0</h3>
+            <div class="eq">
+              <pre id="ansC">t_first_same_shape = 2L / √(T/μ) = 2L √(μ/T).</pre>
+              <button class="copyBtn" data-copy-target="ansC">Copy</button>
+            </div>
+          </div>
+        </section>
+      </article>
+    </div>
+  </main>
+
+  <footer>
+    <div class="hr"></div>
+    <p>
+      Built as a self-contained HTML article (no external libraries). Interactive canvases are for intuition and verification using example parameter values.
+    </p>
+  </footer>
+
+  <script>
+    // ========= Utilities =========
+    const $ = (id) => document.getElementById(id);
+
+    function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
+
+    function fmt(x, digits=3){
+      if (!isFinite(x)) return "—";
+      const abs = Math.abs(x);
+      if (abs !== 0 && (abs < 1e-3 || abs >= 1e4)) return x.toExponential(digits);
+      return x.toFixed(digits);
+    }
+
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      }catch(e){
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        let ok=false;
+        try{ ok = document.execCommand("copy"); }catch(_){ ok=false; }
+        document.body.removeChild(ta);
+        return ok;
+      }
+    }
+
+    function attachCopyButtons(){
+      document.querySelectorAll(".copyBtn[data-copy-target]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const targetId = btn.getAttribute("data-copy-target");
+          const el = $(targetId);
+          const text = el ? el.textContent.trim() : "";
+          const ok = await copyText(text);
+          btn.classList.remove("good","bad");
+          btn.classList.add(ok ? "good":"bad");
+          const old = btn.textContent;
+          btn.textContent = ok ? "Copied ✓" : "Copy failed";
+          setTimeout(()=>{
+            btn.textContent = old;
+            btn.classList.remove("good","bad");
+          }, 900);
+        });
+      });
+
+      $("copyLive").addEventListener("click", async ()=>{
+        const text = $("liveText").textContent.trim();
+        const ok = await copyText(text);
+        const btn = $("copyLive");
+        btn.classList.remove("good","bad");
+        btn.classList.add(ok ? "good":"bad");
+        const old = btn.textContent;
+        btn.textContent = ok ? "Copied ✓" : "Copy failed";
+        setTimeout(()=>{
+          btn.textContent = old;
+          btn.classList.remove("good","bad");
+        }, 900);
+      });
+    }
+
+    // ========= Physics Model (symbolic in text; numeric for plots) =========
+    // Given initial shape: y(x,0) = A2*sin(2πx/L) + A1*sin(πx/L)
+    // where A1=3, A2=2.
+    const A1 = 3.0; // amplitude for n=1
+    const A2 = 2.0; // amplitude for n=2
+
+    function waveSpeed(T, mu){ return Math.sqrt(T/mu); }
+    function omega(n, v, L){ return (n*Math.PI*v)/L; }
+
+    function yMode(n, A, x, t, v, L){
+      const w = omega(n, v, L);
+      return A * Math.sin(n*Math.PI*x/L) * Math.cos(w*t);
+    }
+    function yTotal(x, t, v, L){
+      return yMode(1, A1, x, t, v, L) + yMode(2, A2, x, t, v, L);
+    }
+
+    // Energies for each mode (total energy constant):
+    // E_n = (T/4) * A_n^2 * (nπ)^2 / L
+    // For released-from-rest initial condition:
+    // U_n(t)=E_n cos^2(ω_n t), K_n(t)=E_n sin^2(ω_n t)
+    function modeEnergyTotal(n, A, T, L){
+      return (T/4) * (A*A) * (n*n*Math.PI*Math.PI) / L;
+    }
+    function energiesAt(t, v, T, L){
+      const w1 = omega(1,v,L), w2 = omega(2,v,L);
+      const E1 = modeEnergyTotal(1,A1,T,L);
+      const E2 = modeEnergyTotal(2,A2,T,L);
+      const U = E1*Math.cos(w1*t)**2 + E2*Math.cos(w2*t)**2;
+      const K = E1*Math.sin(w1*t)**2 + E2*Math.sin(w2*t)**2;
+      return {U, K, E: E1+E2};
+    }
+
+    // Shape correlation with initial profile y(x,0):
+    // Using orthogonality of sin modes:
+    // C(t)= (A1^2 cos(w1 t) + A2^2 cos(w2 t)) / (A1^2 + A2^2)
+    function shapeCorrelation(t, v, L){
+      const w1 = omega(1,v,L), w2 = omega(2,v,L);
+      return (A1*A1*Math.cos(w1*t) + A2*A2*Math.cos(w2*t)) / (A1*A1 + A2*A2);
+    }
+
+    // ========= Canvas Plotting Primitives =========
+    function makeHiDPICanvas(canvas){
+      const ctx = canvas.getContext("2d");
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.max(2, Math.floor(rect.width));
+        const h = Math.max(2, Math.floor(rect.height));
+        canvas.width = Math.floor(w*dpr);
+        canvas.height = Math.floor(h*dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+        return {w, h, dpr};
+      }
+      return {ctx, resize};
+    }
+
+    function drawPanelBackground(ctx, w, h){
+      // Subtle grid-y background
+      ctx.clearRect(0,0,w,h);
+      ctx.save();
+      // background fill
+      ctx.fillStyle = "rgba(0,0,0,0.12)";
+      ctx.fillRect(0,0,w,h);
+
+      // faint vignette
+      const g = ctx.createRadialGradient(w*0.25,h*0.2, 10, w*0.5,h*0.5, Math.max(w,h));
+      g.addColorStop(0, "rgba(125,211,252,0.06)");
+      g.addColorStop(0.55, "rgba(167,243,208,0.04)");
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,w,h);
+
+      ctx.restore();
+    }
+
+    function drawAxes(ctx, w, h, box, xLabel, yLabel, title){
+      // box: {x,y,w,h}
+      const {x,y,w:bw,h:bh} = box;
+
+      // Title
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(title, x, y - 10);
+
+      // border for plot region
+      ctx.strokeStyle = "rgba(255,255,255,0.14)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x,y,bw,bh);
+
+      // Labels
+      ctx.fillStyle = "rgba(255,255,255,0.70)";
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(xLabel, x + bw - ctx.measureText(xLabel).width, y + bh + 26);
+
+      // y label rotated
+      ctx.save();
+      ctx.translate(x - 34, y + bh/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(yLabel, -ctx.measureText(yLabel).width/2, 0);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function drawGrid(ctx, box, xTicks, yTicks){
+      const {x,y,w,h} = box;
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+
+      for (let i=0;i<=xTicks;i++){
+        const xx = x + (w*i/xTicks);
+        ctx.beginPath();
+        ctx.moveTo(xx,y);
+        ctx.lineTo(xx,y+h);
+        ctx.stroke();
+      }
+      for (let j=0;j<=yTicks;j++){
+        const yy = y + (h*j/yTicks);
+        ctx.beginPath();
+        ctx.moveTo(x,yy);
+        ctx.lineTo(x+w,yy);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawTicks(ctx, box, xMin, xMax, yMin, yMax, xTicks=5, yTicks=5){
+      const {x,y,w,h} = box;
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.70)";
+      ctx.font = "11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.strokeStyle = "rgba(255,255,255,0.14)";
+      ctx.lineWidth = 1;
+
+      // x ticks
+      for (let i=0;i<=xTicks;i++){
+        const t = i/xTicks;
+        const xx = x + w*t;
+        const val = xMin + (xMax-xMin)*t;
+        ctx.beginPath();
+        ctx.moveTo(xx, y+h);
+        ctx.lineTo(xx, y+h+5);
+        ctx.stroke();
+        const s = fmt(val, (Math.abs(xMax-xMin) < 2 ? 2 : 1));
+        ctx.fillText(s, xx - ctx.measureText(s).width/2, y+h+18);
+      }
+
+      // y ticks
+      for (let j=0;j<=yTicks;j++){
+        const t = 1 - j/yTicks;
+        const yy = y + h*(j/yTicks);
+        const val = yMin + (yMax-yMin)*t;
+        ctx.beginPath();
+        ctx.moveTo(x, yy);
+        ctx.lineTo(x-5, yy);
+        ctx.stroke();
+        const s = fmt(val, 2);
+        ctx.fillText(s, x - 8 - ctx.measureText(s).width, yy + 4);
+      }
+      ctx.restore();
+    }
+
+    function mapXY(box, xMin, xMax, yMin, yMax, xVal, yVal){
+      const {x,y,w,h} = box;
+      const X = x + (xVal - xMin) / (xMax - xMin) * w;
+      const Y = y + (1 - (yVal - yMin) / (yMax - yMin)) * h;
+      return {X,Y};
+    }
+
+    function drawLine(ctx, box, xMin, xMax, yMin, yMax, xs, ys, strokeStyle){
+      ctx.save();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for(let i=0;i<xs.length;i++){
+        const p = mapXY(box,xMin,xMax,yMin,yMax,xs[i],ys[i]);
+        if(i===0) ctx.moveTo(p.X,p.Y);
+        else ctx.lineTo(p.X,p.Y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLegend(ctx, x, y, items){
+      // items: [{label, color}]
+      ctx.save();
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      let yy = y;
+      for(const it of items){
+        ctx.fillStyle = it.color;
+        ctx.fillRect(x, yy-9, 16, 3);
+        ctx.fillStyle = "rgba(255,255,255,0.80)";
+        ctx.fillText(it.label, x+22, yy-2);
+        yy += 18;
+      }
+      ctx.restore();
+    }
+
+    // ========= Draw Functions =========
+    const setupC = makeHiDPICanvas($("cSetup"));
+    const mainC  = makeHiDPICanvas($("cMain"));
+    const energyC= makeHiDPICanvas($("cEnergy"));
+    const corrC  = makeHiDPICanvas($("cCorr"));
+
+    function drawSetupDiagram(params){
+      const {ctx, resize} = setupC;
+      const {w,h} = resize();
+      drawPanelBackground(ctx,w,h);
+
+      const pad = 22;
+      const box = {x: pad+8, y: pad+30, w: w - 2*(pad+8), h: h - (pad+30) - 26};
+      const title = "Setup Diagram: fixed ends and initial shape y(x,0)";
+      drawAxes(ctx,w,h,box,"x (m)","y (m)",title);
+      drawGrid(ctx,box,6,6);
+
+      const {L} = params;
+      const xMin=0, xMax=L;
+
+      // Compute initial y(x,0)
+      const N=500;
+      const xs=[], ys=[];
+      let yMin=Infinity, yMax=-Infinity;
+      for(let i=0;i<N;i++){
+        const x = xMin + (xMax-xMin)*i/(N-1);
+        const y0 = A1*Math.sin(Math.PI*x/L) + A2*Math.sin(2*Math.PI*x/L);
+        xs.push(x); ys.push(y0);
+        yMin = Math.min(yMin,y0); yMax = Math.max(yMax,y0);
+      }
+      const yPad = 0.15*(yMax-yMin || 1);
+      yMin -= yPad; yMax += yPad;
+
+      drawTicks(ctx,box,xMin,xMax,yMin,yMax,5,5);
+      drawLine(ctx,box,xMin,xMax,yMin,yMax,xs,ys,"rgba(125,211,252,0.95)");
+
+      // Draw clamps at ends
+      ctx.save();
+      const left = mapXY(box,xMin,xMax,yMin,yMax,0,0).X;
+      const right = mapXY(box,xMin,xMax,yMin,yMax,L,0).X;
+      const y0Pix = mapXY(box,xMin,xMax,yMin,yMax,0,0).Y;
+
+      ctx.strokeStyle="rgba(255,255,255,0.70)";
+      ctx.lineWidth=2;
+
+      function clampAt(xc){
+        ctx.beginPath();
+        ctx.moveTo(xc, box.y);
+        ctx.lineTo(xc, box.y+box.h);
+        ctx.stroke();
+        // diagonal hatch
+        ctx.strokeStyle="rgba(255,255,255,0.28)";
+        ctx.lineWidth=1;
+        for(let k=0;k<16;k++){
+          const yy = box.y + k*(box.h/16);
+          ctx.beginPath();
+          ctx.moveTo(xc-10, yy);
+          ctx.lineTo(xc+10, yy+10);
+          ctx.stroke();
+        }
+        ctx.strokeStyle="rgba(255,255,255,0.70)";
+        ctx.lineWidth=2;
+      }
+      clampAt(left);
+      clampAt(right);
+
+      // annotate
+      ctx.fillStyle="rgba(255,255,255,0.78)";
+      ctx.font="12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("Clamped", left+8, box.y+16);
+      ctx.fillText("Clamped", right-64, box.y+16);
+
+      ctx.fillStyle="rgba(255,255,255,0.70)";
+      ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.fillText("y(x,0)=3 sin(πx/L)+2 sin(2πx/L)", box.x+8, box.y+box.h-10);
+
+      // baseline y=0
+      ctx.strokeStyle="rgba(255,255,255,0.22)";
+      ctx.lineWidth=1;
+      ctx.setLineDash([5,5]);
+      ctx.beginPath();
+      ctx.moveTo(box.x, y0Pix);
+      ctx.lineTo(box.x+box.w, y0Pix);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.restore();
+    }
+
+    function drawMainPlot(params){
+      const {ctx, resize} = mainC;
+      const {w,h} = resize();
+      drawPanelBackground(ctx,w,h);
+
+      const pad = 22;
+      const box = {x: pad+8, y: pad+30, w: w - 2*(pad+8), h: h - (pad+30) - 26};
+      const {L,v,t, view} = params;
+      const title = (view==="y")
+        ? "Main Plot: y(x,t) along the string"
+        : (view==="mode1" ? "Main Plot: mode n=1 only" : "Main Plot: mode n=2 only");
+      drawAxes(ctx,w,h,box,"x (m)","y (m)",title);
+      drawGrid(ctx,box,6,6);
+
+      const xMin=0, xMax=L;
+
+      const N=700;
+      const xs=[], ys=[], y0s=[];
+      let yMin=Infinity, yMax=-Infinity;
+
+      for(let i=0;i<N;i++){
+        const x = xMin + (xMax-xMin)*i/(N-1);
+        let y = 0;
+        if(view==="y") y = yTotal(x,t,v,L);
+        else if(view==="mode1") y = yMode(1,A1,x,t,v,L);
+        else y = yMode(2,A2,x,t,v,L);
+
+        const y0 = A1*Math.sin(Math.PI*x/L) + A2*Math.sin(2*Math.PI*x/L);
+        xs.push(x); ys.push(y); y0s.push(y0);
+        yMin = Math.min(yMin,y,y0);
+        yMax = Math.max(yMax,y,y0);
+      }
+
+      const yPad = 0.18*(yMax-yMin || 1);
+      yMin -= yPad; yMax += yPad;
+
+      drawTicks(ctx,box,xMin,xMax,yMin,yMax,5,5);
+
+      // current y(x,t)
+      drawLine(ctx,box,xMin,xMax,yMin,yMax,xs,ys,"rgba(167,243,208,0.95)");
+      // initial shape overlay for comparison
+      ctx.save();
+      ctx.globalAlpha = 0.75;
+      drawLine(ctx,box,xMin,xMax,yMin,yMax,xs,y0s,"rgba(125,211,252,0.90)");
+      ctx.restore();
+
+      // legend
+      drawLegend(ctx, box.x+10, box.y+22, [
+        {label:"Current y(x,t)", color:"rgba(167,243,208,0.95)"},
+        {label:"Initial y(x,0)", color:"rgba(125,211,252,0.90)"}
+      ]);
+
+      // annotate time and omegas
+      const w1 = omega(1,v,L), w2 = omega(2,v,L);
+      ctx.save();
+      ctx.fillStyle="rgba(255,255,255,0.80)";
+      ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.fillText(`t = ${fmt(t,3)} s`, box.x+10, box.y+box.h-10);
+      ctx.fillStyle="rgba(255,255,255,0.68)";
+      ctx.fillText(`ω1=${fmt(w1,2)} rad/s  ω2=${fmt(w2,2)} rad/s`, box.x+10, box.y+box.h+38);
+      ctx.restore();
+    }
+
+    function drawEnergyPlot(params){
+      const {ctx, resize} = energyC;
+      const {w,h} = resize();
+      drawPanelBackground(ctx,w,h);
+
+      const pad = 22;
+      const box = {x: pad+8, y: pad+30, w: w - 2*(pad+8), h: h - (pad+30) - 26};
+
+      const {T,mu,L,t} = params;
+      const v = waveSpeed(T,mu);
+
+      const title = "Energy Exchange: U(t), K(t), and total E (conserved)";
+      drawAxes(ctx,w,h,box,"t (s)","Energy (J)",title);
+      drawGrid(ctx,box,6,6);
+
+      // plot over window: 0 to 2*fundamental period
+      const P1 = 2*Math.PI/omega(1,v,L); // = 2L/v
+      const tMin = 0;
+      const tMax = 2*P1;
+
+      const N=500;
+      const ts=[], Us=[], Ks=[], Es=[];
+      let yMin=Infinity, yMax=-Infinity;
+
+      for(let i=0;i<N;i++){
+        const tt = tMin + (tMax-tMin)*i/(N-1);
+        const e = energiesAt(tt,v,T,L);
+        ts.push(tt); Us.push(e.U); Ks.push(e.K); Es.push(e.E);
+        yMin = Math.min(yMin, e.U, e.K, e.E);
+        yMax = Math.max(yMax, e.U, e.K, e.E);
+      }
+      const padY = 0.12*(yMax-yMin || 1);
+      yMin = Math.max(0, yMin - padY);
+      yMax = yMax + padY;
+
+      drawTicks(ctx,box,tMin,tMax,yMin,yMax,5,5);
+
+      drawLine(ctx,box,tMin,tMax,yMin,yMax,ts,Us,"rgba(125,211,252,0.95)");
+      drawLine(ctx,box,tMin,tMax,yMin,yMax,ts,Ks,"rgba(167,243,208,0.95)");
+
+      // total energy as dashed
+      ctx.save();
+      ctx.strokeStyle = "rgba(251,191,36,0.90)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([7,6]);
+      ctx.beginPath();
+      for(let i=0;i<N;i++){
+        const p = mapXY(box,tMin,tMax,yMin,yMax,ts[i],Es[i]);
+        if(i===0) ctx.moveTo(p.X,p.Y);
+        else ctx.lineTo(p.X,p.Y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      drawLegend(ctx, box.x+10, box.y+22, [
+        {label:"U(t) (potential)", color:"rgba(125,211,252,0.95)"},
+        {label:"K(t) (kinetic)", color:"rgba(167,243,208,0.95)"},
+        {label:"E = U+K", color:"rgba(251,191,36,0.90)"}
+      ]);
+
+      // marker at current t
+      const eNow = energiesAt(t,v,T,L);
+      ctx.save();
+      const pU = mapXY(box,tMin,tMax,yMin,yMax,t,eNow.U);
+      const pK = mapXY(box,tMin,tMax,yMin,yMax,t,eNow.K);
+      ctx.fillStyle="rgba(255,255,255,0.85)";
+      ctx.beginPath(); ctx.arc(pU.X,pU.Y,3.6,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(pK.X,pK.Y,3.6,0,Math.PI*2); ctx.fill();
+
+      ctx.fillStyle="rgba(255,255,255,0.70)";
+      ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.fillText(`at t=${fmt(t,3)}s: U=${fmt(eNow.U,2)} J, K=${fmt(eNow.K,2)} J`, box.x+10, box.y+box.h-10);
+      ctx.restore();
+    }
+
+    function drawCorrelationPlot(params){
+      const {ctx, resize} = corrC;
+      const {w,h} = resize();
+      drawPanelBackground(ctx,w,h);
+
+      const pad = 22;
+      const box = {x: pad+8, y: pad+30, w: w - 2*(pad+8), h: h - (pad+30) - 26};
+
+      const {T,mu,L,t} = params;
+      const v = waveSpeed(T,mu);
+
+      const title = "Shape Correlation Sweep: C(t) vs t (C=1 means identical shape to t=0)";
+      drawAxes(ctx,w,h,box,"t (s)","C(t) (dimensionless)",title);
+      drawGrid(ctx,box,6,6);
+
+      const P1 = 2*Math.PI/omega(1,v,L); // = 2L/v
+      const tMin = 0;
+      const tMax = 2.5*P1;
+
+      const N=600;
+      const ts=[], Cs=[];
+      let yMin=-1.1, yMax=1.1;
+
+      for(let i=0;i<N;i++){
+        const tt = tMin + (tMax-tMin)*i/(N-1);
+        const c = shapeCorrelation(tt,v,L);
+        ts.push(tt); Cs.push(c);
+      }
+
+      drawTicks(ctx,box,tMin,tMax,yMin,yMax,5,5);
+      drawLine(ctx,box,tMin,tMax,yMin,yMax,ts,Cs,"rgba(167,243,208,0.95)");
+
+      // highlight C=1 and C=0 lines
+      ctx.save();
+      ctx.strokeStyle="rgba(255,255,255,0.20)";
+      ctx.lineWidth=1;
+      ctx.setLineDash([5,5]);
+      const y0 = mapXY(box,tMin,tMax,yMin,yMax,tMin,0).Y;
+      const y1 = mapXY(box,tMin,tMax,yMin,yMax,tMin,1).Y;
+      const yM1= mapXY(box,tMin,tMax,yMin,yMax,tMin,-1).Y;
+
+      ctx.beginPath(); ctx.moveTo(box.x,y0); ctx.lineTo(box.x+box.w,y0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(box.x,y1); ctx.lineTo(box.x+box.w,y1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(box.x,yM1); ctx.lineTo(box.x+box.w,yM1); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // marker at current t
+      const cNow = shapeCorrelation(t,v,L);
+      ctx.save();
+      const p = mapXY(box,tMin,tMax,yMin,yMax,t,cNow);
+      ctx.fillStyle="rgba(255,255,255,0.88)";
+      ctx.beginPath(); ctx.arc(p.X,p.Y,4.0,0,Math.PI*2); ctx.fill();
+
+      // recurrence time t = 2L/v
+      const tRec = 2*L/v;
+      const pRec = mapXY(box,tMin,tMax,yMin,yMax,tRec,1);
+      ctx.fillStyle="rgba(251,191,36,0.90)";
+      ctx.beginPath(); ctx.arc(pRec.X,pRec.Y,4.4,0,Math.PI*2); ctx.fill();
+
+      ctx.fillStyle="rgba(255,255,255,0.72)";
+      ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.fillText(`C(t) = ${fmt(cNow,3)} at t=${fmt(t,3)} s`, box.x+10, box.y+box.h-10);
+      ctx.fillStyle="rgba(251,191,36,0.90)";
+      ctx.fillText(`first C=1 at t=2L/v=${fmt(tRec,3)} s`, box.x+10, box.y+box.h+38);
+      ctx.restore();
+
+      drawLegend(ctx, box.x+10, box.y+22, [
+        {label:"C(t)", color:"rgba(167,243,208,0.95)"},
+        {label:"first recurrence", color:"rgba(251,191,36,0.90)"}
+      ]);
+    }
+
+    // ========= State & Updates =========
+    const state = {
+      T: 50.0,
+      mu: 0.010,
+      L: 1.00,
+      t: 0.0,
+      view: "y"
+    };
+
+    function updateTimeSliderRange(){
+      const v = waveSpeed(state.T, state.mu);
+      const P1 = 2*state.L / v; // fundamental period
+      // show a meaningful window: up to 2.5 periods
+      const maxT = 2.5 * P1;
+      const slider = $("tslider");
+      const prev = state.t;
+      slider.max = maxT.toFixed(6);
+      // keep current t in range
+      state.t = clamp(prev, 0, maxT);
+      slider.value = state.t;
+      $("tout").textContent = `${fmt(state.t,3)} s`;
+    }
+
+    function updateLiveText(){
+      const v = waveSpeed(state.T, state.mu);
+      const w1 = omega(1,v,state.L);
+      const w2 = omega(2,v,state.L);
+      const E0 = (25*Math.PI*Math.PI*state.T)/(4*state.L);
+
+      $("liveText").textContent =
+`v = √(T/μ) = ${fmt(v,3)} m/s
+ω₁ = πv/L = ${fmt(w1,3)} rad/s
+ω₂ = 2πv/L = ${fmt(w2,3)} rad/s
+E(0) = (25π²T)/(4L) = ${fmt(E0,2)} J (example numeric)`;
+    }
+
+    function renderAll(){
+      const v = waveSpeed(state.T, state.mu);
+      drawSetupDiagram({L: state.L});
+      drawMainPlot({L: state.L, v, t: state.t, view: state.view});
+      drawEnergyPlot({T: state.T, mu: state.mu, L: state.L, t: state.t});
+      drawCorrelationPlot({T: state.T, mu: state.mu, L: state.L, t: state.t});
+      updateLiveText();
+    }
+
+    function bindControls(){
+      const Tslider = $("Tslider");
+      const muslider = $("muslider");
+      const Lslider = $("Lslider");
+      const tslider = $("tslider");
+      const viewSel = $("viewSel");
+
+      function syncOutputs(){
+        $("Tout").textContent = `${fmt(state.T,1)} N`;
+        $("muout").textContent = `${fmt(state.mu,3)} kg/m`;
+        $("Lout").textContent = `${fmt(state.L,3)} m`;
+        $("tout").textContent = `${fmt(state.t,3)} s`;
+      }
+
+      Tslider.addEventListener("input", ()=>{
+        state.T = parseFloat(Tslider.value);
+        syncOutputs();
+        updateTimeSliderRange();
+        renderAll();
+      });
+
+      muslider.addEventListener("input", ()=>{
+        state.mu = parseFloat(muslider.value);
+        syncOutputs();
+        updateTimeSliderRange();
+        renderAll();
+      });
+
+      Lslider.addEventListener("input", ()=>{
+        state.L = parseFloat(Lslider.value);
+        syncOutputs();
+        updateTimeSliderRange();
+        renderAll();
+      });
+
+      tslider.addEventListener("input", ()=>{
+        state.t = parseFloat(tslider.value);
+        syncOutputs();
+        renderAll();
+      });
+
+      viewSel.addEventListener("change", ()=>{
+        state.view = viewSel.value;
+        renderAll();
+      });
+
+      // initialize
+      Tslider.value = state.T;
+      muslider.value = state.mu;
+      Lslider.value = state.L;
+      viewSel.value = state.view;
+
+      syncOutputs();
+      updateTimeSliderRange();
+      renderAll();
+    }
+
+    // ========= Smooth TOC scrolling =========
+    function bindTOC(){
+      document.querySelectorAll('nav.toc a[href^="#"]').forEach(a=>{
+        a.addEventListener("click",(e)=>{
+          e.preventDefault();
+          const id = a.getAttribute("href").slice(1);
+          const el = document.getElementById(id);
+          if(!el) return;
+          el.scrollIntoView({behavior:"smooth", block:"start"});
+        });
+      });
+    }
+
+    // ========= Resize handling =========
+    let resizeTimer = null;
+    function bindResize(){
+      window.addEventListener("resize", ()=>{
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(()=>renderAll(), 120);
+      }, {passive:true});
+    }
+
+    // ========= Init =========
+    attachCopyButtons();
+    bindTOC();
+    bindControls();
+    bindResize();
+  </script>
+</body>
+</html>

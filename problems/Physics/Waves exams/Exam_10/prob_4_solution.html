@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Design a Pinhole Camera — Optimal Hole Diameter (Diffraction vs Geometric Blur)</title>
+  <style>
+    :root{
+      --bg: #0b0f17;
+      --panel:#0f1726;
+      --card:#111c2e;
+      --text:#e8eefc;
+      --muted:#a8b3cf;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --danger:#fb7185;
+      --line: rgba(255,255,255,.10);
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1100px 700px at 20% 10%, rgba(125,211,252,.16), transparent 60%),
+        radial-gradient(900px 600px at 80% 20%, rgba(167,139,250,.14), transparent 55%),
+        radial-gradient(800px 600px at 40% 90%, rgba(52,211,153,.10), transparent 55%),
+        var(--bg);
+      line-height:1.55;
+    }
+
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+    code, pre{ font-family:var(--mono); }
+
+    header{
+      position:relative;
+      padding: clamp(18px, 3.5vw, 36px) 18px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+      overflow:hidden;
+    }
+    header .wrap{
+      max-width:1200px;
+      margin:0 auto;
+      display:grid;
+      gap:14px;
+    }
+    .kicker{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      color:var(--muted);
+      font-size:14px;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      padding:6px 10px;
+      border-radius:999px;
+      backdrop-filter: blur(10px);
+    }
+    h1{
+      margin:0;
+      font-size: clamp(26px, 3.4vw, 44px);
+      line-height:1.12;
+      letter-spacing:-.02em;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      max-width: 85ch;
+      font-size: clamp(14px, 1.4vw, 16px);
+    }
+
+    main{
+      max-width:1200px;
+      margin: 0 auto;
+      padding: 18px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      main{ grid-template-columns: 1fr; }
+    }
+
+    aside{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: rgba(15,23,38,.72);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      backdrop-filter: blur(14px);
+    }
+    @media (max-width: 980px){
+      aside{ position:relative; top:auto; }
+    }
+
+    .toc-title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .toc ul{ list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+    .toc a{
+      display:block;
+      padding:10px 10px;
+      border-radius: 12px;
+      border:1px solid transparent;
+      color: var(--text);
+      background: rgba(255,255,255,.03);
+      transition: transform .18s ease, border-color .18s ease, background .18s ease;
+      font-size: 14px;
+    }
+    .toc a:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,.35);
+      background: rgba(125,211,252,.08);
+      text-decoration:none;
+    }
+
+    article{
+      display:grid;
+      gap:18px;
+      min-width:0;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: rgba(17,28,46,.72);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      backdrop-filter: blur(14px);
+      overflow:hidden;
+    }
+    .card h2, .card h3{
+      margin:0 0 10px 0;
+      letter-spacing:-.01em;
+    }
+    .card h2{ font-size: 18px; }
+    .card h3{ font-size: 16px; color: var(--text); }
+    .muted{ color: var(--muted); }
+
+    .summary{
+      display:grid;
+      gap:10px;
+    }
+    .summary ul{
+      margin:0;
+      padding-left: 18px;
+      color: var(--text);
+    }
+    .summary li{ margin: 6px 0; }
+
+    .callouts{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      .callouts{ grid-template-columns: 1fr; }
+    }
+    .callout{
+      border-radius: 16px;
+      padding: 14px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      position:relative;
+      overflow:hidden;
+    }
+    .callout:before{
+      content:"";
+      position:absolute;
+      inset:-2px -2px auto auto;
+      width:140px;
+      height:140px;
+      background: radial-gradient(circle at 40% 40%, rgba(125,211,252,.20), transparent 65%);
+      transform: translate(28px, -28px);
+      filter: blur(0px);
+      pointer-events:none;
+    }
+    .callout small{ color:var(--muted); display:block; margin-top:6px; }
+
+    .eq{
+      margin: 10px 0 0 0;
+      padding: 12px;
+      border-radius: 14px;
+      border:1px solid rgba(125,211,252,.25);
+      background: rgba(125,211,252,.06);
+      font-family: var(--mono);
+      font-size: 13.5px;
+      overflow:auto;
+      position:relative;
+    }
+    .eq .copy{
+      position:absolute;
+      top:10px;
+      right:10px;
+    }
+
+    .controls{
+      display:grid;
+      gap:12px;
+    }
+    .control{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+      padding: 12px;
+      border-radius: 16px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+    .control label{
+      display:block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      letter-spacing: .02em;
+    }
+    .control .val{
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+      opacity:.95;
+      text-align:right;
+      min-width: 150px;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+    .btnrow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    button{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+      font-family: var(--sans);
+      font-size: 14px;
+    }
+    button:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,.35);
+      background: rgba(125,211,252,.08);
+    }
+    .mini{
+      padding: 7px 10px;
+      font-size: 12.5px;
+      border-radius: 12px;
+    }
+    .copy{
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: 12px;
+      border-color: rgba(167,139,250,.30);
+      background: rgba(167,139,250,.08);
+    }
+    .copy:hover{
+      border-color: rgba(167,139,250,.55);
+      background: rgba(167,139,250,.14);
+    }
+
+    figure{
+      margin:0;
+      display:grid;
+      gap:10px;
+    }
+    .canvasWrap{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+      position:relative;
+      min-height: 260px;
+    }
+    canvas{
+      display:block;
+      width:100%;
+      height: 320px;
+    }
+    .canvasMeta{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .partTitle{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 10px;
+    }
+    .partTitle h2{ margin:0; font-size: 20px; }
+    .tag{
+      font-size: 12px;
+      color: var(--muted);
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    .steps{
+      margin: 8px 0 0 0;
+      padding-left: 18px;
+    }
+    .steps li{ margin: 10px 0; }
+    .steps .tool{
+      display:block;
+      color: var(--muted);
+      margin-top: 3px;
+      font-size: 13px;
+    }
+
+    .boxed{
+      border-radius: 18px;
+      border:1px solid rgba(52,211,153,.35);
+      background: rgba(52,211,153,.08);
+      padding: 14px;
+      position:relative;
+      overflow:hidden;
+    }
+    .boxed:before{
+      content:"";
+      position:absolute;
+      inset:-80px -120px auto auto;
+      width:220px;
+      height:220px;
+      background: radial-gradient(circle at 40% 40%, rgba(52,211,153,.24), transparent 60%);
+      transform: rotate(10deg);
+      pointer-events:none;
+    }
+    .boxed h3{ margin:0 0 8px 0; }
+    .boxed .ans{
+      font-family: var(--mono);
+      font-size: 14px;
+      white-space: pre-wrap;
+      margin:0;
+    }
+
+    footer{
+      max-width:1200px;
+      margin: 0 auto;
+      padding: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid var(--line);
+    }
+
+    .toast{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(15,23,38,.86);
+      color: var(--text);
+      box-shadow: var(--shadow);
+      transform: translateY(18px);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .2s ease, transform .2s ease;
+      z-index: 999;
+      backdrop-filter: blur(14px);
+      font-size: 14px;
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateY(0);
+    }
+
+    /* Subtle fade-in */
+    .fadeIn{
+      animation: fadeInUp .5s ease both;
+    }
+    @keyframes fadeInUp{
+      from{ opacity:0; transform: translateY(6px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+
+    /* Print-friendly */
+    @media print{
+      :root{ --bg:#fff; --text:#111; --muted:#333; --panel:#fff; --card:#fff; --line:#ddd; }
+      body{ background:#fff; color:#111; }
+      header, aside, .controls, .btnrow, .toast{ display:none !important; }
+      main{ grid-template-columns: 1fr; }
+      .card{ box-shadow:none; backdrop-filter:none; }
+      .canvasWrap{ border:1px solid #ccc; }
+      a{ color:#000; text-decoration:underline; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <div class="kicker">
+      <span class="pill">Physics • Geometrical + Wave Optics</span>
+      <span class="pill">Pinhole Camera Optimization</span>
+      <span class="pill">Wavelength: <span id="hdrLambda">500</span> nm</span>
+      <span class="pill">Box length: <span id="hdrL">70.0</span> cm</span>
+    </div>
+    <h1>Design Your Own Pinhole Camera: Optimal Hole Diameter (Best Resolution)</h1>
+    <p class="subtitle">
+      A pinhole camera has two competing blur sources: a larger hole reduces diffraction but increases geometric blur;
+      a smaller hole improves geometry but increases diffraction. The best resolution occurs at the balance point.
+    </p>
+  </div>
+</header>
+
+<main>
+  <aside class="toc fadeIn" aria-label="Table of contents">
+    <div class="toc-title">
+      <span>Contents</span>
+      <span class="tag">Sticky</span>
+    </div>
+    <nav class="toc">
+      <ul>
+        <li><a href="#quick-summary">Quick Summary</a></li>
+        <li><a href="#interactive">Interactive Visualizations</a></li>
+        <li><a href="#part1">PART 1 — Problem Analysis</a></li>
+        <li><a href="#part2">PART 2 — Strategy &amp; Tips</a></li>
+        <li><a href="#part3">PART 3 — Full Solution</a></li>
+        <li><a href="#sanity">Sanity Checks</a></li>
+      </ul>
+    </nav>
+    <div style="margin-top:12px; display:grid; gap:10px;">
+      <button class="mini" id="btnScrollTop" type="button">↑ Back to top</button>
+      <button class="mini" id="btnReset" type="button">Reset demo parameters</button>
+    </div>
+  </aside>
+
+  <article>
+    <!-- Quick Summary -->
+    <section id="quick-summary" class="card fadeIn">
+      <div class="partTitle">
+        <h2>Quick Summary</h2>
+        <span class="tag">3–6 bullets</span>
+      </div>
+      <div class="summary">
+        <ul>
+          <li>The screen is the opposite inner wall of the cube, so the pinhole-to-screen distance is <b>L = 0.70 m</b>.</li>
+          <li>Geometric blur grows with hole diameter <b>d</b>; diffraction blur shrinks as <b>1/d</b>.</li>
+          <li>Use the Airy-disk estimate: diffraction blur diameter on the screen is approximately <b>2.44 λ L / d</b>.</li>
+          <li>Total blur (resolution limit) is minimized when the two effects balance, giving the optimum diameter:
+            <b>d<sub>opt</sub> ≈ √(2.44 λ L)</b>.</li>
+          <li>For <b>λ = 500 nm</b> and <b>L = 0.70 m</b>, this gives <b>d<sub>opt</sub> ≈ 0.92 mm</b> (order-of-mm pinhole).</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Interactive -->
+    <section id="interactive" class="card fadeIn">
+      <div class="partTitle">
+        <h2>Interactive Visualizations</h2>
+        <span class="tag">Canvas + live controls</span>
+      </div>
+
+      <div class="grid2">
+        <div class="controls" aria-label="Interactive controls">
+          <div class="control">
+            <div>
+              <label for="lambdaSlider">Wavelength λ (nm)</label>
+              <input id="lambdaSlider" type="range" min="350" max="700" step="1" value="500" />
+            </div>
+            <div class="val"><span id="lambdaVal">500</span> nm</div>
+          </div>
+
+          <div class="control">
+            <div>
+              <label for="LSlider">Pinhole-to-screen distance L (cm)</label>
+              <input id="LSlider" type="range" min="10" max="120" step="0.5" value="70" />
+            </div>
+            <div class="val"><span id="LVal">70.0</span> cm</div>
+          </div>
+
+          <div class="control">
+            <div>
+              <label for="dSlider">Pinhole diameter d (mm) — for diagram marker</label>
+              <input id="dSlider" type="range" min="0.10" max="5.00" step="0.01" value="0.92" />
+            </div>
+            <div class="val"><span id="dVal">0.92</span> mm</div>
+          </div>
+
+          <div class="btnrow">
+            <button type="button" id="btnSnapOpt">Set d = d<sub>opt</sub></button>
+            <button type="button" class="copy" id="btnCopyAnswer">Copy final numeric answer</button>
+          </div>
+
+          <div class="callouts" style="margin-top:6px;">
+            <div class="callout">
+              <b>Geometric blur</b>
+              <small>≈ d (for distant objects; pinhole acts like an aperture stop)</small>
+            </div>
+            <div class="callout">
+              <b>Diffraction blur</b>
+              <small>≈ 2.44 λ L / d (Airy disk diameter on screen)</small>
+            </div>
+            <div class="callout">
+              <b>Best d</b>
+              <small>Minimizes total blur vs d → balance point</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2" style="grid-template-columns:1fr; gap:14px;">
+          <figure>
+            <div class="canvasWrap">
+              <canvas id="cnvDiagram" aria-label="Pinhole camera setup diagram"></canvas>
+            </div>
+            <figcaption class="canvasMeta">
+              <span><b>Diagram:</b> cube camera geometry, pinhole, screen, rays, blur spot.</span>
+              <span class="muted">Updates with λ, L, and d.</span>
+            </figcaption>
+          </figure>
+
+          <figure>
+            <div class="canvasWrap">
+              <canvas id="cnvMainPlot" aria-label="Main plot: total blur vs pinhole diameter"></canvas>
+            </div>
+            <figcaption class="canvasMeta">
+              <span><b>Main plot:</b> total blur vs diameter d (shows optimum).</span>
+              <span class="muted">Axes in mm; grid + ticks.</span>
+            </figcaption>
+          </figure>
+
+          <figure>
+            <div class="canvasWrap">
+              <canvas id="cnvSweepPlot" aria-label="Secondary plot: optimum diameter vs wavelength"></canvas>
+            </div>
+            <figcaption class="canvasMeta">
+              <span><b>Secondary plot:</b> d<sub>opt</sub> vs wavelength λ (parameter sweep).</span>
+              <span class="muted">Uses the same formula as the derivation.</span>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 1 -->
+    <section id="part1" class="card fadeIn">
+      <div class="partTitle">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+        <span class="tag">Understand &amp; plan</span>
+      </div>
+
+      <section>
+        <h3>1) Restate the problem (in my own words)</h3>
+        <p class="muted">
+          We build a pinhole camera using a cube-shaped box. A small circular hole is drilled in one face, and the
+          photographic film (screen) is placed on the opposite inside wall. The distance from the pinhole to the film
+          is the cube’s side length. We must choose the pinhole diameter that gives the best image resolution for light
+          of wavelength 500 nm, and compute that diameter in millimeters.
+        </p>
+      </section>
+
+      <section class="grid2">
+        <div>
+          <h3>2) Given quantities</h3>
+          <ul>
+            <li>Cube side length (pinhole-to-screen distance): <b>L = 70 cm = 0.70 m</b></li>
+            <li>Wavelength: <b>λ = 500 nm = 5.00×10<sup>-7</sup> m</b></li>
+            <li>Pinhole shape: circular</li>
+          </ul>
+        </div>
+        <div>
+          <h3>3) Unknowns</h3>
+          <ul>
+            <li>Pinhole diameter: <b>d</b> (to be optimized)</li>
+            <li>Resolution / blur size on the film (a function of <b>d</b>)</li>
+          </ul>
+        </div>
+      </section>
+
+      <section>
+        <h3>4) What must be found / proved</h3>
+        <ul>
+          <li>Derive an approximate expression for the <b>optimal pinhole diameter</b> <b>d<sub>opt</sub></b> that maximizes resolution.</li>
+          <li>Evaluate it numerically for <b>λ = 500 nm</b> and <b>L = 70 cm</b>, and report <b>d<sub>opt</sub></b> in <b>mm</b>.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>5) Relevant physical principles (and why they apply)</h3>
+        <ul>
+          <li>
+            <b>Geometrical optics (ray picture):</b> A finite-sized hole lets rays from a single object point pass through
+            different parts of the aperture, producing a “circle of confusion” (geometric blur) on the screen.
+          </li>
+          <li>
+            <b>Wave optics / diffraction:</b> A small circular aperture diffracts light, producing an Airy pattern; the
+            central lobe has a characteristic size that sets a diffraction-limited blur scale.
+          </li>
+          <li>
+            <b>Optimization (minimization):</b> Total image blur comes from both effects; best resolution occurs when the
+            combined blur is minimized with respect to the hole diameter.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>6) Candidate approaches (2–3) and comparison</h3>
+        <ul>
+          <li>
+            <b>Blur-sum minimization (standard pinhole design):</b> Model geometric blur ∝ d and diffraction blur ∝ 1/d,
+            then minimize a combined blur measure. <span class="muted">Fast, accurate to “engineering” level, fits the prompt.</span>
+          </li>
+          <li>
+            <b>Angular resolution / Rayleigh criterion approach:</b> Use the Airy angular width ~ 1.22λ/d and convert to
+            linear size on film, then balance with geometric circle-of-confusion size. <span class="muted">Equivalent physics, different framing.</span>
+          </li>
+          <li>
+            <b>Full imaging model (PSF convolution / MTF):</b> Convolve a top-hat geometric PSF with an Airy PSF and optimize
+            a chosen metric (e.g., MTF cutoff). <span class="muted">More rigorous but overkill for a 5-point derivation.</span>
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>7) Best approach choice</h3>
+        <p class="muted">
+          We choose the <b>blur-sum minimization</b> method because it directly captures the key tradeoff (geometry vs diffraction),
+          yields a clean analytic optimum, and matches the “approximate diameter” wording. We’ll use a circular-aperture Airy-disk
+          estimate for diffraction and a simple circle-of-confusion estimate for geometry.
+        </p>
+      </section>
+    </section>
+
+    <!-- PART 2 -->
+    <section id="part2" class="card fadeIn">
+      <div class="partTitle">
+        <h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+        <span class="tag">No algebra yet</span>
+      </div>
+
+      <ol class="steps">
+        <li>
+          <b>Set the geometry scale.</b>
+          <span class="tool">Goal: identify L (pinhole-to-film distance). Tool: convert 70 cm → meters.</span>
+        </li>
+        <li>
+          <b>Write a geometric blur estimate.</b>
+          <span class="tool">Goal: express the “hole-caused” blur on the screen. Tool: ray picture → circle of confusion ~ d (for distant objects).</span>
+        </li>
+        <li>
+          <b>Write a diffraction blur estimate for a circular aperture.</b>
+          <span class="tool">Goal: express Airy disk size on the film. Tool: θ ≈ 1.22λ/d and blur diameter ≈ 2×(θL) = 2.44λL/d.</span>
+        </li>
+        <li>
+          <b>Combine the two blur contributions into one resolution metric.</b>
+          <span class="tool">Goal: total blur B(d). Tool: add in quadrature B = √(B<sub>geo</sub><sup>2</sup> + B<sub>diff</sub><sup>2</sup>) (or a comparable smooth metric).</span>
+        </li>
+        <li>
+          <b>Optimize with respect to d.</b>
+          <span class="tool">Goal: find d minimizing B(d). Tool: take derivative or minimize B² to avoid square roots.</span>
+        </li>
+        <li>
+          <b>Plug in numbers and convert to mm.</b>
+          <span class="tool">Goal: numerical d<sub>opt</sub>. Tool: unit conversions (nm→m, m→mm).</span>
+        </li>
+        <li>
+          <b>Sanity checks.</b>
+          <span class="tool">Goal: confirm units, scaling (d ∝ √(λL)), and magnitude (~1 mm).</span>
+        </li>
+      </ol>
+
+      <h3>Common mistakes &amp; quick tips</h3>
+      <ul>
+        <li><b>Mixing radius vs diameter:</b> Keep track of whether your blur measure is a radius or a diameter; be consistent.</li>
+        <li><b>Forgetting conversions:</b> 500 nm = 5×10<sup>-7</sup> m, and 1 mm = 10<sup>-3</sup> m.</li>
+        <li><b>Using the wrong L:</b> Here L is the pinhole-to-film distance, equal to the cube side: 70 cm.</li>
+        <li><b>Overprecision:</b> The result is approximate; different reasonable blur-combination choices change the coefficient slightly, but the scaling √(λL) is robust.</li>
+      </ul>
+      <p class="muted"><b>Note:</b> As requested, no algebra is shown here; the derivation is in Part 3.</p>
+    </section>
+
+    <!-- PART 3 -->
+    <section id="part3" class="card fadeIn">
+      <div class="partTitle">
+        <h2>PART 3 — Full Solution</h2>
+        <span class="tag">Derivation + final boxed result</span>
+      </div>
+
+      <section>
+        <h3>Physical intuition (before math)</h3>
+        <p>
+          A pinhole camera forms an image without a lens. If the hole is <b>too large</b>, each object point sends rays through many
+          points of the hole, creating a large “spot” on the film (geometric blur). If the hole is <b>too small</b>, the wave nature
+          of light dominates and the hole acts like a diffracting aperture, spreading the light into an Airy pattern (diffraction blur).
+          Therefore, the sharpest image occurs when these two blurs are comparable—neither dominates.
+        </p>
+      </section>
+
+      <section>
+        <h3>Step-by-step derivation</h3>
+
+        <p><b>Define symbols (used consistently throughout):</b></p>
+        <ul>
+          <li><b>L</b> = distance from pinhole to film/screen (here the cube side).</li>
+          <li><b>d</b> = pinhole diameter (variable to optimize).</li>
+          <li><b>λ</b> = wavelength of light.</li>
+          <li><b>B</b> = effective blur diameter on the film (resolution-limiting spot size).</li>
+        </ul>
+
+        <hr style="border:none;border-top:1px solid var(--line); margin:14px 0;">
+
+        <p><b>1) Geometric blur (finite hole size)</b></p>
+        <p class="muted">
+          For a distant scene point (paraxial rays), the hole acts like a small “window.” The image of a point is approximately a
+          patch whose diameter is on the order of the hole diameter. Thus we use the standard estimate:
+        </p>
+        <div class="eq" data-eq="B_geo ≈ d">
+          <button class="copy" type="button">Copy</button>
+          B_geo ≈ d
+        </div>
+
+        <p><b>2) Diffraction blur (circular aperture → Airy disk)</b></p>
+        <p class="muted">
+          A circular aperture produces an Airy pattern. The first dark ring occurs at angular radius
+          θ ≈ 1.22 λ / d (small-angle approximation). On a screen a distance L away, the linear <i>radius</i> of the central lobe is
+          r ≈ θL, so the <i>diameter</i> of the central lobe is:
+        </p>
+        <div class="eq" data-eq="B_diff ≈ 2.44 λ L / d">
+          <button class="copy" type="button">Copy</button>
+          B_diff ≈ (2.44 λ L) / d
+        </div>
+
+        <p><b>3) Combine blur sources into one resolution metric</b></p>
+        <p class="muted">
+          A simple smooth combination is to add blur contributions in quadrature (treating them like independent spreading mechanisms):
+        </p>
+        <div class="eq" data-eq="B(d) = √(B_geo^2 + B_diff^2) = √( d^2 + (2.44 λ L / d)^2 )">
+          <button class="copy" type="button">Copy</button>
+          B(d) = √( B_geo² + B_diff² ) = √( d² + (2.44 λ L / d)² )
+        </div>
+
+        <p><b>4) Minimize with respect to d</b></p>
+        <p class="muted">
+          Minimizing B is equivalent to minimizing B² (since √ is monotonic). Let
+          F(d) = B² = d² + (2.44 λ L / d)². Differentiate and set to zero.
+        </p>
+
+        <div class="eq" data-eq="F(d)=d^2 + (K/d)^2 with K=2.44 λ L;  dF/dd=2d - 2K^2/d^3 = 0">
+          <button class="copy" type="button">Copy</button>
+          Let K = 2.44 λ L.
+          F(d) = d² + (K/d)²
+          dF/dd = 2d − 2K²/d³ = 0
+        </div>
+
+        <p class="muted">
+          Solve: 2d = 2K²/d³ ⇒ d⁴ = K² ⇒ d² = K (taking positive d), hence:
+        </p>
+
+        <div class="eq" data-eq="d_opt = √(2.44 λ L)">
+          <button class="copy" type="button">Copy</button>
+          d_opt = √( 2.44 λ L )
+        </div>
+
+        <p><b>5) Plug in the numbers</b></p>
+        <ul>
+          <li>L = 70 cm = 0.70 m</li>
+          <li>λ = 500 nm = 5.00 × 10<sup>-7</sup> m</li>
+        </ul>
+
+        <p class="muted">
+          Compute the product inside the square root:
+          2.44 λ L = 2.44 × (5.00×10<sup>-7</sup>) × (0.70) m²
+          = 8.54×10<sup>-7</sup> m² (approximately).
+          Then:
+          d<sub>opt</sub> = √(8.54×10<sup>-7</sup>) m ≈ 9.22×10<sup>-4</sup> m = 0.922 mm.
+        </p>
+
+        <div class="boxed" id="finalBox">
+          <h3>Final Result (best-resolution pinhole diameter)</h3>
+          <p class="ans" id="finalAnswerText">d_opt ≈ √(2.44 λ L)
+
+For L = 0.70 m and λ = 500 nm:
+d_opt ≈ 9.22×10^-4 m ≈ 0.922 mm</p>
+          <div class="btnrow" style="margin-top:10px;">
+            <button type="button" class="copy" id="btnCopyFinal">Copy boxed answer</button>
+            <span class="muted">Approximate optimum (order-of-mm), as expected.</span>
+          </div>
+        </div>
+
+      </section>
+    </section>
+
+    <!-- Sanity checks -->
+    <section id="sanity" class="card fadeIn">
+      <div class="partTitle">
+        <h2>Sanity Checks</h2>
+        <span class="tag">Units • limits • meaning</span>
+      </div>
+
+      <h3>1) Units</h3>
+      <p class="muted">
+        Inside the square root: (λL) has units of m·m = m², so √(λL) has units of m, matching a diameter. The constant 2.44 is dimensionless.
+      </p>
+
+      <h3>2) Limiting cases</h3>
+      <ul>
+        <li><b>Shorter wavelength (smaller λ):</b> d<sub>opt</sub> ∝ √λ decreases → you can use a smaller pinhole before diffraction dominates.</li>
+        <li><b>Longer camera (larger L):</b> d<sub>opt</sub> ∝ √L increases → diffraction grows with L, so you need a larger hole to keep it in check.</li>
+        <li><b>If d ≫ d<sub>opt</sub>:</b> geometric blur ≈ d dominates (image gets “washed” and soft).</li>
+        <li><b>If d ≪ d<sub>opt</sub>:</b> diffraction blur ≈ 2.44 λL/d dominates (image becomes hazy due to spreading).</li>
+      </ul>
+
+      <h3>3) Physical interpretation</h3>
+      <p class="muted">
+        The optimum is essentially the diameter where geometric blur and diffraction blur are comparable in size—neither effect is allowed
+        to dominate. That is the “sweet spot” for sharpness.
+      </p>
+    </section>
+
+  </article>
+</main>
+
+<footer>
+  <div>
+    <b>Note on approximations:</b> The coefficient in d<sub>opt</sub> can vary slightly depending on the exact definition of “blur”
+    and how one combines geometric and diffraction point-spread functions. The robust takeaway is the scaling
+    <span style="font-family:var(--mono);">d_opt ∝ √(λL)</span> and the order-of-magnitude (~1 mm for this camera).
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite">Copied.</div>
+
+<script>
+(function(){
+  // ---------- Utilities ----------
+  const $ = (id) => document.getElementById(id);
+  const toast = $("toast");
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=> toast.classList.remove("show"), 1200);
+  }
+
+  async function copyText(txt){
+    try{
+      await navigator.clipboard.writeText(txt);
+      showToast("Copied to clipboard.");
+    }catch(e){
+      // Fallback
+      const ta = document.createElement("textarea");
+      ta.value = txt;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      showToast("Copied (fallback).");
+    }
+  }
+
+  // Attach copy buttons to equation blocks
+  document.querySelectorAll(".eq").forEach(eq=>{
+    const btn = eq.querySelector("button.copy");
+    if(!btn) return;
+    const text = eq.getAttribute("data-eq") || eq.textContent.trim();
+    btn.addEventListener("click", ()=> copyText(text));
+  });
+
+  $("btnCopyFinal").addEventListener("click", ()=> copyText($("finalAnswerText").textContent.trim()));
+  $("btnCopyAnswer").addEventListener("click", ()=> {
+    const txt = getFinalNumericText(state.lambda_nm, state.L_cm);
+    copyText(txt);
+  });
+
+  $("btnScrollTop").addEventListener("click", ()=> window.scrollTo({top:0, behavior:"smooth"}));
+
+  // ---------- Physics model ----------
+  // Units:
+  // lambda in meters, L in meters, d in meters.
+  // Blur outputs in meters (we convert to mm for display/plots).
+  function dOpt(lambda_m, L_m){
+    return Math.sqrt(2.44 * lambda_m * L_m);
+  }
+  function blurGeo(d_m){
+    // Geometric blur diameter on film (simple pinhole estimate)
+    return d_m;
+  }
+  function blurDiff(lambda_m, L_m, d_m){
+    // Airy disk central lobe diameter on film
+    return (2.44 * lambda_m * L_m) / d_m;
+  }
+  function blurTotal(lambda_m, L_m, d_m){
+    const bg = blurGeo(d_m);
+    const bd = blurDiff(lambda_m, L_m, d_m);
+    return Math.sqrt(bg*bg + bd*bd);
+  }
+
+  // ---------- State ----------
+  const state = {
+    lambda_nm: 500,
+    L_cm: 70.0,
+    d_mm: 0.92,
+  };
+
+  // ---------- Controls ----------
+  const lambdaSlider = $("lambdaSlider");
+  const LSlider = $("LSlider");
+  const dSlider = $("dSlider");
+
+  function syncHeader(){
+    $("hdrLambda").textContent = state.lambda_nm.toFixed(0);
+    $("hdrL").textContent = state.L_cm.toFixed(1);
+  }
+  function syncLabels(){
+    $("lambdaVal").textContent = state.lambda_nm.toFixed(0);
+    $("LVal").textContent = state.L_cm.toFixed(1);
+    $("dVal").textContent = state.d_mm.toFixed(2);
+    syncHeader();
+  }
+
+  function updateFinalBox(){
+    const lambda_m = state.lambda_nm * 1e-9;
+    const L_m = state.L_cm * 1e-2;
+    const dopt_m = dOpt(lambda_m, L_m);
+    const dopt_mm = dopt_m * 1e3;
+
+    const line1 = "d_opt ≈ √(2.44 λ L)";
+    const line2 = `For L = ${L_m.toFixed(2)} m and λ = ${state.lambda_nm.toFixed(0)} nm:`;
+    const line3 = `d_opt ≈ ${(dopt_m).toExponential(3).replace('e','×10^')} m ≈ ${dopt_mm.toFixed(3)} mm`;
+    $("finalAnswerText").textContent = `${line1}\n\n${line2}\n${line3}`;
+  }
+
+  function getFinalNumericText(lambda_nm, L_cm){
+    const lambda_m = lambda_nm * 1e-9;
+    const L_m = L_cm * 1e-2;
+    const dopt_m = dOpt(lambda_m, L_m);
+    const dopt_mm = dopt_m * 1e3;
+    return `Optimal pinhole diameter: d_opt ≈ sqrt(2.44 * λ * L)\nWith λ = ${lambda_nm.toFixed(0)} nm and L = ${L_cm.toFixed(1)} cm: d_opt ≈ ${dopt_mm.toFixed(3)} mm`;
+  }
+
+  function snapDToOpt(){
+    const lambda_m = state.lambda_nm * 1e-9;
+    const L_m = state.L_cm * 1e-2;
+    const dopt_mm = dOpt(lambda_m, L_m) * 1e3;
+    state.d_mm = Math.min(5.00, Math.max(0.10, dopt_mm));
+    dSlider.value = state.d_mm.toFixed(2);
+    syncLabels();
+    renderAll();
+    updateFinalBox();
+  }
+
+  $("btnSnapOpt").addEventListener("click", snapDToOpt);
+
+  $("btnReset").addEventListener("click", ()=>{
+    state.lambda_nm = 500;
+    state.L_cm = 70.0;
+    lambdaSlider.value = state.lambda_nm;
+    LSlider.value = state.L_cm;
+    snapDToOpt();
+    showToast("Reset to default demo parameters.");
+  });
+
+  lambdaSlider.addEventListener("input", ()=>{
+    state.lambda_nm = Number(lambdaSlider.value);
+    syncLabels();
+    // keep d marker but update plots; optionally nudge if out of sensible range
+    renderAll();
+    updateFinalBox();
+  });
+
+  LSlider.addEventListener("input", ()=>{
+    state.L_cm = Number(LSlider.value);
+    syncLabels();
+    renderAll();
+    updateFinalBox();
+  });
+
+  dSlider.addEventListener("input", ()=>{
+    state.d_mm = Number(dSlider.value);
+    syncLabels();
+    renderAll();
+  });
+
+  // ---------- Canvas helpers (HiDPI + responsive) ----------
+  function setupCanvas(canvas){
+    const ctx = canvas.getContext("2d");
+    function resize(){
+      const dpr = Math.max(1, Math.floor(window.devicePixelRatio || 1));
+      const rect = canvas.getBoundingClientRect();
+      const cssW = Math.max(260, rect.width);
+      const cssH = rect.height || 320;
+
+      canvas.width = Math.floor(cssW * dpr);
+      canvas.height = Math.floor(cssH * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      return {w: cssW, h: cssH, dpr};
+    }
+    return {ctx, resize};
+  }
+
+  // Basic drawing primitives
+  function clear(ctx, w, h){
+    ctx.clearRect(0,0,w,h);
+    // subtle background
+    const g = ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0, "rgba(255,255,255,0.04)");
+    g.addColorStop(1, "rgba(255,255,255,0.01)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,w,h);
+  }
+
+  function drawTitle(ctx, w, title){
+    ctx.save();
+    ctx.fillStyle = "rgba(232,238,252,0.95)";
+    ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillText(title, 14, 22);
+    ctx.restore();
+  }
+
+  function drawAxes(ctx, plot){
+    const {x0,y0,x1,y1} = plot;
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,0.20)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x0,y1);
+    ctx.lineTo(x1,y1);
+    ctx.lineTo(x1,y0);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawGridAndTicks(ctx, plot, xTicks, yTicks, xLabel, yLabel){
+    const {x0,y0,x1,y1} = plot;
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    ctx.fillStyle = "rgba(168,179,207,0.92)";
+    ctx.lineWidth = 1;
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+
+    // grid + ticks
+    // x
+    xTicks.forEach(t=>{
+      const x = plot.xMap(t);
+      ctx.beginPath();
+      ctx.moveTo(x, y0);
+      ctx.lineTo(x, y1);
+      ctx.stroke();
+      // tick label
+      ctx.fillText(String(t), x-8, y1+16);
+    });
+    // y
+    yTicks.forEach(t=>{
+      const y = plot.yMap(t);
+      ctx.beginPath();
+      ctx.moveTo(x0, y);
+      ctx.lineTo(x1, y);
+      ctx.stroke();
+      ctx.fillText(String(t), x0-34, y+4);
+    });
+
+    // axis labels
+    ctx.save();
+    ctx.fillStyle = "rgba(232,238,252,0.92)";
+    ctx.font = "600 12.5px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillText(xLabel, (x0+x1)/2 - ctx.measureText(xLabel).width/2, y1+34);
+
+    // y label rotated
+    ctx.translate(x0-54, (y0+y1)/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText(yLabel, -ctx.measureText(yLabel).width/2, 0);
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function makePlotRect(w,h, padL=64, padR=18, padT=36, padB=52){
+    const x0 = padL;
+    const y0 = padT;
+    const x1 = w - padR;
+    const y1 = h - padB;
+    return {x0,y0,x1,y1};
+  }
+
+  // ---------- Diagram canvas ----------
+  const diag = setupCanvas($("cnvDiagram"));
+  function renderDiagram(){
+    const {ctx, resize} = diag;
+    const {w,h} = resize();
+    clear(ctx,w,h);
+    drawTitle(ctx,w,"Diagram — Pinhole camera geometry (cube), rays, and blur spot");
+
+    const lambda_m = state.lambda_nm * 1e-9;
+    const L_m = state.L_cm * 1e-2;
+    const d_m = state.d_mm * 1e-3;
+
+    // Layout
+    const margin = 18;
+    const boxW = Math.min(w - 2*margin, 520);
+    const boxH = Math.min(h - 80, 200);
+    const bx = margin + (w - 2*margin - boxW)*0.05;
+    const by = 52 + (h - 80 - boxH)*0.15;
+
+    // Draw cube (as 2D box)
+    ctx.save();
+    ctx.strokeStyle = "rgba(232,238,252,0.35)";
+    ctx.fillStyle = "rgba(255,255,255,0.02)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.rect(bx,by,boxW,boxH);
+    ctx.fill();
+    ctx.stroke();
+
+    // Pinhole at left wall center
+    const phx = bx;
+    const phy = by + boxH*0.5;
+
+    // Screen at right wall
+    const sx = bx + boxW;
+    const sy1 = by + boxH*0.18;
+    const sy2 = by + boxH*0.82;
+
+    // Screen strip
+    ctx.save();
+    ctx.fillStyle = "rgba(125,211,252,0.10)";
+    ctx.strokeStyle = "rgba(125,211,252,0.35)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.rect(sx-10, sy1, 10, sy2-sy1);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // Pinhole circle size scaled (visual only)
+    const dVis = 6 + 22*(state.d_mm/5.0); // 6..28 px
+    ctx.save();
+    ctx.fillStyle = "rgba(167,139,250,0.20)";
+    ctx.strokeStyle = "rgba(167,139,250,0.60)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(phx, phy, dVis/2, 0, Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // Rays from two object points (off-screen)
+    const objX = bx - 90;
+    const objYTop = by + boxH*0.25;
+    const objYBot = by + boxH*0.75;
+
+    function ray(yObj, yHit, col){
+      ctx.save();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(objX, yObj);
+      ctx.lineTo(phx, phy);
+      ctx.lineTo(sx, yHit);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ray(objYTop, by + boxH*0.62, "rgba(125,211,252,0.55)");
+    ray(objYBot, by + boxH*0.38, "rgba(52,211,153,0.55)");
+
+    // Blur spot on screen: show combined blur size mapped to pixels
+    const Btot_m = blurTotal(lambda_m, L_m, d_m);
+    const Btot_mm = Btot_m * 1e3;
+
+    // map mm to pixels for the little spot (arbitrary but consistent)
+    const spotR = Math.min(34, 4 + 8 * Btot_mm); // grows with blur
+    const spotY = by + boxH*0.50;
+
+    ctx.save();
+    ctx.fillStyle = "rgba(251,191,36,0.14)";
+    ctx.strokeStyle = "rgba(251,191,36,0.55)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(sx-5, spotY, spotR, 0, Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // Labels
+    ctx.save();
+    ctx.fillStyle = "rgba(232,238,252,0.92)";
+    ctx.font = "600 12.5px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+
+    ctx.fillText("pinhole", phx+10, phy-10);
+    ctx.fillText("film/screen", sx-90, sy1-10);
+
+    // L arrow
+    ctx.strokeStyle = "rgba(232,238,252,0.35)";
+    ctx.lineWidth = 1.2;
+    const ax1 = phx + 20, ax2 = sx - 20, ay = by + boxH + 26;
+    ctx.beginPath();
+    ctx.moveTo(ax1, ay);
+    ctx.lineTo(ax2, ay);
+    ctx.stroke();
+    // arrowheads
+    function arrowHead(x,y,dir){
+      ctx.beginPath();
+      ctx.moveTo(x,y);
+      ctx.lineTo(x + dir*8, y-5);
+      ctx.lineTo(x + dir*8, y+5);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(232,238,252,0.35)";
+      ctx.fill();
+    }
+    arrowHead(ax1,ay, +1);
+    arrowHead(ax2,ay, -1);
+
+    const Ltxt = `L = ${state.L_cm.toFixed(1)} cm`;
+    ctx.fillStyle = "rgba(168,179,207,0.95)";
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+    ctx.fillText(Ltxt, (ax1+ax2)/2 - ctx.measureText(Ltxt).width/2, ay-8);
+
+    // Spot label
+    const Btxt = `blur ≈ ${Btot_mm.toFixed(2)} mm`;
+    ctx.fillStyle = "rgba(251,191,36,0.95)";
+    ctx.fillText(Btxt, sx-5 - spotR - ctx.measureText(Btxt).width - 12, spotY+4);
+
+    // Parameter label
+    const ptxt = `λ = ${state.lambda_nm.toFixed(0)} nm, d = ${state.d_mm.toFixed(2)} mm`;
+    ctx.fillStyle = "rgba(168,179,207,0.95)";
+    ctx.fillText(ptxt, bx, by-12);
+
+    ctx.restore();
+    ctx.restore();
+  }
+
+  // ---------- Main plot: blur vs d ----------
+  const mainPlot = setupCanvas($("cnvMainPlot"));
+  function renderMainPlot(){
+    const {ctx, resize} = mainPlot;
+    const {w,h} = resize();
+    clear(ctx,w,h);
+    drawTitle(ctx,w,"Main plot — total blur B(d) vs pinhole diameter d");
+
+    const lambda_m = state.lambda_nm * 1e-9;
+    const L_m = state.L_cm * 1e-2;
+
+    // domain for d in mm
+    const dMin = 0.10, dMax = 5.00;
+
+    // compute curve
+    const N = 450;
+    let maxB = 0;
+    const curve = new Array(N);
+    for(let i=0;i<N;i++){
+      const dmm = dMin + (dMax-dMin)*i/(N-1);
+      const Bmm = blurTotal(lambda_m, L_m, dmm*1e-3)*1e3;
+      curve[i] = {dmm, Bmm};
+      if(Bmm > maxB) maxB = Bmm;
+    }
+
+    // also compute components for legend + optional dashed curves
+    const curveGeo = new Array(N);
+    const curveDiff = new Array(N);
+    let maxB2 = 0;
+    for(let i=0;i<N;i++){
+      const dmm = curve[i].dmm;
+      const d_m = dmm*1e-3;
+      const bg = blurGeo(d_m)*1e3;
+      const bd = blurDiff(lambda_m, L_m, d_m)*1e3;
+      curveGeo[i] = {dmm, Bmm:bg};
+      curveDiff[i] = {dmm, Bmm:bd};
+      maxB2 = Math.max(maxB2, bg, bd);
+    }
+    maxB = Math.max(maxB, maxB2);
+
+    // y-range (mm)
+    const yMin = 0;
+    const yMax = Math.ceil((maxB*1.05)*10)/10; // round up
+    const rect = makePlotRect(w,h,72,18,40,56);
+
+    const plot = {
+      ...rect,
+      xMap:(x)=> rect.x0 + (x-dMin)/(dMax-dMin)*(rect.x1-rect.x0),
+      yMap:(y)=> rect.y1 - (y-yMin)/(yMax-yMin)*(rect.y1-rect.y0)
+    };
+
+    // grid ticks
+    const xTicks = [0.5,1.0,1.5,2.0,3.0,4.0,5.0].filter(t=> t>=dMin && t<=dMax);
+    const yTicks = [];
+    const yStep = yMax<=2 ? 0.25 : (yMax<=5 ? 0.5 : 1);
+    for(let y=0;y<=yMax+1e-9;y+=yStep) yTicks.push(Number(y.toFixed(2)));
+
+    drawGridAndTicks(ctx, plot, xTicks, yTicks, "d (mm)", "Blur B (mm)");
+    drawAxes(ctx, plot);
+
+    // draw curves
+    function drawCurve(arr, strokeStyle, lineWidth, dash){
+      ctx.save();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = lineWidth;
+      ctx.setLineDash(dash || []);
+      ctx.beginPath();
+      for(let i=0;i<arr.length;i++){
+        const x = plot.xMap(arr[i].dmm);
+        const y = plot.yMap(arr[i].Bmm);
+        if(i===0) ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // total blur
+    drawCurve(curve, "rgba(232,238,252,0.90)", 2.2, []);
+    // components
+    drawCurve(curveGeo, "rgba(167,139,250,0.70)", 1.6, [6,5]);
+    drawCurve(curveDiff, "rgba(125,211,252,0.70)", 1.6, [3,4]);
+
+    // optimum marker
+    const dopt_mm = dOpt(lambda_m, L_m)*1e3;
+    // find B at dopt
+    const Bopt_mm = blurTotal(lambda_m, L_m, dopt_mm*1e-3)*1e3;
+    const xo = plot.xMap(dopt_mm);
+    const yo = plot.yMap(Bopt_mm);
+
+    ctx.save();
+    ctx.fillStyle = "rgba(52,211,153,0.95)";
+    ctx.strokeStyle = "rgba(52,211,153,0.95)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(xo, yo, 5.5, 0, Math.PI*2);
+    ctx.fill();
+
+    // vertical line
+    ctx.strokeStyle = "rgba(52,211,153,0.35)";
+    ctx.beginPath();
+    ctx.moveTo(xo, plot.y0);
+    ctx.lineTo(xo, plot.y1);
+    ctx.stroke();
+    ctx.restore();
+
+    // current d marker
+    const xd = plot.xMap(state.d_mm);
+    const Bd_mm = blurTotal(lambda_m, L_m, state.d_mm*1e-3)*1e3;
+    const yd = plot.yMap(Bd_mm);
+
+    ctx.save();
+    ctx.fillStyle = "rgba(251,191,36,0.95)";
+    ctx.beginPath();
+    ctx.arc(xd, yd, 4.8, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    // legend
+    ctx.save();
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+    ctx.fillStyle = "rgba(232,238,252,0.92)";
+    const lx = rect.x0 + 8, ly = rect.y0 + 10;
+    const items = [
+      {name:"B_total", col:"rgba(232,238,252,0.90)", dash:[]},
+      {name:"B_geo ≈ d", col:"rgba(167,139,250,0.75)", dash:[6,5]},
+      {name:"B_diff ≈ 2.44λL/d", col:"rgba(125,211,252,0.75)", dash:[3,4]},
+      {name:`d_opt ≈ ${dopt_mm.toFixed(2)} mm`, col:"rgba(52,211,153,0.95)", dash:null},
+      {name:`your d ≈ ${state.d_mm.toFixed(2)} mm`, col:"rgba(251,191,36,0.95)", dash:null}
+    ];
+    let y = ly;
+    items.forEach((it, idx)=>{
+      // line sample
+      ctx.save();
+      ctx.strokeStyle = it.col;
+      ctx.lineWidth = 2;
+      if(it.dash) ctx.setLineDash(it.dash);
+      else ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(lx, y);
+      ctx.lineTo(lx+26, y);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = "rgba(168,179,207,0.95)";
+      ctx.fillText(it.name, lx+34, y+4);
+      y += 18;
+    });
+    ctx.restore();
+
+    // annotation text
+    ctx.save();
+    ctx.fillStyle = "rgba(168,179,207,0.95)";
+    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    const note = `λ=${state.lambda_nm.toFixed(0)} nm, L=${state.L_cm.toFixed(1)} cm → d_opt ≈ ${dopt_mm.toFixed(2)} mm`;
+    ctx.fillText(note, rect.x0, h-14);
+    ctx.restore();
+  }
+
+  // ---------- Secondary plot: d_opt vs lambda ----------
+  const sweepPlot = setupCanvas($("cnvSweepPlot"));
+  function renderSweepPlot(){
+    const {ctx, resize} = sweepPlot;
+    const {w,h} = resize();
+    clear(ctx,w,h);
+    drawTitle(ctx,w,"Secondary plot — optimum diameter d_opt vs wavelength λ (sweep)");
+
+    const L_m = state.L_cm * 1e-2;
+
+    const lamMin = 350, lamMax = 700; // nm
+    const N = 360;
+
+    const curve = new Array(N);
+    let maxY = 0;
+    for(let i=0;i<N;i++){
+      const lam = lamMin + (lamMax-lamMin)*i/(N-1);
+      const dmm = dOpt(lam*1e-9, L_m)*1e3;
+      curve[i] = {lam, dmm};
+      if(dmm>maxY) maxY=dmm;
+    }
+
+    const yMin = 0;
+    const yMax = Math.ceil(maxY*1.1*10)/10;
+
+    const rect = makePlotRect(w,h,72,18,40,56);
+    const plot = {
+      ...rect,
+      xMap:(x)=> rect.x0 + (x-lamMin)/(lamMax-lamMin)*(rect.x1-rect.x0),
+      yMap:(y)=> rect.y1 - (y-yMin)/(yMax-yMin)*(rect.y1-rect.y0)
+    };
+
+    const xTicks = [350,400,450,500,550,600,650,700];
+    const yTicks = [];
+    const yStep = yMax<=2 ? 0.2 : 0.3;
+    for(let y=0;y<=yMax+1e-9;y+=yStep) yTicks.push(Number(y.toFixed(1)));
+
+    drawGridAndTicks(ctx, plot, xTicks, yTicks, "λ (nm)", "d_opt (mm)");
+    drawAxes(ctx, plot);
+
+    // draw sweep curve
+    ctx.save();
+    ctx.strokeStyle = "rgba(232,238,252,0.90)";
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    for(let i=0;i<curve.length;i++){
+      const x = plot.xMap(curve[i].lam);
+      const y = plot.yMap(curve[i].dmm);
+      if(i===0) ctx.moveTo(x,y);
+      else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // current lambda marker
+    const lam = state.lambda_nm;
+    const dmm = dOpt(lam*1e-9, L_m)*1e3;
+    const x = plot.xMap(lam);
+    const y = plot.yMap(dmm);
+
+    ctx.save();
+    ctx.fillStyle = "rgba(52,211,153,0.95)";
+    ctx.beginPath();
+    ctx.arc(x,y,5.5,0,Math.PI*2);
+    ctx.fill();
+
+    // vertical guide
+    ctx.strokeStyle = "rgba(52,211,153,0.35)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(x, plot.y0);
+    ctx.lineTo(x, plot.y1);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(168,179,207,0.95)";
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+    ctx.fillText(`at λ=${lam.toFixed(0)} nm → d_opt≈${dmm.toFixed(2)} mm`, rect.x0, rect.y0+16);
+    ctx.restore();
+
+    // scaling note
+    ctx.save();
+    ctx.fillStyle = "rgba(168,179,207,0.95)";
+    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillText(`Here L is fixed at ${state.L_cm.toFixed(1)} cm. Formula: d_opt = √(2.44 λ L).`, rect.x0, h-14);
+    ctx.restore();
+  }
+
+  function renderAll(){
+    renderDiagram();
+    renderMainPlot();
+    renderSweepPlot();
+  }
+
+  // ---------- Initialize ----------
+  function init(){
+    lambdaSlider.value = state.lambda_nm;
+    LSlider.value = state.L_cm;
+    // initialize d to optimum for defaults
+    const dopt_mm = dOpt(state.lambda_nm*1e-9, state.L_cm*1e-2)*1e3;
+    state.d_mm = Math.min(5.00, Math.max(0.10, dopt_mm));
+    dSlider.value = state.d_mm.toFixed(2);
+
+    syncLabels();
+    updateFinalBox();
+    renderAll();
+
+    // rerender on resize (debounced)
+    let t=null;
+    window.addEventListener("resize", ()=>{
+      clearTimeout(t);
+      t=setTimeout(renderAll, 80);
+    });
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

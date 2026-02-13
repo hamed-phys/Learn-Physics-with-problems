@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Coupled Oscillators — Normal Modes (Two Masses, Three Springs)</title>
+  <style>
+    :root{
+      --bg: #0b0f17;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.085);
+      --ink: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.72);
+      --muted2: rgba(255,255,255,0.55);
+      --line: rgba(255,255,255,0.14);
+      --accent: #7dd3fc;
+      --accent2: #a78bfa;
+      --good: #86efac;
+      --warn: #fde68a;
+      --bad: #fca5a5;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius: 18px;
+      --radius2: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{ height: 100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 800px at 10% 10%, rgba(125,211,252,.14), transparent 60%),
+        radial-gradient(1000px 700px at 80% 20%, rgba(167,139,250,.14), transparent 55%),
+        radial-gradient(900px 600px at 50% 90%, rgba(134,239,172,.10), transparent 50%),
+        linear-gradient(180deg, #070a10 0%, #0b0f17 50%, #070a10 100%);
+      overflow-x:hidden;
+    }
+
+    a{ color: var(--accent); text-decoration: none; }
+    a:hover{ text-decoration: underline; }
+
+    header{
+      position: relative;
+      padding: 42px 18px 26px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent);
+    }
+
+    .wrap{
+      width: min(1180px, 92vw);
+      margin: 0 auto;
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px){
+      .hero{ grid-template-columns: 1fr; }
+    }
+
+    .title{
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    h1{
+      margin:0;
+      letter-spacing:-0.02em;
+      font-size: clamp(26px, 3.2vw, 40px);
+      line-height: 1.1;
+    }
+
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+      max-width: 72ch;
+    }
+
+    .pillrow{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--muted);
+      font-size: 13px;
+      backdrop-filter: blur(8px);
+    }
+    .dot{
+      width: 10px; height:10px; border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(125,211,252,0.18);
+    }
+    .dot.purple{ background: var(--accent2); box-shadow: 0 0 0 3px rgba(167,139,250,0.18); }
+    .dot.green{ background: var(--good); box-shadow: 0 0 0 3px rgba(134,239,172,0.14); }
+
+    .summary{
+      border-radius: var(--radius);
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: var(--shadow);
+      padding: 16px 16px 14px;
+      position: relative;
+      overflow:hidden;
+    }
+    .summary::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(600px 180px at 20% 0%, rgba(125,211,252,.18), transparent 60%),
+                  radial-gradient(600px 180px at 90% 20%, rgba(167,139,250,.16), transparent 60%);
+      opacity:.8;
+      pointer-events:none;
+    }
+    .summary > *{ position:relative; }
+    .summary h2{
+      margin:0 0 8px;
+      font-size: 16px;
+      letter-spacing: .02em;
+      color: rgba(255,255,255,0.88);
+    }
+    .summary ul{
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    main{
+      padding: 26px 18px 70px;
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      align-self: start;
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 14px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+
+    @media (max-width: 980px){
+      nav.toc{ position: relative; top: 0; }
+    }
+
+    .toc h3{
+      margin: 0 0 10px;
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.78);
+    }
+    .toc a{
+      display:block;
+      padding: 9px 10px;
+      border-radius: 12px;
+      color: var(--muted);
+      border: 1px solid transparent;
+      font-size: 14px;
+      line-height: 1.25;
+      transition: transform .14s ease, background .14s ease, border-color .14s ease;
+    }
+    .toc a:hover{
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.10);
+      transform: translateX(2px);
+      text-decoration:none;
+    }
+    .toc a.active{
+      background: rgba(125,211,252,0.10);
+      border-color: rgba(125,211,252,0.25);
+      color: rgba(255,255,255,0.92);
+    }
+    .toc small{
+      display:block;
+      color: var(--muted2);
+      margin-top: 10px;
+      line-height: 1.35;
+      font-size: 12px;
+    }
+
+    article{
+      min-width: 0;
+      display:flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    section.card{
+      border-radius: var(--radius);
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      transform: translateY(0);
+      animation: floatIn .55s ease both;
+    }
+
+    @keyframes floatIn{
+      from{ opacity:0; transform: translateY(10px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+
+    .cardhead{
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), transparent);
+      display:flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .cardhead h2{
+      margin:0;
+      font-size: 16px;
+      letter-spacing: .01em;
+    }
+    .tag{
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.84);
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      white-space: nowrap;
+    }
+    .content{
+      padding: 16px 18px 18px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 15px;
+    }
+    .content h3{
+      color: rgba(255,255,255,0.88);
+      font-size: 15px;
+      margin: 18px 0 8px;
+    }
+    .content ul, .content ol{
+      margin: 8px 0 0;
+      padding-left: 20px;
+    }
+    .content li{ margin: 6px 0; }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    @media (max-width: 820px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+    .callout{
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 12px 12px 10px;
+    }
+    .callout strong{ color: rgba(255,255,255,0.88); }
+
+    .eq{
+      border-radius: var(--radius2);
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.12);
+      overflow:hidden;
+      margin: 12px 0;
+    }
+    .eqbar{
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      gap: 10px;
+    }
+    .eqbar .label{
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.70);
+    }
+    pre{
+      margin:0;
+      padding: 12px;
+      overflow:auto;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.55;
+      color: rgba(255,255,255,0.88);
+      tab-size: 2;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    button.copy{
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.86);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: 12px;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      white-space: nowrap;
+    }
+    button.copy:hover{
+      background: rgba(255,255,255,0.10);
+      border-color: rgba(255,255,255,0.20);
+      transform: translateY(-1px);
+    }
+    button.copy:active{ transform: translateY(0px) scale(0.99); }
+
+    .vizWrap{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 14px;
+    }
+    @media (max-width: 980px){
+      .vizWrap{ grid-template-columns: 1fr; }
+    }
+
+    .vizCard{
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.055);
+      border: 1px solid rgba(255,255,255,0.12);
+      overflow:hidden;
+      box-shadow: 0 14px 40px rgba(0,0,0,.38);
+    }
+    .vizHead{
+      padding: 12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent);
+    }
+    .vizHead h3{
+      margin:0;
+      font-size: 14px;
+      color: rgba(255,255,255,0.88);
+      letter-spacing: .01em;
+    }
+    .vizBody{
+      padding: 10px 12px 12px;
+    }
+    canvas{
+      width: 100%;
+      height: 320px;
+      display:block;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    .small canvas{ height: 260px; }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .controlGroup{
+      padding: 12px;
+      border-radius: var(--radius2);
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .controlGroup header{
+      padding: 0;
+      border:0;
+      background: none;
+      margin-bottom: 10px;
+    }
+    .controlGroup h4{
+      margin: 0;
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.74);
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      align-items:center;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .row label{
+      font-size: 13px;
+      color: rgba(255,255,255,0.80);
+    }
+    .row output{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(255,255,255,0.84);
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      min-width: 90px;
+      text-align:right;
+    }
+    input[type="range"]{
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    .btnrow{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    button.preset{
+      cursor:pointer;
+      border-radius: 14px;
+      padding: 9px 10px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.86);
+      font-size: 12px;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    button.preset:hover{ background: rgba(255,255,255,0.10); transform: translateY(-1px); }
+    button.preset:active{ transform: translateY(0px); }
+
+    .liveBox{
+      border-radius: var(--radius2);
+      background: rgba(125,211,252,0.08);
+      border: 1px solid rgba(125,211,252,0.18);
+      padding: 12px;
+      color: rgba(255,255,255,0.86);
+    }
+    .liveGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 520px){
+      .liveGrid{ grid-template-columns: 1fr; }
+    }
+    .stat{
+      border-radius: 14px;
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 10px;
+    }
+    .stat .k{ color: rgba(255,255,255,0.72); font-size: 12px; }
+    .stat .v{ font-family: var(--mono); color: rgba(255,255,255,0.92); font-size: 13px; margin-top: 6px; }
+
+    .boxAnswer{
+      border-radius: var(--radius);
+      background: rgba(134,239,172,0.09);
+      border: 1px solid rgba(134,239,172,0.22);
+      padding: 14px;
+      margin-top: 10px;
+    }
+    .boxAnswer h3{ margin:0 0 6px; }
+    .note{
+      font-size: 13px;
+      color: var(--muted2);
+    }
+
+    footer{
+      padding: 24px 18px 34px;
+      border-top: 1px solid var(--line);
+      color: var(--muted2);
+      font-size: 13px;
+      background: linear-gradient(0deg, rgba(255,255,255,0.06), transparent);
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{ background: white; color: #111; }
+      header, nav.toc, .vizCard, .controls, .pillrow{ display:none !important; }
+      section.card{ box-shadow:none; border: 1px solid #ccc; background: white; }
+      .content{ color:#111; }
+      .eq{ border: 1px solid #bbb; }
+      pre{ color:#111; }
+      a{ color:#111; text-decoration: underline; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap hero">
+      <div class="title">
+        <h1>Coupled Oscillators (Two Masses, Three Springs): Normal Modes</h1>
+        <p class="subtitle">
+          Two masses <span style="color:rgba(255,255,255,.9)"><b>A</b></span> and <span style="color:rgba(255,255,255,.9)"><b>B</b></span>
+          are connected to fixed walls by outer springs of constant <b>k</b> and coupled by a middle spring of constant <b>k′</b>.
+          We derive the coupled equations of motion and the general normal-mode frequencies, plus quick “no-calculation” answers for special limits.
+        </p>
+        <div class="pillrow" aria-label="Quick metadata">
+          <span class="pill"><span class="dot"></span> Linear oscillations</span>
+          <span class="pill"><span class="dot purple"></span> Normal modes</span>
+          <span class="pill"><span class="dot green"></span> Interactive plots</span>
+        </div>
+      </div>
+      <aside class="summary" aria-label="Quick Summary">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li>Let <b>x<sub>A</sub>, x<sub>B</sub></b> be small displacements from equilibrium.</li>
+          <li>Matrix form: <b>M ẍ + K x = 0</b> with
+            <span style="font-family:var(--mono)">K = [[k+k′, −k′], [−k′, k+k′]]</span>.
+          </li>
+          <li>Characteristic equation: <b>det(K − ω² M) = 0</b> → a quadratic in <b>ω²</b>.</li>
+          <li>Special limits:
+            <b>k′=0</b> → independent oscillators; <b>k=0</b> → one free translation (ω=0); <b>m<sub>A</sub>→∞</b> → mass B oscillates with k+k′.
+          </li>
+          <li>Use the interactive sliders to see frequency splitting and mode-shape changes.</li>
+        </ul>
+      </aside>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap layout">
+      <nav class="toc" aria-label="Table of contents">
+        <h3>On this page</h3>
+        <a href="#interactive" data-toc>Interactive Visualization</a>
+        <a href="#part1" data-toc>PART 1 — Problem Analysis</a>
+        <a href="#part2" data-toc>PART 2 — Strategy &amp; Tips</a>
+        <a href="#part3" data-toc>PART 3 — Full Solution</a>
+        <a href="#checks" data-toc>Sanity Checks &amp; Limits</a>
+        <small>
+          Tip: Copy buttons grab plain text equations (no formatting) for notes or homework.
+        </small>
+      </nav>
+
+      <article>
+        <!-- Interactive -->
+        <section class="card" id="interactive">
+          <div class="cardhead">
+            <h2>Interactive Visualization</h2>
+            <span class="tag">canvas • live updates • parameter sweep</span>
+          </div>
+          <div class="content">
+            <div class="vizWrap">
+              <div class="vizCard">
+                <div class="vizHead">
+                  <h3>Physical Setup Diagram (labeled)</h3>
+                  <span class="tag">geometry</span>
+                </div>
+                <div class="vizBody">
+                  <canvas id="diagCanvas" aria-label="Diagram canvas"></canvas>
+                  <p class="note" style="margin:10px 2px 0;">
+                    Displacements are measured from equilibrium along the line: <b>x<sub>A</sub></b>, <b>x<sub>B</sub></b> (meters).
+                  </p>
+                </div>
+              </div>
+
+              <div class="controls" aria-label="Interactive controls">
+                <div class="controlGroup">
+                  <header><h4>Example values for plotting</h4></header>
+
+                  <div class="row">
+                    <label for="mA">m<sub>A</sub> (kg)</label>
+                    <output id="mAOut">1.00</output>
+                  </div>
+                  <input id="mA" type="range" min="0.20" max="5.00" step="0.01" value="1.00" />
+
+                  <div class="row">
+                    <label for="mB">m<sub>B</sub> (kg)</label>
+                    <output id="mBOut">1.20</output>
+                  </div>
+                  <input id="mB" type="range" min="0.20" max="5.00" step="0.01" value="1.20" />
+
+                  <div class="row">
+                    <label for="k">k (N/m)</label>
+                    <output id="kOut">60</output>
+                  </div>
+                  <input id="k" type="range" min="5" max="200" step="1" value="60" />
+
+                  <div class="row">
+                    <label for="kp">k′ (N/m)</label>
+                    <output id="kpOut">40</output>
+                  </div>
+                  <input id="kp" type="range" min="0" max="200" step="1" value="40" />
+
+                  <div class="btnrow" aria-label="Presets">
+                    <button class="preset" id="preset_kp0" title="Set k′=0 (decoupled)">Preset: k′=0</button>
+                    <button class="preset" id="preset_k0" title="Set k=0 (free COM)">Preset: k=0</button>
+                    <button class="preset" id="preset_mAinf" title="Approximate mA very large">Preset: mA ≫</button>
+                    <button class="preset" id="preset_reset" title="Reset to default demo values">Reset</button>
+                  </div>
+                </div>
+
+                <div class="liveBox" aria-label="Live computed results">
+                  <div><b>Live results (from your slider settings)</b></div>
+                  <div class="liveGrid">
+                    <div class="stat">
+                      <div class="k">ω<sub>1</sub> (rad/s)</div>
+                      <div class="v" id="w1">—</div>
+                    </div>
+                    <div class="stat">
+                      <div class="k">ω<sub>2</sub> (rad/s)</div>
+                      <div class="v" id="w2">—</div>
+                    </div>
+                    <div class="stat">
+                      <div class="k">Mode 1 ratio r<sub>1</sub> = x<sub>B</sub>/x<sub>A</sub></div>
+                      <div class="v" id="r1">—</div>
+                    </div>
+                    <div class="stat">
+                      <div class="k">Mode 2 ratio r<sub>2</sub> = x<sub>B</sub>/x<sub>A</sub></div>
+                      <div class="v" id="r2">—</div>
+                    </div>
+                  </div>
+                  <p class="note" style="margin:10px 0 0;">
+                    For <b>k′=0</b>, the ratio is undefined (modes become independent), and the plot will reflect decoupling.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid2" style="margin-top:14px;">
+              <div class="vizCard">
+                <div class="vizHead">
+                  <h3>Main Plot: Normal-Mode Frequencies vs Coupling k′</h3>
+                  <span class="tag">parameter sweep</span>
+                </div>
+                <div class="vizBody">
+                  <canvas id="mainPlot" aria-label="Main plot canvas"></canvas>
+                  <p class="note" style="margin:10px 2px 0;">
+                    Curves show ω<sub>1</sub>(k′) and ω<sub>2</sub>(k′) for fixed m<sub>A</sub>, m<sub>B</sub>, k.
+                    The dot marks your current k′.
+                  </p>
+                </div>
+              </div>
+
+              <div class="vizCard small">
+                <div class="vizHead">
+                  <h3>Secondary Plot: Mode-Shape Ratio r = x<sub>B</sub>/x<sub>A</sub> vs k′</h3>
+                  <span class="tag">eigenvector</span>
+                </div>
+                <div class="vizBody">
+                  <canvas id="secPlot" aria-label="Secondary plot canvas"></canvas>
+                  <p class="note" style="margin:10px 2px 0;">
+                    Sign of <b>r</b> distinguishes in-phase (r&gt;0) vs out-of-phase (r&lt;0) motion.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- PART 1 -->
+        <section class="card" id="part1">
+          <div class="cardhead">
+            <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+            <span class="tag">setup • principles • approaches</span>
+          </div>
+          <div class="content">
+            <h3>Problem restatement (in my own words)</h3>
+            <p>
+              Two masses <b>A</b> and <b>B</b> move horizontally. Mass <b>A</b> is attached to the left wall by a spring of constant <b>k</b>.
+              Mass <b>B</b> is attached to the right wall by a spring of constant <b>k</b>.
+              Between the masses, a coupling spring of constant <b>k′</b> connects <b>A</b> to <b>B</b>.
+              For small oscillations about equilibrium, we must find:
+              (a)–(c) normal-mode frequencies in special limits, (d) the coupled equations of motion, and (e) the general normal-mode frequencies.
+            </p>
+
+            <div class="grid2">
+              <div class="callout">
+                <strong>Given quantities</strong>
+                <ul>
+                  <li>Masses: m<sub>A</sub>, m<sub>B</sub></li>
+                  <li>Spring constants: outer springs k (left &amp; right), middle spring k′</li>
+                  <li>Motion is 1D along the line of springs; small oscillations</li>
+                </ul>
+              </div>
+              <div class="callout">
+                <strong>Unknowns</strong>
+                <ul>
+                  <li>Displacements: x<sub>A</sub>(t), x<sub>B</sub>(t) from equilibrium</li>
+                  <li>Normal-mode frequencies: ω<sub>1</sub>, ω<sub>2</sub></li>
+                  <li>Mode shapes (relative amplitudes): (x<sub>A</sub>, x<sub>B</sub>) for each mode</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>What must be found/proved</h3>
+            <ul>
+              <li>(a) If m<sub>A</sub> → ∞, determine the normal-mode frequencies.</li>
+              <li>(b) If k = 0, determine the normal-mode frequencies.</li>
+              <li>(c) If k′ = 0, determine the normal-mode frequencies.</li>
+              <li>(d) Write the coupled equations of motion for general k, k′, m<sub>A</sub>, m<sub>B</sub>.</li>
+              <li>(e) Solve for the general normal-mode frequencies ω<sub>1</sub>, ω<sub>2</sub>.</li>
+            </ul>
+
+            <h3>Relevant physical principles/laws (and why they apply)</h3>
+            <ul>
+              <li><b>Hooke’s law</b> (linear springs): spring force is proportional to extension/compression, valid for small oscillations.</li>
+              <li><b>Newton’s second law</b>: for each mass, sum of forces equals m ẍ.</li>
+              <li><b>Normal-mode/eigenvalue method</b>: linear coupled ODEs with constant coefficients are solved by trial solutions x ∝ e^{iωt}, leading to an eigenvalue problem for ω².</li>
+              <li><b>Energy viewpoint (optional)</b>: potential energy is quadratic in displacements, leading to the same stiffness matrix; useful for checking signs and symmetry.</li>
+            </ul>
+
+            <h3>2–3 candidate approaches (compare briefly)</h3>
+            <ul>
+              <li><b>Direct Newton + trial solution</b>: write two coupled ODEs, assume x = A e^{iωt}, solve determinant condition. Fast and standard.</li>
+              <li><b>Lagrangian (energy) method</b>: write T and V, derive Euler–Lagrange equations, then solve eigenvalue problem. Very systematic, especially for more complex systems.</li>
+              <li><b>Matrix normal-mode method</b>: identify mass matrix M and stiffness matrix K; solve det(K − ω²M)=0. Cleanest for presenting the final formula.</li>
+            </ul>
+
+            <h3>Best approach and justification</h3>
+            <p>
+              The <b>matrix normal-mode method</b> is best here: the system is linear with two degrees of freedom, so we can write
+              M ẍ + K x = 0 and immediately reduce the problem to a 2×2 determinant. This yields compact symbolic expressions for ω<sub>1</sub>, ω<sub>2</sub>, and it aligns naturally with parts (d) and (e).
+            </p>
+          </div>
+        </section>
+
+        <!-- PART 2 -->
+        <section class="card" id="part2">
+          <div class="cardhead">
+            <h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+            <span class="tag">plan • pitfalls</span>
+          </div>
+          <div class="content">
+            <h3>Minimal step-by-step plan (no algebra yet)</h3>
+            <ol>
+              <li>
+                <b>Define coordinates.</b>
+                <div class="note">Goal: Choose x<sub>A</sub>, x<sub>B</sub> from equilibrium. Tool: small-displacement assumption.</div>
+              </li>
+              <li>
+                <b>Write spring extensions.</b>
+                <div class="note">Goal: Express each spring’s extension in terms of x<sub>A</sub>, x<sub>B</sub>. Tool: geometry of 1D springs.</div>
+              </li>
+              <li>
+                <b>Apply Hooke’s law to get forces.</b>
+                <div class="note">Goal: Force on each mass from each spring. Tool: F = −k(Δℓ).</div>
+              </li>
+              <li>
+                <b>Apply Newton’s second law to each mass.</b>
+                <div class="note">Goal: Two coupled ODEs. Tool: ΣF = m ẍ.</div>
+              </li>
+              <li>
+                <b>Convert to matrix form M ẍ + K x = 0.</b>
+                <div class="note">Goal: Identify M and K. Tool: collecting coefficients of x<sub>A</sub>, x<sub>B</sub>.</div>
+              </li>
+              <li>
+                <b>Assume normal-mode solutions.</b>
+                <div class="note">Goal: x(t)=v e^{iωt}. Tool: turns ODEs into algebraic system (K−ω²M)v=0.</div>
+              </li>
+              <li>
+                <b>Impose nontrivial solution condition.</b>
+                <div class="note">Goal: det(K−ω²M)=0. Tool: determinant of 2×2.</div>
+              </li>
+              <li>
+                <b>Solve for ω² and take square roots.</b>
+                <div class="note">Goal: ω<sub>1</sub>, ω<sub>2</sub>. Tool: quadratic formula in ω².</div>
+              </li>
+              <li>
+                <b>(Optional) Get mode shapes.</b>
+                <div class="note">Goal: v ratios x<sub>B</sub>/x<sub>A</sub>. Tool: plug ω² back into (K−ω²M)v=0.</div>
+              </li>
+            </ol>
+
+            <h3>Common mistakes &amp; quick tips</h3>
+            <ul>
+              <li><b>Sign errors</b> in the coupling force: the middle spring depends on (x<sub>A</sub> − x<sub>B</sub>).</li>
+              <li>Forces from the outer springs are simply −k x<sub>A</sub> and −k x<sub>B</sub> (since walls are fixed).</li>
+              <li>Normal modes come from <b>det(K − ω²M)=0</b>, not det(M − ω²K).</li>
+              <li>In limits (k=0 or k′=0), expect a <b>zero-frequency</b> mode when the system has a free translation.</li>
+              <li>Always check units: k/m has units of s⁻², so ω has units s⁻¹ (rad/s).</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- PART 3 -->
+        <section class="card" id="part3">
+          <div class="cardhead">
+            <h2>PART 3 — Full Solution</h2>
+            <span class="tag">derivation • final boxed result</span>
+          </div>
+          <div class="content">
+            <h3>Physical intuition first</h3>
+            <p>
+              Each mass is tied to a wall (outer springs <b>k</b>), so even without coupling (k′=0) each mass oscillates on its own.
+              The coupling spring <b>k′</b> links their motions: if they move together (in-phase), the middle spring stretches less; if they move oppositely (out-of-phase), the middle spring stretches more, increasing the restoring force and typically raising one frequency.
+              Therefore we expect two modes: one more “in-phase-like” and one more “out-of-phase-like,” with a frequency splitting that grows as k′ increases.
+            </p>
+
+            <h3>Define variables</h3>
+            <p>
+              Let x<sub>A</sub>(t) and x<sub>B</sub>(t) be the small displacements of masses A and B from equilibrium, positive to the right.
+              Springs are ideal and massless.
+            </p>
+
+            <!-- Special cases a,b,c -->
+            <h3>(a) If m<sub>A</sub> → ∞, what are the normal mode frequencies?</h3>
+            <p>
+              If m<sub>A</sub> is infinite, mass A cannot accelerate: it effectively becomes a fixed point. Then mass B is attached to a fixed point on the left through spring k′ and to the right wall through spring k. Those two springs act in parallel for B, giving an effective constant k + k′.
+            </p>
+            <div class="eq" role="group" aria-label="Special case a equation">
+              <div class="eqbar">
+                <div class="label">Answer (a)</div>
+                <button class="copy" data-copy="(a) m_A -> infinity:
+omega_1 = 0
+omega_2 = sqrt((k + k')/m_B)">Copy</button>
+              </div>
+              <pre>(a) m_A → ∞:
+ω₁ = 0
+ω₂ = √((k + k′)/m_B)</pre>
+            </div>
+
+            <h3>(b) If k = 0, what are the normal mode frequencies?</h3>
+            <p>
+              With k=0, the outer springs vanish: the only spring is the middle coupling spring k′. The system can translate freely without changing the middle spring length → a zero-frequency (ω=0) mode. The other mode is a “stretching” mode governed by the reduced-mass physics, giving ω² = k′(1/m<sub>A</sub> + 1/m<sub>B</sub>).
+            </p>
+            <div class="eq" role="group" aria-label="Special case b equation">
+              <div class="eqbar">
+                <div class="label">Answer (b)</div>
+                <button class="copy" data-copy="(b) k = 0:
+omega_1 = 0
+omega_2 = sqrt(k'*(1/m_A + 1/m_B))">Copy</button>
+              </div>
+              <pre>(b) k = 0:
+ω₁ = 0
+ω₂ = √(k′(1/m_A + 1/m_B))</pre>
+            </div>
+
+            <h3>(c) If k′ = 0, what are the normal mode frequencies?</h3>
+            <p>
+              With k′=0 the masses decouple. Each mass is just a single mass-on-a-spring with constant k.
+            </p>
+            <div class="eq" role="group" aria-label="Special case c equation">
+              <div class="eqbar">
+                <div class="label">Answer (c)</div>
+                <button class="copy" data-copy="(c) k' = 0:
+omega_A = sqrt(k/m_A)
+omega_B = sqrt(k/m_B)">Copy</button>
+              </div>
+              <pre>(c) k′ = 0:
+ω_A = √(k/m_A)
+ω_B = √(k/m_B)</pre>
+            </div>
+
+            <h3>(d) General coupled equations of motion</h3>
+            <p>
+              Compute forces on each mass using Hooke’s law. The left outer spring gives force −k x<sub>A</sub> on A.
+              The right outer spring gives force −k x<sub>B</sub> on B.
+              The middle spring extension is (x<sub>B</sub> − x<sub>A</sub>), so it pulls A toward B and pulls B toward A:
+              force on A from k′ is +k′(x<sub>B</sub> − x<sub>A</sub>) = −k′(x<sub>A</sub> − x<sub>B</sub>),
+              and force on B is −k′(x<sub>B</sub> − x<sub>A</sub>) = −k′(x<sub>B</sub> − x<sub>A</sub>).
+            </p>
+
+            <div class="eq" role="group" aria-label="Equations of motion">
+              <div class="eqbar">
+                <div class="label">Coupled EOM</div>
+                <button class="copy" data-copy="General equations of motion:
+m_A x_A'' = -k x_A - k'(x_A - x_B)
+m_B x_B'' = -k x_B - k'(x_B - x_A)">Copy</button>
+              </div>
+              <pre>m_A ẍ_A = −k x_A − k′(x_A − x_B)
+m_B ẍ_B = −k x_B − k′(x_B − x_A)</pre>
+            </div>
+
+            <p>
+              Collecting terms:
+            </p>
+            <div class="eq" role="group" aria-label="Equations of motion expanded">
+              <div class="eqbar">
+                <div class="label">Expanded form</div>
+                <button class="copy" data-copy="Expanded EOM:
+m_A x_A'' + (k + k') x_A - k' x_B = 0
+m_B x_B'' - k' x_A + (k + k') x_B = 0">Copy</button>
+              </div>
+              <pre>m_A ẍ_A + (k + k′)x_A − k′ x_B = 0
+m_B ẍ_B − k′ x_A + (k + k′)x_B = 0</pre>
+            </div>
+
+            <h3>(e) Find the normal mode frequencies (full derivation)</h3>
+
+            <h3>Step 1: Write matrix form</h3>
+            <p>
+              Let x = (x<sub>A</sub>, x<sub>B</sub>)ᵀ. Then the system is:
+            </p>
+            <div class="eq" role="group" aria-label="Matrix form">
+              <div class="eqbar">
+                <div class="label">Matrix form</div>
+                <button class="copy" data-copy="Matrix form:
+M x'' + K x = 0
+M = [[m_A, 0],[0, m_B]]
+K = [[k + k', -k'],[-k', k + k']]">Copy</button>
+              </div>
+              <pre>M ẍ + K x = 0
+M = [[m_A, 0],
+     [0,   m_B]]
+
+K = [[k + k′,  −k′],
+     [−k′,     k + k′]]</pre>
+            </div>
+
+            <h3>Step 2: Normal-mode ansatz</h3>
+            <p>
+              Try harmonic motion x(t) = v e^{iωt}, where v is a constant vector (mode shape). Then ẍ = −ω² x, giving:
+            </p>
+            <div class="eq" role="group" aria-label="Eigenvalue equation">
+              <div class="eqbar">
+                <div class="label">Eigenvalue problem</div>
+                <button class="copy" data-copy="Normal-mode condition:
+(K - omega^2 M) v = 0
+Nontrivial v requires det(K - omega^2 M) = 0">Copy</button>
+              </div>
+              <pre>(K − ω² M) v = 0
+Nontrivial v ⇒ det(K − ω² M) = 0</pre>
+            </div>
+
+            <h3>Step 3: Determinant equation</h3>
+            <p>
+              Compute the determinant:
+            </p>
+            <div class="eq" role="group" aria-label="Determinant equation">
+              <div class="eqbar">
+                <div class="label">Characteristic equation</div>
+                <button class="copy" data-copy="Characteristic equation:
+(k+k' - m_A omega^2)(k+k' - m_B omega^2) - (k')^2 = 0">Copy</button>
+              </div>
+              <pre>(k + k′ − m_A ω²)(k + k′ − m_B ω²) − (k′)² = 0</pre>
+            </div>
+
+            <h3>Step 4: Expand to a quadratic in ω²</h3>
+            <p>
+              Expand the product and collect powers of ω²:
+            </p>
+            <div class="eq" role="group" aria-label="Quadratic in omega squared">
+              <div class="eqbar">
+                <div class="label">Quadratic in ω²</div>
+                <button class="copy" data-copy="Expanded:
+m_A m_B omega^4 - (k+k')(m_A + m_B) omega^2 + [(k+k')^2 - (k')^2] = 0
+and [(k+k')^2 - (k')^2] = k^2 + 2 k k'">Copy</button>
+              </div>
+              <pre>m_A m_B ω⁴ − (k + k′)(m_A + m_B) ω² + [(k + k′)² − (k′)²] = 0
+
+But: (k + k′)² − (k′)² = k² + 2k k′</pre>
+            </div>
+
+            <h3>Step 5: Solve for ω² using the quadratic formula</h3>
+            <p>
+              Treat ω² as the unknown. With
+              A = m<sub>A</sub>m<sub>B</sub>, B = (k+k′)(m<sub>A</sub>+m<sub>B</sub>), C = k² + 2k k′,
+              the solutions are:
+            </p>
+
+            <div class="boxAnswer" aria-label="Final boxed result">
+              <h3>Final result (normal-mode frequencies)</h3>
+              <div class="eq" role="group" aria-label="Final omega squared solutions">
+                <div class="eqbar">
+                  <div class="label">Boxed Answer</div>
+                  <button class="copy" data-copy="Normal-mode frequencies (general):
+omega_{1,2}^2 = [ (k+k')(m_A+m_B) ± sqrt( (k+k')^2 (m_A+m_B)^2 - 4 m_A m_B (k^2 + 2 k k') ) ] / (2 m_A m_B)
+omega_{1,2} = sqrt(omega_{1,2}^2)">Copy</button>
+                </div>
+                <pre>ω₁,₂² = { (k + k′)(m_A + m_B) ± √[ (k + k′)²(m_A + m_B)² − 4 m_A m_B (k² + 2k k′) ] } / (2 m_A m_B)
+
+ω₁,₂ = √(ω₁,₂²)</pre>
+              </div>
+              <p class="note" style="margin:10px 0 0;">
+                Convention: take ω₁ ≤ ω₂ (the “−” sign typically gives the lower mode).
+              </p>
+            </div>
+
+            <h3>Optional: mode-shape ratio (useful interpretation)</h3>
+            <p>
+              For a given ω, the eigenvector v = (x<sub>A</sub>, x<sub>B</sub>) satisfies:
+              (k+k′ − m<sub>A</sub>ω²)x<sub>A</sub> − k′ x<sub>B</sub> = 0.
+              If k′ ≠ 0, the amplitude ratio is:
+            </p>
+            <div class="eq" role="group" aria-label="Mode shape ratio">
+              <div class="eqbar">
+                <div class="label">Mode shape (ratio)</div>
+                <button class="copy" data-copy="Mode-shape ratio (k' ≠ 0):
+r = x_B/x_A = (k + k' - m_A omega^2)/k'">Copy</button>
+              </div>
+              <pre>r ≡ x_B/x_A = (k + k′ − m_A ω²) / k′   (for k′ ≠ 0)</pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- Checks -->
+        <section class="card" id="checks">
+          <div class="cardhead">
+            <h2>Sanity Checks &amp; Limiting Cases</h2>
+            <span class="tag">units • limits • interpretation</span>
+          </div>
+          <div class="content">
+            <h3>Units check</h3>
+            <ul>
+              <li>k and k′ have units N/m = kg·s⁻².</li>
+              <li>k/m has units s⁻², so ω² has units s⁻² and ω has units s⁻¹ (rad/s). ✔</li>
+            </ul>
+
+            <h3>Limiting cases (recover parts a–c)</h3>
+            <ul>
+              <li><b>k′ → 0:</b> determinant reduces to (k − m<sub>A</sub>ω²)(k − m<sub>B</sub>ω²)=0 → ω=√(k/m<sub>A</sub>), √(k/m<sub>B</sub>). ✔</li>
+              <li><b>k → 0:</b> constant term becomes 0 → one solution ω=0 and the other ω² = k′(1/m<sub>A</sub> + 1/m<sub>B</sub>). ✔</li>
+              <li><b>m<sub>A</sub> → ∞:</b> one frequency goes to 0, the other tends to √((k+k′)/m<sub>B</sub>). ✔</li>
+            </ul>
+
+            <h3>Physical interpretation</h3>
+            <ul>
+              <li>When the masses move <b>in phase</b>, the coupling spring stretches less → typically the lower-frequency mode.</li>
+              <li>When they move <b>out of phase</b>, the coupling spring stretches more → stronger restoring force → higher-frequency mode.</li>
+              <li>Increasing k′ increases the splitting between ω₁ and ω₂ (visible in the main plot).</li>
+            </ul>
+          </div>
+        </section>
+      </article>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
+        <div>© <span id="year"></span> • Physics tutorial article • Two-DOF coupled oscillators</div>
+        <div class="note">Made with vanilla HTML/CSS/JS. No external libraries.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ---------- Utilities ----------
+    const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+    function fmt(x, digits=4){
+      if (!isFinite(x)) return "—";
+      const ax = Math.abs(x);
+      if (ax >= 1000) return x.toFixed(0);
+      if (ax >= 100) return x.toFixed(1);
+      if (ax >= 10) return x.toFixed(2);
+      if (ax >= 1) return x.toFixed(3);
+      return x.toFixed(digits);
+    }
+
+    function setCanvasHiDPI(canvas){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(2, Math.floor(rect.width * dpr));
+      const h = Math.max(2, Math.floor(rect.height * dpr));
+      if (canvas.width !== w || canvas.height !== h){
+        canvas.width = w;
+        canvas.height = h;
+      }
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return {ctx, width: rect.width, height: rect.height, dpr};
+    }
+
+    function clear(ctx, w, h){
+      ctx.clearRect(0,0,w,h);
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      r = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+r, y);
+      ctx.arcTo(x+w, y, x+w, y+h, r);
+      ctx.arcTo(x+w, y+h, x, y+h, r);
+      ctx.arcTo(x, y+h, x, y, r);
+      ctx.arcTo(x, y, x+w, y, r);
+      ctx.closePath();
+    }
+
+    function drawAxes(ctx, plot){
+      const {x0,y0,w,h, xMin,xMax,yMin,yMax, xLabel,yLabel,title} = plot;
+
+      // Panel
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "rgba(0,0,0,0.18)";
+      roundRect(ctx, x0, y0, w, h, 14);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Title
+      ctx.fillStyle = "rgba(255,255,255,0.90)";
+      ctx.font = "600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(title, x0 + 12, y0 + 18);
+
+      // Plot area
+      const padL = 50, padR = 14, padT = 30, padB = 42;
+      const px0 = x0 + padL;
+      const py0 = y0 + padT;
+      const pw = w - padL - padR;
+      const ph = h - padT - padB;
+
+      // Grid + ticks
+      const nXTicks = 6, nYTicks = 5;
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+
+      // X grid/ticks
+      for (let i=0;i<=nXTicks;i++){
+        const t = i/nXTicks;
+        const x = px0 + t*pw;
+        ctx.beginPath();
+        ctx.moveTo(x, py0);
+        ctx.lineTo(x, py0+ph);
+        ctx.stroke();
+
+        const xv = xMin + t*(xMax-xMin);
+        ctx.fillStyle = "rgba(255,255,255,0.65)";
+        ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+        const s = fmt(xv,3);
+        ctx.fillText(s, x - ctx.measureText(s).width/2, py0+ph+18);
+      }
+
+      // Y grid/ticks
+      for (let j=0;j<=nYTicks;j++){
+        const t = j/nYTicks;
+        const y = py0 + (1-t)*ph;
+        ctx.beginPath();
+        ctx.moveTo(px0, y);
+        ctx.lineTo(px0+pw, y);
+        ctx.stroke();
+
+        const yv = yMin + t*(yMax-yMin);
+        ctx.fillStyle = "rgba(255,255,255,0.65)";
+        ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+        const s = fmt(yv,3);
+        ctx.fillText(s, px0 - 10 - ctx.measureText(s).width, y + 4);
+      }
+
+      // Axes borders
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(px0, py0, pw, ph);
+
+      // Labels
+      ctx.fillStyle = "rgba(255,255,255,0.80)";
+      ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      // X label
+      const xLab = xLabel;
+      ctx.fillText(xLab, px0 + pw/2 - ctx.measureText(xLab).width/2, py0+ph+36);
+      // Y label (rotated)
+      ctx.save();
+      ctx.translate(px0-40, py0+ph/2);
+      ctx.rotate(-Math.PI/2);
+      const yLab = yLabel;
+      ctx.fillText(yLab, -ctx.measureText(yLab).width/2, 0);
+      ctx.restore();
+
+      ctx.restore();
+      return {px0, py0, pw, ph, padL, padR, padT, padB};
+    }
+
+    function toPlotX(x, plot, axes){
+      const {xMin,xMax} = plot;
+      return axes.px0 + (x - xMin)/(xMax-xMin) * axes.pw;
+    }
+    function toPlotY(y, plot, axes){
+      const {yMin,yMax} = plot;
+      return axes.py0 + (1 - (y - yMin)/(yMax-yMin)) * axes.ph;
+    }
+
+    function drawLine(ctx, pts, strokeStyle="rgba(125,211,252,0.95)", width=2){
+      ctx.save();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = width;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      for (let i=0;i<pts.length;i++){
+        const p = pts[i];
+        if (i===0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLegend(ctx, x, y, entries){
+      ctx.save();
+      ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      let yy = y;
+      entries.forEach(e=>{
+        ctx.fillStyle = e.color;
+        ctx.fillRect(x, yy-9, 16, 3);
+        ctx.fillStyle = "rgba(255,255,255,0.82)";
+        ctx.fillText(e.label, x+22, yy-4);
+        yy += 18;
+      });
+      ctx.restore();
+    }
+
+    // ---------- Physics core ----------
+    function computeFrequencies(mA, mB, k, kp){
+      // Solve det(K - ω² M)=0:
+      // (k+kp - mA w2)(k+kp - mB w2) - kp^2 = 0 with w2 = ω²
+      const a = mA*mB;
+      const b = (k+kp)*(mA+mB);
+      const c = (k*k + 2*k*kp); // (k+kp)^2 - kp^2
+
+      // a w2^2 - b w2 + c = 0
+      const disc = b*b - 4*a*c;
+      const sd = disc >= 0 ? Math.sqrt(disc) : 0;
+      const w2_1 = (b - sd)/(2*a);
+      const w2_2 = (b + sd)/(2*a);
+      const w1 = w2_1 > 0 ? Math.sqrt(w2_1) : 0;
+      const w2 = w2_2 > 0 ? Math.sqrt(w2_2) : 0;
+      return {w1, w2, w2_1, w2_2, disc};
+    }
+
+    function modeRatio(mA, k, kp, w){
+      // r = xB/xA = (k+kp - mA ω²)/kp  (kp ≠ 0)
+      if (kp === 0) return NaN;
+      const w2 = w*w;
+      return (k + kp - mA*w2)/kp;
+    }
+
+    // ---------- Diagram ----------
+    function drawDiagram(canvas, params){
+      const {ctx, width:w, height:h} = setCanvasHiDPI(canvas);
+      clear(ctx, w, h);
+
+      // Scale coordinates in CSS pixels (ctx already set to CSS px)
+      const pad = 18;
+      const y = h*0.55;
+      const leftWallX = pad + 18;
+      const rightWallX = w - pad - 18;
+
+      // Track length
+      const trackL = leftWallX + 24;
+      const trackR = rightWallX - 24;
+
+      // Mass positions (visual only)
+      const xA = trackL + (trackR-trackL)*0.36;
+      const xB = trackL + (trackR-trackL)*0.64;
+      const mRad = 18;
+
+      // Visual stiffness indicator
+      const {k, kp} = params;
+      const kN = clamp(k/200, 0, 1);
+      const kpN = clamp(kp/200, 0, 1);
+
+      // Background grid (subtle)
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.05)";
+      ctx.lineWidth = 1;
+      for (let gx=0; gx<w; gx+=40){
+        ctx.beginPath();
+        ctx.moveTo(gx, 0);
+        ctx.lineTo(gx, h);
+        ctx.stroke();
+      }
+      for (let gy=0; gy<h; gy+=40){
+        ctx.beginPath();
+        ctx.moveTo(0, gy);
+        ctx.lineTo(w, gy);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Walls
+      function drawWall(x){
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,255,255,0.55)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, y-65);
+        ctx.lineTo(x, y+65);
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(255,255,255,0.25)";
+        ctx.lineWidth = 2;
+        for (let i=-60;i<=60;i+=12){
+          ctx.beginPath();
+          ctx.moveTo(x, y+i);
+          ctx.lineTo(x+14, y+i+8);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      drawWall(leftWallX);
+      drawWall(rightWallX);
+
+      // Track
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(trackL, y+38);
+      ctx.lineTo(trackR, y+38);
+      ctx.stroke();
+      ctx.restore();
+
+      // Draw springs (zigzag/coil)
+      function drawSpring(x1, x2, y0, amp, turns, color){
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+
+        const L = x2 - x1;
+        const n = turns*2;
+        const dx = L/(n+2);
+        ctx.beginPath();
+        ctx.moveTo(x1, y0);
+        // lead-in
+        ctx.lineTo(x1+dx, y0);
+        for (let i=1;i<=n;i++){
+          const xi = x1 + dx*(i+1);
+          const yi = y0 + (i%2===0 ? -amp : amp);
+          ctx.lineTo(xi, yi);
+        }
+        // lead-out
+        ctx.lineTo(x2-dx, y0);
+        ctx.lineTo(x2, y0);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Outer springs stiffness visual: more turns + amplitude as stiffness rises (purely illustrative)
+      const turnsK  = Math.round(6 + 6*kN);
+      const turnsKP = Math.round(6 + 6*kpN);
+      const ampK    = 6 + 5*kN;
+      const ampKP   = 6 + 5*kpN;
+
+      drawSpring(leftWallX+6, xA-mRad, y, ampK, turnsK, "rgba(125,211,252,0.92)");
+      drawSpring(xA+mRad, xB-mRad, y, ampKP, turnsKP, "rgba(167,139,250,0.92)");
+      drawSpring(xB+mRad, rightWallX-6, y, ampK, turnsK, "rgba(125,211,252,0.92)");
+
+      // Masses
+      function drawMass(x, label, massValue, tint){
+        ctx.save();
+        const grad = ctx.createRadialGradient(x-6, y-8, 6, x, y, 28);
+        grad.addColorStop(0, "rgba(255,255,255,0.20)");
+        grad.addColorStop(1, tint);
+        ctx.fillStyle = grad;
+        ctx.strokeStyle = "rgba(255,255,255,0.18)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, y, mRad, 0, Math.PI*2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.font = "700 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.fillText(label, x-4, y+4);
+
+        ctx.fillStyle = "rgba(255,255,255,0.72)";
+        ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+        const txt = "m = " + fmt(massValue,3) + " kg";
+        ctx.fillText(txt, x - ctx.measureText(txt).width/2, y + 34);
+        ctx.restore();
+      }
+
+      drawMass(xA, "A", params.mA, "rgba(125,211,252,0.22)");
+      drawMass(xB, "B", params.mB, "rgba(167,139,250,0.22)");
+
+      // Labels for k and k'
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("k", (leftWallX+6 + xA-mRad)/2, y-22);
+      ctx.fillText("k′", (xA+mRad + xB-mRad)/2, y-22);
+      ctx.fillText("k", (xB+mRad + rightWallX-6)/2, y-22);
+
+      // Displacement arrows
+      function arrow(x, y1, y2, color){
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y1);
+        ctx.lineTo(x, y2);
+        ctx.stroke();
+        const dir = y2>y1 ? 1 : -1;
+        ctx.beginPath();
+        ctx.moveTo(x, y2);
+        ctx.lineTo(x-6, y2-8*dir);
+        ctx.lineTo(x+6, y2-8*dir);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      arrow(xA, y-60, y-36, "rgba(125,211,252,0.85)");
+      arrow(xB, y-60, y-36, "rgba(167,139,250,0.85)");
+      ctx.fillStyle = "rgba(255,255,255,0.80)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.fillText("x_A", xA-12, y-66);
+      ctx.fillText("x_B", xB-12, y-66);
+
+      // Title inside canvas
+      ctx.fillStyle = "rgba(255,255,255,0.88)";
+      ctx.font = "700 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("Two masses with outer springs k and coupling spring k′", pad+6, pad+18);
+
+      ctx.restore();
+    }
+
+    // ---------- Plots ----------
+    function drawMainPlot(canvas, params){
+      const {ctx, width:w, height:h} = setCanvasHiDPI(canvas);
+      clear(ctx, w, h);
+
+      const x0=10, y0=10, W=w-20, H=h-20;
+
+      // Sweep kp
+      const kpMax = Math.max(20, params.kpMax || 200);
+      const xMin=0, xMax=kpMax;
+
+      // Gather data for ω1, ω2
+      const N=240;
+      let wMax = 0;
+      const arr1=[], arr2=[];
+      for (let i=0;i<=N;i++){
+        const kp = xMin + (xMax-xMin)*i/N;
+        const {w1,w2} = computeFrequencies(params.mA, params.mB, params.k, kp);
+        wMax = Math.max(wMax, w1, w2);
+        arr1.push({kp, w:w1});
+        arr2.push({kp, w:w2});
+      }
+      const yMin=0;
+      const yMax = Math.max(0.5, wMax*1.12);
+
+      const plot = {
+        x0,y0,w:W,h:H, xMin,xMax,yMin,yMax,
+        xLabel:"k′ (N/m)", yLabel:"ω (rad/s)",
+        title:"Normal-mode frequencies vs coupling"
+      };
+
+      const axes = drawAxes(ctx, plot);
+
+      // Lines
+      const pts1 = arr1.map(p=>({x: toPlotX(p.kp, plot, axes), y: toPlotY(p.w, plot, axes)}));
+      const pts2 = arr2.map(p=>({x: toPlotX(p.kp, plot, axes), y: toPlotY(p.w, plot, axes)}));
+
+      drawLine(ctx, pts1, "rgba(125,211,252,0.95)", 2.4);
+      drawLine(ctx, pts2, "rgba(167,139,250,0.95)", 2.4);
+
+      // Highlight current kp
+      const {w1,w2} = computeFrequencies(params.mA, params.mB, params.k, params.kp);
+      const x = toPlotX(params.kp, plot, axes);
+
+      function dot(y, color){
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.strokeStyle = "rgba(255,255,255,0.22)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, y, 5.5, 0, Math.PI*2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+      dot(toPlotY(w1, plot, axes), "rgba(125,211,252,0.95)");
+      dot(toPlotY(w2, plot, axes), "rgba(167,139,250,0.95)");
+
+      // Legend
+      drawLegend(ctx, x0+W-160, y0+52, [
+        {label:"ω₁ (lower)", color:"rgba(125,211,252,0.95)"},
+        {label:"ω₂ (higher)", color:"rgba(167,139,250,0.95)"}
+      ]);
+
+      // Annotation for current values
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.78)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      const t1 = `k′=${fmt(params.kp,3)}  ω₁=${fmt(w1,4)}  ω₂=${fmt(w2,4)}`;
+      ctx.fillText(t1, x0+12, y0+H-14);
+      ctx.restore();
+    }
+
+    function drawSecondaryPlot(canvas, params){
+      const {ctx, width:w, height:h} = setCanvasHiDPI(canvas);
+      clear(ctx, w, h);
+
+      const x0=10, y0=10, W=w-20, H=h-20;
+      const kpMax = Math.max(20, params.kpMax || 200);
+      const xMin=0, xMax=kpMax;
+
+      const N=240;
+      const r1Arr=[], r2Arr=[];
+      let rMin=0, rMax=0;
+
+      for (let i=0;i<=N;i++){
+        const kp = xMin + (xMax-xMin)*i/N;
+        const {w1,w2} = computeFrequencies(params.mA, params.mB, params.k, kp);
+        const r1 = modeRatio(params.mA, params.k, kp, w1);
+        const r2 = modeRatio(params.mA, params.k, kp, w2);
+
+        // Avoid infinities near kp=0
+        const rr1 = isFinite(r1) ? r1 : NaN;
+        const rr2 = isFinite(r2) ? r2 : NaN;
+
+        r1Arr.push({kp, r: rr1});
+        r2Arr.push({kp, r: rr2});
+
+        if (isFinite(rr1)){ rMin = Math.min(rMin, rr1); rMax = Math.max(rMax, rr1); }
+        if (isFinite(rr2)){ rMin = Math.min(rMin, rr2); rMax = Math.max(rMax, rr2); }
+      }
+
+      // Symmetric range around 0 for readability
+      const span = Math.max(1, Math.max(Math.abs(rMin), Math.abs(rMax))*1.15);
+      const yMin = -span;
+      const yMax = +span;
+
+      const plot = {
+        x0,y0,w:W,h:H, xMin,xMax,yMin,yMax,
+        xLabel:"k′ (N/m)", yLabel:"r = x_B / x_A (unitless)",
+        title:"Mode-shape ratio vs coupling"
+      };
+      const axes = drawAxes(ctx, plot);
+
+      // Zero line
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.lineWidth = 1.3;
+      ctx.setLineDash([6,6]);
+      const y0line = toPlotY(0, plot, axes);
+      ctx.beginPath();
+      ctx.moveTo(axes.px0, y0line);
+      ctx.lineTo(axes.px0+axes.pw, y0line);
+      ctx.stroke();
+      ctx.restore();
+
+      function makePts(arr){
+        const pts=[];
+        for (const p of arr){
+          if (!isFinite(p.r)) { pts.push(null); continue; }
+          pts.push({x: toPlotX(p.kp, plot, axes), y: toPlotY(p.r, plot, axes)});
+        }
+        return pts;
+      }
+      const pts1 = makePts(r1Arr);
+      const pts2 = makePts(r2Arr);
+
+      // Draw possibly broken lines
+      function drawBroken(ctx, pts, color){
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.2;
+        ctx.lineJoin="round"; ctx.lineCap="round";
+        ctx.beginPath();
+        let started=false;
+        for (const p of pts){
+          if (!p){
+            started=false;
+            continue;
+          }
+          if (!started){
+            ctx.moveTo(p.x, p.y);
+            started=true;
+          } else {
+            ctx.lineTo(p.x, p.y);
+          }
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+      drawBroken(ctx, pts1, "rgba(125,211,252,0.92)");
+      drawBroken(ctx, pts2, "rgba(167,139,250,0.92)");
+
+      // Highlight current kp
+      const {w1,w2} = computeFrequencies(params.mA, params.mB, params.k, params.kp);
+      const rr1 = modeRatio(params.mA, params.k, params.kp, w1);
+      const rr2 = modeRatio(params.mA, params.k, params.kp, w2);
+      const x = toPlotX(params.kp, plot, axes);
+
+      function dot(y, color){
+        if (!isFinite(y)) return;
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.strokeStyle = "rgba(255,255,255,0.22)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, y, 5.2, 0, Math.PI*2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+      if (params.kp !== 0){
+        dot(toPlotY(rr1, plot, axes), "rgba(125,211,252,0.95)");
+        dot(toPlotY(rr2, plot, axes), "rgba(167,139,250,0.95)");
+      }
+
+      // Legend
+      drawLegend(ctx, x0+W-170, y0+52, [
+        {label:"r₁ for ω₁", color:"rgba(125,211,252,0.95)"},
+        {label:"r₂ for ω₂", color:"rgba(167,139,250,0.95)"}
+      ]);
+
+      // Annotation
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.78)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      const t = (params.kp === 0)
+        ? `k′=${fmt(params.kp,3)}  (decoupled → r undefined)`
+        : `k′=${fmt(params.kp,3)}  r₁=${fmt(rr1,4)}  r₂=${fmt(rr2,4)}`;
+      ctx.fillText(t, x0+12, y0+H-14);
+      ctx.restore();
+    }
+
+    // ---------- UI wiring ----------
+    const els = {
+      mA: document.getElementById("mA"),
+      mB: document.getElementById("mB"),
+      k: document.getElementById("k"),
+      kp: document.getElementById("kp"),
+      mAOut: document.getElementById("mAOut"),
+      mBOut: document.getElementById("mBOut"),
+      kOut: document.getElementById("kOut"),
+      kpOut: document.getElementById("kpOut"),
+      w1: document.getElementById("w1"),
+      w2: document.getElementById("w2"),
+      r1: document.getElementById("r1"),
+      r2: document.getElementById("r2"),
+      diagCanvas: document.getElementById("diagCanvas"),
+      mainPlot: document.getElementById("mainPlot"),
+      secPlot: document.getElementById("secPlot"),
+    };
+
+    const defaults = { mA: 1.00, mB: 1.20, k: 60, kp: 40 };
+    let state = {...defaults};
+
+    function syncOutputs(){
+      els.mAOut.textContent = Number(state.mA).toFixed(2);
+      els.mBOut.textContent = Number(state.mB).toFixed(2);
+      els.kOut.textContent = String(Math.round(state.k));
+      els.kpOut.textContent = String(Math.round(state.kp));
+    }
+
+    function updateLiveReadouts(){
+      const {w1,w2} = computeFrequencies(state.mA, state.mB, state.k, state.kp);
+      const r1 = modeRatio(state.mA, state.k, state.kp, w1);
+      const r2 = modeRatio(state.mA, state.k, state.kp, w2);
+
+      els.w1.textContent = fmt(w1,5);
+      els.w2.textContent = fmt(w2,5);
+      els.r1.textContent = (state.kp===0 || !isFinite(r1)) ? "undefined" : fmt(r1,5);
+      els.r2.textContent = (state.kp===0 || !isFinite(r2)) ? "undefined" : fmt(r2,5);
+    }
+
+    function renderAll(){
+      syncOutputs();
+      updateLiveReadouts();
+      drawDiagram(els.diagCanvas, state);
+      drawMainPlot(els.mainPlot, {...state, kpMax: 200});
+      drawSecondaryPlot(els.secPlot, {...state, kpMax: 200});
+    }
+
+    function bindSliders(){
+      const onInput = () => {
+        state.mA = parseFloat(els.mA.value);
+        state.mB = parseFloat(els.mB.value);
+        state.k  = parseFloat(els.k.value);
+        state.kp = parseFloat(els.kp.value);
+        renderAll();
+      };
+      ["mA","mB","k","kp"].forEach(id=>{
+        els[id].addEventListener("input", onInput);
+      });
+    }
+
+    // Presets
+    document.getElementById("preset_kp0").addEventListener("click", ()=>{
+      els.kp.value = 0;
+      state.kp = 0;
+      renderAll();
+    });
+    document.getElementById("preset_k0").addEventListener("click", ()=>{
+      els.k.value = 0;
+      state.k = 0;
+      renderAll();
+    });
+    document.getElementById("preset_mAinf").addEventListener("click", ()=>{
+      // approximate "infinite" by making mA large relative to other scales
+      els.mA.value = 5.00;
+      state.mA = 5.00;
+      renderAll();
+    });
+    document.getElementById("preset_reset").addEventListener("click", ()=>{
+      state = {...defaults};
+      els.mA.value = defaults.mA;
+      els.mB.value = defaults.mB;
+      els.k.value  = defaults.k;
+      els.kp.value = defaults.kp;
+      renderAll();
+    });
+
+    // Copy buttons (plain text)
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      }catch(e){
+        // Fallback
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position="fixed";
+        ta.style.left="-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        try{ document.execCommand("copy"); }catch(_){}
+        document.body.removeChild(ta);
+        return true;
+      }
+    }
+
+    document.querySelectorAll("button.copy").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const text = btn.getAttribute("data-copy") || "";
+        const ok = await copyText(text);
+        const old = btn.textContent;
+        btn.textContent = ok ? "Copied ✓" : "Copy failed";
+        setTimeout(()=>btn.textContent = old, 900);
+      });
+    });
+
+    // Sticky TOC active section highlighting
+    const tocLinks = Array.from(document.querySelectorAll("[data-toc]"));
+    const sections = tocLinks.map(a => document.querySelector(a.getAttribute("href"))).filter(Boolean);
+
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(ent=>{
+        if (ent.isIntersecting){
+          tocLinks.forEach(a=>a.classList.remove("active"));
+          const id = "#"+ent.target.id;
+          const link = tocLinks.find(a=>a.getAttribute("href")===id);
+          if (link) link.classList.add("active");
+        }
+      });
+    }, {rootMargin: "-30% 0px -62% 0px", threshold: 0.01});
+
+    sections.forEach(s=>io.observe(s));
+
+    // Smooth scroll
+    tocLinks.forEach(a=>{
+      a.addEventListener("click", (e)=>{
+        e.preventDefault();
+        const target = document.querySelector(a.getAttribute("href"));
+        if (target){
+          target.scrollIntoView({behavior:"smooth", block:"start"});
+          history.replaceState(null, "", a.getAttribute("href"));
+        }
+      });
+    });
+
+    // Resize handling: redraw canvases responsively
+    let resizeTimer = null;
+    window.addEventListener("resize", ()=>{
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(renderAll, 80);
+    });
+
+    // Init
+    document.getElementById("year").textContent = new Date().getFullYear();
+    bindSliders();
+    renderAll();
+  </script>
+</body>
+</html>
