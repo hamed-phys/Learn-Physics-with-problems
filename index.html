@@ -1989,7 +1989,7 @@
       if (buttonEl) buttonEl.classList.add("active");
     }
 
-    function showSection(mode) {
+    function showSection(mode, push = true) {
       state.mode = mode;
 
       homeSection.classList.remove("active");
@@ -1998,21 +1998,24 @@
 
       if (mode === "home") {
         homeSection.classList.add("active");
-        document.body.classList.remove("nav-open");
-        return;
       }
 
       if (mode === "cv") {
         cvSection.classList.add("active");
-        typewriter.textContent = "Experience_";
-        document.body.classList.remove("nav-open");
-        return;
       }
 
-      studySection.classList.add("active");
-      typewriter.textContent = "Physics_";
+      if (mode === "study") {
+        studySection.classList.add("active");
+      }
+
       document.body.classList.remove("nav-open");
+
+      // ✅ push into browser history
+      if (push) {
+        history.pushState({ mode: mode }, "", "#" + mode);
+      }
     }
+
 
     function updateLabel() {
       const key = state.filter.toLowerCase();
@@ -2144,6 +2147,13 @@
         setVars(e.clientX, e.clientY);
       }, { passive: true });
 
+
+      window.addEventListener("popstate", (event) => {
+        const mode = event.state?.mode || "home";
+        showSection(mode, false);
+      });
+
+
       // initialize
       setVars(window.innerWidth * 0.5, window.innerHeight * 0.35);
     }
@@ -2191,11 +2201,11 @@
         const filter = btn.dataset.filter;
 
         setActiveNav(btn);
-
         if (mode === "home") {
           showSection("home");
           return;
         }
+
 
         if (mode === "cv") {
           showSection("cv");
@@ -2269,8 +2279,12 @@
       btnGlow.textContent = "GLOW";
       btnDensity.textContent = "DENSITY";
       // ✅ show home on first load
-      setActiveNav(document.getElementById("btn-home"));
-      showSection("home");
+     const initialMode = location.hash.replace("#", "") || "home";
+    showSection(initialMode, false);
+
+    const initialBtn = navButtons.find(b => b.dataset.mode === initialMode);
+    if (initialBtn) setActiveNav(initialBtn);
+
     })();
   </script>
 </body>
