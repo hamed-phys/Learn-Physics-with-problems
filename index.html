@@ -1858,6 +1858,27 @@
       compact: false,
       glow: true
     };
+    function saveUIState() {
+      const snapshot = {
+        mode: state.mode,
+        filter: state.filter,
+        query: state.query,
+        compact: state.compact,
+        glow: state.glow,
+        scrollY: window.scrollY
+      };
+      sessionStorage.setItem("hamed_ui_state", JSON.stringify(snapshot));
+    }
+
+    function loadUIState() {
+      try {
+        const raw = sessionStorage.getItem("hamed_ui_state");
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+
 
     async function loadProblems() {
       try {
@@ -1889,6 +1910,18 @@
           </div>`;
       }
     }
+    document.addEventListener("click", (e) => {
+      const a = e.target.closest("a");
+      if (!a) return;
+
+      // Only handle real navigations (not # links)
+      const href = a.getAttribute("href") || "";
+      if (!href || href.startsWith("#")) return;
+
+      // Save current UI state before leaving index.html
+      saveUIState();
+    });
+
 
     async function loadExperience() {
       try {
@@ -2252,7 +2285,7 @@
         e.preventDefault();
         searchInput.focus();
       }
-
+      window.addEventListener("beforeunload", saveUIState);
       if (e.key === "Escape") {
         if (document.body.classList.contains("nav-open")) {
           document.body.classList.remove("nav-open");
