@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Autonomous Phase Line & Direction Field: ẋ = x(x−1)(x+2),  y' = (1/4)(x−y²)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#111a33;
+      --panel2:#0f1730;
+      --text:#e9eefc;
+      --muted:#b7c2e6;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 18px 55px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f6f8ff;
+        --panel:#ffffff;
+        --panel2:#f3f6ff;
+        --text:#0b1020;
+        --muted:#33406b;
+        --line:rgba(0,0,0,.10);
+        --shadow: 0 18px 45px rgba(16,24,40,.12);
+      }
+    }
+
+    html,body{height:100%;}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      background: radial-gradient(1200px 700px at 15% 0%, rgba(125,211,252,.12), transparent 60%),
+                  radial-gradient(1000px 700px at 85% 15%, rgba(167,139,250,.10), transparent 62%),
+                  var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+
+    header{
+      padding: clamp(18px, 3vw, 34px);
+      border-bottom: 1px solid var(--line);
+      position: relative;
+      overflow:hidden;
+    }
+    header::after{
+      content:"";
+      position:absolute; inset:-40px -60px auto -60px;
+      height: 160px;
+      background: linear-gradient(90deg, rgba(125,211,252,.16), rgba(167,139,250,.10), transparent);
+      transform: rotate(-4deg);
+      pointer-events:none;
+      filter: blur(0px);
+    }
+
+    .wrap{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 clamp(16px, 3vw, 32px) clamp(40px, 5vw, 72px);
+      display:grid;
+      grid-template-columns: 310px 1fr;
+      gap: 18px;
+      align-items:start;
+    }
+
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+    }
+
+    h1{
+      margin: 0 0 8px 0;
+      font-size: clamp(24px, 2.8vw, 40px);
+      letter-spacing:-0.02em;
+      position:relative;
+      z-index:1;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      max-width: 78ch;
+      position:relative;
+      z-index:1;
+    }
+
+    .toc{
+      position: sticky;
+      top: 14px;
+      background: rgba(255,255,255,.02);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+    @media (prefers-color-scheme: light){
+      .toc{ background: rgba(255,255,255,.75); }
+    }
+    .toc h2{
+      font-size: 13px;
+      margin: 0 0 8px 0;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .10em;
+    }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      color: var(--text);
+      text-decoration:none;
+      border: 1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size: 14px;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.25);
+      transform: translateY(-1px);
+    }
+
+    main{
+      padding-top: 18px;
+      display:grid;
+      gap: 16px;
+    }
+
+    section, article{
+      background: rgba(255,255,255,.02);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: clamp(14px, 2.4vw, 22px);
+      overflow:hidden;
+    }
+    @media (prefers-color-scheme: light){
+      section, article{ background: rgba(255,255,255,.85); }
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items:stretch;
+    }
+    @media (max-width: 900px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    @media (prefers-color-scheme: light){
+      .card{ background: linear-gradient(180deg, rgba(243,246,255,.9), rgba(255,255,255,.9)); }
+    }
+
+    h2{
+      margin: 0 0 10px 0;
+      font-size: clamp(18px, 1.8vw, 24px);
+      letter-spacing:-0.01em;
+    }
+    h3{
+      margin: 10px 0 8px 0;
+      font-size: 16px;
+      color: var(--muted);
+      letter-spacing: .02em;
+    }
+
+    ul{ margin: 10px 0 0 20px; }
+    li{ margin: 6px 0; }
+
+    .callout{
+      border-left: 4px solid rgba(125,211,252,.75);
+      background: rgba(125,211,252,.08);
+      padding: 12px 12px 12px 14px;
+      border-radius: 14px;
+      margin: 10px 0;
+    }
+    .callout.warn{
+      border-left-color: rgba(251,191,36,.85);
+      background: rgba(251,191,36,.10);
+    }
+    .callout.bad{
+      border-left-color: rgba(251,113,133,.85);
+      background: rgba(251,113,133,.10);
+    }
+
+    .eq{
+      font-family: var(--mono);
+      font-size: 14px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      overflow-x:auto;
+      position: relative;
+    }
+    @media (prefers-color-scheme: light){
+      .eq{ background: rgba(15,23,48,.06); }
+    }
+
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin: 8px 0 0;
+    }
+    .btn{
+      appearance:none;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size: 13px;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.25);
+    }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .controlRow{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items:center;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+    .pill{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+      white-space: nowrap;
+    }
+
+    figure{ margin: 0; }
+    canvas{
+      width: 100%;
+      height: 320px;
+      display:block;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.18);
+    }
+    @media (prefers-color-scheme: light){
+      canvas{ background: rgba(15,23,48,.04); }
+    }
+
+    .small{ height: 280px; }
+
+    .boxed{
+      border: 1px solid rgba(52,211,153,.35);
+      background: rgba(52,211,153,.10);
+      border-radius: 16px;
+      padding: 14px;
+      margin: 12px 0;
+    }
+    .boxed .title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight: 700;
+      letter-spacing:.01em;
+      margin-bottom: 6px;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:99px;
+      background: var(--good);
+      box-shadow: 0 0 0 6px rgba(52,211,153,.12);
+    }
+
+    footer{
+      color: var(--muted);
+      padding: 18px 0 10px;
+      text-align:center;
+      font-size: 13px;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{ background:#fff; color:#000; }
+      .toc{ display:none; }
+      section, article{ box-shadow:none; background:#fff; }
+      canvas{ border: 1px solid #999; background:#fff; }
+      .btn{ display:none; }
+      a{ color:#000; text-decoration:none; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap" style="grid-template-columns: 1fr;">
+      <div>
+        <h1>Phase Line & Direction Field Sketching</h1>
+        <p class="subtitle">
+          We analyze the autonomous ODE <span class="eq" style="display:inline-block;padding:4px 8px;border-radius:10px;">ẋ = x(x−1)(x+2)</span>
+          (phase line, equilibria, stability, solution types), and the direction field ODE
+          <span class="eq" style="display:inline-block;padding:4px 8px;border-radius:10px;">y' = (1/4)(x − y²)</span>
+          (nullclines, sample solutions, separatrix, and a true/false asymptotic claim).
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <nav class="toc" aria-label="Table of Contents">
+      <h2>Contents</h2>
+      <a href="#quick">Quick Summary</a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a href="#part2">PART 2 — Strategy & Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a href="#viz">Interactive Visualizations</a>
+      <a href="#final">Final Answers (Copy)</a>
+    </nav>
+
+    <main>
+      <section id="quick">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li>For <b>ẋ = x(x−1)(x+2)</b>, equilibria are <b>x = −2, 0, 1</b> with stability: <b>−2 unstable</b>, <b>0 stable</b>, <b>1 unstable</b>.</li>
+          <li>Phase-line arrows: <b>(−∞,−2)</b> left, <b>(−2,0)</b> right, <b>(0,1)</b> left, <b>(1,∞)</b> right.</li>
+          <li>Basic solution types are determined by the interval of the initial condition: trajectories flow toward the stable equilibrium <b>x=0</b> from both sides.</li>
+          <li>For <b>y'=(1/4)(x−y²)</b>, nullclines are <b>y = ±√x</b> (for <b>x≥0</b>).</li>
+          <li>In the strip <b>|y|&lt;√x</b> (x≥0) solutions increase (y'&gt;0); outside it solutions decrease (y'&lt;0).</li>
+          <li>There is a <b>separatrix</b> (an unstable trajectory) asymptotic to <b>y=−√x</b>; solutions just below it fall to −∞, while those above it are attracted toward +√x.</li>
+        </ul>
+      </section>
+
+      <article id="part1">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+        <div class="card">
+          <h3>Rewrite the problem (in my own words)</h3>
+          <ul>
+            <li><b>(a)</b> For the autonomous ODE <span class="eq">ẋ = x(x−1)(x+2)</span>, draw a phase line: find equilibrium (critical) points and classify each as stable/unstable/neither.</li>
+            <li><b>(b)</b> Sketch at least one representative solution from each qualitative type (so all solutions are time-shifts of those sketches).</li>
+            <li>Given a direction field for <span class="eq">y' = (1/4)(x−y²)</span>, add:</li>
+            <li><b>(c)</b> the nullcline(s),</li>
+            <li><b>(d)</b> at least two qualitatively different solution curves,</li>
+            <li><b>(e)</b> the separatrix (if it exists),</li>
+            <li><b>(f)</b> Decide true/false: If a solution y(x) has a minimum, then for all sufficiently large x, <span class="eq">y(x) &lt; √x</span>.</li>
+          </ul>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>Given quantities</h3>
+            <ul>
+              <li>Autonomous RHS: <span class="eq">f(x)=x(x−1)(x+2)</span>.</li>
+              <li>Nonautonomous slope field: <span class="eq">y'=(1/4)(x−y²)</span>.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Unknowns</h3>
+            <ul>
+              <li>Equilibria and stability classification for the ẋ equation.</li>
+              <li>Qualitative families (“basic types”) of solutions for x(t).</li>
+              <li>Nullclines, sample solutions, separatrix existence/shape for y(x).</li>
+              <li>Truth value of the asymptotic statement in (f).</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Relevant principles (and why they apply)</h3>
+          <ul>
+            <li><b>Autonomous 1D dynamics:</b> equilibria occur where <span class="eq">f(x)=0</span>; stability is determined by the sign of f(x) on intervals (or by f′ at equilibria). This applies because ẋ depends only on x (not explicitly on t).</li>
+            <li><b>Direction field logic:</b> for y' = g(x,y), the sign of g sets whether solutions rise or fall; nullclines g=0 are where solution tangents are horizontal. This applies because y' directly encodes slope in the (x,y) plane.</li>
+            <li><b>Separatrix concept:</b> a curve that separates qualitatively different behaviors (e.g., bounded vs blow-down). It arises when an unstable “threshold” trajectory exists.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Possible approaches</h3>
+          <ul>
+            <li><b>Sign chart approach:</b> factor f(x), find zeros, test signs between zeros → immediate phase-line arrows and stability.</li>
+            <li><b>Derivative (linearization) approach:</b> compute f′(x*) at equilibria; stable if f′(x*)&lt;0, unstable if f′(x*)&gt;0 (for 1D autonomous).</li>
+            <li><b>For y'=(x−y²)/4:</b> use nullclines y=±√x and slope sign regions to sketch typical solutions and identify separatrix qualitatively.</li>
+          </ul>
+          <div class="callout">
+            <b>Best choice:</b> Use the <b>sign chart</b> for (a,b) and the <b>nullcline + sign regions</b> method for (c–f). These produce clean sketches without needing an explicit closed-form solution.
+          </div>
+        </div>
+      </article>
+
+      <article id="part2">
+        <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+        <div class="card">
+          <h3>Roadmap (5–10 steps)</h3>
+          <ol>
+            <li><b>Find equilibria for ẋ:</b> solve <span class="eq">x(x−1)(x+2)=0</span>.</li>
+            <li><b>Determine arrows:</b> choose test points in each interval between equilibria; evaluate the sign of f(x).</li>
+            <li><b>Classify stability:</b> sink if arrows point toward the equilibrium on both sides; source if away on both sides.</li>
+            <li><b>Sketch solution types:</b> for each interval, draw x(t) monotone consistent with arrows and limiting equilibria or blow-up behavior.</li>
+            <li><b>Nullclines for y' equation:</b> set <span class="eq">x−y²=0</span> to get <span class="eq">y=±√x</span> (x≥0).</li>
+            <li><b>Sign regions:</b> decide where x−y² is positive/negative → solutions increase/decrease.</li>
+            <li><b>Two solution sketches:</b> choose initial points in different regions (e.g., above +√x and between the curves).</li>
+            <li><b>Separatrix check:</b> identify the unstable boundary near y=−√x separating blow-down from trajectories that escape upward to the attracting branch.</li>
+            <li><b>True/false:</b> interpret “has a minimum” and compare long-x behavior to √x using the direction field near the nullcline.</li>
+          </ol>
+        </div>
+
+        <div class="grid2">
+          <div class="callout warn">
+            <b>Common mistakes</b>
+            <ul>
+              <li>Mixing up the direction of time on a phase line (arrow direction comes from the sign of ẋ).</li>
+              <li>For y' equation, drawing nullclines for all x (but √x is real only for x≥0).</li>
+              <li>Calling y=−√x “stable” just because it is a nullcline (it’s actually repelling in this problem).</li>
+            </ul>
+          </div>
+          <div class="callout">
+            <b>Quick tips</b>
+            <ul>
+              <li>On a phase line, <b>f(x)&gt;0 ⇒ x increases</b> (arrow →), <b>f(x)&lt;0 ⇒ x decreases</b> (arrow ←).</li>
+              <li>For y'=(x−y²)/4, remember: <b>inside</b> the parabola band |y|&lt;√x ⇒ y'&gt;0; <b>outside</b> ⇒ y'&lt;0.</li>
+              <li>Separatrix = the “knife-edge” curve: small perturbations change the fate drastically.</li>
+            </ul>
+          </div>
+        </div>
+      </article>
+
+      <article id="part3">
+        <h2>PART 3 — Full Solution</h2>
+
+        <section class="card">
+          <h3>Physical / dynamical intuition</h3>
+          <ul>
+            <li><b>Autonomous ẋ equation:</b> think of x(t) as a particle on a line with “velocity” f(x). Where f(x)=0 the particle can rest (equilibria). The sign of f tells which direction it moves.</li>
+            <li><b>Direction field y' equation:</b> the slope depends on how y² compares to x. The curves y=±√x are “balance curves” where slope is zero; solutions tend to be pushed up inside the band and pushed down outside it.</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h3>(a) Phase line for ẋ = x(x−1)(x+2)</h3>
+
+          <div class="eq" id="eq1">
+            f(x)=x(x−1)(x+2).  Equilibria solve f(x)=0 ⇒ x∗ ∈ {−2, 0, 1}.
+          </div>
+          <div class="toolbar">
+            <button class="btn" data-copy="#eq1">Copy equation</button>
+          </div>
+
+          <h3>Sign chart (arrows)</h3>
+          <p>
+            The roots split the line into intervals: (−∞,−2), (−2,0), (0,1), (1,∞).
+            Pick a test x in each interval and check the sign of f(x)=x(x−1)(x+2):
+          </p>
+
+          <div class="eq" id="eqSign">
+            Interval (−∞,−2): (−)(−)(−) ⇒ f(x)&lt;0 ⇒ ẋ&lt;0 ⇒ arrow ←
+            Interval (−2,0):   (−)(−)(+) ⇒ f(x)&gt;0 ⇒ ẋ&gt;0 ⇒ arrow →
+            Interval (0,1):    (+)(−)(+) ⇒ f(x)&lt;0 ⇒ ẋ&lt;0 ⇒ arrow ←
+            Interval (1,∞):    (+)(+)(+) ⇒ f(x)&gt;0 ⇒ ẋ&gt;0 ⇒ arrow →
+          </div>
+          <div class="toolbar">
+            <button class="btn" data-copy="#eqSign">Copy sign chart</button>
+          </div>
+
+          <h3>Stability classification</h3>
+          <ul>
+            <li><b>x = −2:</b> left side arrow ←, right side arrow → (arrows point away) ⇒ <b>unstable (source)</b>.</li>
+            <li><b>x = 0:</b> left side arrow →, right side arrow ← (arrows point toward) ⇒ <b>stable (sink)</b>.</li>
+            <li><b>x = 1:</b> left side arrow ←, right side arrow → (arrows point away) ⇒ <b>unstable (source)</b>.</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h3>(b) One solution of each basic type (qualitative)</h3>
+          <p>
+            Because the equation is autonomous and 1D, solutions are monotone on each interval
+            and all other solutions are time-translates of a representative curve from the same interval.
+          </p>
+
+          <div class="grid2">
+            <div class="card">
+              <h3>Equilibrium solutions</h3>
+              <div class="eq" id="eqEq">
+                x(t) ≡ −2,   x(t) ≡ 0,   x(t) ≡ 1.
+              </div>
+              <div class="toolbar">
+                <button class="btn" data-copy="#eqEq">Copy</button>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Non-equilibrium families (by initial x0)</h3>
+              <ul>
+                <li><b>x0 &lt; −2:</b> ẋ&lt;0 so x decreases → <b>x(t)→−∞</b> as t→+∞; as t→−∞, x(t)→−2.</li>
+                <li><b>−2 &lt; x0 &lt; 0:</b> ẋ&gt;0 so x increases → <b>x(t)→0</b> as t→+∞; as t→−∞, x(t)→−2.</li>
+                <li><b>0 &lt; x0 &lt; 1:</b> ẋ&lt;0 so x decreases → <b>x(t)→0</b> as t→+∞; as t→−∞, x(t)→1.</li>
+                <li><b>x0 &gt; 1:</b> ẋ&gt;0 so x increases → <b>x(t)→+∞</b> as t→+∞; as t→−∞, x(t)→1.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout">
+            <b>Key qualitative picture:</b> <b>x=0</b> is the global attractor for trajectories starting in (−2,1),
+            while trajectories starting beyond the unstable equilibria (x&lt;−2 or x&gt;1) run off to ±∞ forward in time.
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>(c) Nullcline for y' = (1/4)(x − y²)</h3>
+          <div class="eq" id="eqNull">
+            y' = 0  ⇔  x − y² = 0  ⇔  y = ±√x  (real only for x ≥ 0).
+          </div>
+          <div class="toolbar">
+            <button class="btn" data-copy="#eqNull">Copy</button>
+          </div>
+
+          <h3>Slope sign regions</h3>
+          <ul>
+            <li>If <b>x &gt; y²</b> (inside the band between y=±√x), then <b>y' &gt; 0</b>: solutions rise with x.</li>
+            <li>If <b>x &lt; y²</b> (outside that band), then <b>y' &lt; 0</b>: solutions fall with x.</li>
+            <li>For <b>x &lt; 0</b>, we always have x−y²&lt;0, so <b>y'&lt;0 everywhere</b> (all solutions decrease as x increases).</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h3>(d) Two quite different solutions (qualitative description)</h3>
+          <ul>
+            <li><b>Solution A (starts above +√x):</b> pick (x0,y0) with y0 &gt; √x0. Then y'&lt;0, so the curve decreases and is pushed toward the attracting nullcline branch y=+√x from above.</li>
+            <li><b>Solution B (starts inside the band):</b> pick |y0|&lt;√x0 (with x0&gt;0). Then y'&gt;0, so the curve increases; it rises and tends to approach y=+√x from below.</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h3>(e) The separatrix (does it exist?)</h3>
+          <p>
+            Yes: there is an <b>unstable threshold</b> trajectory asymptotic to the <b>lower nullcline</b> y=−√x.
+            Here’s why:
+          </p>
+          <ul>
+            <li>Near y=+√x, the flow points toward that curve from both sides ⇒ it is <b>attracting</b>.</li>
+            <li>Near y=−√x, the flow points away (a small upward perturbation enters the rising band; a small downward perturbation enters the falling region) ⇒ it is <b>repelling</b>.</li>
+            <li>Therefore, there is a special solution curve (the <b>separatrix</b>) that “rides” the repelling behavior and separates:
+              <ul>
+                <li>initial data that eventually get pulled upward toward the attracting +√x branch,</li>
+                <li>from initial data that keep decreasing and can plunge to large negative values (often blowing down steeply).</li>
+              </ul>
+            </li>
+          </ul>
+
+          <div class="callout">
+            <b>Sketch cue:</b> Draw y=−√x and then draw a nearby solution slightly above it that peels away upward; a nearby solution slightly below it peels downward—so the “knife-edge” curve between those is the separatrix.
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>(f) True or false statement</h3>
+          <p>
+            <b>Claim:</b> If y(x) is a solution with a minimum, then for all large enough x, y(x) &lt; √x.
+          </p>
+          <div class="boxed" id="finalTF">
+            <div class="title"><span class="dot"></span>Answer</div>
+            <div class="eq" style="margin:0;">
+              TRUE.
+            </div>
+          </div>
+
+          <p>
+            Intuition: having a minimum means the solution transitions from decreasing to increasing, which can only happen after it enters a region where y' becomes positive (i.e., x &gt; y²).
+            For sufficiently large x, the attracting behavior near y=+√x prevents solutions with a minimum from staying above √x; instead they approach +√x from below (or at most cross and return), so eventually y(x) &lt; √x.
+          </p>
+
+          <div class="callout warn">
+            <b>Note (what you must draw on the provided direction field):</b>
+            show the nullcline y=±√x (x≥0), sketch one solution approaching +√x from above, another from inside the band approaching +√x from below, and mark the separatrix near y=−√x.
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Sanity checks</h3>
+          <ul>
+            <li><b>Units:</b> These are dimensionless sketching problems; consistency is about signs/geometry rather than physical units.</li>
+            <li><b>Limiting cases:</b>
+              <ul>
+                <li>As x→∞ for y' equation: if y is large, y'≈−y²/4 (strong downward slope); if y≈+√x, slope tends to 0.</li>
+                <li>As x→±∞ for ẋ equation: f(x)≈x³, so x grows for x&gt;0 and decreases for x&lt;0, consistent with the outer arrows.</li>
+              </ul>
+            </li>
+            <li><b>Interpretation:</b> In 1D autonomous dynamics, stable equilibria collect nearby trajectories; in the direction field, nullclines organize the flow, with separatrices marking boundaries between distinct outcomes.</li>
+          </ul>
+        </section>
+      </article>
+
+      <section id="viz">
+        <h2>Interactive Visualizations</h2>
+
+        <div class="card">
+          <h3>Interactive control</h3>
+          <p style="margin:0;color:var(--muted)">
+            One slider controls example initial conditions for <b>both</b> systems:
+            it updates the phase line highlight, the x(t) plot, and the direction-field solution overlays (including a user-chosen solution).
+            (These are <b>example values</b> for visualization; the analytic answers above are symbolic/qualitative.)
+          </p>
+
+          <div class="controls">
+            <div class="controlRow">
+              <label for="pSlider"><b>Example IC slider p</b> (maps to x(0) and y(0))</label>
+              <span class="pill" id="pReadout">p = 0.00</span>
+            </div>
+            <input id="pSlider" type="range" min="-1" max="1" step="0.001" value="0" />
+            <div class="toolbar">
+              <button class="btn" id="btnRandom">Random IC</button>
+              <button class="btn" id="btnReset">Reset</button>
+            </div>
+            <div class="callout" style="margin: 8px 0 0;">
+              Mapping used:
+              <div class="eq" id="eqMap" style="margin-top:8px;">
+                x(0) = 2.5p − 0.5   (range ≈ [−3, 2])
+                y(0) = 3.6p         (range ≈ [−3.6, 3.6]) at x=0
+              </div>
+              <div class="toolbar">
+                <button class="btn" data-copy="#eqMap">Copy mapping</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <figure class="card">
+            <h3>1) Diagram: Phase line for ẋ = x(x−1)(x+2)</h3>
+            <canvas id="phaseCanvas" class="small" aria-label="Phase line diagram canvas"></canvas>
+            <p style="margin:10px 0 0;color:var(--muted);font-size:13px;">
+              Shows equilibria at x = −2, 0, 1 with arrows and your chosen example x(0).
+            </p>
+          </figure>
+
+          <figure class="card">
+            <h3>2) Main plot: Example trajectory x(t) (RK4)</h3>
+            <canvas id="xtCanvas" aria-label="x versus t plot canvas"></canvas>
+            <p style="margin:10px 0 0;color:var(--muted);font-size:13px;">
+              Plots x(t) for t ∈ [−T, T] using RK4 (example numeric integration) to visualize the qualitative families.
+            </p>
+          </figure>
+        </div>
+
+        <figure class="card">
+          <h3>3) Secondary plot: Direction field for y'=(1/4)(x−y²) + nullclines + solutions</h3>
+          <canvas id="dirCanvas" aria-label="Direction field canvas"></canvas>
+          <p style="margin:10px 0 0;color:var(--muted);font-size:13px;">
+            Overlays: nullclines y=±√x (x≥0), two distinct sample solutions, the separatrix (approximate, shot from large x),
+            and your chosen solution starting at x=0 with y(0) from the slider.
+          </p>
+        </figure>
+      </section>
+
+      <section id="final">
+        <h2>Final Answers (Copy)</h2>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>Autonomous phase line & stability</h3>
+            <div class="eq" id="finalA">
+Equilibria: x = −2, 0, 1.
+Phase-line arrows:
+(−∞,−2): ← ; (−2,0): → ; (0,1): ← ; (1,∞): →.
+Stability:
+x=−2 unstable, x=0 stable, x=1 unstable.
+            </div>
+            <div class="toolbar">
+              <button class="btn" data-copy="#finalA">Copy</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Direction field items</h3>
+            <div class="eq" id="finalB">
+Nullclines: y = ±√x (for x ≥ 0).
+Sign: y' > 0 when x > y² (inside |y| < √x); y' < 0 when x < y² (outside).
+Separatrix: yes — an unstable trajectory asymptotic to y = −√x that separates blow-down from trajectories attracted to y = +√x.
+(f) Statement: TRUE.
+            </div>
+            <div class="toolbar">
+              <button class="btn" data-copy="#finalB">Copy</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        Built with vanilla HTML/CSS/JS. Canvas plots are numerical/illustrative; the classification arguments are qualitative and exact.
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // ---------- Copy buttons ----------
+    (function(){
+      function copyTextFromSelector(sel){
+        const el = document.querySelector(sel);
+        if(!el) return;
+        const text = el.textContent.replace(/\n{3,}/g,"\n\n").trim();
+        navigator.clipboard.writeText(text).then(()=>{
+          // subtle feedback
+          el.animate([{transform:"scale(1)"},{transform:"scale(1.005)"},{transform:"scale(1)"}],{duration:220});
+        }).catch(()=>{});
+      }
+      document.addEventListener("click", (e)=>{
+        const btn = e.target.closest("[data-copy]");
+        if(!btn) return;
+        copyTextFromSelector(btn.getAttribute("data-copy"));
+      });
+    })();
+
+    // ---------- Math helpers ----------
+    const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+    function rk4_step(f, x, y, h){
+      const k1 = f(x,y);
+      const k2 = f(x + h/2, y + h*k1/2);
+      const k3 = f(x + h/2, y + h*k2/2);
+      const k4 = f(x + h, y + h*k3);
+      return y + (h/6)*(k1 + 2*k2 + 2*k3 + k4);
+    }
+
+    // ---------- HiDPI canvas setup ----------
+    function setupCanvas(canvas){
+      const ctx = canvas.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(2, Math.floor(rect.width * dpr));
+      const h = Math.max(2, Math.floor(rect.height * dpr));
+      if(canvas.width !== w || canvas.height !== h){
+        canvas.width = w; canvas.height = h;
+      }
+      ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+      return {ctx, w: rect.width, h: rect.height, dpr};
+    }
+
+    function clear(ctx, w, h){
+      ctx.clearRect(0,0,w,h);
+    }
+
+    function drawGrid(ctx, w, h, pad, nx=10, ny=8){
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+      for(let i=0;i<=nx;i++){
+        const x = pad + (w-2*pad)*i/nx;
+        ctx.beginPath(); ctx.moveTo(x,pad); ctx.lineTo(x,h-pad); ctx.stroke();
+      }
+      for(let j=0;j<=ny;j++){
+        const y = pad + (h-2*pad)*j/ny;
+        ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(w-pad,y); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawAxes(ctx, w, h, pad, xLabel, yLabel, title){
+      ctx.save();
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
+      ctx.font = "12px ui-sans-serif, system-ui";
+      ctx.textAlign = "left";
+      ctx.fillText(title, pad, pad-6);
+
+      // axis labels
+      ctx.textAlign = "center";
+      ctx.fillText(xLabel, w/2, h-6);
+      ctx.save();
+      ctx.translate(10, h/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.textAlign = "center";
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+
+      // frame
+      ctx.strokeStyle = "rgba(255,255,255,0.20)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(pad, pad, w-2*pad, h-2*pad);
+      ctx.restore();
+    }
+
+    function mapLin(v, a, b, c, d){ return c + (d-c)*(v-a)/(b-a); }
+
+    // ---------- System 1: xdot = x(x-1)(x+2) ----------
+    function f_aut(x){ return x*(x-1)*(x+2); }
+
+    function integrateX(x0, T=6, n=1200){
+      // integrate forward and backward in time
+      const dt = (2*T)/n;
+      const tArr = new Array(n+1);
+      const xArr = new Array(n+1);
+
+      // start at t=-T by integrating backward from 0
+      // First integrate backward from t=0 to -T (negative step)
+      let x = x0;
+      let t = 0;
+      const back = [];
+      for(let i=0;i<=n/2;i++){
+        back.push({t, x});
+        const h = -dt;
+        x = rk4_step((tt,xx)=>f_aut(xx), t, x, h);
+        t += h;
+        // prevent runaway numeric overflow
+        if(!isFinite(x) || Math.abs(x)>1e6) break;
+      }
+      back.reverse();
+
+      // forward from t=0 to +T
+      x = x0; t=0;
+      const fwd = [];
+      for(let i=0;i<=n/2;i++){
+        fwd.push({t, x});
+        const h = dt;
+        x = rk4_step((tt,xx)=>f_aut(xx), t, x, h);
+        t += h;
+        if(!isFinite(x) || Math.abs(x)>1e6) break;
+      }
+      // merge (avoid duplicate t=0)
+      const merged = back.concat(fwd.slice(1));
+      return merged;
+    }
+
+    // ---------- System 2: y' = (1/4)(x - y^2) ----------
+    function g_dir(x,y){ return 0.25*(x - y*y); }
+
+    function integrateY(x0, y0, xMin=-2, xMax=10, h=0.01){
+      // integrate forward in x from x0 to xMax and backward from x0 to xMin
+      function step(x,y,hh){ return rk4_step((xx,yy)=>g_dir(xx,yy), x, y, hh); }
+
+      const fwd = [];
+      let x=x0, y=y0;
+      for(let i=0;i<Math.ceil((xMax-x0)/h)+1;i++){
+        fwd.push({x,y});
+        y = step(x,y,h);
+        x += h;
+        if(!isFinite(y) || Math.abs(y)>1e4) break;
+      }
+
+      const back = [];
+      x=x0; y=y0;
+      for(let i=0;i<Math.ceil((x0-xMin)/h)+1;i++){
+        back.push({x,y});
+        y = step(x,y,-h);
+        x -= h;
+        if(!isFinite(y) || Math.abs(y)>1e4) break;
+      }
+      back.reverse();
+      return back.concat(fwd.slice(1));
+    }
+
+    // separatrix approximation by "shooting" from large x with asymptotic y ~ -sqrt(x) - 1/x
+    function separatrixCurve(xMin=-2, xMax=10){
+      const xShoot = xMax;
+      const yShoot = -Math.sqrt(Math.max(0,xShoot)) - 1/Math.max(1e-6,xShoot);
+      // integrate backward to xMin
+      return integrateY(xShoot, yShoot, xMin, xMax, 0.01);
+    }
+
+    // ---------- Plotting helpers (data to pixels) ----------
+    function makePlotTransform(w,h,pad, xMin,xMax, yMin,yMax){
+      return {
+        xToPx: (x)=> pad + (w-2*pad)*(x-xMin)/(xMax-xMin),
+        yToPx: (y)=> h-pad - (h-2*pad)*(y-yMin)/(yMax-yMin),
+        pxToX: (px)=> xMin + (xMax-xMin)*(px-pad)/(w-2*pad),
+        pxToY: (py)=> yMin + (yMax-yMin)*(h-pad-py)/(h-2*pad)
+      };
+    }
+
+    function drawTicks(ctx,w,h,pad, xMin,xMax, yMin,yMax, xStep, yStep){
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.20)";
+      ctx.fillStyle = "rgba(255,255,255,0.65)";
+      ctx.font = "11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+      ctx.lineWidth = 1;
+
+      const tr = makePlotTransform(w,h,pad,xMin,xMax,yMin,yMax);
+      // x ticks
+      for(let x = Math.ceil(xMin/xStep)*xStep; x<=xMax+1e-9; x+=xStep){
+        const px = tr.xToPx(x);
+        ctx.beginPath();
+        ctx.moveTo(px, h-pad);
+        ctx.lineTo(px, h-pad+5);
+        ctx.stroke();
+        ctx.textAlign="center";
+        ctx.fillText((Math.abs(x)<1e-10?0:x).toFixed(1).replace(/\.0$/,''), px, h-pad+16);
+      }
+      // y ticks
+      for(let y = Math.ceil(yMin/yStep)*yStep; y<=yMax+1e-9; y+=yStep){
+        const py = tr.yToPx(y);
+        ctx.beginPath();
+        ctx.moveTo(pad, py);
+        ctx.lineTo(pad-5, py);
+        ctx.stroke();
+        ctx.textAlign="right";
+        ctx.fillText((Math.abs(y)<1e-10?0:y).toFixed(1).replace(/\.0$/,''), pad-8, py+4);
+      }
+      ctx.restore();
+    }
+
+    function drawPolyline(ctx, pts, xToPx, yToPx, stroke="rgba(125,211,252,0.95)", width=2){
+      if(!pts || pts.length<2) return;
+      ctx.save();
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = width;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(xToPx(pts[0].x), yToPx(pts[0].y));
+      for(let i=1;i<pts.length;i++){
+        ctx.lineTo(xToPx(pts[i].x), yToPx(pts[i].y));
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ---------- Draw Phase Line Diagram ----------
+    function drawPhaseLine(canvas, x0){
+      const {ctx,w,h} = setupCanvas(canvas);
+      const pad = 16;
+      clear(ctx,w,h);
+
+      // background
+      drawGrid(ctx,w,h,pad, 8, 6);
+      drawAxes(ctx,w,h,pad, "x (state)", "—", "Phase line (1D flow)");
+
+      // map x in [-3.2, 2.2] onto horizontal, draw vertical axis line for phase line in middle
+      const xMin=-3.2, xMax=2.2;
+      const tr = makePlotTransform(w,h,pad,xMin,xMax, 0,1);
+
+      // phase line "track"
+      const yTrack = pad + (h-2*pad)*0.52;
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.65)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(tr.xToPx(xMin), yTrack);
+      ctx.lineTo(tr.xToPx(xMax), yTrack);
+      ctx.stroke();
+      ctx.restore();
+
+      // equilibria
+      const eqs = [{x:-2,label:"−2 (unstable)"},{x:0,label:"0 (stable)"},{x:1,label:"1 (unstable)"}];
+
+      // arrows per interval
+      const intervals = [
+        {a:xMin, b:-2, dir:-1},
+        {a:-2, b:0, dir:+1},
+        {a:0, b:1, dir:-1},
+        {a:1, b:xMax, dir:+1},
+      ];
+
+      function drawArrow(x, y, dir){
+        const L = 18;
+        ctx.save();
+        ctx.strokeStyle = "rgba(167,139,250,0.85)";
+        ctx.fillStyle   = "rgba(167,139,250,0.85)";
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.moveTo(x - dir*L/2, y);
+        ctx.lineTo(x + dir*L/2, y);
+        ctx.stroke();
+        // head
+        ctx.beginPath();
+        ctx.moveTo(x + dir*L/2, y);
+        ctx.lineTo(x + dir*(L/2-6), y-5);
+        ctx.lineTo(x + dir*(L/2-6), y+5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      intervals.forEach(I=>{
+        for(let k=0;k<3;k++){
+          const x = mapLin(k+1, 1,4, I.a + (I.b-I.a)*0.18, I.a + (I.b-I.a)*0.82);
+          drawArrow(tr.xToPx(x), yTrack, I.dir);
+        }
+      });
+
+      // mark equilibria
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.90)";
+      ctx.strokeStyle = "rgba(255,255,255,0.90)";
+      ctx.font = "12px ui-sans-serif, system-ui";
+      eqs.forEach(e=>{
+        const px = tr.xToPx(e.x);
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.arc(px, yTrack, 6, 0, Math.PI*2);
+        // stable at 0 green-ish
+        if(e.x===0){ ctx.fillStyle="rgba(52,211,153,0.95)"; }
+        else { ctx.fillStyle="rgba(251,113,133,0.92)"; }
+        ctx.fill();
+        ctx.fillStyle="rgba(255,255,255,0.92)";
+        ctx.textAlign="center";
+        ctx.fillText(e.label, px, yTrack-14);
+      });
+      ctx.restore();
+
+      // highlight chosen x0
+      const px0 = tr.xToPx(clamp(x0,xMin,xMax));
+      ctx.save();
+      ctx.strokeStyle = "rgba(125,211,252,0.95)";
+      ctx.fillStyle = "rgba(125,211,252,0.30)";
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.roundRect(px0-12, yTrack+12, 24, 18, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.font = "12px var(--mono)";
+      ctx.textAlign="center";
+      ctx.fillText("x0", px0, yTrack+26);
+      ctx.restore();
+    }
+
+    // ---------- Draw x(t) Plot ----------
+    function drawXT(canvas, x0){
+      const {ctx,w,h} = setupCanvas(canvas);
+      const pad = 44;
+      clear(ctx,w,h);
+      drawGrid(ctx,w,h,pad, 10, 8);
+      drawAxes(ctx,w,h,pad, "t (time, arb.)", "x(t)", "Example solution of ẋ = x(x−1)(x+2)");
+
+      const T=6;
+      const data = integrateX(x0, T, 1400);
+      // choose y-range from data but clamp for nice view
+      let ymin=Infinity,ymax=-Infinity;
+      for(const p of data){
+        ymin = Math.min(ymin, p.x);
+        ymax = Math.max(ymax, p.x);
+      }
+      ymin = clamp(ymin, -6, 6);
+      ymax = clamp(ymax, -6, 6);
+      if(ymax - ymin < 1e-6){ ymax = ymin + 1; }
+      // expand a little
+      const expand = 0.15*(ymax-ymin);
+      ymin -= expand; ymax += expand;
+
+      const xMin=-T, xMax=T;
+      const tr = makePlotTransform(w,h,pad,xMin,xMax,ymin,ymax);
+
+      drawTicks(ctx,w,h,pad, xMin,xMax,ymin,ymax, 2, 1);
+
+      // draw equilibria lines
+      ctx.save();
+      ctx.lineWidth=1.5;
+      const eqs=[-2,0,1];
+      eqs.forEach(v=>{
+        const py=tr.yToPx(v);
+        ctx.strokeStyle = (v===0) ? "rgba(52,211,153,0.55)" : "rgba(251,113,133,0.35)";
+        ctx.beginPath(); ctx.moveTo(pad,py); ctx.lineTo(w-pad,py); ctx.stroke();
+      });
+      ctx.restore();
+
+      // polyline
+      const pts = data.map(p=>({x:p.t, y: clamp(p.x, ymin, ymax)}));
+      drawPolyline(ctx, pts, tr.xToPx, tr.yToPx, "rgba(125,211,252,0.95)", 2.5);
+
+      // legend
+      ctx.save();
+      ctx.fillStyle="rgba(255,255,255,0.85)";
+      ctx.font="12px ui-sans-serif, system-ui";
+      ctx.textAlign="left";
+      ctx.fillText(`Example IC: x(0) = ${x0.toFixed(3)}`, pad+6, pad+18);
+      ctx.fillStyle="rgba(52,211,153,0.85)";
+      ctx.fillText("stable equilibrium: x=0", pad+6, pad+36);
+      ctx.fillStyle="rgba(251,113,133,0.75)";
+      ctx.fillText("unstable: x=−2, 1", pad+6, pad+54);
+      ctx.restore();
+    }
+
+    // ---------- Draw Direction Field Plot ----------
+    function drawDirectionField(canvas, y0){
+      const {ctx,w,h} = setupCanvas(canvas);
+      const pad = 50;
+      clear(ctx,w,h);
+      drawGrid(ctx,w,h,pad, 10, 8);
+      drawAxes(ctx,w,h,pad, "x (independent variable)", "y(x)", "Direction field for y' = (1/4)(x − y²)");
+
+      const xMin=-2, xMax=10;
+      const yMin=-5, yMax=5;
+
+      const tr = makePlotTransform(w,h,pad,xMin,xMax,yMin,yMax);
+      drawTicks(ctx,w,h,pad, xMin,xMax,yMin,yMax, 2, 1);
+
+      // direction field segments
+      const nx=24, ny=18;
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.45)";
+      ctx.lineWidth=1;
+      for(let i=0;i<=nx;i++){
+        const x = xMin + (xMax-xMin)*i/nx;
+        for(let j=0;j<=ny;j++){
+          const y = yMin + (yMax-yMin)*j/ny;
+          const m = g_dir(x,y); // slope dy/dx
+          // draw short segment centered at (x,y), with angle atan(m)
+          const ang = Math.atan(m);
+          const L = 10; // px length in CSS pixels
+          const cx = tr.xToPx(x);
+          const cy = tr.yToPx(y);
+          const dx = (L/2)*Math.cos(ang);
+          const dy = (L/2)*Math.sin(ang);
+          ctx.beginPath();
+          ctx.moveTo(cx-dx, cy+dy);
+          ctx.lineTo(cx+dx, cy-dy);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+
+      // nullclines y = ±sqrt(x) for x>=0
+      function plotCurve(fnY, stroke){
+        const pts=[];
+        for(let x=0; x<=xMax; x+=0.02){
+          const y=fnY(x);
+          pts.push({x,y});
+        }
+        drawPolyline(ctx, pts, tr.xToPx, tr.yToPx, stroke, 2.5);
+      }
+      plotCurve(x=>Math.sqrt(Math.max(0,x)), "rgba(52,211,153,0.95)");
+      plotCurve(x=>-Math.sqrt(Math.max(0,x)), "rgba(251,113,133,0.85)");
+
+      // sample solutions (two different)
+      const solA = integrateY(0, 3.2, xMin, xMax, 0.01).map(p=>({x:p.x, y:clamp(p.y,yMin,yMax)}));
+      const solB = integrateY(1, 0.2, xMin, xMax, 0.01).map(p=>({x:p.x, y:clamp(p.y,yMin,yMax)}));
+
+      drawPolyline(ctx, solA, tr.xToPx, tr.yToPx, "rgba(167,139,250,0.95)", 2.4);
+      drawPolyline(ctx, solB, tr.xToPx, tr.yToPx, "rgba(125,211,252,0.95)", 2.4);
+
+      // separatrix
+      const sep = separatrixCurve(xMin, xMax).map(p=>({x:p.x, y:clamp(p.y,yMin,yMax)}));
+      drawPolyline(ctx, sep, tr.xToPx, tr.yToPx, "rgba(251,191,36,0.95)", 2.8);
+
+      // user solution starting at x=0
+      const user = integrateY(0, y0, xMin, xMax, 0.01).map(p=>({x:p.x, y:clamp(p.y,yMin,yMax)}));
+      drawPolyline(ctx, user, tr.xToPx, tr.yToPx, "rgba(255,255,255,0.92)", 2.6);
+
+      // legend
+      ctx.save();
+      ctx.font="12px ui-sans-serif, system-ui";
+      ctx.textAlign="left";
+      let lx = pad+8, ly = pad+18;
+
+      function leg(color, text){
+        ctx.fillStyle = color;
+        ctx.fillRect(lx, ly-10, 14, 3);
+        ctx.fillStyle = "rgba(255,255,255,0.88)";
+        ctx.fillText(text, lx+20, ly-6);
+        ly += 18;
+      }
+      leg("rgba(52,211,153,0.95)", "nullcline y = +√x");
+      leg("rgba(251,113,133,0.85)", "nullcline y = −√x");
+      leg("rgba(167,139,250,0.95)", "sample solution A (starts above +√x)");
+      leg("rgba(125,211,252,0.95)", "sample solution B (starts inside band)");
+      leg("rgba(251,191,36,0.95)", "separatrix (approx.)");
+      leg("rgba(255,255,255,0.92)", `your solution: y(0) = ${y0.toFixed(3)}`);
+
+      ctx.restore();
+    }
+
+    // ---------- Interaction wiring ----------
+    const pSlider = document.getElementById("pSlider");
+    const pReadout = document.getElementById("pReadout");
+    const phaseCanvas = document.getElementById("phaseCanvas");
+    const xtCanvas = document.getElementById("xtCanvas");
+    const dirCanvas = document.getElementById("dirCanvas");
+
+    function mapping(p){
+      const x0 = 2.5*p - 0.5;   // approx [-3,2]
+      const y0 = 3.6*p;         // approx [-3.6,3.6] at x=0
+      return {x0,y0};
+    }
+
+    function renderAll(){
+      const p = parseFloat(pSlider.value);
+      pReadout.textContent = `p = ${p.toFixed(3)}`;
+      const {x0,y0} = mapping(p);
+      drawPhaseLine(phaseCanvas, x0);
+      drawXT(xtCanvas, x0);
+      drawDirectionField(dirCanvas, y0);
+    }
+
+    pSlider.addEventListener("input", renderAll);
+    document.getElementById("btnReset").addEventListener("click", ()=>{
+      pSlider.value = "0";
+      renderAll();
+    });
+    document.getElementById("btnRandom").addEventListener("click", ()=>{
+      const r = (Math.random()*2-1);
+      pSlider.value = r.toFixed(3);
+      renderAll();
+    });
+
+    // re-render on resize for responsive crispness
+    let resizeTimer=null;
+    window.addEventListener("resize", ()=>{
+      clearTimeout(resizeTimer);
+      resizeTimer=setTimeout(renderAll, 80);
+    });
+
+    // initial draw
+    renderAll();
+
+    // Canvas roundRect polyfill for older browsers
+    CanvasRenderingContext2D.prototype.roundRect = CanvasRenderingContext2D.prototype.roundRect || function(x,y,w,h,r){
+      const rr = Math.min(r, w/2, h/2);
+      this.beginPath();
+      this.moveTo(x+rr, y);
+      this.arcTo(x+w, y, x+w, y+h, rr);
+      this.arcTo(x+w, y+h, x, y+h, rr);
+      this.arcTo(x, y+h, x, y, rr);
+      this.arcTo(x, y, x+w, y, rr);
+      this.closePath();
+      return this;
+    };
+  </script>
+</body>
+</html>

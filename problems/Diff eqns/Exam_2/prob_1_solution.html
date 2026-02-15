@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Logistic Growth with Constant Harvesting: Norway Rats on MIT Campus</title>
+  <style>
+    :root{
+      --bg: #0b0f17;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.085);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.72);
+      --faint: rgba(255,255,255,0.55);
+      --accent: #7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --border: rgba(255,255,255,0.12);
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f6f8fc;
+        --panel: rgba(0,0,0,0.05);
+        --panel2: rgba(0,0,0,0.07);
+        --text: rgba(10,14,20,0.92);
+        --muted: rgba(10,14,20,0.72);
+        --faint: rgba(10,14,20,0.55);
+        --border: rgba(10,14,20,0.12);
+        --shadow: 0 10px 30px rgba(0,0,0,0.12);
+      }
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      background: radial-gradient(1200px 900px at 20% -10%, rgba(125,211,252,0.20), transparent 55%),
+                  radial-gradient(900px 700px at 105% 10%, rgba(167,139,250,0.16), transparent 50%),
+                  radial-gradient(800px 600px at 70% 110%, rgba(52,211,153,0.14), transparent 50%),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    header{
+      padding: 34px 18px 18px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    header .title{
+      display:flex;
+      gap:16px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    h1{
+      margin: 0;
+      font-size: clamp(1.6rem, 2.2vw + 1rem, 2.6rem);
+      letter-spacing: -0.02em;
+      line-height:1.12;
+    }
+    .subtitle{
+      margin-top:10px;
+      color: var(--muted);
+      max-width: 72ch;
+      font-size: 1.05rem;
+    }
+
+    main{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 18px 56px;
+      display:grid;
+      grid-template-columns: 300px 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr}
+    }
+
+    .toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 14px 14px 10px;
+      backdrop-filter: blur(10px);
+    }
+    .toc h2{
+      margin: 6px 0 10px;
+      font-size: 0.95rem;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      color: var(--text);
+      text-decoration:none;
+      border: 1px solid transparent;
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+      font-size: 0.98rem;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,0.10);
+      border-color: rgba(125,211,252,0.22);
+      transform: translateX(2px);
+    }
+    .toc .mini{
+      margin-top:10px;
+      color: var(--faint);
+      font-size: 0.92rem;
+      padding: 0 8px 6px;
+    }
+
+    article{
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 14px;
+      align-items:stretch;
+    }
+    @media (max-width: 980px){
+      .grid2{grid-template-columns:1fr}
+    }
+
+    .card{
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .callout{
+      border-left: 4px solid var(--accent);
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(125,211,252,0.10);
+      border-top: 1px solid rgba(125,211,252,0.20);
+      border-right: 1px solid rgba(125,211,252,0.12);
+      border-bottom: 1px solid rgba(125,211,252,0.12);
+    }
+
+    h2{
+      margin: 16px 0 10px;
+      font-size: 1.35rem;
+      letter-spacing: -0.01em;
+    }
+    h3{
+      margin: 14px 0 8px;
+      font-size: 1.12rem;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+    p{margin: 10px 0}
+    ul{margin: 8px 0 10px 20px}
+    li{margin: 6px 0}
+    .muted{color:var(--muted)}
+    .small{font-size:0.95rem;color:var(--muted)}
+    .hr{
+      height:1px;
+      background: var(--border);
+      margin: 18px 0;
+    }
+
+    .eq{
+      position: relative;
+      padding: 12px 12px 12px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.18);
+      border: 1px solid var(--border);
+      font-family: var(--mono);
+      overflow:auto;
+      white-space: pre;
+    }
+    @media (prefers-color-scheme: light){
+      .eq{background: rgba(255,255,255,0.65)}
+    }
+    .eqbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-top: 8px;
+    }
+    .btn{
+      cursor:pointer;
+      user-select:none;
+      border-radius: 12px;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+    .btn:hover{transform: translateY(-1px); background: rgba(255,255,255,0.08); border-color: rgba(125,211,252,0.25)}
+    .btn:active{transform: translateY(0px)}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.05);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .vizWrap{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    figure{
+      margin:0;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow:hidden;
+    }
+    figcaption{
+      padding: 10px 12px 12px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    canvas{
+      display:block;
+      width:100%;
+      height: 320px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.00));
+    }
+    @media (max-width: 980px){
+      canvas{height: 300px}
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 980px){
+      .controls{grid-template-columns: 1fr}
+    }
+    .control{
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+    }
+    .control label{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+      color: var(--muted);
+      font-weight: 650;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+    input[type="range"]{width:100%}
+    .kv{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:8px;
+      color: var(--muted);
+      font-size:0.95rem;
+    }
+    .kv span{
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .final{
+      border: 1px solid rgba(52,211,153,0.30);
+      background: rgba(52,211,153,0.10);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .final strong{color: var(--good)}
+    .note{
+      border-left:4px solid var(--warn);
+      background: rgba(251,191,36,0.10);
+      border-top: 1px solid rgba(251,191,36,0.18);
+      border-right: 1px solid rgba(251,191,36,0.10);
+      border-bottom: 1px solid rgba(251,191,36,0.10);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 980px){
+      .twoCol{grid-template-columns:1fr}
+    }
+
+    footer{
+      max-width:1180px;
+      margin: 0 auto;
+      padding: 16px 18px 40px;
+      color: var(--faint);
+      font-size: 0.95rem;
+    }
+
+    /* subtle entrance */
+    @keyframes rise {
+      from{opacity:0; transform: translateY(8px)}
+      to{opacity:1; transform: translateY(0)}
+    }
+    article, .toc{animation: rise 420ms ease both}
+
+    /* print-friendly */
+    @media print{
+      body{background:white;color:black}
+      .toc{display:none}
+      article{box-shadow:none;border:1px solid #bbb;background:white}
+      canvas{height: 260px !important}
+      .btn{display:none}
+      a{color:black;text-decoration:none}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">
+      <div>
+        <h1>Norway Rat Population on Campus: Exponential Growth, Logistic Limits, and Pest-Control Harvesting</h1>
+        <p class="subtitle">
+          We model (a) natural growth from a given yearly multiplicative factor, (b) carrying-capacity limits via the logistic equation,
+          and (c) constant-rate removal (harvesting) needed to cap the population at 75% of capacity.
+        </p>
+        <div class="kv">
+          <span class="pill">Symbols: <span style="font-family:var(--mono)">P(t), k, R, a</span></span>
+          <span class="pill">Units: <span style="font-family:var(--mono)">t</span> in years, <span style="font-family:var(--mono)">P</span> in rats</span>
+        </div>
+      </div>
+      <div class="pill" title="This page is self-contained (no external libraries).">Vanilla HTML/CSS/JS • Canvas plots • Copy buttons</div>
+    </div>
+  </header>
+
+  <main>
+    <nav class="toc" aria-label="Table of contents">
+      <h2>Table of Contents</h2>
+      <a href="#quick">Quick Summary</a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a href="#part2">PART 2 — Strategy &amp; Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a href="#viz">Interactive Visualizations</a>
+      <div class="mini">Tip: Use the sliders to see how the equilibrium changes with removal rate <span style="font-family:var(--mono)">a</span>, growth <span style="font-family:var(--mono)">k</span>, and capacity <span style="font-family:var(--mono)">R</span>.</div>
+    </nav>
+
+    <article>
+      <section id="quick">
+        <h2>Quick Summary</h2>
+        <div class="callout">
+          <ul>
+            <li>Exponential model: <span style="font-family:var(--mono)">dP/dt = kP</span>, so <span style="font-family:var(--mono)">P(t)=P(0)e^{kt}</span>.</li>
+            <li>Given “multiplies by <span style="font-family:var(--mono)">e</span> each year”, we get <span style="font-family:var(--mono)">e^{k·1}=e ⇒ k=1 yr⁻¹</span>.</li>
+            <li>Logistic model with capacity <span style="font-family:var(--mono)">R=1000</span>: <span style="font-family:var(--mono)">dP/dt = kP(1 − P/R)</span>.</li>
+            <li>With constant killing/removal <span style="font-family:var(--mono)">a</span>: <span style="font-family:var(--mono)">dP/dt = kP(1 − P/R) − a</span>.</li>
+            <li>To make <span style="font-family:var(--mono)">P*=0.75R</span> an equilibrium: <span style="font-family:var(--mono)">a = kP*(1 − P*/R) = (3/16)kR</span>.</li>
+            <li>Numerically for <span style="font-family:var(--mono)">k=1</span>, <span style="font-family:var(--mono)">R=1000</span>: <strong><span style="font-family:var(--mono)">a = 187.5 rats/year</span></strong>.</li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="hr"></div>
+
+      <section id="part1">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+        <h3>1) Restate the problem (in my own words)</h3>
+        <p>
+          A rat population grows naturally. In ideal conditions, it increases by a factor of <span style="font-family:var(--mono)">e</span> every year.
+          (a) Use a differential equation model for exponential growth to find the continuous-time growth rate <span style="font-family:var(--mono)">k</span>.
+          (b) Because the campus has limited resources, the population has a carrying capacity <span style="font-family:var(--mono)">R=1000</span>; write the logistic ODE.
+          (c) Pest control removes rats at a constant rate <span style="font-family:var(--mono)">a</span> (rats/year). Find <span style="font-family:var(--mono)">a</span> so the population can be limited to <span style="font-family:var(--mono)">75%</span> of <span style="font-family:var(--mono)">R</span>.
+        </p>
+
+        <h3>2) Given quantities</h3>
+        <ul>
+          <li>Yearly multiplicative factor in “perfect environment”: <span style="font-family:var(--mono)">e ≈ 2.71828…</span></li>
+          <li>Carrying capacity: <span style="font-family:var(--mono)">R = 1000</span> rats</li>
+          <li>Target cap (fraction of carrying capacity): <span style="font-family:var(--mono)">0.75R</span></li>
+        </ul>
+
+        <h3>3) Unknowns</h3>
+        <ul>
+          <li><span style="font-family:var(--mono)">k</span> = intrinsic (per-capita) growth rate (units: 1/year)</li>
+          <li>Logistic ODE expression for <span style="font-family:var(--mono)">dP/dt</span></li>
+          <li><span style="font-family:var(--mono)">a</span> = constant removal/killing rate (units: rats/year)</li>
+        </ul>
+
+        <h3>4) What must be found/proved</h3>
+        <ul>
+          <li>(a) Determine <span style="font-family:var(--mono)">k</span> from the statement “population multiplies by <span style="font-family:var(--mono)">e</span> each year.”</li>
+          <li>(b) Write the logistic differential equation with carrying capacity <span style="font-family:var(--mono)">R=1000</span>.</li>
+          <li>(c) Choose <span style="font-family:var(--mono)">a</span> so that <span style="font-family:var(--mono)">P = 0.75R</span> is the controlled equilibrium population.</li>
+        </ul>
+
+        <h3>5) Relevant principles/laws (and why they apply)</h3>
+        <ul>
+          <li><strong>Exponential growth law</strong>: In unlimited resources, per-capita growth is constant ⇒ <span style="font-family:var(--mono)">dP/dt ∝ P</span>, giving <span style="font-family:var(--mono)">dP/dt = kP</span>.</li>
+          <li><strong>Logistic growth</strong>: Limited resources reduce per-capita growth linearly with population size ⇒ factor <span style="font-family:var(--mono)">(1 - P/R)</span>.</li>
+          <li><strong>Constant harvesting/removal</strong>: Pest control removes a fixed number per time, independent of <span style="font-family:var(--mono)">P</span> ⇒ subtract constant <span style="font-family:var(--mono)">a</span> in the ODE.</li>
+        </ul>
+
+        <h3>6) Possible approaches (compare 2–3)</h3>
+        <ul>
+          <li><strong>Approach A (ODE solution matching)</strong>: Solve <span style="font-family:var(--mono)">dP/dt=kP</span> and match the 1-year growth factor to find <span style="font-family:var(--mono)">k</span>; then write logistic and impose equilibrium for harvesting. (Fast, direct.)</li>
+          <li><strong>Approach B (discrete-to-continuous conversion)</strong>: Use <span style="font-family:var(--mono)">P_{n+1}=eP_n</span> and interpret as <span style="font-family:var(--mono)">e^{k}</span> over one year. (Equivalent to A.)</li>
+          <li><strong>Approach C (linearization near equilibrium)</strong>: For part (c), analyze stability and equilibrium branches. (More insight; still needs equilibrium equation.)</li>
+        </ul>
+        <p><strong>Best approach:</strong> Approach A—solve the standard exponential model and match factors, then use the equilibrium condition for the logistic-with-harvesting model. It’s the clearest and least error-prone.</p>
+      </section>
+
+      <div class="hr"></div>
+
+      <section id="part2">
+        <h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+
+        <h3>Minimal plan (5–10 steps)</h3>
+        <ol>
+          <li>
+            <strong>Goal:</strong> model unlimited growth.<br/>
+            <span class="muted"><strong>Tool:</strong> exponential ODE <span style="font-family:var(--mono)">dP/dt = kP</span>.</span>
+          </li>
+          <li>
+            <strong>Goal:</strong> connect “multiplies by <span style="font-family:var(--mono)">e</span> in 1 year” to <span style="font-family:var(--mono)">k</span>.<br/>
+            <span class="muted"><strong>Tool:</strong> solution form <span style="font-family:var(--mono)">P(t)=P(0)e^{kt}</span>.</span>
+          </li>
+          <li>
+            <strong>Goal:</strong> write down the logistic model with capacity <span style="font-family:var(--mono)">R</span>.<br/>
+            <span class="muted"><strong>Tool:</strong> <span style="font-family:var(--mono)">dP/dt = kP(1 - P/R)</span>.</span>
+          </li>
+          <li>
+            <strong>Goal:</strong> include constant killing/removal at rate <span style="font-family:var(--mono)">a</span>.<br/>
+            <span class="muted"><strong>Tool:</strong> subtract constant: <span style="font-family:var(--mono)">dP/dt = kP(1 - P/R) - a</span>.</span>
+          </li>
+          <li>
+            <strong>Goal:</strong> enforce “limit to 75% of capacity” as an equilibrium at <span style="font-family:var(--mono)">P*=0.75R</span>.<br/>
+            <span class="muted"><strong>Tool:</strong> equilibrium condition <span style="font-family:var(--mono)">0 = kP*(1 - P*/R) - a</span>.</span>
+          </li>
+          <li>
+            <strong>Goal:</strong> compute <span style="font-family:var(--mono)">a</span> (symbolic first, then numeric with <span style="font-family:var(--mono)">R=1000</span>, <span style="font-family:var(--mono)">k</span> from part (a)).</strong>
+          </li>
+        </ol>
+
+        <h3>Common mistakes &amp; quick tips</h3>
+        <ul>
+          <li><strong>Units slip:</strong> <span style="font-family:var(--mono)">k</span> must be in <span style="font-family:var(--mono)">1/year</span>, while <span style="font-family:var(--mono)">a</span> is <span style="font-family:var(--mono)">rats/year</span>.</li>
+          <li><strong>Confusing factor vs. rate:</strong> “factor <span style="font-family:var(--mono)">e</span> per year” means <span style="font-family:var(--mono)">e^{k·1}=e</span>, not <span style="font-family:var(--mono)">k=e</span>.</li>
+          <li><strong>Equilibrium logic:</strong> To “limit to 75%” in a steady sense, set <span style="font-family:var(--mono)">dP/dt=0</span> at <span style="font-family:var(--mono)">P=0.75R</span>.</li>
+          <li><strong>Stability intuition:</strong> With constant harvesting, equilibria can disappear if <span style="font-family:var(--mono)">a</span> is too large (the plots below illustrate this).</li>
+        </ul>
+      </section>
+
+      <div class="hr"></div>
+
+      <section id="part3">
+        <h2>PART 3 — Full Solution</h2>
+
+        <h3>Physical intuition</h3>
+        <p>
+          In a perfect environment, each rat contributes the same “per-capita” reproductive output, so the total growth rate scales with the number present:
+          double the rats ⇒ double the births per unit time. That leads to exponential growth. Real environments saturate: limited food/space reduces growth as
+          population approaches a carrying capacity <span style="font-family:var(--mono)">R</span>, producing logistic behavior. Pest control that removes a fixed number each year
+          acts like a constant downward “drain” on population growth.
+        </p>
+
+        <div class="twoCol">
+          <div class="card">
+            <h3>(a) Find the growth rate <span style="font-family:var(--mono)">k</span></h3>
+            <p>
+              Model unlimited growth by
+              <span style="font-family:var(--mono)">dP/dt = kP</span>, where <span style="font-family:var(--mono)">P(t)</span> is population (rats) and <span style="font-family:var(--mono)">k</span> has units 1/year.
+            </p>
+            <p>
+              Solve by separation:
+            </p>
+            <div class="eq" id="eqA">dP/dt = kP
+⇒ (1/P) dP = k dt
+⇒ ∫(1/P) dP = ∫k dt
+⇒ ln|P| = kt + C
+⇒ P(t) = P(0) e^{kt}</div>
+            <div class="eqbar">
+              <button class="btn" data-copy="#eqA">Copy equation</button>
+              <span class="small">Exponential solution form</span>
+            </div>
+            <p>
+              The problem states that after <strong>1 year</strong> the population is multiplied by <span style="font-family:var(--mono)">e</span>:
+              <span style="font-family:var(--mono)">P(1) = e·P(0)</span>.
+              Using <span style="font-family:var(--mono)">P(1)=P(0)e^{k·1}</span> gives
+              <span style="font-family:var(--mono)">e^{k}=e</span>, hence:
+            </p>
+            <div class="final">
+              <p><strong>Result (a):</strong> <span style="font-family:var(--mono)">k = 1</span> <span class="muted">(per year)</span>.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>(b) Write the logistic equation (capacity <span style="font-family:var(--mono)">R=1000</span>)</h3>
+            <p>
+              Logistic growth reduces the net growth when <span style="font-family:var(--mono)">P</span> is a significant fraction of <span style="font-family:var(--mono)">R</span>:
+              <span style="font-family:var(--mono)">dP/dt = kP(1 - P/R)</span>.
+            </p>
+            <div class="eq" id="eqB">dP/dt = kP(1 - P/R),   with R = 1000 rats</div>
+            <div class="eqbar">
+              <button class="btn" data-copy="#eqB">Copy equation</button>
+              <span class="small">Carrying capacity included</span>
+            </div>
+            <p>
+              Using part (a), <span style="font-family:var(--mono)">k=1</span> year<sup>−1</sup>, so a fully numeric version is:
+            </p>
+            <div class="eq" id="eqB2">dP/dt = P(1 - P/1000)</div>
+            <div class="eqbar">
+              <button class="btn" data-copy="#eqB2">Copy equation</button>
+              <span class="small">If you plug in k = 1</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+          <h3>(c) Constant killing at rate <span style="font-family:var(--mono)">a</span>: choose <span style="font-family:var(--mono)">a</span> to cap at <span style="font-family:var(--mono)">0.75R</span></h3>
+          <p>
+            With constant removal of <span style="font-family:var(--mono)">a</span> rats/year, the model becomes:
+          </p>
+          <div class="eq" id="eqC">dP/dt = kP(1 - P/R) - a</div>
+          <div class="eqbar">
+            <button class="btn" data-copy="#eqC">Copy equation</button>
+            <span class="small">Logistic + constant harvesting</span>
+          </div>
+
+          <p>
+            “Limit the population to 75% of the maximum sustainable” means we want a steady population (equilibrium) at
+            <span style="font-family:var(--mono)">P* = 0.75R</span>. At equilibrium, <span style="font-family:var(--mono)">dP/dt=0</span>, so:
+          </p>
+
+          <div class="eq" id="eqC2">0 = kP*(1 - P*/R) - a
+⇒ a = kP*(1 - P*/R)</div>
+          <div class="eqbar">
+            <button class="btn" data-copy="#eqC2">Copy equation</button>
+            <span class="small">Equilibrium condition</span>
+          </div>
+
+          <p>
+            Substitute <span style="font-family:var(--mono)">P* = 0.75R</span>:
+          </p>
+
+          <div class="eq" id="eqC3">a = k(0.75R)(1 - 0.75)
+  = k(0.75R)(0.25)
+  = (3/16)kR
+  = 0.1875 kR</div>
+          <div class="eqbar">
+            <button class="btn" data-copy="#eqC3">Copy equation</button>
+            <span class="small">Symbolic answer</span>
+          </div>
+
+          <p>
+            Now plug in <span style="font-family:var(--mono)">k=1</span> year<sup>−1</sup> and <span style="font-family:var(--mono)">R=1000</span> rats:
+          </p>
+
+          <div class="final" id="finalBox">
+            <p><strong>Final Result (c):</strong></p>
+            <div class="eq" id="eqFinal">a = (3/16)kR
+With k = 1 yr^-1, R = 1000 rats:
+a = (3/16)(1)(1000) = 187.5 rats/year</div>
+            <div class="eqbar">
+              <button class="btn" data-copy="#eqFinal">Copy final answer</button>
+              <span class="small">Target equilibrium: P* = 0.75R = 750 rats</span>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <h3>Sanity checks</h3>
+          <ul>
+            <li><strong>Units:</strong> <span style="font-family:var(--mono)">kP(1-P/R)</span> has units (1/year)·rats = rats/year, so subtracting <span style="font-family:var(--mono)">a</span> (rats/year) is consistent.</li>
+            <li><strong>Limiting cases:</strong>
+              <ul>
+                <li>If <span style="font-family:var(--mono)">a=0</span>, equilibrium returns to logistic: stable <span style="font-family:var(--mono)">P*=R</span>.</li>
+                <li>If <span style="font-family:var(--mono)">P*</span> is close to <span style="font-family:var(--mono)">R</span>, then <span style="font-family:var(--mono)">(1-P*/R)</span> is small ⇒ only a small <span style="font-family:var(--mono)">a</span> is needed.</li>
+              </ul>
+            </li>
+            <li><strong>Physical interpretation:</strong> At <span style="font-family:var(--mono)">P*=750</span>, natural net growth is <span style="font-family:var(--mono)">kP*(1-P*/R)=187.5</span> rats/year; pest control must remove exactly that many per year to hold the population steady.</li>
+          </ul>
+
+          <div class="note">
+            <strong>Extra insight (optional):</strong> The harvested logistic model can lose equilibria if <span style="font-family:var(--mono)">a</span> exceeds the maximum possible natural net growth,
+            which occurs at <span style="font-family:var(--mono)">P=R/2</span> and equals <span style="font-family:var(--mono)">kR/4</span>.
+            The secondary plot below shows this “tipping point.”
+          </div>
+        </div>
+      </section>
+
+      <div class="hr"></div>
+
+      <section id="viz">
+        <h2>Interactive Visualizations</h2>
+        <p class="muted">
+          The same parameters used in the math appear here:
+          <span style="font-family:var(--mono)">k</span> (1/year), <span style="font-family:var(--mono)">R</span> (rats), <span style="font-family:var(--mono)">a</span> (rats/year), and target fraction <span style="font-family:var(--mono)">0.75R</span>.
+          Use the sliders to explore; the plots update live.
+        </p>
+
+        <div class="controls">
+          <div class="control">
+            <label>
+              <span>Removal rate <span style="font-family:var(--mono)">a</span> (rats/year)</span>
+              <span class="pill"><span id="aVal">187.5</span></span>
+            </label>
+            <input id="aSlider" type="range" min="0" max="250" value="187.5" step="0.5" />
+            <div class="kv">
+              <span>Tip: max sustainable is ~ <span style="font-family:var(--mono)">kR/4</span></span>
+            </div>
+          </div>
+
+          <div class="control">
+            <label>
+              <span>Growth rate <span style="font-family:var(--mono)">k</span> (1/year)</span>
+              <span class="pill"><span id="kVal">1.00</span></span>
+            </label>
+            <input id="kSlider" type="range" min="0.2" max="2.0" value="1.0" step="0.01" />
+            <div class="kv">
+              <span>From part (a): <span style="font-family:var(--mono)">k=1</span></span>
+            </div>
+          </div>
+
+          <div class="control">
+            <label>
+              <span>Carrying capacity <span style="font-family:var(--mono)">R</span> (rats)</span>
+              <span class="pill"><span id="rVal">1000</span></span>
+            </label>
+            <input id="rSlider" type="range" min="500" max="2000" value="1000" step="10" />
+            <div class="kv">
+              <span>Given: <span style="font-family:var(--mono)">R=1000</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="vizWrap">
+          <figure>
+            <canvas id="diagramCanvas" aria-label="Diagram of campus rat population model"></canvas>
+            <figcaption>
+              Diagram: population <span style="font-family:var(--mono)">P(t)</span> grows at rate <span style="font-family:var(--mono)">k</span>, is limited by capacity <span style="font-family:var(--mono)">R</span>, and is reduced by constant removal <span style="font-family:var(--mono)">a</span>.
+            </figcaption>
+          </figure>
+
+          <figure>
+            <canvas id="mainPlot" aria-label="Main plot: population versus time"></canvas>
+            <figcaption>
+              Main plot: numerical solution of <span style="font-family:var(--mono)">dP/dt = kP(1 - P/R) - a</span>.
+              Dashed line marks target <span style="font-family:var(--mono)">0.75R</span>. If equilibria exist, they are indicated.
+            </figcaption>
+          </figure>
+
+          <figure>
+            <canvas id="secondaryPlot" aria-label="Secondary plot: equilibrium population versus removal rate"></canvas>
+            <figcaption>
+              Secondary plot (parameter sweep): equilibrium branches from solving
+              <span style="font-family:var(--mono)">kP(1 - P/R) = a</span>.
+              The “tipping point” is <span style="font-family:var(--mono)">a = kR/4</span> where equilibria merge.
+            </figcaption>
+          </figure>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+          <h3>Copy-ready key equations</h3>
+          <div class="grid2">
+            <div>
+              <div class="eq" id="eqPack1">Exponential: dP/dt = kP,  P(t)=P(0)e^{kt}
+Logistic: dP/dt = kP(1 - P/R)
+Harvested logistic: dP/dt = kP(1 - P/R) - a</div>
+              <div class="eqbar">
+                <button class="btn" data-copy="#eqPack1">Copy equations</button>
+                <span class="small">Plain text</span>
+              </div>
+            </div>
+            <div>
+              <div class="eq" id="eqPack2">Target equilibrium P* = 0.75R:
+a = kP*(1 - P*/R) = (3/16)kR
+With k=1, R=1000: a=187.5 rats/year</div>
+              <div class="eqbar">
+                <button class="btn" data-copy="#eqPack2">Copy result</button>
+                <span class="small">Plain text</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </article>
+  </main>
+
+  <footer>
+    Built as a self-contained learning page: no external libraries, fully responsive, high-DPI canvas rendering, and interactive parameter exploration.
+  </footer>
+
+  <script>
+    // ---------- Utility: copy buttons ----------
+    function copyTextFrom(selector){
+      const el = document.querySelector(selector);
+      if(!el) return;
+      const text = el.textContent.replace(/\u00A0/g,' ');
+      navigator.clipboard.writeText(text).then(()=>flash(el, "Copied!"), ()=>flash(el, "Copy failed"));
+    }
+    function flash(el, msg){
+      const badge = document.createElement('div');
+      badge.textContent = msg;
+      badge.style.position = 'absolute';
+      badge.style.right = '10px';
+      badge.style.top = '10px';
+      badge.style.padding = '6px 10px';
+      badge.style.borderRadius = '999px';
+      badge.style.border = '1px solid rgba(255,255,255,0.18)';
+      badge.style.background = 'rgba(0,0,0,0.55)';
+      badge.style.color = 'white';
+      badge.style.fontSize = '0.9rem';
+      badge.style.pointerEvents = 'none';
+      badge.style.transform = 'translateY(-2px)';
+      badge.style.opacity = '0';
+      badge.style.transition = 'opacity 180ms ease, transform 180ms ease';
+      el.style.position = 'relative';
+      el.appendChild(badge);
+      requestAnimationFrame(()=>{
+        badge.style.opacity = '1';
+        badge.style.transform = 'translateY(0px)';
+      });
+      setTimeout(()=>{
+        badge.style.opacity = '0';
+        badge.style.transform = 'translateY(-2px)';
+        setTimeout(()=>badge.remove(), 220);
+      }, 900);
+    }
+    document.querySelectorAll('[data-copy]').forEach(btn=>{
+      btn.addEventListener('click', ()=> copyTextFrom(btn.getAttribute('data-copy')));
+    });
+
+    // ---------- Canvas helpers (HiDPI + responsive) ----------
+    function setupCanvas(canvas){
+      const ctx = canvas.getContext('2d');
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = Math.max(2, Math.floor(rect.width * dpr));
+        canvas.height = Math.max(2, Math.floor(rect.height * dpr));
+        ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+      }
+      resize();
+      const ro = new ResizeObserver(resize);
+      ro.observe(canvas);
+      return {ctx, resize};
+    }
+
+    function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
+
+    function niceTicks(min, max, approxCount){
+      const span = max - min;
+      if(span <= 0) return {step:1, ticks:[min]};
+      const raw = span / Math.max(2, approxCount);
+      const pow10 = Math.pow(10, Math.floor(Math.log10(raw)));
+      const candidates = [1,2,2.5,5,10].map(m=>m*pow10);
+      let step = candidates[0];
+      let best = Infinity;
+      for(const c of candidates){
+        const n = span / c;
+        const err = Math.abs(n - approxCount);
+        if(err < best){ best = err; step = c; }
+      }
+      const start = Math.ceil(min/step)*step;
+      const ticks = [];
+      for(let v=start; v<=max+1e-9; v+=step) ticks.push(v);
+      return {step, ticks};
+    }
+
+    function drawAxes(ctx, x0,y0,w,h, xMin,xMax,yMin,yMax, xLabel,yLabel, title){
+      // background
+      ctx.save();
+      ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height);
+      const W = ctx.canvas.getBoundingClientRect().width;
+      const H = ctx.canvas.getBoundingClientRect().height;
+
+      // panel-like backdrop
+      ctx.fillStyle = 'rgba(255,255,255,0.02)';
+      ctx.fillRect(0,0,W,H);
+
+      // title
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || 'rgba(255,255,255,0.9)';
+      ctx.font = '600 14px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText(title, x0, y0-10);
+
+      // border around plot area
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x0,y0,w,h);
+
+      // ticks and grid
+      const xt = niceTicks(xMin,xMax,6);
+      const yt = niceTicks(yMin,yMax,6);
+
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillStyle = 'rgba(255,255,255,0.72)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+      ctx.lineWidth = 1;
+
+      // x grid + labels
+      for(const xv of xt.ticks){
+        const px = x0 + (xv-xMin)/(xMax-xMin)*w;
+        ctx.beginPath();
+        ctx.moveTo(px, y0);
+        ctx.lineTo(px, y0+h);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+
+        ctx.fillStyle = 'rgba(255,255,255,0.72)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(formatNum(xv), px, y0+h+6);
+      }
+
+      // y grid + labels
+      for(const yv of yt.ticks){
+        const py = y0 + h - (yv-yMin)/(yMax-yMin)*h;
+        ctx.beginPath();
+        ctx.moveTo(x0, py);
+        ctx.lineTo(x0+w, py);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.72)';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(formatNum(yv), x0-8, py);
+      }
+
+      // axis labels
+      ctx.fillStyle = 'rgba(255,255,255,0.78)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(xLabel, x0+w/2, y0+h+26);
+
+      ctx.save();
+      ctx.translate(x0-44, y0+h/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+
+      ctx.restore();
+
+      // Return mapping functions
+      const xToPx = x => x0 + (x-xMin)/(xMax-xMin)*w;
+      const yToPx = y => y0 + h - (y-yMin)/(yMax-yMin)*h;
+      return {xToPx, yToPx};
+    }
+
+    function formatNum(x){
+      const ax = Math.abs(x);
+      if(ax >= 1000) return Math.round(x).toString();
+      if(ax >= 100) return x.toFixed(0);
+      if(ax >= 10) return x.toFixed(1).replace(/\.0$/,'');
+      if(ax >= 1) return x.toFixed(2).replace(/0$/,'').replace(/\.$/,'');
+      return x.toFixed(3).replace(/0+$/,'').replace(/\.$/,'');
+    }
+
+    // ---------- Model + numerics ----------
+    // ODE: dP/dt = k P (1 - P/R) - a
+    function dPdt(P, k, R, a){
+      return k*P*(1 - P/R) - a;
+    }
+
+    // RK4 integrate from t=0..T with dt
+    function integrate(P0, k, R, a, T, dt){
+      const n = Math.floor(T/dt)+1;
+      const t = new Array(n);
+      const P = new Array(n);
+      let p = P0;
+      let time = 0;
+      for(let i=0;i<n;i++){
+        t[i] = time;
+        P[i] = p;
+
+        const k1 = dPdt(p, k, R, a);
+        const k2 = dPdt(p + 0.5*dt*k1, k, R, a);
+        const k3 = dPdt(p + 0.5*dt*k2, k, R, a);
+        const k4 = dPdt(p + dt*k3, k, R, a);
+        p = p + (dt/6)*(k1 + 2*k2 + 2*k3 + k4);
+
+        // population can't be negative in this model
+        p = Math.max(0, p);
+        time += dt;
+      }
+      return {t, P};
+    }
+
+    // Equilibria solve kP(1-P/R)-a=0 -> -(k/R)P^2 + kP - a = 0
+    // P = (R/2)*(1 ± sqrt(1 - 4a/(kR))) when discriminant >= 0.
+    function equilibria(k,R,a){
+      const denom = k*R;
+      if(denom <= 0) return {exists:false, Plo:NaN, Phi:NaN, disc:NaN, acrit:NaN};
+      const disc = 1 - 4*a/(denom);
+      const acrit = denom/4;
+      if(disc < 0) return {exists:false, Plo:NaN, Phi:NaN, disc, acrit};
+      const s = Math.sqrt(Math.max(0,disc));
+      const P1 = (R/2)*(1 - s);
+      const P2 = (R/2)*(1 + s);
+      return {exists:true, Plo:P1, Phi:P2, disc, acrit};
+    }
+
+    // ---------- Draw: Diagram ----------
+    function drawDiagram(ctx, params){
+      const {k,R,a} = params;
+      const W = ctx.canvas.getBoundingClientRect().width;
+      const H = ctx.canvas.getBoundingClientRect().height;
+
+      ctx.clearRect(0,0,W,H);
+
+      // soft background
+      ctx.fillStyle = 'rgba(255,255,255,0.02)';
+      ctx.fillRect(0,0,W,H);
+
+      // Campus box
+      const pad = 18;
+      const box = {x: pad, y: 42, w: W - 2*pad, h: H - 84};
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, box.x, box.y, box.w, box.h, 16, false, true);
+
+      // Title inside
+      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      ctx.font = '700 14px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText('MIT campus environment', box.x+14, box.y+22);
+
+      // Rat "population" cluster
+      const cx = box.x + box.w*0.34;
+      const cy = box.y + box.h*0.58;
+
+      // Draw rats as small circles
+      const count = 14;
+      for(let i=0;i<count;i++){
+        const ang = i*(Math.PI*2/count);
+        const rr = 28 + 10*Math.sin(i*1.7);
+        const x = cx + rr*Math.cos(ang);
+        const y = cy + rr*Math.sin(ang)*0.7;
+        ctx.fillStyle = 'rgba(125,211,252,0.22)';
+        ctx.strokeStyle = 'rgba(125,211,252,0.45)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(x,y,7,0,Math.PI*2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = 'rgba(255,255,255,0.86)';
+      ctx.font = '600 13px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText('Population: P(t)', cx-52, cy+58);
+
+      // Growth arrow
+      const gx1 = cx - 105, gy1 = cy - 65;
+      const gx2 = cx - 10,  gy2 = cy - 20;
+      arrow(ctx, gx1, gy1, gx2, gy2, 'rgba(52,211,153,0.85)');
+      ctx.fillStyle = 'rgba(52,211,153,0.95)';
+      ctx.font = '700 12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText(`growth: k = ${formatNum(k)} yr⁻¹`, gx1-5, gy1-10);
+
+      // Capacity cue: boundary label R
+      const capx = box.x + box.w*0.78;
+      const capy = box.y + box.h*0.32;
+      ctx.strokeStyle = 'rgba(167,139,250,0.65)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(capx, box.y+40);
+      ctx.lineTo(capx, box.y+box.h-30);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(167,139,250,0.95)';
+      ctx.font = '700 12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText(`capacity: R = ${Math.round(R)} rats`, capx-70, box.y+34);
+
+      // Removal arrow
+      const rx1 = box.x + box.w*0.72, ry1 = box.y + box.h*0.72;
+      const rx2 = box.x + box.w + 10, ry2 = box.y + box.h*0.82;
+      arrow(ctx, rx1, ry1, rx2, ry2, 'rgba(251,113,133,0.85)');
+      ctx.fillStyle = 'rgba(251,113,133,0.95)';
+      ctx.font = '700 12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText(`removal: a = ${formatNum(a)} rats/yr`, rx1-10, ry1-10);
+
+      // Model equation
+      const eq = `dP/dt = kP(1 - P/R) − a`;
+      ctx.fillStyle = 'rgba(255,255,255,0.82)';
+      ctx.font = '600 13px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+      ctx.fillText(eq, box.x+14, box.y+box.h-14);
+    }
+
+    function roundRect(ctx,x,y,w,h,r, fill, stroke){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr,y);
+      ctx.arcTo(x+w,y,x+w,y+h,rr);
+      ctx.arcTo(x+w,y+h,x,y+h,rr);
+      ctx.arcTo(x,y+h,x,y,rr);
+      ctx.arcTo(x,y,x+w,y,rr);
+      ctx.closePath();
+      if(fill){ ctx.fill(); }
+      if(stroke){ ctx.stroke(); }
+    }
+
+    function arrow(ctx,x1,y1,x2,y2,color){
+      const head = 10;
+      const dx = x2-x1, dy = y2-y1;
+      const L = Math.hypot(dx,dy) || 1;
+      const ux = dx/L, uy = dy/L;
+      const hx = x2 - head*ux;
+      const hy = y2 - head*uy;
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(x1,y1);
+      ctx.lineTo(hx,hy);
+      ctx.stroke();
+
+      // head
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(x2,y2);
+      ctx.lineTo(hx - 0.55*head*uy, hy + 0.55*head*ux);
+      ctx.lineTo(hx + 0.55*head*uy, hy - 0.55*head*ux);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // ---------- Draw: Main plot (P vs t) ----------
+    function drawMainPlot(ctx, params){
+      const {k,R,a} = params;
+      const W = ctx.canvas.getBoundingClientRect().width;
+      const H = ctx.canvas.getBoundingClientRect().height;
+
+      const margin = {l: 58, r: 16, t: 42, b: 50};
+      const x0 = margin.l, y0 = margin.t, w = W - margin.l - margin.r, h = H - margin.t - margin.b;
+
+      // Integrate with example initial condition (clearly a demo choice)
+      const P0 = Math.max(10, 0.08*R); // example value for visualization
+      const T = 20;                   // years
+      const dt = 0.02;
+      const sol = integrate(P0, k, R, a, T, dt);
+
+      // y range based on R with padding
+      let yMin = 0;
+      let yMax = Math.max(R*1.05, Math.max(...sol.P)*1.05);
+      yMax = Math.max(50, yMax);
+
+      const map = drawAxes(
+        ctx,
+        x0,y0,w,h,
+        0,T, yMin,yMax,
+        'time t (years)',
+        'population P (rats)',
+        'Population vs time (harvested logistic)'
+      );
+
+      // target line at 0.75R
+      const target = 0.75*R;
+      ctx.save();
+      ctx.setLineDash([6,4]);
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(map.xToPx(0), map.yToPx(target));
+      ctx.lineTo(map.xToPx(T), map.yToPx(target));
+      ctx.stroke();
+      ctx.restore();
+
+      // equilibrium lines if exist
+      const eq = equilibria(k,R,a);
+      if(eq.exists){
+        // stable equilibrium is typically the higher branch Phi (for harvesting logistic)
+        ctx.save();
+        ctx.setLineDash([3,4]);
+        ctx.strokeStyle = 'rgba(52,211,153,0.70)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(map.xToPx(0), map.yToPx(eq.Phi));
+        ctx.lineTo(map.xToPx(T), map.yToPx(eq.Phi));
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(251,191,36,0.70)';
+        ctx.beginPath();
+        ctx.moveTo(map.xToPx(0), map.yToPx(eq.Plo));
+        ctx.lineTo(map.xToPx(T), map.yToPx(eq.Plo));
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // solution curve
+      ctx.save();
+      ctx.strokeStyle = 'rgba(125,211,252,0.95)';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for(let i=0;i<sol.t.length;i++){
+        const px = map.xToPx(sol.t[i]);
+        const py = map.yToPx(sol.P[i]);
+        if(i===0) ctx.moveTo(px,py);
+        else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // Legend
+      const lx = x0 + 10, ly = y0 + 10;
+      drawLegend(ctx, lx, ly, [
+        {color:'rgba(125,211,252,0.95)', text:'P(t) (numerical)'},
+        {color:'rgba(255,255,255,0.55)', text:'target 0.75R', dashed:true},
+        ...(eq.exists ? [
+          {color:'rgba(52,211,153,0.70)', text:'equilibrium (upper)', dashed:true},
+          {color:'rgba(251,191,36,0.70)', text:'equilibrium (lower)', dashed:true},
+        ] : [{color:'rgba(251,113,133,0.80)', text:'no equilibrium (a > kR/4)'}])
+      ]);
+
+      // Small annotation: demo P0
+      ctx.fillStyle = 'rgba(255,255,255,0.70)';
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`(example) P(0) = ${formatNum(P0)} rats`, x0+w, y0-10);
+    }
+
+    function drawLegend(ctx, x, y, items){
+      ctx.save();
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+
+      const pad = 10;
+      const lineLen = 22;
+      const rowH = 18;
+      const width = 260;
+      const height = pad*2 + items.length*rowH;
+
+      ctx.fillStyle = 'rgba(0,0,0,0.30)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1;
+      roundRect(ctx, x, y, width, height, 12, true, true);
+
+      for(let i=0;i<items.length;i++){
+        const iy = y + pad + i*rowH + rowH/2;
+
+        ctx.save();
+        ctx.strokeStyle = items[i].color;
+        ctx.lineWidth = 3;
+        if(items[i].dashed) ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        ctx.moveTo(x+12, iy);
+        ctx.lineTo(x+12+lineLen, iy);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.fillStyle = 'rgba(255,255,255,0.78)';
+        ctx.fillText(items[i].text, x+12+lineLen+10, iy);
+      }
+
+      ctx.restore();
+    }
+
+    // ---------- Draw: Secondary plot (equilibria vs a) ----------
+    function drawSecondaryPlot(ctx, params){
+      const {k,R,a} = params;
+      const W = ctx.canvas.getBoundingClientRect().width;
+      const H = ctx.canvas.getBoundingClientRect().height;
+      const margin = {l: 58, r: 16, t: 42, b: 50};
+      const x0 = margin.l, y0 = margin.t, w = W - margin.l - margin.r, h = H - margin.t - margin.b;
+
+      const eq0 = equilibria(k,R,a);
+      const acrit = eq0.acrit || (k*R/4);
+
+      // Sweep a from 0 to 1.1 acrit (show beyond tipping)
+      const aMax = Math.max(1, acrit*1.1);
+      const xMin = 0, xMax = aMax;
+      const yMin = 0, yMax = Math.max(50, R*1.05);
+
+      const map = drawAxes(
+        ctx,
+        x0,y0,w,h,
+        xMin,xMax, yMin,yMax,
+        'removal rate a (rats/year)',
+        'equilibrium P* (rats)',
+        'Equilibrium branches vs removal rate'
+      );
+
+      // Compute branches
+      const N = 400;
+      const upper = [];
+      const lower = [];
+      for(let i=0;i<=N;i++){
+        const ai = xMin + (xMax-xMin)*i/N;
+        const eq = equilibria(k,R,ai);
+        if(eq.exists){
+          lower.push({a: ai, P: eq.Plo});
+          upper.push({a: ai, P: eq.Phi});
+        } else {
+          // stop curves at tipping
+          // (keep arrays as-is)
+        }
+      }
+
+      // Draw upper branch
+      ctx.save();
+      ctx.strokeStyle = 'rgba(52,211,153,0.85)';
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      for(let i=0;i<upper.length;i++){
+        const px = map.xToPx(upper[i].a);
+        const py = map.yToPx(upper[i].P);
+        if(i===0) ctx.moveTo(px,py);
+        else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // Draw lower branch
+      ctx.save();
+      ctx.strokeStyle = 'rgba(251,191,36,0.85)';
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      for(let i=0;i<lower.length;i++){
+        const px = map.xToPx(lower[i].a);
+        const py = map.yToPx(lower[i].P);
+        if(i===0) ctx.moveTo(px,py);
+        else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // Draw tipping vertical line at acrit
+      ctx.save();
+      ctx.setLineDash([6,4]);
+      ctx.strokeStyle = 'rgba(255,255,255,0.50)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(map.xToPx(acrit), map.yToPx(yMin));
+      ctx.lineTo(map.xToPx(acrit), map.yToPx(yMax));
+      ctx.stroke();
+      ctx.restore();
+
+      // Current a vertical line
+      ctx.save();
+      ctx.strokeStyle = 'rgba(125,211,252,0.80)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(map.xToPx(a), map.yToPx(yMin));
+      ctx.lineTo(map.xToPx(a), map.yToPx(yMax));
+      ctx.stroke();
+      ctx.restore();
+
+      // Mark current equilibria points if exist
+      const eqNow = equilibria(k,R,a);
+      ctx.save();
+      if(eqNow.exists){
+        dot(ctx, map.xToPx(a), map.yToPx(eqNow.Phi), 5.5, 'rgba(52,211,153,0.95)');
+        dot(ctx, map.xToPx(a), map.yToPx(eqNow.Plo), 5.5, 'rgba(251,191,36,0.95)');
+      } else {
+        dot(ctx, map.xToPx(a), map.yToPx(0), 5.5, 'rgba(251,113,133,0.95)');
+      }
+      ctx.restore();
+
+      // Target at 0.75R on upper branch: point at a = k*(0.75R)*(0.25)
+      const aTarget = k*(0.75*R)*(0.25);
+      ctx.save();
+      ctx.setLineDash([4,4]);
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(map.xToPx(aTarget), map.yToPx(0));
+      ctx.lineTo(map.xToPx(aTarget), map.yToPx(yMax));
+      ctx.stroke();
+      ctx.restore();
+      dot(ctx, map.xToPx(aTarget), map.yToPx(0.75*R), 6.2, 'rgba(255,255,255,0.85)');
+
+      // Legend
+      const lx = x0 + 10, ly = y0 + 10;
+      drawLegend(ctx, lx, ly, [
+        {color:'rgba(52,211,153,0.85)', text:'upper equilibrium branch'},
+        {color:'rgba(251,191,36,0.85)', text:'lower equilibrium branch'},
+        {color:'rgba(255,255,255,0.50)', text:'tipping: a = kR/4', dashed:true},
+        {color:'rgba(125,211,252,0.80)', text:'current a'},
+        {color:'rgba(255,255,255,0.55)', text:'target a for P*=0.75R', dashed:true}
+      ]);
+
+      // Annotation of acrit
+      ctx.fillStyle = 'rgba(255,255,255,0.72)';
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`a_crit = kR/4 = ${formatNum(acrit)} rats/yr`, x0+w, y0-10);
+    }
+
+    function dot(ctx, x, y, r, color){
+      ctx.fillStyle = color;
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // ---------- Wiring controls + updating everything ----------
+    const diagram = setupCanvas(document.getElementById('diagramCanvas'));
+    const mainPlot = setupCanvas(document.getElementById('mainPlot'));
+    const secondaryPlot = setupCanvas(document.getElementById('secondaryPlot'));
+
+    const aSlider = document.getElementById('aSlider');
+    const kSlider = document.getElementById('kSlider');
+    const rSlider = document.getElementById('rSlider');
+
+    const aVal = document.getElementById('aVal');
+    const kVal = document.getElementById('kVal');
+    const rVal = document.getElementById('rVal');
+
+    function getParams(){
+      const a = parseFloat(aSlider.value);
+      const k = parseFloat(kSlider.value);
+      const R = parseFloat(rSlider.value);
+      return {a,k,R};
+    }
+
+    function updateText(params){
+      aVal.textContent = formatNum(params.a);
+      kVal.textContent = formatNum(params.k);
+      rVal.textContent = Math.round(params.R).toString();
+
+      // Update slider max for a to track kR/4 a bit (but keep a stable):
+      const acrit = params.k*params.R/4;
+      const maxA = Math.max(50, Math.round(acrit*1.25*2)/2); // rounded to 0.5
+      const current = params.a;
+
+      aSlider.max = maxA.toString();
+      if(current > maxA){
+        aSlider.value = maxA.toString();
+        aVal.textContent = formatNum(maxA);
+      }
+    }
+
+    function redraw(){
+      const p = getParams();
+      updateText(p);
+      const p2 = getParams(); // in case slider got clamped
+
+      drawDiagram(diagram.ctx, p2);
+      drawMainPlot(mainPlot.ctx, p2);
+      drawSecondaryPlot(secondaryPlot.ctx, p2);
+
+      // Also update a small "live" computed target in the UI (implicitly through the plots).
+    }
+
+    [aSlider,kSlider,rSlider].forEach(el=> el.addEventListener('input', redraw));
+
+    // Initial draw
+    redraw();
+
+    // ---------- Accessibility: focus outline for keyboard nav (lightweight) ----------
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Tab') document.body.classList.add('user-is-tabbing');
+    });
+  </script>
+</body>
+</html>

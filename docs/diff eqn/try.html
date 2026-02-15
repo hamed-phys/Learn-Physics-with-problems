@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LTI system: pole diagram & Laplace response · tutorial</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #f7f9fc;
+      font-family: 'Inter', 'Segoe UI', Roboto, system-ui, sans-serif;
+      line-height: 1.6;
+      color: #1e2b3c;
+      padding: 1.5rem;
+    }
+    .article-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 2rem 2rem 1rem 1rem;
+      box-shadow: 0 20px 40px -12px rgba(0,20,40,0.25);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+    }
+    /* sticky TOC */
+    .toc-sidebar {
+      background: #f0f4fa;
+      padding: 2rem 1rem;
+      border-right: 1px solid #cfddee;
+      position: sticky;
+      top: 0;
+      align-self: start;
+      height: 100vh;
+      overflow-y: auto;
+      font-size: 0.9rem;
+    }
+    .toc-sidebar h3 {
+      font-weight: 600;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+      margin-bottom: 1.5rem;
+      color: #0b3b5c;
+      border-bottom: 2px solid #a0c1d9;
+      padding-bottom: 0.5rem;
+    }
+    .toc-sidebar ul {
+      list-style: none;
+    }
+    .toc-sidebar li {
+      margin-bottom: 0.75rem;
+    }
+    .toc-sidebar a {
+      text-decoration: none;
+      color: #1e4a6d;
+      font-weight: 500;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      display: block;
+      transition: 0.15s;
+    }
+    .toc-sidebar a:hover {
+      background: #d0e2f0;
+      color: #0a2a3c;
+    }
+    .main-content {
+      padding: 2.2rem 2.5rem;
+      background: white;
+    }
+    /* typography */
+    h1 {
+      font-size: 2.3rem;
+      font-weight: 600;
+      background: linear-gradient(145deg, #0b2b44, #1f4b70);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.2rem;
+    }
+    .subtitle {
+      color: #2c577a;
+      font-weight: 400;
+      margin-bottom: 2rem;
+      border-left: 4px solid #5b8ab5;
+      padding-left: 1rem;
+    }
+    .summary-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin: 2rem 0 2.5rem;
+    }
+    .card {
+      background: #eaf1f9;
+      border-radius: 24px;
+      padding: 1rem 1.6rem;
+      flex: 1 1 160px;
+      box-shadow: 0 4px 8px #d9e2ef;
+    }
+    .card span { font-weight: 700; color: #0b4770; }
+    .section {
+      margin-bottom: 3rem;
+      scroll-margin-top: 1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 550;
+      color: #113955;
+      border-bottom: 2px solid #bcd3e9;
+      padding-bottom: 0.3rem;
+      margin-bottom: 1.5rem;
+    }
+    h3 {
+      font-size: 1.3rem;
+      font-weight: 550;
+      color: #1f4e72;
+      margin: 1.5rem 0 0.8rem;
+    }
+    .eq-block {
+      background: #f3f6fb;
+      padding: 0.8rem 1.2rem;
+      border-radius: 16px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      border: 1px solid #b8cee8;
+      display: inline-block;
+      margin: 0.4rem 0;
+      position: relative;
+    }
+    .copy-btn {
+      background: white;
+      border: 1px solid #1f4e72;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.8rem;
+      margin-left: 1rem;
+      cursor: pointer;
+      transition: 0.1s;
+      font-weight: 600;
+      color: #1f4e72;
+    }
+    .copy-btn:hover {
+      background: #1f4e72;
+      color: white;
+    }
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+    canvas {
+      width: 100%;
+      height: auto;
+      background: #ffffff;
+      border-radius: 20px;
+      border: 1px solid #cbdbea;
+      box-shadow: 0 10px 18px -8px rgba(0,32,64,0.15);
+      display: block;
+    }
+    .plot-caption {
+      text-align: center;
+      font-weight: 500;
+      color: #2c577a;
+      margin-top: 0.3rem;
+      font-size: 0.9rem;
+    }
+    .slider-panel {
+      background: #e4edf6;
+      border-radius: 40px;
+      padding: 1.2rem 2rem;
+      margin: 2rem 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2rem;
+    }
+    .slider-panel label {
+      font-weight: 600;
+      color: #10364b;
+    }
+    input[type=range] {
+      width: 260px;
+    }
+    .final-box {
+      background: #e0edf9;
+      padding: 1.8rem 2rem;
+      border-radius: 28px;
+      border-left: 6px solid #1b4e79;
+      font-size: 1.2rem;
+      margin: 2rem 0 1rem;
+    }
+    footer {
+      margin-top: 3rem;
+      font-size: 0.8rem;
+      color: #5a7794;
+      text-align: right;
+      border-top: 1px dashed #b0c8dd;
+      padding-top: 1rem;
+    }
+    @media (max-width: 1000px) {
+      .article-container { grid-template-columns: 1fr; }
+      .toc-sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="article-container">
+  <aside class="toc-sidebar">
+    <h3>📌 Contents</h3>
+    <ul>
+      <li><a href="#part1">1. Problem analysis</a></li>
+      <li><a href="#part2">2. Strategy & tips</a></li>
+      <li><a href="#part3">3. Full solution</a></li>
+      <li><a href="#plots">Interactive plots</a></li>
+      <li><a href="#final">Final answer</a></li>
+    </ul>
+  </aside>
+  <main class="main-content">
+    <h1>LTI system: <code>W(s) = (s+10)/(s³+2s²+10s)</code></h1>
+    <div class="subtitle">pole diagram & Laplace response to sin(2t) · rest initial conditions</div>
+
+    <!-- Quick summary cards -->
+    <div class="summary-cards">
+      <div class="card"><span>⚡ transfer</span> W(s) = (s+10)/s(s²+2s+10)</div>
+      <div class="card"><span>📌 poles</span> 0 , –1 ± 3j</div>
+      <div class="card"><span>🎯 input</span> sin(2t) → 2/(s²+4)</div>
+      <div class="card"><span>🧾 response</span> Y(s)=W(s)·2/(s²+4)</div>
+    </div>
+
+    <!-- PART 1 -->
+    <section id="part1" class="section">
+      <h2>PART 1 — Problem analysis</h2>
+      <p><strong>Rewrite:</strong> We have a transfer function <em>W(s)</em> of an LTI system. (a) Sketch its pole diagram (poles in complex plane). (b) Find Laplace transform Y(s) of output (zero initial conditions) when input is sin(2t).</p>
+      <h3>Given / unknowns</h3>
+      <ul>
+        <li><span class="eq-block">W(s) = (s+10)/(s³+2s²+10s)</span></li>
+        <li>Input: <span class="eq-block">u(t) = sin(2t) &nbsp; ⇒ &nbsp; U(s) = 2/(s²+4)</span></li>
+        <li>Unknowns: poles of W(s); Y(s) = W(s)·U(s).</li>
+      </ul>
+      <h3>Relevant principles & why</h3>
+      <p>Transfer function poles = roots of denominator = natural modes. For LTI and zero IC, Y(s)=W(s)U(s). Laplace turns differential eq into algebra.</p>
+      <h3>Possible approaches</h3>
+      <ol>
+        <li><strong>Factor denominator</strong> → find roots (poles).</li>
+        <li>Partial fractions to get time response (not asked directly, but could).</li>
+        <li>Sketch poles using factorization.</li>
+      </ol>
+      <p><strong>Best:</strong> Factor denominator fully; it's a cubic with s=0 obvious root. Then quadratic formula gives complex pair.</p>
+    </section>
+
+    <!-- PART 2 -->
+    <section id="part2" class="section">
+      <h2>PART 2 — Strategy & tips (roadmap)</h2>
+      <ol style="list-style-type: decimal; padding-left: 1.8rem;">
+        <li><strong>Factor denominator</strong> – take out s: s(s²+2s+10).</li>
+        <li><strong>Find poles</strong> – solve s=0 and s²+2s+10=0 → complex –1±3j.</li>
+        <li><strong>Sketch diagram</strong> – real/imag axes, mark poles (×).</li>
+        <li><strong>Transform input</strong> – sin(2t) → ℒ = 2/(s²+4).</li>
+        <li><strong>Multiply</strong> Y(s) = W(s)·U(s) = (s+10)/(s³+2s²+10s) · 2/(s²+4).</li>
+        <li>Keep factored form for clarity: Y(s) = 2(s+10) / [s(s²+2s+10)(s²+4)].</li>
+        <li><em>Tip:</em> don't expand unless needed. Check units: s-domain consistent.</li>
+        <li><em>Common mistake:</em> forgetting factor 2 from sin transform.</li>
+      </ol>
+    </section>
+
+    <!-- PART 3 Full solution + interactive plots -->
+    <section id="part3" class="section">
+      <h2>PART 3 — Full solution & visualisation</h2>
+      <p><strong>Physical intuition:</strong> Poles at 0 (integrator), and –1±3j (oscillatory mode ω≈3, decay σ=-1). Input frequency 2 rad/s will excite steady‑state and transient.</p>
+      
+      <h3>🔍 Step-by-step derivation</h3>
+      <p>Denominator: <span class="eq-block">s³+2s²+10s = s(s²+2s+10)</span></p>
+      <p>Quadratic roots: <span class="eq-block">s = \frac{-2 \pm \sqrt{4-40}}{2} = -1 \pm 3j</span></p>
+      <p>Poles: <span class="eq-block">0,\; -1+3j,\; -1-3j</span></p>
+      <p>Input transform: <span class="eq-block">\mathcal{L}\{\sin(2t)\} = \frac{2}{s^2+4}</span></p>
+      <p>Output Laplace: <span class="eq-block">Y(s)=W(s)\cdot\frac{2}{s^2+4}= \frac{s+10}{s(s^2+2s+10)}\cdot\frac{2}{s^2+4}</span></p>
+      <p>Final compact form: <span class="eq-block" id="eq-final">Y(s) = \frac{2(s+10)}{s(s^2+2s+10)(s^2+4)}</span>
+        <button class="copy-btn" onclick="copyEq('2(s+10)/(s(s^2+2s+10)(s^2+4))')">📋 copy</button>
+      </p>
+
+      <h3>✅ Sanity checks</h3>
+      <ul>
+        <li>Units: W(s) dimensionless (if input/output same type), so Y(s) same units as U(s).</li>
+        <li>Limiting s→0: Y(0) = 20/(0·10·4) → ∞ (consistent with pole at 0).</li>
+        <li>Poles at ±j2 (input) and system poles – response contains both.</li>
+      </ul>
+    </section>
+
+    <!-- INTERACTIVE PLOTS (canvas + controls) -->
+    <section id="plots" class="section">
+      <h2>📈 Interactive visualisations</h2>
+      <div class="slider-panel">
+        <label>🎛️ damping factor ζ (affects complex pole): <span id="zetaVal">0.3</span></label>
+        <input type="range" id="zetaSlider" min="0.1" max="0.8" value="0.3162" step="0.01">
+        <span style="margin-left:auto;">(poles move, demo only)</span>
+      </div>
+      <div class="grid-2col">
+        <!-- Pole diagram canvas -->
+        <div>
+          <canvas id="poleCanvas" width="500" height="350"></canvas>
+          <div class="plot-caption">Fig 1: pole diagram (× poles). ζ = 0.3 → poles –ζωₙ ± jωₙ√(1-ζ²) with ωₙ=√10≈3.16</div>
+        </div>
+        <!-- Magnitude |Y(s)| along s=jω (frequency response glimpse) -->
+        <div>
+          <canvas id="freqCanvas" width="500" height="350"></canvas>
+          <div class="plot-caption">Fig 2: |Y(jω)| (output/input scaling) – peaks near poles.</div>
+        </div>
+      </div>
+      <!-- Third plot: step response? but we use parameter sweep via slider: phase of Y(s) -->
+      <div style="margin: 1rem 0;">
+        <canvas id="phaseCanvas" width="800" height="250" style="width:100%; height:auto;"></canvas>
+        <div class="plot-caption">Fig 3: ∠Y(jω) [rad] – influence of ζ change.</div>
+      </div>
+      <p style="font-size:0.9rem; background:#eef5fa; padding:0.5rem 1rem; border-radius:40px;"><strong>Interactive:</strong> slider changes damping of complex poles (ζ). All three plots update (poles shift, mag/phase curves).</p>
+    </section>
+
+    <!-- final answer box -->
+    <section id="final" class="section">
+      <div class="final-box">
+        <strong>✅ Final Laplace transform of response (rest IC):</strong><br>
+        <span style="font-size:1.8rem; font-family: monospace;">Y(s) = 2(s+10) / [s(s²+2s+10)(s²+4)]</span><br>
+        <button class="copy-btn" onclick="copyEq('2(s+10)/(s(s^2+2s+10)(s^2+4))')">📋 copy expression</button>
+        <p style="margin-top:0.8rem;">Pole diagram: zeros at –10 (not shown), poles at 0, –1±3j (for ζ=0.316).</p>
+      </div>
+    </section>
+    <footer>expert physics tutor · built with vanilla HTML/CSS/JS · canvas live update</footer>
+  </main>
+</div>
+
+<script>
+  (function() {
+    const canvasPole = document.getElementById('poleCanvas');
+    const canvasFreq = document.getElementById('freqCanvas');
+    const canvasPhase = document.getElementById('phaseCanvas');
+    const zetaSlider = document.getElementById('zetaSlider');
+    const zetaSpan = document.getElementById('zetaVal');
+
+    const baseWN = Math.sqrt(10);  // 3.1623
+
+    function getPoles(zeta) {
+      if (zeta > 0.99) zeta = 0.99; // safety
+      const real = -zeta * baseWN;
+      const imag = baseWN * Math.sqrt(1 - zeta * zeta);
+      return { p0: 0, p1: { re: real, im: imag }, p2: { re: real, im: -imag } };
+    }
+
+    function drawAll() {
+      const zeta = parseFloat(zetaSlider.value);
+      zetaSpan.innerText = zeta.toFixed(3);
+      const poles = getPoles(zeta);
+      
+      // pole diagram
+      drawPoleDiagram(canvasPole, poles);
+      // magnitude Y(s) along jω
+      drawMagPlot(canvasFreq, poles, zeta);
+      // phase plot
+      drawPhasePlot(canvasPhase, poles, zeta);
+    }
+
+    function drawPoleDiagram(canvas, poles) {
+      const w = canvas.width, h = canvas.height;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,w,h);
+      
+      // axis ranges: real [-4, 1], imag [-4, 4]
+      const realMin = -4, realMax = 1, imagMin = -4, imagMax = 4;
+      const mapX = (re) => ((re - realMin) / (realMax - realMin)) * w * 0.8 + w*0.1;
+      const mapY = (im) => h - ((im - imagMin) / (imagMax - imagMin)) * h * 0.8 - h*0.1;
+
+      // grid & axes
+      ctx.strokeStyle = "#c0d0e0";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      for (let i = -4; i <= 1; i++) { // vertical grid lines
+        let x = mapX(i);
+        ctx.moveTo(x, 0); ctx.lineTo(x, h);
+      }
+      for (let i = -4; i <= 4; i+=1) {
+        let y = mapY(i);
+        ctx.moveTo(0, y); ctx.lineTo(w, y);
+      }
+      ctx.strokeStyle = "#e0eaf2";
+      ctx.stroke();
+
+      // axes
+      ctx.beginPath();
+      ctx.strokeStyle = "#2f5f8a"; ctx.lineWidth = 2;
+      ctx.moveTo(mapX(0),0); ctx.lineTo(mapX(0),h);
+      ctx.moveTo(0, mapY(0)); ctx.lineTo(w, mapY(0));
+      ctx.stroke();
+
+      // plot poles
+      ctx.fillStyle = "#c22d4e";
+      ctx.font = "bold 14px 'Segoe UI'";
+      const markPole = (re, im) => {
+        let x = mapX(re), y = mapY(im);
+        ctx.beginPath();
+        ctx.arc(x, y, 8, 0, 2*Math.PI);
+        ctx.fillStyle = "#b22234";
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 16px monospace";
+        ctx.fillText("×", x-6, y-6);
+      };
+      markPole(poles.p0, 0);
+      markPole(poles.p1.re, poles.p1.im);
+      markPole(poles.p2.re, poles.p2.im);
+      ctx.fillStyle = "#0b2b44";
+      ctx.font = "12px 'Segoe UI'";
+      ctx.fillText("real", mapX(realMax-0.8), mapY(0.2));
+      ctx.fillText("imag", mapX(-0.5), mapY(imagMax-0.3));
+    }
+
+    function evalY(s, poles) {  // magnitude of Y(s) ignoring scale (normalized)
+      // Y(s) proportional to (s+10) / [s(s-p1)(s-p2)(s^2+4)]
+      const jw = s * 1j;
+      let num = jw + 10;
+      let den = jw * (jw - poles.p1.re - poles.p1.im*1j) * (jw - poles.p2.re - poles.p2.im*1j) * (jw*jw + 4);
+      return Math.abs(num / den);
+    }
+
+    function drawMagPlot(canvas, poles, zeta) {
+      const w = canvas.width, h = canvas.height;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,w,h);
+      
+      const omegaMin = 0.1, omegaMax = 5.0;
+      const xs = Array.from({length:200}, (_,i) => omegaMin + i*(omegaMax-omegaMin)/199);
+      const ys = xs.map(ω => {
+        // compute |Y(jω)| (proportional)
+        const s = {re:0, im:ω};
+        const numRe = 10, numIm = ω; // s+10
+        const den1Re = 0, den1Im = ω; // s
+        const den2Re = (0 - poles.p1.re), den2Im = (ω - poles.p1.im); // s-p1
+        const den3Re = (0 - poles.p2.re), den3Im = (ω - poles.p2.im); // s-p2
+        const den4Re = (4 - ω*ω), den4Im = 0; // (jω)^2+4 = -ω²+4
+        
+        const magNum = Math.hypot(numRe, numIm);
+        const magD1 = Math.hypot(den1Re, den1Im);
+        const magD2 = Math.hypot(den2Re, den2Im);
+        const magD3 = Math.hypot(den3Re, den3Im);
+        const magD4 = Math.hypot(den4Re, den4Im);
+        return magNum / (magD1 * magD2 * magD3 * magD4);
+      });
+      const maxY = Math.max(...ys) * 1.1;
+      const mapX = (ω) => ((ω - omegaMin) / (omegaMax - omegaMin)) * w * 0.9 + w*0.05;
+      const mapY = (mag) => h - (mag / maxY) * h * 0.85 - h*0.05;
+
+      // axes
+      ctx.strokeStyle = "#aaa"; ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      for (let i=1;i<=5;i++) { ctx.moveTo(mapX(i),h-10); ctx.lineTo(mapX(i),10); }
+      ctx.strokeStyle = "#e0e0e0"; ctx.stroke();
+
+      ctx.beginPath(); ctx.strokeStyle = "#2c3e6d"; ctx.lineWidth = 2.2;
+      for (let i=0;i<xs.length-1;i++) {
+        let x1 = mapX(xs[i]), y1 = mapY(ys[i]);
+        let x2 = mapX(xs[i+1]), y2 = mapY(ys[i+1]);
+        ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      }
+      ctx.stroke();
+      ctx.fillStyle = "#1f4b70"; ctx.font = "bold 12px"; ctx.fillText("|Y(jω)| (a.u.)", 30,40);
+      ctx.fillStyle = "#2f5f8a"; ctx.fillText("ω (rad/s)", w-100, h-20);
+    }
+
+    function drawPhasePlot(canvas, poles, zeta) {
+      const w = canvas.width, h = canvas.height;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,w,h);
+      const omegaMin = 0.2, omegaMax = 5.0;
+      const xs = Array.from({length:200}, (_,i) => omegaMin + i*(omegaMax-omegaMin)/199);
+      const phases = xs.map(ω => {
+        const s = {re:0, im:ω};
+        let arg = Math.atan2(ω, 10);                 // arg(s+10)
+        arg -= Math.atan2(ω, 0);                     // arg(s)
+        arg -= Math.atan2(ω - poles.p1.im, -poles.p1.re); // arg(s-p1)
+        arg -= Math.atan2(ω - poles.p2.im, -poles.p2.re); // arg(s-p2)
+        arg -= Math.atan2(0, 4-ω*ω);                 // arg(s²+4) = 0 or π
+        if (4-ω*ω < 0) arg -= Math.PI;
+        return arg;
+      });
+      const mapX = (ω) => ((ω - omegaMin) / (omegaMax - omegaMin)) * w * 0.9 + w*0.05;
+      const mapY = (phi) => h/2 - (phi / Math.PI) * h * 0.4; // range ±π
+      ctx.strokeStyle = "#1d5b8e"; ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      for (let i=0;i<xs.length-1;i++) {
+        let x1 = mapX(xs[i]), y1 = mapY(phases[i]);
+        let x2 = mapX(xs[i+1]), y2 = mapY(phases[i+1]);
+        if (Math.abs(phases[i+1]-phases[i]) < 3) { // avoid wrap jump
+          ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+        } else {
+          ctx.moveTo(x2,y2); // skip
+        }
+      }
+      ctx.stroke();
+      ctx.fillStyle = "#303030"; ctx.fillText("∠Y(jω) [rad]", 30,30);
+      ctx.fillText("ω", w-50, h-20);
+    }
+
+    // dummy complex for eval
+    const 1j = {re:0,im:1}; // not really used
+    window.copyEq = (txt) => navigator.clipboard.writeText(txt);
+
+    zetaSlider.addEventListener('input', drawAll);
+    window.addEventListener('resize', ()=>{ /* keep canvases crisp but no resize redraw needed */ });
+    drawAll();
+  })();
+</script>
+<!-- ensure canvases responsive but keep intrinsic dimensions -->
+<style>
+  canvas { width: 100%; height: auto; aspect-ratio: attr(width) / attr(height); }
+  @media print { .toc-sidebar, .slider-panel, .copy-btn { display: none; } }
+</style>
+</body>
+</html>

@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Euler’s Method & Linear ODE with Boundary Condition</title>
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.09);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.72);
+      --faint: rgba(255,255,255,0.55);
+      --accent: #7dd3fc;
+      --accent2: #a7f3d0;
+      --warn: #fbbf24;
+      --danger: #fb7185;
+      --ok: #34d399;
+      --border: rgba(255,255,255,0.14);
+      --shadow: 0 14px 40px rgba(0,0,0,0.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f6f7fb;
+        --panel: rgba(0,0,0,0.04);
+        --panel2: rgba(0,0,0,0.06);
+        --text: rgba(0,0,0,0.90);
+        --muted: rgba(0,0,0,0.70);
+        --faint: rgba(0,0,0,0.55);
+        --border: rgba(0,0,0,0.12);
+        --shadow: 0 12px 30px rgba(0,0,0,0.12);
+      }
+    }
+
+    html, body { height: 100%; }
+    body{
+      margin: 0;
+      background:
+        radial-gradient(1200px 700px at 20% 10%, rgba(125,211,252,0.16), transparent 55%),
+        radial-gradient(900px 600px at 85% 25%, rgba(167,243,208,0.12), transparent 55%),
+        radial-gradient(900px 650px at 50% 100%, rgba(251,191,36,0.08), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.55;
+    }
+    a{ color: var(--accent); text-decoration: none; }
+    a:hover{ text-decoration: underline; }
+    header{
+      padding: 28px 18px 8px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    .title{
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+    h1{
+      margin: 0;
+      font-size: clamp(1.55rem, 2.4vw, 2.35rem);
+      letter-spacing: 0.2px;
+    }
+    .subtitle{
+      margin: 0;
+      color: var(--muted);
+      max-width: 78ch;
+    }
+
+    main{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 10px 18px 60px;
+      display: grid;
+      grid-template-columns: 310px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      main{ grid-template-columns: 1fr; }
+    }
+
+    .toc{
+      position: sticky;
+      top: 14px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+      backdrop-filter: blur(10px);
+    }
+    .toc h2{
+      margin: 0 0 10px;
+      font-size: 1.02rem;
+    }
+    .toc ul{
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 6px;
+    }
+    .toc a{
+      display: block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      color: var(--text);
+      background: transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size: 0.95rem;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,0.10);
+      border-color: rgba(125,211,252,0.22);
+      transform: translateX(2px);
+      text-decoration: none;
+    }
+
+    .content{
+      display: grid;
+      gap: 18px;
+    }
+
+    section, article{
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 16px 16px 14px;
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+    section h2, article h2{
+      margin: 0 0 10px;
+      font-size: 1.22rem;
+      letter-spacing: 0.2px;
+    }
+    section h3{
+      margin: 14px 0 8px;
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+    .muted{ color: var(--muted); }
+    .grid2{
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 14px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .callout{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .callout strong{ color: var(--accent2); }
+
+    .bullets{
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .eq{
+      position: relative;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+      border-radius: 14px;
+      padding: 12px 12px 12px 12px;
+      overflow: auto;
+    }
+    @media (prefers-color-scheme: light){
+      .eq{ background: rgba(255,255,255,0.55); }
+    }
+    .eq pre{
+      margin: 0;
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      color: var(--text);
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+    .copyRow{
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 10px 0 0;
+      flex-wrap: wrap;
+    }
+    .btn{
+      appearance: none;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 9px 11px;
+      cursor: pointer;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size: 0.92rem;
+      user-select: none;
+    }
+    .btn:hover{
+      background: rgba(125,211,252,0.10);
+      border-color: rgba(125,211,252,0.22);
+      transform: translateY(-1px);
+    }
+    .btn:active{ transform: translateY(0px) scale(0.99); }
+    .btn.small{ padding: 7px 10px; font-size: 0.9rem; }
+    .pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.05);
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    .vizWrap{
+      display: grid;
+      gap: 12px;
+    }
+    figure{
+      margin: 0;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+    @media (prefers-color-scheme: light){
+      figure{ background: rgba(255,255,255,0.45); }
+    }
+    figcaption{
+      padding: 10px 12px 12px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      border-top: 1px solid var(--border);
+    }
+    canvas{
+      width: 100%;
+      height: 360px;
+      display: block;
+    }
+    .controls{
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+    @media (max-width: 700px){
+      .controls{ grid-template-columns: 1fr; }
+      canvas{ height: 330px; }
+    }
+    .control{
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .control label{
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    input[type="range"]{
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    .readout{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .finalBox{
+      border: 1px solid rgba(52,211,153,0.35);
+      background: rgba(52,211,153,0.10);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .finalBox h3{
+      margin: 0 0 8px;
+      color: var(--ok);
+    }
+
+    .hr{
+      height: 1px;
+      background: var(--border);
+      margin: 14px 0;
+    }
+
+    footer{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 18px 26px;
+      color: var(--faint);
+      font-size: 0.92rem;
+    }
+
+    /* subtle reveal animation */
+    @keyframes rise {
+      from{ opacity: 0; transform: translateY(8px); }
+      to{ opacity: 1; transform: translateY(0px); }
+    }
+    section, article, .toc{ animation: rise .35s ease both; }
+    section:nth-child(2){ animation-delay: .05s; }
+    section:nth-child(3){ animation-delay: .10s; }
+    section:nth-child(4){ animation-delay: .15s; }
+
+    /* print friendly */
+    @media print{
+      body{ background: white; color: black; }
+      main{ grid-template-columns: 1fr; }
+      .toc{ position: relative; top: auto; box-shadow: none; }
+      section, article, figure{ box-shadow: none; background: white; }
+      .btn{ display: none; }
+      canvas{ height: 260px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="title">
+      <h1>Two Differential-Equations Tasks: Euler’s Method & a Linear ODE with a Boundary Condition</h1>
+      <p class="subtitle">
+        We estimate a solution numerically using Euler’s method, then solve a first-order linear ODE exactly using an integrating factor.
+        Interactive plots below let you change the Euler step size <span class="pill">h</span> and the boundary value <span class="pill">x(π)=c</span>
+        to see how results and errors respond.
+      </p>
+    </div>
+  </header>
+
+  <main>
+    <nav class="toc" aria-label="Table of Contents">
+      <h2>Mini Table of Contents</h2>
+      <ul>
+        <li><a href="#quick">Quick Summary</a></li>
+        <li><a href="#viz">Interactive Visualizations</a></li>
+        <li><a href="#part1">PART 1 — Problem Analysis</a></li>
+        <li><a href="#part2">PART 2 — Strategy & Tips</a></li>
+        <li><a href="#part3">PART 3 — Full Solution</a></li>
+      </ul>
+      <div class="hr"></div>
+      <div class="muted" style="font-size:0.92rem;">
+        Tip: click any section to scroll smoothly. Use the “Copy” buttons for equations and final answers.
+      </div>
+    </nav>
+
+    <div class="content">
+
+      <section id="quick">
+        <h2>Quick Summary</h2>
+        <ul class="bullets">
+          <li>For <span class="pill">y' = x + y</span> with <span class="pill">y(0)=1</span>, Euler with <span class="pill">h=1/2</span> gives <span class="pill">y(3/2) ≈ 4.25</span>.</li>
+          <li>The exact solution is <span class="pill">y(x)=2e^x - x - 1</span>, so <span class="pill">y(3/2)=2e^{3/2}-2.5 ≈ 6.4634</span> (Euler underestimates here).</li>
+          <li>For <span class="pill">t x' + x = cos t</span>, rewrite as a linear ODE and use integrating factor <span class="pill">μ(t)=t</span>.</li>
+          <li>General solution: <span class="pill">(t x)' = cos t ⇒ t x = sin t + C</span>, so <span class="pill">x(t)=(sin t + C)/t</span> for <span class="pill">t≠0</span>.</li>
+          <li>Applying <span class="pill">x(π)=1</span> gives <span class="pill">C=π</span> and <span class="pill">x(t)=(sin t + π)/t</span>.</li>
+        </ul>
+      </section>
+
+      <section id="viz">
+        <h2>Interactive Visualizations</h2>
+        <div class="grid2">
+          <div class="callout">
+            <strong>What you’re seeing:</strong>
+            <ul class="bullets" style="margin-top:8px;">
+              <li><b>Diagram</b>: Euler “staircase” steps for <span class="pill">y' = x + y</span> and the boundary point <span class="pill">(π, c)</span> for the second ODE.</li>
+              <li><b>Main plot</b>: Top panel compares Euler vs exact <span class="pill">y(x)</span>. Bottom panel shows <span class="pill">x(t)</span> for <span class="pill">t x' + x = cos t</span>.</li>
+              <li><b>Secondary plot</b>: Left panel sweeps Euler error at <span class="pill">x=1.5</span> vs step size. Right panel shows how <span class="pill">x(tₑ)</span> depends on boundary value <span class="pill">c=x(π)</span>.</li>
+            </ul>
+          </div>
+
+          <div class="controls" aria-label="Interactive controls">
+            <div class="control">
+              <label for="hSlider">
+                <span>Euler step size <span class="pill">h</span></span>
+                <span class="pill" id="hVal">0.50</span>
+              </label>
+              <input id="hSlider" type="range" min="0.05" max="1.00" step="0.05" value="0.50" />
+              <div class="muted" style="font-size:0.9rem;">
+                Problem uses <span class="pill">h=0.50</span>. Move the slider to explore accuracy.
+              </div>
+            </div>
+
+            <div class="control">
+              <label for="cSlider">
+                <span>Boundary value <span class="pill">c = x(π)</span></span>
+                <span class="pill" id="cVal">1.00</span>
+              </label>
+              <input id="cSlider" type="range" min="-2.0" max="2.0" step="0.1" value="1.0" />
+              <div class="muted" style="font-size:0.9rem;">
+                Problem uses <span class="pill">c=1</span>. Changing <span class="pill">c</span> shifts the solution family.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="readout" id="readout">
+          <span class="pill">Euler y(1.5) ≈ <span id="yEulerOut">4.2500</span></span>
+          <span class="pill">Exact y(1.5) = <span id="yExactOut">6.4634</span></span>
+          <span class="pill">Error = <span id="yErrOut">-2.2134</span></span>
+          <span class="pill">x(tₑ=1) = <span id="xTeOut">3.1416</span></span>
+        </div>
+
+        <div class="vizWrap">
+          <figure>
+            <canvas id="canvasDiagram" aria-label="Diagram canvas"></canvas>
+            <figcaption>
+              Diagram: Euler steps for <span class="pill">y' = x + y</span> (left) and the boundary-condition geometry for <span class="pill">t x' + x = cos t</span> (right).
+            </figcaption>
+          </figure>
+
+          <figure>
+            <canvas id="canvasMain" aria-label="Main quantitative plot canvas"></canvas>
+            <figcaption>
+              Main plot: (Top) Euler vs exact for <span class="pill">y(x)</span> up to <span class="pill">x=1.5</span>.
+              (Bottom) the exact family <span class="pill">x(t)=(sin t + cπ)/t</span> for <span class="pill">t≠0</span> (avoids the singular at <span class="pill">t=0</span>).
+            </figcaption>
+          </figure>
+
+          <figure>
+            <canvas id="canvasSecondary" aria-label="Secondary plot canvas"></canvas>
+            <figcaption>
+              Secondary plot: (Left) parameter sweep of Euler error at <span class="pill">x=1.5</span> vs effective step size.
+              (Right) sensitivity of <span class="pill">x(tₑ)</span> to boundary value <span class="pill">c=x(π)</span>.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <article id="part1">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+        <h3>1) Rewrite the problem (in my own words)</h3>
+        <ul class="bullets">
+          <li><b>(a)</b> Use Euler’s method with step size <span class="pill">h = 1/2</span> to approximate the solution value <span class="pill">y(3/2)</span> for the initial value problem
+            <span class="pill">y' = x + y</span>, <span class="pill">y(0)=1</span>.</li>
+          <li><b>(b)</b> Solve exactly the ODE <span class="pill">t x' + x = cos t</span> subject to the condition <span class="pill">x(π)=1</span>.</li>
+        </ul>
+
+        <h3>2) Given quantities, unknowns, and what must be found</h3>
+        <div class="grid2">
+          <div class="callout">
+            <strong>(a) Given</strong>
+            <ul class="bullets" style="margin-top:8px;">
+              <li>ODE: <span class="pill">y' = x + y</span></li>
+              <li>Initial condition: <span class="pill">y(0)=1</span></li>
+              <li>Step size: <span class="pill">h=1/2</span></li>
+              <li>Target point: <span class="pill">x=3/2</span></li>
+            </ul>
+            <div class="hr"></div>
+            <strong>(a) Unknown</strong>
+            <ul class="bullets" style="margin-top:8px;">
+              <li>Approximate value <span class="pill">y(3/2)</span> using Euler’s method</li>
+            </ul>
+          </div>
+
+          <div class="callout">
+            <strong>(b) Given</strong>
+            <ul class="bullets" style="margin-top:8px;">
+              <li>ODE: <span class="pill">t x' + x = cos t</span></li>
+              <li>Condition: <span class="pill">x(π)=1</span></li>
+            </ul>
+            <div class="hr"></div>
+            <strong>(b) Unknown</strong>
+            <ul class="bullets" style="margin-top:8px;">
+              <li>Closed-form solution <span class="pill">x(t)</span> (for <span class="pill">t≠0</span>)</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>3) Relevant principles/laws and why they apply</h3>
+        <ul class="bullets">
+          <li><b>Euler’s method (numerical integration)</b> applies to (a) because we are explicitly asked to approximate an IVP using a fixed step size, advancing via local slope estimates <span class="pill">y' = f(x,y)</span>.</li>
+          <li><b>First-order linear ODE theory</b> applies to (b) because dividing by <span class="pill">t</span> (when <span class="pill">t≠0</span>) puts it in standard linear form <span class="pill">x' + p(t)x = q(t)</span>, solvable by an integrating factor.</li>
+          <li><b>Physical interpretation (optional intuition)</b>: both equations resemble driven first-order systems (a “growth + forcing” model and a “scaled damping + drive” model), where integrating factor corresponds to “absorbing” a decay/gain term.</li>
+        </ul>
+
+        <h3>4) Possible approaches (compare 2–3)</h3>
+        <ul class="bullets">
+          <li><b>(a) Direct Euler stepping</b>: compute <span class="pill">y_{n+1}=y_n + h f(x_n,y_n)</span> for three steps to reach <span class="pill">x=1.5</span>. Fast and exactly what’s requested.</li>
+          <li><b>(a) Solve exactly then evaluate</b>: can provide a sanity check and error estimate, but it’s not required to produce the Euler approximation.</li>
+          <li><b>(b) Integrating factor</b>: standard, systematic, minimal algebra, directly yields the family of solutions and then apply the boundary condition.</li>
+        </ul>
+
+        <h3>5) Best approach and justification</h3>
+        <ul class="bullets">
+          <li><b>(a)</b> Use Euler stepping (the method requested). Then optionally compare with the exact solution for a correctness check.</li>
+          <li><b>(b)</b> Use integrating factor after rewriting in linear form; it is the most direct and reliable method.</li>
+        </ul>
+      </article>
+
+      <article id="part2">
+        <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+        <h3>(a) Euler’s method roadmap</h3>
+        <ol class="bullets">
+          <li><b>Goal:</b> Set up the mesh points. <b>Tool:</b> <span class="pill">x_n = x_0 + nh</span>, with <span class="pill">x_0=0</span>, <span class="pill">h=1/2</span>.</li>
+          <li><b>Goal:</b> Write the Euler update. <b>Tool:</b> <span class="pill">y_{n+1}=y_n + h(x_n + y_n)</span>.</li>
+          <li><b>Goal:</b> March forward step-by-step. <b>Tool:</b> substitute current <span class="pill">(x_n,y_n)</span> into <span class="pill">x+y</span>.</li>
+          <li><b>Goal:</b> Stop at <span class="pill">x=3/2</span>. <b>Tool:</b> number of steps <span class="pill">N = (3/2)/h = 3</span>.</li>
+          <li><b>Goal:</b> (Optional) Validate. <b>Tool:</b> solve the ODE exactly and compare at <span class="pill">x=3/2</span>.</li>
+        </ol>
+
+        <h3>(b) Linear ODE roadmap</h3>
+        <ol class="bullets">
+          <li><b>Goal:</b> Put in linear standard form. <b>Tool:</b> divide by <span class="pill">t</span> (for <span class="pill">t≠0</span>) to get <span class="pill">x' + (1/t)x = (cos t)/t</span>.</li>
+          <li><b>Goal:</b> Find integrating factor. <b>Tool:</b> <span class="pill">μ(t)=exp(∫(1/t)dt)=t</span> (up to constant).</li>
+          <li><b>Goal:</b> Convert to total derivative. <b>Tool:</b> show <span class="pill">(μx)' = μq</span>, i.e., <span class="pill">(t x)' = cos t</span>.</li>
+          <li><b>Goal:</b> Integrate and solve for <span class="pill">x(t)</span>. <b>Tool:</b> integrate both sides with respect to <span class="pill">t</span>.</li>
+          <li><b>Goal:</b> Apply boundary condition. <b>Tool:</b> enforce <span class="pill">x(π)=1</span> to determine the constant.</li>
+          <li><b>Goal:</b> Note domain behavior. <b>Tool:</b> recognize singularity at <span class="pill">t=0</span>.</li>
+        </ol>
+
+        <h3>Common mistakes & quick tips</h3>
+        <ul class="bullets">
+          <li><b>Euler indexing errors:</b> keep track of <span class="pill">x_n</span> and always use the slope at the <em>left</em> endpoint for standard Euler.</li>
+          <li><b>Step count mismatch:</b> confirm <span class="pill">N = (target - start)/h</span> is an integer here (it is: <span class="pill">3</span>).</li>
+          <li><b>Integrating factor slip:</b> <span class="pill">μ(t)=e^{∫(1/t)dt}=t</span> (not <span class="pill">t^2</span>), and it’s valid only where <span class="pill">t≠0</span>.</li>
+          <li><b>Domain awareness:</b> the solution <span class="pill">x(t)=(sin t + C)/t</span> generally blows up near <span class="pill">t=0</span> unless <span class="pill">C=0</span> (not our case).</li>
+        </ul>
+      </article>
+
+      <article id="part3">
+        <h2>PART 3 — Full Solution</h2>
+
+        <h3>Physical intuition</h3>
+        <div class="callout">
+          <ul class="bullets">
+            <li><b>(a)</b> The slope <span class="pill">y' = x + y</span> grows with both <span class="pill">x</span> and <span class="pill">y</span>, so once <span class="pill">y</span> starts increasing, it tends to accelerate upward. Euler’s method approximates this by taking short straight-line steps using the current slope.</li>
+            <li><b>(b)</b> In <span class="pill">t x' + x = cos t</span>, the factor <span class="pill">t</span> scales the “rate” term. Multiplying by the integrating factor makes the left-hand side become a single derivative, like converting a “leaky” system into a conserved quantity plus a drive.</li>
+          </ul>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3>(a) Euler’s method with <span class="pill">h = 1/2</span> for <span class="pill">y' = x + y</span>, <span class="pill">y(0)=1</span></h3>
+
+        <div class="eq" id="eq-euler">
+          <pre>Given: y' = f(x,y) = x + y,  y(0)=1,  h = 1/2
+Euler update: y_{n+1} = y_n + h f(x_n, y_n) = y_n + h (x_n + y_n)
+Mesh: x_n = x_0 + n h, with x_0 = 0
+
+We need y at x = 3/2.
+Since h = 1/2, number of steps N = (3/2)/(1/2) = 3.</pre>
+          <div class="copyRow">
+            <span class="muted">Key equation to copy:</span>
+            <button class="btn small" data-copy-target="eq-euler">Copy Euler update</button>
+          </div>
+        </div>
+
+        <h3>Step-by-step computation</h3>
+        <div class="eq">
+          <pre>Step 0 → 1:
+x_0 = 0, y_0 = 1
+f(x_0,y_0) = x_0 + y_0 = 0 + 1 = 1
+y_1 = y_0 + h f = 1 + (1/2)(1) = 1.5
+x_1 = 0.5
+
+Step 1 → 2:
+x_1 = 0.5, y_1 = 1.5
+f(x_1,y_1) = 0.5 + 1.5 = 2.0
+y_2 = 1.5 + (1/2)(2.0) = 2.5
+x_2 = 1.0
+
+Step 2 → 3:
+x_2 = 1.0, y_2 = 2.5
+f(x_2,y_2) = 1.0 + 2.5 = 3.5
+y_3 = 2.5 + (1/2)(3.5) = 4.25
+x_3 = 1.5 = 3/2</pre>
+        </div>
+
+        <div class="finalBox" id="final-a">
+          <h3>Final result for (a)</h3>
+          <div class="eq" id="eq-final-a"><pre>Euler estimate:  y(3/2) ≈ y_3 = 4.25</pre></div>
+          <div class="copyRow">
+            <button class="btn" data-copy-target="eq-final-a">Copy final answer (a)</button>
+            <span class="muted">Plain text copy</span>
+          </div>
+        </div>
+
+        <h3>Sanity check (exact solution, for verification)</h3>
+        <div class="eq" id="eq-exact-a">
+          <pre>Solve: y' = x + y  ⇒  y' - y = x
+Integrating factor: e^{-x}
+(e^{-x} y)' = x e^{-x}
+∫ x e^{-x} dx = -(x+1)e^{-x} + C
+
+So: e^{-x} y = -(x+1)e^{-x} + C
+⇒ y(x) = -(x+1) + C e^{x}
+
+Use y(0)=1: 1 = -(0+1) + C  ⇒ C=2
+Exact: y(x) = 2 e^{x} - x - 1
+
+At x=3/2: y(3/2) = 2 e^{3/2} - 2.5 ≈ 6.4634
+Euler error at h=1/2: 4.25 - 6.4634 ≈ -2.2134 (underestimate).</pre>
+          <div class="copyRow">
+            <span class="muted">Key equation to copy:</span>
+            <button class="btn small" data-copy-target="eq-exact-a">Copy exact y(x)</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3>(b) Solve <span class="pill">t x' + x = cos t</span> with <span class="pill">x(π)=1</span></h3>
+
+        <div class="eq" id="eq-linear-b">
+          <pre>Start with:  t x'(t) + x(t) = cos t
+
+For t ≠ 0, divide by t:
+x' + (1/t) x = (cos t)/t
+
+This is linear: x' + p(t)x = q(t) with p(t)=1/t, q(t)=cos t / t.
+
+Integrating factor:
+μ(t) = exp(∫ p(t) dt) = exp(∫ (1/t) dt) = exp(ln|t|) = |t|
+On an interval with fixed sign of t, we can take μ(t)=t (for t>0) or μ(t)=-t (for t<0).
+Since π>0 and the condition is at t=π, we take t>0 and use μ(t)=t.</pre>
+          <div class="copyRow">
+            <span class="muted">Key equation to copy:</span>
+            <button class="btn small" data-copy-target="eq-linear-b">Copy integrating factor setup</button>
+          </div>
+        </div>
+
+        <h3>Convert to total derivative and integrate</h3>
+        <div class="eq">
+          <pre>Multiply the linear form by μ(t)=t:
+t x' + x = cos t
+
+But the left-hand side is exactly the product derivative:
+(t x)' = t x' + x
+
+So:
+(t x)' = cos t
+
+Integrate with respect to t:
+t x = ∫ cos t dt = sin t + C
+
+Solve for x(t):
+x(t) = (sin t + C)/t,   valid for t ≠ 0.</pre>
+        </div>
+
+        <h3>Apply the condition <span class="pill">x(π)=1</span></h3>
+        <div class="eq">
+          <pre>x(π)=1 ⇒ 1 = (sin π + C)/π = (0 + C)/π
+So: C = π
+
+Therefore:
+x(t) = (sin t + π)/t,   for t ≠ 0 (in particular for t>0).</pre>
+        </div>
+
+        <div class="finalBox" id="final-b">
+          <h3>Final result for (b)</h3>
+          <div class="eq" id="eq-final-b"><pre>x(t) = (sin t + π)/t   (t ≠ 0),  satisfying x(π)=1.</pre></div>
+          <div class="copyRow">
+            <button class="btn" data-copy-target="eq-final-b">Copy final answer (b)</button>
+            <span class="muted">Plain text copy</span>
+          </div>
+        </div>
+
+        <h3>Sanity checks</h3>
+        <ul class="bullets">
+          <li><b>Units:</b> No explicit physical units are given; mathematically, each term in each ODE is consistent (same dimensions for each sum).</li>
+          <li><b>Limiting behavior (a):</b> As <span class="pill">h → 0</span>, Euler’s method converges to the exact solution; the error-sweep plot shows the trend.</li>
+          <li><b>Limiting behavior (b):</b> The formula <span class="pill">x(t)=(sin t + π)/t</span> has a singularity at <span class="pill">t=0</span> (it diverges like <span class="pill">π/t</span>), so the solution naturally lives on intervals excluding 0.</li>
+          <li><b>Physical interpretation:</b> (a) behaves like an exponentially growing response with a linear-in-<span class="pill">x</span> drive. (b) is a driven first-order relation whose “effective damping” changes with <span class="pill">1/t</span>.</li>
+        </ul>
+      </article>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="muted">
+      Built with vanilla HTML/CSS/JS. Canvases are high-DPI aware and resize responsively.
+    </div>
+  </footer>
+
+  <script>
+    // ---------- Smooth scrolling for ToC ----------
+    document.querySelectorAll('.toc a[href^="#"]').forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const id = a.getAttribute('href');
+        const el = document.querySelector(id);
+        if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+
+    // ---------- Copy buttons ----------
+    async function copyTextToClipboard(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      }catch(err){
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly','');
+        ta.style.position='fixed';
+        ta.style.left='-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok=false;
+        try{ ok = document.execCommand('copy'); }catch(e){ ok=false; }
+        document.body.removeChild(ta);
+        return ok;
+      }
+    }
+
+    document.querySelectorAll('button[data-copy-target]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const targetId = btn.getAttribute('data-copy-target');
+        const box = document.getElementById(targetId);
+        if(!box) return;
+        const text = box.innerText.replace(/\n{3,}/g,"\n\n").trim();
+        const ok = await copyTextToClipboard(text);
+        const old = btn.textContent;
+        btn.textContent = ok ? "Copied ✓" : "Copy failed";
+        setTimeout(()=>btn.textContent = old, 900);
+      });
+    });
+
+    // ---------- Math helpers ----------
+    const clamp = (x,a,b)=>Math.max(a, Math.min(b, x));
+
+    // Exact solution for (a): y(x)=2 e^x - x - 1 given y(0)=1
+    function yExact(x, y0=1){
+      // More general: y = C e^x - x - 1, with y(0)=y0 => y0 = C - 1 => C=y0+1
+      const C = y0 + 1;
+      return C*Math.exp(x) - x - 1;
+    }
+
+    // Euler estimate for y' = x + y from x=0 to xTarget, with step h
+    function yEuler(xTarget, h, y0=1){
+      const Nraw = xTarget / h;
+      const N = Math.round(Nraw); // expect exact for target when h divides target; for slider, close enough
+      const heff = xTarget / N;    // ensure we land exactly at xTarget
+      let x = 0;
+      let y = y0;
+      for(let i=0;i<N;i++){
+        const f = x + y;
+        y = y + heff*f;
+        x = x + heff;
+      }
+      return {y, N, heff};
+    }
+
+    // Solution for (b): t x' + x = cos t.
+    // General (for t≠0): x(t) = (sin t + C)/t. Boundary x(pi)=c => C = c*pi.
+    function xSol(t, c){
+      return (Math.sin(t) + c*Math.PI) / t;
+    }
+
+    // ---------- Canvas drawing primitives ----------
+    function setupCanvas(canvas){
+      const ctx = canvas.getContext('2d');
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.max(2, Math.floor(rect.width * dpr));
+        const h = Math.max(2, Math.floor(rect.height * dpr));
+        if(canvas.width !== w || canvas.height !== h){
+          canvas.width = w; canvas.height = h;
+        }
+        ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+      }
+      resize();
+      return {ctx, resize};
+    }
+
+    function drawPanelBackground(ctx, x, y, w, h){
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = 'rgba(255,255,255,0.03)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const r = 12;
+      roundRect(ctx, x, y, w, h, r);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.moveTo(x+rr,y);
+      ctx.arcTo(x+w,y,x+w,y+h,rr);
+      ctx.arcTo(x+w,y+h,x,y+h,rr);
+      ctx.arcTo(x,y+h,x,y,rr);
+      ctx.arcTo(x,y,x+w,y,rr);
+      ctx.closePath();
+    }
+
+    function drawText(ctx, text, x, y, opts={}){
+      const {size=12, color='rgba(255,255,255,0.9)', align='left', baseline='alphabetic', weight=400, font='system-ui'} = opts;
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.font = `${weight} ${size}px ${font}`;
+      ctx.textAlign = align;
+      ctx.textBaseline = baseline;
+      ctx.fillText(text, x, y);
+      ctx.restore();
+    }
+
+    function drawAxes(ctx, area, xMin, xMax, yMin, yMax, opts={}){
+      const {
+        title="",
+        xLabel="",
+        yLabel="",
+        grid= true,
+        ticks=5
+      } = opts;
+
+      const {x,y,w,h,pad=44} = area;
+      const left = x + pad;
+      const right = x + w - 16;
+      const top = y + 34;
+      const bottom = y + h - pad;
+
+      // Background
+      drawPanelBackground(ctx, x, y, w, h);
+
+      // Title
+      drawText(ctx, title, x + 12, y + 18, {size: 13, weight: 650, color: 'rgba(255,255,255,0.92)'});
+
+      // Grid + ticks
+      ctx.save();
+      ctx.lineWidth = 1;
+
+      function X(u){ return left + (u - xMin) * (right-left)/(xMax-xMin); }
+      function Y(v){ return bottom - (v - yMin) * (bottom-top)/(yMax-yMin); }
+
+      if(grid){
+        ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+        for(let i=0;i<=ticks;i++){
+          const tx = xMin + i*(xMax-xMin)/ticks;
+          const px = X(tx);
+          ctx.beginPath(); ctx.moveTo(px, top); ctx.lineTo(px, bottom); ctx.stroke();
+        }
+        for(let j=0;j<=ticks;j++){
+          const ty = yMin + j*(yMax-yMin)/ticks;
+          const py = Y(ty);
+          ctx.beginPath(); ctx.moveTo(left, py); ctx.lineTo(right, py); ctx.stroke();
+        }
+      }
+
+      // Axes
+      ctx.strokeStyle = 'rgba(255,255,255,0.24)';
+      ctx.beginPath(); ctx.moveTo(left, bottom); ctx.lineTo(right, bottom); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(left, top); ctx.lineTo(left, bottom); ctx.stroke();
+
+      // Tick labels
+      ctx.fillStyle = 'rgba(255,255,255,0.72)';
+      ctx.font = `11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for(let i=0;i<=ticks;i++){
+        const tx = xMin + i*(xMax-xMin)/ticks;
+        const px = X(tx);
+        ctx.fillText(formatTick(tx), px, bottom + 6);
+        // tick mark
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.beginPath(); ctx.moveTo(px, bottom); ctx.lineTo(px, bottom+4); ctx.stroke();
+      }
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for(let j=0;j<=ticks;j++){
+        const ty = yMin + j*(yMax-yMin)/ticks;
+        const py = Y(ty);
+        ctx.fillText(formatTick(ty), left - 6, py);
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.beginPath(); ctx.moveTo(left-4, py); ctx.lineTo(left, py); ctx.stroke();
+      }
+
+      // Labels
+      drawText(ctx, xLabel, (left+right)/2, y + h - 12, {size: 12, color:'rgba(255,255,255,0.78)', align:'center', baseline:'alphabetic', font:'system-ui', weight:600});
+      ctx.save();
+      ctx.translate(x + 14, (top+bottom)/2);
+      ctx.rotate(-Math.PI/2);
+      drawText(ctx, yLabel, 0, 0, {size: 12, color:'rgba(255,255,255,0.78)', align:'center', baseline:'alphabetic', font:'system-ui', weight:600});
+      ctx.restore();
+
+      ctx.restore();
+
+      return {X, Y, left, right, top, bottom};
+    }
+
+    function formatTick(v){
+      // Nice tick formatting
+      const a = Math.abs(v);
+      if(a >= 1000) return v.toFixed(0);
+      if(a >= 10) return v.toFixed(1);
+      if(a >= 1) return v.toFixed(2);
+      return v.toFixed(3);
+    }
+
+    function drawLine(ctx, pts, stroke='rgba(125,211,252,0.95)', width=2){
+      if(pts.length<2) return;
+      ctx.save();
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = width;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPoints(ctx, pts, fill='rgba(167,243,208,0.95)', radius=3){
+      ctx.save();
+      ctx.fillStyle = fill;
+      for(const p of pts){
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, radius, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawLegend(ctx, items, x, y){
+      ctx.save();
+      let yy = y;
+      for(const it of items){
+        ctx.fillStyle = it.color;
+        ctx.fillRect(x, yy-9, 12, 3);
+        drawText(ctx, it.label, x+18, yy, {size: 12, color:'rgba(255,255,255,0.85)', align:'left', baseline:'middle', weight:600});
+        yy += 16;
+      }
+      ctx.restore();
+    }
+
+    // ---------- Draw all canvases ----------
+    const diag = setupCanvas(document.getElementById('canvasDiagram'));
+    const main = setupCanvas(document.getElementById('canvasMain'));
+    const sec  = setupCanvas(document.getElementById('canvasSecondary'));
+
+    const hSlider = document.getElementById('hSlider');
+    const cSlider = document.getElementById('cSlider');
+    const hVal = document.getElementById('hVal');
+    const cVal = document.getElementById('cVal');
+
+    const yEulerOut = document.getElementById('yEulerOut');
+    const yExactOut = document.getElementById('yExactOut');
+    const yErrOut = document.getElementById('yErrOut');
+    const xTeOut = document.getElementById('xTeOut');
+
+    const xTarget = 1.5;     // for (a)
+    const tEval = 1.0;       // used in secondary right panel
+
+    function updateReadout(h, c){
+      const {y, N, heff} = yEuler(xTarget, h, 1);
+      const ye = yExact(xTarget, 1);
+      const err = y - ye;
+
+      yEulerOut.textContent = y.toFixed(4);
+      yExactOut.textContent = ye.toFixed(4);
+      yErrOut.textContent = err.toFixed(4);
+
+      const xte = xSol(tEval, c);
+      xTeOut.textContent = xte.toFixed(4);
+
+      hVal.textContent = heff.toFixed(2); // show effective step that lands on 1.5 exactly
+      cVal.textContent = (+c).toFixed(2);
+    }
+
+    function drawDiagram(h, c){
+      const ctx = diag.ctx;
+      const canvas = document.getElementById('canvasDiagram');
+      const W = canvas.clientWidth, H = canvas.clientHeight;
+
+      ctx.clearRect(0,0,W,H);
+
+      // two panels side-by-side
+      const gap = 12;
+      const wPanel = (W - gap - 2) / 2;
+      const hPanel = H - 2;
+
+      // Left: Euler step diagram in x-y plane
+      const areaL = {x:1, y:1, w:wPanel, h:hPanel, pad:44};
+      const axL = drawAxes(ctx, areaL, 0, xTarget, 0, 7.2, {
+        title: "Diagram (a): Euler steps for y' = x + y",
+        xLabel: "x (units)",
+        yLabel: "y (units)",
+        ticks: 6
+      });
+
+      // Compute Euler points (landing exactly at xTarget)
+      const {N, heff} = yEuler(xTarget, h, 1);
+      let x=0, y=1;
+      const pts = [{x: x, y: y}];
+      const segs = []; // store line segments for staircase
+      for(let i=0;i<N;i++){
+        const slope = x + y;
+        // horizontal step in x
+        const xNext = x + heff;
+        const yHoriz = y;
+        // Euler takes line segment from (x,y) to (x+heff, y + heff*slope) but conceptually
+        // "slope at left endpoint" -> draw as straight segment
+        const yNext = y + heff*slope;
+        segs.push({x0:x, y0:y, x1:xNext, y1:yNext});
+        x = xNext; y = yNext;
+        pts.push({x, y});
+      }
+
+      // Plot exact curve for reference in diagram
+      const exactPts = [];
+      const M = 220;
+      for(let i=0;i<=M;i++){
+        const xx = xTarget*i/M;
+        exactPts.push({x: axL.X(xx), y: axL.Y(yExact(xx,1))});
+      }
+      drawLine(ctx, exactPts, 'rgba(125,211,252,0.95)', 2);
+
+      // Plot Euler segments and points
+      const segPts = [];
+      for(const s of segs){
+        segPts.push({x: axL.X(s.x0), y: axL.Y(s.y0)});
+        segPts.push({x: axL.X(s.x1), y: axL.Y(s.y1)});
+      }
+      // draw each segment separately for crispness
+      ctx.save();
+      ctx.strokeStyle = 'rgba(167,243,208,0.95)';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      for(const s of segs){
+        ctx.beginPath();
+        ctx.moveTo(axL.X(s.x0), axL.Y(s.y0));
+        ctx.lineTo(axL.X(s.x1), axL.Y(s.y1));
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      const ePts = pts.map(p=>({x: axL.X(p.x), y: axL.Y(p.y)}));
+      drawPoints(ctx, ePts, 'rgba(167,243,208,0.95)', 3);
+
+      // Legend
+      drawLegend(ctx, [
+        {label:"Exact y(x)=2e^x-x-1", color:'rgba(125,211,252,0.95)'},
+        {label:"Euler segments (step h)", color:'rgba(167,243,208,0.95)'}
+      ], areaL.x + 12, areaL.y + 44);
+
+      // annotate h
+      drawText(ctx, `Effective h = ${heff.toFixed(2)} (lands on x=1.50)`, areaL.x + 12, areaL.y + areaL.h - 16,
+        {size:12, color:'rgba(255,255,255,0.78)', weight:650});
+
+      // Right: boundary condition geometry for (b)
+      const areaR = {x:1+wPanel+gap, y:1, w:wPanel, h:hPanel, pad:44};
+      const tMin = 0.2, tMax = 2*Math.PI;
+      // pick y-range based on c
+      // sample to estimate range
+      let ymin=+Infinity, ymax=-Infinity;
+      for(let i=0;i<=240;i++){
+        const t = tMin + (tMax-tMin)*i/240;
+        const val = xSol(t, c);
+        ymin = Math.min(ymin, val);
+        ymax = Math.max(ymax, val);
+      }
+      // keep reasonable margins
+      const padY = 0.15*(ymax-ymin || 1);
+      ymin -= padY; ymax += padY;
+      ymin = clamp(ymin, -12, 12);
+      ymax = clamp(ymax, -12, 12);
+      if(ymax-ymin < 2){ ymin -= 1; ymax += 1; }
+
+      const axR = drawAxes(ctx, areaR, tMin, tMax, ymin, ymax, {
+        title: "Diagram (b): boundary point and solution curve x(t)",
+        xLabel: "t (radians)",
+        yLabel: "x(t) (units)",
+        ticks: 6
+      });
+
+      // curve
+      const curve = [];
+      for(let i=0;i<=320;i++){
+        const t = tMin + (tMax-tMin)*i/320;
+        curve.push({x: axR.X(t), y: axR.Y(xSol(t,c))});
+      }
+      drawLine(ctx, curve, 'rgba(125,211,252,0.95)', 2);
+
+      // boundary point at (pi, c)
+      const px = axR.X(Math.PI);
+      const py = axR.Y(c);
+      drawPoints(ctx, [{x:px,y:py}], 'rgba(251,191,36,0.95)', 4);
+
+      // draw crosshair
+      ctx.save();
+      ctx.strokeStyle = 'rgba(251,191,36,0.55)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5,5]);
+      ctx.beginPath(); ctx.moveTo(px, axR.top); ctx.lineTo(px, axR.bottom); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(axR.left, py); ctx.lineTo(axR.right, py); ctx.stroke();
+      ctx.restore();
+
+      drawLegend(ctx, [
+        {label:"x(t)=(sin t + cπ)/t", color:'rgba(125,211,252,0.95)'},
+        {label:"Boundary point (π, c)", color:'rgba(251,191,36,0.95)'}
+      ], areaR.x + 12, areaR.y + 44);
+
+      drawText(ctx, `c = x(π) = ${(+c).toFixed(2)}`, areaR.x + 12, areaR.y + areaR.h - 16,
+        {size:12, color:'rgba(255,255,255,0.78)', weight:650});
+    }
+
+    function drawMainPlot(h, c){
+      const ctx = main.ctx;
+      const canvas = document.getElementById('canvasMain');
+      const W = canvas.clientWidth, H = canvas.clientHeight;
+      ctx.clearRect(0,0,W,H);
+
+      // two stacked panels
+      const gap = 12;
+      const panelH = (H - gap - 2)/2;
+
+      // Top: Euler vs exact for y(x) on [0,1.5]
+      const areaTop = {x:1, y:1, w:W-2, h:panelH, pad:44};
+      const axT = drawAxes(ctx, areaTop, 0, xTarget, 0, 7.2, {
+        title: "Main plot (a): y(x) exact vs Euler (up to x=1.5)",
+        xLabel: "x (units)",
+        yLabel: "y (units)",
+        ticks: 6
+      });
+
+      // exact curve
+      const exact = [];
+      for(let i=0;i<=320;i++){
+        const xx = xTarget*i/320;
+        exact.push({x: axT.X(xx), y: axT.Y(yExact(xx,1))});
+      }
+      drawLine(ctx, exact, 'rgba(125,211,252,0.95)', 2);
+
+      // Euler polyline (connect Euler points)
+      const {N, heff} = yEuler(xTarget, h, 1);
+      let x=0, y=1;
+      const ePts = [{x:axT.X(x), y:axT.Y(y)}];
+      for(let i=0;i<N;i++){
+        const slope = x + y;
+        y = y + heff*slope;
+        x = x + heff;
+        ePts.push({x:axT.X(x), y:axT.Y(y)});
+      }
+      drawLine(ctx, ePts, 'rgba(167,243,208,0.95)', 2);
+      drawPoints(ctx, ePts, 'rgba(167,243,208,0.95)', 3);
+
+      // mark target point
+      const yE = ePts[ePts.length-1];
+      const yEx = {x: axT.X(xTarget), y: axT.Y(yExact(xTarget,1))};
+      drawPoints(ctx, [yE], 'rgba(251,191,36,0.95)', 4);
+      drawPoints(ctx, [yEx], 'rgba(251,191,36,0.95)', 4);
+
+      // annotate values
+      const yEulerVal = yEuler(xTarget, h, 1).y;
+      const yExactVal = yExact(xTarget, 1);
+      drawText(ctx, `Euler y(1.5)≈${yEulerVal.toFixed(4)}   Exact y(1.5)=${yExactVal.toFixed(4)}`, areaTop.x+12, areaTop.y+areaTop.h-16,
+        {size:12, color:'rgba(255,255,255,0.78)', weight:650});
+
+      drawLegend(ctx, [
+        {label:"Exact: y=2e^x-x-1", color:'rgba(125,211,252,0.95)'},
+        {label:"Euler polyline", color:'rgba(167,243,208,0.95)'},
+        {label:"Markers at x=1.5", color:'rgba(251,191,36,0.95)'}
+      ], areaTop.x+12, areaTop.y+44);
+
+      // Bottom: x(t) for t x' + x = cos t, with x(pi)=c
+      const areaBot = {x:1, y:1+panelH+gap, w:W-2, h:panelH, pad:44};
+      const tMin = 0.2, tMax = 2*Math.PI;
+
+      // find y-range
+      let ymin=+Infinity, ymax=-Infinity;
+      for(let i=0;i<=360;i++){
+        const t = tMin + (tMax-tMin)*i/360;
+        const val = xSol(t, c);
+        ymin = Math.min(ymin, val);
+        ymax = Math.max(ymax, val);
+      }
+      const padY = 0.18*(ymax-ymin || 1);
+      ymin -= padY; ymax += padY;
+      ymin = clamp(ymin, -12, 12);
+      ymax = clamp(ymax, -12, 12);
+      if(ymax-ymin < 2){ ymin -= 1; ymax += 1; }
+
+      const axB = drawAxes(ctx, areaBot, tMin, tMax, ymin, ymax, {
+        title: "Main plot (b): x(t) for t x' + x = cos t with boundary x(π)=c",
+        xLabel: "t (radians)",
+        yLabel: "x(t) (units)",
+        ticks: 6
+      });
+
+      const curve = [];
+      for(let i=0;i<=420;i++){
+        const t = tMin + (tMax-tMin)*i/420;
+        curve.push({x: axB.X(t), y: axB.Y(xSol(t,c))});
+      }
+      drawLine(ctx, curve, 'rgba(125,211,252,0.95)', 2);
+
+      // boundary point (pi, c)
+      const px = axB.X(Math.PI);
+      const py = axB.Y(c);
+      drawPoints(ctx, [{x:px,y:py}], 'rgba(251,191,36,0.95)', 4);
+
+      // Also mark tEval
+      const pte = axB.X(tEval);
+      const xte = xSol(tEval, c);
+      const pye = axB.Y(xte);
+      drawPoints(ctx, [{x:pte,y:pye}], 'rgba(167,243,208,0.95)', 4);
+
+      // dashed lines for boundary point
+      ctx.save();
+      ctx.strokeStyle = 'rgba(251,191,36,0.55)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5,5]);
+      ctx.beginPath(); ctx.moveTo(px, axB.top); ctx.lineTo(px, axB.bottom); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(axB.left, py); ctx.lineTo(axB.right, py); ctx.stroke();
+      ctx.restore();
+
+      drawLegend(ctx, [
+        {label:"x(t)=(sin t + cπ)/t", color:'rgba(125,211,252,0.95)'},
+        {label:"Boundary (π,c)", color:'rgba(251,191,36,0.95)'},
+        {label:"Marker at tₑ=1", color:'rgba(167,243,208,0.95)'}
+      ], areaBot.x+12, areaBot.y+44);
+
+      drawText(ctx, `c=${(+c).toFixed(2)}  →  x(1)=${xte.toFixed(4)}  (note: singular at t=0)`, areaBot.x+12, areaBot.y+areaBot.h-16,
+        {size:12, color:'rgba(255,255,255,0.78)', weight:650});
+    }
+
+    function drawSecondary(h, c){
+      const ctx = sec.ctx;
+      const canvas = document.getElementById('canvasSecondary');
+      const W = canvas.clientWidth, H = canvas.clientHeight;
+      ctx.clearRect(0,0,W,H);
+
+      // Two panels side-by-side
+      const gap = 12;
+      const wPanel = (W - gap - 2)/2;
+      const hPanel = H - 2;
+
+      // Left panel: Euler error vs effective h (using h = 1.5/n)
+      const areaL = {x:1, y:1, w:wPanel, h:hPanel, pad:44};
+
+      // Build sweep
+      const sweep = [];
+      let errMin=+Infinity, errMax=-Infinity;
+      for(let n=1;n<=60;n++){
+        const heff = xTarget / n;
+        const yE = yEuler(xTarget, heff, 1).y; // lands exactly
+        const yX = yExact(xTarget, 1);
+        const err = yE - yX;
+        sweep.push({heff, err});
+        errMin = Math.min(errMin, err);
+        errMax = Math.max(errMax, err);
+      }
+      // focus on magnitude a bit: include 0 line
+      errMin = Math.min(errMin, 0);
+      errMax = Math.max(errMax, 0);
+      const padE = 0.15*(errMax-errMin || 1);
+      errMin -= padE; errMax += padE;
+
+      const axL = drawAxes(ctx, areaL, 0, 1.5, errMin, errMax, {
+        title: "Secondary (a): Euler error at x=1.5 vs step size",
+        xLabel: "effective step size h (units of x)",
+        yLabel: "error = y_Euler − y_exact (units of y)",
+        ticks: 6
+      });
+
+      // Draw error curve (sorted by h)
+      sweep.sort((a,b)=>a.heff-b.heff);
+      const pts = sweep.map(p=>({x: axL.X(p.heff), y: axL.Y(p.err)}));
+      drawLine(ctx, pts, 'rgba(125,211,252,0.95)', 2);
+
+      // Draw zero line
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([6,6]);
+      ctx.beginPath();
+      ctx.moveTo(axL.left, axL.Y(0));
+      ctx.lineTo(axL.right, axL.Y(0));
+      ctx.stroke();
+      ctx.restore();
+
+      // Marker for current h (convert to effective heff that lands on 1.5)
+      const {heff: hEffCur, y: yCur} = yEuler(xTarget, h, 1);
+      const errCur = yCur - yExact(xTarget, 1);
+      const mX = axL.X(hEffCur);
+      const mY = axL.Y(errCur);
+      drawPoints(ctx, [{x:mX,y:mY}], 'rgba(251,191,36,0.95)', 5);
+
+      drawLegend(ctx, [
+        {label:"Error curve (heff=1.5/n)", color:'rgba(125,211,252,0.95)'},
+        {label:"Current h marker", color:'rgba(251,191,36,0.95)'}
+      ], areaL.x+12, areaL.y+44);
+
+      drawText(ctx, `Current effective h=${hEffCur.toFixed(2)}, error=${errCur.toFixed(4)}`, areaL.x+12, areaL.y+areaL.h-16,
+        {size:12, color:'rgba(255,255,255,0.78)', weight:650});
+
+      // Right panel: x(tEval) vs c = x(pi)
+      const areaR = {x:1+wPanel+gap, y:1, w:wPanel, h:hPanel, pad:44};
+
+      const cMin=-2.0, cMax=2.0;
+      // x(tEval) = (sin(tEval) + c*pi)/tEval
+      let yMin=+Infinity, yMax=-Infinity;
+      for(let i=0;i<=200;i++){
+        const cc = cMin + (cMax-cMin)*i/200;
+        const xv = xSol(tEval, cc);
+        yMin = Math.min(yMin, xv);
+        yMax = Math.max(yMax, xv);
+      }
+      const padY = 0.12*(yMax-yMin || 1);
+      yMin -= padY; yMax += padY;
+
+      const axR = drawAxes(ctx, areaR, cMin, cMax, yMin, yMax, {
+        title: "Secondary (b): sensitivity of x(tₑ) to boundary value c=x(π)",
+        xLabel: "c (units of x)",
+        yLabel: `x(tₑ=1) (units of x)`,
+        ticks: 6
+      });
+
+      const curve = [];
+      for(let i=0;i<=260;i++){
+        const cc = cMin + (cMax-cMin)*i/260;
+        curve.push({x: axR.X(cc), y: axR.Y(xSol(tEval, cc))});
+      }
+      drawLine(ctx, curve, 'rgba(125,211,252,0.95)', 2);
+
+      // marker for current c
+      const xCur = xSol(tEval, c);
+      drawPoints(ctx, [{x: axR.X(c), y: axR.Y(xCur)}], 'rgba(251,191,36,0.95)', 5);
+
+      // reference line at c=1 (problem's value)
+      ctx.save();
+      ctx.strokeStyle = 'rgba(167,243,208,0.55)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5,5]);
+      ctx.beginPath();
+      ctx.moveTo(axR.X(1), axR.top);
+      ctx.lineTo(axR.X(1), axR.bottom);
+      ctx.stroke();
+      ctx.restore();
+
+      drawLegend(ctx, [
+        {label:"x(1) vs c (linear)", color:'rgba(125,211,252,0.95)'},
+        {label:"Current c marker", color:'rgba(251,191,36,0.95)'},
+        {label:"c=1 reference", color:'rgba(167,243,208,0.95)'}
+      ], areaR.x+12, areaR.y+44);
+
+      drawText(ctx, `At tₑ=1: x(1)=(sin 1 + cπ)/1 = ${xCur.toFixed(4)}`, areaR.x+12, areaR.y+areaR.h-16,
+        {size:12, color:'rgba(255,255,255,0.78)', weight:650});
+    }
+
+    function redrawAll(){
+      const h = parseFloat(hSlider.value);
+      const c = parseFloat(cSlider.value);
+      updateReadout(h, c);
+      drawDiagram(h, c);
+      drawMainPlot(h, c);
+      drawSecondary(h, c);
+    }
+
+    // Resize handling
+    function handleResize(){
+      diag.resize(); main.resize(); sec.resize();
+      redrawAll();
+    }
+    window.addEventListener('resize', handleResize);
+
+    hSlider.addEventListener('input', redrawAll);
+    cSlider.addEventListener('input', redrawAll);
+
+    // Initial draw
+    redrawAll();
+  </script>
+</body>
+</html>

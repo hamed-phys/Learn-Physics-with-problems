@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Laplace Transforms: cos(t), Time-Shift Inverse, and IVPs (with Interactive Plots)</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --panel:#121a27;
+      --panel2:#0f1623;
+      --text:#e8eefc;
+      --muted:#a8b3d6;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:rgba(232,238,252,.12);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 600px at 15% 10%, rgba(125,211,252,.14), transparent 60%),
+        radial-gradient(900px 600px at 85% 15%, rgba(167,139,250,.14), transparent 55%),
+        radial-gradient(800px 800px at 50% 90%, rgba(52,211,153,.08), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding:28px 18px 12px;
+      max-width:1100px;
+      margin:0 auto;
+    }
+    header .title{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(1.4rem, 2.2vw + 1rem, 2.3rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:6px 0 0;
+      color:var(--muted);
+      max-width:75ch;
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:18px;
+      max-width:1100px;
+      margin:0 auto;
+      padding: 0 18px 32px;
+    }
+
+    /* Sticky mini TOC */
+    .toc{
+      position:sticky;
+      top:12px;
+      align-self:start;
+      background:linear-gradient(180deg, rgba(18,26,39,.92), rgba(18,26,39,.70));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px 14px 10px;
+      backdrop-filter: blur(10px);
+    }
+    .toc h2{
+      margin:0 0 10px;
+      font-size:1rem;
+      letter-spacing:.4px;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .toc .pill{
+      font-size:.75rem;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      color:var(--muted);
+      background:rgba(255,255,255,.03);
+    }
+    .toc nav a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid transparent;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+    .toc nav a:hover{
+      background:rgba(125,211,252,.08);
+      border-color:rgba(125,211,252,.18);
+      color:var(--text);
+      text-decoration:none;
+    }
+
+    main{
+      display:grid;
+      grid-template-columns: 340px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+
+    @media (max-width: 980px){
+      main{grid-template-columns:1fr}
+      .toc{position:relative; top:auto}
+    }
+
+    section, article{
+      background:linear-gradient(180deg, rgba(18,26,39,.88), rgba(15,22,35,.82));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px 18px 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    h2{
+      margin:0 0 10px;
+      font-size:1.25rem;
+    }
+    h3{
+      margin:18px 0 8px;
+      font-size:1.05rem;
+      color:var(--text);
+    }
+    p{margin:10px 0}
+    ul{margin:10px 0 10px 20px}
+    li{margin:6px 0}
+    .muted{color:var(--muted)}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 860px){
+      .grid2{grid-template-columns:1fr}
+    }
+
+    .callout{
+      border:1px solid rgba(125,211,252,.22);
+      background:rgba(125,211,252,.07);
+      border-radius:14px;
+      padding:12px 12px;
+    }
+    .callout.ok{
+      border-color: rgba(52,211,153,.25);
+      background: rgba(52,211,153,.07);
+    }
+    .callout.warn{
+      border-color: rgba(251,191,36,.26);
+      background: rgba(251,191,36,.08);
+    }
+    .callout.bad{
+      border-color: rgba(251,113,133,.26);
+      background: rgba(251,113,133,.07);
+    }
+
+    .eq{
+      font-family:var(--mono);
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 12px;
+      overflow:auto;
+      position:relative;
+    }
+    .eq .label{
+      position:absolute;
+      top:10px;
+      right:10px;
+      font-size:.75rem;
+      color:var(--muted);
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+      padding:3px 8px;
+      border-radius:999px;
+    }
+    .eq pre{
+      margin:0;
+      white-space:pre-wrap;
+    }
+
+    .btnrow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:10px;
+    }
+    button{
+      cursor:pointer;
+      border:none;
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:600;
+      color:var(--text);
+      background:rgba(125,211,252,.12);
+      border:1px solid rgba(125,211,252,.25);
+      transition: transform .06s ease, background .15s ease, border-color .15s ease;
+    }
+    button:hover{
+      background:rgba(125,211,252,.18);
+      border-color:rgba(125,211,252,.35);
+    }
+    button:active{transform: translateY(1px)}
+    .btn-secondary{
+      background:rgba(167,139,250,.10);
+      border-color:rgba(167,139,250,.25);
+    }
+    .btn-secondary:hover{
+      background:rgba(167,139,250,.16);
+      border-color:rgba(167,139,250,.35);
+    }
+    .btn-ok{
+      background:rgba(52,211,153,.10);
+      border-color:rgba(52,211,153,.25);
+    }
+    .btn-ok:hover{
+      background:rgba(52,211,153,.16);
+      border-color:rgba(52,211,153,.35);
+    }
+    .copyhint{
+      font-size:.85rem;
+      color:var(--muted);
+      margin-top:6px;
+    }
+
+    .viz{
+      padding:0;
+      overflow:hidden;
+    }
+    .viz header{
+      max-width:none;
+      margin:0;
+      padding:14px 16px 0;
+    }
+    .viz header h2{margin:0}
+    .viz .content{
+      padding:12px 16px 16px;
+    }
+    .controls{
+      display:grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap:12px;
+      margin:10px 0 12px;
+    }
+    @media (max-width: 980px){
+      .controls{grid-template-columns:1fr}
+    }
+    .control{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 10px;
+      background:rgba(0,0,0,.12);
+    }
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size:.9rem;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .control .value{
+      color:var(--text);
+      font-family:var(--mono);
+      font-size:.9rem;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: #7dd3fc;
+    }
+    select{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      padding:10px 10px;
+      outline:none;
+    }
+
+    .canvaswrap{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 980px){
+      .canvaswrap{grid-template-columns:1fr}
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      border-top:1px solid var(--line);
+      background:rgba(7,10,16,.55);
+    }
+    .canvasTitle{
+      padding:10px 12px;
+      font-weight:700;
+      border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .canvasTitle small{color:var(--muted); font-weight:600}
+
+    .boxed{
+      border:1px solid rgba(52,211,153,.28);
+      background:rgba(52,211,153,.08);
+      border-radius:14px;
+      padding:12px 12px;
+    }
+    .boxed .big{
+      font-family:var(--mono);
+      font-size:1rem;
+      white-space:pre-wrap;
+      margin:0;
+    }
+
+    footer{
+      max-width:1100px;
+      margin:0 auto;
+      padding: 0 18px 24px;
+      color:var(--muted);
+      font-size:.9rem;
+    }
+
+    /* subtle animation */
+    @media (prefers-reduced-motion: no-preference){
+      section, article, .toc{animation: pop .35s ease both}
+      @keyframes pop{
+        from{opacity:0; transform: translateY(6px)}
+        to{opacity:1; transform:none}
+      }
+    }
+
+    /* Print friendly */
+    @media print{
+      body{background:#fff; color:#000}
+      section, article, .toc{box-shadow:none; background:#fff; border:1px solid #ddd}
+      canvas{border:1px solid #ddd}
+      button{display:none}
+      a{color:#000; text-decoration:underline}
+      main{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="title">
+    <div>
+      <h1>Laplace Transforms &amp; 2nd-Order IVPs (Problems 7–9)</h1>
+      <p class="subtitle">
+        We derive <span class="muted">ℒ{cos(t)}</span> using complex exponentials, compute a shifted inverse Laplace in both
+        unit-step and piecewise (“cases”) form, and solve two second-order initial value problems via Laplace transforms,
+        with an interactive oscillator visualization.
+      </p>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <main>
+    <aside class="toc" aria-label="Table of Contents">
+      <h2>Mini TOC <span class="pill">sticky</span></h2>
+      <nav>
+        <a href="#quick">Quick Summary</a>
+        <a href="#viz">Interactive Visualization</a>
+        <a href="#part1">PART 1 — Problem Analysis</a>
+        <a href="#part2">PART 2 — Strategy &amp; Tips</a>
+        <a href="#part3">PART 3 — Full Solution</a>
+        <a href="#final">Final Answers (Copy)</a>
+      </nav>
+    </aside>
+
+    <div>
+      <section id="quick">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li><span class="muted">Using</span> cos(t) = (e<sup>it</sup> + e<sup>-it</sup>)/2 <span class="muted">gives</span> ℒ{cos t} = s/(s²+1).</li>
+          <li>ℒ<sup>-1</sup>(1/s − e<sup>-s</sup>/(s(s+1))) = 1 − u(t−1)[1 − e<sup>-(t−1)</sup>] = { 1 (t&lt;1), e<sup>-(t−1)</sup> (t≥1) }.</li>
+          <li>IVP (a): y'' − y' − 2y = 0, y(0)=0, y'(0)=2 ⇒ y(t) = (2/3)(e<sup>2t</sup> − e<sup>-t</sup>).</li>
+          <li>IVP (b): y'' + 4y = cos t, y(0)=y'(0)=0 ⇒ y(t) = (1/3)(cos t − cos 2t).</li>
+          <li>Physics view: (b) is a driven undamped oscillator (ω₀=2) driven at ω=1, producing a “beat-like” response.</li>
+        </ul>
+      </section>
+
+      <section id="viz" class="viz" aria-label="Interactive visualization">
+        <header>
+          <h2>Interactive Visualization (Mass–Spring–Damper Analogy)</h2>
+          <p class="muted" style="margin:8px 0 0">
+            These ODEs match standard mechanical models. We plot time-response and a frequency-sweep curve (undamped, regularized near resonance for display).
+            Controls update <strong>all</strong> canvases live.
+          </p>
+        </header>
+        <div class="content">
+          <div class="controls">
+            <div class="control">
+              <label for="mode">
+                <span>Displayed IVP</span>
+                <span class="value" id="modeLabel">IVP (b)</span>
+              </label>
+              <select id="mode">
+                <option value="b" selected>IVP (b): y'' + 4y = cos(ω t) (driven oscillator)</option>
+                <option value="a">IVP (a): y'' − a y' − 2y = 0 (growth/decay model)</option>
+                <option value="step">Problem (8): f(t) piecewise (time shift)</option>
+              </select>
+            </div>
+
+            <div class="control" id="controlOmega">
+              <label for="omega">
+                <span>Forcing frequency ω (rad/s)</span>
+                <span class="value" id="omegaVal">1.00</span>
+              </label>
+              <input id="omega" type="range" min="0.20" max="3.50" step="0.01" value="1.00"/>
+              <div class="copyhint">Problem (9b) uses ω=1 and ω₀=2. Slider varies ω for insight.</div>
+            </div>
+
+            <div class="control" id="controlA" style="display:none">
+              <label for="aCoef">
+                <span>Coefficient a in y'' − a y' − 2y = 0</span>
+                <span class="value" id="aVal">1.00</span>
+              </label>
+              <input id="aCoef" type="range" min="-1.50" max="3.00" step="0.01" value="1.00"/>
+              <div class="copyhint">Problem (9a) uses a=1. Slider shows how roots change growth/decay.</div>
+            </div>
+          </div>
+
+          <div class="canvaswrap">
+            <article style="padding:0; overflow:hidden;">
+              <div class="canvasTitle">
+                <div>Diagram: Oscillator model <small>(m, k, c, forcing)</small></div>
+                <div class="muted" style="font-family:var(--mono); font-size:.85rem" id="diagramNote">ω = 1.00 rad/s</div>
+              </div>
+              <canvas id="canvasDiagram" aria-label="Oscillator diagram canvas"></canvas>
+            </article>
+
+            <article style="padding:0; overflow:hidden;">
+              <div class="canvasTitle">
+                <div>Main Plot: Time response <small>(selected model)</small></div>
+                <div class="muted" style="font-family:var(--mono); font-size:.85rem" id="timeNote">t in s</div>
+              </div>
+              <canvas id="canvasTime" aria-label="Time response plot canvas"></canvas>
+            </article>
+
+            <article style="padding:0; overflow:hidden;">
+              <div class="canvasTitle">
+                <div>Secondary Plot: Frequency sweep <small>(amplitude vs ω)</small></div>
+                <div class="muted" style="font-family:var(--mono); font-size:.85rem" id="sweepNote">ω₀ = 2 rad/s</div>
+              </div>
+              <canvas id="canvasSweep" aria-label="Frequency sweep plot canvas"></canvas>
+            </article>
+
+            <article class="callout ok" style="margin:0">
+              <h3 style="margin-top:0">What you’re seeing</h3>
+              <ul>
+                <li><strong>IVP (b):</strong> An undamped oscillator with natural frequency ω₀=2 driven at ω. Response is a combination of cos(ωt) and cos(ω₀t).</li>
+                <li><strong>Frequency sweep:</strong> Ideal undamped steady-state amplitude grows near resonance (ω→ω₀). For plotting, we cap/regularize the blow-up so the graph stays readable.</li>
+                <li><strong>IVP (a):</strong> Exponential modes from the characteristic roots; changing a shifts stability (growth vs decay).</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="part1">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+        <h3>Rewrite the problems in plain words</h3>
+        <p>
+          <strong>(7)</strong> Compute the Laplace transform of cos(t) by rewriting cos(t) using complex exponentials.
+          <br/>
+          <strong>(8)</strong> Find the function f(t) whose Laplace transform is
+          <span class="muted">1/s − e<sup>-s</sup> / (s(s+1))</span>, expressed (i) with the unit step u(t−a) and (ii) as a piecewise function, then sketch its graph.
+          <br/>
+          <strong>(9)</strong> Solve two initial value problems using the Laplace transform:
+          (a) y'' − y' − 2y = 0, y(0)=0, y'(0)=2;
+          (b) y'' + 4y = cos t, y(0)=y'(0)=0.
+        </p>
+
+        <div class="grid2">
+          <div class="callout">
+            <h3 style="margin-top:0">Given quantities</h3>
+            <ul>
+              <li>Laplace transform ℒ{·} defined in the standard way: ℒ{f(t)} = ∫₀^∞ e<sup>-st</sup> f(t) dt.</li>
+              <li>Problem (7): input function cos(t).</li>
+              <li>Problem (8): Laplace-domain expression F(s) = 1/s − e<sup>-s</sup>/(s(s+1)).</li>
+              <li>Problem (9a): linear homogeneous ODE with constants and initial data y(0)=0, y'(0)=2.</li>
+              <li>Problem (9b): linear forced ODE with cos(t) forcing and zero initial data.</li>
+            </ul>
+          </div>
+
+          <div class="callout">
+            <h3 style="margin-top:0">Unknowns / what must be found</h3>
+            <ul>
+              <li>(7) Find a closed form for ℒ{cos(t)}.</li>
+              <li>(8) Find f(t) in both u-form and cases form, and sketch.</li>
+              <li>(9a) Find y(t) satisfying the ODE and initial conditions.</li>
+              <li>(9b) Find y(t) satisfying the ODE and initial conditions.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Relevant principles (and why they apply)</h3>
+        <ul>
+          <li><strong>Complex exponential representation:</strong> cos(t) can be written using e<sup>it</sup> and e<sup>-it</sup>, and Laplace transforms handle exponentials cleanly.</li>
+          <li><strong>Linearity of ℒ:</strong> ℒ{af+bg} = aℒ{f}+bℒ{g} simplifies all three problems.</li>
+          <li><strong>Time-shift (second shifting theorem):</strong> e<sup>-as</sup>G(s) ↔ u(t−a)g(t−a) is exactly what problem (8) is built around.</li>
+          <li><strong>Derivative transforms:</strong> ℒ{y'} = sY − y(0), ℒ{y''} = s²Y − s y(0) − y'(0) convert IVPs into algebraic equations in Y(s).</li>
+          <li><strong>Physics analogy:</strong> y'' + ω₀² y = driving corresponds to a mass–spring system; it provides intuition (oscillation, resonance, beats).</li>
+        </ul>
+
+        <h3>Possible approaches (compare briefly)</h3>
+        <ul>
+          <li><strong>Approach A (Laplace-first):</strong> Apply Laplace transform, solve for Y(s), then invert using partial fractions and shift rules. Best for (8) and required for (9).</li>
+          <li><strong>Approach B (direct ODE solving):</strong> Use characteristic equations / undetermined coefficients. Fast for (9), but the task explicitly asks for Laplace method.</li>
+          <li><strong>Approach C (tables &amp; pattern matching):</strong> Use known transform pairs. Efficient but you must justify steps (especially in (7) via complex exponential).</li>
+        </ul>
+
+        <div class="callout ok">
+          <strong>Chosen approach:</strong> Use Laplace transform systematically:
+          complex exponentials for (7), time-shift theorem for (8), and derivative properties + partial fractions for (9).
+          This is the most consistent method across all parts and matches the prompt’s requirements.
+        </div>
+      </section>
+
+      <section id="part2">
+        <h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+
+        <h3>Minimal step-by-step plan (5–10 steps)</h3>
+        <ol>
+          <li><strong>(7) Rewrite cos(t):</strong> Use cos(t) = (e<sup>it</sup> + e<sup>-it</sup>)/2. <span class="muted">Tool:</span> Euler’s formula.</li>
+          <li><strong>(7) Transform exponentials:</strong> Compute ℒ{e<sup>±it</sup>} as ∫₀^∞ e<sup>-(s∓i)t</sup> dt. <span class="muted">Tool:</span> geometric integral.</li>
+          <li><strong>(8) Identify a shift:</strong> Recognize e<sup>-s</sup>G(s) as a time delay by 1. <span class="muted">Tool:</span> second shifting theorem.</li>
+          <li><strong>(8) Invert G(s):</strong> Partial fraction 1/(s(s+1)) → simple time functions. <span class="muted">Tool:</span> table + algebra.</li>
+          <li><strong>(9) Transform derivatives:</strong> Replace y'', y' with expressions in Y(s) using initial conditions. <span class="muted">Tool:</span> derivative Laplace formulas.</li>
+          <li><strong>(9) Solve for Y(s):</strong> Algebraic solve in s-domain. <span class="muted">Tool:</span> factoring/partial fractions.</li>
+          <li><strong>(9) Invert:</strong> Use partial fractions and known inverse transforms (exponentials, cosines). <span class="muted">Tool:</span> transform pairs.</li>
+          <li><strong>Sanity checks:</strong> Verify initial conditions and qualitative behavior (growth/oscillation). <span class="muted">Tool:</span> evaluate y(0), y'(0), limits.</li>
+        </ol>
+
+        <h3>Common mistakes &amp; quick tips</h3>
+        <div class="grid2">
+          <div class="callout warn">
+            <strong>Common mistakes</strong>
+            <ul>
+              <li>Forgetting initial-condition terms in ℒ{y'} and ℒ{y''}.</li>
+              <li>Mixing up the shift rule: e<sup>-as</sup>G(s) corresponds to u(t−a)g(t−a), not u(t)g(t−a).</li>
+              <li>Sign errors in partial fractions for rational functions with s²+α² factors.</li>
+              <li>In (9b), forgetting ω₀=2 implies cos(2t) appears from s/(s²+4).</li>
+            </ul>
+          </div>
+          <div class="callout ok">
+            <strong>Quick tips</strong>
+            <ul>
+              <li>Keep Y(s) factored when possible; it reveals which table entry you need.</li>
+              <li>Check y(0) and y'(0) from your final y(t) immediately—fast error detector.</li>
+              <li>For (8), sketch by computing f(t&lt;1) and f(t≥1) separately; the step function just “turns on” the shifted piece.</li>
+              <li>For oscillator intuition: undamped + forcing produces a combination of two cosines ⇒ beating patterns (difference frequency).</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="part3">
+        <h2>PART 3 — Full Solution</h2>
+
+        <h3>Physical intuition (big picture)</h3>
+        <p>
+          Laplace transforms convert time-domain dynamics into algebra. For second-order systems, this is like switching from
+          “time-evolution” to a “frequency/complex growth rate” viewpoint. In physics, the equation
+          y'' + ω₀² y = driving is a classic mass–spring oscillator; the transform automatically handles initial conditions and yields
+          a response made of natural motion (ω₀) plus a forced motion (ω).
+        </p>
+
+        <article class="callout">
+          <h3 style="margin-top:0">Definitions used</h3>
+          <div class="eq" style="margin-top:10px">
+            <span class="label">Definition</span>
+            <pre>ℒ{f(t)} = F(s) = ∫₀^∞ e^{-st} f(t) dt    (for s large enough)</pre>
+          </div>
+          <div class="eq" style="margin-top:10px">
+            <span class="label">Derivatives</span>
+            <pre>ℒ{y'}  = sY(s) − y(0)
+ℒ{y''} = s^2 Y(s) − s y(0) − y'(0)</pre>
+          </div>
+          <div class="eq" style="margin-top:10px">
+            <span class="label">Shift</span>
+            <pre>If ℒ{g(t)} = G(s), then ℒ{u(t−a) g(t−a)} = e^{-as} G(s)</pre>
+          </div>
+        </article>
+
+        <hr style="border:none; border-top:1px solid var(--line); margin:18px 0;"/>
+
+        <h3 id="sol7">Problem (7): Derive ℒ{cos(t)} using complex exponentials</h3>
+        <p>
+          Start from Euler’s identity:
+        </p>
+        <div class="eq" id="eq7a">
+          <span class="label">Key identity</span>
+          <pre>cos(t) = (e^{it} + e^{-it}) / 2</pre>
+        </div>
+        <p>
+          Apply linearity of the Laplace transform:
+        </p>
+        <div class="eq" id="eq7b">
+          <span class="label">Linearity</span>
+          <pre>ℒ{cos(t)} = (1/2) [ ℒ{e^{it}} + ℒ{e^{-it}} ]</pre>
+        </div>
+        <p>
+          Compute each term directly from the definition (treat i as a constant):
+        </p>
+        <div class="eq" id="eq7c">
+          <span class="label">Integral</span>
+          <pre>ℒ{e^{it}} = ∫₀^∞ e^{-st} e^{it} dt = ∫₀^∞ e^{-(s - i)t} dt
+          = 1 / (s - i)          (Re(s) &gt; 0)</pre>
+        </div>
+        <p>
+          Similarly,
+        </p>
+        <div class="eq" id="eq7d">
+          <span class="label">Integral</span>
+          <pre>ℒ{e^{-it}} = ∫₀^∞ e^{-(s + i)t} dt = 1 / (s + i)</pre>
+        </div>
+        <p>
+          Combine:
+        </p>
+        <div class="eq" id="eq7e">
+          <span class="label">Combine</span>
+          <pre>ℒ{cos(t)} = (1/2) [ 1/(s - i) + 1/(s + i) ]
+          = (1/2) [ (s + i + s - i) / (s^2 + 1) ]
+          = s / (s^2 + 1)</pre>
+        </div>
+
+        <div class="boxed" id="box7">
+          <p class="big"><strong>Result (7):</strong>
+ℒ{cos(t)} = s / (s^2 + 1)   (Re(s) &gt; 0)</p>
+        </div>
+
+        <div class="callout ok">
+          <strong>Sanity check:</strong> As s → ∞, ℒ{cos t} ≈ s/s² = 1/s, which matches the idea that very large s heavily weights t≈0 where cos(t)≈1.
+        </div>
+
+        <hr style="border:none; border-top:1px solid var(--line); margin:18px 0;"/>
+
+        <h3 id="sol8">Problem (8): Compute f(t) = ℒ<sup>-1</sup>( 1/s − e<sup>-s</sup>/(s(s+1)) )</h3>
+        <p>
+          Let
+          <span class="muted">F(s) = 1/s − e<sup>-s</sup>/(s(s+1))</span>.
+          Invert term-by-term (linearity).
+        </p>
+
+        <h4 style="margin:12px 0 6px; font-size:1rem;">Step 1: Invert 1/s</h4>
+        <div class="eq" id="eq8a">
+          <span class="label">Table</span>
+          <pre>ℒ^{-1}{1/s} = 1</pre>
+        </div>
+
+        <h4 style="margin:12px 0 6px; font-size:1rem;">Step 2: Handle the shifted term</h4>
+        <p>
+          Write the shifted term as e<sup>-s</sup> G(s), where
+        </p>
+        <div class="eq" id="eq8b">
+          <span class="label">Identify G(s)</span>
+          <pre>G(s) = 1 / [s(s+1)]</pre>
+        </div>
+        <p>
+          First invert G(s). Use partial fractions:
+        </p>
+        <div class="eq" id="eq8c">
+          <span class="label">Partial fractions</span>
+          <pre>1/[s(s+1)] = A/s + B/(s+1)
+
+1 = A(s+1) + Bs
+  = (A+B)s + A
+
+Match coefficients:
+A + B = 0
+A = 1
+
+So: A = 1, B = −1
+
+⇒ 1/[s(s+1)] = 1/s − 1/(s+1)</pre>
+        </div>
+        <p>
+          Therefore,
+        </p>
+        <div class="eq" id="eq8d">
+          <span class="label">Invert G</span>
+          <pre>g(t) = ℒ^{-1}{G(s)} = ℒ^{-1}{1/s} − ℒ^{-1}{1/(s+1)}
+     = 1 − e^{-t}</pre>
+        </div>
+        <p>
+          Now apply the time-shift rule with a = 1:
+        </p>
+        <div class="eq" id="eq8e">
+          <span class="label">Shift rule</span>
+          <pre>ℒ^{-1}{ e^{-s} G(s) } = u(t−1) g(t−1)
+= u(t−1) [ 1 − e^{-(t−1)} ]</pre>
+        </div>
+
+        <h4 style="margin:12px 0 6px; font-size:1rem;">Step 3: Combine both parts</h4>
+        <div class="eq" id="eq8f">
+          <span class="label">Combine</span>
+          <pre>f(t) = 1 − u(t−1)[1 − e^{-(t−1)}]</pre>
+        </div>
+
+        <div class="boxed" id="box8">
+          <p class="big"><strong>Result (8) — u-form:</strong>
+f(t) = 1 − u(t−1)[1 − e^{-(t−1)}]</p>
+        </div>
+
+        <p>
+          To write in cases form, evaluate for t&lt;1 and t≥1:
+        </p>
+        <div class="eq" id="eq8g">
+          <span class="label">Cases</span>
+          <pre>For t &lt; 1:  u(t−1)=0  ⇒ f(t)=1
+
+For t ≥ 1: u(t−1)=1  ⇒ f(t)= 1 − (1 − e^{-(t−1)}) = e^{-(t−1)}</pre>
+        </div>
+
+        <div class="boxed" id="box8cases">
+          <p class="big"><strong>Result (8) — cases form:</strong>
+f(t) = { 1,                 t &lt; 1
+       { e^{-(t−1)},        t ≥ 1</p>
+        </div>
+
+        <div class="callout ok">
+          <strong>Sketch notes:</strong> f(t) stays at 1 up to t=1, then jumps to e<sup>0</sup>=1 and decays exponentially for t&gt;1.
+          So it is continuous at t=1 (no jump), but the slope changes at t=1.
+        </div>
+
+        <hr style="border:none; border-top:1px solid var(--line); margin:18px 0;"/>
+
+        <h3 id="sol9">Problem (9): Solve IVPs via Laplace transforms</h3>
+
+        <h4 style="margin:12px 0 6px; font-size:1rem;">(9a)  y'' − y' − 2y = 0,  y(0)=0,  y'(0)=2</h4>
+        <p>
+          Let Y(s)=ℒ{y(t)}. Take Laplace transforms term-by-term:
+        </p>
+        <div class="eq" id="eq9a1">
+          <span class="label">Transform ODE</span>
+          <pre>ℒ{y''} − ℒ{y'} − 2ℒ{y} = 0
+(s^2Y − s y(0) − y'(0)) − (sY − y(0)) − 2Y = 0</pre>
+        </div>
+        <p>
+          Substitute y(0)=0 and y'(0)=2:
+        </p>
+        <div class="eq" id="eq9a2">
+          <span class="label">Insert ICs</span>
+          <pre>(s^2Y − 2) − (sY) − 2Y = 0
+⇒ (s^2 − s − 2)Y = 2</pre>
+        </div>
+        <p>
+          Factor the quadratic:
+        </p>
+        <div class="eq" id="eq9a3">
+          <span class="label">Factor</span>
+          <pre>s^2 − s − 2 = (s−2)(s+1)
+⇒ Y(s) = 2 / [(s−2)(s+1)]</pre>
+        </div>
+        <p>
+          Partial fractions:
+        </p>
+        <div class="eq" id="eq9a4">
+          <span class="label">Partial fractions</span>
+          <pre>2/[(s−2)(s+1)] = A/(s−2) + B/(s+1)
+
+2 = A(s+1) + B(s−2)
+  = (A+B)s + (A − 2B)
+
+Match:
+A + B = 0
+A − 2B = 2
+
+From B = −A:
+A − 2(−A) = 2 ⇒ 3A = 2 ⇒ A = 2/3
+B = −2/3</pre>
+        </div>
+        <p>
+          Invert using ℒ<sup>-1</sup>{1/(s−a)} = e<sup>at</sup>:
+        </p>
+        <div class="eq" id="eq9a5">
+          <span class="label">Invert</span>
+          <pre>y(t) = (2/3)e^{2t} − (2/3)e^{−t}
+     = (2/3)(e^{2t} − e^{−t})</pre>
+        </div>
+
+        <div class="boxed" id="box9a">
+          <p class="big"><strong>Result (9a):</strong>
+y(t) = (2/3)(e^{2t} − e^{−t})</p>
+        </div>
+
+        <div class="callout ok">
+          <strong>Sanity checks:</strong>
+          <ul>
+            <li>Initial conditions: y(0)=(2/3)(1−1)=0, y'(t)=(2/3)(2e^{2t}+e^{-t}) ⇒ y'(0)=(2/3)(3)=2.</li>
+            <li>Qualitative behavior: e^{2t} dominates ⇒ solution grows rapidly (an unstable mode).</li>
+            <li>Units: if t is time, exponents require rates (here 2 and −1) in 1/time; consistent for a dimensionless y or scaled variables.</li>
+          </ul>
+        </div>
+
+        <h4 style="margin:16px 0 6px; font-size:1rem;">(9b)  y'' + 4y = cos t,  y(0)=0,  y'(0)=0</h4>
+        <p>
+          Again let Y(s)=ℒ{y(t)}. Transform:
+        </p>
+        <div class="eq" id="eq9b1">
+          <span class="label">Transform ODE</span>
+          <pre>ℒ{y''} + 4ℒ{y} = ℒ{cos t}
+(s^2Y − s y(0) − y'(0)) + 4Y = ℒ{cos t}</pre>
+        </div>
+        <p>
+          With y(0)=0 and y'(0)=0:
+        </p>
+        <div class="eq" id="eq9b2">
+          <span class="label">Insert ICs</span>
+          <pre>(s^2 + 4)Y = ℒ{cos t}</pre>
+        </div>
+        <p>
+          From Problem (7), ℒ{cos t} = s/(s^2+1). Therefore:
+        </p>
+        <div class="eq" id="eq9b3">
+          <span class="label">Solve for Y</span>
+          <pre>Y(s) = [ s/(s^2+1) ] / (s^2+4)
+     = s / [(s^2+1)(s^2+4)]</pre>
+        </div>
+        <p>
+          Decompose into terms that invert to cosines:
+        </p>
+        <div class="eq" id="eq9b4">
+          <span class="label">Partial fractions</span>
+          <pre>Assume:  s/[(s^2+1)(s^2+4)] = A·s/(s^2+1) + B·s/(s^2+4)
+
+Multiply both sides by (s^2+1)(s^2+4):
+s = A s (s^2+4) + B s (s^2+1)
+
+Divide by s (valid for algebraic identity):
+1 = A(s^2+4) + B(s^2+1)
+  = (A+B)s^2 + (4A + B)
+
+Match coefficients:
+A + B = 0
+4A + B = 1
+
+B = −A ⇒ 4A − A = 1 ⇒ 3A = 1 ⇒ A = 1/3,  B = −1/3</pre>
+        </div>
+        <p>
+          Invert using ℒ<sup>-1</sup>{ s/(s^2+a^2) } = cos(at):
+        </p>
+        <div class="eq" id="eq9b5">
+          <span class="label">Invert</span>
+          <pre>y(t) = (1/3)cos(t) − (1/3)cos(2t)
+     = (1/3)(cos t − cos 2t)</pre>
+        </div>
+
+        <div class="boxed" id="box9b">
+          <p class="big"><strong>Result (9b):</strong>
+y(t) = (1/3)(cos t − cos 2t)</p>
+        </div>
+
+        <div class="callout ok">
+          <strong>Sanity checks:</strong>
+          <ul>
+            <li>Initial conditions: y(0)=(1/3)(1−1)=0; y'(t)=(1/3)(−sin t + 2 sin 2t) ⇒ y'(0)=0.</li>
+            <li>Limiting/interpretation: response is a superposition of the driving cosine (ω=1) and natural cosine (ω₀=2), producing a beating pattern.</li>
+            <li>Units: if y is displacement, then the forcing term “cos t” is implicitly scaled to the same units as y'' (i.e., we’re in nondimensional or normalized units with m=1).</li>
+          </ul>
+        </div>
+
+      </section>
+
+      <section id="final">
+        <h2>Final Answers (Copy)</h2>
+
+        <div class="grid2">
+          <article>
+            <h3 style="margin-top:0">Key equations</h3>
+            <div class="eq" id="copyBlockKey">
+              <span class="label">Copy block</span>
+              <pre>cos(t) = (e^{it} + e^{-it})/2
+ℒ{cos t} = s/(s^2+1)
+
+Shift rule: ℒ^{-1}{e^{-as}G(s)} = u(t-a) g(t-a), where g = ℒ^{-1}{G}</pre>
+            </div>
+            <div class="btnrow">
+              <button class="btn-secondary" data-copy="#copyBlockKey">Copy key equations</button>
+            </div>
+            <div class="copyhint">Copies plain text (no formatting).</div>
+          </article>
+
+          <article>
+            <h3 style="margin-top:0">Final results</h3>
+            <div class="eq" id="copyBlockFinal">
+              <span class="label">Copy block</span>
+              <pre>(7)  ℒ{cos(t)} = s/(s^2+1)
+
+(8)  f(t) = 1 − u(t−1)[1 − e^{-(t−1)}]
+     = { 1,          t &lt; 1
+       { e^{-(t−1)}, t ≥ 1
+
+(9a) y(t) = (2/3)(e^{2t} − e^{−t})
+
+(9b) y(t) = (1/3)(cos t − cos 2t)</pre>
+            </div>
+            <div class="btnrow">
+              <button class="btn-ok" data-copy="#copyBlockFinal">Copy final answers</button>
+            </div>
+            <div class="copyhint">Tip: paste into notes/homework solutions directly.</div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<footer>
+  <p>
+    Built with vanilla HTML/CSS/JS (no external libraries). Canvases are high-DPI aware and responsive.
+    If you print this page, the solution text remains clean while interactive elements are hidden.
+  </p>
+</footer>
+
+<script>
+/* =========================
+   Copy-to-clipboard
+========================= */
+(function(){
+  function getTextFromSelector(sel){
+    const el = document.querySelector(sel);
+    if(!el) return "";
+    return el.innerText.replace(/\n{3,}/g,"\n\n").trim();
+  }
+  async function copyText(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(e){
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position="fixed";
+      ta.style.left="-9999px";
+      ta.style.top="0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      let ok=false;
+      try{ ok = document.execCommand("copy"); }catch(err){ ok=false; }
+      document.body.removeChild(ta);
+      return ok;
+    }
+  }
+  document.querySelectorAll("[data-copy]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const sel = btn.getAttribute("data-copy");
+      const text = getTextFromSelector(sel);
+      const ok = await copyText(text);
+      const old = btn.textContent;
+      btn.textContent = ok ? "Copied!" : "Copy failed";
+      setTimeout(()=>btn.textContent=old, 900);
+    });
+  });
+})();
+
+/* =========================
+   Canvas helpers
+========================= */
+function setupHiDPICanvas(canvas){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(320, rect.width);
+  const h = Math.max(240, rect.height);
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  return {ctx, w, h, dpr};
+}
+
+function drawRoundedRect(ctx, x,y,w,h,r){
+  const rr = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr, y);
+  ctx.arcTo(x+w, y, x+w, y+h, rr);
+  ctx.arcTo(x+w, y+h, x, y+h, rr);
+  ctx.arcTo(x, y+h, x, y, rr);
+  ctx.arcTo(x, y, x+w, y, rr);
+  ctx.closePath();
+}
+
+function niceTicks(min, max, n=6){
+  if(max === min) return [min];
+  const span = max - min;
+  const raw = span / n;
+  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+  const steps = [1,2,2.5,5,10].map(k=>k*pow);
+  let step = steps[0];
+  for(const s of steps){
+    if(raw <= s){ step = s; break; }
+  }
+  const start = Math.ceil(min/step)*step;
+  const ticks = [];
+  for(let v=start; v<=max+1e-12; v+=step) ticks.push(v);
+  return ticks;
+}
+
+function drawAxes(ctx, box, xlim, ylim, opts){
+  const {x,y,w,h} = box;
+  const padL = opts.padL ?? 54;
+  const padR = opts.padR ?? 18;
+  const padT = opts.padT ?? 16;
+  const padB = opts.padB ?? 42;
+
+  const px = x + padL;
+  const py = y + padT;
+  const pw = w - padL - padR;
+  const ph = h - padT - padB;
+
+  // background panel
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "rgba(255,255,255,0.02)";
+  ctx.fillRect(x,y,w,h);
+
+  // grid
+  const xt = niceTicks(xlim[0], xlim[1], 6);
+  const yt = niceTicks(ylim[0], ylim[1], 6);
+
+  ctx.strokeStyle = "rgba(232,238,252,0.10)";
+  ctx.lineWidth = 1;
+
+  ctx.beginPath();
+  for(const xv of xt){
+    const X = px + (xv - xlim[0])/(xlim[1]-xlim[0]) * pw;
+    ctx.moveTo(X, py);
+    ctx.lineTo(X, py+ph);
+  }
+  for(const yv of yt){
+    const Y = py + (1 - (yv - ylim[0])/(ylim[1]-ylim[0])) * ph;
+    ctx.moveTo(px, Y);
+    ctx.lineTo(px+pw, Y);
+  }
+  ctx.stroke();
+
+  // axes border
+  ctx.strokeStyle = "rgba(232,238,252,0.16)";
+  ctx.strokeRect(px, py, pw, ph);
+
+  // ticks + labels
+  ctx.fillStyle = "rgba(232,238,252,0.72)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  for(const xv of xt){
+    const X = px + (xv - xlim[0])/(xlim[1]-xlim[0]) * pw;
+    ctx.beginPath();
+    ctx.moveTo(X, py+ph);
+    ctx.lineTo(X, py+ph+5);
+    ctx.strokeStyle = "rgba(232,238,252,0.18)";
+    ctx.stroke();
+    ctx.fillText(formatTick(xv), X, py+ph+8);
+  }
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  for(const yv of yt){
+    const Y = py + (1 - (yv - ylim[0])/(ylim[1]-ylim[0])) * ph;
+    ctx.beginPath();
+    ctx.moveTo(px-5, Y);
+    ctx.lineTo(px, Y);
+    ctx.strokeStyle = "rgba(232,238,252,0.18)";
+    ctx.stroke();
+    ctx.fillText(formatTick(yv), px-8, Y);
+  }
+
+  // axis labels
+  ctx.fillStyle = "rgba(232,238,252,0.86)";
+  ctx.font = "13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillText(opts.xlabel || "", px + pw/2, y + h - 8);
+
+  ctx.save();
+  ctx.translate(x + 14, py + ph/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText(opts.ylabel || "", 0, 0);
+  ctx.restore();
+
+  // title
+  ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText(opts.title || "", x + 12, y + 10);
+
+  ctx.restore();
+
+  function xToPx(xv){ return px + (xv - xlim[0])/(xlim[1]-xlim[0]) * pw; }
+  function yToPx(yv){ return py + (1 - (yv - ylim[0])/(ylim[1]-ylim[0])) * ph; }
+
+  return {plot:{x:px,y:py,w:pw,h:ph}, xToPx, yToPx};
+}
+
+function formatTick(v){
+  const av = Math.abs(v);
+  if(av >= 1000 || (av > 0 && av < 0.001)) return v.toExponential(1);
+  // trim trailing zeros
+  let s = (Math.round(v*1000)/1000).toFixed(3);
+  s = s.replace(/\.?0+$/,"");
+  return s;
+}
+
+function polyline(ctx, pts, strokeStyle="rgba(125,211,252,0.95)", lineWidth=2){
+  if(pts.length < 2) return;
+  ctx.save();
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = lineWidth;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawLegend(ctx, items, x, y){
+  ctx.save();
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  let yy = y;
+  for(const it of items){
+    ctx.strokeStyle = it.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, yy);
+    ctx.lineTo(x+16, yy);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(232,238,252,0.86)";
+    ctx.fillText(it.label, x+22, yy);
+    yy += 16;
+  }
+  ctx.restore();
+}
+
+/* =========================
+   Models (for visualization)
+========================= */
+function y_ivp_b(t, omega, omega0=2){
+  // Solve y'' + omega0^2 y = cos(omega t), y(0)=y'(0)=0, amplitude normalized to 1.
+  // For omega != omega0: y = (cos(omega t) - cos(omega0 t))/(omega0^2 - omega^2)
+  // For omega = omega0: resonance limit -> y = (t/(2*omega0)) sin(omega0 t)
+  const denom = (omega0*omega0 - omega*omega);
+  if(Math.abs(denom) < 1e-5){
+    return (t/(2*omega0)) * Math.sin(omega0*t);
+  }
+  return (Math.cos(omega*t) - Math.cos(omega0*t))/denom;
+}
+
+function y_ivp_a(t, a){
+  // Generalized for visualization: y'' - a y' - 2 y = 0, y(0)=0, y'(0)=2
+  // Roots: r = (a ± sqrt(a^2 + 8))/2
+  const disc = Math.sqrt(a*a + 8);
+  const r1 = (a + disc)/2;
+  const r2 = (a - disc)/2;
+  // y = C (e^{r1 t} - e^{r2 t})
+  // y'(0)= C(r1 - r2) = C*disc = 2 -> C = 2/disc
+  const C = 2/disc;
+  return C*(Math.exp(r1*t) - Math.exp(r2*t));
+}
+
+function f_piecewise(t){
+  // Problem (8): f(t)=1 for t<1, and e^{-(t-1)} for t>=1
+  if(t < 1) return 1;
+  return Math.exp(-(t-1));
+}
+
+/* =========================
+   Rendering
+========================= */
+const els = {
+  mode: document.getElementById("mode"),
+  modeLabel: document.getElementById("modeLabel"),
+  omega: document.getElementById("omega"),
+  omegaVal: document.getElementById("omegaVal"),
+  aCoef: document.getElementById("aCoef"),
+  aVal: document.getElementById("aVal"),
+  controlOmega: document.getElementById("controlOmega"),
+  controlA: document.getElementById("controlA"),
+  diagramNote: document.getElementById("diagramNote"),
+  canvasDiagram: document.getElementById("canvasDiagram"),
+  canvasTime: document.getElementById("canvasTime"),
+  canvasSweep: document.getElementById("canvasSweep")
+};
+
+const state = {
+  mode: "b",
+  omega: 1.00,
+  a: 1.00,
+  omega0: 2.0,
+};
+
+function syncControls(){
+  state.mode = els.mode.value;
+  els.modeLabel.textContent = state.mode === "b" ? "IVP (b)" : (state.mode === "a" ? "IVP (a)" : "Problem (8)");
+  // show/hide parameter controls
+  els.controlOmega.style.display = (state.mode === "b") ? "block" : "none";
+  els.controlA.style.display = (state.mode === "a") ? "block" : "none";
+  els.diagramNote.textContent = (state.mode === "b")
+    ? `ω = ${state.omega.toFixed(2)} rad/s`
+    : (state.mode === "a" ? `a = ${state.a.toFixed(2)}` : "shift at t = 1 s");
+}
+
+function drawDiagram(){
+  const {ctx,w,h} = setupHiDPICanvas(els.canvasDiagram);
+  ctx.clearRect(0,0,w,h);
+
+  // Panel
+  ctx.save();
+  ctx.fillStyle = "rgba(255,255,255,0.02)";
+  ctx.fillRect(0,0,w,h);
+  ctx.restore();
+
+  // Coordinate system baseline
+  const midY = h*0.58;
+  const left = 48;
+  const right = w-28;
+
+  // ground line
+  ctx.strokeStyle = "rgba(232,238,252,0.18)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(left, midY+62);
+  ctx.lineTo(right, midY+62);
+  ctx.stroke();
+
+  // wall
+  ctx.strokeStyle = "rgba(232,238,252,0.22)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(left, midY-40);
+  ctx.lineTo(left, midY+80);
+  ctx.stroke();
+  for(let y=midY-38; y<=midY+78; y+=10){
+    ctx.beginPath();
+    ctx.moveTo(left, y);
+    ctx.lineTo(left-12, y+8);
+    ctx.stroke();
+  }
+
+  // spring
+  const springStartX = left;
+  const springEndX = w*0.44;
+  const coils = 10;
+  const amp = 12;
+  ctx.strokeStyle = "rgba(125,211,252,0.8)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(springStartX, midY);
+  const dx = (springEndX - springStartX)/coils;
+  for(let i=1;i<coils;i++){
+    const x = springStartX + i*dx;
+    const y = midY + (i%2===0 ? -amp : amp);
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(springEndX, midY);
+  ctx.stroke();
+
+  // damper (in parallel)
+  const dStartX = left+10;
+  const dEndX = springEndX;
+  const yD = midY-40;
+  ctx.strokeStyle = "rgba(167,139,250,0.75)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(dStartX, yD);
+  ctx.lineTo(dStartX+40, yD);
+  ctx.stroke();
+  // piston box
+  ctx.strokeRect(dStartX+40, yD-10, 36, 20);
+  ctx.beginPath();
+  ctx.moveTo(dStartX+76, yD);
+  ctx.lineTo(dEndX, yD);
+  ctx.stroke();
+
+  // mass
+  const massX = springEndX;
+  const massW = w*0.18;
+  const massH = 70;
+  const massY = midY - massH/2;
+  ctx.save();
+  ctx.fillStyle = "rgba(232,238,252,0.06)";
+  ctx.strokeStyle = "rgba(232,238,252,0.22)";
+  ctx.lineWidth = 2;
+  drawRoundedRect(ctx, massX, massY, massW, massH, 14);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // wheels / guides
+  ctx.strokeStyle = "rgba(232,238,252,0.18)";
+  ctx.lineWidth = 2;
+  for(let i=0;i<3;i++){
+    const cx = massX + 20 + i*28;
+    const cy = midY + massH/2 + 14;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 8, 0, Math.PI*2);
+    ctx.stroke();
+  }
+
+  // forcing arrow
+  const arrowX1 = massX + massW + 8;
+  const arrowX2 = massX + massW + 70;
+  const arrowY = midY;
+  ctx.strokeStyle = "rgba(52,211,153,0.85)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(arrowX1, arrowY);
+  ctx.lineTo(arrowX2, arrowY);
+  ctx.stroke();
+  // arrow head
+  ctx.beginPath();
+  ctx.moveTo(arrowX2, arrowY);
+  ctx.lineTo(arrowX2-12, arrowY-7);
+  ctx.lineTo(arrowX2-12, arrowY+7);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(52,211,153,0.85)";
+  ctx.fill();
+
+  // labels
+  ctx.fillStyle = "rgba(232,238,252,0.9)";
+  ctx.font = "600 13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText("wall", left-36, midY-50);
+
+  ctx.fillStyle = "rgba(125,211,252,0.92)";
+  ctx.font = "600 13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText("spring k", (springStartX+springEndX)/2 - 18, midY+26);
+
+  ctx.fillStyle = "rgba(167,139,250,0.88)";
+  ctx.fillText("damper c", dStartX+40, yD-18);
+
+  ctx.fillStyle = "rgba(232,238,252,0.9)";
+  ctx.fillText("mass m", massX+18, massY+22);
+
+  ctx.fillStyle = "rgba(52,211,153,0.9)";
+  ctx.fillText("F(t) = cos(ω t)", arrowX1-4, arrowY-18);
+
+  // mode-specific note
+  ctx.fillStyle = "rgba(232,238,252,0.78)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  let note = "";
+  if(state.mode === "b"){
+    note = `Model: y'' + ω0^2 y = cos(ω t), ω0 = ${state.omega0.toFixed(0)}`;
+  }else if(state.mode === "a"){
+    note = `Model: y'' − a y' − 2y = 0 (a = ${state.a.toFixed(2)})`;
+  }else{
+    note = `Model: f(t)=1 for t<1, then exp(-(t-1)) for t≥1`;
+  }
+  ctx.fillText(note, 18, 18);
+}
+
+function drawTimePlot(){
+  const {ctx,w,h} = setupHiDPICanvas(els.canvasTime);
+  ctx.clearRect(0,0,w,h);
+
+  let title = "";
+  let xlabel = "time t (s)";
+  let ylabel = "";
+  let xlim = [0, 8];
+  let ylim = [-1, 1];
+  const N = 900;
+
+  // choose function + y-range
+  let f = (t)=>0;
+  if(state.mode === "b"){
+    title = "Time response: y(t) for y'' + 4y = cos(ω t), y(0)=y'(0)=0";
+    ylabel = "displacement y (arb.)";
+    f = (t)=> y_ivp_b(t, state.omega, state.omega0);
+    xlim = [0, 18];
+    // estimate range by sampling
+    let ymin=Infinity, ymax=-Infinity;
+    for(let i=0;i<=600;i++){
+      const t = xlim[0] + (xlim[1]-xlim[0])*(i/600);
+      const y = f(t);
+      ymin = Math.min(ymin, y);
+      ymax = Math.max(ymax, y);
+    }
+    const pad = 0.15*(ymax-ymin || 1);
+    ylim = [ymin-pad, ymax+pad];
+  }else if(state.mode === "a"){
+    title = "Time response: y(t) for y'' − a y' − 2y = 0, y(0)=0, y'(0)=2";
+    ylabel = "state y (arb.)";
+    f = (t)=> y_ivp_a(t, state.a);
+    xlim = [0, 5];
+    let ymin=Infinity, ymax=-Infinity;
+    for(let i=0;i<=500;i++){
+      const t = xlim[0] + (xlim[1]-xlim[0])*(i/500);
+      const y = f(t);
+      ymin = Math.min(ymin, y);
+      ymax = Math.max(ymax, y);
+    }
+    const pad = 0.12*(ymax-ymin || 1);
+    ylim = [ymin-pad, ymax+pad];
+  }else{
+    title = "Time response: f(t) from Problem (8)";
+    ylabel = "f(t) (unitless)";
+    f = (t)=> f_piecewise(t);
+    xlim = [0, 6];
+    ylim = [-0.1, 1.2];
+  }
+
+  const ax = drawAxes(ctx, {x:0,y:0,w,h}, xlim, ylim, {title, xlabel, ylabel});
+  const pts = [];
+  for(let i=0;i<=N;i++){
+    const t = xlim[0] + (xlim[1]-xlim[0])*(i/N);
+    const y = f(t);
+    pts.push({x: ax.xToPx(t), y: ax.yToPx(y)});
+  }
+
+  // curve
+  const colorMain = state.mode === "b" ? "rgba(125,211,252,0.95)" : (state.mode === "a" ? "rgba(251,191,36,0.95)" : "rgba(52,211,153,0.95)");
+  polyline(ctx, pts, colorMain, 2.5);
+
+  // reference markers
+  ctx.save();
+  if(state.mode === "b"){
+    // draw forcing cos(ωt) scaled by same denom to show contribution (visual aid)
+    const denom = (state.omega0*state.omega0 - state.omega*state.omega);
+    const scale = (Math.abs(denom) < 1e-5) ? 0 : 1/denom;
+    const pts2 = [];
+    for(let i=0;i<=N;i++){
+      const t = xlim[0] + (xlim[1]-xlim[0])*(i/N);
+      const y2 = scale * Math.cos(state.omega*t);
+      pts2.push({x: ax.xToPx(t), y: ax.yToPx(y2)});
+    }
+    polyline(ctx, pts2, "rgba(52,211,153,0.55)", 2);
+    drawLegend(ctx, [
+      {label:"y(t)", color: colorMain},
+      {label:"(cos(ωt))/(ω0^2−ω^2) (visual aid)", color:"rgba(52,211,153,0.55)"}
+    ], ax.plot.x + 12, ax.plot.y + 16);
+  }else if(state.mode === "a"){
+    drawLegend(ctx, [{label:"y(t)", color: colorMain}], ax.plot.x + 12, ax.plot.y + 16);
+  }else{
+    // show t=1 marker
+    const X = ax.xToPx(1);
+    ctx.strokeStyle = "rgba(232,238,252,0.35)";
+    ctx.setLineDash([6,6]);
+    ctx.beginPath();
+    ctx.moveTo(X, ax.plot.y);
+    ctx.lineTo(X, ax.plot.y + ax.plot.h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(232,238,252,0.78)";
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+    ctx.fillText("shift at t=1", X+6, ax.plot.y+10);
+    drawLegend(ctx, [{label:"f(t)", color: colorMain}], ax.plot.x + 12, ax.plot.y + 16);
+  }
+  ctx.restore();
+}
+
+function drawSweepPlot(){
+  const {ctx,w,h} = setupHiDPICanvas(els.canvasSweep);
+  ctx.clearRect(0,0,w,h);
+
+  const title = "Frequency sweep (ideal undamped): amplitude vs ω";
+  const xlabel = "forcing frequency ω (rad/s)";
+  const ylabel = "amplitude |1/(ω0²−ω²)| (arb.)";
+
+  const wmin = 0.2, wmax = 3.5;
+  const omega0 = state.omega0;
+  // For display only: regularize blow-up near resonance
+  const eps = 0.06; // purely visual stabilization
+  function amp(omega){
+    const denom = (omega0*omega0 - omega*omega);
+    return 1 / Math.sqrt(denom*denom + eps*eps);
+  }
+
+  // determine y-range
+  let ymax = 0;
+  for(let i=0;i<=600;i++){
+    const om = wmin + (wmax-wmin)*(i/600);
+    ymax = Math.max(ymax, amp(om));
+  }
+  const ylim = [0, ymax*1.08];
+
+  const ax = drawAxes(ctx, {x:0,y:0,w,h}, [wmin,wmax], ylim, {title, xlabel, ylabel});
+
+  // curve
+  const pts = [];
+  const N = 900;
+  for(let i=0;i<=N;i++){
+    const om = wmin + (wmax-wmin)*(i/N);
+    const y = amp(om);
+    pts.push({x: ax.xToPx(om), y: ax.yToPx(y)});
+  }
+  polyline(ctx, pts, "rgba(167,139,250,0.92)", 2.5);
+
+  // resonance marker at omega0
+  ctx.save();
+  const X0 = ax.xToPx(omega0);
+  ctx.strokeStyle = "rgba(251,113,133,0.55)";
+  ctx.setLineDash([6,6]);
+  ctx.beginPath();
+  ctx.moveTo(X0, ax.plot.y);
+  ctx.lineTo(X0, ax.plot.y + ax.plot.h);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(251,113,133,0.9)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  ctx.fillText("ω₀ = 2", X0+6, ax.plot.y+10);
+
+  // current ω marker (only meaningful for mode b, but we show it anyway)
+  const omCur = state.omega;
+  const yCur = amp(omCur);
+  const Xc = ax.xToPx(omCur);
+  const Yc = ax.yToPx(yCur);
+
+  ctx.fillStyle = "rgba(125,211,252,0.95)";
+  ctx.beginPath();
+  ctx.arc(Xc, Yc, 5, 0, Math.PI*2);
+  ctx.fill();
+
+  drawLegend(ctx, [
+    {label:"amplitude curve (regularized)", color:"rgba(167,139,250,0.92)"},
+    {label:"current ω", color:"rgba(125,211,252,0.95)"},
+    {label:"resonance ω₀", color:"rgba(251,113,133,0.55)"}
+  ], ax.plot.x + 12, ax.plot.y + 16);
+
+  // footnote about regularization
+  ctx.fillStyle = "rgba(232,238,252,0.7)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "bottom";
+  ctx.fillText("Note: undamped amplitude diverges at ω=ω₀; plotted curve is slightly regularized for readability.", ax.plot.x, ax.plot.y + ax.plot.h - 6);
+
+  ctx.restore();
+}
+
+function renderAll(){
+  syncControls();
+  drawDiagram();
+  drawTimePlot();
+  drawSweepPlot();
+}
+
+/* =========================
+   Events
+========================= */
+els.mode.addEventListener("change", ()=>{
+  renderAll();
+});
+
+els.omega.addEventListener("input", ()=>{
+  state.omega = parseFloat(els.omega.value);
+  els.omegaVal.textContent = state.omega.toFixed(2);
+  renderAll();
+});
+
+els.aCoef.addEventListener("input", ()=>{
+  state.a = parseFloat(els.aCoef.value);
+  els.aVal.textContent = state.a.toFixed(2);
+  renderAll();
+});
+
+window.addEventListener("resize", ()=>{
+  renderAll();
+});
+
+// init
+(function init(){
+  els.omegaVal.textContent = state.omega.toFixed(2);
+  els.aVal.textContent = state.a.toFixed(2);
+  renderAll();
+})();
+</script>
+</body>
+</html>
