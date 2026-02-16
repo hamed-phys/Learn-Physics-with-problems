@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gaussian Beam Identification from Two Widths (Waist Location & Radius)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#111a33;
+      --muted:#9fb0d0;
+      --text:#e9efff;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(125,211,252,.14), transparent 60%),
+        radial-gradient(900px 600px at 85% 35%, rgba(167,139,250,.12), transparent 55%),
+        radial-gradient(700px 500px at 30% 90%, rgba(52,211,153,.10), transparent 55%),
+        var(--bg);
+      line-height:1.55;
+    }
+    a{color:var(--accent)}
+    header{
+      padding:32px 18px 18px;
+      border-bottom:1px solid var(--line);
+      position:relative;
+      overflow:hidden;
+    }
+    header .wrap{max-width:1100px;margin:0 auto;display:grid;gap:14px}
+    h1{
+      font-size:clamp(1.45rem, 2.6vw, 2.15rem);
+      margin:0;
+      letter-spacing:.2px;
+    }
+    .sub{
+      color:var(--muted);
+      max-width:85ch;
+      margin:0;
+    }
+    .metaRow{
+      display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;
+      color:var(--muted);font-size:.95rem;
+    }
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border:1px solid var(--line);
+      border-radius:999px;background:rgba(255,255,255,.04);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .pill b{color:var(--text)}
+    main{
+      max-width:1100px;
+      margin:18px auto 70px;
+      padding:0 18px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:16px;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:16px;
+    }
+    @media (max-width: 980px){
+      .grid2{grid-template-columns:1fr}
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .card .hd h2,.card .hd h3{
+      margin:0;font-size:1.05rem;letter-spacing:.2px;
+    }
+    .card .bd{padding:14px 16px}
+    .muted{color:var(--muted)}
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:12px;
+    }
+    @media (max-width: 520px){
+      .kpi{grid-template-columns:1fr}
+    }
+    .kpi .box{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px 12px;
+      background:rgba(0,0,0,.10);
+    }
+    .box .label{color:var(--muted);font-size:.9rem}
+    .box .val{font-size:1.15rem;margin-top:4px}
+    .box .val .small{font-size:.95rem;color:var(--muted)}
+    .callout{
+      border-left:4px solid rgba(125,211,252,.9);
+      background:rgba(125,211,252,.08);
+      padding:12px 12px;
+      border-radius:14px;
+      margin:10px 0;
+    }
+    .warn{
+      border-left-color: rgba(251,191,36,.95);
+      background: rgba(251,191,36,.10);
+    }
+    .good{
+      border-left-color: rgba(52,211,153,.95);
+      background: rgba(52,211,153,.10);
+    }
+    ul{margin:8px 0 0 18px}
+    li{margin:4px 0}
+    .toc{
+      position:sticky; top:12px;
+      align-self:start;
+      padding:12px;
+      border-radius:18px;
+      background:rgba(0,0,0,.18);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+    }
+    .toc h3{margin:0 0 8px;font-size:1.02rem}
+    .toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      color:var(--text);
+      text-decoration:none;
+      border:1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size:.95rem;
+    }
+    .toc a:hover{
+      background:rgba(255,255,255,.06);
+      border-color:rgba(255,255,255,.10);
+      transform: translateY(-1px);
+    }
+    .toc small{color:var(--muted)}
+    .layout{
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap:16px;
+    }
+    @media (max-width: 980px){
+      .layout{grid-template-columns:1fr}
+      .toc{position:relative}
+    }
+
+    .eq{
+      position:relative;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(0,0,0,.18);
+      overflow:hidden;
+      margin:10px 0;
+    }
+    .eq pre{
+      margin:0;
+      padding:12px 12px 12px 12px;
+      font-family:var(--mono);
+      font-size:.95rem;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .copyBtn{
+      position:absolute;
+      top:10px; right:10px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      border-radius:12px;
+      padding:7px 10px;
+      cursor:pointer;
+      font-size:.85rem;
+      transition: transform .12s ease, background .12s ease;
+      user-select:none;
+    }
+    .copyBtn:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
+    .copyBtn:active{transform:translateY(0px)}
+    .copyNote{
+      display:inline-block;
+      margin-left:8px;
+      font-size:.85rem;
+      color:var(--muted);
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      margin-top:10px;
+    }
+    @media (max-width: 740px){
+      .controls{grid-template-columns:1fr}
+    }
+    .ctrl{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      background:rgba(0,0,0,.12);
+    }
+    .ctrl label{
+      display:flex;justify-content:space-between;gap:10px;align-items:baseline;
+      font-size:.95rem;
+      margin-bottom:8px;
+    }
+    .ctrl label span{color:var(--muted)}
+    input[type="range"]{width:100%}
+    select{
+      width:100%;
+      padding:10px 10px;
+      border-radius:12px;
+      background:rgba(0,0,0,.25);
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.14);
+      outline:none;
+    }
+
+    figure{margin:0}
+    .canvasWrap{
+      padding:10px 12px 14px;
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.25);
+    }
+    .cap{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:.93rem;
+    }
+
+    .badge{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.15);
+      font-size:.9rem;color:var(--muted);
+    }
+    .badge i{
+      width:10px;height:10px;border-radius:999px;display:inline-block;
+      background:var(--accent);
+      box-shadow:0 0 0 3px rgba(125,211,252,.15);
+    }
+    .badge.alt i{background:var(--accent2);box-shadow:0 0 0 3px rgba(167,139,250,.15)}
+    .badge.meas i{background:var(--good);box-shadow:0 0 0 3px rgba(52,211,153,.15)}
+
+    .boxFinal{
+      border:1px solid rgba(52,211,153,.35);
+      background:rgba(52,211,153,.10);
+      border-radius:18px;
+      padding:14px;
+      margin:10px 0;
+    }
+    .boxFinal h3{margin:0 0 8px}
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 740px){
+      .twoCol{grid-template-columns:1fr}
+    }
+
+    .foot{
+      margin-top:16px;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+
+    /* subtle motion */
+    .card, .toc{
+      transform: translateZ(0);
+      animation: fadeIn .35s ease both;
+    }
+    @keyframes fadeIn{
+      from{opacity:0; transform: translateY(6px)}
+      to{opacity:1; transform: translateY(0)}
+    }
+
+    @media print{
+      body{background:white;color:black}
+      header{border:none}
+      .card,.toc{box-shadow:none}
+      .toc{position:relative}
+      canvas{display:none}
+      .copyBtn{display:none}
+      .muted{color:#444}
+      .card{border:1px solid #ddd;background:white}
+      a{color:black}
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <h1>Beam Identification by Two Widths (Gaussian Beam)</h1>
+    <p class="sub">
+      From two measured beam widths at known separation, we infer the <b>waist radius</b> and the <b>waist location</b>
+      using the Gaussian-beam propagation law (Rayleigh range + quadratic growth of <span class="muted">w(z)</span>).
+    </p>
+    <div class="metaRow">
+      <span class="pill">Wavelength: <b id="metaLam">10.6 μm</b></span>
+      <span class="pill">Given widths: <b id="metaW1">1.699 mm</b> and <b id="metaW2">3.380 mm</b></span>
+      <span class="pill">Separation: <b id="metaD">10 cm</b></span>
+    </div>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- Sticky mini TOC -->
+  <nav class="toc" aria-label="Table of contents">
+    <h3>Contents</h3>
+    <a href="#quick" data-scroll>Quick Summary <small>results at a glance</small></a>
+    <a href="#part1" data-scroll>Part 1 — Problem Analysis</a>
+    <a href="#part2" data-scroll>Part 2 — Strategy & Tips</a>
+    <a href="#part3" data-scroll>Part 3 — Full Solution</a>
+    <a href="#viz" data-scroll>Interactive Visualizations</a>
+    <a href="#checks" data-scroll>Sanity Checks</a>
+    <a href="#footer" data-scroll>Notes</a>
+  </nav>
+
+  <div>
+    <!-- Quick summary -->
+    <section class="card" id="quick">
+      <div class="hd">
+        <h2>Quick Summary</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+          <span class="badge meas"><i></i>measured</span>
+          <span class="badge"><i></i>solution A</span>
+          <span class="badge alt"><i></i>solution B</span>
+        </div>
+      </div>
+      <div class="bd">
+        <ul>
+          <li>Gaussian beam radius follows <b>w(z)=w<sub>0</sub>√(1+((z−z<sub>0</sub>)/z<sub>R</sub>)²)</b>, with <b>z<sub>R</sub>=πw<sub>0</sub>²/λ</b>.</li>
+          <li>With only two widths, there are generally <b>two physically possible</b> waist locations (on different sides of the measurement segment) that fit the same data.</li>
+          <li><b>Solution A</b>: <span id="qaA"></span></li>
+          <li><b>Solution B</b>: <span id="qaB"></span></li>
+          <li>Use the interactive panel to vary <b>d</b> or <b>W₂</b> and see how both inferred waists and the plots change live.</li>
+        </ul>
+
+        <div class="callout warn" id="ambiguityNote">
+          <b>Important:</b> The two-width method can yield two valid waists unless you also know
+          whether both measurement points are on the same side of the waist, or have a third width (or a divergence measurement) to break the symmetry.
+        </div>
+
+        <div class="kpi">
+          <div class="box">
+            <div class="label">Assumed definition of “width”</div>
+            <div class="val">w(z) is the <b>1/e² intensity radius</b> <span class="small">(standard Gaussian-beam spot size)</span></div>
+          </div>
+          <div class="box">
+            <div class="label">Coordinate choice used throughout</div>
+            <div class="val">Point 1 at <b>z=0</b>, Point 2 at <b>z=d</b> <span class="small">(waist at z=z₀)</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 1 -->
+    <section class="card" id="part1" style="margin-top:16px;">
+      <div class="hd"><h2>PART 1 — Problem Analysis (no solving yet)</h2></div>
+      <div class="bd">
+        <h3>Restate the problem (in plain words)</h3>
+        <p>
+          A CO₂ laser (λ = 10.6 μm) produces a Gaussian beam. At two locations along the beam axis separated by
+          <b>d = 10 cm</b>, the measured beam radii are <b>W₁ = 1.699 mm</b> and <b>W₂ = 3.380 mm</b>.
+          From these, determine (i) where the beam waist is located relative to those measurement points, and (ii) the waist radius <b>w₀</b>.
+        </p>
+
+        <h3>Given quantities</h3>
+        <ul>
+          <li>Wavelength: λ = 10.6 μm</li>
+          <li>Beam radius at point 1: W₁ = 1.699 mm</li>
+          <li>Beam radius at point 2: W₂ = 3.380 mm</li>
+          <li>Axial separation: d = 10 cm</li>
+        </ul>
+
+        <h3>Unknowns</h3>
+        <ul>
+          <li>Waist radius: w₀</li>
+          <li>Waist axial position: z₀ (relative to point 1 at z=0)</li>
+          <li>(Intermediate) Rayleigh range: z<sub>R</sub></li>
+        </ul>
+
+        <h3>What must be found</h3>
+        <ul>
+          <li>Compute the location of the waist (z₀) and the waist radius (w₀) consistent with the measurements.</li>
+        </ul>
+
+        <h3>Relevant physics (and why it applies)</h3>
+        <p>
+          In the paraxial regime, a TEM₀₀ Gaussian beam propagates with a spot size
+          <b>w(z)</b> that depends on distance from the waist:
+          it grows like a square root of a quadratic, with a natural scale set by the Rayleigh range
+          <b>z<sub>R</sub>=πw₀²/λ</b>. Since the problem explicitly states “Gaussian beam” and provides widths at two axial points,
+          the Gaussian-beam propagation law is the correct model.
+        </p>
+
+        <h3>Possible approaches (compare 2–3)</h3>
+        <ol>
+          <li>
+            <b>Direct Gaussian-beam equations</b>: write w(0)=W₁ and w(d)=W₂, use z<sub>R</sub>=πw₀²/λ, solve for w₀ and z₀.
+            <span class="muted">Best: uses only standard formulas and yields a clean numerical solution.</span>
+          </li>
+          <li>
+            <b>q-parameter method</b>: represent the beam by complex parameter q(z)=z−z₀+i z<sub>R</sub>, relate |q| to w(z).
+            <span class="muted">Equivalent, elegant for optical systems, but more abstract here.</span>
+          </li>
+          <li>
+            <b>Geometric divergence approximation</b>: infer divergence angle and back-propagate to a waist.
+            <span class="muted">Risky: only accurate far from waist; we don’t know if points are in far field.</span>
+          </li>
+        </ol>
+
+        <div class="callout good">
+          <b>Chosen approach:</b> use the <b>Gaussian-beam spot size</b> relation at two points plus <b>z<sub>R</sub>=πw₀²/λ</b>.
+          It is exact within the Gaussian model and requires no extra assumptions about “near/far field.”
+        </div>
+      </div>
+    </section>
+
+    <!-- PART 2 -->
+    <section class="card" id="part2" style="margin-top:16px;">
+      <div class="hd"><h2>PART 2 — Strategy & Tips (roadmap only)</h2></div>
+      <div class="bd">
+        <h3>Roadmap (minimal steps)</h3>
+        <ol>
+          <li><b>Set coordinates</b>: take point 1 at z=0 and point 2 at z=d. <span class="muted">(tool: coordinate choice)</span></li>
+          <li><b>Write the propagation law</b>: w(z)=w₀√(1+((z−z₀)/z<sub>R</sub>)²). <span class="muted">(tool: Gaussian beam theory)</span></li>
+          <li><b>Apply at two points</b>: w(0)=W₁, w(d)=W₂. <span class="muted">(tool: substitution)</span></li>
+          <li><b>Use Rayleigh range constraint</b>: z<sub>R</sub>=πw₀²/λ. <span class="muted">(tool: definition)</span></li>
+          <li><b>Eliminate w₀</b> and reduce to one variable (dimensionless offset x). <span class="muted">(tool: algebra)</span></li>
+          <li><b>Solve for x</b> (typically gives two roots). <span class="muted">(tool: numerical root finding)</span></li>
+          <li><b>Back-substitute</b> to find w₀ and z₀ for each root. <span class="muted">(tool: definitions)</span></li>
+          <li><b>Interpret physically</b> and check units/consistency. <span class="muted">(tool: sanity checks)</span></li>
+        </ol>
+
+        <h3>Common mistakes & quick tips</h3>
+        <ul>
+          <li><b>Mixing diameter vs radius</b>: many labs report “beam diameter.” Here we treat the given widths as <b>radii</b> w(z). If your instrument reports diameter, divide by 2 first.</li>
+          <li><b>Forgetting λ units</b>: keep λ in meters when computing z<sub>R</sub>.</li>
+          <li><b>Ignoring the two-solution ambiguity</b>: two widths at two points can fit two different waists. A third measurement breaks the tie.</li>
+          <li><b>Assuming far-field</b>: not necessary—use the exact Gaussian expression instead.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- PART 3 -->
+    <section class="card" id="part3" style="margin-top:16px;">
+      <div class="hd">
+        <h2>PART 3 — Full Solution</h2>
+        <div class="muted" style="font-size:.9rem">step-by-step derivation + results</div>
+      </div>
+      <div class="bd">
+        <h3>Physical intuition first</h3>
+        <p>
+          A Gaussian beam is narrowest at its waist (radius w₀) and expands away from that point. If we only know two radii
+          at two axial locations, we can “fit” the quadratic growth of w²(z). However, without knowing whether the waist lies
+          between the points or outside them, there can be <b>two</b> different waists that reproduce the same pair of widths.
+        </p>
+
+        <h3>Step 1: Write the governing equations</h3>
+        <p>Gaussian beam radius (spot size):</p>
+        <div class="eq">
+          <button class="copyBtn" data-copy="eq1">Copy</button>
+          <pre id="eq1">w(z) = w0 * sqrt( 1 + ((z - z0)/zR)^2 )
+zR = π w0^2 / λ</pre>
+        </div>
+
+        <p>
+          Choose coordinates: point 1 at z=0 and point 2 at z=d. Then:
+        </p>
+        <div class="eq">
+          <button class="copyBtn" data-copy="eq2">Copy</button>
+          <pre id="eq2">w(0) = W1 = w0 * sqrt( 1 + (z0/zR)^2 )
+w(d) = W2 = w0 * sqrt( 1 + ((d - z0)/zR)^2 )</pre>
+        </div>
+
+        <h3>Step 2: Square to simplify</h3>
+        <div class="eq">
+          <button class="copyBtn" data-copy="eq3">Copy</button>
+          <pre id="eq3">W1^2 = w0^2 * ( 1 + (z0/zR)^2 )
+W2^2 = w0^2 * ( 1 + ((d - z0)/zR)^2 )</pre>
+        </div>
+
+        <h3>Step 3: Introduce a dimensionless offset</h3>
+        <p>
+          Define
+          <b>x ≡ (0 − z0)/zR = −z0/zR</b>.
+          Then z0 = −x zR, and the second point has dimensionless distance
+          <b>y ≡ (d − z0)/zR = (d/zR) + x</b>.
+        </p>
+        <p>
+          With these,
+          <b>W1^2 = w0^2 (1 + x^2)</b> and <b>W2^2 = w0^2 (1 + (x + a)^2)</b>, where <b>a ≡ d/zR</b>.
+        </p>
+
+        <h3>Step 4: Eliminate w0 and link a to x using zR = πw0²/λ</h3>
+        <p>
+          From W1² = w0²(1+x²) we get:
+        </p>
+        <div class="eq">
+          <button class="copyBtn" data-copy="eq4">Copy</button>
+          <pre id="eq4">w0^2 = W1^2 / (1 + x^2)</pre>
+        </div>
+        <p>
+          Therefore
+          <b>zR = π w0^2 / λ = π W1^2 / (λ (1 + x^2))</b>
+          and thus
+          <b>a = d/zR = d λ (1 + x^2) / (π W1^2)</b>.
+        </p>
+        <div class="eq">
+          <button class="copyBtn" data-copy="eq5">Copy</button>
+          <pre id="eq5">zR = π W1^2 / (λ (1 + x^2))
+a = d / zR = d λ (1 + x^2) / (π W1^2)</pre>
+        </div>
+
+        <h3>Step 5: Build a single equation for x</h3>
+        <p>
+          Subtract the squared-width equations:
+        </p>
+        <div class="eq">
+          <button class="copyBtn" data-copy="eq6">Copy</button>
+          <pre id="eq6">Δ ≡ W2^2 - W1^2
+= w0^2 * [ (1 + (x+a)^2) - (1 + x^2) ]
+= w0^2 * ( 2 a x + a^2 )</pre>
+        </div>
+        <p>
+          Substitute w0² = W1²/(1+x²) and a(x) from above to obtain one equation in x:
+        </p>
+        <div class="eq">
+          <button class="copyBtn" data-copy="eq7">Copy</button>
+          <pre id="eq7">Let a(x) = d λ (1 + x^2) / (π W1^2)
+
+Solve for x from:
+W2^2 - W1^2 = [W1^2/(1 + x^2)] * ( 2 a(x) x + a(x)^2 )</pre>
+        </div>
+
+        <h3>Step 6: Solve for x and back-substitute (numerical)</h3>
+        <p>
+          Using the given numbers (λ = 10.6 μm, W1 = 1.699 mm, W2 = 3.380 mm, d = 10 cm), the equation produces
+          <b>two real roots</b>. Each root gives a valid (w0, z0, zR) triple.
+        </p>
+
+        <div class="boxFinal">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+            <h3 style="margin:0;">Final Results (both valid solutions)</h3>
+            <button class="copyBtn" style="position:static" data-copy="finalText">Copy final (plain text)</button>
+          </div>
+
+          <div class="twoCol" style="margin-top:10px;">
+            <div class="callout" style="margin:0;">
+              <b>Solution A (waist before point 1)</b>
+              <div class="eq" style="margin:10px 0 0;">
+                <pre id="solA"></pre>
+              </div>
+            </div>
+
+            <div class="callout" style="margin:0;border-left-color:rgba(167,139,250,.95);background:rgba(167,139,250,.10);">
+              <b>Solution B (waist between the points)</b>
+              <div class="eq" style="margin:10px 0 0;">
+                <pre id="solB"></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="muted" style="margin-top:10px;">
+            Here, <b>z0</b> is the waist position on the z-axis where point 1 is at z=0 and point 2 is at z=d.
+            Negative z0 means the waist is upstream of point 1.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visualizations -->
+    <section class="card" id="viz" style="margin-top:16px;">
+      <div class="hd">
+        <h2>Interactive Visualizations</h2>
+        <div class="muted" style="font-size:.9rem">diagram + two plots + live controls</div>
+      </div>
+      <div class="bd">
+        <div class="grid2">
+          <div class="card" style="margin:0;">
+            <div class="hd"><h3>1) Labeled setup diagram (z-axis + waist + measurement planes)</h3></div>
+            <div class="canvasWrap">
+              <canvas id="cDiagram" aria-label="Beam geometry diagram"></canvas>
+              <div class="cap">
+                Shows point 1 (z=0) and point 2 (z=d), measured radii W₁ and W₂, and both possible waist locations.
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="margin:0;">
+            <div class="hd"><h3>Controls (updates ALL canvases)</h3></div>
+            <div class="bd">
+              <div class="controls">
+                <div class="ctrl">
+                  <label>
+                    <div><b>Separation</b> d <span class="muted">(cm)</span></div>
+                    <div class="muted"><span id="dVal">10.0</span> cm</div>
+                  </label>
+                  <input id="dSlider" type="range" min="2" max="30" step="0.1" value="10" />
+                </div>
+
+                <div class="ctrl">
+                  <label>
+                    <div><b>Second width</b> W₂ <span class="muted">(mm)</span></div>
+                    <div class="muted"><span id="w2Val">3.380</span> mm</div>
+                  </label>
+                  <input id="w2Slider" type="range" min="1.8" max="6.0" step="0.001" value="3.380" />
+                </div>
+
+                <div class="ctrl">
+                  <label>
+                    <div><b>Profile z-position</b> <span class="muted">(along axis)</span></div>
+                    <div class="muted"><span id="zProbeVal">0.0</span> cm</div>
+                  </label>
+                  <input id="zProbeSlider" type="range" min="0" max="10" step="0.05" value="0" />
+                  <div class="muted" style="margin-top:6px;font-size:.88rem;">
+                    This sets where the transverse intensity profile is sampled (relative to point 1).
+                  </div>
+                </div>
+
+                <div class="ctrl">
+                  <label>
+                    <div><b>Pick a solution</b> <span class="muted">(for profile plot)</span></div>
+                    <div class="muted" id="solPickHint">A or B</div>
+                  </label>
+                  <select id="solSelect">
+                    <option value="A">Use Solution A (waist before point 1)</option>
+                    <option value="B">Use Solution B (waist between points)</option>
+                  </select>
+                  <div class="muted" style="margin-top:6px;font-size:.88rem;">
+                    The main beam-radius plot always shows <b>both</b> solutions; the profile plot uses this choice.
+                  </div>
+                </div>
+              </div>
+
+              <div class="callout warn" style="margin-top:12px;">
+                Tip: If your “width” is actually a <b>diameter</b>, halve W₁ and W₂. The inferred w₀ and z₀ change accordingly.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px;">
+          <div class="hd"><h3>2) Main quantitative plot — beam radius w(z) vs z</h3></div>
+          <div class="canvasWrap">
+            <canvas id="cMain" aria-label="Beam radius plot"></canvas>
+            <div class="cap">
+              Solid curves: predicted w(z) for both solutions. Markers: measured points (z=0,W₁) and (z=d,W₂).
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px;">
+          <div class="hd"><h3>3) Secondary plot — transverse intensity profile I(r) at chosen z</h3></div>
+          <div class="canvasWrap">
+            <canvas id="cProfile" aria-label="Intensity profile plot"></canvas>
+            <div class="cap">
+              Uses <b>I(r) ∝ exp(−2r²/w(z)²)</b>. The slider picks z, and the dropdown chooses which inferred waist (A or B) to use.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Checks -->
+    <section class="card" id="checks" style="margin-top:16px;">
+      <div class="hd"><h2>Sanity Checks</h2></div>
+      <div class="bd">
+        <h3>1) Units</h3>
+        <ul>
+          <li>w₀ is in meters (reported below in mm), z₀ and z<sub>R</sub> are in meters (reported in cm or mm).</li>
+          <li>z<sub>R</sub>=πw₀²/λ has units: m² / m = m ✅</li>
+        </ul>
+
+        <h3>2) Limiting behavior</h3>
+        <ul>
+          <li>If you move far from the waist, |z−z₀| ≫ z<sub>R</sub>, then w(z) ≈ w₀|z−z₀|/z<sub>R</sub> grows approximately linearly (divergence regime).</li>
+          <li>If a point is near the waist, |z−z₀| ≪ z<sub>R</sub>, then w(z) ≈ w₀ (nearly constant).</li>
+        </ul>
+
+        <h3>3) Physical interpretation for this problem</h3>
+        <ul>
+          <li><b>Solution A</b> implies a moderately sized waist (~0.20 mm) located ~10 cm before point 1; both measurement points are on the same side of the waist.</li>
+          <li><b>Solution B</b> implies a much tighter waist (~0.066 mm) located between the points; the beam is already many Rayleigh ranges away at both points, so it expands quickly.</li>
+          <li>Both satisfy the two width constraints exactly—additional data would select which is realized in your setup.</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer class="card" id="footer" style="margin-top:16px;">
+      <div class="hd"><h2>Notes</h2></div>
+      <div class="bd">
+        <p class="foot">
+          This article assumes the provided widths are Gaussian spot sizes (1/e² intensity radii).
+          If your measurement defines width differently (FWHM, 1/e field radius, knife-edge diameter, etc.),
+          convert to the equivalent 1/e² radius before applying these formulas.
+        </p>
+      </div>
+    </footer>
+  </div>
+</main>
+
+<script>
+/* =========================
+   Helpers: formatting & copy
+   ========================= */
+function fmt(x, digits=3){
+  if(!isFinite(x)) return "—";
+  return x.toFixed(digits);
+}
+function si(x, unit){
+  return `${x} ${unit}`;
+}
+function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
+function copyText(text){
+  if(!navigator.clipboard){
+    const ta=document.createElement("textarea");
+    ta.value=text; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+    return Promise.resolve();
+  }
+  return navigator.clipboard.writeText(text);
+}
+
+document.addEventListener("click", (e)=>{
+  const btn = e.target.closest(".copyBtn");
+  if(!btn) return;
+  const id = btn.getAttribute("data-copy");
+  let text="";
+  if(id === "finalText"){
+    text = (document.getElementById("solA").textContent.trim() + "\n\n" + document.getElementById("solB").textContent.trim()).trim();
+  }else{
+    const el = document.getElementById(id);
+    if(el) text = el.textContent;
+  }
+  if(!text) return;
+  const old = btn.textContent;
+  copyText(text).then(()=>{
+    btn.textContent="Copied!";
+    setTimeout(()=>btn.textContent=old, 900);
+  });
+});
+
+/* =========================
+   Gaussian beam math
+   =========================
+   Model:
+     w(z) = w0 * sqrt(1 + ((z - z0)/zR)^2)
+     zR   = π w0^2 / λ
+   Coordinate: point 1 at z=0, point 2 at z=d
+*/
+const consts = {
+  lam: 10.6e-6, // m
+  W1: 1.699e-3  // m
+};
+
+// Default values (can be changed by sliders)
+let state = {
+  d: 0.10,        // m
+  W2: 3.380e-3,   // m
+  zProbe: 0.0,    // m (0..d)
+  solPick: "A"
+};
+
+function aOfX(x, d, lam, W1){
+  // a = d/zR; with zR = π W1^2 / (λ(1+x^2)) after eliminating w0
+  return d * lam * (1 + x*x) / (Math.PI * W1*W1);
+}
+
+function fOfX(x, d, lam, W1, W2){
+  // Equation in x:
+  // Δ = W2^2 - W1^2 = [W1^2/(1+x^2)] * (2 a x + a^2), with a=a(x)
+  const a = aOfX(x, d, lam, W1);
+  const lhs = (W2*W2 - W1*W1);
+  const rhs = (W1*W1/(1 + x*x)) * (2*a*x + a*a);
+  return lhs - rhs;
+}
+
+function bisectRoot(fn, xL, xR, it=80){
+  let fL = fn(xL), fR = fn(xR);
+  if(!isFinite(fL) || !isFinite(fR)) return null;
+  if(fL === 0) return xL;
+  if(fR === 0) return xR;
+  if(fL * fR > 0) return null;
+  let a=xL, b=xR;
+  for(let i=0;i<it;i++){
+    const m = 0.5*(a+b);
+    const fM = fn(m);
+    if(!isFinite(fM)) break;
+    if(Math.abs(fM) < 1e-14) return m;
+    if(fL * fM <= 0){
+      b=m; fR=fM;
+    }else{
+      a=m; fL=fM;
+    }
+  }
+  return 0.5*(a+b);
+}
+
+function findRoots(d, lam, W1, W2){
+  // Scan x over a wide range and locate sign changes; return up to 2 roots.
+  // Typical problems yield two real roots; scanning is robust.
+  const fn = (x)=>fOfX(x, d, lam, W1, W2);
+  const roots = [];
+  const xmin = -120, xmax = 120;
+  const steps = 2400; // fine scan for sign changes
+  let xPrev = xmin;
+  let fPrev = fn(xPrev);
+
+  for(let i=1;i<=steps;i++){
+    const x = xmin + (xmax-xmin)*i/steps;
+    const f = fn(x);
+    if(isFinite(fPrev) && isFinite(f)){
+      if(fPrev === 0){
+        roots.push(xPrev);
+      } else if(fPrev * f < 0){
+        const r = bisectRoot(fn, xPrev, x, 90);
+        if(r!==null && isFinite(r)){
+          // avoid duplicates
+          if(!roots.some(rr => Math.abs(rr-r) < 1e-4)){
+            roots.push(r);
+          }
+        }
+      }
+    }
+    xPrev = x; fPrev = f;
+  }
+  roots.sort((a,b)=>a-b);
+  // Most relevant: two roots. If more appear due to numerical quirks, keep central two.
+  if(roots.length > 2){
+    // choose two with smallest |f| after refinement by local bisection around them
+    // For simplicity, keep first two distinct roots.
+    return roots.slice(0,2);
+  }
+  return roots;
+}
+
+function paramsFromX(x, d, lam, W1){
+  // From W1^2 = w0^2 (1+x^2) => w0^2 = W1^2/(1+x^2)
+  const w0sq = (W1*W1)/(1 + x*x);
+  const w0 = Math.sqrt(w0sq);
+  const zR = Math.PI * w0sq / lam;
+  const z0 = -x * zR; // since x = -z0/zR
+  // Verify W2 prediction (should match if x is a root)
+  const w2calc = w0 * Math.sqrt(1 + Math.pow((d - z0)/zR, 2));
+  return {x, w0, zR, z0, w2calc};
+}
+
+function wOfZ(z, p){
+  return p.w0 * Math.sqrt(1 + Math.pow((z - p.z0)/p.zR, 2));
+}
+
+/* =========================
+   Canvas drawing utilities
+   ========================= */
+function setupCanvas(canvas){
+  const ctx = canvas.getContext("2d");
+  function resize(){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(1, Math.floor(rect.width * dpr));
+    const h = Math.max(1, Math.floor(rect.height * dpr));
+    if(canvas.width !== w || canvas.height !== h){
+      canvas.width = w; canvas.height = h;
+    }
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.scale(dpr, dpr);
+  }
+  const ro = new ResizeObserver(resize);
+  ro.observe(canvas);
+  resize();
+  return {ctx, resize};
+}
+
+function drawAxes(ctx, rect, xMin, xMax, yMin, yMax, opts){
+  const {xLabel, yLabel, title} = opts || {};
+  const {x, y, w, h} = rect;
+  // background already set by CSS, but add a subtle panel tint
+  ctx.save();
+  ctx.clearRect(0,0,ctx.canvas.clientWidth, ctx.canvas.clientHeight);
+
+  // Map functions
+  const X = (v)=> x + (v - xMin) * w / (xMax - xMin);
+  const Y = (v)=> y + h - (v - yMin) * h / (yMax - yMin);
+
+  // grid
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "rgba(255,255,255,.08)";
+  const nx = 6, ny = 6;
+  for(let i=0;i<=nx;i++){
+    const xv = xMin + (xMax-xMin)*i/nx;
+    const px = X(xv);
+    ctx.beginPath(); ctx.moveTo(px,y); ctx.lineTo(px,y+h); ctx.stroke();
+  }
+  for(let j=0;j<=ny;j++){
+    const yv = yMin + (yMax-yMin)*j/ny;
+    const py = Y(yv);
+    ctx.beginPath(); ctx.moveTo(x,py); ctx.lineTo(x+w,py); ctx.stroke();
+  }
+
+  // axes border
+  ctx.strokeStyle="rgba(255,255,255,.18)";
+  ctx.strokeRect(x,y,w,h);
+
+  // ticks and labels
+  ctx.fillStyle="rgba(233,239,255,.92)";
+  ctx.font="12px ui-sans-serif, system-ui";
+  ctx.textBaseline="top";
+
+  // x ticks
+  ctx.textAlign="center";
+  for(let i=0;i<=nx;i++){
+    const xv = xMin + (xMax-xMin)*i/nx;
+    const px = X(xv);
+    ctx.strokeStyle="rgba(255,255,255,.18)";
+    ctx.beginPath(); ctx.moveTo(px,y+h); ctx.lineTo(px,y+h+5); ctx.stroke();
+    ctx.fillText(xv.toFixed(2), px, y+h+7);
+  }
+  // y ticks
+  ctx.textAlign="right";
+  ctx.textBaseline="middle";
+  for(let j=0;j<=ny;j++){
+    const yv = yMin + (yMax-yMin)*j/ny;
+    const py = Y(yv);
+    ctx.strokeStyle="rgba(255,255,255,.18)";
+    ctx.beginPath(); ctx.moveTo(x-5,py); ctx.lineTo(x,py); ctx.stroke();
+    ctx.fillText(yv.toFixed(2), x-7, py);
+  }
+
+  // titles
+  ctx.textAlign="left";
+  ctx.textBaseline="top";
+  if(title){
+    ctx.font="600 14px ui-sans-serif, system-ui";
+    ctx.fillText(title, x, y-22);
+  }
+  ctx.font="12px ui-sans-serif, system-ui";
+  ctx.fillStyle="rgba(159,176,208,.95)";
+  if(xLabel){
+    ctx.textAlign="center";
+    ctx.fillText(xLabel, x + w/2, y + h + 30);
+  }
+  if(yLabel){
+    ctx.save();
+    ctx.translate(x-44, y + h/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign="center";
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+  }
+
+  ctx.restore();
+  return {X, Y};
+}
+
+function drawLine(ctx, pts, strokeStyle, lineWidth=2){
+  ctx.save();
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = lineWidth;
+  ctx.lineJoin="round";
+  ctx.lineCap="round";
+  ctx.beginPath();
+  for(let i=0;i<pts.length;i++){
+    const p = pts[i];
+    if(i===0) ctx.moveTo(p[0], p[1]);
+    else ctx.lineTo(p[0], p[1]);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawMarker(ctx, x, y, style, label){
+  ctx.save();
+  ctx.fillStyle = style;
+  ctx.strokeStyle="rgba(0,0,0,.35)";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.arc(x,y,5,0,Math.PI*2);
+  ctx.fill();
+  ctx.stroke();
+
+  if(label){
+    ctx.font="12px ui-sans-serif, system-ui";
+    ctx.fillStyle="rgba(233,239,255,.92)";
+    ctx.textAlign="left";
+    ctx.textBaseline="bottom";
+    ctx.fillText(label, x+8, y-6);
+  }
+  ctx.restore();
+}
+
+/* =========================
+   Draw: diagram
+   ========================= */
+function drawDiagram(canvas, solutions){
+  const ctx = canvas.getContext("2d");
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  ctx.clearRect(0,0,W,H);
+
+  const pad = 18;
+  const axisY = H*0.58;
+
+  // Determine z-range to show
+  let zMin = -0.12, zMax = state.d + 0.12;
+  for(const s of solutions){
+    if(!s) continue;
+    zMin = Math.min(zMin, s.z0 - 0.06);
+    zMax = Math.max(zMax, s.z0 + 0.06);
+  }
+
+  const X = (z)=> pad + (z - zMin) * (W-2*pad) / (zMax - zMin);
+  const Y = (v)=> axisY - v;
+
+  // axis
+  ctx.save();
+  ctx.strokeStyle="rgba(255,255,255,.18)";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(pad, axisY);
+  ctx.lineTo(W-pad, axisY);
+  ctx.stroke();
+
+  // arrow
+  ctx.beginPath();
+  ctx.moveTo(W-pad, axisY);
+  ctx.lineTo(W-pad-10, axisY-6);
+  ctx.lineTo(W-pad-10, axisY+6);
+  ctx.closePath();
+  ctx.fillStyle="rgba(255,255,255,.18)";
+  ctx.fill();
+
+  // labels
+  ctx.fillStyle="rgba(159,176,208,.95)";
+  ctx.font="12px ui-sans-serif, system-ui";
+  ctx.fillText("z (m)", W-pad-42, axisY+12);
+
+  // measurement planes
+  const z1=0, z2=state.d;
+  const x1=X(z1), x2=X(z2);
+
+  function plane(x, tag){
+    ctx.strokeStyle="rgba(52,211,153,.85)";
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x, axisY-95); ctx.lineTo(x, axisY+95); ctx.stroke();
+    ctx.fillStyle="rgba(233,239,255,.95)";
+    ctx.fillText(tag, x+6, axisY-98);
+  }
+  plane(x1,"Point 1 (z=0)");
+  plane(x2,`Point 2 (z=d=${fmt(state.d,2)} m)`);
+
+  // indicate radii (scaled for diagram)
+  const rScale = 1400; // purely visual scale
+  const r1 = consts.W1 * rScale;
+  const r2 = state.W2 * rScale;
+
+  ctx.strokeStyle="rgba(52,211,153,.85)";
+  ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(x1, axisY-r1); ctx.lineTo(x1, axisY+r1); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2, axisY-r2); ctx.lineTo(x2, axisY+r2); ctx.stroke();
+
+  ctx.fillStyle="rgba(233,239,255,.95)";
+  ctx.fillText(`W1=${fmt(consts.W1*1e3,3)} mm`, x1+6, axisY + r1 + 6);
+  ctx.fillText(`W2=${fmt(state.W2*1e3,3)} mm`, x2+6, axisY + r2 + 6);
+
+  // draw waist markers for solutions
+  const colors = {
+    A: "rgba(125,211,252,.95)",
+    B: "rgba(167,139,250,.95)"
+  };
+  const glow = {
+    A: "rgba(125,211,252,.22)",
+    B: "rgba(167,139,250,.22)"
+  };
+
+  solutions.forEach((s, idx)=>{
+    if(!s) return;
+    const key = idx===0 ? "A" : "B";
+    const xw = X(s.z0);
+    // waist "pin"
+    ctx.fillStyle = glow[key];
+    ctx.beginPath(); ctx.arc(xw, axisY, 16, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = colors[key];
+    ctx.beginPath(); ctx.arc(xw, axisY, 6, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle="rgba(0,0,0,.35)";
+    ctx.lineWidth=2;
+    ctx.stroke();
+
+    ctx.fillStyle="rgba(233,239,255,.95)";
+    ctx.fillText(`Waist ${key} (z0=${fmt(s.z0,3)} m)`, xw+10, axisY-14);
+  });
+
+  // title
+  ctx.font="600 14px ui-sans-serif, system-ui";
+  ctx.fillStyle="rgba(233,239,255,.95)";
+  ctx.fillText("Geometry (two measurement planes, two possible inferred waists)", pad, pad);
+
+  // tick marks on axis
+  ctx.strokeStyle="rgba(255,255,255,.14)";
+  ctx.lineWidth=1;
+  const nTicks = 6;
+  ctx.font="12px ui-sans-serif, system-ui";
+  ctx.fillStyle="rgba(159,176,208,.95)";
+  ctx.textAlign="center";
+  ctx.textBaseline="top";
+  for(let i=0;i<=nTicks;i++){
+    const z = zMin + (zMax-zMin)*i/nTicks;
+    const px = X(z);
+    ctx.beginPath(); ctx.moveTo(px, axisY); ctx.lineTo(px, axisY+8); ctx.stroke();
+    ctx.fillText(z.toFixed(2), px, axisY+10);
+  }
+
+  ctx.restore();
+}
+
+/* =========================
+   Draw: main plot w(z)
+   ========================= */
+function drawMainPlot(canvas, solutions){
+  const ctx = canvas.getContext("2d");
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+
+  // z-range: cover waists and measurements
+  let zMin = -0.14, zMax = state.d + 0.14;
+  solutions.forEach(s=>{
+    if(!s) return;
+    zMin = Math.min(zMin, s.z0 - 6*s.zR);
+    zMax = Math.max(zMax, s.z0 + 6*s.zR);
+  });
+
+  // y-range: based on max w in range
+  let wMax = 0;
+  const probeN = 400;
+  for(const s of solutions){
+    if(!s) continue;
+    for(let i=0;i<=probeN;i++){
+      const z = zMin + (zMax-zMin)*i/probeN;
+      wMax = Math.max(wMax, wOfZ(z, s));
+    }
+  }
+  wMax = Math.max(wMax, state.W2, consts.W1) * 1.10;
+
+  const rect = {x:58, y:46, w:W-78, h:H-98};
+  const axes = drawAxes(ctx, rect,
+    zMin, zMax,
+    0, wMax*1e3, // mm
+    {title:"Beam radius vs axial position", xLabel:"z (m)", yLabel:"w(z) (mm)"}
+  );
+  const {X, Y} = axes;
+
+  // curves
+  const colA = "rgba(125,211,252,.95)";
+  const colB = "rgba(167,139,250,.95)";
+
+  function curvePoints(s){
+    const pts = [];
+    const n = 520;
+    for(let i=0;i<=n;i++){
+      const z = zMin + (zMax-zMin)*i/n;
+      const w = wOfZ(z, s)*1e3;
+      pts.push([X(z), Y(w)]);
+    }
+    return pts;
+  }
+
+  if(solutions[0]) drawLine(ctx, curvePoints(solutions[0]), colA, 2.5);
+  if(solutions[1]) drawLine(ctx, curvePoints(solutions[1]), colB, 2.5);
+
+  // measured points
+  drawMarker(ctx, X(0), Y(consts.W1*1e3), "rgba(52,211,153,.95)", "Measured (0, W1)");
+  drawMarker(ctx, X(state.d), Y(state.W2*1e3), "rgba(52,211,153,.95)", "Measured (d, W2)");
+
+  // waist markers on plot
+  if(solutions[0]){
+    drawMarker(ctx, X(solutions[0].z0), Y(solutions[0].w0*1e3), colA, "Waist A");
+  }
+  if(solutions[1]){
+    drawMarker(ctx, X(solutions[1].z0), Y(solutions[1].w0*1e3), colB, "Waist B");
+  }
+
+  // legend
+  ctx.save();
+  ctx.font="12px ui-sans-serif, system-ui";
+  ctx.textAlign="left";
+  ctx.textBaseline="middle";
+  const lx = rect.x + 10, ly = rect.y + 10;
+  ctx.fillStyle="rgba(0,0,0,.35)";
+  ctx.fillRect(lx-6, ly-6, 240, 58);
+  ctx.strokeStyle="rgba(255,255,255,.12)";
+  ctx.strokeRect(lx-6, ly-6, 240, 58);
+
+  ctx.fillStyle=colA;
+  ctx.fillRect(lx, ly, 14, 3);
+  ctx.fillStyle="rgba(233,239,255,.95)";
+  ctx.fillText("Solution A: inferred w(z)", lx+22, ly+1);
+
+  ctx.fillStyle=colB;
+  ctx.fillRect(lx, ly+18, 14, 3);
+  ctx.fillStyle="rgba(233,239,255,.95)";
+  ctx.fillText("Solution B: inferred w(z)", lx+22, ly+19);
+
+  ctx.fillStyle="rgba(52,211,153,.95)";
+  ctx.beginPath(); ctx.arc(lx+7, ly+39, 4.5, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle="rgba(233,239,255,.95)";
+  ctx.fillText("Measured widths", lx+22, ly+39);
+
+  ctx.restore();
+}
+
+/* =========================
+   Draw: intensity profile I(r)
+   ========================= */
+function drawProfile(canvas, solutions){
+  const ctx = canvas.getContext("2d");
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+
+  const pick = (state.solPick === "A") ? solutions[0] : solutions[1];
+  if(!pick){
+    ctx.clearRect(0,0,W,H);
+    return;
+  }
+  const z = state.zProbe; // meters from point 1
+  const w = wOfZ(z, pick); // meters
+
+  // Choose r range: up to 2.5 w
+  const rMax = 2.5*w; // m
+  // Axes in mm
+  const rect = {x:58, y:46, w:W-78, h:H-98};
+  const axes = drawAxes(ctx, rect,
+    0, rMax*1e3,
+    0, 1.05,
+    {title:`Transverse intensity profile at z=${fmt(z*100,2)} cm (using Solution ${state.solPick})`,
+     xLabel:"r (mm)", yLabel:"Normalized I(r)"}
+  );
+  const {X, Y} = axes;
+
+  // Build profile points: I(r) = exp(-2 r^2 / w^2) normalized with I(0)=1
+  const pts = [];
+  const n = 450;
+  for(let i=0;i<=n;i++){
+    const r = (rMax*i/n);
+    const I = Math.exp(-2*(r*r)/(w*w));
+    pts.push([X(r*1e3), Y(I)]);
+  }
+
+  const col = (state.solPick==="A") ? "rgba(125,211,252,.95)" : "rgba(167,139,250,.95)";
+  drawLine(ctx, pts, col, 2.6);
+
+  // Mark r=w (1/e^2 intensity radius) where I = exp(-2) ~ 0.1353
+  const Iw = Math.exp(-2);
+  drawMarker(ctx, X(w*1e3), Y(Iw), "rgba(52,211,153,.95)", "r = w(z)");
+
+  // Text box with w(z)
+  ctx.save();
+  ctx.font="12px ui-sans-serif, system-ui";
+  ctx.fillStyle="rgba(0,0,0,.35)";
+  ctx.fillRect(rect.x+10, rect.y+rect.h-44, 260, 34);
+  ctx.strokeStyle="rgba(255,255,255,.12)";
+  ctx.strokeRect(rect.x+10, rect.y+rect.h-44, 260, 34);
+  ctx.fillStyle="rgba(233,239,255,.95)";
+  ctx.fillText(`w(z) = ${fmt(w*1e3,4)} mm    I(w)=e^{-2}≈${fmt(Iw,4)}`, rect.x+18, rect.y+rect.h-27);
+  ctx.restore();
+}
+
+/* =========================
+   Update: compute solutions & refresh UI
+   ========================= */
+function computeSolutions(){
+  const roots = findRoots(state.d, consts.lam, consts.W1, state.W2);
+  // We want to label two solutions consistently:
+  // Typically one root is positive x (waist before point1 -> z0 negative) and one root negative x (waist between points -> z0 positive).
+  const sols = roots.map(x=>paramsFromX(x, state.d, consts.lam, consts.W1));
+
+  // Sort into A,B by z0 (A: waist before point1 => smaller z0)
+  sols.sort((p,q)=>p.z0 - q.z0);
+
+  // Ensure exactly 2 slots (may happen if slider creates only one real root in extreme ranges)
+  const A = sols[0] || null;
+  const B = sols[1] || null;
+  return [A, B];
+}
+
+function updateText(solutions){
+  // Header meta
+  document.getElementById("metaLam").textContent = `${fmt(consts.lam*1e6,1)} μm`;
+  document.getElementById("metaW1").textContent = `${fmt(consts.W1*1e3,3)} mm`;
+  document.getElementById("metaW2").textContent = `${fmt(state.W2*1e3,3)} mm`;
+  document.getElementById("metaD").textContent = `${fmt(state.d*100,1)} cm`;
+
+  // Controls readouts
+  document.getElementById("dVal").textContent = fmt(state.d*100,1);
+  document.getElementById("w2Val").textContent = fmt(state.W2*1e3,3);
+  document.getElementById("zProbeVal").textContent = fmt(state.zProbe*100,2);
+
+  // Quick summary lines
+  const A = solutions[0], B = solutions[1];
+  const qaA = A
+    ? `w0 ≈ ${fmt(A.w0*1e3,4)} mm,  z0 ≈ ${fmt(A.z0*100,2)} cm (upstream of point 1),  zR ≈ ${fmt(A.zR*100,2)} cm`
+    : `No real Solution A for current sliders.`;
+  const qaB = B
+    ? `w0 ≈ ${fmt(B.w0*1e3,4)} mm,  z0 ≈ ${fmt(B.z0*100,2)} cm (measured from point 1),  zR ≈ ${fmt(B.zR*1e3,3)} mm`
+    : `No real Solution B for current sliders.`;
+  document.getElementById("qaA").textContent = qaA;
+  document.getElementById("qaB").textContent = qaB;
+
+  // Final blocks
+  const solAEl = document.getElementById("solA");
+  const solBEl = document.getElementById("solB");
+
+  if(A){
+    solAEl.textContent =
+`Solution A (waist before point 1):
+w0 = ${fmt(A.w0*1e3,6)} mm
+zR = ${fmt(A.zR*100,6)} cm
+z0 = ${fmt(A.z0*100,6)} cm   (point 1 at z=0)
+
+Check: predicted W2 = ${fmt(A.w2calc*1e3,6)} mm`;
+  }else{
+    solAEl.textContent = "Solution A not available (no real root for current sliders).";
+  }
+
+  if(B){
+    solBEl.textContent =
+`Solution B (waist between points):
+w0 = ${fmt(B.w0*1e3,6)} mm
+zR = ${fmt(B.zR*1e3,6)} mm
+z0 = ${fmt(B.z0*100,6)} cm   (point 1 at z=0)
+
+Check: predicted W2 = ${fmt(B.w2calc*1e3,6)} mm`;
+  }else{
+    solBEl.textContent = "Solution B not available (no real root for current sliders).";
+  }
+}
+
+/* =========================
+   Main render loop
+   ========================= */
+const cDiagram = document.getElementById("cDiagram");
+const cMain = document.getElementById("cMain");
+const cProfile = document.getElementById("cProfile");
+setupCanvas(cDiagram);
+setupCanvas(cMain);
+setupCanvas(cProfile);
+
+function render(){
+  const solutions = computeSolutions();
+  updateText(solutions);
+  drawDiagram(cDiagram, solutions);
+  drawMainPlot(cMain, solutions);
+  drawProfile(cProfile, solutions);
+}
+
+/* =========================
+   Controls wiring
+   ========================= */
+const dSlider = document.getElementById("dSlider");
+const w2Slider = document.getElementById("w2Slider");
+const zProbeSlider = document.getElementById("zProbeSlider");
+const solSelect = document.getElementById("solSelect");
+
+dSlider.addEventListener("input", ()=>{
+  state.d = parseFloat(dSlider.value)/100; // cm -> m
+  // keep zProbe in range
+  state.zProbe = clamp(state.zProbe, 0, state.d);
+  zProbeSlider.max = (state.d*100).toFixed(2);
+  zProbeSlider.value = (state.zProbe*100).toFixed(2);
+  render();
+});
+
+w2Slider.addEventListener("input", ()=>{
+  state.W2 = parseFloat(w2Slider.value)*1e-3; // mm -> m
+  render();
+});
+
+zProbeSlider.addEventListener("input", ()=>{
+  state.zProbe = parseFloat(zProbeSlider.value)/100; // cm -> m
+  render();
+});
+
+solSelect.addEventListener("change", ()=>{
+  state.solPick = solSelect.value;
+  render();
+});
+
+// Initialize zProbe slider max based on d (in cm)
+zProbeSlider.max = (state.d*100).toFixed(2);
+zProbeSlider.value = (state.zProbe*100).toFixed(2);
+
+/* =========================
+   Smooth scrolling TOC
+   ========================= */
+document.querySelectorAll("[data-scroll]").forEach(a=>{
+  a.addEventListener("click", (e)=>{
+    e.preventDefault();
+    const id = a.getAttribute("href");
+    const el = document.querySelector(id);
+    if(!el) return;
+    el.scrollIntoView({behavior:"smooth", block:"start"});
+  });
+});
+
+/* =========================
+   First render
+   ========================= */
+render();
+</script>
+</body>
+</html>

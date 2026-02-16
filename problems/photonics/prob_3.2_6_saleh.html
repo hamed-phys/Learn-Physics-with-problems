@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gaussian Beam Focusing with a Single Lens (Shortest Focal Length)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#101a33;
+      --card:#0f1830;
+      --text:#e9eefc;
+      --muted:#b7c2e6;
+      --line:rgba(255,255,255,.12);
+      --accent:#7aa7ff;
+      --accent2:#7dffcf;
+      --warn:#ffcc66;
+      --good:#8dff8d;
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% -10%, rgba(122,167,255,.22), transparent 55%),
+        radial-gradient(900px 700px at 120% 10%, rgba(125,255,207,.16), transparent 60%),
+        radial-gradient(900px 700px at 50% 120%, rgba(255,204,102,.12), transparent 60%),
+        var(--bg);
+      line-height:1.55;
+    }
+    header{
+      padding:28px 18px 10px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    header .title{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+    }
+    h1{
+      font-size:clamp(1.5rem, 2.2vw + 1rem, 2.35rem);
+      margin:0 0 8px 0;
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:0;
+      max-width:80ch;
+    }
+
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding:14px 18px 48px;
+      display:grid;
+      grid-template-columns: 300px 1fr;
+      gap:18px;
+    }
+
+    /* Sticky mini TOC */
+    nav#toc{
+      position:sticky;
+      top:14px;
+      align-self:start;
+      background:linear-gradient(180deg, rgba(16,26,51,.92), rgba(16,26,51,.82));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px 14px 10px;
+      backdrop-filter: blur(10px);
+    }
+    #toc h2{
+      font-size:1rem;
+      margin:0 0 10px;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    #toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      color:var(--muted);
+      text-decoration:none;
+      border:1px solid transparent;
+      transition:transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size:.95rem;
+    }
+    #toc a:hover{
+      background:rgba(122,167,255,.10);
+      border-color:rgba(122,167,255,.25);
+      color:var(--text);
+      transform: translateY(-1px);
+    }
+    #toc .hint{
+      margin:10px 4px 0;
+      color:rgba(183,194,230,.75);
+      font-size:.85rem;
+    }
+
+    article{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+
+    section, .card{
+      background:linear-gradient(180deg, rgba(15,24,48,.92), rgba(15,24,48,.78));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px 16px;
+      backdrop-filter: blur(10px);
+    }
+    section h2{
+      margin:0 0 10px;
+      font-size:1.25rem;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    section h3{
+      margin:14px 0 8px;
+      font-size:1.05rem;
+      color:var(--text);
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      main{ grid-template-columns: 1fr; }
+      nav#toc{ position:relative; top:auto; }
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .bullets{
+      margin:10px 0 0 0;
+      padding-left:18px;
+      color:var(--muted);
+    }
+    .bullets li{ margin:6px 0; }
+    .callouts{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .callouts{ grid-template-columns: 1fr; }
+    }
+    .callout{
+      border:1px solid rgba(122,167,255,.22);
+      background:rgba(122,167,255,.08);
+      border-radius:16px;
+      padding:12px 12px;
+    }
+    .callout strong{ color:var(--text); }
+    .callout.warn{
+      border-color:rgba(255,204,102,.25);
+      background:rgba(255,204,102,.08);
+    }
+    .eq{
+      font-family:var(--mono);
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      padding:10px 12px;
+      overflow:auto;
+      position:relative;
+    }
+    .eq .copyBtn{
+      position:absolute;
+      top:10px;
+      right:10px;
+      border:none;
+      border-radius:12px;
+      padding:7px 10px;
+      cursor:pointer;
+      color:var(--text);
+      background:rgba(122,167,255,.22);
+      border:1px solid rgba(122,167,255,.35);
+      transition:transform .12s ease, background .12s ease;
+      font-size:.85rem;
+    }
+    .eq .copyBtn:hover{ transform: translateY(-1px); background:rgba(122,167,255,.30); }
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    .kpi .tile{
+      padding:12px 12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+    }
+    .kpi .label{ color:rgba(183,194,230,.9); font-size:.9rem; }
+    .kpi .value{ font-size:1.15rem; font-weight:700; margin-top:4px; }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(125,255,207,.28);
+      background:rgba(125,255,207,.10);
+      color:var(--text);
+      font-size:.88rem;
+    }
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      margin-top:10px;
+    }
+    @media (max-width: 720px){
+      .controls{ grid-template-columns: 1fr; }
+      .kpi{ grid-template-columns: 1fr; }
+    }
+    .ctrl{
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+      border-radius:16px;
+      padding:12px;
+    }
+    .ctrl label{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      color:rgba(233,238,252,.95);
+      font-size:.95rem;
+      margin-bottom:8px;
+    }
+    .ctrl .small{
+      color:rgba(183,194,230,.85);
+      font-size:.85rem;
+    }
+    input[type="range"]{ width:100%; }
+    select{
+      width:100%;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(11,16,32,.55);
+      color:var(--text);
+      outline:none;
+    }
+    .canvasWrap{
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);
+      border-radius:16px;
+      overflow:hidden;
+    }
+    .canvasHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.04);
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .canvasHeader .title{
+      font-weight:700;
+      font-size:.95rem;
+    }
+    .canvasHeader .meta{
+      color:rgba(183,194,230,.85);
+      font-size:.85rem;
+    }
+    canvas{ display:block; width:100%; height:320px; }
+    .note{
+      color:rgba(183,194,230,.9);
+      font-size:.95rem;
+    }
+    .boxFinal{
+      border:1px solid rgba(125,255,207,.32);
+      background:rgba(125,255,207,.10);
+      border-radius:18px;
+      padding:14px 14px;
+      position:relative;
+      overflow:hidden;
+    }
+    .boxFinal:before{
+      content:"";
+      position:absolute;
+      inset:-80px -80px auto auto;
+      width:160px; height:160px;
+      background:radial-gradient(circle at 30% 30%, rgba(125,255,207,.35), transparent 60%);
+      transform: rotate(12deg);
+    }
+    .finalLine{
+      font-family:var(--mono);
+      font-size:1.02rem;
+      margin:8px 0 0;
+      white-space:pre-wrap;
+    }
+    .copyRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .btn{
+      border:none;
+      border-radius:14px;
+      padding:10px 12px;
+      cursor:pointer;
+      color:var(--text);
+      background:rgba(122,167,255,.22);
+      border:1px solid rgba(122,167,255,.35);
+      transition:transform .12s ease, background .12s ease;
+      font-weight:700;
+      font-size:.92rem;
+    }
+    .btn:hover{ transform: translateY(-1px); background:rgba(122,167,255,.30); }
+    .btn.secondary{
+      background:rgba(255,255,255,.06);
+      border-color:rgba(255,255,255,.14);
+      font-weight:600;
+    }
+
+    footer{
+      max-width:1200px;
+      margin:0 auto;
+      padding:0 18px 28px;
+      color:rgba(183,194,230,.8);
+      font-size:.9rem;
+    }
+
+    /* Print friendly */
+    @media print{
+      body{ background:white; color:black; }
+      nav#toc{ display:none; }
+      section, .card{ box-shadow:none; backdrop-filter:none; background:white; border:1px solid #ddd; }
+      .eq{ background:#f7f7f7; border-color:#ddd; }
+      .btn, .copyBtn{ display:none !important; }
+      canvas{ height:240px; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="title">
+    <div>
+      <h1>Beam Focusing (Gaussian Beam) — Shortest Single-Lens Focal Length</h1>
+      <p class="subtitle">
+        We focus an argon-ion laser Gaussian beam (λ = 488 nm, input waist radius W<sub>0</sub> = 0.5 mm)
+        to a target spot diameter of 100 μm using one thin lens, and determine the minimum focal length that can achieve it.
+      </p>
+    </div>
+    <div class="badge" title="Assumes diffraction-limited TEM00 (M² = 1) and a thin lens">
+      ✅ TEM<sub>00</sub> model • thin-lens Gaussian optics
+    </div>
+  </div>
+</header>
+
+<main>
+  <nav id="toc" aria-label="Table of contents">
+    <h2>📌 Contents</h2>
+    <a href="#quick">Quick Summary</a>
+    <a href="#part1">PART 1 — Problem Analysis</a>
+    <a href="#part2">PART 2 — Strategy & Tips</a>
+    <a href="#part3">PART 3 — Full Solution</a>
+    <a href="#viz">Interactive Visualizations</a>
+    <div class="hint">Tip: Use the slider(s) to see how the required focal length changes.</div>
+  </nav>
+
+  <article>
+
+    <section id="quick">
+      <h2>⚡ Quick Summary</h2>
+      <ul class="bullets">
+        <li>Target spot diameter 100 μm means target waist radius <span class="eq" style="display:inline-block;padding:2px 8px;">w<sub>f</sub> = 50 μm</span>.</li>
+        <li>For a Gaussian beam with waist radius W<sub>0</sub> located at the lens, the focused waist is
+          <span class="eq" style="display:inline-block;padding:2px 8px;">w<sub>f</sub> = (λ f)/(π W<sub>0</sub>)</span>.</li>
+        <li>So the required focal length is <span class="eq" style="display:inline-block;padding:2px 8px;">f = (π W<sub>0</sub> w<sub>f</sub>)/λ</span>.</li>
+        <li>Numerically: <b>f ≈ 0.161 m</b> → <b>16.1 cm</b> (shortest usable focal length under these assumptions).</li>
+        <li>The focused Rayleigh range is about <b>z<sub>R,f</sub> ≈ 1.61 cm</b>, giving the depth of focus scale.</li>
+      </ul>
+    </section>
+
+    <!-- ===================== PART 1 ===================== -->
+    <section id="part1">
+      <h2>🧩 PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <h3>1) Clear restatement</h3>
+      <p class="note">
+        A TEM<sub>00</sub> argon-ion laser produces a Gaussian beam of wavelength λ = 488 nm.
+        The beam has a waist radius W<sub>0</sub> = 0.5 mm (the 1/e<sup>2</sup> intensity radius).
+        Design a single-lens focusing system that produces a focused spot with diameter 100 μm (i.e., radius 50 μm).
+        Find the shortest focal length lens that can achieve this.
+      </p>
+
+      <div class="grid2">
+        <div class="callout">
+          <h3 style="margin-top:0;">Given quantities</h3>
+          <ul class="bullets">
+            <li>Wavelength: λ = 488 nm</li>
+            <li>Input waist radius: W<sub>0</sub> = 0.5 mm</li>
+            <li>Desired spot diameter: D = 100 μm</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <h3 style="margin-top:0;">Unknowns</h3>
+          <ul class="bullets">
+            <li>Focused waist radius w<sub>f</sub> (related to D)</li>
+            <li>Shortest focal length f (minimum usable f)</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>2) What must be found</h3>
+      <ul class="bullets">
+        <li>Convert the spot diameter requirement into a Gaussian waist requirement.</li>
+        <li>Use Gaussian-beam focusing relations to compute the focal length that yields that waist.</li>
+        <li>Interpret “shortest focal length” as the minimum f that meets the spot size (with the beam size fixed).</li>
+      </ul>
+
+      <h3>3) Relevant physical principles (and why)</h3>
+      <div class="callouts">
+        <div class="callout">
+          <p>
+            <strong>Gaussian beam propagation:</strong> A TEM<sub>00</sub> beam is characterized by a waist radius
+            and evolves with diffraction. A lens transforms the beam’s wavefront curvature, creating a new waist.
+            Because the problem provides a waist radius and asks for a focused spot size, <strong>Gaussian beam optics</strong>
+            is the correct framework (more accurate than simple ray optics for diffraction-limited spots).
+          </p>
+          <p>
+            <strong>Thin lens approximation:</strong> “Single-lens system” implies we can model it as a thin lens,
+            and use standard formulas for focusing a Gaussian beam.
+          </p>
+        </div>
+        <div class="callout warn">
+          <p>
+            <strong>Diffraction limit / quality factor:</strong> The minimum achievable waist depends on beam quality M².
+            Unless stated otherwise, we assume an ideal Gaussian (M² = 1). If M² &gt; 1, the required focal length increases
+            proportionally (we note this later).
+          </p>
+        </div>
+      </div>
+
+      <h3>4) Possible approaches (compare 2–3)</h3>
+      <ul class="bullets">
+        <li><b>Approach A (best):</b> Use the standard Gaussian focusing formula
+          w<sub>f</sub> = (λ f)/(π W<sub>0</sub>) for a lens placed at the input waist (or for a collimated beam with radius W<sub>0</sub> at the lens).
+          Direct, minimal algebra, and matches typical textbook “beam focusing” design.</li>
+        <li><b>Approach B:</b> Use ABCD matrices for Gaussian beams (q-parameter transformation through a lens),
+          then extract the new waist from the transformed q. More general (handles waist not at lens), but heavier than needed.</li>
+        <li><b>Approach C:</b> Use an “effective numerical aperture” and diffraction-limited spot size formula
+          w ≈ 0.61 λ/NA. This is more imaging/NA-centric and needs NA ↔ beam radius ↔ focal length connections anyway.</li>
+      </ul>
+
+      <h3>5) Chosen approach</h3>
+      <p class="note">
+        We choose <b>Approach A</b> because the problem provides a beam waist radius and asks for a single-lens design,
+        which is directly handled by the standard Gaussian focusing relation for an ideal Gaussian beam.
+      </p>
+    </section>
+
+    <!-- ===================== PART 2 ===================== -->
+    <section id="part2">
+      <h2>🧭 PART 2 — Strategy & Tips (roadmap only)</h2>
+
+      <h3>Step-by-step plan (no algebra yet)</h3>
+      <ol class="bullets">
+        <li><b>Goal:</b> Convert spot diameter to waist radius.
+          <br><span class="small">Tool:</span> D = 2 w<sub>f</sub> (Gaussian diameter defined as 2×radius).</li>
+        <li><b>Goal:</b> State the Gaussian focusing relation linking input radius, focal length, and focused waist.
+          <br><span class="small">Tool:</span> w<sub>f</sub> = (λ f)/(π W<sub>0</sub>) (TEM<sub>00</sub>, waist at lens / collimated at lens).</li>
+        <li><b>Goal:</b> Solve that relation for the focal length required.
+          <br><span class="small">Tool:</span> algebraic rearrangement.</li>
+        <li><b>Goal:</b> Substitute numbers in SI units and compute f.
+          <br><span class="small">Tool:</span> unit conversion μm → m, nm → m, mm → m.</li>
+        <li><b>Goal:</b> Provide sanity checks (units, trends, physical interpretation).
+          <br><span class="small">Tool:</span> dimensional analysis and limiting cases.</li>
+        <li><b>Goal:</b> (Optional but useful) Compute depth of focus via Rayleigh range.
+          <br><span class="small">Tool:</span> z<sub>R,f</sub> = π w<sub>f</sub><sup>2</sup> / λ.</li>
+      </ol>
+
+      <h3>Common mistakes & quick tips</h3>
+      <ul class="bullets">
+        <li><b>Diameter vs radius:</b> The target “spot diameter 100 μm” means waist radius 50 μm (if diameter is defined as 2w).</li>
+        <li><b>Unit consistency:</b> Convert everything to meters before computing.</li>
+        <li><b>Beam quality:</b> If the beam is not ideal (M²&gt;1), the focused waist is larger by M², so the required f is larger by M².</li>
+        <li><b>Lens placement assumption:</b> The simple formula assumes the beam radius at the lens is W<sub>0</sub> (often by placing the lens at the waist or using a collimated section). A different waist location requires the q-parameter (ABCD) method.</li>
+      </ul>
+    </section>
+
+    <!-- ===================== PART 3 ===================== -->
+    <section id="part3">
+      <h2>🧮 PART 3 — Full Solution</h2>
+
+      <h3>Physical intuition first</h3>
+      <p class="note">
+        A lens focuses a beam by imparting curvature to its wavefront. For a diffraction-limited Gaussian beam,
+        a larger beam radius at the lens (bigger “aperture”) allows a tighter focus. Here W<sub>0</sub> is fixed,
+        so the only knob is the focal length: <b>shorter f → tighter focus</b>. The shortest usable focal length is
+        the one that just achieves the required spot size.
+      </p>
+
+      <h3>Define symbols</h3>
+      <ul class="bullets">
+        <li>λ: vacuum wavelength</li>
+        <li>W<sub>0</sub>: 1/e<sup>2</sup> intensity radius (waist radius) of the incident Gaussian beam at the lens</li>
+        <li>f: focal length of the thin lens</li>
+        <li>w<sub>f</sub>: focused waist radius (1/e<sup>2</sup>) at the focal region</li>
+        <li>D: focused spot diameter, taken as D = 2 w<sub>f</sub></li>
+      </ul>
+
+      <h3>Key Gaussian focusing relation</h3>
+      <div class="eq" id="eq1">
+        <button class="copyBtn" data-copy="w_f = (lambda * f) / (pi * W0)">Copy</button>
+        w_f = (λ f) / (π W0)
+      </div>
+      <p class="note">
+        This is the standard result for focusing a diffraction-limited Gaussian beam when the beam radius at the lens is W<sub>0</sub>
+        (often achieved by placing the lens at the beam waist or using a collimated section with radius W<sub>0</sub> at the lens).
+      </p>
+
+      <h3>Convert target diameter to waist radius</h3>
+      <div class="eq" id="eq2">
+        <button class="copyBtn" data-copy="w_f = D / 2">Copy</button>
+        w_f = D / 2
+      </div>
+
+      <h3>Solve for the focal length</h3>
+      <p class="note">Start from <span class="eq" style="display:inline-block;padding:2px 8px;">w_f = (λ f)/(π W0)</span> and rearrange:</p>
+      <div class="eq" id="eq3">
+        <button class="copyBtn" data-copy="f = (pi * W0 * w_f) / lambda = (pi * W0 * D) / (2 * lambda)">Copy</button>
+        f = (π W0 w_f)/λ = (π W0 D)/(2 λ)
+      </div>
+
+      <h3>Substitute numbers (SI units)</h3>
+      <ul class="bullets">
+        <li>λ = 488 nm = 488 × 10<sup>-9</sup> m</li>
+        <li>W<sub>0</sub> = 0.5 mm = 0.5 × 10<sup>-3</sup> m</li>
+        <li>D = 100 μm ⇒ w<sub>f</sub> = 50 μm = 50 × 10<sup>-6</sup> m</li>
+      </ul>
+
+      <p class="note">Compute:</p>
+      <div class="eq" id="eq4">
+        <button class="copyBtn" data-copy="f = pi*(0.5e-3)*(50e-6)/(488e-9) ≈ 0.16094 m">Copy</button>
+        f = π (0.5×10^-3)(50×10^-6) / (488×10^-9)
+          ≈ 0.16094 m
+      </div>
+
+      <div class="boxFinal" aria-label="Final result">
+        <h3 style="margin:0;">✅ Final Answer (boxed)</h3>
+        <p class="finalLine" id="finalText">
+Shortest focal length (ideal Gaussian, M² = 1):
+f_min ≈ 0.161 m = 16.1 cm
+        </p>
+        <div class="copyRow">
+          <button class="btn" id="copyFinal">Copy final answer</button>
+          <button class="btn secondary" id="copyAll">Copy key equations</button>
+        </div>
+      </div>
+
+      <h3>Sanity checks</h3>
+      <div class="grid2">
+        <div class="callout">
+          <h3 style="margin-top:0;">1) Units</h3>
+          <p class="note">
+            From f = (π W0 w_f)/λ:
+            (m·m)/m → m. Correct.
+          </p>
+        </div>
+        <div class="callout">
+          <h3 style="margin-top:0;">2) Limiting cases</h3>
+          <ul class="bullets">
+            <li>If W0 increases (fatter beam at lens), f needed for a given w_f increases linearly (or equivalently, for fixed f you get a smaller focus).</li>
+            <li>If λ increases (longer wavelength), diffraction is stronger, so for the same w_f you need a larger f (harder to focus tightly).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <h3 style="margin-top:0;">3) Physical interpretation & depth of focus</h3>
+        <p class="note">
+          A useful extra number is the focused Rayleigh range:
+          z<sub>R,f</sub> = π w<sub>f</sub><sup>2</sup>/λ.
+          With w<sub>f</sub> = 50 μm and λ = 488 nm, this gives z<sub>R,f</sub> ≈ 0.0161 m = 1.61 cm.
+          That’s the distance over which the spot radius increases by √2 (a “depth of focus” scale).
+        </p>
+        <p class="note">
+          If beam quality is not ideal, replace λ → M²λ (or w_f → M²(λ f)/(π W0)).
+          Then <b>f_min scales as M²</b>.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===================== VISUALIZATIONS ===================== -->
+    <section id="viz">
+      <h2>📊 Interactive Visualizations (diagram + 2 plots)</h2>
+      <p class="note">
+        Use the controls to change the target spot diameter, input beam waist at the lens, and wavelength.
+        The diagram and both plots update live, and the computed minimum focal length updates too.
+      </p>
+
+      <div class="controls" aria-label="Interactive controls">
+        <div class="ctrl">
+          <label for="dSlider">
+            <span>Target spot diameter D (μm)</span>
+            <span class="small"><span id="dVal">100</span> μm</span>
+          </label>
+          <input id="dSlider" type="range" min="20" max="300" step="1" value="100" />
+          <div class="small">Interpretation here: D = 2 w<sub>f</sub> (1/e² diameter).</div>
+        </div>
+
+        <div class="ctrl">
+          <label for="wSlider">
+            <span>Input waist radius W<sub>0</sub> at lens (mm)</span>
+            <span class="small"><span id="wVal">0.50</span> mm</span>
+          </label>
+          <input id="wSlider" type="range" min="0.10" max="2.00" step="0.01" value="0.50" />
+          <div class="small">Larger W<sub>0</sub> means lower divergence and tighter achievable focus.</div>
+        </div>
+
+        <div class="ctrl">
+          <label for="lambdaSelect">
+            <span>Wavelength λ</span>
+            <span class="small"><span id="lamVal">488</span> nm</span>
+          </label>
+          <select id="lambdaSelect">
+            <option value="488" selected>488 nm (Ar-ion line)</option>
+            <option value="532">532 nm (green)</option>
+            <option value="633">633 nm (He-Ne red)</option>
+            <option value="1064">1064 nm (Nd:YAG IR)</option>
+          </select>
+          <div class="small">Longer wavelength → larger diffraction-limited spot for same optics.</div>
+        </div>
+
+        <div class="ctrl">
+          <div class="kpi">
+            <div class="tile">
+              <div class="label">Computed focal length f (m)</div>
+              <div class="value" id="fOut">0.1609</div>
+            </div>
+            <div class="tile">
+              <div class="label">Computed focal length f (cm)</div>
+              <div class="value" id="fOutCm">16.09</div>
+            </div>
+            <div class="tile">
+              <div class="label">Focused waist radius w<sub>f</sub> (μm)</div>
+              <div class="value" id="wfOut">50.0</div>
+            </div>
+            <div class="tile">
+              <div class="label">Focused Rayleigh range z<sub>R,f</sub> (cm)</div>
+              <div class="value" id="zrOut">1.61</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:14px;">
+        <div class="canvasWrap">
+          <div class="canvasHeader">
+            <div class="title">Diagram: Gaussian beam + thin lens → focused waist</div>
+            <div class="meta">Labeled geometry • not to scale</div>
+          </div>
+          <canvas id="cDiagram" aria-label="Optical setup diagram"></canvas>
+        </div>
+
+        <div class="canvasWrap">
+          <div class="canvasHeader">
+            <div class="title">Main plot: Focused spot diameter D vs focal length f</div>
+            <div class="meta">D(f) = 2 λ f / (π W0)</div>
+          </div>
+          <canvas id="cPlot1" aria-label="Main quantitative plot"></canvas>
+        </div>
+      </div>
+
+      <div class="canvasWrap" style="margin-top:14px;">
+        <div class="canvasHeader">
+          <div class="title">Secondary plot: Required focal length f vs input waist W0 (parameter sweep)</div>
+          <div class="meta">f(W0) = π W0 (D/2) / λ</div>
+        </div>
+        <canvas id="cPlot2" aria-label="Secondary parameter sweep plot"></canvas>
+      </div>
+    </section>
+
+  </article>
+</main>
+
+<footer>
+  <p>
+    Assumptions used: ideal Gaussian TEM<sub>00</sub> (M² = 1), thin lens, beam radius at the lens equals the given W<sub>0</sub>.
+    If the waist is not at the lens or the beam is not collimated at the lens, use the q-parameter (ABCD) method; the interactive plots still show the key scaling.
+  </p>
+</footer>
+
+<script>
+/* ------------------------ Utilities ------------------------ */
+function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+function fmt(x, n=4){
+  if(!isFinite(x)) return "—";
+  return Number(x).toFixed(n);
+}
+function fmtSmart(x){
+  if(!isFinite(x)) return "—";
+  const ax = Math.abs(x);
+  if(ax >= 100) return x.toFixed(0);
+  if(ax >= 10) return x.toFixed(1);
+  if(ax >= 1) return x.toFixed(2);
+  if(ax >= 0.1) return x.toFixed(3);
+  return x.toExponential(2);
+}
+async function copyText(t){
+  try{
+    await navigator.clipboard.writeText(t);
+  }catch(e){
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = t;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+  }
+}
+
+/* ------------------------ Physics Model ------------------------
+   Ideal Gaussian (M^2 = 1), beam radius at lens = W0.
+   Focused waist: w_f = (lambda * f) / (pi * W0)
+   Spot diameter: D = 2*w_f
+   Required focal length for target D: f = (pi*W0*(D/2))/lambda
+   Rayleigh range at focus: zR = pi*w_f^2 / lambda
+--------------------------------------------------------------- */
+function computeFromInputs(lam_m, W0_m, D_um){
+  const D_m = D_um * 1e-6;
+  const wf_m = D_m/2;
+  const f_m = Math.PI * W0_m * wf_m / lam_m;
+  const zR_m = Math.PI * wf_m * wf_m / lam_m;
+  return {D_m, wf_m, f_m, zR_m};
+}
+
+/* ------------------------ Canvas helpers ------------------------ */
+function setupCanvas(canvas){
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(10, rect.width);
+  const h = Math.max(10, rect.height);
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx, w, h, dpr};
+}
+function clear(ctx, w, h){
+  ctx.clearRect(0,0,w,h);
+}
+
+/* Axes drawing */
+function drawAxes(ctx, box, xMin, xMax, yMin, yMax, opts){
+  const {x, y, w, h} = box;
+  const padL = 56, padR = 16, padT = 30, padB = 44;
+  const ix = x + padL, iy = y + padT, iw = w - padL - padR, ih = h - padT - padB;
+
+  // background panel
+  ctx.save();
+  ctx.fillStyle = "rgba(255,255,255,0.02)";
+  ctx.fillRect(x,y,w,h);
+  ctx.restore();
+
+  // grid
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
+  ctx.lineWidth = 1;
+
+  const xTicks = opts.xTicks || 6;
+  const yTicks = opts.yTicks || 6;
+
+  for(let i=0;i<=xTicks;i++){
+    const gx = ix + (iw*i/xTicks);
+    ctx.beginPath(); ctx.moveTo(gx, iy); ctx.lineTo(gx, iy+ih); ctx.stroke();
+  }
+  for(let j=0;j<=yTicks;j++){
+    const gy = iy + (ih*j/yTicks);
+    ctx.beginPath(); ctx.moveTo(ix, gy); ctx.lineTo(ix+iw, gy); ctx.stroke();
+  }
+  ctx.restore();
+
+  // axes border
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.18)";
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(ix, iy, iw, ih);
+  ctx.restore();
+
+  // title
+  ctx.save();
+  ctx.fillStyle = "rgba(233,238,252,0.95)";
+  ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(opts.title || "", x+12, y+20);
+  ctx.restore();
+
+  // labels
+  ctx.save();
+  ctx.fillStyle = "rgba(183,194,230,0.95)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(opts.xLabel || "", ix + iw/2 - 40, y + h - 12);
+  // y label (rotated)
+  ctx.translate(x+14, iy + ih/2 + 40);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(opts.yLabel || "", 0, 0);
+  ctx.restore();
+
+  // tick labels
+  ctx.save();
+  ctx.fillStyle = "rgba(183,194,230,0.9)";
+  ctx.font = "11px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+
+  for(let i=0;i<=xTicks;i++){
+    const val = xMin + (xMax-xMin)*i/xTicks;
+    const tx = ix + (iw*i/xTicks);
+    const ty = iy+ih+16;
+    ctx.fillText(fmtSmart(val), tx-10, ty);
+  }
+  for(let j=0;j<=yTicks;j++){
+    const val = yMax - (yMax-yMin)*j/yTicks;
+    const tx = x+10;
+    const ty = iy + (ih*j/yTicks) + 4;
+    ctx.fillText(fmtSmart(val), tx, ty);
+  }
+  ctx.restore();
+
+  function xMap(xv){ return ix + (xv-xMin)*iw/(xMax-xMin); }
+  function yMap(yv){ return iy + (yMax-yv)*ih/(yMax-yMin); }
+
+  return {ix, iy, iw, ih, xMap, yMap, padL, padR, padT, padB};
+}
+
+/* Polyline plot */
+function plotLine(ctx, mapper, data, strokeStyle="rgba(122,167,255,0.95)", width=2){
+  ctx.save();
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  for(let i=0;i<data.length;i++){
+    const p = data[i];
+    const X = mapper.xMap(p.x);
+    const Y = mapper.yMap(p.y);
+    if(i===0) ctx.moveTo(X,Y);
+    else ctx.lineTo(X,Y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+function plotPoint(ctx, mapper, x, y, style){
+  const X = mapper.xMap(x);
+  const Y = mapper.yMap(y);
+  ctx.save();
+  ctx.fillStyle = style || "rgba(125,255,207,0.95)";
+  ctx.beginPath();
+  ctx.arc(X,Y,5,0,Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+function plotHLine(ctx, mapper, y, style="rgba(255,204,102,0.85)"){
+  ctx.save();
+  ctx.strokeStyle = style;
+  ctx.lineWidth = 1.8;
+  ctx.setLineDash([6,6]);
+  ctx.beginPath();
+  ctx.moveTo(mapper.xMap(mapper._xMin), mapper.yMap(y));
+  ctx.lineTo(mapper.xMap(mapper._xMax), mapper.yMap(y));
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* ------------------------ Drawing: Diagram ------------------------ */
+function drawDiagram(canvas, params){
+  const {ctx, w, h} = setupCanvas(canvas);
+  clear(ctx,w,h);
+
+  // coordinate system inside
+  const margin = 18;
+  const x0 = margin, y0 = margin;
+  const W = w - 2*margin, H = h - 2*margin;
+
+  // Title
+  ctx.save();
+  ctx.fillStyle = "rgba(233,238,252,0.95)";
+  ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("Optical setup (single lens focusing a Gaussian beam)", x0+8, y0+16);
+  ctx.restore();
+
+  // Setup geometry
+  const lensX = x0 + W*0.48;
+  const focusX = x0 + W*0.78;
+  const axisY = y0 + H*0.55;
+
+  // Draw optical axis
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.18)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x0+10, axisY);
+  ctx.lineTo(x0+W-10, axisY);
+  ctx.stroke();
+  ctx.restore();
+
+  // Beam envelope: incident waist at lens of radius W0 (scaled)
+  const W0mm = params.W0_m * 1e3;
+  const D_um = params.D_um;
+  const wf_um = D_um/2;
+
+  // Scale beam radii to pixels
+  const maxR = Math.max(W0mm*1000, wf_um); // in um
+  const pixPerUm = (H*0.32) / (maxR*1.15 + 1e-9);
+
+  function beamRadiusAtX(x){
+    // draw a stylized envelope: wide before lens, narrows after lens to focus
+    // Not a full Gaussian propagation; we just render a smooth taper.
+    if(x <= lensX){
+      const t = (x-(x0+20)) / (lensX-(x0+20));
+      const rUm = lerp(W0mm*1000*1.05, W0mm*1000, clamp(t,0,1));
+      return rUm;
+    }else{
+      const t = (x-lensX) / (focusX-lensX);
+      const rUm = lerp(W0mm*1000, wf_um, easeInOut(clamp(t,0,1)));
+      return rUm;
+    }
+  }
+
+  // Beam envelope (top & bottom)
+  ctx.save();
+  ctx.strokeStyle = "rgba(122,167,255,0.95)";
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  const leftX = x0+20;
+  const rightX = x0+W-20;
+  for(let i=0;i<=200;i++){
+    const x = leftX + (rightX-leftX)*i/200;
+    const r = beamRadiusAtX(x) * pixPerUm;
+    const y = axisY - r;
+    if(i===0) ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.beginPath();
+  for(let i=0;i<=200;i++){
+    const x = leftX + (rightX-leftX)*i/200;
+    const r = beamRadiusAtX(x) * pixPerUm;
+    const y = axisY + r;
+    if(i===0) ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // Lens
+  ctx.save();
+  ctx.strokeStyle = "rgba(125,255,207,0.92)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(lensX, axisY - H*0.28);
+  ctx.lineTo(lensX, axisY + H*0.28);
+  ctx.stroke();
+  // lens arcs (thin lens)
+  ctx.strokeStyle = "rgba(125,255,207,0.45)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(lensX-10, axisY, H*0.22, -Math.PI/2, Math.PI/2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(lensX+10, axisY, H*0.22, Math.PI/2, -Math.PI/2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Focus waist marker
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,204,102,0.9)";
+  ctx.lineWidth = 2;
+  const wfPix = wf_um*pixPerUm;
+  ctx.beginPath();
+  ctx.moveTo(focusX, axisY - wfPix);
+  ctx.lineTo(focusX, axisY + wfPix);
+  ctx.stroke();
+  ctx.restore();
+
+  // Distance f arrow
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,204,102,0.85)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6,6]);
+  ctx.beginPath();
+  ctx.moveTo(lensX, axisY + H*0.32);
+  ctx.lineTo(focusX, axisY + H*0.32);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  arrowHead(ctx, focusX, axisY + H*0.32, 0);
+  arrowHead(ctx, lensX, axisY + H*0.32, Math.PI);
+  ctx.fillStyle = "rgba(255,204,102,0.9)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("f", (lensX+focusX)/2 - 4, axisY + H*0.32 - 6);
+  ctx.restore();
+
+  // Labels
+  ctx.save();
+  ctx.fillStyle = "rgba(183,194,230,0.95)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("Incident beam waist radius W0 at lens", x0+24, axisY - H*0.30);
+  ctx.fillText("Thin lens", lensX - 22, axisY + H*0.30);
+  ctx.fillText("Focused waist radius wf (D = 2 wf)", focusX - 90, axisY - H*0.18);
+  ctx.restore();
+
+  // Values box
+  ctx.save();
+  const bx = x0+12, by = y0+28, bw = 240, bh = 92;
+  ctx.fillStyle = "rgba(0,0,0,0.28)";
+  ctx.strokeStyle = "rgba(255,255,255,0.14)";
+  ctx.lineWidth = 1;
+  roundRect(ctx,bx,by,bw,bh,14,true,true);
+  ctx.fillStyle = "rgba(233,238,252,0.95)";
+  ctx.font = "700 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("Current parameters", bx+12, by+22);
+  ctx.fillStyle = "rgba(183,194,230,0.95)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(`λ = ${params.lam_nm.toFixed(0)} nm`, bx+12, by+44);
+  ctx.fillText(`W0 = ${W0mm.toFixed(2)} mm`, bx+12, by+62);
+  ctx.fillText(`Target D = ${D_um.toFixed(0)} μm`, bx+12, by+80);
+  ctx.restore();
+
+  // Helper funcs
+  function lerp(a,b,t){ return a+(b-a)*t; }
+  function easeInOut(t){ return t<0.5 ? 2*t*t : 1- Math.pow(-2*t+2,2)/2; }
+  function arrowHead(ctx, x, y, angle){
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(angle);
+    ctx.fillStyle = "rgba(255,204,102,0.85)";
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.lineTo(-8,-5);
+    ctx.lineTo(-8,5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  function roundRect(ctx,x,y,w,h,r,fill,stroke){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    ctx.closePath();
+    if(fill) ctx.fill();
+    if(stroke) ctx.stroke();
+  }
+}
+
+/* ------------------------ Plot 1: D vs f ------------------------ */
+function drawPlot1(canvas, params){
+  const {ctx, w, h} = setupCanvas(canvas);
+  clear(ctx,w,h);
+
+  const lam = params.lam_m;
+  const W0 = params.W0_m;
+
+  // choose f range around current required f
+  const fReq = params.f_m;
+  const fMin = Math.max(0.01, fReq*0.25);
+  const fMax = Math.max(0.05, fReq*2.5);
+
+  // generate data: D_um(f) = 2*(lam*f)/(pi*W0) * 1e6
+  const N = 220;
+  const data = [];
+  for(let i=0;i<=N;i++){
+    const f = fMin + (fMax-fMin)*i/N;
+    const wf = (lam*f)/(Math.PI*W0);
+    const D_um = 2*wf*1e6;
+    data.push({x:f, y:D_um});
+  }
+
+  // y-range
+  const yMin = 0;
+  const yMax = Math.max(params.D_um*1.8, data[data.length-1].y*1.05);
+
+  const mapper = drawAxes(ctx,
+    {x:8,y:8,w:w-16,h:h-16},
+    fMin, fMax, yMin, yMax,
+    {
+      title:"Spot diameter vs focal length",
+      xLabel:"f (m)",
+      yLabel:"D (μm)",
+      xTicks:6, yTicks:6
+    }
+  );
+  // store for helper line drawing
+  mapper._xMin = fMin;
+  mapper._xMax = fMax;
+
+  plotLine(ctx, mapper, data, "rgba(122,167,255,0.95)", 2.4);
+
+  // target line and point
+  ctx.save();
+  ctx.fillStyle = "rgba(183,194,230,0.95)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(`Target D = ${params.D_um.toFixed(0)} μm`, mapper.ix + 10, mapper.iy + 18);
+  ctx.restore();
+
+  // dashed horizontal target
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,204,102,0.85)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([7,6]);
+  ctx.beginPath();
+  ctx.moveTo(mapper.xMap(fMin), mapper.yMap(params.D_um));
+  ctx.lineTo(mapper.xMap(fMax), mapper.yMap(params.D_um));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // point at required focal length
+  plotPoint(ctx, mapper, params.f_m, params.D_um, "rgba(125,255,207,0.95)");
+
+  // annotation
+  ctx.save();
+  const px = mapper.xMap(params.f_m);
+  const py = mapper.yMap(params.D_um);
+  ctx.fillStyle = "rgba(125,255,207,0.95)";
+  ctx.font = "700 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(`f ≈ ${params.f_m.toFixed(3)} m`, px + 10, py - 10);
+  ctx.restore();
+}
+
+/* ------------------------ Plot 2: f vs W0 sweep ------------------------ */
+function drawPlot2(canvas, params){
+  const {ctx, w, h} = setupCanvas(canvas);
+  clear(ctx,w,h);
+
+  const lam = params.lam_m;
+  const D_um = params.D_um;
+  const wf_m = (D_um*1e-6)/2;
+
+  const W0min = 0.10e-3; // 0.10 mm
+  const W0max = 2.00e-3; // 2.00 mm
+
+  const N = 240;
+  const data = [];
+  let fMax = 0;
+  for(let i=0;i<=N;i++){
+    const W0 = W0min + (W0max-W0min)*i/N;
+    const f = Math.PI * W0 * wf_m / lam;
+    fMax = Math.max(fMax, f);
+    data.push({x:W0*1e3, y:f}); // x in mm
+  }
+
+  const xMin = W0min*1e3, xMax = W0max*1e3;
+  const yMin = 0;
+  const yMax = Math.max(params.f_m*1.7, fMax*1.05);
+
+  const mapper = drawAxes(ctx,
+    {x:8,y:8,w:w-16,h:h-16},
+    xMin, xMax, yMin, yMax,
+    {
+      title:"Required focal length vs input waist (parameter sweep)",
+      xLabel:"W0 (mm)",
+      yLabel:"f (m)",
+      xTicks:6, yTicks:6
+    }
+  );
+
+  plotLine(ctx, mapper, data, "rgba(122,167,255,0.95)", 2.4);
+
+  // mark current W0
+  plotPoint(ctx, mapper, params.W0_m*1e3, params.f_m, "rgba(125,255,207,0.95)");
+
+  // small legend text
+  ctx.save();
+  ctx.fillStyle = "rgba(183,194,230,0.95)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(`Fixed target D = ${D_um.toFixed(0)} μm, λ = ${params.lam_nm.toFixed(0)} nm`, mapper.ix + 10, mapper.iy + 18);
+  ctx.restore();
+
+  // annotate current point
+  ctx.save();
+  const px = mapper.xMap(params.W0_m*1e3);
+  const py = mapper.yMap(params.f_m);
+  ctx.fillStyle = "rgba(125,255,207,0.95)";
+  ctx.font = "700 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(`(${(params.W0_m*1e3).toFixed(2)} mm, ${params.f_m.toFixed(3)} m)`, px + 10, py - 10);
+  ctx.restore();
+}
+
+/* ------------------------ Wiring & Updates ------------------------ */
+const dSlider = document.getElementById('dSlider');
+const wSlider = document.getElementById('wSlider');
+const lambdaSelect = document.getElementById('lambdaSelect');
+
+const dVal = document.getElementById('dVal');
+const wVal = document.getElementById('wVal');
+const lamVal = document.getElementById('lamVal');
+
+const fOut = document.getElementById('fOut');
+const fOutCm = document.getElementById('fOutCm');
+const wfOut = document.getElementById('wfOut');
+const zrOut = document.getElementById('zrOut');
+
+const finalText = document.getElementById('finalText');
+
+const cDiagram = document.getElementById('cDiagram');
+const cPlot1 = document.getElementById('cPlot1');
+const cPlot2 = document.getElementById('cPlot2');
+
+function updateAll(){
+  const D_um = Number(dSlider.value);
+  const W0_mm = Number(wSlider.value);
+  const lam_nm = Number(lambdaSelect.value);
+
+  dVal.textContent = D_um.toFixed(0);
+  wVal.textContent = W0_mm.toFixed(2);
+  lamVal.textContent = lam_nm.toFixed(0);
+
+  const lam_m = lam_nm * 1e-9;
+  const W0_m = W0_mm * 1e-3;
+
+  const r = computeFromInputs(lam_m, W0_m, D_um);
+
+  // KPIs
+  fOut.textContent = fmt(r.f_m, 4);
+  fOutCm.textContent = fmt(r.f_m*100, 2);
+  wfOut.textContent = fmt((r.wf_m*1e6), 1);
+  zrOut.textContent = fmt((r.zR_m*100), 2);
+
+  // Update final answer box text (reflect current params)
+  finalText.textContent =
+`Shortest focal length (ideal Gaussian, M² = 1):
+f_min ≈ ${r.f_m.toFixed(3)} m = ${(r.f_m*100).toFixed(1)} cm`;
+
+  // redraw visuals
+  const params = {
+    D_um, W0_m, lam_m, lam_nm,
+    wf_m: r.wf_m,
+    f_m: r.f_m,
+    zR_m: r.zR_m
+  };
+  drawDiagram(cDiagram, params);
+  drawPlot1(cPlot1, params);
+  drawPlot2(cPlot2, params);
+}
+
+[dSlider, wSlider, lambdaSelect].forEach(el => {
+  el.addEventListener('input', updateAll);
+  el.addEventListener('change', updateAll);
+});
+
+// Resize handling
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(updateAll, 60);
+});
+
+/* ------------------------ Copy buttons ------------------------ */
+document.querySelectorAll('.copyBtn').forEach(btn=>{
+  btn.addEventListener('click', async ()=>{
+    const t = btn.getAttribute('data-copy') || '';
+    await copyText(t);
+    const old = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(()=>btn.textContent=old, 900);
+  });
+});
+document.getElementById('copyFinal').addEventListener('click', async ()=>{
+  await copyText(finalText.textContent.trim());
+});
+document.getElementById('copyAll').addEventListener('click', async ()=>{
+  const txt =
+`Key equations (ideal Gaussian, M² = 1):
+w_f = (lambda * f) / (pi * W0)
+D = 2 * w_f
+f = (pi * W0 * w_f) / lambda = (pi * W0 * D) / (2 * lambda)
+zR_f = pi * w_f^2 / lambda`;
+  await copyText(txt);
+});
+
+/* ------------------------ Smooth scroll for TOC ------------------------ */
+document.querySelectorAll('#toc a').forEach(a=>{
+  a.addEventListener('click', (e)=>{
+    const href = a.getAttribute('href');
+    if(href && href.startsWith('#')){
+      e.preventDefault();
+      const el = document.querySelector(href);
+      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+  });
+});
+
+/* Initial render */
+updateAll();
+</script>
+</body>
+</html>
