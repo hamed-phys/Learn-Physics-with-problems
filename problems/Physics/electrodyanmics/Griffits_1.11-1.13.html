@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Vector Analysis — Gradients, Hill Optimization, Radial Derivatives, and Rotation of ∇f</title>
+  <style>
+    :root{
+      --bg0:#070A10;
+      --bg1:#0B1020;
+      --card:#0E162C;
+      --ink:#EAF0FF;
+      --muted:#B8C2E0;
+      --faint:#8190B8;
+      --accent:#7CF0C6;
+      --accent2:#7AA7FF;
+      --warn:#FFD27A;
+      --danger:#FF7A90;
+      --line:rgba(255,255,255,.10);
+      --shadow:0 18px 60px rgba(0,0,0,.45);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background: radial-gradient(1200px 800px at 20% 10%, rgba(122,167,255,.14), transparent 55%),
+                  radial-gradient(1100px 900px at 80% 20%, rgba(124,240,198,.10), transparent 55%),
+                  linear-gradient(180deg, var(--bg0), var(--bg1));
+      line-height:1.55;
+    }
+
+    header{
+      padding: clamp(18px, 2.6vw, 34px) 20px 14px;
+      border-bottom:1px solid var(--line);
+      position:relative;
+      overflow:hidden;
+    }
+    header::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(900px 260px at 15% 30%, rgba(124,240,198,.13), transparent 55%),
+                  radial-gradient(700px 240px at 70% 20%, rgba(122,167,255,.14), transparent 60%);
+      pointer-events:none;
+      filter: blur(0px);
+    }
+    header .wrap{ position:relative; max-width:1100px; margin:0 auto; }
+    h1{
+      margin:0 0 6px;
+      font-size: clamp(22px, 3.0vw, 34px);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      max-width: 75ch;
+      font-size: 0.98rem;
+    }
+
+    main{
+      max-width:1100px;
+      margin: 18px auto 70px;
+      padding: 0 20px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 16px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns:1fr; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .inner{ padding: 16px 16px 14px; }
+    .card h2, .card h3{
+      margin: 0 0 10px;
+      letter-spacing:.2px;
+    }
+    .card h2{ font-size:1.12rem; }
+    .card h3{ font-size:1.02rem; color: var(--ink); }
+    .muted{ color: var(--muted); }
+    .tiny{ font-size:.92rem; color: var(--muted); }
+
+    .callouts{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 800px){
+      .callouts{ grid-template-columns:1fr; }
+    }
+    .callout{
+      border:1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 12px 10px;
+      background: rgba(14,22,44,.55);
+    }
+    .callout strong{ color: var(--accent); }
+    .callout.warn strong{ color: var(--warn); }
+
+    .toc{
+      position: sticky;
+      top: 10px;
+      padding: 14px 14px 10px;
+    }
+    .toc .title{
+      font-weight:700;
+      font-size: .95rem;
+      margin-bottom: 8px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .toc nav a{
+      display:block;
+      padding: 7px 10px;
+      border-radius: 10px;
+      color: var(--muted);
+      text-decoration:none;
+      border: 1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size: .93rem;
+    }
+    .toc nav a:hover{
+      background: rgba(122,167,255,.10);
+      border-color: rgba(122,167,255,.18);
+      transform: translateX(2px);
+      color: var(--ink);
+    }
+
+    section{ scroll-margin-top: 86px; }
+    .section-title{
+      display:flex;
+      gap: 10px;
+      align-items:baseline;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.12);
+    }
+    .section-title h2{ margin:0; font-size: 1.08rem; }
+    .badge{
+      font-size: .78rem;
+      color: var(--faint);
+      border:1px solid var(--line);
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+      white-space:nowrap;
+    }
+
+    .equation{
+      font-family: var(--mono);
+      font-size: .95rem;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      overflow:auto;
+      margin: 10px 0 10px;
+    }
+    .eqrow{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .copybtn{
+      appearance:none;
+      border:1px solid rgba(124,240,198,.28);
+      background: rgba(124,240,198,.10);
+      color: var(--ink);
+      padding: 7px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-size: .88rem;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .copybtn:hover{
+      transform: translateY(-1px);
+      background: rgba(124,240,198,.14);
+      border-color: rgba(124,240,198,.45);
+    }
+    .copybtn:active{ transform: translateY(0px) scale(.99); }
+    .copyhint{ font-size:.86rem; color: var(--muted); }
+
+    .two-col{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 900px){ .two-col{ grid-template-columns:1fr; } }
+
+    figure{
+      margin:0;
+      padding: 12px;
+      border-top:1px solid var(--line);
+      background: rgba(0,0,0,.10);
+    }
+    figcaption{
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    canvas{
+      width: 100%;
+      height: 320px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(5,8,14,.45);
+      display:block;
+    }
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 12px;
+      align-items:center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-top:1px solid var(--line);
+      background: rgba(255,255,255,.02);
+    }
+    .ctrl{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex: 1 1 320px;
+      min-width: 260px;
+    }
+    .ctrl label{
+      font-size:.92rem;
+      color: var(--muted);
+      min-width: 150px;
+    }
+    input[type="range"]{ width: min(420px, 100%); }
+    .pill{
+      font-family: var(--mono);
+      font-size:.88rem;
+      color: var(--ink);
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      white-space:nowrap;
+    }
+
+    .box{
+      border:1px solid rgba(122,167,255,.18);
+      background: rgba(122,167,255,.08);
+      border-radius: 14px;
+      padding: 12px 12px 10px;
+      margin: 10px 0;
+    }
+    .box strong{ color: var(--accent2); }
+    .final{
+      border:1px solid rgba(124,240,198,.35);
+      background: rgba(124,240,198,.10);
+      border-radius: 16px;
+      padding: 14px 14px 12px;
+    }
+    .final h3{ margin-top:0; }
+    .hr{ height:1px; background: var(--line); margin: 14px 0; }
+
+    footer{
+      max-width:1100px;
+      margin: 0 auto 26px;
+      padding: 0 20px;
+      color: var(--muted);
+      font-size:.92rem;
+    }
+
+    /* Subtle reveal animation */
+    @media (prefers-reduced-motion: no-preference){
+      .card{ animation: pop .35s ease both; }
+      @keyframes pop{
+        from{ transform: translateY(8px); opacity:0; }
+        to{ transform: translateY(0); opacity:1; }
+      }
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{ background:#fff; color:#111; }
+      header, .toc, .controls, .copybtn{ display:none !important; }
+      .card{ box-shadow:none; border-color:#ccc; }
+      canvas{ border-color:#bbb; }
+      .equation{ background:#f5f5f5; border-color:#ddd; color:#111; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <h1>Vector Analysis Problems 1.11–1.14: Gradients, Optimization, Radial Identities, and Rotation Behavior</h1>
+    <p class="subtitle">
+      We compute gradients, locate and interpret the maximum of a quadratic “hill” surface, prove standard radial-gradient identities,
+      and show that <span style="font-family:var(--mono)">∇f</span> transforms like a vector under rotations.
+      Interactive canvases below let you rotate coordinates by an angle <span style="font-family:var(--mono)">φ</span> and watch all plots update.
+    </p>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+    <article class="card">
+      <div class="inner">
+        <h2>Quick Summary</h2>
+        <ul class="muted">
+          <li><b>Problem 1.11:</b> Take partial derivatives component-wise to get <span style="font-family:var(--mono)">∇f</span>.</li>
+          <li><b>Problem 1.12:</b> The hill top is at the critical point where <span style="font-family:var(--mono)">∇h=0</span>: here <span style="font-family:var(--mono)">(x,y)=(-2,3)</span> miles, height <span style="font-family:var(--mono)">720 ft</span>.</li>
+          <li><b>Slope at (1,1):</b> <span style="font-family:var(--mono)">∇h(1,1)=(-220,220) ft/mi</span>; steepest ascent is toward NW (45° north of west) with magnitude <span style="font-family:var(--mono)">220√2 ft/mi</span>.</li>
+          <li><b>Problem 1.13:</b> If <span style="font-family:var(--mono)">r</span> is distance and <span style="font-family:var(--mono)">\mathbf{r}</span> the separation vector, then <span style="font-family:var(--mono)">∇(r²)=2\mathbf{r}</span> and <span style="font-family:var(--mono)">∇(1/r)=-(\hat{\mathbf{r}})/r²</span>.</li>
+          <li><b>Problem 1.14:</b> Under rotation by <span style="font-family:var(--mono)">φ</span> in the <span style="font-family:var(--mono)">(y,z)</span>-plane, gradient components rotate: <span style="font-family:var(--mono)">[f_ȳ, f_ż]^T = R(φ)[f_y, f_z]^T</span>.</li>
+        </ul>
+
+        <div class="callouts">
+          <div class="callout">
+            <strong>Key idea:</strong> The gradient points in the direction of steepest increase, and its magnitude is the steepest slope.
+          </div>
+          <div class="callout warn">
+            <strong>Watch out:</strong> Units for slope in Problem 1.12 are <em>feet per mile</em> because <span style="font-family:var(--mono)">x,y</span> are in miles but <span style="font-family:var(--mono)">h</span> is in feet.
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <aside class="card toc">
+      <div class="title">📌 Mini Table of Contents</div>
+      <nav>
+        <a href="#part1">Part 1 — Problem Analysis</a>
+        <a href="#part2">Part 2 — Strategy & Tips</a>
+        <a href="#part3">Part 3 — Full Solution</a>
+        <a href="#viz">Interactive Visualizations</a>
+        <a href="#final">Final Answers (Copy-ready)</a>
+      </nav>
+      <div class="hr"></div>
+      <div class="tiny">
+        Interactive parameter: <span style="font-family:var(--mono)">φ</span> rotates coordinates. All canvases update live.
+      </div>
+    </aside>
+  </div>
+
+  <!-- PART 1 -->
+  <section id="part1" class="card">
+    <div class="section-title">
+      <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+      <span class="badge">Understand → Plan → Execute</span>
+    </div>
+    <div class="inner">
+      <h3>Rewrite the problem in plain words</h3>
+      <ul class="muted">
+        <li><b>1.11:</b> For three given scalar fields <span style="font-family:var(--mono)">f</span>, compute the gradient vector <span style="font-family:var(--mono)">∇f</span>.</li>
+        <li><b>1.12:</b> A hill height <span style="font-family:var(--mono)">h(x,y)</span> (feet) is given as a quadratic function of position (miles). Find:
+          (a) the location of the top, (b) the maximum height, (c) the slope vector and steepest direction at <span style="font-family:var(--mono)">(1,1)</span>.</li>
+        <li><b>1.13:</b> Let <span style="font-family:var(--mono)">\mathbf{r}</span> be the separation vector from a fixed point to <span style="font-family:var(--mono)">(x,y,z)</span>, and <span style="font-family:var(--mono)">r=|\mathbf{r}|</span>. Prove identities for <span style="font-family:var(--mono)">∇(r²)</span>, <span style="font-family:var(--mono)">∇(1/r)</span>, then generalize to <span style="font-family:var(--mono)">∇(r^n)</span>.</li>
+        <li><b>1.14:</b> If <span style="font-family:var(--mono)">f</span> depends only on <span style="font-family:var(--mono)">y,z</span>, show that the gradient transforms as a vector under a rotation of axes.</li>
+      </ul>
+
+      <h3>Given quantities</h3>
+      <ul class="muted">
+        <li>Explicit functions in 1.11.</li>
+        <li><span style="font-family:var(--mono)">h(x,y)=10(2xy-3x²-4y²-18x+28y+12)</span> with <span style="font-family:var(--mono)">x,y</span> in miles, <span style="font-family:var(--mono)">h</span> in feet.</li>
+        <li>Separation vector <span style="font-family:var(--mono)">\mathbf{r}=(x-x')\hat{\mathbf{i}}+(y-y')\hat{\mathbf{j}}+(z-z')\hat{\mathbf{k}}</span>, length <span style="font-family:var(--mono)">r=\sqrt{(x-x')²+(y-y')²+(z-z')²}</span>.</li>
+        <li>Rotation in the <span style="font-family:var(--mono)">(y,z)</span>-plane by angle <span style="font-family:var(--mono)">φ</span>.</li>
+      </ul>
+
+      <h3>Unknowns / what must be found or proved</h3>
+      <ul class="muted">
+        <li>Compute gradients (vector fields) in 1.11.</li>
+        <li>Maximizer <span style="font-family:var(--mono)">(x*,y*)</span>, maximum height, and slope info in 1.12.</li>
+        <li>Derive symbolic identities in 1.13, including a general formula.</li>
+        <li>Derive transformation rule for gradient components under rotation in 1.14.</li>
+      </ul>
+
+      <h3>Relevant principles and why they apply</h3>
+      <div class="two-col">
+        <div class="box">
+          <strong>Gradient definition</strong><br/>
+          For a scalar field <span style="font-family:var(--mono)">f</span>,
+          <div class="equation">∇f = (∂f/∂x) î + (∂f/∂y) ĵ + (∂f/∂z) k̂.</div>
+          This is the direct tool for 1.11 and for slopes in 1.12.
+        </div>
+        <div class="box">
+          <strong>Optimization of smooth surfaces</strong><br/>
+          A maximum/minimum (interior point) occurs at a critical point:
+          <div class="equation">∇h(x*,y*) = 0.</div>
+          Because <span style="font-family:var(--mono)">h</span> is a concave quadratic (negative definite in x,y here), the critical point is the unique global maximum.
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="box">
+          <strong>Radial functions</strong><br/>
+          When <span style="font-family:var(--mono)">f</span> depends on distance <span style="font-family:var(--mono)">r</span>, chain rule gives:
+          <div class="equation">∇(g(r)) = g'(r) ∇r.</div>
+          This underpins 1.13.
+        </div>
+        <div class="box">
+          <strong>Coordinate transformations</strong><br/>
+          Under rotations, physical vectors should rotate consistently. Problem 1.14 checks that <span style="font-family:var(--mono)">∇f</span> behaves like a true vector (components rotate by the rotation matrix).
+        </div>
+      </div>
+
+      <h3>Possible approaches</h3>
+      <ol class="muted">
+        <li><b>Direct differentiation:</b> compute all partial derivatives explicitly (best for 1.11, 1.12).</li>
+        <li><b>Matrix/quadratic form:</b> rewrite 1.12 as <span style="font-family:var(--mono)">h = 10( -[x y]A[x y]^T + b·[x y] + c )</span> and solve with linear algebra.</li>
+        <li><b>Chain rule + geometry:</b> for 1.13–1.14, use chain rule and the fact that <span style="font-family:var(--mono)">\hat{\mathbf{r}}=\mathbf{r}/r</span> and rotation matrices preserve lengths and angles.</li>
+      </ol>
+
+      <h3>Chosen best approach (and why)</h3>
+      <p class="muted">
+        We’ll use <b>direct component-wise differentiation</b> for 1.11 and 1.12 because it is straightforward and transparent.
+        For 1.13–1.14, we’ll use the <b>chain rule</b> (and simple rotation relations) because it cleanly exposes the vector structure
+        without heavy algebra.
+      </p>
+    </div>
+  </section>
+
+  <!-- PART 2 -->
+  <section id="part2" class="card">
+    <div class="section-title">
+      <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+      <span class="badge">5–10 steps, no algebra yet</span>
+    </div>
+    <div class="inner">
+      <ol class="muted">
+        <li><b>Compute gradients (1.11)</b>
+          <ul>
+            <li>Goal: find <span style="font-family:var(--mono)">∇f</span>.</li>
+            <li>Tool: definition <span style="font-family:var(--mono)">∇f=(f_x,f_y,f_z)</span>.</li>
+          </ul>
+        </li>
+        <li><b>Find hill top (1.12a)</b>
+          <ul>
+            <li>Goal: location of maximum.</li>
+            <li>Tool: solve <span style="font-family:var(--mono)">∂h/∂x=0</span> and <span style="font-family:var(--mono)">∂h/∂y=0</span>.</li>
+          </ul>
+        </li>
+        <li><b>Confirm it is a maximum (1.12a, concept check)</b>
+          <ul>
+            <li>Goal: ensure “top” not saddle.</li>
+            <li>Tool: Hessian (second derivative matrix) is negative definite for a concave quadratic.</li>
+          </ul>
+        </li>
+        <li><b>Compute maximum height (1.12b)</b>
+          <ul>
+            <li>Goal: evaluate <span style="font-family:var(--mono)">h(x*,y*)</span>.</li>
+            <li>Tool: substitution.</li>
+          </ul>
+        </li>
+        <li><b>Slope at a point (1.12c)</b>
+          <ul>
+            <li>Goal: steepness and direction at <span style="font-family:var(--mono)">(1,1)</span>.</li>
+            <li>Tool: <span style="font-family:var(--mono)">∇h(1,1)</span>; magnitude gives steepest slope, direction is gradient direction.</li>
+          </ul>
+        </li>
+        <li><b>Radial identities (1.13)</b>
+          <ul>
+            <li>Goal: compute <span style="font-family:var(--mono)">∇(r²)</span>, <span style="font-family:var(--mono)">∇(1/r)</span>, then <span style="font-family:var(--mono)">∇(r^n)</span>.</li>
+            <li>Tool: write <span style="font-family:var(--mono)">r²</span> explicitly; use chain rule for <span style="font-family:var(--mono)">r</span>-dependent functions.</li>
+          </ul>
+        </li>
+        <li><b>Rotation behavior (1.14)</b>
+          <ul>
+            <li>Goal: show gradient components rotate by <span style="font-family:var(--mono)">R(φ)</span>.</li>
+            <li>Tool: chain rule with <span style="font-family:var(--mono)">y(ȳ,z̄)</span>, <span style="font-family:var(--mono)">z(ȳ,z̄)</span>.</li>
+          </ul>
+        </li>
+      </ol>
+
+      <div class="callouts">
+        <div class="callout">
+          <strong>Quick tip:</strong> For products like <span style="font-family:var(--mono)">x²y³z⁴</span>, differentiate w.r.t. one variable at a time and treat the others as constants.
+        </div>
+        <div class="callout warn">
+          <strong>Common mistakes:</strong>
+          <ul class="muted" style="margin:8px 0 0 18px;">
+            <li>For <span style="font-family:var(--mono)">ln(z)</span>, remember <span style="font-family:var(--mono)">d/dz ln(z)=1/z</span>.</li>
+            <li>In 1.12, forgetting the outer factor <span style="font-family:var(--mono)">10</span> changes slopes and height by ×10.</li>
+            <li>In 1.13, mixing up <span style="font-family:var(--mono)">\mathbf{r}</span> (vector) with <span style="font-family:var(--mono)">r</span> (scalar length).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PART 3 -->
+  <section id="part3" class="card">
+    <div class="section-title">
+      <h2>PART 3 — Full Solution</h2>
+      <span class="badge">Intuition → Derivation → Checks</span>
+    </div>
+    <div class="inner">
+
+      <article>
+        <h3>Problem 1.11 — Gradients of given scalar fields</h3>
+        <p class="muted">
+          <b>Physical intuition:</b> The gradient measures how rapidly the scalar field changes per unit distance in each coordinate direction.
+          It packages the three partial derivatives into one vector.
+        </p>
+
+        <div class="eqrow">
+          <div class="equation" id="eq-grad-def">∇f = (∂f/∂x) î + (∂f/∂y) ĵ + (∂f/∂z) k̂</div>
+          <button class="copybtn" data-copy="∇f = (∂f/∂x) î + (∂f/∂y) ĵ + (∂f/∂z) k̂">Copy</button>
+          <span class="copyhint">copies plain text</span>
+        </div>
+
+        <div class="two-col">
+          <div class="box">
+            <strong>(a)</strong> <span style="font-family:var(--mono)">f(x,y,z)=x² + y³ + z⁴</span><br/>
+            <div class="equation">f_x=2x, &nbsp; f_y=3y², &nbsp; f_z=4z³</div>
+            <div class="equation" id="eq-111a">∇f = (2x)î + (3y²)ĵ + (4z³)k̂</div>
+            <button class="copybtn" data-copy="(1.11a) ∇f = (2x) î + (3y^2) ĵ + (4z^3) k̂">Copy</button>
+          </div>
+          <div class="box">
+            <strong>(b)</strong> <span style="font-family:var(--mono)">f(x,y,z)=x² y³ z⁴</span><br/>
+            <div class="equation">f_x=2x y³ z⁴, &nbsp; f_y=3y² x² z⁴, &nbsp; f_z=4z³ x² y³</div>
+            <div class="equation" id="eq-111b">∇f = (2x y³ z⁴)î + (3x² y² z⁴)ĵ + (4x² y³ z³)k̂</div>
+            <button class="copybtn" data-copy="(1.11b) ∇f = (2x y^3 z^4) î + (3x^2 y^2 z^4) ĵ + (4x^2 y^3 z^3) k̂">Copy</button>
+          </div>
+        </div>
+
+        <div class="box">
+          <strong>(c)</strong> <span style="font-family:var(--mono)">f(x,y,z)=e^x sin(y) ln(z)</span><br/>
+          <p class="muted" style="margin:8px 0 6px;">
+            Treat the non-differentiated factors as constants for each partial derivative:
+          </p>
+          <div class="equation">
+            f_x = e^x sin(y) ln(z), &nbsp;
+            f_y = e^x cos(y) ln(z), &nbsp;
+            f_z = e^x sin(y) (1/z)
+          </div>
+          <div class="equation" id="eq-111c">∇f = (e^x sin(y) ln(z))î + (e^x cos(y) ln(z))ĵ + (e^x sin(y)/z)k̂</div>
+          <button class="copybtn" data-copy="(1.11c) ∇f = (e^x sin(y) ln(z)) î + (e^x cos(y) ln(z)) ĵ + (e^x sin(y)/z) k̂">Copy</button>
+
+          <div class="hr"></div>
+          <p class="muted"><b>Sanity checks:</b> each component has the same overall “units” as <span style="font-family:var(--mono)">f</span> divided by the corresponding coordinate unit; and symmetry matches the original dependence (e.g., only the x-derivative “touches” <span style="font-family:var(--mono)">e^x</span>).</p>
+        </div>
+      </article>
+
+      <article>
+        <h3>Problem 1.12 — Top of a hill, its height, and steepest slope</h3>
+        <p class="muted">
+          <b>Physical intuition:</b> The top of the hill is where you can’t increase height by moving a tiny bit in any horizontal direction:
+          that means the “slope vector” (the gradient) is zero there. Away from the top, the gradient points uphill; its magnitude is the steepest rise in ft per mile.
+        </p>
+
+        <div class="equation" id="eq-hill">
+h(x,y)=10(2xy - 3x² - 4y² - 18x + 28y + 12),  with x,y in miles and h in feet.
+        </div>
+        <button class="copybtn" data-copy="h(x,y)=10(2xy - 3x^2 - 4y^2 - 18x + 28y + 12)  (x,y in miles; h in feet)">Copy</button>
+
+        <h4 style="margin:14px 0 6px;">(a) Where is the top located?</h4>
+        <p class="muted">
+          It’s cleaner to differentiate the inside polynomial first. Let
+          <span style="font-family:var(--mono)">g(x,y)=2xy - 3x² - 4y² - 18x + 28y + 12</span>,
+          so <span style="font-family:var(--mono)">h=10g</span>. Since multiplying by 10 doesn’t change where the maximum occurs,
+          we can solve <span style="font-family:var(--mono)">∇g=0</span>.
+        </p>
+        <div class="equation">
+∂g/∂x = 2y - 6x - 18
+<br/>∂g/∂y = 2x - 8y + 28
+        </div>
+        <p class="muted">Set both to zero:</p>
+        <div class="equation">
+2y - 6x - 18 = 0  ⇒  y = 3x + 9
+<br/>2x - 8y + 28 = 0  ⇒  x = 4y - 14
+        </div>
+        <p class="muted">Solve simultaneously:</p>
+        <div class="equation">
+y = 3(4y - 14) + 9 = 12y - 42 + 9 = 12y - 33
+<br/>y - 12y = -33  ⇒  -11y = -33  ⇒  y = 3
+<br/>x = 4(3) - 14 = 12 - 14 = -2
+        </div>
+        <div class="box">
+          <strong>Top location:</strong>
+          <div class="equation" id="eq-top">(x*,y*) = (-2, 3) miles</div>
+          <p class="muted" style="margin:6px 0 0;">
+            Interpretation: 2 miles <b>west</b> (since x is east-positive) and 3 miles <b>north</b> of South Hadley.
+          </p>
+        </div>
+
+        <h4 style="margin:14px 0 6px;">(b) How high is the hill?</h4>
+        <p class="muted">Evaluate <span style="font-family:var(--mono)">h(-2,3)=10 g(-2,3)</span>:</p>
+        <div class="equation">
+g(-2,3)=2(-2)(3) - 3(-2)² - 4(3)² - 18(-2) + 28(3) + 12
+<br/>= -12 - 12 - 36 + 36 + 84 + 12
+<br/>= 72
+        </div>
+        <div class="box">
+          <strong>Maximum height:</strong>
+          <div class="equation" id="eq-height">h_max = 10·72 = 720 ft</div>
+        </div>
+
+        <h4 style="margin:14px 0 6px;">(c) How steep is the slope at (1,1)? Direction of steepest slope?</h4>
+        <p class="muted">
+          The gradient in miles-coordinates is
+          <span style="font-family:var(--mono)">∇h = (∂h/∂x, ∂h/∂y)</span>
+          and has units <span style="font-family:var(--mono)">ft/mi</span>.
+          Because <span style="font-family:var(--mono)">h=10g</span>,
+          <span style="font-family:var(--mono)">∇h = 10∇g</span>.
+        </p>
+        <div class="equation">
+∂h/∂x = 10(2y - 6x - 18)
+<br/>∂h/∂y = 10(2x - 8y + 28)
+        </div>
+        <p class="muted">At <span style="font-family:var(--mono)">(x,y)=(1,1)</span>:</p>
+        <div class="equation">
+∂h/∂x(1,1) = 10(2 - 6 - 18) = 10(-22) = -220  (ft/mi)
+<br/>∂h/∂y(1,1) = 10(2 - 8 + 28) = 10(22) = 220  (ft/mi)
+        </div>
+
+        <div class="two-col">
+          <div class="final">
+            <h3 style="margin:0 0 8px;">Slope vector and steepness</h3>
+            <div class="equation" id="eq-slopevec">∇h(1,1) = (-220, 220)  ft/mi</div>
+            <div class="equation" id="eq-steepness">|∇h(1,1)| = √(220²+220²)=220√2 ≈ 311.13  ft/mi</div>
+            <p class="muted" style="margin:8px 0 0;">
+              Steepest <b>ascent</b> is in the direction of <span style="font-family:var(--mono)">∇h</span>.
+              Steepest <b>descent</b> is opposite.
+            </p>
+          </div>
+          <div class="final">
+            <h3 style="margin:0 0 8px;">Direction of steepest slope</h3>
+            <p class="muted" style="margin:0 0 8px;">
+              A unit direction is <span style="font-family:var(--mono)">\hat{u} = ∇h/|∇h|</span>.
+            </p>
+            <div class="equation" id="eq-direction">\hat{u} = (-1/√2, 1/√2)</div>
+            <p class="muted" style="margin:8px 0 0;">
+              This points <b>northwest</b>: 45° north of west (since x-component is negative, y-component positive).
+            </p>
+          </div>
+        </div>
+
+        <div class="box">
+          <strong>Sanity checks:</strong>
+          <ul class="muted" style="margin:8px 0 0 18px;">
+            <li><b>Units:</b> <span style="font-family:var(--mono)">h</span> is ft, <span style="font-family:var(--mono)">x,y</span> are mi ⇒ gradient is ft/mi (matches).</li>
+            <li><b>Behavior:</b> at the top, we found <span style="font-family:var(--mono)">∇h=0</span>; at (1,1), gradient points uphill toward NW, consistent with “go toward the peak at (-2,3)” (from (1,1), moving left and up makes sense).</li>
+          </ul>
+        </div>
+      </article>
+
+      <article>
+        <h3>Problem 1.13 — Radial gradient identities</h3>
+        <p class="muted">
+          <b>Physical intuition:</b> If a quantity depends only on distance to a fixed point, then its change is purely radial:
+          gradients point along the line joining the fixed point to <span style="font-family:var(--mono)">(x,y,z)</span>.
+        </p>
+
+        <p class="muted">
+          Let the fixed point be <span style="font-family:var(--mono)">(x',y',z')</span> and define the separation vector
+        </p>
+        <div class="equation">
+\mathbf{r} = (x-x')î + (y-y')ĵ + (z-z')k̂,   and   r = |\mathbf{r}| = √[(x-x')²+(y-y')²+(z-z')²].
+        </div>
+
+        <h4 style="margin:14px 0 6px;">(a) Show that ∇(r²) = 2\mathbf{r}</h4>
+        <p class="muted">Start by writing <span style="font-family:var(--mono)">r²</span> explicitly:</p>
+        <div class="equation">
+r² = (x-x')² + (y-y')² + (z-z')²
+        </div>
+        <p class="muted">Differentiate component-wise:</p>
+        <div class="equation">
+∂(r²)/∂x = 2(x-x'),  ∂(r²)/∂y = 2(y-y'),  ∂(r²)/∂z = 2(z-z')
+        </div>
+        <div class="box">
+          <strong>Therefore</strong>
+          <div class="equation" id="eq-r2">∇(r²) = 2(x-x')î + 2(y-y')ĵ + 2(z-z')k̂ = 2\mathbf{r}</div>
+        </div>
+
+        <h4 style="margin:14px 0 6px;">(b) Show that ∇(1/r) = -\hat{\mathbf{r}}/r²</h4>
+        <p class="muted">
+          Use the chain rule with <span style="font-family:var(--mono)">r = (r²)^{1/2}</span>.
+          First note:
+        </p>
+        <div class="equation">
+∇r = ∇( (r²)^{1/2} ) = (1/(2√(r²))) ∇(r²) = (1/(2r)) (2\mathbf{r}) = \mathbf{r}/r = \hat{\mathbf{r}}.
+        </div>
+        <p class="muted">Now apply chain rule to <span style="font-family:var(--mono)">1/r</span>:</p>
+        <div class="equation">
+∇(1/r) = d(1/r)/dr · ∇r = (-1/r²) · \hat{\mathbf{r}} = -\hat{\mathbf{r}}/r².
+        </div>
+        <div class="box">
+          <strong>Result</strong>
+          <div class="equation" id="eq-1overr">∇(1/r) = -\hat{\mathbf{r}}/r² = -\mathbf{r}/r³</div>
+          <p class="muted" style="margin:6px 0 0;">
+            (Both forms are equivalent because <span style="font-family:var(--mono)">\hat{\mathbf{r}}=\mathbf{r}/r</span>.)
+          </p>
+        </div>
+
+        <h4 style="margin:14px 0 6px;">(c) General formula for ∇(r^n)</h4>
+        <p class="muted">
+          Let <span style="font-family:var(--mono)">g(r)=r^n</span>. Then <span style="font-family:var(--mono)">g'(r)=n r^{n-1}</span>.
+          Using <span style="font-family:var(--mono)">∇r = \hat{\mathbf{r}}</span>:
+        </p>
+        <div class="equation">
+∇(r^n) = n r^{n-1} \hat{\mathbf{r}} = n r^{n-2} \mathbf{r}.
+        </div>
+        <div class="box">
+          <strong>General result (for r ≠ 0):</strong>
+          <div class="equation" id="eq-rn">∇(r^n) = n r^{n-1} \hat{\mathbf{r}} = n r^{n-2} \mathbf{r}</div>
+        </div>
+
+        <div class="box">
+          <strong>Sanity checks:</strong>
+          <ul class="muted" style="margin:8px 0 0 18px;">
+            <li>For <span style="font-family:var(--mono)">n=2</span>: <span style="font-family:var(--mono)">∇(r²)=2r^0 \mathbf{r}=2\mathbf{r}</span> (matches part a).</li>
+            <li>For <span style="font-family:var(--mono)">n=-1</span>: <span style="font-family:var(--mono)">∇(r^{-1}) = -r^{-3}\mathbf{r}</span> (matches part b).</li>
+            <li>Direction is radial (along <span style="font-family:var(--mono)">\hat{\mathbf{r}}</span>), which fits “depends only on distance”.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article>
+        <h3>Problem 1.14 — Gradient transforms as a vector under rotations</h3>
+        <p class="muted">
+          <b>Physical intuition:</b> The scalar field <span style="font-family:var(--mono)">f</span> is coordinate-independent: rotating axes doesn’t change the physical value at a point.
+          What changes are the <em>components</em> of vectors like <span style="font-family:var(--mono)">∇f</span>, which should rotate exactly like any vector components.
+        </p>
+
+        <p class="muted">
+          Suppose <span style="font-family:var(--mono)">f=f(y,z)</span> only. Rotate axes by angle <span style="font-family:var(--mono)">φ</span>:
+        </p>
+        <div class="equation" id="eq-rot">
+y = ȳ cosφ + ż sinφ,
+z = -ȳ sinφ + ż cosφ.
+        </div>
+        <button class="copybtn" data-copy="y = ybar cosφ + zbar sinφ;  z = -ybar sinφ + zbar cosφ">Copy</button>
+
+        <p class="muted">
+          We want to show the gradient in the new coordinates is
+          <span style="font-family:var(--mono)">∇f = (∂f/∂ȳ) ŷ̄ + (∂f/∂ż) ẑ̄</span>,
+          and that the component pair <span style="font-family:var(--mono)">(f_ȳ, f_ż)</span> is obtained by rotating <span style="font-family:var(--mono)">(f_y, f_z)</span>.
+        </p>
+
+        <h4 style="margin:14px 0 6px;">Chain rule computation</h4>
+        <p class="muted">Using <span style="font-family:var(--mono)">f(y,z)</span> and <span style="font-family:var(--mono)">y(ȳ,ż), z(ȳ,ż)</span>:</p>
+        <div class="equation">
+∂f/∂ȳ = (∂f/∂y)(∂y/∂ȳ) + (∂f/∂z)(∂z/∂ȳ)
+<br/>∂f/∂ż = (∂f/∂y)(∂y/∂ż) + (∂f/∂z)(∂z/∂ż)
+        </div>
+        <p class="muted">Differentiate the rotation formulas:</p>
+        <div class="equation">
+∂y/∂ȳ = cosφ,  ∂z/∂ȳ = -sinφ
+<br/>∂y/∂ż = sinφ,  ∂z/∂ż = cosφ
+        </div>
+        <p class="muted">Plug in:</p>
+        <div class="equation" id="eq-grad-rot">
+f_ȳ = f_y cosφ - f_z sinφ
+<br/>f_ż = f_y sinφ + f_z cosφ
+        </div>
+
+        <div class="box">
+          <strong>Matrix form (vector transformation):</strong>
+          <div class="equation" id="eq-rot-matrix">
+[ f_ȳ ]   [ cosφ  -sinφ ] [ f_y ]
+[ f_ż ] = [ sinφ   cosφ ] [ f_z ]
+          </div>
+          <p class="muted" style="margin:6px 0 0;">
+            That is exactly the 2D rotation matrix <span style="font-family:var(--mono)">R(φ)</span>.
+            So the gradient components rotate like a vector’s components.
+          </p>
+        </div>
+
+        <div class="box">
+          <strong>Sanity checks:</strong>
+          <ul class="muted" style="margin:8px 0 0 18px;">
+            <li><b>φ=0:</b> <span style="font-family:var(--mono)">f_ȳ=f_y</span>, <span style="font-family:var(--mono)">f_ż=f_z</span> (no change).</li>
+            <li><b>φ=90°:</b> cos=0, sin=1 ⇒ <span style="font-family:var(--mono)">f_ȳ=-f_z</span>, <span style="font-family:var(--mono)">f_ż=f_y</span> (a 90° rotation).</li>
+            <li>Magnitudes preserved: <span style="font-family:var(--mono)">f_ȳ²+f_ż² = f_y²+f_z²</span> (rotation preserves length), consistent with “true vector”.</li>
+          </ul>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- VISUALIZATIONS -->
+  <section id="viz" class="card">
+    <div class="section-title">
+      <h2>Interactive Visualizations</h2>
+      <span class="badge">Canvas + live parameter φ</span>
+    </div>
+
+    <div class="inner">
+      <p class="muted" style="margin-top:0;">
+        We use <b>one shared rotation parameter</b> <span style="font-family:var(--mono)">φ</span> (degrees) that rotates the <span style="font-family:var(--mono)">(u,v)</span>-axes relative to the original
+        hill coordinates <span style="font-family:var(--mono)">(x,y)</span>, and also rotates the axes in the gradient-rotation demo.
+        This way, <b>the same parameter</b> updates <b>all</b> canvases live.
+      </p>
+    </div>
+
+    <figure>
+      <canvas id="cvDiagram" aria-label="Diagram canvas"></canvas>
+      <figcaption>
+        <b>Diagram:</b> hill map coordinates. The point is fixed at <span style="font-family:var(--mono)">(u0,v0)=(1,1)</span> in the rotated display axes; the corresponding
+        physical point <span style="font-family:var(--mono)">(x,y)</span> changes with <span style="font-family:var(--mono)">φ</span>. The arrow shows the uphill direction (gradient).
+      </figcaption>
+    </figure>
+
+    <figure>
+      <canvas id="cvMain" aria-label="Main quantitative plot canvas"></canvas>
+      <figcaption>
+        <b>Main plot (quantitative):</b> contour-style height map of <span style="font-family:var(--mono)">h(x,y)</span> drawn over the rotated display plane <span style="font-family:var(--mono)">(u,v)</span>.
+        Axes include tick marks and units (miles). A marker shows the current point; arrow shows <span style="font-family:var(--mono)">∇h</span> direction.
+      </figcaption>
+    </figure>
+
+    <figure>
+      <canvas id="cvSecondary" aria-label="Secondary plot canvas"></canvas>
+      <figcaption>
+        <b>Secondary plot:</b> height profile along the diagonal line <span style="font-family:var(--mono)">v=u</span> (miles) in display coordinates.
+        This helps visualize how the rotated slice through the hill changes with <span style="font-family:var(--mono)">φ</span>.
+      </figcaption>
+    </figure>
+
+    <div class="controls">
+      <div class="ctrl">
+        <label for="phi">Rotate axes angle φ (degrees)</label>
+        <input id="phi" type="range" min="-90" max="90" value="25" step="1" />
+        <span class="pill" id="phiVal">φ = 25°</span>
+      </div>
+      <div class="ctrl" style="justify-content:flex-end;">
+        <button class="copybtn" id="btnReset">Reset φ</button>
+        <span class="pill" id="readout">Loading…</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL ANSWERS -->
+  <section id="final" class="card">
+    <div class="section-title">
+      <h2>Final Answers (Copy-ready)</h2>
+      <span class="badge">All results in one place</span>
+    </div>
+    <div class="inner">
+      <div class="final">
+        <h3>Problem 1.11</h3>
+        <div class="equation" id="ans-111">
+(a) ∇f = (2x)î + (3y²)ĵ + (4z³)k̂
+(b) ∇f = (2x y³ z⁴)î + (3x² y² z⁴)ĵ + (4x² y³ z³)k̂
+(c) ∇f = (e^x sin(y) ln(z))î + (e^x cos(y) ln(z))ĵ + (e^x sin(y)/z)k̂
+        </div>
+        <button class="copybtn" data-copy="Problem 1.11:
+(a) ∇f = (2x)î + (3y^2)ĵ + (4z^3)k̂
+(b) ∇f = (2x y^3 z^4)î + (3x^2 y^2 z^4)ĵ + (4x^2 y^3 z^3)k̂
+(c) ∇f = (e^x sin(y) ln(z))î + (e^x cos(y) ln(z))ĵ + (e^x sin(y)/z)k̂">Copy</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="final">
+        <h3>Problem 1.12</h3>
+        <div class="equation" id="ans-112">
+(a) Top at (x*,y*) = (-2, 3) miles (2 mi west, 3 mi north).
+(b) h_max = 720 ft.
+(c) ∇h(1,1)=(-220,220) ft/mi; |∇h|=220√2≈311.13 ft/mi.
+    Steepest ascent direction: (-1/√2, 1/√2) (northwest, 45° north of west).
+        </div>
+        <button class="copybtn" data-copy="Problem 1.12:
+(a) (x*,y*) = (-2, 3) miles.
+(b) h_max = 720 ft.
+(c) ∇h(1,1)=(-220,220) ft/mi; |∇h|=220√2≈311.13 ft/mi; direction = (-1/√2, 1/√2) (NW).">Copy</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="final">
+        <h3>Problem 1.13</h3>
+        <div class="equation" id="ans-113">
+Let \mathbf{r}=(x-x')î+(y-y')ĵ+(z-z')k̂, r=|\mathbf{r}|.
+(a) ∇(r²)=2\mathbf{r}.
+(b) ∇(1/r)=-(\hat{\mathbf{r}})/r²= -\mathbf{r}/r³.
+(c) For r≠0: ∇(r^n)=n r^{n-1}\hat{\mathbf{r}}=n r^{n-2}\mathbf{r}.
+        </div>
+        <button class="copybtn" data-copy="Problem 1.13:
+(a) ∇(r^2)=2 r⃗.
+(b) ∇(1/r)=-(r̂)/r^2 = -r⃗/r^3.
+(c) ∇(r^n)=n r^{n-1} r̂ = n r^{n-2} r⃗ (for r≠0).">Copy</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="final">
+        <h3>Problem 1.14</h3>
+        <div class="equation" id="ans-114">
+With y = ȳ cosφ + ż sinφ, z = -ȳ sinφ + ż cosφ and f=f(y,z):
+f_ȳ = f_y cosφ - f_z sinφ
+f_ż = f_y sinφ + f_z cosφ
+So [f_ȳ, f_ż]^T = R(φ)[f_y, f_z]^T, i.e., ∇f transforms as a vector under rotations.
+        </div>
+        <button class="copybtn" data-copy="Problem 1.14:
+y = ybar cosφ + zbar sinφ,  z = -ybar sinφ + zbar cosφ.
+f_ybar = f_y cosφ - f_z sinφ;  f_zbar = f_y sinφ + f_z cosφ.
+Thus [f_ybar, f_zbar]^T = R(φ)[f_y, f_z]^T and ∇f transforms as a vector.">Copy</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="eqrow">
+        <div class="equation" style="flex:1;" id="ans-all">
+ALL FINAL RESULTS (1.11–1.14):
+1.11(a) ∇f=(2x,3y²,4z³)
+1.11(b) ∇f=(2x y³ z⁴, 3x² y² z⁴, 4x² y³ z³)
+1.11(c) ∇f=(e^x sin y ln z, e^x cos y ln z, e^x sin y / z)
+1.12 top: (-2,3) miles; height 720 ft; ∇h(1,1)=(-220,220) ft/mi; |∇h|=220√2; direction NW
+1.13: ∇(r²)=2r⃗; ∇(1/r)= -r⃗/r³; ∇(r^n)= n r^{n-2} r⃗
+1.14: (f_ybar,f_zbar)=R(φ)(f_y,f_z)
+        </div>
+        <button class="copybtn" data-copy="ALL FINAL RESULTS:
+1.11(a) ∇f=(2x,3y^2,4z^3)
+1.11(b) ∇f=(2x y^3 z^4, 3x^2 y^2 z^4, 4x^2 y^3 z^3)
+1.11(c) ∇f=(e^x sin y ln z, e^x cos y ln z, e^x sin y / z)
+1.12 top: (-2,3) miles; height 720 ft; ∇h(1,1)=(-220,220) ft/mi; |∇h|=220√2; direction NW
+1.13: ∇(r^2)=2r⃗; ∇(1/r)=-r⃗/r^3; ∇(r^n)=n r^{n-2} r⃗
+1.14: (f_ybar,f_zbar)=R(φ)(f_y,f_z)">Copy ALL</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Built with vanilla HTML/CSS/JS. Canvases are high-DPI aware and responsive. Copy buttons copy plain-text equations/results.
+</footer>
+
+<script>
+(function(){
+  // ---------------------------
+  // Copy buttons (plain text)
+  // ---------------------------
+  function copyText(txt){
+    if(!txt) return;
+    navigator.clipboard.writeText(txt).then(()=>{
+      // lightweight feedback
+      const toast = document.createElement('div');
+      toast.textContent = 'Copied ✓';
+      toast.style.position='fixed';
+      toast.style.bottom='18px';
+      toast.style.left='50%';
+      toast.style.transform='translateX(-50%)';
+      toast.style.background='rgba(0,0,0,.75)';
+      toast.style.color='white';
+      toast.style.padding='8px 12px';
+      toast.style.border='1px solid rgba(255,255,255,.18)';
+      toast.style.borderRadius='999px';
+      toast.style.fontSize='.92rem';
+      toast.style.zIndex=9999;
+      toast.style.backdropFilter='blur(6px)';
+      document.body.appendChild(toast);
+      setTimeout(()=>toast.remove(), 900);
+    }).catch(()=>{ /* ignore */ });
+  }
+  document.addEventListener('click', (e)=>{
+    const b = e.target.closest('.copybtn');
+    if(!b) return;
+    if(b.id === 'btnReset') return;
+    copyText(b.getAttribute('data-copy') || '');
+  });
+
+  // ---------------------------
+  // Math utilities
+  // ---------------------------
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+  const lerp = (a,b,t)=>a+(b-a)*t;
+
+  function rot2(phi){
+    const c = Math.cos(phi), s = Math.sin(phi);
+    return {c,s};
+  }
+  // Map between rotated display coordinates (u,v) and original hill coords (x,y).
+  // We choose: [x;y] = R(phi) [u;v]
+  // i.e. x = u c - v s, y = u s + v c
+  function uv_to_xy(u,v,phi){
+    const {c,s}=rot2(phi);
+    return { x: u*c - v*s, y: u*s + v*c };
+  }
+  // And inverse (not strictly needed): [u;v]=R(-phi)[x;y]
+  function xy_to_uv(x,y,phi){
+    const {c,s}=rot2(phi);
+    return { u: x*c + y*s, v: -x*s + y*c };
+  }
+
+  // Hill function and gradient (x,y in miles; h in feet)
+  function gHill(x,y){
+    return (2*x*y - 3*x*x - 4*y*y - 18*x + 28*y + 12);
+  }
+  function hHill(x,y){ return 10*gHill(x,y); }
+
+  function grad_h_xy(x,y){
+    // ∂h/∂x = 10(2y - 6x - 18)
+    // ∂h/∂y = 10(2x - 8y + 28)
+    return {
+      hx: 10*(2*y - 6*x - 18),
+      hy: 10*(2*x - 8*y + 28)
+    };
+  }
+
+  // Transform gradient components to (u,v) display coordinates:
+  // If [x;y] = R(phi)[u;v], then for gradients:
+  // ∇_u = R(-phi) ∇_x (components)
+  function grad_xy_to_uv(hx,hy,phi){
+    const {c,s}=rot2(phi);
+    // R(-phi) = [c s; -s c]
+    return {
+      hu: hx*c + hy*s,
+      hv: -hx*s + hy*c
+    };
+  }
+
+  // Demo scalar field for rotation check (Problem 1.14) in yz-plane:
+  // choose f(y,z)= y^2 + 0.5 z^2  (simple elliptical bowl)
+  function fDemo(y,z){ return y*y + 0.5*z*z; }
+  function grad_f_yz(y,z){ return {fy: 2*y, fz: z}; } // f_y=2y, f_z=z
+
+  // ---------------------------
+  // Canvas setup (HiDPI)
+  // ---------------------------
+  function setupCanvas(canvas){
+    const ctx = canvas.getContext('2d');
+    function resize(){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(10, Math.floor(rect.width * dpr));
+      const h = Math.max(10, Math.floor(rect.height * dpr));
+      if(canvas.width !== w || canvas.height !== h){
+        canvas.width = w; canvas.height = h;
+      }
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.scale(dpr, dpr);
+      return {w: rect.width, h: rect.height, dpr};
+    }
+    return {ctx, resize};
+  }
+
+  // Axis drawing helpers
+  function drawAxes(ctx, plot, opts){
+    const {x0,y0,w,h, xMin,xMax,yMin,yMax} = plot;
+    const grid = opts.grid ?? true;
+    const ticks = opts.ticks ?? 5;
+    const title = opts.title ?? '';
+    const xLabel = opts.xLabel ?? '';
+    const yLabel = opts.yLabel ?? '';
+    const colorInk = 'rgba(234,240,255,.92)';
+    const colorFaint = 'rgba(184,194,224,.65)';
+    const colorGrid = 'rgba(255,255,255,.08)';
+
+    // background panel
+    ctx.save();
+    ctx.fillStyle = 'rgba(5,8,14,.20)';
+    ctx.fillRect(x0,y0,w,h);
+    ctx.strokeStyle = 'rgba(255,255,255,.10)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x0,y0,w,h);
+
+    // grid + ticks
+    if(grid){
+      for(let i=0;i<=ticks;i++){
+        const tx = x0 + (w*i/ticks);
+        const ty = y0 + (h*i/ticks);
+        ctx.strokeStyle = colorGrid;
+        ctx.beginPath(); ctx.moveTo(tx,y0); ctx.lineTo(tx,y0+h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x0,ty); ctx.lineTo(x0+w,ty); ctx.stroke();
+      }
+    }
+
+    // tick labels
+    ctx.fillStyle = colorFaint;
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    ctx.textAlign='center';
+    ctx.textBaseline='top';
+    for(let i=0;i<=ticks;i++){
+      const xv = lerp(xMin,xMax,i/ticks);
+      const tx = x0 + (w*i/ticks);
+      ctx.fillText(xv.toFixed(1), tx, y0+h+6);
+    }
+    ctx.textAlign='right';
+    ctx.textBaseline='middle';
+    for(let i=0;i<=ticks;i++){
+      const yv = lerp(yMin,yMax,1-i/ticks);
+      const ty = y0 + (h*i/ticks);
+      ctx.fillText(yv.toFixed(1), x0-6, ty);
+    }
+
+    // titles
+    ctx.fillStyle = colorInk;
+    ctx.font = '600 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.textAlign='left';
+    ctx.textBaseline='bottom';
+    ctx.fillText(title, x0, y0-8);
+
+    ctx.fillStyle = colorFaint;
+    ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.textAlign='center';
+    ctx.textBaseline='top';
+    ctx.fillText(xLabel, x0 + w/2, y0+h+26);
+
+    ctx.save();
+    ctx.translate(x0-38, y0 + h/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign='center';
+    ctx.textBaseline='top';
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function mapX(plot, x){
+    const {x0,w,xMin,xMax} = plot;
+    return x0 + (x-xMin)/(xMax-xMin)*w;
+  }
+  function mapY(plot, y){
+    const {y0,h,yMin,yMax} = plot;
+    return y0 + (yMax-y)/(yMax-yMin)*h;
+  }
+
+  function drawArrow(ctx, x1,y1, x2,y2){
+    const dx=x2-x1, dy=y2-y1;
+    const L=Math.hypot(dx,dy);
+    if(L<1e-6) return;
+    const ux=dx/L, uy=dy/L;
+    const head=10;
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(x2 - head*ux + head*0.5*(-uy), y2 - head*uy + head*0.5*(ux));
+    ctx.lineTo(x2 - head*ux - head*0.5*(-uy), y2 - head*uy - head*0.5*(ux));
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // ---------------------------
+  // Draw: Diagram canvas
+  // ---------------------------
+  function drawDiagram(ctx, W, H, phi){
+    ctx.clearRect(0,0,W,H);
+    const pad=22;
+    const x0=pad+44, y0=pad+26, w=W - (pad+44) - pad, h=H - (pad+26) - pad - 10;
+
+    // coordinate frame
+    const plot = {x0,y0,w,h, xMin:-4, xMax:4, yMin:-4, yMax:4};
+    drawAxes(ctx, plot, {
+      title: 'Diagram: Hill geometry & gradient at a rotating point',
+      xLabel: 'u (miles) [display axis]',
+      yLabel: 'v (miles) [display axis]',
+      ticks: 4
+    });
+
+    // draw a soft "hill" blob (not quantitative): based on height contours
+    // sample grid and draw faint contour rings
+    const n=70;
+    let zMin=1e9, zMax=-1e9;
+    const vals = [];
+    for(let i=0;i<n;i++){
+      vals[i]=[];
+      for(let j=0;j<n;j++){
+        const u=lerp(plot.xMin, plot.xMax, i/(n-1));
+        const v=lerp(plot.yMin, plot.yMax, j/(n-1));
+        const {x,y}=uv_to_xy(u,v,phi);
+        const z=hHill(x,y);
+        vals[i][j]=z;
+        if(z<zMin) zMin=z;
+        if(z>zMax) zMax=z;
+      }
+    }
+
+    // contour levels
+    ctx.save();
+    for(let k=1;k<=6;k++){
+      const level = lerp(zMin, zMax, k/7);
+      ctx.strokeStyle = 'rgba(122,167,255,.20)';
+      ctx.lineWidth = 1;
+      // marching squares-ish (simple): draw small segments where sign changes
+      for(let i=0;i<n-1;i++){
+        for(let j=0;j<n-1;j++){
+          const a=vals[i][j]-level, b=vals[i+1][j]-level, c=vals[i+1][j+1]-level, d=vals[i][j+1]-level;
+          const mask = (a>0)<<0 | (b>0)<<1 | (c>0)<<2 | (d>0)<<3;
+          if(mask===0 || mask===15) continue;
+          // approximate with center-cross
+          const u0=lerp(plot.xMin,plot.xMax,i/(n-1));
+          const u1=lerp(plot.xMin,plot.xMax,(i+1)/(n-1));
+          const v0=lerp(plot.yMin,plot.yMax,j/(n-1));
+          const v1=lerp(plot.yMin,plot.yMax,(j+1)/(n-1));
+          const xm = (u0+u1)/2, ym=(v0+v1)/2;
+          const pxm=mapX(plot,xm), pym=mapY(plot,ym);
+          // draw a tiny cross mark
+          ctx.beginPath();
+          ctx.moveTo(pxm-4,pym); ctx.lineTo(pxm+4,pym);
+          ctx.moveTo(pxm,pym-4); ctx.lineTo(pxm,pym+4);
+          ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
+
+    // fixed display-point (u0,v0)
+    const uP=1, vP=1;
+    const {x,y}=uv_to_xy(uP,vP,phi);
+    const {hx,hy}=grad_h_xy(x,y);
+    const {hu,hv}=grad_xy_to_uv(hx,hy,phi); // gradient in display components
+    const mag = Math.hypot(hu,hv);
+
+    // point
+    const px=mapX(plot,uP), py=mapY(plot,vP);
+    ctx.save();
+    ctx.fillStyle='rgba(124,240,198,.95)';
+    ctx.beginPath(); ctx.arc(px,py,5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=2;
+    ctx.stroke();
+
+    // gradient arrow (scaled)
+    const scale = 0.0022; // visual scale from (ft/mi) to canvas pixels
+    const ex = px + hu*scale*w;
+    const ey = py - hv*scale*h; // minus because v-axis maps upward
+    ctx.strokeStyle='rgba(124,240,198,.85)';
+    ctx.fillStyle='rgba(124,240,198,.85)';
+    ctx.lineWidth=2.2;
+    drawArrow(ctx, px,py, ex,ey);
+
+    // draw rotated axes hint
+    const originX = mapX(plot,0), originY = mapY(plot,0);
+    const axLen = Math.min(w,h)*0.18;
+    ctx.strokeStyle='rgba(255,255,255,.35)';
+    ctx.fillStyle='rgba(255,255,255,.35)';
+    ctx.lineWidth=2;
+
+    // original x,y axes rotated relative to u,v: show x-axis direction in u,v plane.
+    // In u,v plane, x-axis corresponds to vector (c, -s) in (u,v) because x = u c - v s.
+    const {c,s}=rot2(phi);
+    const xDirU = c, xDirV = -s;
+    const yDirU = s, yDirV =  c;
+    drawArrow(ctx, originX, originY, originX + xDirU*axLen, originY - xDirV*axLen);
+    drawArrow(ctx, originX, originY, originX + yDirU*axLen, originY - yDirV*axLen);
+
+    ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    ctx.fillText('x-axis', originX + xDirU*axLen + 6, originY - xDirV*axLen);
+    ctx.fillText('y-axis', originX + yDirU*axLen + 6, originY - yDirV*axLen);
+
+    // labels
+    ctx.fillStyle='rgba(234,240,255,.88)';
+    ctx.font='12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.fillText(`Fixed display point (u0,v0) = (${uP.toFixed(1)}, ${vP.toFixed(1)}) mi`, x0+10, y0+10);
+    ctx.fillText(`Physical point (x,y) = (${x.toFixed(2)}, ${y.toFixed(2)}) mi`, x0+10, y0+28);
+    ctx.fillText(`|∇h| at point ≈ ${mag.toFixed(1)} ft/mi`, x0+10, y0+46);
+
+    ctx.restore();
+  }
+
+  // ---------------------------
+  // Draw: Main plot (height map + gradient arrow)
+  // ---------------------------
+  function drawMain(ctx, W, H, phi){
+    ctx.clearRect(0,0,W,H);
+    const pad=22;
+    const x0=pad+44, y0=pad+26, w=W - (pad+44) - pad, h=H - (pad+26) - pad - 10;
+
+    const plot = {x0,y0,w,h, xMin:-5, xMax:5, yMin:-5, yMax:5};
+    drawAxes(ctx, plot, {
+      title: 'Main plot: Height map h(x,y) over rotated display axes (u,v)',
+      xLabel: 'u (miles)',
+      yLabel: 'v (miles)',
+      ticks: 5
+    });
+
+    // rasterize height (simple colormap)
+    const nx = 120, ny = 90;
+    let zMin=1e9, zMax=-1e9;
+    const z = new Float32Array(nx*ny);
+    for(let j=0;j<ny;j++){
+      for(let i=0;i<nx;i++){
+        const u=lerp(plot.xMin, plot.xMax, i/(nx-1));
+        const v=lerp(plot.yMin, plot.yMax, j/(ny-1));
+        const {x,y}=uv_to_xy(u,v,phi);
+        const val = hHill(x,y);
+        z[j*nx+i]=val;
+        if(val<zMin) zMin=val;
+        if(val>zMax) zMax=val;
+      }
+    }
+
+    // draw pixels
+    ctx.save();
+    for(let j=0;j<ny-1;j++){
+      for(let i=0;i<nx-1;i++){
+        const val = z[j*nx+i];
+        const t = (val - zMin)/(zMax - zMin + 1e-9);
+        // color blend between accent2 (low) and accent (high) using alpha only (no explicit colors requirement? it's internal)
+        // We'll use grayscale-ish with alpha and a slight tint for readability.
+        const a = 0.10 + 0.55*t;
+        ctx.fillStyle = `rgba(124,240,198,${a.toFixed(3)})`;
+        const u0=lerp(plot.xMin, plot.xMax, i/(nx-1));
+        const v0=lerp(plot.yMin, plot.yMax, j/(ny-1));
+        const u1=lerp(plot.xMin, plot.xMax, (i+1)/(nx-1));
+        const v1=lerp(plot.yMin, plot.yMax, (j+1)/(ny-1));
+        const px0=mapX(plot,u0), py0=mapY(plot,v0);
+        const px1=mapX(plot,u1), py1=mapY(plot,v1);
+        ctx.fillRect(px0, py1, (px1-px0)+1, (py0-py1)+1);
+      }
+    }
+    ctx.restore();
+
+    // contour lines
+    ctx.save();
+    const levels=7;
+    for(let k=1;k<levels;k++){
+      const level=lerp(zMin,zMax,k/levels);
+      ctx.strokeStyle='rgba(255,255,255,.16)';
+      ctx.lineWidth=1;
+      // simple: draw polyline by scanning rows and finding crossings
+      for(let j=0;j<ny;j++){
+        ctx.beginPath();
+        let started=false;
+        for(let i=0;i<nx-1;i++){
+          const a=z[j*nx+i]-level;
+          const b=z[j*nx+i+1]-level;
+          if(a===0) continue;
+          if((a>0) !== (b>0)){
+            const t = Math.abs(a)/(Math.abs(a)+Math.abs(b));
+            const u=lerp(plot.

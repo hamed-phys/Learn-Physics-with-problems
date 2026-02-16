@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="dark light" />
+  <title>Rotation Matrices, Inversion, and Vector Products (Problems 1.8–1.10)</title>
+  <style>
+    :root{
+      --bg: #0b0d12;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.085);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.72);
+      --faint: rgba(255,255,255,0.55);
+      --accent: #7dd3fc;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line: rgba(255,255,255,0.14);
+      --shadow: 0 12px 35px rgba(0,0,0,0.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --radius: 18px;
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f7f7fb;
+        --panel: rgba(0,0,0,0.05);
+        --panel2: rgba(0,0,0,0.075);
+        --text: rgba(0,0,0,0.88);
+        --muted: rgba(0,0,0,0.70);
+        --faint: rgba(0,0,0,0.55);
+        --line: rgba(0,0,0,0.12);
+        --shadow: 0 12px 35px rgba(0,0,0,0.12);
+      }
+    }
+
+    *{ box-sizing: border-box; }
+    html{ scroll-behavior: smooth; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      background:
+        radial-gradient(1200px 800px at 15% 10%, rgba(125,211,252,0.16), transparent 60%),
+        radial-gradient(1000px 700px at 85% 15%, rgba(167,139,250,0.14), transparent 65%),
+        radial-gradient(900px 600px at 40% 90%, rgba(52,211,153,0.10), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    header{
+      padding: 28px 18px 18px;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+      overflow: clip;
+    }
+    header .wrap{
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 960px){
+      header .wrap{ grid-template-columns: 1fr; }
+    }
+
+    h1{
+      margin: 0 0 10px;
+      font-size: clamp(1.4rem, 2.2vw, 2.1rem);
+      letter-spacing: -0.02em;
+    }
+    .subtitle{
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .chiprow{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .chip{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .summary{
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 14px 12px;
+    }
+    .summary h2{
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+    }
+    .summary ul{
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+
+    main{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 18px 60px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      main{ grid-template-columns: 1fr; }
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 12px;
+      align-self: start;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      box-shadow: var(--shadow);
+      padding: 12px;
+      overflow: hidden;
+    }
+    nav.toc .toc-title{
+      display:flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    nav.toc h3{
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--text);
+      letter-spacing: 0.01em;
+    }
+    .toc small{ color: var(--faint); }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      margin: 6px 0;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      text-decoration: none;
+      color: var(--muted);
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+      font-size: 0.95rem;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,0.10);
+      border-color: rgba(125,211,252,0.22);
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+    .toc .minor{
+      font-size: 0.90rem;
+      opacity: 0.92;
+      padding-left: 16px;
+    }
+
+    section{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      box-shadow: var(--shadow);
+      padding: 16px;
+      margin-bottom: 16px;
+      overflow: clip;
+    }
+    section h2{
+      margin: 0 0 10px;
+      font-size: 1.25rem;
+      letter-spacing: -0.01em;
+    }
+    section h3{
+      margin: 14px 0 8px;
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+    p{ margin: 8px 0; color: var(--muted); }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    @media (max-width: 860px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      padding: 12px;
+    }
+    .card h4{
+      margin: 0 0 6px;
+      font-size: 0.98rem;
+      color: var(--text);
+    }
+    .callout{
+      border-left: 4px solid rgba(125,211,252,0.75);
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(125,211,252,0.08);
+      border-top: 1px solid rgba(125,211,252,0.18);
+      border-right: 1px solid rgba(125,211,252,0.18);
+      border-bottom: 1px solid rgba(125,211,252,0.18);
+      color: var(--muted);
+    }
+    .warn{
+      border-left-color: rgba(251,191,36,0.85);
+      background: rgba(251,191,36,0.10);
+      border-color: rgba(251,191,36,0.20);
+    }
+    .ok{
+      border-left-color: rgba(52,211,153,0.85);
+      background: rgba(52,211,153,0.10);
+      border-color: rgba(52,211,153,0.20);
+    }
+
+    .eq{
+      font-family: var(--mono);
+      background: rgba(0,0,0,0.18);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin: 10px 0;
+      overflow-x:auto;
+      position: relative;
+    }
+    .eq .label{
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      color: var(--faint);
+      margin-bottom: 6px;
+    }
+    .eq pre{
+      margin:0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text);
+    }
+
+    .copybtn{
+      position:absolute;
+      top: 10px;
+      right: 10px;
+      border-radius: 12px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      cursor:pointer;
+      font-size: 0.85rem;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+    }
+    .copybtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,0.28);
+      background: rgba(125,211,252,0.10);
+    }
+    .copybtn:active{ transform: translateY(0px) scale(0.98); }
+
+    figure{
+      margin: 0;
+      padding: 0;
+    }
+    .vizwrap{
+      display:grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 12px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      .vizwrap{ grid-template-columns: 1fr; }
+    }
+
+    .controls{
+      display:grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      padding: 12px;
+    }
+    .controls .row{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    .controls label{
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .controls input[type="range"]{
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    .pill{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.05);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-family: var(--mono);
+      color: var(--text);
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .toggle{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      user-select: none;
+    }
+    .toggle input{ transform: scale(1.1); }
+
+    .canvasCard{
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      padding: 10px;
+    }
+    .canvasTitle{
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .canvasTitle h4{
+      margin:0;
+      font-size: 0.98rem;
+      color: var(--text);
+    }
+    .canvasTitle span{
+      color: var(--faint);
+      font-family: var(--mono);
+      font-size: 0.82rem;
+    }
+    canvas{
+      width: 100%;
+      height: 290px;
+      display:block;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.12);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    .mini canvas{ height: 260px; }
+
+    .metrics{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 640px){
+      .metrics{ grid-template-columns: 1fr; }
+    }
+    .metric{
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      padding: 10px 12px;
+    }
+    .metric .k{
+      color: var(--faint);
+      font-size: 0.85rem;
+      margin-bottom: 3px;
+    }
+    .metric .v{
+      font-family: var(--mono);
+      color: var(--text);
+      font-size: 0.95rem;
+      word-break: break-word;
+    }
+
+    footer{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 18px 40px;
+      color: var(--faint);
+      font-size: 0.92rem;
+    }
+
+    /* subtle entrance */
+    .fadeIn{
+      animation: fadeInUp 420ms ease both;
+    }
+    @keyframes fadeInUp{
+      from{ opacity: 0; transform: translateY(8px); }
+      to{ opacity: 1; transform: translateY(0px); }
+    }
+
+    /* print friendly */
+    @media print{
+      nav.toc{ display:none; }
+      body{ background: #fff; color:#000; }
+      section, .summary{ box-shadow:none; }
+      canvas{ border: 1px solid #000; background:#fff; }
+      .copybtn{ display:none; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="fadeIn">
+      <h1>Rotation Matrices, Length/Dot Preservation, and Inversion Effects (Problems 1.8–1.10)</h1>
+      <p class="subtitle">
+        We prove why rotation matrices preserve dot products and lengths, build a specific 3D rotation matrix about the
+        axis through (1,1,1), and analyze how vectors and cross/triple products behave under translations and inversions.
+      </p>
+      <div class="chiprow">
+        <span class="chip">Linear Algebra</span>
+        <span class="chip">Orthogonal Matrices</span>
+        <span class="chip">Rodrigues Formula</span>
+        <span class="chip">Pseudovectors</span>
+      </div>
+    </div>
+
+    <aside class="summary fadeIn" aria-label="Quick Summary">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li>2D rotation matrix <span style="font-family:var(--mono)">R(θ)</span> preserves dot products because <span style="font-family:var(--mono)">RᵀR = I</span>.</li>
+        <li>In 3D, preserving all lengths requires columns/rows of <span style="font-family:var(--mono)">R</span> to be orthonormal: <span style="font-family:var(--mono)">RᵀR=I</span>. Proper rotations also have <span style="font-family:var(--mono)">det R = +1</span>.</li>
+        <li>Rotation by 120° about axis (1,1,1), clockwise looking toward origin, is <span style="font-family:var(--mono)">R = [[0,1,0],[0,0,1],[1,0,0]]</span>.</li>
+        <li>Pure coordinate translation does not change vector components (same axes directions); inversion flips vector components’ signs.</li>
+        <li>Cross product is a <b>pseudovector</b>: it does <i>not</i> change sign under inversion; scalar triple product is a <b>pseudoscalar</b>: it <i>does</i> change sign.</li>
+      </ul>
+    </aside>
+  </div>
+</header>
+
+<main>
+  <nav class="toc fadeIn" aria-label="Table of Contents">
+    <div class="toc-title">
+      <h3>Table of Contents</h3>
+      <small>sticky</small>
+    </div>
+    <a href="#viz">Interactive Visualizations</a>
+    <a href="#part1">PART 1 — Problem Analysis</a>
+    <a class="minor" href="#p18">Problem 1.8</a>
+    <a class="minor" href="#p19">Problem 1.9</a>
+    <a class="minor" href="#p110">Problem 1.10</a>
+    <a href="#part2">PART 2 — Strategy & Tips</a>
+    <a href="#part3">PART 3 — Full Solution</a>
+    <a class="minor" href="#sol18">Solution 1.8</a>
+    <a class="minor" href="#sol19">Solution 1.9</a>
+    <a class="minor" href="#sol110">Solution 1.10</a>
+    <a href="#final">Final Results (boxed)</a>
+  </nav>
+
+  <div>
+    <section id="viz" class="fadeIn">
+      <h2>Interactive Visualizations</h2>
+      <p>
+        These plots use <b>example vectors</b> (clearly labeled) to visualize the <i>symbolic facts</i> proved below:
+        rotations preserve dot products and lengths; inversion flips vectors but leaves cross products unchanged and flips triple products.
+      </p>
+
+      <div class="vizwrap">
+        <figure class="canvasCard" aria-label="Diagram of vectors and rotation axis">
+          <div class="canvasTitle">
+            <h4>Diagram: 3D vectors, axis n = (1,1,1), and transformed vectors</h4>
+            <span>canvas (labeled)</span>
+          </div>
+          <canvas id="cDiagram"></canvas>
+        </figure>
+
+        <div class="controls" aria-label="Interactive controls">
+          <div class="row">
+            <label for="angle">Rotation angle θ (degrees)</label>
+            <span class="pill" id="angleReadout">120°</span>
+          </div>
+          <input id="angle" type="range" min="0" max="360" value="120" step="1"/>
+
+          <div class="row">
+            <label class="toggle">
+              <input id="invert" type="checkbox"/>
+              Apply inversion of coordinates (x̄ = −x, ȳ = −y, z̄ = −z)
+            </label>
+            <span class="pill" id="parityReadout">det = +1</span>
+          </div>
+
+          <div class="row">
+            <label for="mode">Transformation mode</label>
+            <select id="mode" style="border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,0.05);color:var(--text);padding:8px 10px;">
+              <option value="rotate">Rotation only (proper)</option>
+              <option value="invert">Inversion only (improper)</option>
+              <option value="both">Rotation + inversion</option>
+            </select>
+          </div>
+
+          <div class="card">
+            <h4>Example vectors used for plotting (fixed in space)</h4>
+            <p style="margin:0;color:var(--muted);font-family:var(--mono)">
+              A = (1.2, 0.6, 0.2),&nbsp;
+              B = (−0.4, 1.0, 0.7),&nbsp;
+              C = (0.3, −0.2, 1.1)
+            </p>
+            <p style="margin:8px 0 0;color:var(--faint);font-size:0.9rem">
+              These are just demo values to generate curves; the proved results are general.
+            </p>
+          </div>
+
+          <div class="metrics" aria-label="Live computed metrics">
+            <div class="metric">
+              <div class="k">Dot product check: (A′·B′) − (A·B)</div>
+              <div class="v" id="mDot">0</div>
+            </div>
+            <div class="metric">
+              <div class="k">Length check: |A′| − |A|</div>
+              <div class="v" id="mLen">0</div>
+            </div>
+            <div class="metric">
+              <div class="k">Cross check: |(A′×B′) − s(A×B)|</div>
+              <div class="v" id="mCross">0</div>
+            </div>
+            <div class="metric">
+              <div class="k">Triple product: T′ / T (expected = det)</div>
+              <div class="v" id="mTriple">+1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px">
+        <figure class="canvasCard" aria-label="Main plot">
+          <div class="canvasTitle">
+            <h4>Main plot: dot products vs angle (invariance under rotation)</h4>
+            <span>units: none</span>
+          </div>
+          <canvas id="cMain"></canvas>
+        </figure>
+
+        <figure class="canvasCard mini" aria-label="Secondary plot">
+          <div class="canvasTitle">
+            <h4>Secondary plot: scalar triple product vs angle (tracks det)</h4>
+            <span>units: none</span>
+          </div>
+          <canvas id="cSecond"></canvas>
+        </figure>
+      </div>
+
+      <div class="callout ok" style="margin-top:12px">
+        <b>How to read the plots:</b>
+        <ul style="margin:8px 0 0; padding-left:18px; color:var(--muted)">
+          <li>For <b>rotation only</b>, the curve for <span style="font-family:var(--mono)">A′·B′</span> lies on top of <span style="font-family:var(--mono)">A·B</span> for all θ.</li>
+          <li>When inversion is included, <span style="font-family:var(--mono)">A′·B′</span> still matches <span style="font-family:var(--mono)">A·B</span>, but the <b>triple product</b> flips sign because <span style="font-family:var(--mono)">det = −1</span>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="part1" class="fadeIn">
+      <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <article id="p18" class="card">
+        <h3>Problem 1.8 (rewrite)</h3>
+        <p>
+          (a) Show that a 2D rotation matrix preserves dot products:
+          if vectors <span style="font-family:var(--mono)">A,B</span> are rotated to <span style="font-family:var(--mono)">Ā, B̄</span>,
+          then <span style="font-family:var(--mono)">Ā·B̄ = A·B</span>.
+        </p>
+        <p>
+          (b) Determine the constraints on the components <span style="font-family:var(--mono)">R<sub>ij</sub></span> of a 3D rotation matrix
+          that guarantee preservation of the length <span style="font-family:var(--mono)">|A|</span> for all vectors <span style="font-family:var(--mono)">A</span>.
+        </p>
+        <div class="grid2">
+          <div class="card">
+            <h4>Given</h4>
+            <ul style="margin:0; padding-left:18px; color:var(--muted)">
+              <li>2D rotation matrix (standard form) and 3D rotation matrix components <span style="font-family:var(--mono)">R<sub>ij</sub></span>.</li>
+              <li>Dot product definition: <span style="font-family:var(--mono)">A·B = Σ A<sub>i</sub>B<sub>i</sub></span>.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Unknowns / Must prove</h4>
+            <ul style="margin:0; padding-left:18px; color:var(--muted)">
+              <li>(a) Prove <span style="font-family:var(--mono)">Ā·B̄ = A·B</span>.</li>
+              <li>(b) Find constraints on <span style="font-family:var(--mono)">R</span> so <span style="font-family:var(--mono)">|Ā|=|A|</span> for all <span style="font-family:var(--mono)">A</span>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h4 style="margin:12px 0 6px;color:var(--text)">Relevant principles (why they apply)</h4>
+        <ul style="margin:0; padding-left:18px; color:var(--muted)">
+          <li><b>Matrix representation of linear transformations:</b> rotated components come from <span style="font-family:var(--mono)">Ā = R A</span>.</li>
+          <li><b>Dot product as a quadratic form:</b> <span style="font-family:var(--mono)">A·B = AᵀB</span> so invariance becomes a condition on <span style="font-family:var(--mono)">RᵀR</span>.</li>
+        </ul>
+
+        <h4 style="margin:12px 0 6px;color:var(--text)">Possible approaches</h4>
+        <ol style="margin:0; padding-left:18px; color:var(--muted)">
+          <li><b>Direct component expansion</b> using trig identities (very concrete for 2D).</li>
+          <li><b>Linear algebra</b>: show invariance follows from <span style="font-family:var(--mono)">RᵀR=I</span> (clean and general).</li>
+          <li><b>Geometric argument</b>: rotation preserves angles and lengths by definition (intuitive, but needs a mathematical translation).</li>
+        </ol>
+        <p class="callout">
+          <b>Best choice:</b> Use the <b>linear algebra route</b> because it generalizes immediately to 3D and to any dimension, and it gives the exact constraints on <span style="font-family:var(--mono)">R<sub>ij</sub></span>.
+        </p>
+      </article>
+
+      <article id="p19" class="card" style="margin-top:12px">
+        <h3>Problem 1.9 (rewrite)</h3>
+        <p>
+          Find the 3×3 matrix <span style="font-family:var(--mono)">R</span> that rotates vectors by 120° about the axis through the origin in the direction (1,1,1).
+          The rotation is <b>clockwise</b> when looking <b>down the axis toward the origin</b>.
+        </p>
+
+        <div class="grid2">
+          <div class="card">
+            <h4>Given</h4>
+            <ul style="margin:0; padding-left:18px; color:var(--muted)">
+              <li>Axis direction: <span style="font-family:var(--mono)">n ∥ (1,1,1)</span>.</li>
+              <li>Angle magnitude: <span style="font-family:var(--mono)">120°</span>.</li>
+              <li>Orientation: “clockwise looking toward origin”.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Unknown / Must find</h4>
+            <ul style="margin:0; padding-left:18px; color:var(--muted)">
+              <li>The explicit matrix <span style="font-family:var(--mono)">R</span> in standard (x,y,z) coordinates.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h4 style="margin:12px 0 6px;color:var(--text)">Relevant principles (why they apply)</h4>
+        <ul style="margin:0; padding-left:18px; color:var(--muted)">
+          <li><b>Axis–angle rotations</b> are described by <b>Rodrigues’ rotation formula</b>.</li>
+          <li>The “clockwise” statement fixes the <b>sign</b> of the angle (right-hand rule).</li>
+        </ul>
+
+        <h4 style="margin:12px 0 6px;color:var(--text)">Possible approaches</h4>
+        <ol style="margin:0; padding-left:18px; color:var(--muted)">
+          <li>Use Rodrigues formula directly (systematic, shortest).</li>
+          <li>Use symmetry: 120° about (1,1,1) permutes axes (fast if you notice it).</li>
+          <li>Build from eigenvectors: axis is eigenvector with eigenvalue 1; solve for others (more algebra).</li>
+        </ol>
+        <p class="callout">
+          <b>Best choice:</b> Rodrigues formula + a quick symmetry sanity check (you get both correctness and intuition).
+        </p>
+      </article>
+
+      <article id="p110" class="card" style="margin-top:12px">
+        <h3>Problem 1.10 (rewrite)</h3>
+        <p>
+          (a) How do vector components transform under a <b>translation</b> of coordinates?
+          <br/>
+          (b) How do vector components transform under <b>inversion</b> of coordinates?
+          <br/>
+          (c) How does the <b>cross product</b> transform under inversion (show why it’s a pseudovector)? Give two classical examples.
+          <br/>
+          (d) How does the <b>scalar triple product</b> transform under inversion (pseudoscalar)?
+        </p>
+
+        <div class="grid2">
+          <div class="card">
+            <h4>Given</h4>
+            <ul style="margin:0; padding-left:18px; color:var(--muted)">
+              <li>Translation: <span style="font-family:var(--mono)">x̄ = x, ȳ = y − a, z̄ = z</span> (axes directions unchanged).</li>
+              <li>Inversion: <span style="font-family:var(--mono)">x̄ = −x, ȳ = −y, z̄ = −z</span>.</li>
+              <li>Cross product definition and triple product <span style="font-family:var(--mono)">A·(B×C)</span>.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Unknowns / Must determine</h4>
+            <ul style="margin:0; padding-left:18px; color:var(--muted)">
+              <li>(a) Relation between <span style="font-family:var(--mono)">A</span> and <span style="font-family:var(--mono)">Ā</span> components under translation.</li>
+              <li>(b) Relation under inversion.</li>
+              <li>(c) Cross product behavior under inversion; vector or pseudovector; examples.</li>
+              <li>(d) Triple product behavior (pseudoscalar).</li>
+            </ul>
+          </div>
+        </div>
+
+        <h4 style="margin:12px 0 6px;color:var(--text)">Relevant principles (why they apply)</h4>
+        <ul style="margin:0; padding-left:18px; color:var(--muted)">
+          <li><b>Passive coordinate changes:</b> the geometric vector is the same, only its components in the new basis may change.</li>
+          <li><b>Inversion changes handedness:</b> it has determinant <span style="font-family:var(--mono)">−1</span>, so objects involving the Levi-Civita symbol (cross products, triple products) can pick up extra signs.</li>
+        </ul>
+
+        <h4 style="margin:12px 0 6px;color:var(--text)">Possible approaches</h4>
+        <ol style="margin:0; padding-left:18px; color:var(--muted)">
+          <li>Basis-vector method: write <span style="font-family:var(--mono)">A = A<sub>i</sub> ê<sub>i</sub></span> and see how <span style="font-family:var(--mono)">ê<sub>i</sub></span> changes.</li>
+          <li>Matrix method: represent transformation with matrix <span style="font-family:var(--mono)">Q</span> (translation: identity; inversion: <span style="font-family:var(--mono)">Q=−I</span>).</li>
+          <li>Component method for cross product: use <span style="font-family:var(--mono)">(A×B)<sub>i</sub> = ε<sub>ijk</sub>A<sub>j</sub>B<sub>k</sub></span>.</li>
+        </ol>
+        <p class="callout">
+          <b>Best choice:</b> Use the matrix/basis viewpoint for (a,b), then a short algebraic sign-check for (c,d).
+        </p>
+      </article>
+    </section>
+
+    <section id="part2" class="fadeIn">
+      <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+      <div class="card">
+        <h3>Roadmap (5–10 steps)</h3>
+        <ol style="margin:0; padding-left:18px; color:var(--muted)">
+          <li><b>Goal:</b> express rotated vectors in components. <b>Tool:</b> matrix form <span style="font-family:var(--mono)">Ā = R A</span>.</li>
+          <li><b>Goal:</b> link dot product to matrices. <b>Tool:</b> <span style="font-family:var(--mono)">A·B = AᵀB</span>, so <span style="font-family:var(--mono)">Ā·B̄ = Aᵀ(RᵀR)B</span>.</li>
+          <li><b>Goal:</b> identify constraints for invariance. <b>Tool:</b> require <span style="font-family:var(--mono)">RᵀR = I</span>.</li>
+          <li><b>Goal:</b> enforce “proper rotation” in 3D. <b>Tool:</b> add <span style="font-family:var(--mono)">det R = +1</span>.</li>
+          <li><b>Goal:</b> build the 120° axis–angle matrix. <b>Tool:</b> Rodrigues formula with unit axis <span style="font-family:var(--mono)">n=(1,1,1)/√3</span> and correct sign of angle.</li>
+          <li><b>Goal:</b> handle translation/inversion. <b>Tool:</b> translation keeps basis directions → components unchanged; inversion flips basis → components change sign.</li>
+          <li><b>Goal:</b> classify cross and triple products. <b>Tool:</b> sign tracking under inversion: <span style="font-family:var(--mono)">(-A)×(-B)=A×B</span>, but <span style="font-family:var(--mono)">(-A)·(B×C)=-(A·(B×C))</span>.</li>
+        </ol>
+      </div>
+
+      <div class="grid2" style="margin-top:12px">
+        <div class="callout warn">
+          <b>Common mistakes</b>
+          <ul style="margin:8px 0 0; padding-left:18px;">
+            <li>Confusing “rotate the object” (active) with “rotate coordinates” (passive). Dot/length invariance is the same idea, but signs/orientation language can flip.</li>
+            <li>For Problem 1.9, ignoring the word <b>clockwise</b>, which sets the sign of the angle.</li>
+            <li>Thinking inversion is a rotation. It is <b>improper</b> (det = −1), changes handedness.</li>
+          </ul>
+        </div>
+        <div class="callout ok">
+          <b>Quick tips</b>
+          <ul style="margin:8px 0 0; padding-left:18px;">
+            <li>“Preserves dot products for all vectors” ⇔ <span style="font-family:var(--mono)">RᵀR = I</span>.</li>
+            <li>Axis–angle rotation: <span style="font-family:var(--mono)">R = cI + (1−c)nnᵀ + s[n]×</span>.</li>
+            <li>Under inversion: vectors flip sign, pseudovectors do not, pseudoscalars do.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="part3" class="fadeIn">
+      <h2>PART 3 — Full Solution</h2>
+
+      <article id="sol18" class="card">
+        <h3>Solution to Problem 1.8</h3>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">Physical / geometric intuition</h4>
+        <p>
+          A rotation is a rigid motion: it preserves lengths and angles. Since
+          <span style="font-family:var(--mono)">A·B = |A||B| cos(θ<sub>AB</sub>)</span>,
+          keeping lengths and the angle between vectors fixed means the dot product stays the same.
+          The algebraic statement of “rigid rotation” is: the matrix has orthonormal columns (no stretching/shearing).
+        </p>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">Step-by-step derivation (2D dot product preservation)</h4>
+        <p>
+          Let the 2D rotation matrix by angle <span style="font-family:var(--mono)">θ</span> be
+        </p>
+
+        <div class="eq" id="eqR2">
+          <div class="label">Key equation: 2D rotation matrix</div>
+          <button class="copybtn" data-copy="R(θ) = [[cosθ, -sinθ],[sinθ, cosθ]]">Copy</button>
+          <pre>R(θ) = [ [cosθ, −sinθ],
+         [sinθ,  cosθ] ]</pre>
+        </div>
+
+        <p>
+          A rotation maps components as
+          <span style="font-family:var(--mono)">Ā = R A</span>,
+          <span style="font-family:var(--mono)">B̄ = R B</span>.
+          The dot product in matrix form is <span style="font-family:var(--mono)">A·B = AᵀB</span>, so
+        </p>
+
+        <div class="eq" id="eqDotPres">
+          <div class="label">Compute the transformed dot product</div>
+          <button class="copybtn" data-copy="(RA)·(RB) = (RA)^T (RB) = A^T (R^T R) B">Copy</button>
+          <pre>Ā·B̄ = (RA)ᵀ (RB) = Aᵀ (RᵀR) B</pre>
+        </div>
+
+        <p>
+          Therefore, to have <span style="font-family:var(--mono)">Ā·B̄ = A·B</span> for all vectors <span style="font-family:var(--mono)">A,B</span>,
+          it is sufficient (and in fact necessary) that
+          <span style="font-family:var(--mono)">RᵀR = I</span>.
+          Let’s verify <span style="font-family:var(--mono)">R(θ)</span> satisfies this:
+        </p>
+
+        <div class="eq" id="eqR2Orth">
+          <div class="label">Orthogonality check</div>
+          <button class="copybtn" data-copy="R(θ)^T R(θ) = I (because cos^2θ + sin^2θ = 1 and cross-terms cancel)">Copy</button>
+          <pre>R(θ)ᵀ = [ [cosθ,  sinθ],
+          [−sinθ, cosθ] ]
+
+R(θ)ᵀR(θ) =
+[ [cos²θ + sin²θ,   −cosθ sinθ + sinθ cosθ],
+  [−sinθ cosθ + cosθ sinθ,   sin²θ + cos²θ] ]
+= [ [1,0],[0,1] ] = I</pre>
+        </div>
+
+        <p>
+          Since <span style="font-family:var(--mono)">RᵀR=I</span>, we conclude
+          <span style="font-family:var(--mono)">Ā·B̄ = AᵀIB = AᵀB = A·B</span>,
+          which is exactly the required statement.
+        </p>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">Part (b): constraints on a 3D rotation matrix to preserve lengths</h4>
+        <p>
+          Let <span style="font-family:var(--mono)">Ā = R A</span> in 3D, where <span style="font-family:var(--mono)">R</span> is 3×3.
+          Length squared is the dot product with itself:
+          <span style="font-family:var(--mono)">|A|² = A·A = AᵀA</span>.
+          Then
+        </p>
+
+        <div class="eq" id="eqLenPres">
+          <div class="label">Length preservation condition</div>
+          <button class="copybtn" data-copy="|RA|^2 = (RA)^T (RA) = A^T (R^T R) A, so need R^T R = I">Copy</button>
+          <pre>|Ā|² = |RA|² = (RA)ᵀ(RA) = Aᵀ(RᵀR)A</pre>
+        </div>
+
+        <p>
+          For <span style="font-family:var(--mono)">|Ā|² = |A|²</span> to hold for <b>every</b> vector <span style="font-family:var(--mono)">A</span>,
+          we must have
+          <span style="font-family:var(--mono)">RᵀR = I</span>.
+          This means:
+        </p>
+        <ul style="margin:0; padding-left:18px; color:var(--muted)">
+          <li>The columns of <span style="font-family:var(--mono)">R</span> are orthonormal (unit length and mutually perpendicular).</li>
+          <li>Equivalently, the rows of <span style="font-family:var(--mono)">R</span> are orthonormal.</li>
+          <li>In components: <span style="font-family:var(--mono)">Σ_k R_{k i} R_{k j} = δ_{ij}</span>.</li>
+        </ul>
+
+        <div class="eq" id="eqOrthoComp">
+          <div class="label">Component constraint (orthogonality)</div>
+          <button class="copybtn" data-copy="Sum_k R_{k i} R_{k j} = δ_{ij}  (equivalently, R^T R = I)">Copy</button>
+          <pre>∑ₖ Rₖᵢ Rₖⱼ = δᵢⱼ    (i,j = 1,2,3)</pre>
+        </div>
+
+        <p>
+          If the matrix is specifically a <b>proper rotation</b> (not a reflection), we also require
+          <span style="font-family:var(--mono)">det R = +1</span>.
+          (Orthogonality alone allows <span style="font-family:var(--mono)">det R = ±1</span>; the <span style="font-family:var(--mono)">−1</span> case includes inversions/reflections.)
+        </p>
+
+        <div class="callout ok">
+          <b>Sanity checks:</b>
+          <ul style="margin:8px 0 0; padding-left:18px;">
+            <li><b>Units:</b> entries of <span style="font-family:var(--mono)">R</span> are dimensionless → dot products/lengths keep correct units.</li>
+            <li><b>Limiting case:</b> for <span style="font-family:var(--mono)">θ=0</span>, <span style="font-family:var(--mono)">R=I</span> and nothing changes.</li>
+            <li><b>Interpretation:</b> <span style="font-family:var(--mono)">RᵀR=I</span> means “no stretching”: pure rigid rotation.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article id="sol19" class="card" style="margin-top:12px">
+        <h3>Solution to Problem 1.9</h3>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">Physical intuition</h4>
+        <p>
+          Rotating by 120° around the diagonal axis (1,1,1) has strong symmetry: it tends to <i>cycle</i> the coordinate axes.
+          The only subtlety is the word <b>clockwise</b>, which selects whether the cycle goes one way or the other.
+        </p>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">Step 1: define the axis unit vector</h4>
+        <p>
+          The axis direction is <span style="font-family:var(--mono)">n ∥ (1,1,1)</span>, so the unit vector is
+        </p>
+
+        <div class="eq" id="eqnUnit">
+          <div class="label">Unit axis vector</div>
+          <button class="copybtn" data-copy="n = (1,1,1)/sqrt(3)">Copy</button>
+          <pre>n = (1,1,1)/√3</pre>
+        </div>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">Step 2: interpret “clockwise looking down the axis toward the origin”</h4>
+        <p>
+          The axis points from the origin toward <span style="font-family:var(--mono)">(1,1,1)</span>, i.e. along <span style="font-family:var(--mono)">+n</span>.
+          “Looking down the axis toward the origin” means your viewing direction is along <span style="font-family:var(--mono)">−n</span>.
+          A rotation that appears <b>clockwise</b> when looking along <span style="font-family:var(--mono)">−n</span> corresponds to a
+          <b>negative</b> right-hand-rule angle about <span style="font-family:var(--mono)">+n</span>.
+        </p>
+        <p>
+          So we take
+          <span style="font-family:var(--mono)">θ = −120° = −2π/3</span>
+          about the axis <span style="font-family:var(--mono)">n</span>.
+        </p>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">Step 3: Rodrigues’ rotation formula</h4>
+        <p>
+          For unit axis <span style="font-family:var(--mono)">n</span>, Rodrigues’ formula is
+        </p>
+
+        <div class="eq" id="eqRod">
+          <div class="label">Rodrigues formula (matrix form)</div>
+          <button class="copybtn" data-copy="R = cosθ I + (1−cosθ) n n^T + sinθ [n]_×">Copy</button>
+          <pre>R = (cosθ) I + (1−cosθ) (n nᵀ) + (sinθ) [n]×</pre>
+        </div>
+
+        <p>
+          For <span style="font-family:var(--mono)">θ = −120°</span>, we have
+          <span style="font-family:var(--mono)">cosθ = cos(120°) = −1/2</span>,
+          <span style="font-family:var(--mono)">sinθ = sin(−120°) = −√3/2</span>.
+          Plugging <span style="font-family:var(--mono)">n=(1,1,1)/√3</span> into Rodrigues yields a remarkably simple result.
+          (You can verify by direct multiplication or by checking how basis vectors map.)
+        </p>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">Resulting matrix</h4>
+        <div class="eq" id="eqR120">
+          <div class="label">Rotation by 120° about (1,1,1), clockwise looking toward origin</div>
+          <button class="copybtn" data-copy="R = [[0,1,0],[0,0,1],[1,0,0]]">Copy</button>
+          <pre>R = [ [0, 1, 0],
+      [0, 0, 1],
+      [1, 0, 0] ]</pre>
+        </div>
+
+        <p>
+          Interpretation: this matrix maps the basis vectors as
+          <span style="font-family:var(--mono)">êx → êz</span>, <span style="font-family:var(--mono)">êy → êx</span>, <span style="font-family:var(--mono)">êz → êy</span>.
+          That is a 3-cycle consistent with a 120° rotation around the symmetric axis.
+        </p>
+
+        <div class="callout ok">
+          <b>Sanity checks:</b>
+          <ul style="margin:8px 0 0; padding-left:18px;">
+            <li><b>Axis fixed:</b> <span style="font-family:var(--mono)">R(1,1,1)ᵀ = (1,1,1)ᵀ</span> (so the axis is unchanged).</li>
+            <li><b>Proper rotation:</b> <span style="font-family:var(--mono)">RᵀR=I</span> and <span style="font-family:var(--mono)">det R = +1</span>.</li>
+            <li><b>Angle:</b> applying R three times returns identity (a 3-cycle): <span style="font-family:var(--mono)">R³=I</span>, consistent with 120°.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article id="sol110" class="card" style="margin-top:12px">
+        <h3>Solution to Problem 1.10</h3>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">Physical intuition</h4>
+        <p>
+          A vector is a geometric object independent of coordinates. When you move or flip the coordinate system,
+          you’re changing how you <i>describe</i> the vector. Translations shift the origin but keep axis directions; inversions flip axis directions.
+          Cross products encode handedness, so they behave differently under inversions.
+        </p>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">(a) Translation of coordinates</h4>
+        <p>
+          Translation (example shown): <span style="font-family:var(--mono)">x̄ = x</span>, <span style="font-family:var(--mono)">ȳ = y − a</span>, <span style="font-family:var(--mono)">z̄ = z</span>.
+          This changes the <b>origin</b> location but the axes point in the same directions.
+        </p>
+        <p>
+          For a geometric vector <span style="font-family:var(--mono)">A</span> (not a position vector tied to the origin), its components in the translated system are unchanged:
+        </p>
+
+        <div class="eq" id="eqTrans">
+          <div class="label">Translation result (components unchanged)</div>
+          <button class="copybtn" data-copy="Translation: Ā = A  (same components, same basis directions)">Copy</button>
+          <pre>Translation (origin shift):  Āx = Ax,  Āy = Ay,  Āz = Az</pre>
+        </div>
+
+        <p class="callout warn">
+          <b>Important nuance:</b> The <i>position vector</i> <span style="font-family:var(--mono)">r</span> does change under translation because it is defined from the origin.
+          But a general “free” vector (like velocity, electric field at a point, etc.) has the same components when axes are unchanged.
+        </p>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">(b) Inversion of coordinates</h4>
+        <p>
+          Inversion is <span style="font-family:var(--mono)">(x̄,ȳ,z̄) = (−x,−y,−z)</span>, i.e. the new basis vectors are flipped:
+          <span style="font-family:var(--mono)">ê̄x = −êx</span>, <span style="font-family:var(--mono)">ê̄y = −êy</span>, <span style="font-family:var(--mono)">ê̄z = −êz</span>.
+          The geometric vector is the same:
+          <span style="font-family:var(--mono)">A = Ax êx + Ay êy + Az êz = Āx ê̄x + Āy ê̄y + Āz ê̄z</span>.
+        </p>
+        <p>
+          Substitute <span style="font-family:var(--mono)">ê̄i = −êi</span>:
+          <span style="font-family:var(--mono)">A = Āx (−êx) + Āy (−êy) + Āz (−êz) = −(Āx êx + Āy êy + Āz êz)</span>.
+          Comparing coefficients gives:
+        </p>
+
+        <div class="eq" id="eqInvVec">
+          <div class="label">Inversion result (polar vectors flip sign)</div>
+          <button class="copybtn" data-copy="Inversion: Ā = −A  (components change sign)">Copy</button>
+          <pre>Inversion:  Āx = −Ax,  Āy = −Ay,  Āz = −Az</pre>
+        </div>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">(c) Cross product under inversion (pseudovector)</h4>
+        <p>
+          Under inversion, vectors change sign: <span style="font-family:var(--mono)">Ā = −A</span>, <span style="font-family:var(--mono)">B̄ = −B</span>.
+          Then the transformed cross product is
+        </p>
+
+        <div class="eq" id="eqInvCross">
+          <div class="label">Cross product sign under inversion</div>
+          <button class="copybtn" data-copy="(−A)×(−B) = A×B, so cross product does NOT flip under inversion (pseudovector)">Copy</button>
+          <pre>Ā×B̄ = (−A)×(−B) = (+1)(A×B)</pre>
+        </div>
+
+        <p>
+          So <span style="font-family:var(--mono)">A×B</span> is a <b>pseudovector</b> (also called an axial vector):
+          it behaves like a vector under proper rotations, but it picks up an extra sign under improper transformations so that
+          under inversion it stays the same.
+        </p>
+
+        <div class="card">
+          <h4>Is the cross product of two pseudovectors a vector or a pseudovector?</h4>
+          <p style="margin:0;color:var(--muted)">
+            Under inversion, pseudovectors do <i>not</i> change sign. If <span style="font-family:var(--mono)">P</span> and <span style="font-family:var(--mono)">Q</span> are pseudovectors, then
+            <span style="font-family:var(--mono)">P̄ = P</span>, <span style="font-family:var(--mono)">Q̄ = Q</span>, hence
+            <span style="font-family:var(--mono)">P̄×Q̄ = P×Q</span>.
+            But a <b>true vector</b> would flip sign under inversion, while a <b>pseudovector</b> would not.
+            Therefore, <b>the cross product of two pseudovectors is a pseudovector</b>.
+          </p>
+        </div>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">Two classical pseudovectors</h4>
+        <ul style="margin:0; padding-left:18px; color:var(--muted)">
+          <li><b>Angular momentum</b> <span style="font-family:var(--mono)">L = r × p</span>.</li>
+          <li><b>Magnetic field</b> <span style="font-family:var(--mono)">B</span> (axial vector; e.g., around a current loop).</li>
+        </ul>
+
+        <h4 style="margin:10px 0 6px;color:var(--text)">(d) Scalar triple product under inversion (pseudoscalar)</h4>
+        <p>
+          Consider <span style="font-family:var(--mono)">T = A·(B×C)</span>.
+          Under inversion: <span style="font-family:var(--mono)">Ā = −A</span>, but <span style="font-family:var(--mono)">B×C</span> is a pseudovector so it does not change sign:
+          <span style="font-family:var(--mono)">B̄×C̄ = B×C</span>.
+          Therefore
+        </p>
+
+        <div class="eq" id="eqInvTriple">
+          <div class="label">Triple product sign under inversion</div>
+          <button class="copybtn" data-copy="T̄ = (−A)·(B×C) = −T, so it is a pseudoscalar">Copy</button>
+          <pre>T̄ = Ā·(B̄×C̄) = (−A)·(B×C) = − A·(B×C) = −T</pre>
+        </div>
+
+        <div class="callout ok">
+          <b>Sanity checks:</b>
+          <ul style="margin:8px 0 0; padding-left:18px;">
+            <li><b>Units:</b> inversion/rotation are dimensionless → units of cross/triple products unchanged.</li>
+            <li><b>Limiting case:</b> applying inversion twice returns original (<span style="font-family:var(--mono)">(-1)^2=+1</span>), so signs revert.</li>
+            <li><b>Interpretation:</b> triple product measures oriented volume; inversion flips handedness → volume orientation flips → sign flips.</li>
+          </ul>
+        </div>
+      </article>
+    </section>
+
+    <section id="final" class="fadeIn">
+      <h2>Final Results (boxed)</h2>
+
+      <div class="eq" id="eqFinal1">
+        <div class="label">Problem 1.8 — invariance conditions</div>
+        <button class="copybtn" data-copy="(1) Dot/length preservation: R^T R = I. (2) Proper rotation additionally: det R = +1.">Copy</button>
+        <pre>✔ Dot product preserved (all A,B):  (RA)·(RB) = A·B  ⇔  RᵀR = I
+✔ Length preserved (all A):         |RA| = |A|       ⇔  RᵀR = I
+✔ Proper 3D rotation (no reflection): det R = +1</pre>
+      </div>
+
+      <div class="eq" id="eqFinal2">
+        <div class="label">Problem 1.9 — the 120° matrix about axis (1,1,1), clockwise toward origin</div>
+        <button class="copybtn" data-copy="R = [[0,1,0],[0,0,1],[1,0,0]]">Copy</button>
+        <pre>✔ Axis n = (1,1,1)/√3, angle θ = −120° (clockwise when viewed toward origin)
+
+R = [ [0, 1, 0],
+      [0, 0, 1],
+      [1, 0, 0] ]</pre>
+      </div>
+
+      <div class="eq" id="eqFinal3">
+        <div class="label">Problem 1.10 — translation, inversion, pseudovector/pseudoscalar</div>
+        <button class="copybtn" data-copy="Translation: components unchanged. Inversion: Ā = −A. Cross product: Ā×B̄ = A×B (pseudovector). Triple product: Ā·(B̄×C̄) = −A·(B×C) (pseudoscalar).">Copy</button>
+        <pre>✔ Translation of coordinates (axes unchanged):   Ā = A   (components unchanged)
+
+✔ Inversion (x̄,ȳ,z̄)=(-x,-y,-z):                Ā = −A  (polar vectors flip)
+
+✔ Cross product under inversion:
+   Ā×B̄ = (−A)×(−B) = A×B   ⇒  cross product is a PSEUDOVECTOR
+
+✔ Scalar triple product under inversion:
+   Ā·(B̄×C̄) = (−A)·(B×C) = −A·(B×C)  ⇒  triple product is a PSEUDOSCALAR</pre>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="fadeIn">
+  <p>
+    Built with vanilla HTML/CSS/JS. Tip: use the controls to see invariants update live and connect the algebra to geometry.
+  </p>
+</footer>
+
+<script>
+/* ============================
+   Copy buttons (plain text)
+   ============================ */
+(function(){
+  function copyText(t){
+    navigator.clipboard.writeText(t).then(()=>{
+      // no intrusive toast; do a tiny button feedback
+    }).catch(()=>{
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = t;
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand('copy'); }catch(e){}
+      document.body.removeChild(ta);
+    });
+  }
+
+  document.querySelectorAll('.copybtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const text = btn.getAttribute('data-copy') || '';
+      copyText(text);
+      const old = btn.textContent;
+      btn.textContent = 'Copied';
+      setTimeout(()=> btn.textContent = old, 700);
+    });
+  });
+})();
+
+/* ============================
+   Math helpers (3D vectors)
+   ============================ */
+function v(x,y,z){ return {x:x,y:y,z:z}; }
+function add(a,b){ return v(a.x+b.x,a.y+b.y,a.z+b.z); }
+function sub(a,b){ return v(a.x-b.x,a.y-b.y,a.z-b.z); }
+function mul(a,s){ return v(a.x*s,a.y*s,a.z*s); }
+function dot(a,b){ return a.x*b.x + a.y*b.y + a.z*b.z; }
+function cross(a,b){
+  return v(
+    a.y*b.z - a.z*b.y,
+    a.z*b.x - a.x*b.z,
+    a.x*b.y - a.y*b.x
+  );
+}
+function norm(a){ return Math.sqrt(dot(a,a)); }
+function unit(a){
+  const n = norm(a);
+  return n>0 ? mul(a,1/n) : v(0,0,0);
+}
+function matMulVec(M, a){
+  return v(
+    M[0][0]*a.x + M[0][1]*a.y + M[0][2]*a.z,
+    M[1][0]*a.x + M[1][1]*a.y + M[1][2]*a.z,
+    M[2][0]*a.x + M[2][1]*a.y + M[2][2]*a.z
+  );
+}
+function matMul(A,B){
+  const R = [[0,0,0],[0,0,0],[0,0,0]];
+  for(let i=0;i<3;i++){
+    for(let j=0;j<3;j++){
+      let s=0;
+      for(let k=0;k<3;k++) s += A[i][k]*B[k][j];
+      R[i][j]=s;
+    }
+  }
+  return R;
+}
+function det3(M){
+  const a=M[0][0], b=M[0][1], c=M[0][2];
+  const d=M[1][0], e=M[1][1], f=M[1][2];
+  const g=M[2][0], h=M[2][1], i=M[2][2];
+  return a*(e*i - f*h) - b*(d*i - f*g) + c*(d*h - e*g);
+}
+function rodrigues(n, theta){
+  // n must be unit
+  const nx=n.x, ny=n.y, nz=n.z;
+  const c = Math.cos(theta), s = Math.sin(theta);
+  const C = 1 - c;
+  return [
+    [c + nx*nx*C,      nx*ny*C - nz*s, nx*nz*C + ny*s],
+    [ny*nx*C + nz*s,   c + ny*ny*C,    ny*nz*C - nx*s],
+    [nz*nx*C - ny*s,   nz*ny*C + nx*s, c + nz*nz*C   ]
+  ];
+}
+
+/* ============================
+   Canvas utilities: HiDPI
+   ============================ */
+function setupHiDPI(canvas){
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(1, Math.floor(rect.width * dpr));
+  const h = Math.max(1, Math.floor(rect.height * dpr));
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w; canvas.height = h;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  return {ctx, w: rect.width, h: rect.height, dpr};
+}
+function clear(ctx,w,h){
+  ctx.clearRect(0,0,w,h);
+}
+
+/* ============================
+   Plotting helpers (2D)
+   ============================ */
+function drawAxes(ctx, w, h, box, xMin, xMax, yMin, yMax, xLabel, yLabel){
+  // box: {x,y,ww,hh} in CSS pixels
+  const {x,y,ww,hh} = box;
+  // background
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.fillRect(x,y,ww,hh);
+
+  // gridlines
+  ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+  ctx.lineWidth = 1;
+  const nx=6, ny=6;
+  for(let i=0;i<=nx;i++){
+    const xx = x + (ww*i/nx);
+    ctx.beginPath(); ctx.moveTo(xx,y); ctx.lineTo(xx,y+hh); ctx.stroke();
+  }
+  for(let j=0;j<=ny;j++){
+    const yy = y + (hh*j/ny);
+    ctx.beginPath(); ctx.moveTo(x,yy); ctx.lineTo(x+ww,yy); ctx.stroke();
+  }
+
+  // border
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.strokeRect(x,y,ww,hh);
+
+  // ticks & labels
+  ctx.fillStyle = 'rgba(255,255,255,0.72)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+
+  function xToPx(xv){ return x + (xv - xMin) * ww / (xMax-xMin); }
+  function yToPx(yv){ return y + hh - (yv - yMin) * hh / (yMax-yMin); }
+
+  // x ticks
+  for(let i=0;i<=nx;i++){
+    const xv = xMin + (xMax-xMin)*i/nx;
+    const px = xToPx(xv);
+    ctx.strokeStyle='rgba(255,255,255,0.22)';
+    ctx.beginPath();
+    ctx.moveTo(px, y+hh);
+    ctx.lineTo(px, y+hh+6);
+    ctx.stroke();
+    const txt = (Math.abs(xv) < 1e-9) ? '0' : (xv.toFixed(0));
+    ctx.fillText(txt, px-6, y+hh+18);
+  }
+  // y ticks
+  for(let j=0;j<=ny;j++){
+    const yv = yMin + (yMax-yMin)*j/ny;
+    const py = yToPx(yv);
+    ctx.strokeStyle='rgba(255,255,255,0.22)';
+    ctx.beginPath();
+    ctx.moveTo(x-6, py);
+    ctx.lineTo(x, py);
+    ctx.stroke();
+    const txt = (Math.abs(yv) < 1e-9) ? '0' : yv.toFixed(2);
+    ctx.fillText(txt, x-52, py+4);
+  }
+
+  // axis labels
+  ctx.fillStyle = 'rgba(255,255,255,0.78)';
+  ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+  ctx.fillText(xLabel, x + ww - 90, y + hh + 34);
+  ctx.save();
+  ctx.translate(x - 44, y + 18);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+
+  ctx.restore();
+
+  return {xToPx, yToPx};
+}
+
+function drawLegend(ctx, x, y, items){
+  ctx.save();
+  ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+  const pad=8, lh=18;
+  const w = 10 + Math.max(...items.map(it=>ctx.measureText(it.label).width)) + 28;
+  const h = pad*2 + items.length*lh;
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.roundRect(x,y,w,h,12);
+  ctx.fill(); ctx.stroke();
+  items.forEach((it,i)=>{
+    const yy = y + pad + i*lh + 12;
+    ctx.strokeStyle = it.stroke;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(x+10, yy-4); ctx.lineTo(x+26, yy-4); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.80)';
+    ctx.fillText(it.label, x+32, yy);
+  });
+  ctx.restore();
+}
+
+/* ============================
+   3D diagram projection
+   ============================ */
+function project(p){
+  // simple isometric-ish projection into 2D
+  // returns {u,v}
+  const u = p.x - 0.85*p.y;
+  const v = 0.55*p.x + 0.55*p.y - 1.0*p.z;
+  return {u,v};
+}
+function drawArrow(ctx, p0, p1, stroke, label){
+  ctx.save();
+  ctx.strokeStyle = stroke;
+  ctx.fillStyle = stroke;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(p0.x,p0.y);
+  ctx.lineTo(p1.x,p1.y);
+  ctx.stroke();
+  // arrowhead
+  const dx = p1.x-p0.x, dy = p1.y-p0.y;
+  const L = Math.hypot(dx,dy) || 1;
+  const ux = dx/L, uy = dy/L;
+  const ah=10, aw=6;
+  const bx = p1.x - ah*ux, by = p1.y - ah*uy;
+  ctx.beginPath();
+  ctx.moveTo(p1.x,p1.y);
+  ctx.lineTo(bx - aw*uy, by + aw*ux);
+  ctx.lineTo(bx + aw*uy, by - aw*ux);
+  ctx.closePath();
+  ctx.fill();
+
+  if(label){
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.fillText(label, p1.x + 6, p1.y + 2);
+  }
+  ctx.restore();
+}
+
+/* ============================
+   State & rendering
+   ============================ */
+const A0 = v(1.2, 0.6, 0.2);
+const B0 = v(-0.4, 1.0, 0.7);
+const C0 = v(0.3, -0.2, 1.1);
+const nAxis = unit(v(1,1,1));
+
+const elAngle = document.getElementById('angle');
+const elAngleReadout = document.getElementById('angleReadout');
+const elInvert = document.getElementById('invert');
+const elMode = document.getElementById('mode');
+const elParityReadout = document.getElementById('parityReadout');
+
+const mDot = document.getElementById('mDot');
+const mLen = document.getElementById('mLen');
+const mCross = document.getElementById('mCross');
+const mTriple = document.getElementById('mTriple');
+
+const cDiagram = document.getElementById('cDiagram');
+const cMain = document.getElementById('cMain');
+const cSecond = document.getElementById('cSecond');
+
+function getTransform(thetaDeg){
+  const theta = thetaDeg * Math.PI / 180;
+  const R = rodrigues(nAxis, theta);
+  const inv = -1; // inversion matrix = -I
+
+  const mode = elMode.value;
+  let M = [[1,0,0],[0,1,0],[0,0,1]];
+  if(mode === 'rotate'){
+    M = R;
+  }else if(mode === 'invert'){
+    M = [[inv,0,0],[0,inv,0],[0,0,inv]];
+  }else{ // both
+    // apply rotation then inversion in coordinates (effectively -R)
+    M = [[-R[0][0],-R[0][1],-R[0][2]],
+         [-R[1][0],-R[1][1],-R[1][2]],
+         [-R[2][0],-R[2][1],-R[2][2]]];
+  }
+
+  // optional checkbox: if user checks it, we force inversion parity as an extra factor
+  // (so they can explore separately from mode)
+  if(elInvert.checked){
+    M = [[-M[0][0],-M[0][1],-M[0][2]],
+         [-M[1][0],-M[1][1],-M[1][2]],
+         [-M[2][0],-M[2][1],-M[2][2]]];
+  }
+
+  return M;
+}
+
+function render(){
+  const thetaDeg = parseFloat(elAngle.value);
+  elAngleReadout.textContent = thetaDeg.toFixed(0) + '°';
+
+  const M = getTransform(thetaDeg);
+  const det = det3(M);
+  elParityReadout.textContent = 'det = ' + (det>=0 ? '+' : '') + det.toFixed(0);
+
+  // transformed vectors
+  const A1 = matMulVec(M, A0);
+  const B1 = matMulVec(M, B0);
+  const C1 = matMulVec(M, C0);
+
+  // checks
+  const d0 = dot(A0,B0), d1 = dot(A1,B1);
+  const len0 = norm(A0), len1 = norm(A1);
+  const X0 = cross(A0,B0), X1 = cross(A1,B1);
+
+  // Under a general orthogonal matrix with det = s, cross transforms as:
+  // (MA)×(MB) = (det M) M^{-T} (A×B). For orthogonal M, M^{-T}=M, so = (det M) M (A×B).
+  // Here we compare X1 against s * M * X0 (works when M is orthogonal; ours is rotation / inversion / combo => orthogonal).
+  const s = (det >= 0) ? 1 : -1;
+  const X0pred = mul(matMulVec(M, X0), s);
+  const crossErr = norm(sub(X1, X0pred));
+
+  const T0 = dot(A0, cross(B0,C0));
+  const T1 = dot(A1, cross(B1,C1));
+  const ratio = (Math.abs(T0) < 1e-12) ? 0 : (T1 / T0);
+
+  mDot.textContent = (d1 - d0).toExponential(3);
+  mLen.textContent = (len1 - len0).toExponential(3);
+  mCross.textContent = crossErr.toExponential(3) + '  (s = ' + (s>0?'+1':'-1') + ')';
+  mTriple.textContent = (ratio>=0?'+':'') + ratio.toFixed(3) + '  (det ≈ ' + (det>=0?'+':'') + det.toFixed(0) + ')';
+
+  drawDiagram(A1,B1,M,thetaDeg);
+  drawMainPlot(thetaDeg);
+  drawSecondPlot(thetaDeg);
+}
+
+function drawDiagram(A1,B1,M,thetaDeg){
+  const {ctx, w, h} = setupHiDPI(cDiagram);
+  clear(ctx,w,h);
+
+  // panel title inside canvas
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.82)';
+  ctx.font = '13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+  ctx.fillText('3D setup (projected): axes, axis n=(1,1,1), A,B and transformed A′,B′', 10, 18);
+  ctx.restore();
+
+  // coordinate mapping
+  const origin = {x: w*0.52, y: h*0.58};
+
+  function toScreen(p){
+    const pr = project(p);
+    const scale = Math.min(w,h)*0.16;
+    return {x: origin.x + pr.u*scale, y: origin.y + pr.v*scale};
+  }
+
+  // axes
+  const ax = toScreen(v(1.4,0,0));
+  const ay = toScreen(v(0,1.4,0));
+  const az = toScreen(v(0,0,1.4));
+  drawArrow(ctx, origin, ax, 'rgba(125,211,252,0.85)', 'x');
+  drawArrow(ctx, origin, ay, 'rgba(167,139,250,0.85)', 'y');
+  drawArrow(ctx, origin, az, 'rgba(52,211,153,0.85)', 'z');
+
+  // axis n
+  const nTip = toScreen(mul(nAxis, 1.6));
+  drawArrow(ctx, origin, nTip, 'rgba(251,191,36,0.90)', 'n');
+
+  // original A,B
+  const A0s = toScreen(mul(A0, 1.0));
+  const B0s = toScreen(mul(B0, 1.0));
+  drawArrow(ctx, origin, A0s, 'rgba(255,255,255,0.70)', 'A');
+  drawArrow(ctx, origin, B0s, 'rgba(255,255,255,0.60)', 'B');
+
+  // transformed A',B'
+  const A1s = toScreen(mul(A1, 1.0));
+  const B1s = toScreen(mul(B1, 1.0));
+  drawArrow(ctx, origin, A1s, 'rgba(255,255,255,0.95)', "A′");
+  drawArrow(ctx, origin, B1s, 'rgba(255,255,255,0.82)', "B′");
+
+  // mini annotation box
+  ctx.save();
+  const det = det3(M);
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.roundRect(10, h-72, 420, 56, 14);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.80)';
+  ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+  ctx.fillText('θ = ' + thetaDeg.toFixed(0) + '°   det(M) ≈ ' + (det>=0?'+':'') + det.toFixed(0), 22, h-48);
+  ctx.fillStyle='rgba(255,255,255,0.70)';
+  ctx.fillText("Mode: " + document.getElementById('mode').selectedOptions[0].text, 22, h-28);
+  ctx.restore();
+}
+
+function drawMainPlot(thetaDeg){
+  const {ctx, w, h} = setupHiDPI(cMain);
+  clear(ctx,w,h);
+
+  ctx.save();
+  ctx.fillStyle='rgba(255,255,255,0.82)';
+  ctx.font='13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+  ctx.fillText('Dot products vs angle θ', 10, 18);
+  ctx.restore();
+
+  const box = {x: 70, y: 38, ww: w-90, hh: h-85};
+
+  // Sw
