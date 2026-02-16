@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>Axially Graded Plate (n(z)) — Ray Invariant, Trajectory, and Parallel Emergence</title>
+  <style>
+    :root{
+      --bg:#070a12;
+      --panel:#0d1428;
+      --card:#0f1933;
+      --text:#eaf0ff;
+      --muted:#aab7e6;
+      --line:rgba(255,255,255,.10);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(125,211,252,.20), transparent 60%),
+        radial-gradient(1000px 600px at 95% 0%, rgba(167,139,250,.18), transparent 60%),
+        radial-gradient(900px 600px at 50% 110%, rgba(52,211,153,.10), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+
+    header{
+      padding: 28px 18px 10px;
+      max-width: 1150px;
+      margin: 0 auto;
+    }
+    .hero{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+      overflow:hidden;
+      position:relative;
+    }
+    .hero:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(600px 220px at 20% 10%, rgba(125,211,252,.20), transparent 70%),
+                  radial-gradient(500px 220px at 85% 0%, rgba(167,139,250,.16), transparent 70%);
+      pointer-events:none;
+      filter:saturate(1.05);
+    }
+    .hero > *{position:relative}
+    h1{
+      margin: 0 0 8px 0;
+      font-size: clamp(1.2rem, 1.2rem + 1.6vw, 2.1rem);
+      letter-spacing:.2px;
+    }
+    .sub{
+      margin: 0;
+      color: var(--muted);
+      max-width: 78ch;
+    }
+
+    main{
+      max-width: 1150px;
+      margin: 0 auto;
+      padding: 12px 18px 60px;
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap: 16px;
+      align-items:start;
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 12px;
+      align-self:start;
+      background: rgba(13,20,40,.72);
+      backdrop-filter: blur(10px);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: 0 10px 28px rgba(0,0,0,.35);
+    }
+    .toc h2{
+      margin:0 0 8px 0;
+      font-size: .95rem;
+      color: var(--muted);
+      font-weight:700;
+      letter-spacing:.3px;
+    }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      text-decoration:none;
+      color: var(--text);
+      border:1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size: .93rem;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.18);
+      transform: translateY(-1px);
+    }
+    .toc small{color:var(--muted); display:block; margin-top:8px}
+
+    section, article{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 28px rgba(0,0,0,.25);
+      padding: 16px;
+    }
+    .stack{display:grid; gap: 14px;}
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 14px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr;}
+      nav.toc{position:relative; top:auto;}
+      .grid2{grid-template-columns: 1fr;}
+    }
+
+    .quick{
+      border:1px solid rgba(52,211,153,.25);
+      background: linear-gradient(180deg, rgba(52,211,153,.12), rgba(52,211,153,.05));
+    }
+    .quick h2{margin:0 0 10px}
+    ul{margin: 8px 0 0 20px}
+    li{margin: 4px 0}
+    .muted{color:var(--muted)}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      font-size: .9rem;
+      color: var(--muted);
+    }
+
+    .callout{
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(15,25,51,.65);
+      padding: 12px;
+    }
+    .callout.ok{border-color: rgba(52,211,153,.28); background: rgba(52,211,153,.08)}
+    .callout.warn{border-color: rgba(251,191,36,.28); background: rgba(251,191,36,.07)}
+    .callout.bad{border-color: rgba(251,113,133,.28); background: rgba(251,113,133,.07)}
+
+    .eqbox{
+      border:1px dashed rgba(125,211,252,.35);
+      background: rgba(125,211,252,.06);
+      border-radius: 14px;
+      padding: 10px 10px 10px;
+      overflow:auto;
+    }
+    .eq{
+      font-family: var(--mono);
+      font-size: .95rem;
+      white-space: pre-wrap;
+      margin:0;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:650;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(125,211,252,.25); background: rgba(125,211,252,.08)}
+    .btn:active{transform: translateY(0px)}
+    .btn.small{padding: 6px 9px; font-size:.88rem; font-weight:650}
+    .btn.copy-ok{border-color: rgba(52,211,153,.35); background: rgba(52,211,153,.12)}
+    .kpi{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 10px;
+    }
+    .kpi .chip{
+      flex: 1 1 170px;
+      min-width: 170px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.20);
+      border-radius: 14px;
+      padding: 10px;
+    }
+    .chip .label{color: var(--muted); font-size:.85rem}
+    .chip .value{font-family:var(--mono); font-size:1.02rem; margin-top:6px}
+
+    .controls{
+      display:grid;
+      gap: 10px;
+    }
+    .control{
+      border:1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(0,0,0,.18);
+    }
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      align-items:baseline;
+      font-weight: 700;
+      font-size:.92rem;
+    }
+    .control label span{
+      color: var(--muted);
+      font-weight: 650;
+      font-family: var(--mono);
+      font-size: .90rem;
+      white-space:nowrap;
+    }
+    input[type="range"]{
+      width:100%;
+      margin-top: 8px;
+      accent-color: var(--accent);
+    }
+    select{
+      width:100%;
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(0,0,0,.25);
+      border:1px solid var(--line);
+      color: var(--text);
+      font-weight:650;
+      outline:none;
+    }
+
+    figure{
+      margin:0;
+      border-radius: var(--radius);
+      overflow:hidden;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+    }
+    figcaption{
+      padding: 10px 12px;
+      border-top:1px solid var(--line);
+      color: var(--muted);
+      font-size:.92rem;
+    }
+    canvas{
+      display:block;
+      width:100%;
+      height: 320px;
+    }
+    .canvasTall canvas{height: 360px;}
+    .twoCanv{
+      display:grid;
+      gap: 12px;
+    }
+    @media (min-width: 980px){
+      .twoCanv{grid-template-columns: 1fr 1fr;}
+    }
+
+    .boxFinal{
+      border:1px solid rgba(167,139,250,.35);
+      background: linear-gradient(180deg, rgba(167,139,250,.12), rgba(167,139,250,.05));
+      border-radius: var(--radius);
+      padding: 12px;
+    }
+    .boxFinal h3{margin:0 0 8px}
+    .hr{
+      height:1px;
+      background: var(--line);
+      margin: 14px 0;
+    }
+
+    .fadeIn{
+      animation: fadeIn .35s ease both;
+    }
+    @keyframes fadeIn{
+      from{opacity:0; transform: translateY(6px)}
+      to{opacity:1; transform: translateY(0)}
+    }
+
+    footer{
+      max-width: 1150px;
+      margin: 18px auto 40px;
+      padding: 0 18px;
+      color: var(--muted);
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff; color:#111}
+      nav.toc{display:none}
+      section, article, .hero{box-shadow:none; background:#fff; border-color:#ddd}
+      .btn{display:none}
+      canvas{display:none}
+      figure{display:none}
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="hero fadeIn">
+    <div class="row" style="justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h1>Axially Graded Plate: <span class="muted">why <code>n(z) sinθ(z)</code> is conserved and the ray exits parallel</span></h1>
+        <p class="sub">
+          A light ray enters a slab whose refractive index varies only with depth <code>z</code>. We derive the ray invariant,
+          the trajectory differential equation, and show the exiting ray in air is parallel to the incident ray.
+        </p>
+      </div>
+      <div class="pill" title="Self-contained article (no external libraries).">🧭 Ray optics • graded index • Snell invariant</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Sticky mini TOC -->
+  <nav class="toc fadeIn" aria-label="Table of contents">
+    <h2>On this page</h2>
+    <a href="#quick">Quick Summary</a>
+    <a href="#part1">PART 1 — Problem Analysis</a>
+    <a href="#part2">PART 2 — Strategy &amp; Tips</a>
+    <a href="#part3">PART 3 — Full Solution</a>
+    <a href="#viz">Interactive Visualizations</a>
+    <small>Tip: Use the sliders to change <code>θ₀</code>, thickness <code>d</code>, and the grading strength.</small>
+  </nav>
+
+  <div class="stack">
+    <!-- Quick Summary -->
+    <section id="quick" class="quick fadeIn">
+      <h2 style="margin:0 0 10px;">Quick Summary</h2>
+      <ul>
+        <li>Because <strong>the medium varies only with <code>z</code></strong>, the tangential wavevector component (and thus <code>n(z) sinθ(z)</code>) is conserved along the ray.</li>
+        <li>The invariant is <strong><code>n(z) sinθ(z) = sinθ₀</code></strong> (since the ray enters from air with <code>n=1</code>).</li>
+        <li>Hence <strong><code>sinθ(z)=sinθ₀ / n(z)</code></strong>: the ray bends toward smaller angles where <code>n(z)</code> is larger.</li>
+        <li>The trajectory inside the plate obeys <strong><code>(dy/dz)² = ( n(z)²/sin²θ₀ − 1 )⁻¹</code></strong>.</li>
+        <li>At the exit back into air, the ray must satisfy <strong><code>sinθ_out = n(d) sinθ(d) = sinθ₀</code></strong> → it emerges <strong>parallel</strong> to the incident ray (possibly laterally shifted).</li>
+      </ul>
+    </section>
+
+    <!-- PART 1 -->
+    <article id="part1" class="fadeIn">
+      <h2 style="margin:0 0 10px;">PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <section class="callout">
+        <h3 style="margin:0 0 6px;">Problem restatement (in plain words)</h3>
+        <p class="muted" style="margin:0;">
+          A slab of thickness <code>d</code> is normal to the <code>z</code>-axis. Its refractive index varies only with depth:
+          <code>n = n(z)</code>. A ray from air enters the slab in the <code>y–z</code> plane with incidence angle <code>θ₀</code>
+          (measured from the <code>z</code>-axis / slab normal). You must show:
+          <br>1) the ray angle inside satisfies <code>n(z) sinθ(z) = sinθ₀</code>;
+          <br>2) the ray exits into air parallel to the incident ray;
+          <br>3) the internal path satisfies <code>(dy/dz)² = ( n(z)²/sin²θ₀ − 1 )⁻¹</code>.
+        </p>
+      </section>
+
+      <div class="grid2" style="margin-top:12px;">
+        <section class="callout">
+          <h3 style="margin:0 0 8px;">Given</h3>
+          <ul>
+            <li>Plate thickness: <code>d</code></li>
+            <li>Index profile: <code>n(z)</code> (varies only with <code>z</code>)</li>
+            <li>Incident medium: air (<code>n_air = 1</code>)</li>
+            <li>Incident angle: <code>θ₀</code> in the <code>y–z</code> plane</li>
+          </ul>
+        </section>
+
+        <section class="callout">
+          <h3 style="margin:0 0 8px;">Unknowns / must show</h3>
+          <ul>
+            <li>Angle inside: <code>θ(z)</code> such that <code>n(z) sinθ(z)=sinθ₀</code></li>
+            <li>Emergent direction: ray exits into air <em>parallel</em> to incident ray</li>
+            <li>Trajectory equation: <code>(dy/dz)² = ( n(z)²/sin²θ₀ − 1 )⁻¹</code></li>
+          </ul>
+        </section>
+      </div>
+
+      <section class="callout" style="margin-top:12px;">
+        <h3 style="margin:0 0 8px;">Relevant physics &amp; why it applies</h3>
+        <ul>
+          <li><strong>Geometrical optics / Fermat’s principle:</strong> rays follow stationary optical path length; in graded media this yields a ray equation.</li>
+          <li><strong>Translational symmetry in <code>y</code>:</strong> since <code>n</code> depends only on <code>z</code>, the system is invariant under shifts in <code>y</code>. This implies a conserved “momentum-like” quantity, which becomes the ray invariant <code>n(z) sinθ(z)</code>.</li>
+          <li><strong>Snell’s law at boundaries:</strong> tangential component of the wavevector is continuous across each interface; this connects the invariant to the incident angle in air.</li>
+        </ul>
+      </section>
+
+      <section class="callout" style="margin-top:12px;">
+        <h3 style="margin:0 0 8px;">Possible approaches (choose one)</h3>
+        <ol>
+          <li><strong>Eikonal / wavevector method:</strong> use conservation of tangential <code>k</code> (or Hamiltonian ray optics) when <code>n=n(z)</code>. Fast and clean for deriving <code>n sinθ</code> invariant.</li>
+          <li><strong>Fermat’s principle (calculus of variations):</strong> minimize optical path <code>∫ n(z) ds</code>. Since the integrand does not depend explicitly on <code>y</code>, a first integral gives the same invariant.</li>
+          <li><strong>Differential Snell’s law:</strong> treat the medium as many thin layers, apply Snell layer-by-layer, and take a limit.</li>
+        </ol>
+        <p class="muted" style="margin:8px 0 0;">
+          <strong>Best choice:</strong> Fermat/variational or eikonal symmetry argument—both directly exploit the <code>y</code>-invariance and naturally produce the conserved quantity and trajectory equation with minimal assumptions.
+        </p>
+      </section>
+    </article>
+
+    <!-- PART 2 -->
+    <article id="part2" class="fadeIn">
+      <h2 style="margin:0 0 10px;">PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+
+      <section class="callout">
+        <h3 style="margin:0 0 8px;">Roadmap (no algebra yet)</h3>
+        <ol>
+          <li><strong>Set geometry:</strong> ray in <code>y–z</code> plane, angle <code>θ</code> from <code>z</code>-axis, and slope <code>dy/dz = tanθ</code>.</li>
+          <li><strong>Write optical path:</strong> optical length <code>∫ n(z) ds</code> with <code>ds = √(1+(dy/dz)²) dz</code>.</li>
+          <li><strong>Use symmetry:</strong> since the integrand has no explicit <code>y</code>, use a conserved “canonical momentum” (first integral of Euler–Lagrange).</li>
+          <li><strong>Relate constant to angle:</strong> express the conserved quantity in terms of <code>θ(z)</code>, giving <code>n(z) sinθ(z) = constant</code>.</li>
+          <li><strong>Determine constant from entry boundary:</strong> apply Snell at entrance (air → slab) to show the constant equals <code>sinθ₀</code>.</li>
+          <li><strong>Derive slope equation:</strong> combine <code>sinθ(z)=sinθ₀/n(z)</code> with trigonometry to express <code>(dy/dz)²</code> in terms of <code>n(z)</code> and <code>θ₀</code>.</li>
+          <li><strong>Parallel emergence:</strong> evaluate the invariant at the exit boundary (slab → air) to show <code>θ_out = θ₀</code>.</li>
+          <li><strong>Sanity checks:</strong> uniform index limit, small-angle limit, and physical interpretation (bending but same exit direction).</li>
+        </ol>
+      </section>
+
+      <div class="grid2" style="margin-top:12px;">
+        <section class="callout warn">
+          <h3 style="margin:0 0 8px;">Common mistakes</h3>
+          <ul>
+            <li>Mixing angle conventions (from surface vs from normal). Here <code>θ</code> is from the <code>z</code>-axis (normal).</li>
+            <li>Forgetting that the invariant is fixed by the <em>incident medium</em>: because air has <code>n=1</code>, the constant is <code>sinθ₀</code>.</li>
+            <li>Ignoring feasibility: you need <code>sinθ₀ ≤ n(z)</code> for all <code>z</code> along the path (otherwise the local angle would require <code>sinθ>1</code>).</li>
+          </ul>
+        </section>
+
+        <section class="callout ok">
+          <h3 style="margin:0 0 8px;">Quick tips</h3>
+          <ul>
+            <li>Think “conserved tangential <code>k</code>”: in layered media, <code>k_y</code> is constant → <code>n sinθ</code> is constant.</li>
+            <li>Use <code>tan²θ = sin²θ/(1−sin²θ)</code> to turn angle results into a differential equation for <code>y(z)</code>.</li>
+            <li>Expect a lateral shift: “parallel out” does <em>not</em> mean “same line,” just the same direction.</li>
+          </ul>
+        </section>
+      </div>
+    </article>
+
+    <!-- PART 3 -->
+    <article id="part3" class="fadeIn">
+      <h2 style="margin:0 0 10px;">PART 3 — Full Solution</h2>
+
+      <section class="callout">
+        <h3 style="margin:0 0 8px;">Physical intuition</h3>
+        <p class="muted" style="margin:0;">
+          The index varies only with depth <code>z</code>, so nothing changes if we shift the whole setup along <code>y</code>.
+          That symmetry means the ray has a conserved “sideways component” of its optical momentum. In wave language,
+          the tangential component of the wavevector stays the same everywhere (and across each interface). That conserved
+          quantity is precisely <code>n(z) sinθ(z)</code>.
+        </p>
+      </section>
+
+      <div class="hr"></div>
+
+      <section>
+        <h3 style="margin:0 0 10px;">Step 1 — Set up the ray geometry</h3>
+        <p style="margin:0 0 10px;">
+          The ray lies in the <code>y–z</code> plane. Let <code>θ(z)</code> be the local ray angle measured from the <code>z</code>-axis
+          (the slab normal). Then the slope of the ray is
+        </p>
+
+        <div class="eqbox">
+          <div class="row" style="justify-content:space-between;">
+            <p class="eq" id="eq_slope">dy/dz = tan θ(z)</p>
+            <button class="btn small" data-copy="#eq_slope">Copy</button>
+          </div>
+        </div>
+
+        <p class="muted" style="margin:10px 0 0;">
+          Also, the arc-length element along the ray is <code>ds = √(dy² + dz²) = √(1+(dy/dz)²) dz</code>.
+        </p>
+      </section>
+
+      <section style="margin-top:12px;">
+        <h3 style="margin:0 0 10px;">Step 2 — Fermat’s principle and the conserved quantity</h3>
+        <p style="margin:0 0 10px;">
+          The optical path length for a curve <code>y(z)</code> through an index <code>n(z)</code> is
+        </p>
+
+        <div class="eqbox">
+          <div class="row" style="justify-content:space-between;">
+            <p class="eq" id="eq_opl">OPL = ∫ n(z) ds = ∫ n(z) √(1 + (dy/dz)²) dz</p>
+            <button class="btn small" data-copy="#eq_opl">Copy</button>
+          </div>
+        </div>
+
+        <p style="margin:10px 0 10px;">
+          Fermat’s principle says the physical ray makes this integral stationary. Treat the integrand as a Lagrangian:
+        </p>
+        <div class="eqbox">
+          <div class="row" style="justify-content:space-between;">
+            <p class="eq" id="eq_L">L(y, y', z) = n(z) √(1 + y'²)   where y' ≡ dy/dz</p>
+            <button class="btn small" data-copy="#eq_L">Copy</button>
+          </div>
+        </div>
+
+        <p style="margin:10px 0 0;">
+          Because <code>L</code> does <strong>not</strong> depend explicitly on <code>y</code> (only on <code>y'</code> and <code>z</code>),
+          the Euler–Lagrange equation implies the “momentum”
+          <code>∂L/∂y'</code> is a constant:
+        </p>
+
+        <div class="eqbox" style="margin-top:10px;">
+          <div class="row" style="justify-content:space-between;">
+            <p class="eq" id="eq_conserve">∂L/∂y' = constant</p>
+            <button class="btn small" data-copy="#eq_conserve">Copy</button>
+          </div>
+        </div>
+
+        <p class="muted" style="margin:10px 0 0;">
+          This is the mathematical expression of <code>y</code>-translation symmetry.
+        </p>
+      </section>
+
+      <section style="margin-top:12px;">
+        <h3 style="margin:0 0 10px;">Step 3 — Evaluate the constant and get <code>n(z) sinθ(z)=sinθ₀</code></h3>
+        <p style="margin:0 0 10px;">
+          Compute <code>∂L/∂y'</code>:
+        </p>
+
+        <div class="eqbox">
+          <p class="eq">
+∂L/∂y' = n(z) · (1/2)(1+y'²)^(-1/2) · 2y'
+      = n(z) y' / √(1+y'²).
+          </p>
+        </div>
+
+        <p style="margin:10px 0 10px;">
+          Now relate this to the angle. Since <code>y' = tanθ</code>, we have
+          <code>√(1+y'²) = √(1+tan²θ) = secθ</code>. Therefore,
+        </p>
+
+        <div class="eqbox">
+          <p class="eq">
+n(z) y' / √(1+y'²) = n(z) (tanθ) / (secθ) = n(z) sinθ.
+          </p>
+        </div>
+
+        <p style="margin:10px 0 10px;">
+          So the conserved quantity becomes
+        </p>
+
+        <div class="eqbox">
+          <div class="row" style="justify-content:space-between;">
+            <p class="eq" id="eq_invariant">n(z) sin θ(z) = C   (constant along the ray)</p>
+            <button class="btn small" data-copy="#eq_invariant">Copy</button>
+          </div>
+        </div>
+
+        <p style="margin:10px 0 10px;">
+          To determine <code>C</code>, use Snell’s law at the entrance plane (<code>z=0</code>) from air (<code>n=1</code>) into the slab.
+          Continuity of the tangential component of the wavevector gives:
+        </p>
+
+        <div class="eqbox">
+          <p class="eq">
+n_air sinθ₀ = n(0) sinθ(0)  ⇒  1·sinθ₀ = n(0) sinθ(0).
+          </p>
+        </div>
+
+        <p style="margin:10px 0 10px;">
+          But the conserved quantity evaluated just inside the slab at <code>z=0</code> is
+          <code>C = n(0) sinθ(0)</code>. Hence,
+        </p>
+
+        <div class="eqbox">
+          <div class="row" style="justify-content:space-between;">
+            <p class="eq" id="eq_main">n(z) sin θ(z) = sin θ₀</p>
+            <button class="btn small" data-copy="#eq_main">Copy</button>
+          </div>
+        </div>
+
+        <p class="muted" style="margin:10px 0 0;">
+          Equivalently: <code>sinθ(z) = sinθ₀ / n(z)</code>.
+        </p>
+      </section>
+
+      <section style="margin-top:12px;">
+        <h3 style="margin:0 0 10px;">Step 4 — Derive the trajectory equation for <code>y(z)</code></h3>
+        <p style="margin:0 0 10px;">
+          Start from <code>dy/dz = tanθ</code>. Using <code>tan²θ = sin²θ / (1 − sin²θ)</code>, we get
+        </p>
+
+        <div class="eqbox">
+          <p class="eq">
+(dy/dz)² = tan²θ
+         = sin²θ / (1 − sin²θ).
+          </p>
+        </div>
+
+        <p style="margin:10px 0 10px;">
+          Substitute <code>sinθ(z) = sinθ₀ / n(z)</code>:
+        </p>
+
+        <div class="eqbox">
+          <p class="eq">
+(dy/dz)² = (sin²θ₀ / n(z)²) / (1 − sin²θ₀ / n(z)²)
+        = sin²θ₀ / (n(z)² − sin²θ₀).
+          </p>
+        </div>
+
+        <p style="margin:10px 0 10px;">
+          Rearranging to match the requested form:
+        </p>
+
+        <div class="eqbox">
+          <div class="row" style="justify-content:space-between;">
+            <p class="eq" id="eq_diff">(dy/dz)² = ( n(z)² / sin²θ₀ − 1 )⁻¹</p>
+            <button class="btn small" data-copy="#eq_diff">Copy</button>
+          </div>
+        </div>
+
+        <p class="muted" style="margin:10px 0 0;">
+          (Same equation, just written differently.)
+        </p>
+      </section>
+
+      <section style="margin-top:12px;">
+        <h3 style="margin:0 0 10px;">Step 5 — Show the ray emerges parallel to the incident ray</h3>
+        <p style="margin:0 0 10px;">
+          Let the ray reach the exit plane at <code>z=d</code> with internal angle <code>θ(d)</code>.
+          Apply Snell’s law at the exit (slab → air):
+        </p>
+
+        <div class="eqbox">
+          <p class="eq">
+n(d) sinθ(d) = n_air sinθ_out = 1·sinθ_out.
+          </p>
+        </div>
+
+        <p style="margin:10px 0 10px;">
+          But from the invariant derived above, <code>n(d) sinθ(d) = sinθ₀</code>. Therefore,
+        </p>
+
+        <div class="eqbox">
+          <p class="eq">
+sinθ_out = sinθ₀  ⇒  θ_out = θ₀  (for 0 ≤ θ ≤ π/2).
+          </p>
+        </div>
+
+        <div class="boxFinal" style="margin-top:12px;">
+          <div class="row" style="justify-content:space-between; align-items:flex-start;">
+            <div>
+              <h3>Final result (boxed)</h3>
+              <div class="eqbox" style="margin-top:8px;">
+                <p class="eq" id="eq_final">n(z) sinθ(z) = sinθ₀,  so the emergent ray in air has θ_out = θ₀ (parallel to incident).</p>
+              </div>
+            </div>
+            <button class="btn" data-copy="#eq_final">Copy final answer</button>
+          </div>
+          <p class="muted" style="margin:10px 0 0;">
+            The ray can be laterally displaced (different <code>y</code> position) but its direction in air matches the incoming direction.
+          </p>
+        </div>
+      </section>
+
+      <section style="margin-top:12px;">
+        <h3 style="margin:0 0 10px;">Sanity checks</h3>
+
+        <div class="grid2">
+          <div class="callout ok">
+            <h4 style="margin:0 0 8px;">Units</h4>
+            <ul>
+              <li><code>n</code> and <code>sinθ</code> are dimensionless → invariant is dimensionless.</li>
+              <li><code>dy/dz</code> is dimensionless, consistent with <code>(dy/dz)² = f(n,θ₀)</code>.</li>
+            </ul>
+          </div>
+          <div class="callout">
+            <h4 style="margin:0 0 8px;">Limiting cases</h4>
+            <ul>
+              <li><strong>Uniform slab:</strong> if <code>n(z)=n₁</code>, then <code>sinθ = sinθ₀/n₁</code> is constant → straight line inside; exits parallel (standard parallel-plate result).</li>
+              <li><strong>Small angle:</strong> for <code>θ₀ ≪ 1</code>, <code>sinθ≈θ</code>, so <code>θ(z)≈θ₀/n(z)</code>; larger index reduces angle as expected.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout warn" style="margin-top:12px;">
+          <h4 style="margin:0 0 8px;">Physical feasibility</h4>
+          <p class="muted" style="margin:0;">
+            Since <code>sinθ(z)=sinθ₀/n(z)</code>, you need <code>sinθ₀ ≤ n(z)</code> everywhere along the path.
+            If the profile dips below <code>sinθ₀</code>, the local ray solution would require <code>sinθ&gt;1</code> (no propagating ray).
+            In the interactive plots below, this is flagged as an invalid region.
+          </p>
+        </div>
+      </section>
+    </article>
+
+    <!-- Visualizations -->
+    <article id="viz" class="fadeIn">
+      <h2 style="margin:0 0 10px;">Interactive Visualizations</h2>
+      <p class="muted" style="margin:0 0 12px;">
+        The plots use <strong>example values</strong> (editable below) to visualize the symbolic results.
+        Units: <code>z</code> and <code>y</code> in <strong>mm</strong>; angles in <strong>degrees</strong>; refractive index unitless.
+      </p>
+
+      <div class="grid2">
+        <section class="controls" aria-label="Interactive controls">
+          <div class="control">
+            <label for="profile">Index profile <span id="profileVal">Linear</span></label>
+            <select id="profile">
+              <option value="linear" selected>Linear: n(z)=n0 + g·(z/d − 1/2)</option>
+              <option value="quadratic">Quadratic: n(z)=n0 + a·(z/d − 1/2)²</option>
+              <option value="sinusoidal">Sinusoidal: n(z)=n0 + A·sin(2π z/d)</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label for="n0">Base index n0 <span id="n0Val">1.60</span></label>
+            <input id="n0" type="range" min="1.10" max="2.20" step="0.01" value="1.60" />
+          </div>
+
+          <div class="control">
+            <label for="grad">Grading strength <span id="gradVal">0.35</span></label>
+            <input id="grad" type="range" min="0.00" max="0.80" step="0.01" value="0.35" />
+            <div class="muted" style="font-size:.88rem; margin-top:6px;">
+              Linear uses <code>g</code>, Quadratic uses <code>a</code>, Sinusoidal uses amplitude <code>A</code>.
+            </div>
+          </div>
+
+          <div class="control">
+            <label for="theta0">Incident angle θ0 (deg) <span id="theta0Val">35.0°</span></label>
+            <input id="theta0" type="range" min="0" max="75" step="0.5" value="35" />
+          </div>
+
+          <div class="control">
+            <label for="dmm">Thickness d (mm) <span id="dmmVal">10.0 mm</span></label>
+            <input id="dmm" type="range" min="2" max="30" step="0.5" value="10" />
+          </div>
+
+          <div class="row" style="gap:10px;">
+            <button class="btn" id="btnReset">Reset example</button>
+            <button class="btn" id="btnRandom">Randomize</button>
+          </div>
+
+          <div id="status" class="callout ok" role="status" aria-live="polite">
+            <strong>Status:</strong> Ready.
+          </div>
+
+          <div class="kpi">
+            <div class="chip">
+              <div class="label">Invariant (should be constant)</div>
+              <div class="value" id="kpiInv">—</div>
+            </div>
+            <div class="chip">
+              <div class="label">Exit angle θ_out (deg)</div>
+              <div class="value" id="kpiOut">—</div>
+            </div>
+            <div class="chip">
+              <div class="label">Lateral shift Δy at z=d (mm)</div>
+              <div class="value" id="kpiShift">—</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="callout">
+          <h3 style="margin:0 0 8px;">Key equations used in the plots</h3>
+
+          <div class="eqbox">
+            <div class="row" style="justify-content:space-between;">
+              <p class="eq" id="eq_plot1">Invariant: n(z) sinθ(z) = sinθ0</p>
+              <button class="btn small" data-copy="#eq_plot1">Copy</button>
+            </div>
+          </div>
+
+          <div class="eqbox" style="margin-top:10px;">
+            <div class="row" style="justify-content:space-between;">
+              <p class="eq" id="eq_plot2">Trajectory: dy/dz = sinθ0 / √( n(z)^2 − sin^2θ0 )</p>
+              <button class="btn small" data-copy="#eq_plot2">Copy</button>
+            </div>
+          </div>
+
+          <div class="eqbox" style="margin-top:10px;">
+            <div class="row" style="justify-content:space-between;">
+              <p class="eq" id="eq_plot3">Angle: θ(z) = asin( sinθ0 / n(z) )</p>
+              <button class="btn small" data-copy="#eq_plot3">Copy</button>
+            </div>
+          </div>
+
+          <p class="muted" style="margin:10px 0 0;">
+            The trajectory is computed numerically (RK4) using the slope equation.
+          </p>
+        </section>
+      </div>
+
+      <div class="twoCanv" style="margin-top:12px;">
+        <figure class="canvasTall">
+          <canvas id="cDiagram" aria-label="Diagram canvas"></canvas>
+          <figcaption>
+            <strong>Diagram:</strong> graded-index plate (thickness <code>d</code>) with incident ray, curved path inside, and emergent ray parallel to the incident ray.
+          </figcaption>
+        </figure>
+
+        <figure class="canvasTall">
+          <canvas id="cMain" aria-label="Main plot canvas"></canvas>
+          <figcaption>
+            <strong>Main plot:</strong> ray trajectory <code>y(z)</code> inside the plate (example values) computed from the derived differential equation.
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="twoCanv" style="margin-top:12px;">
+        <figure>
+          <canvas id="cSecondary" aria-label="Secondary plot canvas"></canvas>
+          <figcaption>
+            <strong>Secondary plot:</strong> index <code>n(z)</code> and angle <code>θ(z)</code> vs <code>z</code>, plus an “invariant check” curve <code>n(z) sinθ(z)</code>.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <canvas id="cSweep" aria-label="Parameter sweep canvas"></canvas>
+          <figcaption>
+            <strong>Parameter sweep:</strong> exit lateral shift <code>Δy</code> vs incident angle <code>θ₀</code> (holding the chosen <code>n(z)</code> profile fixed).
+          </figcaption>
+        </figure>
+      </div>
+    </article>
+  </div>
+</main>
+
+<footer class="fadeIn">
+  <div class="callout">
+    <strong>Note:</strong> The final results are symbolic and general for any <code>n(z)</code> (with a propagating ray).
+    The numerical plots use adjustable example profiles to help build intuition.
+  </div>
+</footer>
+
+<script>
+(() => {
+  // ---------------------------
+  // Utilities
+  // ---------------------------
+  const $ = (sel) => document.querySelector(sel);
+
+  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  function deg2rad(d){ return d*Math.PI/180; }
+  function rad2deg(r){ return r*180/Math.PI; }
+
+  // High-DPI canvas setup
+  function setupCanvas(canvas){
+    const ctx = canvas.getContext('2d');
+    function resize(){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(1, Math.round(rect.width * dpr));
+      const h = Math.max(1, Math.round(rect.height * dpr));
+      if(canvas.width !== w || canvas.height !== h){
+        canvas.width = w; canvas.height = h;
+      }
+      ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+      return {w: rect.width, h: rect.height, dpr};
+    }
+    return {ctx, resize};
+  }
+
+  function drawGrid(ctx, x0, y0, w, h, xTicks=6, yTicks=6){
+    ctx.save();
+    ctx.globalAlpha = 0.9;
+
+    // background
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fillRect(x0,y0,w,h);
+
+    // grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.lineWidth = 1;
+    for(let i=0;i<=xTicks;i++){
+      const x = x0 + (w*i/xTicks);
+      ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y0+h); ctx.stroke();
+    }
+    for(let j=0;j<=yTicks;j++){
+      const y = y0 + (h*j/yTicks);
+      ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x0+w, y); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function text(ctx, str, x, y, size=12, color='rgba(234,240,255,0.92)', align='left', baseline='alphabetic'){
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.font = `${size}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
+    ctx.textAlign = align;
+    ctx.textBaseline = baseline;
+    ctx.fillText(str, x, y);
+    ctx.restore();
+  }
+
+  function mono(ctx, str, x, y, size=12, color='rgba(234,240,255,0.92)', align='left', baseline='alphabetic'){
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.font = `${size}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`;
+    ctx.textAlign = align;
+    ctx.textBaseline = baseline;
+    ctx.fillText(str, x, y);
+    ctx.restore();
+  }
+
+  function drawAxes(ctx, box, xLabel, yLabel, titleStr, ticks){
+    const {x,y,w,h, padL, padR, padT, padB} = box;
+    const ix = x + padL;
+    const iy = y + padT;
+    const iw = w - padL - padR;
+    const ih = h - padT - padB;
+
+    // Title
+    text(ctx, titleStr, x + w/2, y + 16, 13, 'rgba(234,240,255,0.95)', 'center', 'middle');
+
+    // Axes
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(ix, iy+ih);
+    ctx.lineTo(ix+iw, iy+ih);
+    ctx.moveTo(ix, iy);
+    ctx.lineTo(ix, iy+ih);
+    ctx.stroke();
+    ctx.restore();
+
+    // Labels
+    text(ctx, xLabel, ix + iw/2, y + h - 6, 12, 'rgba(170,183,230,0.95)', 'center', 'alphabetic');
+    ctx.save();
+    ctx.translate(x + 14, iy + ih/2);
+    ctx.rotate(-Math.PI/2);
+    text(ctx, yLabel, 0, 0, 12, 'rgba(170,183,230,0.95)', 'center', 'alphabetic');
+    ctx.restore();
+
+    // ticks + tick labels + small grid
+    const xt = ticks?.x || [];
+    const yt = ticks?.y || [];
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 1;
+
+    // light grid inside plot
+    const gridNX = 6, gridNY = 6;
+    for(let i=0;i<=gridNX;i++){
+      const gx = ix + iw*i/gridNX;
+      ctx.beginPath(); ctx.moveTo(gx, iy); ctx.lineTo(gx, iy+ih); ctx.stroke();
+    }
+    for(let j=0;j<=gridNY;j++){
+      const gy = iy + ih*j/gridNY;
+      ctx.beginPath(); ctx.moveTo(ix, gy); ctx.lineTo(ix+iw, gy); ctx.stroke();
+    }
+
+    ctx.restore();
+
+    // tick marks
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillStyle = 'rgba(170,183,230,0.95)';
+    ctx.lineWidth = 1.2;
+    ctx.font = `11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace`;
+
+    xt.forEach(t => {
+      const px = ix + iw*t.pos;
+      ctx.beginPath(); ctx.moveTo(px, iy+ih); ctx.lineTo(px, iy+ih+5); ctx.stroke();
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText(t.label, px, iy+ih+7);
+    });
+
+    yt.forEach(t => {
+      const py = iy + ih*(1-t.pos);
+      ctx.beginPath(); ctx.moveTo(ix, py); ctx.lineTo(ix-5, py); ctx.stroke();
+      ctx.textAlign='right'; ctx.textBaseline='middle';
+      ctx.fillText(t.label, ix-7, py);
+    });
+    ctx.restore();
+
+    return {ix, iy, iw, ih};
+  }
+
+  // ---------------------------
+  // Physics model
+  // ---------------------------
+  function makeProfile(kind, n0, g){
+    // z in [0,d]; we use normalized u=z/d in [0,1]
+    if(kind === 'linear'){
+      return (u) => n0 + g*(u - 0.5);
+    } else if(kind === 'quadratic'){
+      return (u) => n0 + g*Math.pow(u - 0.5, 2);
+    } else { // sinusoidal
+      return (u) => n0 + g*Math.sin(2*Math.PI*u);
+    }
+  }
+
+  // dy/dz from derived equation
+  function slopeFromInvariant(n, s0){
+    // dy/dz = s0 / sqrt(n^2 - s0^2) (choose positive branch for forward propagation)
+    const denom2 = n*n - s0*s0;
+    if(denom2 <= 0) return NaN;
+    return s0 / Math.sqrt(denom2);
+  }
+
+  function thetaFromInvariant(n, s0){
+    const arg = s0 / n;
+    if(arg > 1) return NaN;
+    return Math.asin(arg);
+  }
+
+  // RK4 integrate y'(z)=f(z,y) but f doesn't depend on y here.
+  function integratePath(nOfU, dmm, s0, N=900){
+    const z = new Float64Array(N+1);
+    const y = new Float64Array(N+1);
+    const th = new Float64Array(N+1);
+    const inv = new Float64Array(N+1);
+
+    const h = dmm / N;
+    z[0]=0; y[0]=0;
+
+    for(let i=0;i<=N;i++){
+      const u = (z[i]/dmm);
+      const n = nOfU(u);
+      const theta = thetaFromInvariant(n, s0);
+      th[i]=theta;
+      inv[i]= (isFinite(theta) ? n*Math.sin(theta) : NaN);
+      if(i===N) break;
+
+      const f = (zz) => {
+        const uu = zz/dmm;
+        const nn = nOfU(uu);
+        return slopeFromInvariant(nn, s0);
+      };
+
+      const k1 = f(z[i]);
+      const k2 = f(z[i] + 0.5*h);
+      const k3 = f(z[i] + 0.5*h);
+      const k4 = f(z[i] + h);
+
+      if(!isFinite(k1) || !isFinite(k2) || !isFinite(k3) || !isFinite(k4)){
+        // mark remaining as NaN
+        for(let j=i+1;j<=N;j++){
+          z[j]=z[j-1]+h;
+          y[j]=NaN;
+          th[j]=NaN;
+          inv[j]=NaN;
+        }
+        break;
+      }
+
+      y[i+1] = y[i] + (h/6)*(k1 + 2*k2 + 2*k3 + k4);
+      z[i+1] = z[i] + h;
+    }
+    return {z,y,th,inv};
+  }
+
+  function computeExitAngle(nExit, s0){
+    // Snell at exit: sinθ_out = nExit*sinθ_inside = s0 (since invariant)
+    const sOut = s0; // because n(z) sinθ(z)=s0 everywhere
+    if(sOut>1) return NaN;
+    return Math.asin(sOut);
+  }
+
+  // ---------------------------
+  // Plotting helpers
+  // ---------------------------
+  function niceTicks(min, max, n=5){
+    if(!isFinite(min) || !isFinite(max) || min===max){
+      return {vals:[min], labels:[String(min)]};
+    }
+    const span = max - min;
+    const raw = span / n;
+    const pow = Math.pow(10, Math.floor(Math.log10(Math.abs(raw))));
+    const steps = [1,2,2.5,5,10].map(s=>s*pow);
+    let step = steps[0];
+    for(const s of steps){ if(raw <= s){ step=s; break; } }
+    const start = Math.ceil(min/step)*step;
+    const end = Math.floor(max/step)*step;
+    const vals=[];
+    for(let v=start; v<=end+1e-12; v+=step){ vals.push(v); }
+    // ensure endpoints coverage
+    if(vals.length<2){
+      vals.push(start+step);
+    }
+    const labels = vals.map(v => {
+      const abs = Math.abs(step);
+      const dec = abs < 0.01 ? 3 : abs < 0.1 ? 2 : abs < 1 ? 2 : abs < 10 ? 1 : 0;
+      return v.toFixed(dec);
+    });
+    return {vals, labels};
+  }
+
+  function mapX(x, xmin, xmax, ix, iw){
+    const t = (x - xmin) / (xmax - xmin);
+    return ix + iw * t;
+  }
+  function mapY(y, ymin, ymax, iy, ih){
+    const t = (y - ymin) / (ymax - ymin);
+    return iy + ih * (1 - t);
+  }
+
+  function drawPolyline(ctx, xs, ys, xmin, xmax, ymin, ymax, ix, iy, iw, ih, strokeStyle='rgba(125,211,252,0.95)', width=2.2){
+    ctx.save();
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = width;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    let started=false;
+    for(let i=0;i<xs.length;i++){
+      const x=xs[i], y=ys[i];
+      if(!isFinite(x) || !isFinite(y)) continue;
+      const px = mapX(x, xmin, xmax, ix, iw);
+      const py = mapY(y, ymin, ymax, iy, ih);
+      if(!started){ ctx.moveTo(px,py); started=true; }
+      else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawLegend(ctx, items, x, y){
+    ctx.save();
+    const pad=10, r=14;
+    const lineH=18;
+    const w = 260;
+    const h = pad*2 + items.length*lineH;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth=1;
+    roundRect(ctx, x, y, w, h, r);
+    ctx.fill();
+    ctx.stroke();
+
+    for(let i=0;i<items.length;i++){
+      const it = items[i];
+      const yy = y + pad + i*lineH + 11;
+      ctx.strokeStyle = it.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x+12, yy-4);
+      ctx.lineTo(x+42, yy-4);
+      ctx.stroke();
+      text(ctx, it.label, x+52, yy-4, 12, 'rgba(234,240,255,0.92)', 'left', 'middle');
+    }
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+  // ---------------------------
+  // Canvases
+  // ---------------------------
+  const diagram = setupCanvas($('#cDiagram'));
+  const mainPlot = setupCanvas($('#cMain'));
+  const secPlot  = setupCanvas($('#cSecondary'));
+  const sweepPlot= setupCanvas($('#cSweep'));
+
+  // ---------------------------
+  // Controls
+  // ---------------------------
+  const state = {
+    profile:'linear',
+    n0: 1.60,
+    g: 0.35,
+    theta0deg: 35,
+    dmm: 10
+  };
+
+  const els = {
+    profile: $('#profile'),
+    n0: $('#n0'),
+    grad: $('#grad'),
+    theta0: $('#theta0'),
+    dmm: $('#dmm'),
+    profileVal: $('#profileVal'),
+    n0Val: $('#n0Val'),
+    gradVal: $('#gradVal'),
+    theta0Val: $('#theta0Val'),
+    dmmVal: $('#dmmVal'),
+    status: $('#status'),
+    kpiInv: $('#kpiInv'),
+    kpiOut: $('#kpiOut'),
+    kpiShift: $('#kpiShift'),
+    btnReset: $('#btnReset'),
+    btnRandom: $('#btnRandom')
+  };
+
+  function syncLabels(){
+    els.profileVal.textContent = els.profile.options[els.profile.selectedIndex].textContent.split(':')[0];
+    els.n0Val.textContent = Number(state.n0).toFixed(2);
+    els.gradVal.textContent = Number(state.g).toFixed(2);
+    els.theta0Val.textContent = Number(state.theta0deg).toFixed(1) + '°';
+    els.dmmVal.textContent = Number(state.dmm).toFixed(1) + ' mm';
+  }
+
+  // Copy buttons
+  function setupCopy(){
+    document.querySelectorAll('[data-copy]').forEach(btn=>{
+      btn.addEventListener('click', () => {
+        const targetSel = btn.getAttribute('data-copy');
+        const node = document.querySelector(targetSel);
+        const textToCopy = (node?.textContent || '').trim();
+        if(!textToCopy) return;
+
+        navigator.clipboard.writeText(textToCopy).then(()=>{
+          const old = btn.textContent;
+          btn.textContent = 'Copied ✓';
+          btn.classList.add('copy-ok');
+          setTimeout(()=>{ btn.textContent = old; btn.classList.remove('copy-ok'); }, 900);
+        }).catch(()=>{
+          // fallback
+          const ta = document.createElement('textarea');
+          ta.value = textToCopy;
+          document.body.appendChild(ta);
+          ta.select();
+          try{ document.execCommand('copy'); }catch(e){}
+          document.body.removeChild(ta);
+        });
+      });
+    });
+  }
+
+  // Smooth TOC scrolling
+  function setupTOC(){
+    document.querySelectorAll('.toc a').forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        const href = a.getAttribute('href');
+        if(!href || !href.startsWith('#')) return;
+        const el = document.querySelector(href);
+        if(!el) return;
+        e.preventDefault();
+        el.scrollIntoView({behavior:'smooth', block:'start'});
+        history.replaceState(null, '', href);
+      });
+    });
+  }
+
+  // ---------------------------
+  // Rendering
+  // ---------------------------
+  function setStatus(kind, msg){
+    els.status.className = 'callout ' + (kind || 'ok');
+    els.status.innerHTML = `<strong>Status:</strong> ${msg}`;
+  }
+
+  function renderAll(){
+    syncLabels();
+
+    const nOfU = makeProfile(state.profile, state.n0, state.g);
+    const theta0 = deg2rad(state.theta0deg);
+    const s0 = Math.sin(theta0);
+
+    // Check feasibility: n(z) must stay >= s0
+    let nMin = +Infinity, nMax = -Infinity;
+    const M=300;
+    for(let i=0;i<=M;i++){
+      const u=i/M;
+      const n=nOfU(u);
+      nMin = Math.min(nMin, n);
+      nMax = Math.max(nMax, n);
+    }
+
+    const feasible = (nMin > s0 + 1e-12);
+    if(!feasible){
+      setStatus('bad', `No propagating ray for these settings: min n(z) = ${nMin.toFixed(3)} < sinθ0 = ${s0.toFixed(3)}. Reduce θ0 or increase n0/strength.`);
+    }else{
+      setStatus('ok', `Propagating ray: min n(z) = ${nMin.toFixed(3)} ≥ sinθ0 = ${s0.toFixed(3)}. Invariant should stay ≈ sinθ0.`);
+    }
+
+    // Integrate path
+    const path = integratePath(nOfU, state.dmm, s0, 900);
+
+    // Exit direction in air
+    const nExit = nOfU(1.0);
+    const thetaOut = computeExitAngle(nExit, s0);
+
+    // KPIs
+    const invMean = feasible ? s0 : NaN;
+    const shift = path.y[path.y.length-1];
+
+    els.kpiInv.textContent = isFinite(invMean) ? `sinθ0 = ${invMean.toFixed(4)}` : '—';
+    els.kpiOut.textContent = isFinite(thetaOut) ? `${rad2deg(thetaOut).toFixed(2)}° (equals θ0)` : '—';
+    els.kpiShift.textContent = (isFinite(shift) ? `${shift.toFixed(3)} mm` : '—');
+
+    // Draw canvases
+    drawDiagram(diagram, nOfU, path, feasible);
+    drawMain(mainPlot, path, feasible);
+    drawSecondary(secPlot, nOfU, path, s0, nMin, nMax, feasible);
+    drawSweep(sweepPlot, nOfU, state.dmm, nMin, nMax);
+  }
+
+  function drawDiagram(canvasObj, nOfU, path, feasible){
+    const {ctx, resize} = canvasObj;
+    const {w,h} = resize();
+    ctx.clearRect(0,0,w,h);
+
+    // Layout
+    const margin = 14;
+    const plateX = w*0.30;
+    const plateW = w*0.40;
+    const plateY = h*0.18;
+    const plateH = h*0.64;
+
+    // Background
+    drawGrid(ctx, margin, margin, w-2*margin, h-2*margin, 8, 6);
+
+    // Plate
+    ctx.save();
+    ctx.fillStyle = 'rgba(125,211,252,0.08)';
+    ctx.strokeStyle = 'rgba(125,211,252,0.45)';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, plateX, plateY, plateW, plateH, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    // z axis (down) and y axis (right)
+    ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+    ctx.lineWidth = 1.2;
+    const ax0x = plateX - w*0.22;
+    const ax0y = plateY + plateH*0.70;
+    ctx.beginPath();
+    ctx.moveTo(ax0x, ax0y);
+    ctx.lineTo(ax0x + 90, ax0y); // y
+    ctx.moveTo(ax0x, ax0y);
+    ctx.lineTo(ax0x, ax0y - 90); // z
+    ctx.stroke();
+
+    // arrowheads
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.beginPath(); ctx.moveTo(ax0x + 90, ax0y); ctx.lineTo(ax0x + 82, ax0y - 4); ctx.lineTo(ax0x + 82, ax0y + 4); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(ax0x, ax0y - 90); ctx.lineTo(ax0x - 4, ax0y - 82); ctx.lineTo(ax0x + 4, ax0y - 82); ctx.closePath(); ctx.fill();
+
+    text(ctx, 'y', ax0x + 98, ax0y + 2, 12, 'rgba(170,183,230,0.95)', 'left', 'middle');
+    text(ctx, 'z', ax0x - 2, ax0y - 98, 12, 'rgba(170,183,230,0.95)', 'right', 'middle');
+
+    // plate labels
+    text(ctx, 'Air (n=1)', plateX - 10, plateY - 10, 12, 'rgba(170,183,230,0.95)', 'right', 'alphabetic');
+    text(ctx, 'Graded plate: n(z)', plateX + plateW/2, plateY - 10, 12, 'rgba(170,183,230,0.95)', 'center', 'alphabetic');
+    text(ctx, 'Air (n=1)', plateX + plateW + 10, plateY - 10, 12, 'rgba(170,183,230,0.95)', 'left', 'alphabetic');
+    mono(ctx, 'thickness d', plateX + plateW/2, plateY + plateH + 18, 12, 'rgba(170,183,230,0.95)', 'center', 'alphabetic');
+
+    // draw entrance/exit planes
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+    ctx.setLineDash([6,6]);
+    ctx.beginPath(); ctx.moveTo(plateX, plateY); ctx.lineTo(plateX, plateY+plateH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plateX+plateW, plateY); ctx.lineTo(plateX+plateW, plateY+plateH); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Construct a nice mapping from physical z in [0,d] to plate height
+    const dmm = path.z[path.z.length-1] || 10;
+    const zToY = (zmm) => plateY + plateH * (zmm/dmm);
+    // Lateral y (physical) to x coordinate; scale to fit
+    // Use the internal y range
+    let ymin=0, ymax=0;
+    for(let i=0;i<path.y.length;i++){
+      if(isFinite(path.y[i])){ ymin = Math.min(ymin, path.y[i]); ymax = Math.max(ymax, path.y[i]); }
+    }
+    const span = Math.max(1e-6, (ymax-ymin));
+    const scale = (plateW*0.60) / span; // keep margin inside plate
+    const yToX = (ymm) => plateX + plateW*0.20 + (ymm - ymin)*scale;
+
+    // Incident ray in air: straight line to entry at z=0
+    // Use local incident angle theta0; in diagram assume line comes from left
+    const theta0 = Math.asin(clamp(Math.sin(deg2rad(state.theta0deg)),0,1));
+    const entryX = plateX;
+    const entryZ = 0;
+    const entryY = 0;
+    const entryCanvasX = yToX(entryY);
+    const entryCanvasY = zToY(entryZ);
+
+    // Create an incident point far left
+    const L = w*0.28;
+    const incX0 = entryCanvasX - L;
+    const incY0 = entryCanvasY + Math.tan(theta0)*(L); // downward if positive angle
+    ctx.strokeStyle = 'rgba(167,139,250,0.95)';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(incX0, incY0);
+    ctx.lineTo(entryCanvasX, entryCanvasY);
+    ctx.stroke();
+
+    // draw angle arc at entry
+    ctx.save();
+    ctx.strokeStyle = 'rgba(167,139,250,0.7)';
+    ctx.lineWidth = 1.3;
+    const r=24;
+    ctx.beginPath();
+    // angle between +z (down) and ray; but our z-axis in diagram goes downwards.
+    // We'll draw arc from vertical down to incident direction.
+    const start = Math.PI/2; // pointing down is +90deg from +x
+    const end = start + theta0; // rotate clockwise (down-right) if theta0>0
+    ctx.arc(entryCanvasX, entryCanvasY, r, start, end);
+    ctx.stroke();
+    mono(ctx, 'θ0', entryCanvasX + 18, entryCanvasY + 8, 12, 'rgba(167,139,250,0.95)');
+    ctx.restore();
+
+    // Internal curved ray path
+    ctx.strokeStyle = feasible ? 'rgba(125,211,252,0.95)' : 'rgba(251,113,133,0.85)';
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    let started=false;
+    for(let i=0;i<path.z.length;i++){
+      const zmm = path.z[i];
+      const ymm = path.y[i];
+      if(!isFinite(zmm) || !isFinite(ymm)) continue;
+      const x = yToX(ymm);
+      const y = zToY(zmm);
+      if(!started){ ctx.moveTo(x,y); started=true; }
+      else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+
+    // Exit ray in air: must be parallel to incident (same theta0)
+    const exitYmm = path.y[path.y.length-1];
+    const exitCanvasX = yToX(exitYmm);
+    const exitCanvasY = zToY(dmm);
+    const outL = w*0.26;
+    const outX1 = exitCanvasX + outL;
+    const outY1 = exitCanvasY + Math.tan(theta0)*(outL);
+    ctx.strokeStyle = 'rgba(167,139,250,0.95)';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(exitCanvasX, exitCanvasY);
+    ctx.lineTo(outX1, outY1);
+    ctx.stroke();
+
+    // Annotations
+    text(ctx, 'incident ray', incX0 + 6, incY0 - 6, 12, 'rgba(170,183,230,0.95)', 'left', 'alphabetic');
+    text(ctx, 'emergent ray (parallel)', outX1 - 6, outY1 - 6, 12, 'rgba(170,183,230,0.95)', 'right', 'alphabetic');
+
+    // Show n(z) cue: tiny gradient bar on the plate
+    const barX = plateX + plateW - 18;
+    const barY = plateY + 10;
+    const barW = 8;
+    const barH = plateH - 20;
+    const grad = ctx.createLinearGradient(0, barY, 0, barY+barH);
+    grad.addColorStop(0, 'rgba(125,211,252,0.90)');
+    grad.addColorStop(1, 'rgba(167,139,250,0.90)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(barX, barY, barW, barH);
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.strokeRect(barX, barY, barW, barH);
+    mono(ctx, 'n(z)', barX-6, barY-2, 11, 'rgba(170,183,230,0.95)', 'right', 'alphabetic');
+
+    ctx.restore();
+  }
+
+  function drawMain(canvasObj, path, feasible){
+    const {ctx, resize} = canvasObj;
+    const {w,h} = resize();
+    ctx.clearRect(0,0,w,h);
+
+    const box = {x:12, y:10, w:w-24, h:h-20, padL:58, padR:18, padT:28, padB:42};
+    const {ix,iy,iw,ih} = drawAxes(ctx, box, 'z (mm)', 'y (mm)', 'Ray trajectory inside the plate: y(z)', makeTickStruct(path.z, path.y));
+
+    // Determine ranges
+    const xmin = 0;
+    const xmax = path.z[path.z.length-1] || state.dmm;
+
+    let ymin=0, ymax=0;
+    for(let i=0;i<path.y.length;i++){
+      const v = path.y[i];
+      if(isFinite(v)){ ymin = Math.min(ymin, v); ymax = Math.max(ymax, v); }
+    }
+    if(!isFinite(ymin) || !isFinite(ymax) || ymin===ymax){ ymin -= 0.5; ymax += 0.5; }
+    const pad = 0.12*(ymax-ymin);
+    ymin -= pad; ymax += pad;
+
+    // Curve
+    drawPolyline(ctx, path.z, path.y, xmin, xmax, ymin, ymax, ix, iy, iw, ih, feasible ? 'rgba(125,211,252,0.95)' : 'rgba(251,113,133,0.85)', 2.8);
+
+    // Legend + note
+    drawLegend(ctx, [
+      {label:'y(z) from dy/dz = sinθ0 / √(n(z)^2 − sin^2θ0)', color: feasible ? 'rgba(125,211,252,0.95)' : 'rgba(251,113,133,0.85)'}
+    ], ix + 10, iy + 10);
+  }
+
+  function makeTickStruct(xs, ys){
+    // Provide normalized tick positions and labels
+    const xmax = xs[xs.length-1] || state.dmm;
+    const xt = niceTicks(0, xmax, 5);
+    const xTicks = xt.vals.map(v => ({pos: (v-0)/(xmax-0), label: v.toFixed(1)}));
+
+    let ymin=0, ymax=0;
+    for(let i=0;i<ys.length;i++){
+      if(isFinite(ys[i])){ ymin=Math.min(ymin,ys[i]); ymax=Math.max(ymax,ys[i]); }
+    }
+    if(!isFinite(ymin) || !isFinite(ymax) || ymin===ymax){ ymin -= 1; ymax += 1; }
+    const yt = niceTicks(ymin, ymax, 5);
+    const yTicks = yt.vals.map(v => ({pos: (v-ymin)/(ymax-ymin), label: v.toFixed(2)}));
+    return {x: xTicks, y: yTicks};
+  }
+
+  function drawSecondary(canvasObj, nOfU, path, s0, nMin, nMax, feasible){
+    const {ctx, resize} = canvasObj;
+    const {w,h} = resize();
+    ctx.clearRect(0,0,w,h);
+
+    const box = {x:12, y:10, w:w-24, h:h-20, padL:58, padR:18, padT:28, padB:42};
+    // We'll plot two y-axes conceptually but on one axis by scaling:
+    // Top: n(z) in [nMin,nMax]
+    // Bottom: θ(z) in degrees in [0,θ0]
+    // Additionally draw invariant check n(z)sinθ(z) normalized.
+    // We'll set y-axis to show two scales via labels inside.
+    const dmm = path.z[path.z.length-1] || state.dmm;
+    const ticks = (() => {
+      const xt = niceTicks(0, dmm, 5);
+      const xTicks = xt.vals.map(v => ({pos: v/dmm, label: v.toFixed(1)}));
+      // y scale in terms of "plot units" = 0..1
+      const yTicks = [0,0.25,0.5,0.75,1].map(v => ({pos:v, label: v.toFixed(2)}));
+      return {x:xTicks, y:yTicks};
+    })();
+
+    const {ix,iy,iw,ih} = drawAxes(ctx, box, 'z (mm)', 'scaled value (unitless)', 'Index, angle, and invariant check vs z', ticks);
+
+    // Build arrays for plotting
+    const N = path.z.length;
+    const z = path.z;
+    const nArr = new Float64Array(N);
+    const thDeg = new Float64Array(N);
+    const inv = path.inv;
+
+    let theta0Deg = rad2deg(Math.asin(clamp(s0,0,1)));
+
+    for(let i=0;i<N;i++){
+      const u = z[i]/dmm;
+      const n = nOfU(u);
+      nArr[i]=n;
+      thDeg[i]= isFinite(path.th[i]) ? rad2deg(path.th[i]) : NaN;
+    }
+
+    // Map to scaled 0..1
+    const nScale = (n) => (n - nMin) / (nMax - nMin || 1);
+    const tScale = (tdeg) => (tdeg - 0) / (theta0Deg - 0 || 1);
+    const invScale = (v) => (v - (s0*0.98)) / (s0*1.02 - s0*0.98 || 1); // tiny window around s0
+
+    const nPlotY = new Float64Array(N);
+    const tPlotY = new Float64Array(N);
+    const invPlotY = new Float64Array(N);
+
+    for(let i=0;i<N;i++){
+      nPlotY[i]= nScale(nArr[i]);
+      tPlotY[i]= tScale(thDeg[i]);
+      invPlotY[i]= invScale(inv[i]);
+    }
+
+    const xmin=0, xmax=dmm;
+    const ymin=0, ymax=1;
+
+    // Draw curves
+    drawPolyline(ctx, z, nPlotY, xmin, xmax, ymin, ymax, ix, iy, iw, ih, 'rgba(125,211,252,0.95)', 2.3);
+    drawPolyline(ctx, z, tPlotY, xmin, xmax, ymin, ymax, ix, iy, iw, ih, 'rgba(167,139,250,0.95)', 2.3);
+    drawPolyline(ctx, z, invPlotY, xmin, xmax, ymin, ymax, ix, iy, iw, ih, feasible ? 'rgba(52,211,153,0.92)' : 'rgba(251,113,133,0.85)', 2.0);
+
+    drawLegend(ctx, [
+      {label:'n(z) (scaled to 0..1)', color:'rgba(125,211,252,0.95)'},
+      {label:'θ(z) (deg, scaled to 0..1)', color:'rgba(167,139,250,0.95)'},
+      {label:'Invariant check: n(z)sinθ(z) ≈ sinθ0', color: feasible ? 'rgba(52,211,153,0.92)' : 'rgba(251,113,133,0.85)'}
+    ], ix + 10, iy + 10);
+
+    // Add small scale annotations
+    ctx.save();
+    const yTop = iy + 14;
+    const yBottom = iy + ih - 10;
+    mono(ctx, `n scale: ${nMin.toFixed(2)} → ${nMax.toFixed(2)}`, ix + iw - 10, yTop, 11, 'rgba(170,183,230,0.95)', 'right', 'alphabetic');
+    mono(ctx, `θ scale: 0° → ${theta0Deg.toFixed(1)}°`, ix + iw - 10, yBottom, 11, 'rgba(170,183,230,0.95)', 'right', 'alphabetic');
+    ctx.restore();
+  }
+
+  function drawSweep(canvasObj, nOfU, dmm, nMin, nMax){
+    const {ctx, resize} = canvasObj;
+    const {w,h} = resize();
+    ctx.clearRect(0,0,w,h);
+
+    const box = {x:12, y:10, w:w-24, h:h-20, padL:58, padR:18, padT:28, padB:42};
+
+    // Sweep θ0 from 0..θmax feasible (approx)
+    // Feasibility: sinθ0 < nMin => θ0 < asin(nMin)
+    const thetaMax = rad2deg(Math.asin(clamp(Math.max(0, Math.min(1, nMin - 1e-6)), 0, 1))); // if nMin>1, cap at 90
+    const thetaSweepMax = clamp(thetaMax, 1, 85);
+    const thetaMin = 0;
+
+    const NS = 120;
+    const xs = new Float64Array(NS+1);
+    const ys = new Float64Array(NS+1);
+
+    for(let i=0;i<=NS;i++){
+      const th0 = lerp(thetaMin, thetaSweepMax, i/NS);
+      const s0 = Math.sin(deg2rad(th0));
+      // integrate to get shift
+      // quick and lighter integration
+      const path = integratePath(nOfU, dmm, s0, 450);
+      const shift = path.y[path.y.length-1];
+      xs[i]=th0;
+      ys[i]=isFinite(shift) ? shift : NaN;
+    }
+
+    // y-range
+    let ymin=0, ymax=0;
+    for(let i=0;i<ys.length;i++){
+      if(isFinite(ys[i])){ ymin=Math.min(ymin,ys[i]); ymax=Math.max(ymax,ys[i]); }
+    }
+    if(!isFinite(ymin) || !isFinite(ymax) || ymin===ymax){ ymin -= 0.5; ymax += 0.5; }
+    const pad = 0.12*(ymax-ymin);
+    ymin -= pad; ymax += pad;
+
+    const ticks = (() => {
+      const xt = niceTicks(thetaMin, thetaSweepMax, 5);
+      const xTicks = xt.vals.map(v => ({pos: (v-thetaMin)/(thetaSweepMax-thetaMin), label: v.toFixed(0)}));
+      const yt = niceTicks(ymin, ymax, 5);
+      const yTicks = yt.vals.map(v => ({pos: (v-ymin)/(ymax-ymin), label: v.toFixed(2)}));
+      return {x:xTicks, y:yTicks};
+    })();
+
+    const {ix,iy,iw,ih} = drawAxes(ctx, box, 'θ0 (deg)', 'Δy at exit (mm)', 'Parameter sweep: lateral shift Δy vs θ0', ticks);
+
+    drawPolyline(ctx, xs, ys, thetaMin, thetaSweepMax, ymin, ymax, ix, iy, iw, ih, 'rgba(125,211,252,0.95)', 2.6);
+
+    // Mark current theta0 on sweep
+    const xCur = state.theta0deg;
+    // Find yCur by nearest
+    let idx = Math.round((xCur-thetaMin)/(thetaSweepMax-thetaMin) * NS);
+    idx = clamp(idx,0,NS);
+    const yCur = ys[idx];
+    if(isFinite(yCur)){
+      const px = mapX(xCur, thetaMin, thetaSweepMax, ix, iw);
+      const py = mapY(yCur, ymin, ymax, iy, ih);
+      ctx.save();
+      ctx.fillStyle = 'rgba(167,139,250,0.95)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(px, py, 4.5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      mono(ctx, `current: (${xCur.toFixed(1)}°, ${yCur.toFixed(2)} mm)`, px + 10, py - 10, 11, 'rgba(170,183,230,0.95)', 'left', 'alphabetic');
+      ctx.restore();
+    }
+
+    drawLegend(ctx, [
+      {label:'Δy(θ0) for chosen n(z), d', color:'rgba(125,211,252,0.95)'},
+      {label:'marker = current θ0 setting', color:'rgba(167,139,250,0.95)'}
+    ], ix + 10, iy + 10);
+  }
+
+  // ---------------------------
+  // Events
+  // ---------------------------
+  function bindControls(){
+    els.profile.addEventListener('change', () => { state.profile = els.profile.value; renderAll(); });
+    els.n0.addEventListener('input', () => { state.n0 = parseFloat(els.n0.value); renderAll(); });
+    els.grad.addEventListener('input', () => { state.g = parseFloat(els.grad.value); renderAll(); });
+    els.theta0.addEventListener('input', () => { state.theta0deg = parseFloat(els.theta0.value); renderAll(); });
+    els.dmm.addEventListener('input', () => { state.dmm = parseFloat(els.dmm.value); renderAll(); });
+
+    els.btnReset.addEventListener('click', () => {
+      state.profile = 'linear';
+      state.n0 = 1.60;
+      state.g = 0.35;
+      state.theta0deg = 35;
+      state.dmm = 10;
+
+      els.profile.value = state.profile;
+      els.n0.value = state.n0;
+      els.grad.value = state.g;
+      els.theta0.value = state.theta0deg;
+      els.dmm.value = state.dmm;
+
+      renderAll();
+    });
+
+    els.btnRandom.addEventListener('click', () => {
+      const profiles = ['linear','quadratic','sinusoidal'];
+      state.profile = profiles[Math.floor(Math.random()*profiles.length)];
+      state.n0 = lerp(1.25, 2.05, Math.random());
+      state.g = lerp(0.05, 0.70, Math.random());
+      state.dmm = lerp(4, 24, Math.random());
+      // choose theta0 not too close to invalid: use sinθ0 <= nMin margin
+      els.profile.value = state.profile;
+      els.n0.value = state.n0;
+      els.grad.value = state.g;
+      els.dmm.value = state.dmm;
+
+      // rough min estimate by sampling
+      const nOfU = makeProfile(state.profile, state.n0, state.g);
+      let nMin=Infinity;
+      for(let i=0;i<=200;i++){
+        const u=i/200;
+        nMin=Math.min(nMin, nOfU(u));
+      }
+      const thMax = rad2deg(Math.asin(clamp(Math.min(1, Math.max(0, nMin - 0.01)),0,1)));
+      state.theta0deg = clamp(lerp(5, thMax, Math.random()), 0, 75);
+
+      els.theta0.value = state.theta0deg;
+      renderAll();
+    });
+
+    window.addEventListener('resize', () => renderAll(), {passive:true});
+  }
+
+  // ---------------------------
+  // Init
+  // ---------------------------
+  setupCopy();
+  setupTOC();
+  bindControls();
+
+  // Set control initial values
+  els.profile.value = state.profile;
+  els.n0.value = state.n0;
+  els.grad.value = state.g;
+  els.theta0.value = state.theta0deg;
+  els.dmm.value = state.dmm;
+
+  renderAll();
+})();
+</script>
+</body>
+</html>

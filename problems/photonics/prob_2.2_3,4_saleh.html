@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Spherical Waves: Helmholtz Verification & Intensity vs Power</title>
+  <style>
+    :root{
+      --bg: #0b0d12;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.08);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.70);
+      --faint: rgba(255,255,255,0.55);
+      --line: rgba(255,255,255,0.14);
+      --accent: #7dd3fc;
+      --accent2:#a78bfa;
+      --good:#86efac;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+      --maxw: 1100px;
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f7f8fb;
+        --panel: rgba(0,0,0,0.04);
+        --panel2: rgba(0,0,0,0.06);
+        --text: rgba(0,0,0,0.90);
+        --muted: rgba(0,0,0,0.68);
+        --faint: rgba(0,0,0,0.55);
+        --line: rgba(0,0,0,0.12);
+        --shadow: 0 10px 30px rgba(0,0,0,0.10);
+      }
+    }
+
+    *{ box-sizing: border-box; }
+    html{ scroll-behavior: smooth; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 15% -10%, rgba(125,211,252,0.20), transparent 60%),
+        radial-gradient(1000px 600px at 90% 0%, rgba(167,139,250,0.18), transparent 55%),
+        radial-gradient(900px 600px at 50% 110%, rgba(134,239,172,0.14), transparent 60%),
+        var(--bg);
+      line-height: 1.55;
+    }
+
+    header{
+      padding: 34px 18px 10px;
+    }
+    .wrap{
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 0 10px;
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 900px){
+      .hero{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 16px 16px 0;
+    }
+    .title{
+      margin: 0;
+      font-size: clamp(1.25rem, 2.2vw, 1.8rem);
+      letter-spacing: 0.2px;
+    }
+    .subtitle{
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+    .badgeRow{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .badge{
+      font-size: 0.82rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(8px);
+    }
+
+    .qs{
+      padding: 14px 16px 16px;
+    }
+    .qs h2{
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+    }
+    .qs ul{
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+    .qs li{ margin: 6px 0; }
+
+    /* Sticky TOC */
+    .toc{
+      position: sticky;
+      top: 12px;
+      padding: 14px 14px 12px;
+      border-radius: var(--radius);
+    }
+    .toc h3{
+      margin: 0 0 10px;
+      font-size: 1rem;
+      letter-spacing: 0.2px;
+    }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      color: var(--muted);
+      text-decoration:none;
+      border: 1px solid transparent;
+      transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,0.10);
+      border-color: rgba(125,211,252,0.30);
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+
+    main{
+      padding: 10px 18px 46px;
+    }
+
+    section{
+      margin-top: 16px;
+    }
+    .sectionCard{
+      padding: 16px;
+    }
+    .sectionCard h2{
+      margin: 0 0 10px;
+      font-size: 1.25rem;
+    }
+    .sectionCard h3{
+      margin: 16px 0 8px;
+      font-size: 1.05rem;
+    }
+    .muted{ color: var(--muted); }
+    .faint{ color: var(--faint); }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 860px){ .grid2{ grid-template-columns: 1fr; } }
+
+    .callout{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px 12px 10px;
+      background: rgba(255,255,255,0.03);
+    }
+    .callout strong{ color: var(--text); }
+    .kpiRow{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    @media (max-width: 700px){ .kpiRow{ grid-template-columns: 1fr; } }
+    .kpi{
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(255,255,255,0.03);
+    }
+    .kpi .lab{ color: var(--muted); font-size: 0.85rem; }
+    .kpi .val{ font-family: var(--mono); font-size: 1.05rem; margin-top: 6px; }
+
+    .eqBox{
+      border: 1px dashed rgba(125,211,252,0.55);
+      background: rgba(125,211,252,0.08);
+      border-radius: var(--radius);
+      padding: 12px 12px 10px;
+      margin: 10px 0;
+      position: relative;
+      overflow:hidden;
+    }
+    .eqBox .eq{
+      font-family: var(--mono);
+      font-size: 0.98rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 0;
+      color: var(--text);
+    }
+    .btnRow{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      align-items:center;
+    }
+    button.copyBtn{
+      appearance:none;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      cursor:pointer;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+    }
+    button.copyBtn:hover{
+      background: rgba(167,139,250,0.12);
+      border-color: rgba(167,139,250,0.35);
+      transform: translateY(-1px);
+    }
+    .toast{
+      font-size: 0.85rem;
+      color: var(--good);
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 160ms ease, transform 160ms ease;
+    }
+    .toast.show{ opacity: 1; transform: translateY(0); }
+
+    /* Viz */
+    .vizGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    @media (max-width: 980px){ .vizGrid{ grid-template-columns: 1fr; } }
+
+    figure{
+      margin:0;
+      padding: 12px;
+    }
+    figure figcaption{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    canvas{
+      width: 100%;
+      height: 360px;
+      display:block;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.10);
+    }
+    @media (prefers-color-scheme: light){
+      canvas{ background: rgba(0,0,0,0.03); }
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 12px;
+      border-top: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+    }
+    @media (max-width: 720px){
+      .controls{ grid-template-columns: 1fr; }
+    }
+    .ctrl{
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 10px;
+      background: rgba(255,255,255,0.03);
+    }
+    .ctrl label{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+    .ctrl .readout{
+      font-family: var(--mono);
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    input[type="range"]{
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    select{
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      outline: none;
+    }
+    .note{
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    footer{
+      padding: 16px 18px 30px;
+      color: var(--muted);
+      text-align:center;
+    }
+
+    /* Print */
+    @media print{
+      body{ background:#fff; color:#000; }
+      .card{ box-shadow:none; }
+      .toc{ position: static; }
+      canvas{ border: 1px solid #aaa; background:#fff; }
+      .controls, .btnRow, .toast{ display:none !important; }
+      a{ color:#000; text-decoration:none; }
+    }
+
+    /* Subtle entrance */
+    @keyframes rise{
+      from{ opacity:0; transform: translateY(8px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+    .card, section{ animation: rise 240ms ease both; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap hero">
+      <article class="card">
+        <div class="hd">
+          <h1 class="title">Spherical Waves (Helmholtz Verification) & Intensity vs Power</h1>
+          <p class="subtitle">
+            We verify the standard spherical-wave complex amplitude solves the Helmholtz equation (away from the source),
+            then derive the intensity of an isotropic spherical wave in terms of total optical power.
+          </p>
+          <div class="badgeRow">
+            <span class="badge">Helmholtz equation</span>
+            <span class="badge">Spherical Laplacian</span>
+            <span class="badge">Intensity & power</span>
+            <span class="badge">Interactive plots</span>
+          </div>
+        </div>
+        <div class="qs">
+          <h2>Quick Summary</h2>
+          <ul>
+            <li>A (time-harmonic) spherical wave has complex amplitude <span style="font-family:var(--mono)">U(r)=A e^{±ikr}/r</span>.</li>
+            <li>Using the spherical-coordinate Laplacian, <span style="font-family:var(--mono)">(∇²+k²)U=0</span> for <span style="font-family:var(--mono)">r≠0</span> (the origin is a source singularity).</li>
+            <li>For an isotropic radiator, total power <span style="font-family:var(--mono)">P</span> spreads over a sphere area <span style="font-family:var(--mono)">4πr²</span>, so <span style="font-family:var(--mono)">I(r)=P/(4πr²)</span>.</li>
+            <li>Example: <span style="font-family:var(--mono)">P=100 W</span> at <span style="font-family:var(--mono)">r=1 m</span> gives <span style="font-family:var(--mono)">I≈7.96 W/m²</span>.</li>
+            <li>The plots below update live as you change <span style="font-family:var(--mono)">P</span>, the observation distance, and wavelength (phase).</li>
+          </ul>
+        </div>
+      </article>
+
+      <nav class="card toc" aria-label="Table of contents">
+        <h3>Table of Contents</h3>
+        <a href="#part1">Part 1 — Problem Analysis</a>
+        <a href="#part2">Part 2 — Strategy & Tips</a>
+        <a href="#part3">Part 3 — Full Solution</a>
+        <a href="#viz">Interactive Visualizations</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+
+      <section id="part1" class="card sectionCard">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+        <h3>1) Restate the problem (in my own words)</h3>
+        <p class="muted">
+          (2.2-3) Using spherical coordinates, show that the standard complex amplitude of a spherical wave
+          satisfies the Helmholtz equation.
+          <br />
+          (2.2-4) For an isotropic spherical wave carrying total optical power <span style="font-family:var(--mono)">P</span>,
+          derive the intensity <span style="font-family:var(--mono)">I(r)</span> at distance <span style="font-family:var(--mono)">r</span>.
+          Then evaluate it at <span style="font-family:var(--mono)">r=1 m</span> for <span style="font-family:var(--mono)">P=100 W</span>.
+        </p>
+
+        <div class="grid2">
+          <div class="callout">
+            <strong>Given quantities</strong>
+            <ul class="muted" style="margin:8px 0 0; padding-left:18px;">
+              <li>Wavenumber <span style="font-family:var(--mono)">k = 2π/λ</span> (time-harmonic wave).</li>
+              <li>Spherical-wave complex amplitude (typical form): <span style="font-family:var(--mono)">U(r)=A e^{±ikr}/r</span>.</li>
+              <li>Total optical power <span style="font-family:var(--mono)">P</span> (for intensity problem).</li>
+              <li>Distance from source <span style="font-family:var(--mono)">r</span>.</li>
+            </ul>
+          </div>
+
+          <div class="callout">
+            <strong>Unknowns / what must be shown</strong>
+            <ul class="muted" style="margin:8px 0 0; padding-left:18px;">
+              <li>Verify: <span style="font-family:var(--mono)">(∇² + k²)U = 0</span> (for <span style="font-family:var(--mono)">r≠0</span>).</li>
+              <li>Derive: <span style="font-family:var(--mono)">I(r)</span> in terms of <span style="font-family:var(--mono)">P</span> and <span style="font-family:var(--mono)">r</span>.</li>
+              <li>Compute: <span style="font-family:var(--mono)">I(1 m)</span> for <span style="font-family:var(--mono)">P=100 W</span>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>2) Relevant physics principles (and why they apply)</h3>
+        <ul class="muted">
+          <li>
+            <strong>Helmholtz equation</strong> arises from the wave equation for time-harmonic fields
+            (assume <span style="font-family:var(--mono)">e^{-iωt}</span> time dependence): the spatial part satisfies
+            <span style="font-family:var(--mono)">(∇² + k²)U=0</span> in source-free regions.
+          </li>
+          <li>
+            <strong>Spherical symmetry</strong>: a point-like source in a homogeneous medium produces wavefronts that are spheres,
+            so the field depends only on <span style="font-family:var(--mono)">r</span>, simplifying the Laplacian in spherical coordinates.
+          </li>
+          <li>
+            <strong>Energy conservation</strong> for intensity: total power crossing any sphere centered on the source is constant (no loss),
+            so intensity must scale like <span style="font-family:var(--mono)">1/(4πr²)</span>.
+          </li>
+        </ul>
+
+        <h3>3) Possible approaches (compare briefly)</h3>
+        <ol class="muted">
+          <li>
+            <strong>Direct Laplacian in spherical coordinates</strong>:
+            compute <span style="font-family:var(--mono)">∇²U</span> for a purely radial <span style="font-family:var(--mono)">U(r)</span>.
+            Cleanest and shortest.
+          </li>
+          <li>
+            <strong>Reduce to an ODE</strong>:
+            assume separation with spherical symmetry, write radial Helmholtz equation, solve it to get <span style="font-family:var(--mono)">e^{±ikr}/r</span>,
+            then confirm it matches the given amplitude.
+          </li>
+          <li>
+            <strong>Green’s function viewpoint</strong>:
+            recognize the spherical wave as the free-space Green’s function of Helmholtz, which satisfies the equation with a delta-function source at the origin.
+            Powerful, but more abstract than needed here.
+          </li>
+        </ol>
+
+        <p class="muted">
+          <strong>Best choice:</strong> Use the spherical-coordinate Laplacian for a radial function (Approach 1),
+          because it directly verifies the Helmholtz equation and keeps the logic transparent. Then use power-through-sphere
+          area for the intensity (energy conservation).
+        </p>
+      </section>
+
+      <section id="part2" class="card sectionCard">
+        <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+        <h3>Step-by-step plan (no algebra yet)</h3>
+        <ol class="muted">
+          <li><strong>State the spherical-wave amplitude</strong>: choose <span style="font-family:var(--mono)">U(r)=A e^{ikr}/r</span> (or <span style="font-family:var(--mono)">e^{-ikr}</span>).</li>
+          <li><strong>Write the spherical Laplacian</strong> for a purely radial function: use the reduced radial form of <span style="font-family:var(--mono)">∇²</span>.</li>
+          <li><strong>Compute</strong> <span style="font-family:var(--mono)">∇²U</span> by differentiating <span style="font-family:var(--mono)">rU</span> (this avoids messy product rules).</li>
+          <li><strong>Plug into Helmholtz</strong>: evaluate <span style="font-family:var(--mono)">(∇²+k²)U</span> and show it vanishes for <span style="font-family:var(--mono)">r≠0</span>.</li>
+          <li><strong>Interpret the origin</strong>: note the amplitude has a singularity at <span style="font-family:var(--mono)">r=0</span> (source location).</li>
+          <li><strong>Intensity derivation</strong>: use power conservation through a sphere: <span style="font-family:var(--mono)">P = I(r)·4πr²</span> (isotropic).</li>
+          <li><strong>Solve for</strong> <span style="font-family:var(--mono)">I(r)</span> and evaluate at given numbers.</li>
+          <li><strong>Sanity checks</strong>: units, scaling with <span style="font-family:var(--mono)">r</span>, and qualitative meaning.</li>
+        </ol>
+
+        <h3>Common mistakes & quick tips</h3>
+        <ul class="muted">
+          <li><strong>Forgetting the “radial-only” simplification</strong>: if <span style="font-family:var(--mono)">U</span> depends only on <span style="font-family:var(--mono)">r</span>, all angular derivatives vanish.</li>
+          <li><strong>Mixing time convention</strong>: <span style="font-family:var(--mono)">e^{+iωt}</span> vs <span style="font-family:var(--mono)">e^{-iωt}</span> flips signs in the complex exponential; either is fine if consistent.</li>
+          <li><strong>Including the origin as “source-free”</strong>: the Helmholtz equation is satisfied for <span style="font-family:var(--mono)">r≠0</span>. At <span style="font-family:var(--mono)">r=0</span> a point source corresponds to a delta-function term.</li>
+          <li><strong>Intensity vs field amplitude</strong>: intensity scales like the square magnitude of the field (and for isotropic power flow it must scale as <span style="font-family:var(--mono)">1/r²</span>).</li>
+        </ul>
+      </section>
+
+      <section id="part3" class="card sectionCard">
+        <h2>PART 3 — Full Solution</h2>
+
+        <h3>Physical intuition first</h3>
+        <p class="muted">
+          A point-like emitter launches wavefronts that are spherical shells. As the shell expands, the same total power
+          must pass through larger and larger areas (<span style="font-family:var(--mono)">4πr²</span>), so intensity drops like <span style="font-family:var(--mono)">1/r²</span>.
+          Meanwhile, a time-harmonic wave in a uniform medium must satisfy the Helmholtz equation in regions without sources.
+          The standard spherical wave <span style="font-family:var(--mono)">U(r) ∝ e^{±ikr}/r</span> has the right phase variation (<span style="font-family:var(--mono)">kr</span>)
+          and geometric spreading (<span style="font-family:var(--mono)">1/r</span>) to match those requirements.
+        </p>
+
+        <h3>(2.2-3) Verify the spherical wave satisfies the Helmholtz equation</h3>
+        <p class="muted">
+          Let the complex amplitude (spatial part) of a spherical wave be
+          <span style="font-family:var(--mono)">U(r) = A e^{ikr}/r</span>,
+          where <span style="font-family:var(--mono)">A</span> is a constant complex amplitude and <span style="font-family:var(--mono)">k</span> is the wavenumber.
+          (Using <span style="font-family:var(--mono)">e^{-ikr}</span> works identically.)
+        </p>
+
+        <div class="eqBox" id="eq-helmholtz">
+          <div class="eq" data-copy="U(r)=A e^{ikr}/r
+Helmholtz: (∇² + k²)U = 0 (for r≠0)">U(r) = A e^{ikr}/r
+Helmholtz equation: (∇² + k²)U = 0  (in source-free region)</div>
+          <div class="btnRow">
+            <button class="copyBtn" data-copy-target="#eq-helmholtz .eq">Copy equation (plain text)</button>
+            <span class="toast" aria-live="polite">Copied!</span>
+          </div>
+        </div>
+
+        <p class="muted">
+          In spherical coordinates, the Laplacian of a scalar field is
+        </p>
+        <div class="eqBox" id="eq-laplace-sph">
+          <div class="eq" data-copy="∇²U = (1/r²) ∂/∂r ( r² ∂U/∂r ) + (1/(r² sinθ)) ∂/∂θ ( sinθ ∂U/∂θ ) + (1/(r² sin²θ)) ∂²U/∂φ²">
+∇²U = (1/r²) ∂/∂r ( r² ∂U/∂r )
+    + (1/(r² sinθ)) ∂/∂θ ( sinθ ∂U/∂θ )
+    + (1/(r² sin²θ)) ∂²U/∂φ²
+          </div>
+          <div class="btnRow">
+            <button class="copyBtn" data-copy-target="#eq-laplace-sph .eq">Copy equation (plain text)</button>
+            <span class="toast" aria-live="polite">Copied!</span>
+          </div>
+        </div>
+
+        <p class="muted">
+          Because <span style="font-family:var(--mono)">U(r)</span> depends only on <span style="font-family:var(--mono)">r</span>,
+          the angular derivatives vanish:
+          <span style="font-family:var(--mono)">∂U/∂θ = 0</span> and <span style="font-family:var(--mono)">∂U/∂φ = 0</span>.
+          Therefore,
+        </p>
+
+        <div class="eqBox">
+          <div class="eq">∇²U = (1/r²) d/dr ( r² dU/dr )</div>
+        </div>
+
+        <p class="muted">
+          A very clean trick is to rewrite this radial Laplacian as
+          <span style="font-family:var(--mono)">∇²U = (1/r) d²/dr² ( rU )</span>
+          (valid for radial functions with <span style="font-family:var(--mono)">r≠0</span>).
+          We will verify it quickly and use it:
+        </p>
+
+        <div class="eqBox">
+          <div class="eq">Let V(r) = rU(r).
+Then dV/dr = U + r dU/dr.
+Then d²V/dr² = 2 dU/dr + r d²U/dr².
+So (1/r) d²V/dr² = (2/r) dU/dr + d²U/dr² = (1/r²) d/dr (r² dU/dr) = ∇²U.</div>
+        </div>
+
+        <p class="muted">
+          Now compute <span style="font-family:var(--mono)">V(r)=rU(r)</span>:
+        </p>
+        <div class="eqBox">
+          <div class="eq">V(r) = rU(r) = r (A e^{ikr}/r) = A e^{ikr}.</div>
+        </div>
+
+        <p class="muted">
+          Differentiate twice:
+        </p>
+        <div class="eqBox">
+          <div class="eq">dV/dr = A (ik) e^{ikr}
+d²V/dr² = A (ik)² e^{ikr} = -k² A e^{ikr}.</div>
+        </div>
+
+        <p class="muted">
+          Convert back to <span style="font-family:var(--mono)">∇²U</span> using <span style="font-family:var(--mono)">∇²U=(1/r)d²V/dr²</span>:
+        </p>
+        <div class="eqBox">
+          <div class="eq">∇²U = (1/r)(-k² A e^{ikr}) = -k² (A e^{ikr}/r) = -k² U.</div>
+        </div>
+
+        <p class="muted">
+          Finally, substitute into the Helmholtz operator:
+        </p>
+        <div class="eqBox">
+          <div class="eq">(∇² + k²)U = (-k²U + k²U) = 0,   for r ≠ 0.</div>
+        </div>
+
+        <div class="callout">
+          <strong>Important note about the origin:</strong>
+          <span class="muted">
+            The field <span style="font-family:var(--mono)">U ~ 1/r</span> is singular at <span style="font-family:var(--mono)">r=0</span>, where the point source sits.
+            In a more complete treatment, the spherical wave is the Green’s function of Helmholtz and satisfies
+            <span style="font-family:var(--mono)">(∇² + k²)U = -4πA δ³(r)</span>.
+            Your “source-free” verification is correctly understood as applying for <span style="font-family:var(--mono)">r≠0</span>.
+          </span>
+        </div>
+
+        <h3>(2.2-4) Intensity of a spherical wave in terms of total power</h3>
+        <p class="muted">
+          Assume an <strong>isotropic</strong> emitter in a lossless medium: the same total power <span style="font-family:var(--mono)">P</span> crosses every sphere centered on the source.
+          The area of a sphere of radius <span style="font-family:var(--mono)">r</span> is <span style="font-family:var(--mono)">4πr²</span>.
+          If the intensity is uniform over that sphere, then
+        </p>
+
+        <div class="eqBox" id="eq-power-balance">
+          <div class="eq" data-copy="P = I(r) · 4πr²   (isotropic, lossless)">
+P = I(r) · 4πr²   (isotropic, lossless)
+          </div>
+          <div class="btnRow">
+            <button class="copyBtn" data-copy-target="#eq-power-balance .eq">Copy equation (plain text)</button>
+            <span class="toast" aria-live="polite">Copied!</span>
+          </div>
+        </div>
+
+        <p class="muted">
+          Solve for <span style="font-family:var(--mono)">I(r)</span>:
+        </p>
+
+        <div class="eqBox" id="eq-final-symbolic" style="border-style: solid; border-color: rgba(134,239,172,0.55); background: rgba(134,239,172,0.10);">
+          <div class="eq" data-copy="FINAL: I(r) = P / (4πr²)">✅ FINAL:  I(r) = P / (4πr²)</div>
+          <div class="btnRow">
+            <button class="copyBtn" data-copy-target="#eq-final-symbolic .eq">Copy final result (plain text)</button>
+            <span class="toast" aria-live="polite">Copied!</span>
+          </div>
+        </div>
+
+        <p class="muted">
+          Now evaluate at <span style="font-family:var(--mono)">P=100 W</span> and <span style="font-family:var(--mono)">r=1 m</span>:
+        </p>
+
+        <div class="eqBox" id="eq-final-numeric" style="border-style: solid; border-color: rgba(125,211,252,0.60); background: rgba(125,211,252,0.10);">
+          <div class="eq" data-copy="I(1 m) = 100 / (4π·1²) W/m² ≈ 7.96 W/m²">I(1 m) = 100 / (4π·1²) W/m² ≈ 7.96 W/m²</div>
+          <div class="btnRow">
+            <button class="copyBtn" data-copy-target="#eq-final-numeric .eq">Copy numeric answer (plain text)</button>
+            <span class="toast" aria-live="polite">Copied!</span>
+          </div>
+        </div>
+
+        <div class="kpiRow" aria-label="Sanity checks">
+          <div class="kpi">
+            <div class="lab">Units check</div>
+            <div class="val">P/(4πr²) → W / m² ✅</div>
+          </div>
+          <div class="kpi">
+            <div class="lab">Limiting behavior</div>
+            <div class="val">r→∞ ⇒ I→0 as 1/r² ✅</div>
+          </div>
+          <div class="kpi">
+            <div class="lab">Physical meaning</div>
+            <div class="val">Power spreads over area 4πr² ✅</div>
+          </div>
+        </div>
+
+        <p class="note">
+          (Optional connection to field amplitude.) For many waves, intensity is proportional to squared magnitude of the complex amplitude:
+          <span style="font-family:var(--mono)">I(r) ∝ |U(r)|²</span>.
+          Since <span style="font-family:var(--mono)">U ∝ 1/r</span>, we get <span style="font-family:var(--mono)">I ∝ 1/r²</span>,
+          consistent with the power argument above.
+        </p>
+      </section>
+
+      <section id="viz" class="card sectionCard">
+        <h2>Interactive Visualizations</h2>
+        <p class="muted">
+          Controls below change the source power <span style="font-family:var(--mono)">P</span>, observation distance <span style="font-family:var(--mono)">r<sub>obs</sub></span>,
+          and wavelength <span style="font-family:var(--mono)">λ</span>. All canvases update live.
+        </p>
+
+        <div class="vizGrid">
+          <figure class="card" style="padding:0;">
+            <div class="hd" style="padding:14px 14px 0;">
+              <h3 style="margin:0;">Diagram: Expanding spherical wavefronts</h3>
+              <p class="muted" style="margin:8px 0 0;">Geometry showing intensity spreading over sphere area <span style="font-family:var(--mono)">4πr²</span>.</p>
+            </div>
+            <div style="padding:12px;">
+              <canvas id="cDiagram" aria-label="Spherical wave diagram canvas"></canvas>
+              <figcaption>
+                The marker at <span style="font-family:var(--mono)">r<sub>obs</sub></span> corresponds to the same observation distance used in the plots.
+              </figcaption>
+            </div>
+          </figure>
+
+          <figure class="card" style="padding:0;">
+            <div class="hd" style="padding:14px 14px 0;">
+              <h3 style="margin:0;">Main plot: Intensity vs distance</h3>
+              <p class="muted" style="margin:8px 0 0;">Uses <span style="font-family:var(--mono)">I(r)=P/(4πr²)</span> (isotropic, lossless).</p>
+            </div>
+            <div style="padding:12px;">
+              <canvas id="cMain" aria-label="Intensity vs distance plot canvas"></canvas>
+              <figcaption>
+                The vertical line shows the chosen <span style="font-family:var(--mono)">r<sub>obs</sub></span> and the dot shows <span style="font-family:var(--mono)">I(r<sub>obs</sub>)</span>.
+              </figcaption>
+            </div>
+          </figure>
+
+          <figure class="card" style="padding:0;">
+            <div class="hd" style="padding:14px 14px 0;">
+              <h3 style="margin:0;">Secondary plot: Phase vs distance</h3>
+              <p class="muted" style="margin:8px 0 0;">Phase of <span style="font-family:var(--mono)">U(r)=A e^{ikr}/r</span> is <span style="font-family:var(--mono)">φ(r)=kr</span> (wrapped to ±π).</p>
+            </div>
+            <div style="padding:12px;">
+              <canvas id="cSecondary" aria-label="Phase vs distance plot canvas"></canvas>
+              <figcaption>
+                Changing wavelength changes <span style="font-family:var(--mono)">k=2π/λ</span> and thus the oscillation rate of phase vs distance.
+              </figcaption>
+            </div>
+          </figure>
+
+          <figure class="card" style="padding:0;">
+            <div class="hd" style="padding:14px 14px 0;">
+              <h3 style="margin:0;">Parameter sweep: Intensity scaling check</h3>
+              <p class="muted" style="margin:8px 0 0;">Plot of <span style="font-family:var(--mono)">I(r)·r²</span> vs <span style="font-family:var(--mono)">r</span>, which should be constant <span style="font-family:var(--mono)">P/(4π)</span>.</p>
+            </div>
+            <div style="padding:12px;">
+              <canvas id="cSweep" aria-label="Intensity times r^2 vs distance plot canvas"></canvas>
+              <figcaption>
+                If the model is consistent, this curve is (nearly) flat across <span style="font-family:var(--mono)">r</span>.
+              </figcaption>
+            </div>
+          </figure>
+        </div>
+
+        <div class="controls" role="group" aria-label="Interactive controls">
+          <div class="ctrl">
+            <label for="pSlider">
+              <span>Power <span style="font-family:var(--mono)">P</span> (W)</span>
+              <span class="readout" id="pReadout">100</span>
+            </label>
+            <input id="pSlider" type="range" min="1" max="500" step="1" value="100" />
+            <div class="note">Controls overall intensity level.</div>
+          </div>
+
+          <div class="ctrl">
+            <label for="rObsSlider">
+              <span>Observation distance <span style="font-family:var(--mono)">r<sub>obs</sub></span> (m)</span>
+              <span class="readout" id="rObsReadout">1.00</span>
+            </label>
+            <input id="rObsSlider" type="range" min="0.2" max="10" step="0.05" value="1" />
+            <div class="note">Moves the marker and readouts on all plots.</div>
+          </div>
+
+          <div class="ctrl">
+            <label for="rMaxSlider">
+              <span>Plot range <span style="font-family:var(--mono)">r<sub>max</sub></span> (m)</span>
+              <span class="readout" id="rMaxReadout">10.0</span>
+            </label>
+            <input id="rMaxSlider" type="range" min="2" max="50" step="1" value="10" />
+            <div class="note">Changes x-axis extent for all plots.</div>
+          </div>
+
+          <div class="ctrl">
+            <label for="lambdaSelect">
+              <span>Wavelength <span style="font-family:var(--mono)">λ</span> (nm)</span>
+              <span class="readout" id="lambdaReadout">1550</span>
+            </label>
+            <select id="lambdaSelect">
+              <option value="400">400 (violet)</option>
+              <option value="532">532 (green)</option>
+              <option value="633">633 (red)</option>
+              <option value="1064">1064 (Nd:YAG)</option>
+              <option value="1310">1310 (telecom)</option>
+              <option value="1550" selected>1550 (telecom)</option>
+            </select>
+            <div class="note">Affects phase plot via <span style="font-family:var(--mono)">k=2π/λ</span>.</div>
+          </div>
+        </div>
+
+        <div class="kpiRow" style="margin-top: 14px;">
+          <div class="kpi">
+            <div class="lab">Current formula</div>
+            <div class="val" id="kpiFormula">I(r)=P/(4πr²)</div>
+          </div>
+          <div class="kpi">
+            <div class="lab">Computed intensity at <span style="font-family:var(--mono)">r<sub>obs</sub></span></div>
+            <div class="val" id="kpiIntensity">7.96 W/m²</div>
+          </div>
+          <div class="kpi">
+            <div class="lab">Phase at <span style="font-family:var(--mono)">r<sub>obs</sub></span> (wrapped)</div>
+            <div class="val" id="kpiPhase">… rad</div>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="faint">
+        Self-contained article • Vanilla HTML/CSS/JS • Canvas visuals with live parameter updates
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // -----------------------------
+    // Copy buttons (plain text)
+    // -----------------------------
+    function copyPlainText(text){
+      return navigator.clipboard.writeText(text);
+    }
+    function flashToast(btn){
+      const toast = btn.parentElement.querySelector('.toast');
+      if(!toast) return;
+      toast.classList.add('show');
+      setTimeout(()=>toast.classList.remove('show'), 900);
+    }
+    document.querySelectorAll('button.copyBtn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const sel = btn.getAttribute('data-copy-target');
+        const el = document.querySelector(sel);
+        const text = (el?.getAttribute('data-copy') || el?.textContent || '').trim();
+        try{
+          await copyPlainText(text);
+          flashToast(btn);
+        }catch(e){
+          // Fallback
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          flashToast(btn);
+        }
+      });
+    });
+
+    // -----------------------------
+    // Math/model
+    // -----------------------------
+    function intensity(P, r){
+      return P / (4*Math.PI*r*r);
+    }
+    function kFromLambdaNm(lambdaNm){
+      const lambda = lambdaNm * 1e-9; // meters
+      return 2*Math.PI / lambda; // rad/m
+    }
+    function wrapPi(x){
+      // wrap to (-pi, pi]
+      const twopi = 2*Math.PI;
+      x = ((x + Math.PI) % twopi + twopi) % twopi - Math.PI;
+      return x;
+    }
+
+    // -----------------------------
+    // Canvas utilities (HiDPI + responsive)
+    // -----------------------------
+    function setupCanvas(canvas){
+      const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(320, Math.floor(rect.width));
+      const h = Math.max(240, Math.floor(rect.height));
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+      return {ctx, w, h, dpr};
+    }
+
+    function clear(ctx, w, h){
+      ctx.clearRect(0,0,w,h);
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    function drawTitle(ctx, title, x, y){
+      ctx.save();
+      ctx.font = '600 14px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+      ctx.fillStyle = getColor('--text');
+      ctx.fillText(title, x, y);
+      ctx.restore();
+    }
+
+    function getColor(varName){
+      return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    }
+
+    function drawAxes(ctx, box, xLabel, yLabel){
+      const {x,y,w,h} = box;
+      ctx.save();
+      ctx.strokeStyle = getColor('--line');
+      ctx.lineWidth = 1;
+
+      // border
+      roundRect(ctx, x, y, w, h, 14);
+      ctx.stroke();
+
+      // labels
+      ctx.fillStyle = getColor('--muted');
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+      ctx.fillText(xLabel, x + w/2 - ctx.measureText(xLabel).width/2, y + h + 26);
+
+      ctx.save();
+      ctx.translate(x - 34, y + h/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(yLabel, -ctx.measureText(yLabel).width/2, 0);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function niceTicks(min, max, target=6){
+      const span = max - min;
+      if(span <= 0) return [min];
+      const raw = span / target;
+      const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+      const norm = raw / mag;
+      let step;
+      if(norm < 1.5) step = 1*mag;
+      else if(norm < 3) step = 2*mag;
+      else if(norm < 7) step = 5*mag;
+      else step = 10*mag;
+
+      const start = Math.ceil(min/step)*step;
+      const ticks = [];
+      for(let v = start; v <= max + 1e-12; v += step) ticks.push(v);
+      return ticks;
+    }
+
+    function drawGridAndTicks(ctx, box, xMin, xMax, yMin, yMax, xUnitFmt, yUnitFmt){
+      const {x,y,w,h} = box;
+      const xTicks = niceTicks(xMin, xMax, 6);
+      const yTicks = niceTicks(yMin, yMax, 6);
+
+      ctx.save();
+      // grid
+      ctx.strokeStyle = getColor('--line');
+      ctx.lineWidth = 1;
+
+      // clip to plot area
+      ctx.beginPath();
+      ctx.rect(x,y,w,h);
+      ctx.clip();
+
+      // vertical grid
+      xTicks.forEach(t=>{
+        const px = x + (t - xMin)/(xMax - xMin)*w;
+        ctx.beginPath();
+        ctx.moveTo(px, y);
+        ctx.lineTo(px, y+h);
+        ctx.stroke();
+      });
+
+      // horizontal grid
+      yTicks.forEach(t=>{
+        const py = y + h - (t - yMin)/(yMax - yMin)*h;
+        ctx.beginPath();
+        ctx.moveTo(x, py);
+        ctx.lineTo(x+w, py);
+        ctx.stroke();
+      });
+
+      ctx.restore();
+
+      // tick labels
+      ctx.save();
+      ctx.fillStyle = getColor('--muted');
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+
+      xTicks.forEach(t=>{
+        const px = x + (t - xMin)/(xMax - xMin)*w;
+        const s = xUnitFmt(t);
+        ctx.fillText(s, px - ctx.measureText(s).width/2, y + h + 16);
+        // tick mark
+        ctx.strokeStyle = getColor('--line');
+        ctx.beginPath();
+        ctx.moveTo(px, y+h);
+        ctx.lineTo(px, y+h+6);
+        ctx.stroke();
+      });
+
+      yTicks.forEach(t=>{
+        const py = y + h - (t - yMin)/(yMax - yMin)*h;
+        const s = yUnitFmt(t);
+        ctx.fillText(s, x - 10 - ctx.measureText(s).width, py + 4);
+        ctx.strokeStyle = getColor('--line');
+        ctx.beginPath();
+        ctx.moveTo(x-6, py);
+        ctx.lineTo(x, py);
+        ctx.stroke();
+      });
+
+      ctx.restore();
+    }
+
+    function plotLine(ctx, box, xMin, xMax, yMin, yMax, xs, ys, strokeStyle, lineWidth=2){
+      const {x,y,w,h} = box;
+      function X(v){ return x + (v-xMin)/(xMax-xMin)*w; }
+      function Y(v){ return y + h - (v-yMin)/(yMax-yMin)*h; }
+
+      ctx.save();
+      ctx.beginPath();
+      for(let i=0;i<xs.length;i++){
+        const px = X(xs[i]);
+        const py = Y(ys[i]);
+        if(i===0) ctx.moveTo(px,py);
+        else ctx.lineTo(px,py);
+      }
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = lineWidth;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLegend(ctx, items, x, y){
+      ctx.save();
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+      ctx.fillStyle = getColor('--muted');
+
+      let yy = y;
+      items.forEach(it=>{
+        ctx.strokeStyle = it.color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, yy+4);
+        ctx.lineTo(x+18, yy+4);
+        ctx.stroke();
+
+        ctx.fillText(it.label, x+26, yy+8);
+        yy += 18;
+      });
+      ctx.restore();
+    }
+
+    function formatSI(v, digits=3){
+      if(!isFinite(v)) return '—';
+      const abs = Math.abs(v);
+      if(abs === 0) return '0';
+      if(abs >= 1e6) return (v/1e6).toFixed(2)+'e6';
+      if(abs >= 1e3) return (v/1e3).toFixed(2)+'e3';
+      if(abs >= 1) return v.toFixed(digits);
+      if(abs >= 1e-3) return (v*1e3).toFixed(2)+'e-3';
+      if(abs >= 1e-6) return (v*1e6).toFixed(2)+'e-6';
+      return v.toExponential(2);
+    }
+
+    // -----------------------------
+    // State + controls
+    // -----------------------------
+    const state = {
+      P: 100,
+      rObs: 1.0,
+      rMax: 10.0,
+      lambdaNm: 1550
+    };
+
+    const els = {
+      pSlider: document.getElementById('pSlider'),
+      rObsSlider: document.getElementById('rObsSlider'),
+      rMaxSlider: document.getElementById('rMaxSlider'),
+      lambdaSelect: document.getElementById('lambdaSelect'),
+      pReadout: document.getElementById('pReadout'),
+      rObsReadout: document.getElementById('rObsReadout'),
+      rMaxReadout: document.getElementById('rMaxReadout'),
+      lambdaReadout: document.getElementById('lambdaReadout'),
+      kpiIntensity: document.getElementById('kpiIntensity'),
+      kpiPhase: document.getElementById('kpiPhase')
+    };
+
+    function syncReadouts(){
+      els.pReadout.textContent = String(state.P);
+      els.rObsReadout.textContent = state.rObs.toFixed(2);
+      els.rMaxReadout.textContent = state.rMax.toFixed(1);
+      els.lambdaReadout.textContent = String(state.lambdaNm);
+
+      const Iobs = intensity(state.P, state.rObs);
+      els.kpiIntensity.textContent = `${formatSI(Iobs, 3)} W/m²`;
+
+      const k = kFromLambdaNm(state.lambdaNm);
+      const phase = wrapPi(k * state.rObs);
+      els.kpiPhase.textContent = `${phase.toFixed(3)} rad`;
+    }
+
+    function bindControls(){
+      els.pSlider.addEventListener('input', ()=>{
+        state.P = parseFloat(els.pSlider.value);
+        syncReadouts();
+        renderAll();
+      });
+      els.rObsSlider.addEventListener('input', ()=>{
+        state.rObs = parseFloat(els.rObsSlider.value);
+        // keep within rMax
+        if(state.rObs > state.rMax) state.rObs = state.rMax;
+        syncReadouts();
+        renderAll();
+      });
+      els.rMaxSlider.addEventListener('input', ()=>{
+        state.rMax = parseFloat(els.rMaxSlider.value);
+        if(state.rObs > state.rMax){
+          state.rObs = state.rMax;
+          els.rObsSlider.value = String(state.rObs);
+        }
+        syncReadouts();
+        renderAll();
+      });
+      els.lambdaSelect.addEventListener('change', ()=>{
+        state.lambdaNm = parseFloat(els.lambdaSelect.value);
+        syncReadouts();
+        renderAll();
+      });
+    }
+
+    // -----------------------------
+    // Rendering: diagram + plots
+    // -----------------------------
+    const canv = {
+      diagram: document.getElementById('cDiagram'),
+      main: document.getElementById('cMain'),
+      secondary: document.getElementById('cSecondary'),
+      sweep: document.getElementById('cSweep')
+    };
+
+    function renderDiagram(){
+      const {ctx, w, h} = setupCanvas(canv.diagram);
+      clear(ctx,w,h);
+
+      const pad = 18;
+      const cx = w*0.52, cy = h*0.52;
+      const maxR = Math.min(w,h)*0.38;
+
+      // background panel inside
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = (window.matchMedia('(prefers-color-scheme: light)').matches) ? 'rgba(0,0,0,0.02)' : 'rgba(0,0,0,0.12)';
+      roundRect(ctx, pad, pad, w-2*pad, h-2*pad, 18);
+      ctx.fill();
+      ctx.restore();
+
+      drawTitle(ctx, "Spherical wavefronts", pad+10, pad+20);
+
+      // concentric wavefronts
+      const rings = 5;
+      for(let i=1;i<=rings;i++){
+        const r = (i/rings)*maxR;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI*2);
+        ctx.strokeStyle = (i%2===0) ? getColor('--accent2') : getColor('--accent');
+        ctx.globalAlpha = 0.45;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      // source at center
+      ctx.beginPath();
+      ctx.arc(cx, cy, 6, 0, Math.PI*2);
+      ctx.fillStyle = getColor('--warn');
+      ctx.fill();
+
+      ctx.fillStyle = getColor('--text');
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+      ctx.fillText("source", cx+10, cy-10);
+
+      // observation point at rObs mapped into diagram radius
+      const rObsNorm = Math.min(1, state.rObs / state.rMax);
+      const rObsPix = Math.max(14, rObsNorm * maxR);
+
+      // Choose a fixed angle for the marker
+      const ang = -0.55;
+      const ox = cx + rObsPix*Math.cos(ang);
+      const oy = cy + rObsPix*Math.sin(ang);
+
+      // radial line
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(ox, oy);
+      ctx.strokeStyle = getColor('--good');
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.9;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      // marker
+      ctx.beginPath();
+      ctx.arc(ox, oy, 6, 0, Math.PI*2);
+      ctx.fillStyle = getColor('--good');
+      ctx.fill();
+
+      // label r_obs
+      ctx.fillStyle = getColor('--text');
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+      const label = `r_obs = ${state.rObs.toFixed(2)} m`;
+      ctx.fillText(label, ox + 10, oy + 4);
+
+      // annotation: area
+      ctx.fillStyle = getColor('--muted');
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+      ctx.fillText("Intensity spreads over area 4πr²", pad+10, h - pad - 10);
+
+      // small arrow around ring to hint wave propagation
+      ctx.save();
+      ctx.translate(cx, cy);
+      const rArrow = maxR*0.72;
+      const a0 = 0.9, a1 = 1.35;
+      ctx.beginPath();
+      ctx.arc(0,0,rArrow,a0,a1);
+      ctx.strokeStyle = getColor('--accent');
+      ctx.globalAlpha = 0.65;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // arrow head
+      const ax = rArrow*Math.cos(a1), ay = rArrow*Math.sin(a1);
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(ax-10*Math.cos(a1-0.25), ay-10*Math.sin(a1-0.25));
+      ctx.lineTo(ax-10*Math.cos(a1+0.25), ay-10*Math.sin(a1+0.25));
+      ctx.closePath();
+      ctx.fillStyle = getColor('--accent');
+      ctx.globalAlpha = 0.65;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function renderMainPlot(){
+      const {ctx, w, h} = setupCanvas(canv.main);
+      clear(ctx,w,h);
+
+      const padL = 64, padR = 16, padT = 34, padB = 54;
+      const box = {x: padL, y: padT, w: w-padL-padR, h: h-padT-padB};
+
+      const xMin = 0.2;
+      const xMax = state.rMax;
+
+      // Determine y-range from model, with headroom
+      const yMax = intensity(state.P, xMin) * 1.05;
+      const yMin = 0;
+
+      // background for plot area
+      ctx.save();
+      ctx.fillStyle = (window.matchMedia('(prefers-color-scheme: light)').matches) ? 'rgba(0,0,0,0.02)' : 'rgba(0,0,0,0.12)';
+      roundRect(ctx, box.x, box.y, box.w, box.h, 16);
+      ctx.fill();
+      ctx.restore();
+
+      drawTitle(ctx, "Intensity I(r) vs distance r", box.x, 20);
+      drawAxes(ctx, box, "r (m)", "I (W/m²)");
+      drawGridAndTicks(ctx, box, xMin, xMax, yMin, yMax,
+        v => (v>=10 ? v.toFixed(0) : v.toFixed(1)),
+        v => (v>=10 ? v.toFixed(0) : v.toFixed(2))
+      );
+
+      // sample curve
+      const N = 360;
+      const xs = [];
+      const ys = [];
+      for(let i=0;i<N;i++){
+        const r = xMin + (xMax-xMin)*i/(N-1);
+        xs.push(r);
+        ys.push(intensity(state.P, r));
+      }
+
+      const col = getColor('--accent');
+      plotLine(ctx, box, xMin, xMax, yMin, yMax, xs, ys, col, 2.5);
+
+      // marker at rObs
+      const rObs = Math.max(xMin, Math.min(xMax, state.rObs));
+      const Iobs = intensity(state.P, rObs);
+
+      const X = (v)=> box.x + (v-xMin)/(xMax-xMin)*box.w;
+      const Y = (v)=> box.y + box.h - (v-yMin)/(yMax-yMin)*box.h;
+
+      // vertical line
+      ctx.save();
+      ctx.strokeStyle = getColor('--good');
+      ctx.globalAlpha = 0.9;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(X(rObs), box.y);
+      ctx.lineTo(X(rObs), box.y+box.h);
+      ctx.stroke();
+
+      // point
+      ctx.beginPath();
+      ctx.arc(X(rObs), Y(Iobs), 5.5, 0, Math.PI*2);
+      ctx.fillStyle = getColor('--good');
+      ctx.fill();
+
+      // label
+      ctx.fillStyle = getColor('--text');
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+      const t = `I(r_obs) = ${formatSI(Iobs,3)} W/m²`;
+      const tx = Math.min(box.x + box.w - ctx.measureText(t).width - 8, X(rObs)+8);
+      const ty = Math.max(box.y + 16, Y(Iobs)-10);
+      ctx.fillText(t, tx, ty);
+
+      ctx.restore();
+
+      // legend
+      drawLegend(ctx, [
+        {label: "I(r)=P/(4πr²)", color: col},
+        {label: "r_obs marker", color: getColor('--good')}
+      ], box.x + 12, box.y + 12);
+    }
+
+    function renderSecondaryPlot(){
+      const {ctx, w, h} = setupCanvas(canv.secondary);
+      clear(ctx,w,h);
+
+      const padL = 64, padR = 16, padT = 34, padB = 54;
+      const box = {x: padL, y: padT, w: w-padL-padR, h: h-padT-padB};
+
+      const xMin = 0.2;
+      const xMax = state.rMax;
+      const yMin = -Math.PI;
+      const yMax = Math.PI;
+
+      // background
+      ctx.save();
+      ctx.fillStyle = (window.matchMedia('(prefers-color-scheme: light)').matches) ? 'rgba(0,0,0,0.02)' : 'rgba(0,0,0,0.12)';
+      roundRect(ctx, box.x, box.y, box.w, box.h, 16);
+      ctx.fill();
+      ctx.restore();
+
+      drawTitle(ctx, "Wrapped phase φ(r)=kr (mod 2π)", box.x, 20);
+      drawAxes(ctx, box, "r (m)", "φ (rad)");
+      drawGridAndTicks(ctx, box, xMin, xMax, yMin, yMax,
+        v => (v>=10 ? v.toFixed(0) : v.toFixed(1)),
+        v => {
+          if(Math.abs(v - Math.PI) < 1e-6) return "π";
+          if(Math.abs(v + Math.PI) < 1e-6) return "−π";
+          if(Math.abs(v) < 1e-6) return "0";
+          return v.toFixed(2);
+        }
+      );
+
+      const k = kFromLambdaNm(state.lambdaNm);
+
+      const N = 600;
+      const xs = [];
+      const ys = [];
+      for(let i=0;i<N;i++){
+        const r = xMin + (xMax-xMin)*i/(N-1);
+        xs.push(r);
+        ys.push(wrapPi(k*r));
+      }
+
+      const col = getColor('--accent2');
+      plotLine(ctx, box, xMin, xMax, yMin, yMax, xs, ys, col, 2.2);
+
+      // marker at rObs
+      const rObs = Math.max(xMin, Math.min(xMax, state.rObs));
+      const ph = wrapPi(k*rObs);
+
+      const X = (v)=> box.x + (v-xMin)/(xMax-xMin)*box.w;
+      const Y = (v)=> box.y + box.h - (v-yMin)/(yMax-yMin)*box.h;
+
+      ctx.save();
+      ctx.strokeStyle = getColor('--good');
+      ctx.globalAlpha = 0.9;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(X(rObs), box.y);
+      ctx.lineTo(X(rObs), box.y+box.h);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(X(rObs), Y(ph), 5.5, 0, Math.PI*2);
+      ctx.fillStyle = getColor('--good');
+      ctx.fill();
+
+      ctx.fillStyle = getColor('--text');
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+      const t = `φ(r_obs) = ${ph.toFixed(3)} rad`;
+      const tx = Math.min(box.x + box.w - ctx.measureText(t).width - 8, X(rObs)+8);
+      const ty = Math.max(box.y + 16, Y(ph)-10);
+      ctx.fillText(t, tx, ty);
+
+      ctx.restore();
+
+      drawLegend(ctx, [
+        {label: `λ = ${state.lambdaNm} nm`, color: col},
+        {label: "r_obs marker", color: getColor('--good')}
+      ], box.x + 12, box.y + 12);
+    }
+
+    function renderSweepPlot(){
+      const {ctx, w, h} = setupCanvas(canv.sweep);
+      clear(ctx,w,h);
+
+      const padL = 64, padR = 16, padT = 34, padB = 54;
+      const box = {x: padL, y: padT, w: w-padL-padR, h: h-padT-padB};
+
+      const xMin = 0.2;
+      const xMax = state.rMax;
+
+      // I(r) r^2 = P/(4π) constant
+      const target = state.P/(4*Math.PI);
+      const yMin = 0;
+      const yMax = target * 1.6; // headroom
+
+      ctx.save();
+      ctx.fillStyle = (window.matchMedia('(prefers-color-scheme: light)').matches) ? 'rgba(0,0,0,0.02)' : 'rgba(0,0,0,0.12)';
+      roundRect(ctx, box.x, box.y, box.w, box.h, 16);
+      ctx.fill();
+      ctx.restore();
+
+      drawTitle(ctx, "Scaling check: I(r)·r² should be constant", box.x, 20);
+      drawAxes(ctx, box, "r (m)", "I·r² (W)");
+      drawGridAndTicks(ctx, box, xMin, xMax, yMin, yMax,
+        v => (v>=10 ? v.toFixed(0) : v.toFixed(1)),
+        v => (v>=10 ? v.toFixed(1) : v.toFixed(2))
+      );
+
+      const N = 360;
+      const xs = [];
+      const ys = [];
+      for(let i=0;i<N;i++){
+        const r = xMin + (xMax-xMin)*i/(N-1);
+        xs.push(r);
+        ys.push(intensity(state.P, r)*r*r);
+      }
+      const col = getColor('--accent');
+      plotLine(ctx, box, xMin, xMax, yMin, yMax, xs, ys, col, 2.3);
+
+      // draw reference constant line
+      const X = (v)=> box.x + (v-xMin)/(xMax-xMin)*box.w;
+      const Y = (v)=> box.y + box.h - (v-yMin)/(yMax-yMin)*box.h;
+
+      ctx.save();
+      ctx.strokeStyle = getColor('--warn');
+      ctx.globalAlpha = 0.85;
+      ctx.setLineDash([6,6]);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(X(xMin), Y(target));
+      ctx.lineTo(X(xMax), Y(target));
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // label
+      ctx.fillStyle = getColor('--text');
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+      const t = `P/(4π) = ${formatSI(target,3)} W`;
+      ctx.fillText(t, box.x + 12, Math.max(box.y + 16, Y(target) - 8));
+
+      ctx.restore();
+
+      drawLegend(ctx, [
+        {label: "I(r)·r²", color: col},
+        {label: "constant P/(4π)", color: getColor('--warn')}
+      ], box.x + 12, box.y + 12);
+    }
+
+    function renderAll(){
+      renderDiagram();
+      renderMainPlot();
+      renderSecondaryPlot();
+      renderSweepPlot();
+    }
+
+    // Re-render on resize (responsive)
+    let resizeTimer = null;
+    window.addEventListener('resize', ()=>{
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(renderAll, 120);
+    });
+
+    // Init
+    (function init(){
+      bindControls();
+      syncReadouts();
+      renderAll();
+    })();
+  </script>
+</body>
+</html>

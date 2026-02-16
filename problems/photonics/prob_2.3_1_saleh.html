@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>Wavefronts in a GRIN (SELFOC) Slab — Sketch + Interactive Visualization</title>
+  <style>
+    :root{
+      --bg0:#070a12;
+      --bg1:#0b1020;
+      --card:#0f1730cc;
+      --card2:#0c1328cc;
+      --text:#e9ecff;
+      --muted:#aab3d6;
+      --faint:#6f7ab0;
+      --accent:#7aa7ff;
+      --accent2:#79ffd7;
+      --warn:#ffd37a;
+      --ok:#87ff9b;
+      --bad:#ff7a8f;
+      --line:#263157;
+      --shadow: 0 14px 40px rgba(0,0,0,.38);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 18% 10%, rgba(122,167,255,.18), transparent 60%),
+                  radial-gradient(900px 600px at 75% 20%, rgba(121,255,215,.12), transparent 55%),
+                  linear-gradient(180deg, var(--bg0), var(--bg1) 60%, #050814);
+      color:var(--text);
+      line-height:1.55;
+    }
+
+    header{
+      padding: 34px 18px 10px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:18px;
+      align-items:stretch;
+    }
+
+    .titleCard{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+      position:relative;
+      overflow:hidden;
+    }
+    .titleCard::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(900px 260px at 30% 0%, rgba(122,167,255,.20), transparent 65%),
+                  radial-gradient(800px 260px at 78% 0%, rgba(121,255,215,.12), transparent 68%);
+      pointer-events:none;
+      filter:saturate(1.1);
+    }
+    .titleCard > *{position:relative}
+    h1{
+      margin:0 0 10px;
+      font-size: clamp(1.35rem, 2.2vw, 2.0rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:0 0 12px;
+      font-size: 0.98rem;
+    }
+    .pillRow{
+      display:flex; flex-wrap:wrap; gap:8px;
+      margin-top:10px;
+    }
+    .pill{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(15,23,48,.55);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .pill b{color:var(--text); font-weight:700}
+
+    .quick{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px 14px;
+    }
+    .quick h2{
+      margin:0 0 8px;
+      font-size: 1.05rem;
+    }
+    .quick ul{margin: 8px 0 0 18px; padding:0}
+    .quick li{color:var(--muted); margin:6px 0}
+
+    main{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 8px 18px 80px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      align-items:start;
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: rgba(10,16,34,.72);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+    .tocHeader{
+      padding: 12px 14px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .tocHeader b{
+      letter-spacing:.3px;
+      font-size:.95rem;
+    }
+    .toc small{color:var(--faint)}
+    .tocLinks{
+      padding: 10px 10px 12px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .toc a{
+      text-decoration:none;
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 12px;
+      border:1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size: .93rem;
+    }
+    .toc a:hover{
+      background: rgba(122,167,255,.10);
+      border-color: rgba(122,167,255,.25);
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+    .toc a span{color: var(--faint)}
+
+    .content{
+      display:flex;
+      flex-direction:column;
+      gap: 18px;
+    }
+
+    section.card{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 16px 14px;
+      overflow:hidden;
+    }
+    section.card h2{
+      margin:0 0 10px;
+      font-size: 1.18rem;
+      letter-spacing:.2px;
+    }
+    section.card h3{
+      margin: 14px 0 8px;
+      font-size: 1.03rem;
+      color: var(--text);
+    }
+    p{margin: 8px 0; color: var(--muted)}
+    ul,ol{color:var(--muted)}
+    li{margin: 6px 0}
+
+    .callouts{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .callout{
+      border-radius: 16px;
+      padding: 12px 12px 10px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(10,16,34,.58);
+      min-height: 92px;
+    }
+    .callout b{display:block; margin-bottom:6px}
+    .callout p{margin:0; font-size:.93rem}
+    .callout.good{border-color: rgba(135,255,155,.26)}
+    .callout.warn{border-color: rgba(255,211,122,.28)}
+    .callout.note{border-color: rgba(122,167,255,.26)}
+
+    .eq{
+      margin: 12px 0 10px;
+      padding: 12px 12px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(7,10,18,.55);
+      position:relative;
+      overflow:hidden;
+    }
+    .eq .label{
+      font-size: .82rem;
+      color: var(--faint);
+      margin-bottom:6px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+    }
+    pre{
+      margin:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-family: var(--mono);
+      font-size: .95rem;
+      color: #eef1ff;
+      line-height:1.45;
+    }
+    .copyBtn{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(122,167,255,.10);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 7px 10px;
+      font-size: .86rem;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .copyBtn:hover{transform: translateY(-1px); background: rgba(122,167,255,.16); border-color: rgba(122,167,255,.30)}
+    .copyBtn:active{transform: translateY(0px)}
+    .copyStatus{
+      color: var(--faint);
+      font-size: .82rem;
+      margin-left: 8px;
+    }
+
+    .vizGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .vizCard{
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(10,16,34,.55);
+      overflow:hidden;
+    }
+    .vizTop{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding: 12px 12px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .vizTop b{font-size:.95rem}
+    .vizTop span{color: var(--faint); font-size: .86rem}
+    canvas{
+      width:100%;
+      height: 360px;
+      display:block;
+      background: rgba(5,8,20,.55);
+    }
+    .controls{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .control{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(7,10,18,.45);
+      border-radius: 16px;
+      padding: 10px 10px 8px;
+      min-height: 74px;
+    }
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      color: var(--muted);
+      font-size: .86rem;
+      margin-bottom: 8px;
+    }
+    .control .val{
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .86rem;
+    }
+    input[type="range"]{width:100%}
+    select, button.smallBtn{
+      width:100%;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(15,23,48,.55);
+      color: var(--text);
+      padding: 8px 10px;
+      font-size:.9rem;
+      cursor:pointer;
+    }
+    button.smallBtn:hover{background: rgba(122,167,255,.12); border-color: rgba(122,167,255,.25)}
+    .foot{
+      margin-top: 10px;
+      color: var(--faint);
+      font-size: .88rem;
+    }
+    .boxed{
+      border-left: 4px solid rgba(121,255,215,.65);
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(7,10,18,.40);
+      margin: 12px 0;
+      color: var(--muted);
+    }
+    .boxed b{color: var(--text)}
+    .kpiRow{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap:10px;
+      margin-top: 10px;
+    }
+    .kpi{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(7,10,18,.45);
+      border-radius: 16px;
+      padding: 10px 10px 8px;
+    }
+    .kpi .k{color:var(--faint); font-size:.84rem}
+    .kpi .v{font-family: var(--mono); color: var(--text); margin-top:4px}
+    .mini{
+      font-size:.92rem;
+      color: var(--muted);
+    }
+
+    footer{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 18px 40px;
+      color: var(--faint);
+      font-size: .9rem;
+    }
+
+    @media (max-width: 980px){
+      .hero{grid-template-columns: 1fr}
+      main{grid-template-columns: 1fr}
+      nav.toc{position:relative; top:0}
+      .controls{grid-template-columns: repeat(2, minmax(0,1fr))}
+      canvas{height: 330px}
+      .callouts{grid-template-columns: 1fr}
+      .kpiRow{grid-template-columns: 1fr}
+    }
+
+    @media print{
+      body{background:white; color:black}
+      nav.toc{display:none}
+      .titleCard,.quick,section.card,.vizCard,.control,.kpi{box-shadow:none}
+      .titleCard,.quick,section.card,.vizCard{border:1px solid #bbb}
+      canvas{background:white}
+      .copyBtn{display:none}
+    }
+
+    @keyframes floatIn{
+      from{transform: translateY(8px); opacity:0}
+      to{transform: translateY(0); opacity:1}
+    }
+    section.card, .titleCard, .quick, nav.toc{animation: floatIn .35s ease both}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hero">
+      <div class="titleCard">
+        <h1>2.3-1 — Wave in a GRIN (SELFOC) Slab: Sketch the Wavefronts</h1>
+        <p class="subtitle">
+          We use the same graded-index slab from Example/Exercise 1.3-1 (SELFOC GRIN lens): rays bend sinusoidally and the
+          wavefronts are surfaces of constant phase (constant optical path length) that stay orthogonal to the rays.
+        </p>
+        <div class="pillRow">
+          <div class="pill"><b>Model</b>: paraxial GRIN, 2D (y–z)</div>
+          <div class="pill"><b>Key idea</b>: wavefronts = φ(y,z)=const</div>
+          <div class="pill"><b>Output</b>: curved wavefronts → effective cylindrical lens</div>
+        </div>
+      </div>
+
+      <aside class="quick">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li>The SELFOC slab has <span style="color:var(--text)">highest refractive index on-axis</span> and lower index toward the edges.</li>
+          <li>Rays satisfy a harmonic-oscillator equation: <span style="font-family:var(--mono); color:var(--text)">y(z)=y0 cos(αz)+ (θ0/α) sin(αz)</span>.</li>
+          <li>Wavefronts are curves/surfaces orthogonal to the ray family and satisfy <span style="font-family:var(--mono); color:var(--text)">φ=k0·OPL</span> = constant.</li>
+          <li>For a normally incident plane wave (θ0=0), wavefronts rapidly become <span style="color:var(--text)">curved</span>; spacing varies with y because n(y) varies.</li>
+          <li>At the exit, the phase profile is approximately quadratic in y → equivalent to a <span style="color:var(--text)">thin lens</span> (cylindrical focusing in the y–z plane).</li>
+        </ul>
+      </aside>
+    </div>
+  </header>
+
+  <main>
+    <nav class="toc" aria-label="Table of Contents">
+      <div class="tocHeader">
+        <b>Table of Contents</b>
+        <small>sticky</small>
+      </div>
+      <div class="tocLinks">
+        <a href="#part1">Part 1 — Problem Analysis <span>→</span></a>
+        <a href="#part2">Part 2 — Strategy & Tips <span>→</span></a>
+        <a href="#part3">Part 3 — Full Solution <span>→</span></a>
+        <a href="#viz">Interactive Visualizations <span>→</span></a>
+      </div>
+    </nav>
+
+    <div class="content">
+
+      <section class="card" id="part1">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+        <h3>1) Restate the problem (in my own words)</h3>
+        <p>
+          We have a graded-index (GRIN) SELFOC slab whose refractive index varies with transverse coordinate <b>y</b>
+          (highest on-axis, lower off-axis), as in Example/Exercise 1.3-1. A wave travels through the slab along +z.
+          The task is to <b>sketch the wavefronts</b> inside the slab: i.e., the curves (in the y–z cross-section) where the
+          optical phase is constant.
+        </p>
+
+        <h3>2) Given quantities</h3>
+        <ul>
+          <li>GRIN slab of length <b>d</b> along z.</li>
+          <li>Index profile of SELFOC type. In paraxial form we use the standard quadratic approximation:
+            <span style="font-family:var(--mono); color:var(--text)">n(y) ≈ n0 [1 − (α² y²)/2]</span>
+            (equivalently, many texts start from <span style="font-family:var(--mono); color:var(--text)">n(y)=n0√(1−α²y²)</span> and expand for small y).</li>
+          <li>Optical wavelength in vacuum <b>λ</b> (so <span style="font-family:var(--mono); color:var(--text)">k0=2π/λ</span>).</li>
+          <li>Wave launched at z=0 (a common and most instructive case is a <b>normally incident plane wave</b>).</li>
+        </ul>
+
+        <h3>3) Unknowns</h3>
+        <ul>
+          <li>The <b>shape</b> of wavefronts inside the slab (curves of constant phase φ in the y–z plane).</li>
+          <li>How wavefront curvature evolves with z (qualitatively and, if possible, via a formula for φ(y,z)).</li>
+        </ul>
+
+        <h3>4) What must be found/proved</h3>
+        <ul>
+          <li>A correct sketch/description of wavefronts for a wave traveling through the SELFOC GRIN slab.</li>
+          <li>Connection to Example 1.3-1: wavefronts should be consistent with the known sinusoidal ray trajectories.</li>
+        </ul>
+
+        <h3>5) Relevant physical principles (and why they apply)</h3>
+        <div class="callouts">
+          <div class="callout note">
+            <b>Geometrical optics / eikonal</b>
+            <p>The slab varies slowly in y (on the scale of λ), so the field phase satisfies the eikonal equation and rays are valid.</p>
+          </div>
+          <div class="callout note">
+            <b>Rays ⟂ wavefronts</b>
+            <p>In isotropic media, rays follow energy flow and are orthogonal to constant-phase surfaces (wavefronts).</p>
+          </div>
+          <div class="callout note">
+            <b>Optical path length</b>
+            <p>Phase is proportional to OPL: φ = k0 ∫ n ds. Wavefronts are loci where φ is constant (mod 2π).</p>
+          </div>
+        </div>
+
+        <h3>6) Possible approaches (compare 2–3)</h3>
+        <ol>
+          <li><b>Ray family + “orthogonal wavefront” construction</b>: compute ray trajectories y(z), then draw curves orthogonal to them. <span class="mini">(Best for sketching.)</span></li>
+          <li><b>Eikonal/OPL approach</b>: compute φ(y,z)=k0·OPL and draw constant-φ contours. <span class="mini">(Gives quantitative wavefronts.)</span></li>
+          <li><b>Wave equation (paraxial) solution</b>: solve for field envelope in a quadratic index medium (Hermite–Gaussian modes). <span class="mini">(Most complete but heavier.)</span></li>
+        </ol>
+
+        <h3>7) Chosen approach</h3>
+        <p>
+          We choose <b>Approach (2)</b> built on <b>(1)</b>: use the known paraxial GRIN ray solution (sinusoidal),
+          compute the optical path length (OPL) along those rays, and then plot/describe <b>constant-phase contours</b>.
+          This directly produces wavefront sketches and connects cleanly to Example 1.3-1.
+        </p>
+      </section>
+
+      <section class="card" id="part2">
+        <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+        <h3>Minimal plan (no algebra yet)</h3>
+        <ol>
+          <li><b>Define the index model</b>: pick SELFOC paraxial form n(y) ≈ n0[1 − (α²y²)/2].</li>
+          <li><b>Write the ray equation</b> using geometrical optics in a graded medium → harmonic oscillator in y(z).</li>
+          <li><b>Choose launch condition</b> for the wave (e.g., plane wave at z=0 ⇒ initial slope θ0=0 for all rays).</li>
+          <li><b>Compute ray family</b> y(z) for different initial positions y0.</li>
+          <li><b>Compute phase</b> φ = k0 ∫ n ds along each ray (paraxial ds≈dz).</li>
+          <li><b>Express φ as a function of (y,z)</b> by eliminating y0 in favor of the current y at depth z.</li>
+          <li><b>Wavefronts</b>: set φ(y,z)=const and interpret the resulting curves; relate curvature to focusing.</li>
+          <li><b>Sanity checks</b>: near z=0 wavefronts ~ planes; stronger curvature for larger α or longer d; units.</li>
+        </ol>
+
+        <h3>Tools/principles used step-by-step</h3>
+        <ul>
+          <li>Ray equation from eikonal/Hamiltonian optics in inhomogeneous n(y).</li>
+          <li>OPL-based phase: φ = k0·OPL.</li>
+          <li>Paraxial approximation: small angles, ds≈dz, and small |αy| so quadratic index is valid.</li>
+        </ul>
+
+        <h3>Common mistakes + quick tips</h3>
+        <div class="callouts">
+          <div class="callout warn">
+            <b>Sign intuition error</b>
+            <p>Higher n means slower phase velocity but larger phase accumulation. Don’t confuse “front advances” with “phase builds.”</p>
+          </div>
+          <div class="callout warn">
+            <b>Forgetting orthogonality</b>
+            <p>Wavefronts are not “parallel to rays.” They are perpendicular to the local ray direction.</p>
+          </div>
+          <div class="callout good">
+            <b>Fast sketch rule</b>
+            <p>Draw sinusoidal rays; then draw short segments perpendicular to them; connect equal-phase points smoothly.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="part3">
+        <h2>PART 3 — Full Solution</h2>
+
+        <h3>Physical intuition first</h3>
+        <p>
+          In a SELFOC GRIN slab, the refractive index is largest at the center (y=0) and decreases with |y|.
+          Rays bend toward higher index, so they curve toward the axis and execute sinusoidal motion in y(z).
+          A wavefront is a surface of constant phase. Because phase accumulates as
+          <span style="font-family:var(--mono); color:var(--text)">φ = k0 ∫ n ds</span>,
+          different transverse positions accrue phase differently (since n depends on y along the path). Therefore,
+          a wavefront that starts planar becomes <b>curved</b> inside the slab. The curvature is precisely what makes the slab act like a lens.
+        </p>
+
+        <div class="eq" id="eq1">
+          <div class="label">
+            <span>Key definitions (copyable)</span>
+            <span>
+              <button class="copyBtn" data-copy-target="eq1pre">Copy</button>
+              <span class="copyStatus" id="eq1status"></span>
+            </span>
+          </div>
+          <pre id="eq1pre">k0 = 2π/λ
+φ(y,z) = k0 · OPL(y,z) = k0 ∫_path n(y) ds
+Wavefronts: φ(y,z) = const (mod 2π)</pre>
+        </div>
+
+        <h3>Step 1 — Index profile (SELFOC paraxial form)</h3>
+        <p>
+          A standard SELFOC GRIN profile used in Example 1.3-1 is
+          <span style="font-family:var(--mono); color:var(--text)">n(y)=n0 √(1−α²y²)</span>.
+          For paraxial rays with small |αy|, expand to second order:
+        </p>
+        <div class="eq" id="eq2">
+          <div class="label">
+            <span>Quadratic GRIN approximation</span>
+            <span>
+              <button class="copyBtn" data-copy-target="eq2pre">Copy</button>
+              <span class="copyStatus" id="eq2status"></span>
+            </span>
+          </div>
+          <pre id="eq2pre">n(y) ≈ n0 [ 1 − (α² y²)/2 ]      (valid for |αy| ≪ 1)</pre>
+        </div>
+
+        <h3>Step 2 — Ray trajectories in a quadratic GRIN medium</h3>
+        <p>
+          In paraxial geometrical optics for a medium varying in y only, the ray equation reduces (to leading order) to a harmonic oscillator:
+        </p>
+        <div class="eq" id="eq3">
+          <div class="label">
+            <span>Ray equation and solution</span>
+            <span>
+              <button class="copyBtn" data-copy-target="eq3pre">Copy</button>
+              <span class="copyStatus" id="eq3status"></span>
+            </span>
+          </div>
+          <pre id="eq3pre">d²y/dz² + α² y = 0
+⇒ y(z) = y0 cos(αz) + (θ0/α) sin(αz)</pre>
+        </div>
+        <p>
+          Here <b>y0</b> is the entry position at z=0 and <b>θ0 ≡ (dy/dz)|_{z=0}</b> is the initial slope.
+          For a normally incident plane wave at the entrance plane, all rays start with <b>θ0 = 0</b>, so:
+        </p>
+        <div class="eq" id="eq4">
+          <div class="label">
+            <span>Plane-wave launch (normal incidence)</span>
+            <span>
+              <button class="copyBtn" data-copy-target="eq4pre">Copy</button>
+              <span class="copyStatus" id="eq4status"></span>
+            </span>
+          </div>
+          <pre id="eq4pre">θ0 = 0  ⇒  y(z) = y0 cos(αz)</pre>
+        </div>
+
+        <h3>Step 3 — Phase accumulation (optical path length)</h3>
+        <p>
+          The phase at a point reached by a ray is proportional to the optical path length (OPL):
+          <span style="font-family:var(--mono); color:var(--text)">OPL = ∫ n ds</span>.
+          For paraxial rays, slopes are small so <span style="font-family:var(--mono); color:var(--text)">ds ≈ dz</span>. Then for a ray labeled by y0:
+        </p>
+
+        <div class="eq" id="eq5">
+          <div class="label">
+            <span>OPL along a ray (paraxial)</span>
+            <span>
+              <button class="copyBtn" data-copy-target="eq5pre">Copy</button>
+              <span class="copyStatus" id="eq5status"></span>
+            </span>
+          </div>
+          <pre id="eq5pre">OPL(y0,z) ≈ ∫₀^z n(y(z')) dz'
+with y(z') = y0 cos(αz')   (plane-wave launch)</pre>
+        </div>
+
+        <h3>Step 4 — Carry out the integral (detailed)</h3>
+        <p>
+          Substitute the quadratic index model <span style="font-family:var(--mono); color:var(--text)">n(y) ≈ n0[1 − (α²y²)/2]</span>
+          and the ray path <span style="font-family:var(--mono); color:var(--text)">y(z')=y0 cos(αz')</span>:
+        </p>
+        <div class="eq" id="eq6">
+          <div class="label">
+            <span>Integral evaluation</span>
+            <span>
+              <button class="copyBtn" data-copy-target="eq6pre">Copy</button>
+              <span class="copyStatus" id="eq6status"></span>
+            </span>
+          </div>
+          <pre id="eq6pre">n(y(z')) ≈ n0 [1 − (α²/2) y0² cos²(αz')]
+
+OPL(y0,z) ≈ ∫₀^z n0 dz' − (n0 α² y0²/2) ∫₀^z cos²(αz') dz'
+
+Use cos²(u) = (1 + cos(2u))/2:
+∫₀^z cos²(αz') dz' = z/2 + sin(2αz)/(4α)
+
+So:
+OPL(y0,z) ≈ n0 z − (n0 α² y0²/2) [ z/2 + sin(2αz)/(4α) ]
+          = n0 z − n0 α² y0² [ z/4 + sin(2αz)/(8α) ]</pre>
+        </div>
+
+        <h3>Step 5 — Convert from “ray label” y0 to spatial coordinate y</h3>
+        <p>
+          At depth z, a ray that entered at y0 sits at
+          <span style="font-family:var(--mono); color:var(--text)">y = y0 cos(αz)</span>.
+          Provided <span style="font-family:var(--mono); color:var(--text)">cos(αz) ≠ 0</span>, we invert:
+          <span style="font-family:var(--mono); color:var(--text)">y0 = y / cos(αz)</span>.
+          Substitute into OPL(y0,z) to obtain a phase field φ(y,z)=k0·OPL(y,z):
+        </p>
+
+        <div class="eq" id="eq7">
+          <div class="label">
+            <span>Phase as a function of (y,z)</span>
+            <span>
+              <button class="copyBtn" data-copy-target="eq7pre">Copy</button>
+              <span class="copyStatus" id="eq7status"></span>
+            </span>
+          </div>
+          <pre id="eq7pre">Let y0 = y / cos(αz).
+
+φ(y,z) = k0 · OPL(y,z)
+≈ k0 n0 z − k0 n0 α² (y² / cos²(αz)) [ z/4 + sin(2αz)/(8α) ]</pre>
+        </div>
+
+        <h3>Step 6 — Wavefronts are constant-phase contours</h3>
+        <p>
+          A wavefront is the locus where φ(y,z) is constant (mod 2π). So the wavefront curves satisfy:
+        </p>
+
+        <div class="eq" id="eq8">
+          <div class="label">
+            <span>Wavefront condition</span>
+            <span>
+              <button class="copyBtn" data-copy-target="eq8pre">Copy</button>
+              <span class="copyStatus" id="eq8status"></span>
+            </span>
+          </div>
+          <pre id="eq8pre">Wavefronts:   φ(y,z) = 2π m   (m integer)
+⇒ constant-φ contours in the (y,z) plane</pre>
+        </div>
+
+        <div class="boxed">
+          <b>Qualitative sketch features (what your hand-drawn sketch must show)</b>
+          <ul>
+            <li><b>Near z=0</b>: wavefronts are nearly planar (parallel lines), because all rays start in phase.</li>
+            <li><b>Inside the slab</b>: wavefronts become curved and remain everywhere <b>perpendicular</b> to the sinusoidal rays.</li>
+            <li><b>Spacing</b>: where n is higher (near y=0) the phase accumulates faster → wavefront spacing (in z) is slightly smaller on-axis than off-axis.</li>
+            <li><b>Focusing behavior</b>: the curvature corresponds to a lens: the exiting wavefront is approximately a cylindrical (y–z) converging wavefront.</li>
+          </ul>
+        </div>
+
+        <h3>Step 7 — Connect to “lens-like” behavior at the exit</h3>
+        <p>
+          At the exit plane z=d, φ(y,d) is approximately quadratic in y (in this paraxial model), which is exactly the phase of a thin lens:
+          <span style="font-family:var(--mono); color:var(--text)">φ(y) = φ0 − (k0/(2f)) y²</span>.
+          So the GRIN slab produces a quadratic phase curvature and therefore focuses (in the y–z plane).
+        </p>
+
+        <div class="eq" id="eq9">
+          <div class="label">
+            <span>Thin-lens phase match (effective focal length)</span>
+            <span>
+              <button class="copyBtn" data-copy-target="eq9pre">Copy</button>
+              <span class="copyStatus" id="eq9status"></span>
+            </span>
+          </div>
+          <pre id="eq9pre">If φ_out(y) ≈ φ0 − (k0/(2f)) y²,
+then  d²φ_out/dy² = −k0/f   ⇒   f = −k0 / (d²φ_out/dy²)</pre>
+        </div>
+
+        <div class="eq" id="final">
+          <div class="label">
+            <span><b>Final answer (what to sketch)</b></span>
+            <span>
+              <button class="copyBtn" data-copy-target="finalpre">Copy</button>
+              <span class="copyStatus" id="finalstatus"></span>
+            </span>
+          </div>
+          <pre id="finalpre">Inside a SELFOC (GRIN) slab, rays follow sinusoidal paths y(z)=y0 cos(αz) (for normal incidence).
+Wavefronts are the constant-phase curves φ(y,z)=const where φ = k0∫n ds.
+
+Using n(y)≈n0[1−(α²y²)/2] and ds≈dz:
+φ(y,z) ≈ k0 n0 z − k0 n0 α² (y² / cos²(αz)) [ z/4 + sin(2αz)/(8α) ].
+
+Sketch: start with nearly planar wavefronts at z=0, then draw progressively curved wavefronts that remain orthogonal to the sinusoidal ray family and correspond to a converging (lens-like) wavefront at the exit.</pre>
+        </div>
+
+        <h3>Sanity checks</h3>
+        <ul>
+          <li><b>Units</b>: φ is dimensionless; k0 has 1/length, OPL has length → OK.</li>
+          <li><b>Limiting case α→0</b>: n(y)→n0 constant, rays straight, φ≈k0n0z ⇒ wavefronts are planes → OK.</li>
+          <li><b>Physical interpretation</b>: curvature increases with α and with propagation distance; stronger gradient ⇒ stronger focusing → OK.</li>
+        </ul>
+      </section>
+
+      <section class="card" id="viz">
+        <h2>Interactive Visualizations</h2>
+        <p>
+          The canvases below render (1) a labeled GRIN slab diagram with rays and wavefronts,
+          (2) a quantitative phase profile at the exit plane (showing the quadratic lens-like phase),
+          and (3) a parameter sweep of effective focal length versus slab length (and comparison to the textbook GRIN-lens formula).
+          Use the controls to update <b>all</b> plots live.
+        </p>
+
+        <div class="controls" aria-label="interactive controls">
+          <div class="control">
+            <label>
+              <span>Gradient α (1/mm)</span>
+              <span class="val" id="alphaVal"></span>
+            </label>
+            <input id="alpha" type="range" min="0.2" max="2.0" step="0.02" value="0.9" />
+          </div>
+          <div class="control">
+            <label>
+              <span>Slab length d (mm)</span>
+              <span class="val" id="dVal"></span>
+            </label>
+            <input id="d" type="range" min="0.3" max="4.0" step="0.02" value="2.0" />
+          </div>
+          <div class="control">
+            <label>
+              <span>Index on-axis n₀</span>
+              <span class="val" id="n0Val"></span>
+            </label>
+            <input id="n0" type="range" min="1.2" max="2.2" step="0.01" value="1.6" />
+          </div>
+          <div class="control">
+            <label>
+              <span>Vacuum wavelength λ (nm)</span>
+              <span class="val" id="lamVal"></span>
+            </label>
+            <input id="lam" type="range" min="400" max="1600" step="10" value="850" />
+          </div>
+
+          <div class="control">
+            <label>
+              <span>Wavefront density</span>
+              <span class="val" id="wfVal"></span>
+            </label>
+            <input id="wf" type="range" min="6" max="22" step="1" value="12" />
+          </div>
+          <div class="control">
+            <label>
+              <span>Max |y| shown (mm)</span>
+              <span class="val" id="ymaxVal"></span>
+            </label>
+            <input id="ymax" type="range" min="0.4" max="2.4" step="0.02" value="1.2" />
+          </div>
+          <div class="control">
+            <label>
+              <span>Launch condition</span>
+              <span class="val" id="launchVal"></span>
+            </label>
+            <select id="launch">
+              <option value="plane" selected>Plane wave (θ₀=0)</option>
+              <option value="tilt">Tilted plane wave (θ₀≠0)</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>
+              <span>Actions</span>
+              <span class="val">reset</span>
+            </label>
+            <button class="smallBtn" id="resetBtn" type="button">Reset to example values</button>
+          </div>
+        </div>
+
+        <div class="kpiRow" aria-label="computed readouts">
+          <div class="kpi">
+            <div class="k">Estimated focal length from exit phase curvature (mm)</div>
+            <div class="v" id="fEst">—</div>
+          </div>
+          <div class="kpi">
+            <div class="k">Textbook GRIN-slab lens formula (mm)</div>
+            <div class="v" id="fText">—</div>
+          </div>
+          <div class="kpi">
+            <div class="k">Validity note</div>
+            <div class="v" id="validNote">—</div>
+          </div>
+        </div>
+
+        <div class="vizGrid">
+          <figure class="vizCard">
+            <div class="vizTop">
+              <div>
+                <b>(1) GRIN slab diagram: rays + wavefronts</b>
+                <span>y–z plane (units: mm)</span>
+              </div>
+              <span id="diagNote">orthogonality: wavefronts ⟂ rays</span>
+            </div>
+            <canvas id="c1" aria-label="diagram canvas"></canvas>
+          </figure>
+
+          <figure class="vizCard">
+            <div class="vizTop">
+              <div>
+                <b>(2) Main plot: exit-plane phase profile φ(y,d)</b>
+                <span>shows quadratic (lens-like) phase</span>
+              </div>
+              <span>y (mm) vs φ (rad)</span>
+            </div>
+            <canvas id="c2" aria-label="phase plot canvas"></canvas>
+          </figure>
+
+          <figure class="vizCard">
+            <div class="vizTop">
+              <div>
+                <b>(3) Secondary plot: focal length vs slab length</b>
+                <span>numeric vs textbook curve</span>
+              </div>
+              <span>d (mm) vs f (mm)</span>
+            </div>
+            <canvas id="c3" aria-label="sweep plot canvas"></canvas>
+          </figure>
+        </div>
+
+        <p class="foot">
+          <b>Note:</b> This interactive model uses the standard paraxial quadratic GRIN approximation (good for |αy|≪1 and modest slopes),
+          which is exactly what you want for a clear “wavefront sketch” consistent with Example 1.3-1.
+        </p>
+      </section>
+
+    </div>
+  </main>
+
+  <footer>
+    Built with vanilla HTML/CSS/JS. Copy buttons copy plain text equations/results. Canvases are high-DPI aware and resize responsively.
+  </footer>
+
+  <script>
+    // ========= Copy buttons =========
+    (function(){
+      function setStatus(el, msg){
+        if(!el) return;
+        el.textContent = msg;
+        setTimeout(()=>{ el.textContent=""; }, 900);
+      }
+      async function copyText(text){
+        if(navigator.clipboard && window.isSecureContext){
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position='fixed';
+        ta.style.left='-9999px';
+        ta.style.top='-9999px';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        let ok=false;
+        try{ ok = document.execCommand('copy'); }catch(e){ ok=false; }
+        document.body.removeChild(ta);
+        return ok;
+      }
+
+      document.querySelectorAll('.copyBtn').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const id = btn.getAttribute('data-copy-target');
+          const pre = document.getElementById(id);
+          const status = btn.parentElement.querySelector('.copyStatus');
+          const ok = await copyText(pre ? pre.textContent.trim() : '');
+          setStatus(status, ok ? 'Copied ✓' : 'Copy failed');
+        });
+      });
+    })();
+
+    // ========= Canvas utilities =========
+    function makeHiDPICanvas(canvas){
+      const ctx = canvas.getContext('2d');
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.max(2, Math.floor(rect.width * dpr));
+        const h = Math.max(2, Math.floor(rect.height * dpr));
+        if(canvas.width !== w || canvas.height !== h){
+          canvas.width = w;
+          canvas.height = h;
+        }
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+        return {w: rect.width, h: rect.height, dpr};
+      }
+      return {ctx, resize};
+    }
+
+    function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
+
+    // Axes drawing (simple, consistent, ticks+grid)
+    function drawAxes(ctx, box, xMin, xMax, yMin, yMax, xLabel, yLabel, title){
+      const {x,y,w,h} = box;
+      ctx.save();
+      ctx.clearRect(x,y,w,h);
+
+      // background
+      ctx.fillStyle = 'rgba(5,8,20,0.55)';
+      ctx.fillRect(x,y,w,h);
+
+      const padL = 56, padR = 16, padT = 34, padB = 44;
+      const px = x + padL, py = y + padT;
+      const pw = w - padL - padR, ph = h - padT - padB;
+
+      // title
+      ctx.fillStyle = 'rgba(233,236,255,0.92)';
+      ctx.font = '600 14px ui-sans-serif, system-ui';
+      ctx.fillText(title, x + 12, y + 20);
+
+      // grid & ticks
+      const nGrid = 6;
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1;
+
+      function xTo(u){ return px + (u - xMin) * pw / (xMax - xMin); }
+      function yTo(v){ return py + ph - (v - yMin) * ph / (yMax - yMin); }
+
+      // grid lines
+      for(let i=0;i<=nGrid;i++){
+        const gx = px + i * pw / nGrid;
+        const gy = py + i * ph / nGrid;
+        ctx.beginPath(); ctx.moveTo(gx, py); ctx.lineTo(gx, py+ph); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px, gy); ctx.lineTo(px+pw, gy); ctx.stroke();
+      }
+
+      // axes
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py+ph); ctx.lineTo(px+pw, py+ph); ctx.stroke();
+
+      // tick labels
+      ctx.fillStyle = 'rgba(170,179,214,0.95)';
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas';
+      for(let i=0;i<=nGrid;i++){
+        const u = xMin + (xMax-xMin)*i/nGrid;
+        const v = yMin + (yMax-yMin)*i/nGrid;
+
+        const tx = xTo(u);
+        const ty = yTo(v);
+
+        // x ticks
+        ctx.fillText(u.toFixed(2), tx-14, py+ph+18);
+        // y ticks
+        ctx.fillText(v.toFixed(2), px-50, ty+4);
+      }
+
+      // axis labels
+      ctx.fillStyle = 'rgba(233,236,255,0.85)';
+      ctx.font = '600 12px ui-sans-serif, system-ui';
+      ctx.fillText(xLabel, px + pw/2 - ctx.measureText(xLabel).width/2, y + h - 12);
+
+      ctx.save();
+      ctx.translate(x + 14, py + ph/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+
+      ctx.restore();
+      return {px,py,pw,ph,xTo,yTo};
+    }
+
+    // ========= Physics model (paraxial quadratic GRIN) =========
+    // n(y) ≈ n0 [1 − (α² y²)/2] (α in 1/mm, y in mm)
+    // Ray: y(z) = y0 cos(αz) + (θ0/α) sin(αz)
+    // OPL(y0,z) ≈ n0 z − n0 α² y0² [ z/4 + sin(2αz)/(8α) ]   (for θ0=0; ds≈dz)
+    // For tilted launch, we'll use y(z) general solution, and approximate OPL with same n(y(z)) integral numerically.
+
+    function nOfY(y, n0, alpha){
+      return n0 * (1 - 0.5 * (alpha*alpha) * y*y);
+    }
+
+    function rayY(z, y0, theta0, alpha){
+      if(Math.abs(alpha) < 1e-9) return y0 + theta0*z;
+      return y0*Math.cos(alpha*z) + (theta0/alpha)*Math.sin(alpha*z);
+    }
+
+    function rayDYDZ(z, y0, theta0, alpha){
+      if(Math.abs(alpha) < 1e-9) return theta0;
+      return -y0*alpha*Math.sin(alpha*z) + theta0*Math.cos(alpha*z);
+    }
+
+    // Numerical OPL along ray with paraxial correction ds≈sqrt(1+(dy/dz)^2) dz
+    function oplNumerical(y0, theta0, zEnd, n0, alpha){
+      const N = 900; // fixed, fast enough
+      let sum = 0;
+      let zPrev = 0;
+      let yPrev = rayY(0,y0,theta0,alpha);
+      let dyPrev = rayDYDZ(0,y0,theta0,alpha);
+      for(let i=1;i<=N;i++){
+        const z = zEnd * i / N;
+        const y = rayY(z,y0,theta0,alpha);
+        const dy = rayDYDZ(z,y0,theta0,alpha);
+        const dz = z - zPrev;
+
+        // midpoint
+        const zm = 0.5*(z+zPrev);
+        const ym = rayY(zm,y0,theta0,alpha);
+        const dym = rayDYDZ(zm,y0,theta0,alpha);
+        const ds = Math.sqrt(1 + dym*dym) * dz; // paraxial-ish but better than ds≈dz
+        const nm = nOfY(ym,n0,alpha);
+        sum += nm * ds;
+
+        zPrev = z; yPrev = y; dyPrev = dy;
+      }
+      return sum;
+    }
+
+    function phaseAt(y0, theta0, z, lambdaNm, n0, alpha){
+      const k0 = 2*Math.PI / (lambdaNm*1e-6); // nm -> mm (1 nm = 1e-6 mm)
+      const opl = oplNumerical(y0,theta0,z,n0,alpha);
+      return k0 * opl;
+    }
+
+    // Exit phase profile φ(y,z=d) computed by mapping from y0 grid to current y and interpolating
+    function computeExitPhaseProfile(d, lambdaNm, n0, alpha, theta0, yMax){
+      // Sample y0 uniformly; map to y at exit; compute phase along each ray.
+      const M = 140;
+      const y0Min = -yMax, y0Max = yMax;
+      const pairs = [];
+      for(let i=0;i<M;i++){
+        const y0 = y0Min + (y0Max-y0Min)*i/(M-1);
+        const y = rayY(d, y0, theta0, alpha);
+        const phi = phaseAt(y0, theta0, d, lambdaNm, n0, alpha);
+        pairs.push({y, phi, y0});
+      }
+      // sort by y
+      pairs.sort((a,b)=>a.y-b.y);
+
+      // Create interpolated φ(y) on fixed y grid
+      const Ny = 160;
+      const ys = [];
+      const phis = [];
+      for(let j=0;j<Ny;j++){
+        const y = -yMax + 2*yMax*j/(Ny-1);
+        ys.push(y);
+
+        // linear interpolation in sorted pairs
+        let k = 0;
+        while(k < pairs.length-2 && pairs[k+1].y < y) k++;
+        const a = pairs[k], b = pairs[k+1];
+        let phi;
+        if(y <= pairs[0].y) phi = pairs[0].phi;
+        else if(y >= pairs[pairs.length-1].y) phi = pairs[pairs.length-1].phi;
+        else{
+          const t = (y - a.y)/(b.y - a.y);
+          phi = a.phi*(1-t) + b.phi*t;
+        }
+        phis.push(phi);
+      }
+      return {ys, phis, raw:pairs};
+    }
+
+    // Quadratic fit around y=0 for phase curvature: φ ≈ c0 + c2 y^2 (ignore linear)
+    function estimateFocalFromPhase(ys, phis, lambdaNm){
+      const k0 = 2*Math.PI / (lambdaNm*1e-6);
+
+      // select central region |y| <= 0.35*max
+      const yMax = Math.max(...ys.map(v=>Math.abs(v)));
+      const cutoff = 0.35*yMax + 1e-12;
+
+      let S00=0, S01=0, S11=0;
+      let T0=0, T1=0;
+      // Model: phi = a + b*y^2
+      for(let i=0;i<ys.length;i++){
+        const y = ys[i];
+        if(Math.abs(y) > cutoff) continue;
+        const x0 = 1;
+        const x1 = y*y;
+        const w = 1; // uniform
+        S00 += w*x0*x0;
+        S01 += w*x0*x1;
+        S11 += w*x1*x1;
+        T0  += w*x0*phis[i];
+        T1  += w*x1*phis[i];
+      }
+      const det = S00*S11 - S01*S01;
+      if(Math.abs(det) < 1e-12) return {f: NaN, curv: NaN, a:NaN, b:NaN};
+      const a = (T0*S11 - T1*S01)/det;
+      const b = (T1*S00 - T0*S01)/det;
+
+      // For lens: phi ≈ phi0 − (k0/(2f)) y^2  => b = −k0/(2f)  => f = −k0/(2b)
+      const f = -k0/(2*b);
+      const curv = 2*b; // d²phi/dy² = 2b
+      return {f, curv, a, b};
+    }
+
+    // Textbook focal length from Example 1.3-1 (shown in the screenshot): f ≈ 1/(n0 α sin(α d)).
+    // Units: alpha(1/mm), d(mm) -> alpha d dimensionless => f(mm).
+    function fTextbook(n0, alpha, d){
+      const s = Math.sin(alpha*d);
+      if(Math.abs(s) < 1e-6) return NaN;
+      return 1/(n0*alpha*s);
+    }
+
+    // ========= Drawing wavefronts by contouring phase on a grid =========
+    function computePhaseGrid(d, lambdaNm, n0, alpha, theta0, yMax){
+      // compute phi(y,z) on regular grid (Ny x Nz)
+      const Ny = 110, Nz = 150;
+      const ys = new Array(Ny);
+      const zs = new Array(Nz);
+      for(let i=0;i<Ny;i++) ys[i] = -yMax + 2*yMax*i/(Ny-1);
+      for(let j=0;j<Nz;j++) zs[j] = d * j/(Nz-1);
+
+      // For each (y,z): invert approximately to find y0 by solving y = y(z; y0).
+      // For plane wave: y = y0 cos(αz) + (theta0/alpha) sin(αz). Solve y0 = (y - (theta0/alpha) sin(αz))/cos(αz).
+      const phi = Array.from({length:Ny}, ()=> new Array(Nz).fill(0));
+      const k0 = 2*Math.PI / (lambdaNm*1e-6);
+
+      for(let j=0;j<Nz;j++){
+        const z = zs[j];
+        const c = Math.cos(alpha*z);
+        const s = Math.sin(alpha*z);
+        for(let i=0;i<Ny;i++){
+          const y = ys[i];
+          let y0;
+          if(Math.abs(alpha) < 1e-10){
+            y0 = y - theta0*z;
+          }else{
+            if(Math.abs(c) < 0.08){
+              // near singular; clamp to avoid blow-up in a sketch model
+              y0 = (y - (theta0/alpha)*s) / (Math.sign(c)*0.08);
+            }else{
+              y0 = (y - (theta0/alpha)*s) / c;
+            }
+          }
+          // compute OPL numerically along that ray from 0 to z
+          const opl = oplNumerical(y0, theta0, z, n0, alpha);
+          phi[i][j] = k0 * opl;
+        }
+      }
+      return {ys, zs, phi};
+    }
+
+    // Marching squares for contour lines at levels
+    function marchingSquaresContours(grid, levels){
+      const {ys,zs,phi} = grid;
+      const Ny = ys.length, Nz = zs.length;
+      const contours = levels.map(()=>[]);
+      // helper to interpolate edge
+      function interp(p1, p2, v1, v2, level){
+        const t = (level - v1) / (v2 - v1);
+        return {
+          y: p1.y + t*(p2.y - p1.y),
+          z: p1.z + t*(p2.z - p1.z)
+        };
+      }
+
+      for(let li=0; li<levels.length; li++){
+        const L = levels[li];
+        const segs = [];
+        for(let i=0;i<Ny-1;i++){
+          for(let j=0;j<Nz-1;j++){
+            const v00 = phi[i][j];
+            const v10 = phi[i+1][j];
+            const v01 = phi[i][j+1];
+            const v11 = phi[i+1][j+1];
+
+            let idx = 0;
+            if(v00 >= L) idx |= 1;
+            if(v10 >= L) idx |= 2;
+            if(v11 >= L) idx |= 4;
+            if(v01 >= L) idx |= 8;
+
+            if(idx===0 || idx===15) continue;
+
+            const p00 = {y: ys[i],   z: zs[j]};
+            const p10 = {y: ys[i+1], z: zs[j]};
+            const p01 = {y: ys[i],   z: zs[j+1]};
+            const p11 = {y: ys[i+1], z: zs[j+1]};
+
+            // edges: e0 between p00-p10, e1 p10-p11, e2 p11-p01, e3 p01-p00
+            let pts = [];
+            switch(idx){
+              case 1: case 14:
+                pts = [interp(p01,p00,v01,v00,L), interp(p00,p10,v00,v10,L)];
+                break;
+              case 2: case 13:
+                pts = [interp(p00,p10,v00,v10,L), interp(p10,p11,v10,v11,L)];
+                break;
+              case 3: case 12:
+                pts = [interp(p01,p00,v01,v00,L), interp(p10,p11,v10,v11,L)];
+                break;
+              case 4: case 11:
+                pts = [interp(p10,p11,v10,v11,L), interp(p11,p01,v11,v01,L)];
+                break;
+              case 5:
+                // ambiguous; split into two segments
+                segs.push([interp(p01,p00,v01,v00,L), interp(p00,p10,v00,v10,L)]);
+                segs.push([interp(p10,p11,v10,v11,L), interp(p11,p01,v11,v01,L)]);
+                continue;
+              case 6: case 9:
+                pts = [interp(p00,p10,v00,v10,L), interp(p11,p01,v11,v01,L)];
+                break;
+              case 7: case 8:
+                pts = [interp(p01,p00,v01,v00,L), interp(p11,p01,v11,v01,L)];
+                break;
+              case 10:
+                // ambiguous; split
+                segs.push([interp(p00,p10,v00,v10,L), interp(p10,p11,v10,v11,L)]);
+                segs.push([interp(p11,p01,v11,v01,L), interp(p01,p00,v01,v00,L)]);
+                continue;
+              default:
+                break;
+            }
+            if(pts.length===2) segs.push(pts);
+          }
+        }
+        contours[li] = segs;
+      }
+      return contours;
+    }
+
+    // ========= Plotting =========
+    const c1 = makeHiDPICanvas(document.getElementById('c1'));
+    const c2 = makeHiDPICanvas(document.getElementById('c2'));
+    const c3 = makeHiDPICanvas(document.getElementById('c3'));
+
+    const els = {
+      alpha: document.getElementById('alpha'),
+      d: document.getElementById('d'),
+      n0: document.getElementById('n0'),
+      lam: document.getElementById('lam'),
+      wf: document.getElementById('wf'),
+      ymax: document.getElementById('ymax'),
+      launch: document.getElementById('launch'),
+      resetBtn: document.getElementById('resetBtn'),
+
+      alphaVal: document.getElementById('alphaVal'),
+      dVal: document.getElementById('dVal'),
+      n0Val: document.getElementById('n0Val'),
+      lamVal: document.getElementById('lamVal'),
+      wfVal: document.getElementById('wfVal'),
+      ymaxVal: document.getElementById('ymaxVal'),
+      launchVal: document.getElementById('launchVal'),
+
+      fEst: document.getElementById('fEst'),
+      fText: document.getElementById('fText'),
+      validNote: document.getElementById('validNote')
+    };
+
+    function readParams(){
+      const alpha = parseFloat(els.alpha.value);     // 1/mm
+      const d = parseFloat(els.d.value);             // mm
+      const n0 = parseFloat(els.n0.value);
+      const lambdaNm = parseFloat(els.lam.value);    // nm
+      const wf = parseInt(els.wf.value,10);
+      const yMax = parseFloat(els.ymax.value);
+
+      const launch = els.launch.value;
+      // choose theta0 (dimensionless slope dy/dz) for tilted plane wave
+      const theta0 = (launch === 'tilt') ? 0.18 : 0.0; // ~10 degrees-ish (small)
+      return {alpha,d,n0,lambdaNm,wf,yMax,theta0,launch};
+    }
+
+    function updateUI(p){
+      els.alphaVal.textContent = p.alpha.toFixed(2);
+      els.dVal.textContent = p.d.toFixed(2);
+      els.n0Val.textContent = p.n0.toFixed(2);
+      els.lamVal.textContent = p.lambdaNm.toFixed(0);
+      els.wfVal.textContent = String(p.wf);
+      els.ymaxVal.textContent = p.yMax.toFixed(2);
+      els.launchVal.textContent = (p.launch==='plane') ? 'θ₀=0' : 'θ₀=0.18';
+
+      // validity quick note
+      const alphaY = p.alpha * p.yMax;
+      let note = '';
+      if(alphaY < 0.6) note = 'Good: |αy|max is small → quadratic GRIN is reliable.';
+      else if(alphaY < 0.9) note = 'Moderate: model OK for sketching; avoid very edge rays.';
+      else note = 'Caution: |αy|max is large → quadratic approximation may distort details.';
+      els.validNote.textContent = note;
+    }
+
+    function drawDiagram(p){
+      const {ctx, resize} = c1;
+      const {w,h} = resize();
+
+      // Diagram axes in physical coordinates: z in [0,d], y in [-yMax,yMax]
+      const box = {x:0,y:0,w,h};
+      const ax = drawAxes(ctx, box, 0, p.d, -p.yMax, p.yMax, 'z (mm)', 'y (mm)', 'GRIN slab: rays + wavefronts (constant phase)');
+      const {xTo,yTo,px,py,pw,ph} = ax;
+
+      // slab rectangle
+      ctx.save();
+      ctx.fillStyle = 'rgba(122,167,255,0.08)';
+      ctx.strokeStyle = 'rgba(122,167,255,0.35)';
+      ctx.lineWidth = 1.5;
+      const x0 = xTo(0), x1 = xTo(p.d);
+      const y0 = yTo(p.yMax), y1 = yTo(-p.yMax);
+      ctx.fillRect(x0, y0, x1-x0, y1-y0);
+      ctx.strokeRect(x0, y0, x1-x0, y1-y0);
+
+      // index gradient indicator (simple)
+      ctx.fillStyle = 'rgba(121,255,215,0.10)';
+      ctx.fillRect(x0, yTo(0)-12, x1-x0, 24);
+
+      ctx.fillStyle = 'rgba(233,236,255,0.88)';
+      ctx.font = '600 12px ui-sans-serif, system-ui';
+      ctx.fillText('SELFOC GRIN slab', x0+10, y0+18);
+      ctx.fillStyle = 'rgba(170,179,214,0.9)';
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas';
+      ctx.fillText('n(y) ≈ n0[1−(α²y²)/2] (max at y=0)', x0+10, y0+36);
+
+      // draw rays (family)
+      const rayCount = 13;
+      ctx.lineWidth = 1.4;
+      ctx.strokeStyle = 'rgba(233,236,255,0.30)';
+      for(let r=0;r<rayCount;r++){
+        const y0r = -p.yMax*0.92 + 2*p.yMax*0.92*r/(rayCount-1);
+        ctx.beginPath();
+        const steps = 220;
+        for(let k=0;k<=steps;k++){
+          const z = p.d * k/steps;
+          const y = rayY(z, y0r, p.theta0, p.alpha);
+          const X = xTo(z);
+          const Y = yTo(y);
+          if(k===0) ctx.moveTo(X,Y);
+          else ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+      }
+
+      // compute phase grid and draw wavefront contours
+      const grid = computePhaseGrid(p.d, p.lambdaNm, p.n0, p.alpha, p.theta0, p.yMax);
+
+      // choose contour levels: evenly spaced by 2π, offset near center
+      // pick reference at (0,0): phi=0, so levels = m*2π within min/max
+      let phiMin=Infinity, phiMax=-Infinity;
+      for(let i=0;i<grid.ys.length;i++){
+        for(let j=0;j<grid.zs.length;j++){
+          const v = grid.phi[i][j];
+          phiMin = Math.min(phiMin, v);
+          phiMax = Math.max(phiMax, v);
+        }
+      }
+      const twoPi = 2*Math.PI;
+      // density control: use larger step if wf small
+      const step = twoPi * (18 / p.wf); // heuristic
+      const levels = [];
+      const start = Math.ceil(phiMin/step)*step;
+      for(let L=start; L<=phiMax; L+=step) levels.push(L);
+
+      const contours = marchingSquaresContours(grid, levels);
+
+      // draw contours
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = 'rgba(121,255,215,0.70)';
+      for(let li=0;li<contours.length;li++){
+        const segs = contours[li];
+        for(const seg of segs){
+          ctx.beginPath();
+          const a = seg[0], b = seg[1];
+          ctx.moveTo(xTo(a.z), yTo(a.y));
+          ctx.lineTo(xTo(b.z), yTo(b.y));
+          ctx.stroke();
+        }
+      }
+
+      // entrance wave arrow
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      ctx.lineWidth = 2;
+      const axY = yTo(p.theta0===0 ? 0.65*p.yMax : 0.50*p.yMax);
+      ctx.beginPath();
+      ctx.moveTo(xTo(-0.25), axY);
+      ctx.lineTo(xTo(0), axY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(xTo(0), axY);
+      ctx.lineTo(xTo(-0.06), axY-6);
+      ctx.lineTo(xTo(-0.06), axY+6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = 'rgba(170,179,214,0.92)';
+      ctx.font = '600 12px ui-sans-serif, system-ui';
+      ctx.fillText('incoming wave', xTo(0.02), axY-8);
+
+      // legend
+      const lx = x0+12, ly = y1-52;
+      ctx.fillStyle = 'rgba(7,10,18,0.55)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(lx, ly, 220, 42, 10);
+      ctx.fill(); ctx.stroke();
+
+      ctx.font = '12px ui-sans-serif, system-ui';
+      ctx.fillStyle = 'rgba(233,236,255,0.85)';
+      ctx.fillText('Legend', lx+10, ly+16);
+
+      ctx.strokeStyle = 'rgba(233,236,255,0.32)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(lx+10, ly+28); ctx.lineTo(lx+44, ly+28); ctx.stroke();
+      ctx.fillStyle = 'rgba(170,179,214,0.9)';
+      ctx.fillText('rays', lx+52, ly+32);
+
+      ctx.strokeStyle = 'rgba(121,255,215,0.70)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(lx+110, ly+28); ctx.lineTo(lx+144, ly+28); ctx.stroke();
+      ctx.fillStyle = 'rgba(170,179,214,0.9)';
+      ctx.fillText('wavefronts', lx+152, ly+32);
+
+      ctx.restore();
+    }
+
+    // Plot exit phase φ(y,d) and quadratic fit
+    function drawExitPhase(p){
+      const {ctx, resize} = c2;
+      const {w,h} = resize();
+
+      const prof = computeExitPhaseProfile(p.d, p.lambdaNm, p.n0, p.alpha, p.theta0, p.yMax);
+      // unwrap relative to center to avoid huge offsets in display
+      const ys = prof.ys;
+      const phis = prof.phis.slice();
+
+      // subtract center phase
+      const mid = Math.floor(ys.length/2);
+      const phi0 = phis[mid];
+      for(let i=0;i<phis.length;i++) phis[i] -= phi0;
+
+      // keep in a readable range: show within +- 60 rad by modulo shift
+      // (for plotting; does not affect curvature)
+      for(let i=0;i<phis.length;i++){
+        while(phis[i] > 60) phis[i] -= 2*Math.PI*10;
+        while(phis[i] < -60) phis[i] += 2*Math.PI*10;
+      }
+
+      // estimate focal length from unshifted curvature (use original phases w/ center subtraction ok)
+      const est = estimateFocalFromPhase(ys, phis, p.lambdaNm);
+      const fE = est.f;
+
+      // compute y-range and phi-range
+      let yMin = -p.yMax, yMax = p.yMax;
+      let phiMin = Math.min(...phis), phiMax = Math.max(...phis);
+      // pad
+      const pad = 0.12*(phiMax-phiMin + 1e-6);
+      phiMin -= pad; phiMax += pad;
+
+      const box = {x:0,y:0,w,h};
+      const ax = drawAxes(ctx, box, yMin, yMax, phiMin, phiMax, 'y (mm)', 'φ(y,d) (rad)', 'Exit-plane phase profile (relative to center)');
+      const {xTo,yTo,px,py,pw,ph} = ax;
+
+      // curve
+      ctx.save();
+      ctx.strokeStyle = 'rgba(121,255,215,0.85)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for(let i=0;i<ys.length;i++){
+        const X = xTo(ys[i]);
+        const Y = yTo(phis[i]);
+        if(i===0) ctx.moveTo(X,Y);
+        else ctx.lineTo(X,Y);
+      }
+      ctx.stroke();
+
+      // quadratic fit overlay (from est: phi ≈ a + b y^2 ; display with same y range)
+      ctx.strokeStyle = 'rgba(122,167,255,0.85)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([7,5]);
+      ctx.beginPath();
+      for(let i=0;i<ys.length;i++){
+        const y = ys[i];
+        const fit = est.a + est.b*y*y;
+        const X = xTo(y);
+        const Y = yTo(fit);
+        if(i===0) ctx.moveTo(X,Y);
+        else ctx.lineTo(X,Y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // legend
+      const lx = px + pw - 220, ly = py + 12;
+      ctx.fillStyle = 'rgba(7,10,18,0.55)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(lx, ly, 208, 54, 10);
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = 'rgba(233,236,255,0.85)';
+      ctx.font = '600 12px ui-sans-serif, system-ui';
+      ctx.fillText('Legend', lx+10, ly+16);
+
+      ctx.strokeStyle = 'rgba(121,255,215,0.85)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(lx+10, ly+30); ctx.lineTo(lx+44, ly+30); ctx.stroke();
+      ctx.fillStyle = 'rgba(170,179,214,0.9)';
+      ctx.fillText('numeric φ(y)', lx+52, ly+34);
+
+      ctx.strokeStyle = 'rgba(122,167,255,0.85)';
+      ctx.setLineDash([7,5]);
+      ctx.beginPath(); ctx.moveTo(lx+10, ly+46); ctx.lineTo(lx+44, ly+46); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(170,179,214,0.9)';
+      ctx.fillText('quadratic fit', lx+52, ly+50);
+
+      ctx.restore();
+
+      return {fE, est};
+    }
+
+    // Sweep plot: f(d) numeric vs textbook using same alpha,n0,lambda
+    function drawSweep(p){
+      const {ctx, resize} = c3;
+      const {w,h} = resize();
+
+      const dMin = 0.3;
+      const dMax = 4.0;
+
+      const Ns = 30;
+      const ds = [];
+      const fNum = [];
+      const fTxt = [];
+      for(let i=0;i<Ns;i++){
+        const d = dMin + (dMax-dMin)*i/(Ns-1);
+        // numeric: compute exit phase profile and curvature
+        const prof = computeExitPhaseProfile(d, p.lambdaNm, p.n0, p.alpha, p.theta0, p.yMax);
+        const ys = prof.ys;
+        const phis = prof.phis.slice();
+        const mid = Math.floor(ys.length/2);
+        const phi0 = phis[mid];
+        for(let k=0;k<phis.length;k++) phis[k] -= phi0;
+        const est = estimateFocalFromPhase(ys, phis, p.lambdaNm);
+        let f = est.f;
+        // discard negative or insane values for plot scale
+        if(!isFinite(f) || Math.abs(f) > 2000) f = NaN;
+
+        ds.push(d);
+        fNum.push(f);
+        fTxt.push(fTextbook(p.n0, p.alpha, d));
+      }
+
+      // choose y-range based on finite values
+      const vals = fNum.concat(fTxt).filter(v=>isFinite(v) && v>0 && v<800);
+      let yMin = 0;
+      let yMax = vals.length ? Math.max(...vals) : 200;
+      yMax = Math.max(40, yMax);
+      yMax *= 1.12;
+
+      const box = {x:0,y:0,w,h};
+      const ax = drawAxes(ctx, box, dMin, dMax, yMin, yMax, 'd (mm)', 'f (mm)', 'Effective focal length vs slab length');
+      const {xTo,yTo,px,py,pw,ph} = ax;
+
+      // numeric curve
+      ctx.save();
+      ctx.strokeStyle = 'rgba(121,255,215,0.85)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      let started=false;
+      for(let i=0;i<Ns;i++){
+        if(!isFinite(fNum[i]) || fNum[i] <= 0) { started=false; continue; }
+        const X = xTo(ds[i]);
+        const Y = yTo(fNum[i]);
+        if(!started){ ctx.moveTo(X,Y); started=true; }
+        else ctx.lineTo(X,Y);
+      }
+      ctx.stroke();
+
+      // points
+      ctx.fillStyle = 'rgba(121,255,215,0.85)';
+      for(let i=0;i<Ns;i++){
+        if(!isFinite(fNum[i]) || fNum[i] <= 0) continue;
+        ctx.beginPath();
+        ctx.arc(xTo(ds[i]), yTo(fNum[i]), 2.6, 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      // textbook curve
+      ctx.strokeStyle = 'rgba(122,167,255,0.85)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([7,5]);
+      ctx.beginPath();
+      started=false;
+      for(let i=0;i<Ns;i++){
+        const ft = fTxt[i];
+        if(!isFinite(ft) || ft <= 0 || ft>800) { started=false; continue; }
+        const X = xTo(ds[i]);
+        const Y = yTo(ft);
+        if(!started){ ctx.moveTo(X,Y); started=true; }
+        else ctx.lineTo(X,Y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // mark current d
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(xTo(p.d), py);
+      ctx.lineTo(xTo(p.d), py+ph);
+      ctx.stroke();
+
+      // legend
+      const lx = px + 12, ly = py + 12;
+      ctx.fillStyle = 'rgba(7,10,18,0.55)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(lx, ly, 280, 62, 10);
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = 'rgba(233,236,255,0.85)';
+      ctx.font = '600 12px ui-sans-serif, system-ui';
+      ctx.fillText('Legend', lx+10, ly+16);
+
+      ctx.strokeStyle = 'rgba(121,255,215,0.85)';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(lx+10, ly+32); ctx.lineTo(lx+44, ly+32); ctx.stroke();
+      ctx.fillStyle = 'rgba(170,179,214,0.9)';
+      ctx.fillText('numeric from φ curvature', lx+52, ly+36);
+
+      ctx.strokeStyle = 'rgba(122,167,255,0.85)';
+      ctx.setLineDash([7,5]);
+      ctx.beginPath(); ctx.moveTo(lx+10, ly+50); ctx.lineTo(lx+44, ly+50); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(170,179,214,0.9)';
+      ctx.fillText('textbook: f≈1/(n0 α sin(αd))', lx+52, ly+54);
+
+      ctx.restore();
+    }
+
+    // ========= Main update =========
+    function updateAll(){
+      const p = readParams();
+      updateUI(p);
+
+      // draw
+      drawDiagram(p);
+      const {fE} = drawExitPhase(p);
+      drawSweep(p);
+
+      // KPIs
+      const fT = fTextbook(p.n0, p.alpha, p.d);
+
+      els.fEst.textContent = (isFinite(fE) && fE>0) ? fE.toFixed(2) : '—';
+      els.fText.textContent = (isFinite(fT) && fT>0) ? fT.toFixed(2) : '—';
+
+      // small caution about d relative to quarter-pitch (π/2α)
+      const quarter = Math.PI/(2*p.alpha);
+      const half = Math.PI/(p.alpha);
+      let msg = '';
+      if(p.d < 0.85*quarter) msg = 'd is safely below π/(2α): wavefronts smoothly curve (lens-like).';
+      else if(p.d < 1.05*quarter) msg = 'Near π/(2α): strong focusing/near-caustic; sketches become very curved.';
+      else msg = 'Beyond π/(2α): rays cross and the simple mapping can look distorted (still instructive).';
+      els.validNote.textContent = els.validNote.textContent + '  ' + msg;
+    }
+
+    // ========= Events =========
+    ['alpha','d','n0','lam','wf','ymax','launch'].forEach(id=>{
+      document.getElementById(id).addEventListener('input', updateAll);
+      document.getElementById(id).addEventListener('change', updateAll);
+    });
+    els.resetBtn.addEventListener('click', ()=>{
+      els.alpha.value = '0.9';
+      els.d.value = '2.0';
+      els.n0.value = '1.6';
+      els.lam.value = '850';
+      els.wf.value = '12';
+      els.ymax.value = '1.2';
+      els.launch.value = 'plane';
+      updateAll();
+    });
+
+    window.addEventListener('resize', ()=>{
+      // resize canvases and redraw
+      updateAll();
+    });
+
+    // initial
+    updateAll();
+  </script>
+</body>
+</html>
