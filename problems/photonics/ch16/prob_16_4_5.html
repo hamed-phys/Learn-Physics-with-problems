@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Q-Switched Ruby Laser Power — Pump, Spontaneous Loss, and Q-Switched Pulse</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1620;
+      --card:#111c28;
+      --ink:#e9f1ff;
+      --muted:#a8b6cc;
+      --faint:#6f819d;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:#1f2b3a;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 900px at 15% 10%, rgba(125,211,252,.14), transparent 60%),
+        radial-gradient(900px 700px at 85% 20%, rgba(167,139,250,.14), transparent 55%),
+        radial-gradient(700px 700px at 50% 85%, rgba(52,211,153,.10), transparent 55%),
+        var(--bg);
+      line-height:1.55;
+    }
+
+    header{
+      position:relative;
+      padding:28px 18px 18px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+
+    .hero{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:22px 18px;
+      overflow:hidden;
+    }
+    .hero h1{
+      margin:0 0 8px 0;
+      font-size: clamp(22px, 2.3vw, 34px);
+      letter-spacing:.2px;
+    }
+    .hero p{
+      margin:0;
+      color:var(--muted);
+      max-width: 80ch;
+    }
+
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding:10px 18px 70px;
+      display:grid;
+      grid-template-columns: 290px 1fr;
+      gap:16px;
+      align-items:start;
+    }
+
+    nav.toc{
+      position:sticky;
+      top:12px;
+      align-self:start;
+      background:rgba(15,22,32,.8);
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px 14px 12px;
+    }
+    .toc .toc-title{
+      font-weight:700;
+      font-size:14px;
+      letter-spacing:.6px;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      text-decoration:none;
+      color:var(--ink);
+      border:1px solid transparent;
+      margin:6px 0;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size:14px;
+    }
+    .toc a:hover{
+      background:rgba(125,211,252,.09);
+      border-color:rgba(125,211,252,.25);
+      transform: translateY(-1px);
+    }
+    .toc small{color:var(--faint)}
+    .content{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      min-width:0;
+    }
+
+    section, article{
+      background:rgba(15,22,32,.78);
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+      min-width:0;
+    }
+
+    h2{
+      margin:0 0 10px;
+      font-size: clamp(18px, 1.6vw, 24px);
+      letter-spacing:.2px;
+    }
+    h3{
+      margin:18px 0 8px;
+      font-size: 16.5px;
+      color: #dce7ff;
+    }
+    p{margin:10px 0; color:var(--ink)}
+    ul{margin:10px 0 10px 22px; color:var(--ink)}
+    li{margin:6px 0}
+    .muted{color:var(--muted)}
+    .faint{color:var(--faint)}
+    .mono{font-family:var(--mono)}
+    .eq{
+      font-family:var(--mono);
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:12px;
+      padding:10px 12px;
+      overflow:auto;
+      white-space:nowrap;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap:12px;
+    }
+
+    .callout{
+      border-radius:16px;
+      padding:12px 12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    }
+    .callout strong{display:block; margin-bottom:4px}
+    .callout.assump{border-color: rgba(125,211,252,.28)}
+    .callout.key{border-color: rgba(167,139,250,.28)}
+    .callout.mist{border-color: rgba(251,191,36,.30)}
+    .callout.final{border-color: rgba(52,211,153,.30)}
+    .callout.final .big{
+      font-size: 18px;
+      font-weight:800;
+      letter-spacing:.2px;
+      margin-top:6px;
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px 14px;
+      align-items:end;
+      margin-top:10px;
+    }
+    .control{
+      flex: 1 1 210px;
+      min-width: 210px;
+    }
+    label{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:10px;
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    input[type="range"]{width:100%}
+    select, button{
+      width:100%;
+      padding:10px 10px;
+      border-radius:12px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--ink);
+      outline:none;
+    }
+    button{
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    button:hover{
+      transform: translateY(-1px);
+      background:rgba(125,211,252,.10);
+      border-color:rgba(125,211,252,.25);
+    }
+
+    .canvasWrap{
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.12);
+    }
+    canvas{display:block; width:100%; height:auto}
+
+    .rowTop{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .copyBtn{
+      padding:8px 10px;
+      border-radius:12px;
+      font-size:13px;
+      width:auto;
+      min-width: 120px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color:var(--muted);
+      font-size:13px;
+    }
+    .pill .dot{
+      width:9px;height:9px;border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(125,211,252,.15);
+    }
+
+    footer{
+      max-width:1200px;
+      margin:0 auto;
+      padding: 0 18px 26px;
+      color:var(--muted);
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:white; color:#111}
+      header, main, section, article, nav.toc{box-shadow:none; backdrop-filter:none}
+      nav.toc{position:relative; top:auto}
+      .canvasWrap{border:1px solid #bbb}
+      .copyBtn, button{display:none !important}
+      a{color:#111}
+    }
+
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr}
+      nav.toc{position:relative}
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="hero">
+    <h1>Q-Switched Ruby Laser Power: Pump Requirement, Spontaneous Loss, and Q-Switched Pulse</h1>
+    <p>
+      We model a ruby (Cr<sup>3+</sup>) rod inside a resonator, pumped into the upper laser level, then released by a Q-switch.
+      You’ll learn how to convert population dynamics into power, and how a simple Q-switch rate-equation model predicts pulse energy,
+      peak power, and duration.
+    </p>
+  </div>
+</header>
+
+<main>
+  <nav class="toc" aria-label="Table of contents">
+    <div class="toc-title">
+      <span>Table of Contents</span>
+      <span class="pill"><span class="dot"></span><small>sticky</small></span>
+    </div>
+    <a href="#quick">Quick Summary</a>
+    <a href="#part0">PART 0 — Concept Primer</a>
+    <a href="#part1">PART 1 — Problem Analysis</a>
+    <a href="#part2">PART 2 — Strategy & Tips</a>
+    <a href="#part3">PART 3 — Full Solution</a>
+    <a href="#part4">PART 4 — Deeper Understanding</a>
+    <a href="#part5">PART 5 — Visualization Guide</a>
+  </nav>
+
+  <div class="content">
+    <section id="quick">
+      <div class="rowTop">
+        <h2 style="margin:0">Quick Summary</h2>
+        <button class="copyBtn" id="copyFinalBtn" onclick="copyText('finalAnswerText')">Copy final answers</button>
+      </div>
+      <ul>
+        <li><b>What this is about:</b> A ruby rod is pumped to an inversion density, then a Q-switch releases the stored energy as a short laser pulse.</li>
+        <li><b>Key physics idea:</b> Population decay rates set required pump power; Q-switching converts stored inversion into a burst of photons.</li>
+        <li><b>Governing steady-state rate:</b> <span class="mono">R_pump ≈ N₂/τ₂</span> (pump must replace spontaneous decay in the upper level).</li>
+        <li><b>Photon energy:</b> <span class="mono">E_ph = hc/λ</span> converts excitation rate into optical power.</li>
+        <li><b>Laser threshold:</b> <span class="mono">exp(2σN_th ℓ) · R₁R₂ = 1</span> ⇒ <span class="mono">N_th = ln(1/(R₁R₂)) / (2σℓ)</span>.</li>
+        <li><b>Pulse extraction estimate:</b> Stored inversion drops from <span class="mono">N₀</span> to near <span class="mono">N_th</span>; output energy is a fraction set by output coupling.</li>
+        <li><b>Final result type:</b> Numeric results for (a) pump power, (b) spontaneous power, (c) Q-switched pulse energy/peak/duration plus an interactive simulation.</li>
+      </ul>
+
+      <div class="callout final">
+        <strong>Final numeric answers (with the given data and the simple Q-switch model used here)</strong>
+        <div class="mono" id="finalAnswerText">
+(a) Pump power to maintain N2 = 1.0×10^19 cm^-3:
+    P_pump ≈ (N2·V/τ2)·(hc/λ_p) ≈ 2.21×10^4 W ≈ 22 kW  (λ_p = 450 nm)
+
+(b) Spontaneous radiated power before Q-switch (taking fluorescence energy ~ laser line at 694 nm):
+    P_sp ≈ (N2·V/τ2)·(hc/λ_L) ≈ 1.43×10^4 W ≈ 14 kW  (λ_L ≈ 694 nm)
+
+(c) Q-switched pulse (R1=0.95, R2=0.70, σ=2×10^-20 cm^2, ℓ=15 cm, cavity L=20 cm):
+    Threshold inversion: N_th ≈ 6.8×10^17 cm^-3
+    Output energy (idealized): E_out ≈ 3.7×10^1 J  (≈ 37 J)
+    Peak power (from rate-equation simulation): P_peak ≈ 9×10^9 W  (≈ 9 GW)
+    Pulse duration (FWHM from simulation): τ_FWHM ≈ 3 ns
+        </div>
+        <div class="muted" style="margin-top:8px">
+          Note: Real ruby Q-switched pulses are often longer (tens of ns) because of additional physics (mode volume, refractive index,
+          nonuniform inversion, line broadening, excited-state absorption, finite switching time, etc.). The model here is intentionally minimal and transparent.
+        </div>
+      </div>
+    </section>
+
+    <article id="part0">
+      <h2>PART 0 — Concept Primer (THEORY BEFORE SOLVING)</h2>
+
+      <h3>Core definitions (symbols & units)</h3>
+      <ul>
+        <li><b>Upper laser level population density</b> <span class="mono">N₂</span> (cm<sup>−3</sup>): number of ions per volume in the metastable upper level.</li>
+        <li><b>Lifetime</b> <span class="mono">τ₂</span> (s): characteristic time for spontaneous decay out of level 2 (radiative + nonradiative).</li>
+        <li><b>Pump wavelength</b> <span class="mono">λ_p</span> (m): wavelength of pump photons that excite ions into an upper pump band (level 3).</li>
+        <li><b>Laser wavelength</b> <span class="mono">λ_L</span> (m): wavelength of laser transition (ruby ≈ 694 nm, the R-line).</li>
+        <li><b>Stimulated emission cross section</b> <span class="mono">σ</span> (cm<sup>2</sup>): strength of stimulated emission/absorption on the laser transition.</li>
+        <li><b>Rod length</b> <span class="mono">ℓ</span> and area <span class="mono">A</span> (cm, cm<sup>2</sup>): define active volume <span class="mono">V = Aℓ</span>.</li>
+        <li><b>Mirror reflectances</b> <span class="mono">R₁, R₂</span> (dimensionless): define cavity round-trip losses (including output coupling).</li>
+        <li><b>Cavity length</b> <span class="mono">L</span> (m): sets round-trip time <span class="mono">t_rt = 2L/c</span> and photon lifetime.</li>
+      </ul>
+
+      <h3>Physical meaning of key quantities</h3>
+      <ul>
+        <li><span class="mono">N₂</span> stores <b>energy in the medium</b>. Each excited ion is “chemical potential” for one photon of energy <span class="mono">hν</span>.</li>
+        <li><span class="mono">τ₂</span> sets how fast the stored energy leaks away <b>even if you do nothing</b> (spontaneous + nonradiative decay).</li>
+        <li><span class="mono">σ</span> sets how efficiently a photon stimulates emission: larger <span class="mono">σ</span> ⇒ faster energy extraction once lasing starts.</li>
+        <li><span class="mono">R₂</span> is both “loss” and “useful output”: lower <span class="mono">R₂</span> extracts more power per pass but also shortens photon lifetime.</li>
+      </ul>
+
+      <h3>Key laws/principles (validity & assumptions)</h3>
+      <div class="callout key">
+        <strong>Two essential ideas</strong>
+        <ul style="margin:8px 0 0 22px">
+          <li><b>Population rate balance:</b> In steady state, pump must replace decay: <span class="mono">R_pump ≈ N₂/τ₂</span>.</li>
+          <li><b>Laser threshold:</b> Round-trip gain equals round-trip loss:
+            <span class="mono">exp(2σN_th ℓ)·R₁R₂ = 1</span>.</li>
+        </ul>
+      </div>
+      <p class="muted">
+        These are valid when: (i) inversion is approximately uniform in the pumped region, (ii) the system can be approximated as a 4-level laser during the pulse
+        (ruby is actually 3-level, but the problem states negligible lower-state population initially), and (iii) pump and spontaneous processes are slow compared to the Q-switched pulse.
+      </p>
+
+      <h3>Common models/approximations (why we use them)</h3>
+      <ul>
+        <li><b>Steady-state pump:</b> Replace a detailed multi-level pump cycle by “one pump photon creates one ion in level 2” (quantum efficiency ≈ 1).</li>
+        <li><b>Spontaneous power:</b> Treat each decay as releasing ≈ one photon of energy <span class="mono">hc/λ_L</span> (a radiative-energy proxy).</li>
+        <li><b>Minimal Q-switch model:</b> Use coupled rate equations for inversion <span class="mono">N(t)</span> and intracavity photon density <span class="mono">Φ(t)</span> with a cavity photon lifetime
+          <span class="mono">τ_ph</span>. This captures the qualitative scaling of energy and peak power.</li>
+      </ul>
+
+      <h3>Mini intuition examples (quick)</h3>
+      <ul>
+        <li>If you double <span class="mono">N₂</span> while keeping <span class="mono">τ₂</span> fixed, you must pump twice as hard to maintain it (decay doubles).</li>
+        <li>If you decrease <span class="mono">R₂</span> (stronger output coupling), you often get <b>lower energy but higher peak power</b> because the cavity empties faster.</li>
+      </ul>
+
+      <div class="callout mist">
+        <strong>What to watch for (pitfalls)</strong>
+        <ul style="margin:8px 0 0 22px">
+          <li>Confusing <b>pump power</b> with <b>laser output power</b>: pump must cover all decay paths, not only useful photons.</li>
+          <li>For Q-switching, pulse dynamics are much faster than <span class="mono">τ₂</span>; do not use the ms lifetime to estimate ns pulse width.</li>
+          <li>Be careful with units: <span class="mono">σ</span> is given in cm<sup>2</sup>, while <span class="mono">c</span> is in m/s if you switch to SI.</li>
+        </ul>
+      </div>
+    </article>
+
+    <article id="part1">
+      <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <h3>Restate the problem (in plain language)</h3>
+      <p>
+        A Q-switched ruby laser uses a Cr<sup>3+</sup>-doped rod (length 15 cm, area 1 cm<sup>2</sup>) in a 20 cm resonator.
+        Mirrors have reflectances <span class="mono">R₁=0.95</span> and <span class="mono">R₂=0.70</span>. The stimulated emission cross section is
+        <span class="mono">σ=2×10^-20 cm^2</span>.
+        The rod is pumped via a pump band near <span class="mono">λ_p = 450 nm</span> (level 3), quickly relaxing to the metastable upper level 2 with lifetime
+        <span class="mono">τ₂ ≈ 3 ms</span>. We start with an inversion density <span class="mono">N₂ = 10^19 cm^-3</span> (lower laser level negligible).
+      </p>
+      <p>Find:</p>
+      <ol style="margin:8px 0 0 22px">
+        <li>Required pump power to maintain <span class="mono">N₂ = 10^19 cm^-3</span>.</li>
+        <li>Spontaneous radiated power before Q-switching.</li>
+        <li>Peak power, pulse energy, and pulse duration of the Q-switched pulse.</li>
+      </ol>
+
+      <h3>Given quantities</h3>
+      <div class="grid2">
+        <div class="callout">
+          <strong>Geometry</strong>
+          <div class="mono">ℓ = 15 cm</div>
+          <div class="mono">A = 1 cm^2</div>
+          <div class="mono">V = Aℓ = 15 cm^3</div>
+          <div class="mono">L_cav = 20 cm</div>
+        </div>
+        <div class="callout">
+          <strong>Optics & medium</strong>
+          <div class="mono">R₁ = 0.95</div>
+          <div class="mono">R₂ = 0.70</div>
+          <div class="mono">σ = 2×10^-20 cm^2</div>
+          <div class="mono">λ_p = 450 nm</div>
+          <div class="mono">τ₂ = 3 ms</div>
+        </div>
+      </div>
+
+      <h3>Unknowns</h3>
+      <ul>
+        <li>Pump power <span class="mono">P_pump</span> needed to maintain inversion.</li>
+        <li>Spontaneous radiated power <span class="mono">P_sp</span> prior to Q-switching.</li>
+        <li>Q-switched pulse: output energy <span class="mono">E_out</span>, peak power <span class="mono">P_peak</span>, duration <span class="mono">τ_p</span>.</li>
+      </ul>
+
+      <h3>Relevant principles & why they apply</h3>
+      <ul>
+        <li><b>Rate equations:</b> Pumping and decay are population flows between levels; power follows from flow rate × photon energy.</li>
+        <li><b>Cavity threshold condition:</b> The Q-switch changes cavity loss; once “high-Q” is restored, gain overwhelms losses and photons grow exponentially.</li>
+        <li><b>Energy conservation in extraction:</b> The pulse energy cannot exceed the stored inversion energy in the rod.</li>
+      </ul>
+      <p class="muted">
+        We will <b>not</b> use detailed spatial pump absorption or multi-mode field theory because the problem provides only global rod dimensions and a single cross section,
+        which naturally points to a lumped-parameter model.
+      </p>
+
+      <div class="callout assump">
+        <strong>Assumptions (explicit)</strong>
+        <ul style="margin:8px 0 0 22px">
+          <li>Uniform inversion in the active volume <span class="mono">V</span>.</li>
+          <li>One pump photon at <span class="mono">λ_p</span> creates one ion in level 2 (quantum efficiency ≈ 1).</li>
+          <li>During the Q-switched pulse, pumping and spontaneous decay are negligible compared with stimulated emission.</li>
+          <li>Losses are dominated by mirror reflectances (no extra intracavity loss specified).</li>
+          <li>For (b), we estimate radiated energy per decay using <span class="mono">λ_L ≈ 694 nm</span> (ruby’s dominant emission line).</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (compare)</h3>
+      <ul>
+        <li><b>Approach A: purely analytic estimates</b> (threshold inversion, stored energy, photon lifetime). Fast, transparent, good for back-of-envelope scaling.</li>
+        <li><b>Approach B: numerical rate-equation pulse simulation</b> (N(t), photon density Φ(t)). Still simple but yields pulse shape, FWHM, and peak power.</li>
+        <li><b>Approach C: full Frantz–Nodvik / traveling-wave extraction</b>. More accurate for gain saturation and spatial effects, but needs more parameters (mode area, absorption, etc.).</li>
+      </ul>
+      <p><b>Chosen:</b> A + B. We’ll do analytic for (a,b) and use a minimal but instructive numerical Q-switch model for (c), which also powers the interactive plots.</p>
+    </article>
+
+    <article id="part2">
+      <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+      <ol style="margin:10px 0 0 22px">
+        <li>
+          <b>Compute rod volume</b> <span class="muted">(goal: how many excited ions exist)</span><br/>
+          Tool: <span class="mono">V = Aℓ</span>.<br/>
+          Meaning: converts density (cm<sup>−3</sup>) into total number of ions.
+        </li>
+        <li>
+          <b>Compute required pump excitation rate</b><br/>
+          Tool: steady-state balance <span class="mono">R_pump = N₂/τ₂</span> (per ion), then multiply by <span class="mono">V</span>.<br/>
+          Meaning: how many excitations per second must be supplied.
+        </li>
+        <li>
+          <b>Convert excitation rate to pump power</b><br/>
+          Tool: <span class="mono">P_pump = (exc/s)·(hc/λ_p)</span>.<br/>
+          Meaning: each excitation costs one pump photon energy.
+        </li>
+        <li>
+          <b>Estimate spontaneous radiated power</b><br/>
+          Tool: same decay rate, energy per emitted photon <span class="mono">hc/λ_L</span>.<br/>
+          Meaning: stored energy leaks away even when Q is low.
+        </li>
+        <li>
+          <b>Find threshold inversion</b><br/>
+          Tool: <span class="mono">N_th = ln(1/(R₁R₂))/(2σℓ)</span>.<br/>
+          Meaning: the inversion at which gain exactly balances losses.
+        </li>
+        <li>
+          <b>Estimate extractable energy</b><br/>
+          Tool: <span class="mono">E_stored ≈ (N₀−N_th)·V·hc/λ_L</span>, then multiply by an output-coupling fraction.<br/>
+          Meaning: inversion above threshold is available to convert into photons.
+        </li>
+        <li>
+          <b>Compute pulse shape, peak, width</b><br/>
+          Tool: integrate coupled ODEs for <span class="mono">N(t)</span> and photon density <span class="mono">Φ(t)</span> using cavity photon lifetime.<br/>
+          Meaning: gives a time-resolved pulse (and FWHM).
+        </li>
+      </ol>
+
+      <div class="callout mist" style="margin-top:12px">
+        <strong>Common mistakes & quick tips</strong>
+        <ul style="margin:8px 0 0 22px">
+          <li><b>Tip:</b> keep cm-based densities with cm-based volume until the very end; only convert when multiplying by <span class="mono">c</span> in SI.</li>
+          <li><b>Mistake:</b> using <span class="mono">R₁+R₂</span> for losses; threshold depends on <span class="mono">R₁R₂</span> (round-trip multiplication).</li>
+          <li><b>Tip:</b> pulse duration depends strongly on photon lifetime (ns) and gain (via <span class="mono">σN</span>), not on <span class="mono">τ₂</span> (ms).</li>
+        </ul>
+      </div>
+    </article>
+
+    <article id="part3">
+      <h2>PART 3 — Full Solution (DETAILED + TEACHING)</h2>
+
+      <h3>Qualitative expectation (before calculating)</h3>
+      <p>
+        The upper level lifetime is <span class="mono">τ₂ ≈ 3 ms</span>. Maintaining a huge inversion density
+        (<span class="mono">10^19 cm^-3</span>) over a sizable rod volume (15 cm<sup>3</sup>) means an enormous number of ions decay every millisecond.
+        So the required pump power should be <b>kilowatts to tens of kilowatts</b>.
+      </p>
+      <p>
+        Once the Q-switch opens, the cavity photon number can grow exponentially in just a few photon lifetimes (ns),
+        rapidly draining the inversion down toward threshold. That leads to a <b>very short, very intense</b> pulse.
+      </p>
+
+      <h3>(a) Pump power required to maintain N₂ = 10<sup>19</sup> cm<sup>−3</sup></h3>
+
+      <p><b>Step 1: Active volume.</b></p>
+      <div class="eq" id="eqV">
+        V = Aℓ = (1 cm^2)(15 cm) = 15 cm^3
+      </div>
+      <button class="copyBtn" onclick="copyText('eqV')">Copy equation</button>
+
+      <p><b>Step 2: Total number of excited ions in level 2.</b></p>
+      <div class="eq" id="eqNtot">
+        N2,total = N2 · V = (1.0×10^19 cm^-3)(15 cm^3) = 1.5×10^20
+      </div>
+      <button class="copyBtn" onclick="copyText('eqNtot')">Copy equation</button>
+
+      <p><b>Step 3: In steady state, pump must replace decays.</b></p>
+      <p>
+        If the population in level 2 is held constant, the pump must create excitations at the same rate that level 2 decays:
+      </p>
+      <div class="eq" id="eqRate">
+        R_pump,total = N2,total / τ2 = (1.5×10^20) / (3×10^-3 s) = 5.0×10^22 s^-1
+      </div>
+      <button class="copyBtn" onclick="copyText('eqRate')">Copy equation</button>
+
+      <p><b>Step 4: Convert excitation rate to optical pump power using pump photon energy.</b></p>
+      <p>Define pump photon energy:</p>
+      <div class="eq" id="eqEp">
+        E_p = hc/λ_p = (6.626×10^-34 J·s)(3.00×10^8 m/s) / (450×10^-9 m) ≈ 4.41×10^-19 J
+      </div>
+      <button class="copyBtn" onclick="copyText('eqEp')">Copy equation</button>
+
+      <p>Then:</p>
+      <div class="eq" id="eqPpump">
+        P_pump = R_pump,total · E_p ≈ (5.0×10^22 s^-1)(4.41×10^-19 J) ≈ 2.21×10^4 W ≈ 22 kW
+      </div>
+      <button class="copyBtn" onclick="copyText('eqPpump')">Copy equation</button>
+
+      <div class="callout assump">
+        <strong>Interpretation</strong>
+        <p style="margin:6px 0 0">
+          About 22 kW of absorbed pump power is required just to <i>hold</i> the inversion at 10<sup>19</sup> cm<sup>−3</sup>.
+          Any less, and the inversion decays on the millisecond scale.
+        </p>
+      </div>
+
+      <p><b>Sanity check (units):</b> <span class="mono">(s^-1)·(J) = W</span> ✓</p>
+
+      <h3>(b) Spontaneous power radiated before the Q-switch is operated</h3>
+      <p>
+        Before Q-switching, stimulated emission is suppressed (low Q), so the excited ions primarily decay spontaneously (and/or nonradiatively).
+        A common estimate for <i>radiated</i> optical power uses the fluorescence photon energy near the ruby laser line:
+        <span class="mono">λ_L ≈ 694 nm</span>.
+      </p>
+      <p>Photon energy at 694 nm:</p>
+      <div class="eq" id="eqEL">
+        E_L = hc/λ_L ≈ (6.626×10^-34)(3.00×10^8)/(694×10^-9) ≈ 2.86×10^-19 J
+      </div>
+      <button class="copyBtn" onclick="copyText('eqEL')">Copy equation</button>
+
+      <p>The decay rate is the same as in part (a), <span class="mono">N2,total/τ2 = 5.0×10^22 s^-1</span>, so:</p>
+      <div class="eq" id="eqPsp">
+        P_sp ≈ (N2,total/τ2)·E_L ≈ (5.0×10^22)(2.86×10^-19) ≈ 1.43×10^4 W ≈ 14 kW
+      </div>
+      <button class="copyBtn" onclick="copyText('eqPsp')">Copy equation</button>
+
+      <div class="callout key">
+        <strong>Meaning</strong>
+        <p style="margin:6px 0 0">
+          If you store that much inversion and delay the Q-switch, you “burn” energy away at ~14 kW (radiative proxy).
+          In practice, not all decay is radiative at exactly 694 nm, so this is an estimate of the optical-scale spontaneous loss.
+        </p>
+      </div>
+
+      <h3>(c) Peak power, energy, and duration of the Q-switched pulse</h3>
+
+      <h4 style="margin:12px 0 6px">Step 1: Threshold inversion density</h4>
+      <p>
+        For a simple cavity where the only specified losses are mirror reflectances, the round-trip condition at threshold is:
+      </p>
+      <div class="eq" id="eqThresh">
+        exp(2σ N_th ℓ) · R1 R2 = 1
+        ⇒ N_th = ln(1/(R1 R2)) / (2σℓ)
+      </div>
+      <button class="copyBtn" onclick="copyText('eqThresh')">Copy equation</button>
+
+      <p>Compute numerically (use ℓ = 15 cm, σ = 2×10^-20 cm², R1R2 = 0.95×0.70 = 0.665):</p>
+      <div class="eq" id="eqNthNum">
+        ln(1/(R1R2)) = ln(1/0.665) ≈ 0.407
+        ⇒ N_th ≈ 0.407 / (2·(2×10^-20)·15)
+        ≈ 6.8×10^17 cm^-3
+      </div>
+      <button class="copyBtn" onclick="copyText('eqNthNum')">Copy equation</button>
+
+      <p><b>Interpretation:</b> the initial inversion <span class="mono">N0 = 1.0×10^19 cm^-3</span> is ≈ 15× threshold, so the pulse can be extremely strong.</p>
+
+      <h4 style="margin:12px 0 6px">Step 2: Stored energy available above threshold</h4>
+      <p>
+        If the pulse drains inversion from <span class="mono">N0</span> down to about <span class="mono">N_th</span>, the number of emitted photons is approximately
+        <span class="mono">(N0 − N_th)·V</span>. Multiplying by photon energy gives a stored-to-photon energy estimate:
+      </p>
+      <div class="eq" id="eqEstored">
+        E_stored ≈ (N0 − N_th)·V·(hc/λ_L)
+      </div>
+      <button class="copyBtn" onclick="copyText('eqEstored')">Copy equation</button>
+
+      <p>
+        Not all intracavity loss becomes useful output; only the output coupler transmission contributes to extracted energy.
+        A simple (transparent) estimate splits the round-trip losses between the two mirrors:
+      </p>
+      <div class="eq" id="eqFout">
+        f_out ≈ (1−R2) / [(1−R1) + (1−R2)]
+      </div>
+      <button class="copyBtn" onclick="copyText('eqFout')">Copy equation</button>
+
+      <p>For R1=0.95, R2=0.70: <span class="mono">f_out ≈ 0.30 / (0.05+0.30) ≈ 0.857</span>.</p>
+
+      <p>
+        Numerically, this leads to an output energy on the order of a few ×10 J. (The simulation below yields ~37 J.)
+      </p>
+
+      <h4 style="margin:12px 0 6px">Step 3: Pulse duration and peak power from a minimal Q-switch rate-equation model</h4>
+      <p>
+        During the pulse, we ignore pumping and spontaneous decay and track two coupled variables:
+      </p>
+      <div class="eq" id="eqODE">
+        dN/dt = −σ c Φ N
+        dΦ/dt = (σ c N − 1/τ_ph) Φ
+      </div>
+      <button class="copyBtn" onclick="copyText('eqODE')">Copy equation</button>
+
+      <p>
+        Here <span class="mono">Φ</span> is intracavity photon density (photons/m³), and <span class="mono">τ_ph</span> is the cavity photon lifetime set by losses.
+        With cavity length <span class="mono">L</span>:
+      </p>
+      <div class="eq" id="eqTauph">
+        t_rt = 2L/c
+        τ_ph = t_rt / [−ln(R1 R2)]
+      </div>
+      <button class="copyBtn" onclick="copyText('eqTauph')">Copy equation</button>
+
+      <p>
+        The intracavity energy is <span class="mono">U = Φ V (hc/λ_L)</span>. The output power is approximated by the fraction of cavity loss corresponding to the output coupler:
+      </p>
+      <div class="eq" id="eqPout">
+        P_out(t) ≈ f_out · U(t) / τ_ph
+      </div>
+      <button class="copyBtn" onclick="copyText('eqPout')">Copy equation</button>
+
+      <div class="callout final">
+        <strong>Numerical outcome (given parameters)</strong>
+        <div class="big mono">
+          E_out ≈ 37 J, &nbsp; P_peak ≈ 9 GW, &nbsp; τ_FWHM ≈ 3 ns
+        </div>
+        <div class="muted" style="margin-top:8px">
+          These values come from integrating the above ODEs with a tiny seed photon density and using the specified mirror losses.
+          Use the interactive controls below to see how changing parameters reshapes the pulse.
+        </div>
+      </div>
+
+      <h4 style="margin:14px 0 8px">Connect to the diagram and plots</h4>
+      <p class="muted">
+        The diagram shows the rod inside a two-mirror resonator. The Q-switch (not drawn as a detailed device) effectively toggles the cavity from high loss (no pulse)
+        to low loss (pulse). The main plot shows the predicted output power vs time during the Q-switched event; the secondary plot sweeps a key parameter to show scaling.
+      </p>
+    </article>
+
+    <article id="part4">
+      <h2>PART 4 — Deeper Understanding (THEORY AROUND THE RESULT)</h2>
+
+      <h3>Re-interpreting the final formulas</h3>
+      <ul>
+        <li><b>Pump power:</b> <span class="mono">P_pump ∝ (N₂ V / τ₂) · (1/λ_p)</span>.
+          Bigger inversion, bigger volume, or shorter lifetime means you must pump harder. Shorter pump wavelength means higher photon energy per excitation.</li>
+        <li><b>Threshold inversion:</b> <span class="mono">N_th ∝ ln(1/(R₁R₂)) / (σℓ)</span>.
+          Higher reflectivity or larger cross section lowers the threshold.</li>
+        <li><b>Pulse energy (ideal):</b> <span class="mono">E_out ≈ f_out (N0 − N_th)V hc/λ_L</span>.
+          Output coupling controls what fraction of extracted photons leave the cavity as useful output.</li>
+        <li><b>Pulse duration:</b> controlled mainly by the competition between <span class="mono">σcN</span> (gain rate) and <span class="mono">1/τ_ph</span> (loss rate).</li>
+      </ul>
+
+      <h3>How changing parameters affects outcomes (linked to interactive plots)</h3>
+      <ul>
+        <li>Increasing <span class="mono">N0</span> increases <b>energy</b> and typically increases <b>peak power</b> (more gain available).</li>
+        <li>Increasing <span class="mono">R2</span> increases photon lifetime (longer cavity storage), often <b>reducing peak power</b> but can increase or decrease extracted energy depending on output coupling.</li>
+        <li>Increasing <span class="mono">σ</span> makes stimulated emission faster ⇒ shorter pulses and higher peaks.</li>
+      </ul>
+
+      <h3>Alternative derivation idea (brief)</h3>
+      <p class="muted">
+        A more refined approach uses traveling-wave extraction (Frantz–Nodvik) with gain saturation along the rod and an explicit mode area.
+        That can predict pulse energy and temporal shape more accurately when spatial depletion of inversion is significant.
+      </p>
+
+      <h3>Concept checks (quick Q&A)</h3>
+      <ul>
+        <li><b>Q:</b> Why is the Q-switched pulse duration not ~3 ms (the upper-state lifetime)?<br/>
+            <b>A:</b> The pulse is governed by stimulated emission and photon lifetime (ns), which are much faster processes than spontaneous decay (ms).</li>
+        <li><b>Q:</b> What sets the threshold inversion? <br/>
+            <b>A:</b> The inversion where round-trip gain equals round-trip loss: <span class="mono">exp(2σN_thℓ)R₁R₂=1</span>.</li>
+        <li><b>Q:</b> If you increase output coupling (lower R2), what tends to happen to peak power? <br/>
+            <b>A:</b> Peak power often increases because energy leaks out faster per unit intracavity energy, though total extracted energy can drop if losses become too high.</li>
+        <li><b>Q:</b> Why do we need a “seed” photon in simulations? <br/>
+            <b>A:</b> Without a seed, <span class="mono">Φ=0</span> stays zero. In reality, spontaneous emission provides the seed that starts the pulse.</li>
+      </ul>
+    </article>
+
+    <article id="part5">
+      <h2>PART 5 — Visualization Guide (HOW TO READ THE PLOTS)</h2>
+
+      <div class="grid2">
+        <div>
+          <h3 style="margin-top:0">Interactive controls</h3>
+          <p class="muted">
+            Use the slider to change the <b>initial inversion density</b> <span class="mono">N0</span> (cm<sup>−3</sup>).
+            This updates:
+            (i) the cavity diagram annotation,
+            (ii) the time-domain Q-switched pulse plot,
+            (iii) the parameter sweep showing how energy/peak depend on output mirror reflectance.
+          </p>
+
+          <div class="controls">
+            <div class="control">
+              <label for="n0Slider">
+                <span>Initial inversion <span class="mono">N0</span> (cm<sup>−3</sup>)</span>
+                <span class="mono" id="n0Read">1.00e19</span>
+              </label>
+              <input id="n0Slider" type="range" min="3" max="12" step="0.1" value="10"/>
+              <div class="faint" style="margin-top:6px">Slider is log10(N0): from 1e3? No — from 1e3 would be silly; here it maps to 10^x with x in [3,12] but we clamp to realistic range in code (1e18–1.2e19).</div>
+            </div>
+
+            <div class="control">
+              <label for="r2Select">
+                <span>Output mirror reflectance <span class="mono">R2</span> for pulse plot</span>
+                <span class="mono" id="r2Read">0.70</span>
+              </label>
+              <select id="r2Select">
+                <option value="0.50">0.50</option>
+                <option value="0.60">0.60</option>
+                <option value="0.70" selected>0.70</option>
+                <option value="0.80">0.80</option>
+                <option value="0.90">0.90</option>
+                <option value="0.95">0.95</option>
+              </select>
+            </div>
+
+            <div class="control">
+              <label>
+                <span>Recompute</span>
+                <span class="mono">updates all</span>
+              </label>
+              <button onclick="recomputeAll()">Run simulation & redraw</button>
+            </div>
+          </div>
+
+          <div class="callout final" style="margin-top:12px">
+            <strong>Live computed outputs (for current settings)</strong>
+            <div class="mono" id="liveOut" style="margin-top:6px; white-space:pre-wrap"></div>
+          </div>
+        </div>
+
+        <div>
+          <h3 style="margin-top:0">What each canvas shows</h3>
+          <ul>
+            <li><b>Canvas 1 (diagram):</b> Rod + two mirrors (R1, R2), cavity length, and a stylized Q-switch. Labels show the parameters used in the calculations.</li>
+            <li><b>Canvas 2 (main plot):</b> Q-switched output power <span class="mono">P_out(t)</span> vs time (ns). Read peak power and pulse width.</li>
+            <li><b>Canvas 3 (secondary sweep):</b> Output energy and peak power vs <span class="mono">R2</span> for the current <span class="mono">N0</span>. This shows tradeoffs in output coupling.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Visualizations</h3>
+      <div class="grid3">
+        <div class="canvasWrap">
+          <canvas id="cDiagram" width="700" height="420" aria-label="Laser cavity diagram"></canvas>
+        </div>
+        <div class="canvasWrap">
+          <canvas id="cMain" width="700" height="420" aria-label="Main plot: Q-switched pulse power vs time"></canvas>
+        </div>
+        <div class="canvasWrap">
+          <canvas id="cSweep" width="700" height="420" aria-label="Secondary plot: sweep vs output coupler reflectance"></canvas>
+        </div>
+      </div>
+
+      <div class="callout mist" style="margin-top:12px">
+        <strong>Reading tips</strong>
+        <ul style="margin:8px 0 0 22px">
+          <li>The pulse plot uses a linear y-axis. Very large peaks can make smaller features hard to see; focus on peak and FWHM.</li>
+          <li>On the sweep plot, energy and peak are plotted on two y-axes. Use the legend to match each curve.</li>
+        </ul>
+      </div>
+    </article>
+  </div>
+</main>
+
+<footer>
+  <p>
+    Built as a self-contained learning article (vanilla HTML/CSS/JS). The interactive model is intentionally minimal to keep the physics transparent.
+  </p>
+</footer>
+
+<script>
+/* =========================
+   Helpers: math + formatting
+   ========================= */
+
+function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
+
+function fmtSI(x, unit=""){
+  // readable scientific formatting
+  if (!isFinite(x)) return "—";
+  const ax = Math.abs(x);
+  if (ax === 0) return "0 " + unit;
+  if (ax >= 1e4 || ax < 1e-2){
+    const e = Math.floor(Math.log10(ax));
+    const m = x / Math.pow(10, e);
+    return m.toFixed(3) + "e" + (e>=0?"+":"") + e + (unit?(" "+unit):"");
+  }
+  return x.toFixed(3) + (unit?(" "+unit):"");
+}
+
+function fmtEng(x, unit=""){
+  // simple engineering prefixes
+  const prefixes = [
+    {p:1e-12, s:"p"},
+    {p:1e-9,  s:"n"},
+    {p:1e-6,  s:"µ"},
+    {p:1e-3,  s:"m"},
+    {p:1e0,   s:""},
+    {p:1e3,   s:"k"},
+    {p:1e6,   s:"M"},
+    {p:1e9,   s:"G"},
+    {p:1e12,  s:"T"}
+  ];
+  const ax = Math.abs(x);
+  if (ax===0 || !isFinite(x)) return "0 " + unit;
+  let best = prefixes[4];
+  for (const pr of prefixes){
+    if (ax >= pr.p) best = pr;
+  }
+  const v = x / best.p;
+  const digits = (Math.abs(v) >= 100) ? 0 : (Math.abs(v) >= 10 ? 1 : 2);
+  return v.toFixed(digits) + " " + best.s + unit;
+}
+
+function copyText(id){
+  const el = document.getElementById(id);
+  const text = el.innerText || el.textContent || "";
+  navigator.clipboard.writeText(text).then(()=>{
+    // tiny feedback
+    const btn = document.activeElement;
+    if (btn && btn.classList && btn.classList.contains("copyBtn")){
+      const old = btn.textContent;
+      btn.textContent = "Copied ✓";
+      setTimeout(()=>btn.textContent=old, 900);
+    }
+  });
+}
+
+/* =========================
+   Physical constants & given
+   ========================= */
+const h = 6.62607015e-34;
+const c = 299792458;
+
+const given = {
+  // geometry
+  ell_cm: 15.0,       // rod length
+  A_cm2: 1.0,         // rod area
+  Lcav_m: 0.20,       // cavity length (20 cm)
+  // mirrors
+  R1: 0.95,
+  // medium
+  sigma_cm2: 2e-20,
+  // pump + lifetime
+  lam_p_m: 450e-9,
+  tau2_s: 3e-3,
+  // laser wavelength (ruby)
+  lam_L_m: 694e-9
+};
+
+function volume_cm3(){ return given.ell_cm * given.A_cm2; }
+
+function pumpPower_W(N2_cm3){
+  const V = volume_cm3();
+  const rate = (N2_cm3 * V) / given.tau2_s; // s^-1
+  const Ep = h*c/given.lam_p_m;
+  return rate * Ep;
+}
+
+function spontPower_W(N2_cm3){
+  const V = volume_cm3();
+  const rate = (N2_cm3 * V) / given.tau2_s;
+  const EL = h*c/given.lam_L_m;
+  return rate * EL;
+}
+
+function thresholdInversion_cm3(R2){
+  const Rprod = given.R1 * R2;
+  const lnLoss = Math.log(1.0 / Rprod);
+  const denom = 2 * given.sigma_cm2 * given.ell_cm;
+  return lnLoss / denom;
+}
+
+function photonLifetime_s(R2){
+  const Rprod = given.R1 * R2;
+  const t_rt = 2*given.Lcav_m / c;
+  return t_rt / (-Math.log(Rprod));
+}
+
+function fout(R2){
+  // transparent split-loss estimate
+  const T1 = 1 - given.R1;
+  const T2 = 1 - R2;
+  return T2 / (T1 + T2);
+}
+
+/* =========================
+   Minimal Q-switch simulation
+   dN/dt = -σ c Φ N
+   dΦ/dt = (σ c N - 1/τ_ph) Φ
+   ========================= */
+
+function simulatePulse(N0_cm3, R2, opts={}){
+  // Convert to SI for c; keep N in m^-3 and σ in m^2
+  const sigma_m2 = given.sigma_cm2 * 1e-4;      // cm^2 -> m^2
+  const N0_m3 = N0_cm3 * 1e6;                   // cm^-3 -> m^-3
+  const V_m3 = volume_cm3() * 1e-6;             // cm^3 -> m^3
+  const tau_ph = photonLifetime_s(R2);
+  const fOut = fout(R2);
+  const hnu = h*c/given.lam_L_m;
+
+  const tmax = opts.tmax ?? 200e-9;
+  const dt = opts.dt ?? 0.02e-9;
+
+  const steps = Math.floor(tmax/dt)+1;
+  const t = new Float64Array(steps);
+  const N = new Float64Array(steps);
+  const Phi = new Float64Array(steps);
+  const Pout = new Float64Array(steps);
+
+  // seed: ~1 photon in the active volume
+  N[0] = N0_m3;
+  Phi[0] = 1.0 / V_m3;
+  t[0] = 0;
+
+  function deriv(n, phi){
+    const dN = -sigma_m2 * c * phi * n;
+    const dPhi = (sigma_m2 * c * n - 1.0/tau_ph) * phi;
+    return [dN, dPhi];
+  }
+
+  for (let i=0;i<steps-1;i++){
+    const ti = i*dt;
+    t[i] = ti;
+
+    const n = N[i];
+    const ph = Phi[i];
+
+    // RK4
+    const k1 = deriv(n, ph);
+    const k2 = deriv(n + 0.5*dt*k1[0], ph + 0.5*dt*k1[1]);
+    const k3 = deriv(n + 0.5*dt*k2[0], ph + 0.5*dt*k2[1]);
+    const k4 = deriv(n + dt*k3[0],     ph + dt*k3[1]);
+
+    const nNext = n + (dt/6)*(k1[0] + 2*k2[0] + 2*k3[0] + k4[0]);
+    let phNext = ph + (dt/6)*(k1[1] + 2*k2[1] + 2*k3[1] + k4[1]);
+
+    if (!isFinite(phNext) || phNext < 0) phNext = 0;
+
+    N[i+1] = Math.max(nNext, 0);
+    Phi[i+1] = phNext;
+  }
+  t[steps-1] = (steps-1)*dt;
+
+  // output power
+  for (let i=0;i<steps;i++){
+    const U = Phi[i] * V_m3 * hnu; // J
+    Pout[i] = fOut * U / tau_ph;   // W
+  }
+
+  // energy integral
+  let E = 0;
+  for (let i=0;i<steps-1;i++){
+    E += 0.5*(Pout[i]+Pout[i+1]) * dt;
+  }
+
+  // peak, FWHM
+  let Ppk = 0, ipk = 0;
+  for (let i=0;i<steps;i++){
+    if (Pout[i] > Ppk){
+      Ppk = Pout[i]; ipk = i;
+    }
+  }
+  const half = 0.5 * Ppk;
+  let i1 = -1, i2 = -1;
+  for (let i=0;i<steps;i++){
+    if (Pout[i] >= half){ i1 = i; break; }
+  }
+  for (let i=steps-1;i>=0;i--){
+    if (Pout[i] >= half){ i2 = i; break; }
+  }
+  const fwhm = (i1>=0 && i2>=0) ? (t[i2]-t[i1]) : 0;
+
+  return {t, Pout, E, Ppk, tpk: t[ipk], fwhm, tau_ph, fOut};
+}
+
+/* =========================
+   Canvas drawing utilities
+   ========================= */
+
+function setupCanvas(canvas){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(320, rect.width);
+  const h = Math.max(240, rect.height);
+  canvas.width = Math.round(w*dpr);
+  canvas.height = Math.round(h*dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx, w, h, dpr};
+}
+
+function clearPanel(ctx,w,h){
+  ctx.clearRect(0,0,w,h);
+  // subtle backdrop
+  const g = ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0, "rgba(255,255,255,0.05)");
+  g.addColorStop(1, "rgba(255,255,255,0.02)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,w,h);
+}
+
+function drawTitle(ctx, x, y, text){
+  ctx.fillStyle = "rgba(233,241,255,.92)";
+  ctx.font = "700 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  ctx.fillText(text, x, y);
+}
+
+function drawAxes(ctx, box, xLabel, yLabel, xMin, xMax, yMin, yMax, opts={}){
+  const {x,y,w,h} = box;
+  const padL = opts.padL ?? 55;
+  const padR = opts.padR ?? 16;
+  const padT = opts.padT ?? 34;
+  const padB = opts.padB ?? 48;
+
+  const ix = x + padL;
+  const iy = y + padT;
+  const iw = w - padL - padR;
+  const ih = h - padT - padB;
+
+  // frame
+  ctx.strokeStyle = "rgba(255,255,255,.14)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(ix, iy, iw, ih);
+
+  // grid + ticks
+  const nx = opts.nx ?? 6;
+  const ny = opts.ny ?? 5;
+
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  ctx.fillStyle = "rgba(168,182,204,.95)";
+  ctx.strokeStyle = "rgba(255,255,255,.08)";
+
+  function lerp(a,b,t){ return a + (b-a)*t; }
+
+  for (let i=0;i<=nx;i++){
+    const t = i/nx;
+    const gx = ix + t*iw;
+    ctx.beginPath();
+    ctx.moveTo(gx, iy);
+    ctx.lineTo(gx, iy+ih);
+    ctx.stroke();
+    const val = lerp(xMin,xMax,t);
+    const s = opts.xTickFmt ? opts.xTickFmt(val) : val.toFixed(2);
+    ctx.fillText(s, gx-10, iy+ih+18);
+  }
+  for (let j=0;j<=ny;j++){
+    const t = j/ny;
+    const gy = iy + (1-t)*ih;
+    ctx.beginPath();
+    ctx.moveTo(ix, gy);
+    ctx.lineTo(ix+iw, gy);
+    ctx.stroke();
+    const val = lerp(yMin,yMax,t);
+    const s = opts.yTickFmt ? opts.yTickFmt(val) : val.toFixed(2);
+    ctx.fillText(s, x+8, gy+4);
+  }
+
+  // labels
+  ctx.fillStyle = "rgba(233,241,255,.90)";
+  ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  ctx.fillText(xLabel, ix + iw*0.5 - ctx.measureText(xLabel).width*0.5, y+h-12);
+
+  // y label rotated
+  ctx.save();
+  ctx.translate(x+14, iy + ih*0.5);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, -ctx.measureText(yLabel).width*0.5, 0);
+  ctx.restore();
+
+  return {ix,iy,iw,ih, padL,padR,padT,padB};
+}
+
+function plotLine(ctx, ax, xs, ys, xMin,xMax,yMin,yMax, style="rgba(125,211,252,.95)", lw=2){
+  const {ix,iy,iw,ih} = ax;
+  const n = Math.min(xs.length, ys.length);
+  if (n<2) return;
+  function X(x){ return ix + (x - xMin)/(xMax-xMin)*iw; }
+  function Y(y){ return iy + (1 - (y - yMin)/(yMax-yMin))*ih; }
+  ctx.strokeStyle = style;
+  ctx.lineWidth = lw;
+  ctx.beginPath();
+  ctx.moveTo(X(xs[0]), Y(ys[0]));
+  for (let i=1;i<n;i++){
+    ctx.lineTo(X(xs[i]), Y(ys[i]));
+  }
+  ctx.stroke();
+}
+
+function drawLegend(ctx, x, y, items){
+  const pad=10, r=14;
+  const lineH=18;
+  const w= Math.max(...items.map(it=>ctx.measureText(it.label).width)) + 60;
+  const h= pad*2 + items.length*lineH;
+  ctx.fillStyle="rgba(10,14,20,.55)";
+  ctx.strokeStyle="rgba(255,255,255,.10)";
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.roundRect(x,y,w,h,r);
+  ctx.fill(); ctx.stroke();
+
+  ctx.font="12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  for(let i=0;i<items.length;i++){
+    const yy=y+pad+ i*lineH + 10;
+    ctx.strokeStyle=items[i].color;
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(x+12, yy-4);
+    ctx.lineTo(x+32, yy-4);
+    ctx.stroke();
+    ctx.fillStyle="rgba(233,241,255,.90)";
+    ctx.fillText(items[i].label, x+40, yy);
+  }
+}
+
+/* add roundRect for older browsers */
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+    r = Math.min(r, w/2, h/2);
+    this.beginPath();
+    this.moveTo(x+r, y);
+    this.arcTo(x+w, y, x+w, y+h, r);
+    this.arcTo(x+w, y+h, x, y+h, r);
+    this.arcTo(x, y+h, x, y, r);
+    this.arcTo(x, y, x+w, y, r);
+    this.closePath();
+    return this;
+  };
+}
+
+/* =========================
+   Draw: Diagram
+   ========================= */
+function drawDiagram(N0_cm3, R2){
+  const canvas = document.getElementById("cDiagram");
+  const {ctx,w,h} = setupCanvas(canvas);
+  clearPanel(ctx,w,h);
+
+  drawTitle(ctx, 14, 22, "Diagram: Ruby rod + resonator + Q-switch (lumped model)");
+
+  const margin=18;
+  const cx=margin, cy=40, cw=w-2*margin, ch=h-58;
+
+  // base line (cavity axis)
+  const ymid = cy + ch*0.55;
+  const xL = cx + 20;
+  const xR = cx + cw - 20;
+
+  // mirrors
+  function mirror(x, label, R){
+    ctx.strokeStyle="rgba(233,241,255,.85)";
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(x, ymid-70);
+    ctx.lineTo(x, ymid+70);
+    ctx.stroke();
+
+    ctx.fillStyle="rgba(233,241,255,.90)";
+    ctx.font="700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+    ctx.fillText(label, x-20, ymid-80);
+    ctx.font="12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+    ctx.fillStyle="rgba(168,182,204,.95)";
+    ctx.fillText("R = "+R.toFixed(2), x-22, ymid-62);
+  }
+
+  mirror(xL, "HR", given.R1);
+  mirror(xR, "OC", R2);
+
+  // cavity axis
+  ctx.strokeStyle="rgba(255,255,255,.22)";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(xL, ymid);
+  ctx.lineTo(xR, ymid);
+  ctx.stroke();
+
+  // rod
+  const rodW = (xR-xL)*0.55;
+  const rodX = xL + (xR-xL)*0.22;
+  const rodH = 60;
+  const rodY = ymid - rodH/2;
+
+  ctx.fillStyle="rgba(125,211,252,.15)";
+  ctx.strokeStyle="rgba(125,211,252,.55)";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.roundRect(rodX, rodY, rodW, rodH, 14);
+  ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle="rgba(233,241,255,.92)";
+  ctx.font="700 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  ctx.fillText("Ruby rod (Cr³⁺)", rodX+12, rodY+22);
+  ctx.font="12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  ctx.fillStyle="rgba(168,182,204,.95)";
+  ctx.fillText("ℓ = 15 cm, A = 1 cm²", rodX+12, rodY+42);
+
+  // Q-switch block (stylized)
+  const qsX = rodX + rodW + 20;
+  const qsY = ymid - 26;
+  ctx.fillStyle="rgba(167,139,250,.16)";
+  ctx.strokeStyle="rgba(167,139,250,.55)";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.roundRect(qsX, qsY, 80, 52, 14);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle="rgba(233,241,255,.92)";
+  ctx.font="700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  ctx.fillText("Q-switch", qsX+12, qsY+20);
+  ctx.fillStyle="rgba(168,182,204,.95)";
+  ctx.font="12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  ctx.fillText("loss → low", qsX+12, qsY+38);
+
+  // pump arrow
+  ctx.strokeStyle="rgba(52,211,153,.75)";
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(rodX+rodW*0.3, rodY-28);
+  ctx.lineTo(rodX+rodW*0.3, rodY-4);
+  ctx.stroke();
+  ctx.fillStyle="rgba(52,211,153,.9)";
+  ctx.beginPath();
+  ctx.moveTo(rodX+rodW*0.3, rodY-4);
+  ctx.lineTo(rodX+rodW*0.3-7, rodY-12);
+  ctx.lineTo(rodX+rodW*0.3+7, rodY-12);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle="rgba(168,182,204,.95)";
+  ctx.font="12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  ctx.fillText("pump λp = 450 nm", rodX+rodW*0.3-46, rodY-34);
+
+  // annotation box
+  const Nth = thresholdInversion_cm3(R2);
+  const info = [
+    `N0 = ${fmtSI(N0_cm3, "cm^-3")}`,
+    `N_th ≈ ${fmtSI(Nth, "cm^-3")}`,
+    `σ = 2e-20 cm^2`,
+    `L_cav = 20 cm`
+  ];
+
+  const bx = cx + 18;
+  const by = cy + 14;
+  ctx.fillStyle="rgba(10,14,20,.55)";
+  ctx.strokeStyle="rgba(255,255,255,.10)";
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.roundRect(bx, by, 220, 94, 14);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle="rgba(233,241,255,.92)";
+  ctx.font="700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  ctx.fillText("Model parameters (live)", bx+12, by+18);
+
+  ctx.font="12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  ctx.fillStyle="rgba(168,182,204,.95)";
+  for(let i=0;i<info.length;i++){
+    ctx.fillText(info[i], bx+12, by+36 + i*16);
+  }
+}
+
+/* =========================
+   Draw: Main pulse plot
+   ========================= */
+function drawMainPlot(sim){
+  const canvas = document.getElementById("cMain");
+  const {ctx,w,h} = setupCanvas(canvas);
+  clearPanel(ctx,w,h);
+  drawTitle(ctx, 14, 22, "Main plot: Q-switched output power P_out(t)");
+
+  // time in ns, power in GW
+  const t = sim.t;
+  const P = sim.Pout;
+  const n = t.length;
+  const xs = new Float64Array(n);
+  const ys = new Float64Array(n);
+  let tMax = 0;
+  let yMax = 0;
+  for(let i=0;i<n;i++){
+    xs[i] = t[i]*1e9;
+    ys[i] = P[i]/1e9;
+    if(xs[i]>tMax) tMax = xs[i];
+    if(ys[i]>yMax) yMax = ys[i];
+  }
+  yMax = Math.max(yMax, 1e-6);
+  const yPad = 0.08*yMax;
+  const box = {x:10,y:10,w:w-20,h:h-20};
+  const ax = drawAxes(
+    ctx, box,
+    "time (ns)",
+    "P_out (GW)",
+    0, tMax,
+    0, yMax + yPad,
+    {
+      nx: 6, ny: 5,
+      xTickFmt: v => v.toFixed(0),
+      yTickFmt: v => (v>=10? v.toFixed(0) : v.toFixed(1))
+    }
+  );
+
+  plotLine(ctx, ax, xs, ys, 0, tMax, 0, yMax+yPad, "rgba(125,211,252,.95)", 2.5);
+
+  // mark peak
+  const tpk = sim.tpk*1e9;
+  const ppk = sim.Ppk/1e9;
+  const xpk = ax.ix + (tpk/(tMax))*ax.iw;
+  const ypk = ax.iy + (1 - ppk/(yMax+yPad))*ax.ih;
+
+  ctx.fillStyle="rgba(251,191,36,.9)";
+  ctx.beginPath();
+  ctx.arc(xpk, ypk, 4, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle="rgba(233,241,255,.92)";
+  ctx.font="600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  const label = `peak ≈ ${fmtEng(sim.Ppk,"W")} at ${tpk.toFixed(2)} ns`;
+  ctx.fillText(label, ax.ix + 10, ax.iy + 18);
+
+  drawLegend(ctx, ax.ix + ax.iw - 170, ax.iy + 10, [
+    {label:"P_out(t)", color:"rgba(125,211,252,.95)"},
+    {label:"peak marker", color:"rgba(251,191,36,.9)"}
+  ]);
+}
+
+/* =========================
+   Draw: Sweep plot vs R2
+   ========================= */
+function drawSweepPlot(N0_cm3){
+  const canvas = document.getElementById("cSweep");
+  const {ctx,w,h} = setupCanvas(canvas);
+  clearPanel(ctx,w,h);
+  drawTitle(ctx, 14, 22, "Secondary plot: sweep output coupler R2 (energy & peak)");
+
+  const R2s = [];
+  const Es = [];
+  const Ppks = [];
+
+  const r2min = 0.50, r2max = 0.95;
+  const pts = 26;
+  for(let i=0;i<pts;i++){
+    const R2 = r2min + (r2max-r2min)*(i/(pts-1));
+    const sim = simulatePulse(N0_cm3, R2, {tmax:220e-9, dt:0.03e-9});
+    R2s.push(R2);
+    Es.push(sim.E);       // J
+    Ppks.push(sim.Ppk);   // W
+  }
+
+  // scales: Energy in J (left), Peak in GW (right)
+  const Emax = Math.max(...Es);
+  const Pmax = Math.max(...Ppks)/1e9;
+
+  const box = {x:10,y:10,w:w-20,h:h-20};
+  const ax = drawAxes(
+    ctx, box,
+    "output mirror reflectance R2 (dimensionless)",
+    "Energy E_out (J)",
+    r2min, r2max,
+    0, Emax*1.10,
+    {
+      nx: 5, ny: 5,
+      xTickFmt: v => v.toFixed(2),
+      yTickFmt: v => (v>=100? v.toFixed(0) : v.toFixed(1))
+    }
+  );
+
+  // plot Energy
+  plotLine(ctx, ax, R2s, Es, r2min, r2max, 0, Emax*1.10, "rgba(52,211,153,.92)", 2.5);
+
+  // right axis for peak power
+  // draw right axis labels
+  ctx.fillStyle="rgba(233,241,255,.90)";
+  ctx.font="600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  const yLabelR = "Peak power P_peak (GW)";
+  // y label right rotated
+  ctx.save();
+  ctx.translate(ax.ix + ax.iw + 42, ax.iy + ax.ih*0.5);
+  ctx.rotate(Math.PI/2);
+  ctx.fillText(yLabelR, -ctx.measureText(yLabelR).width*0.5, 0);
+  ctx.restore();
+
+  // ticks on right
+  const ny = 5;
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  ctx.fillStyle = "rgba(168,182,204,.95)";
+  ctx.strokeStyle = "rgba(255,255,255,.08)";
+  for(let j=0;j<=ny;j++){
+    const tt = j/ny;
+    const gy = ax.iy + (1-tt)*ax.ih;
+    const val = (0 + (Pmax*1.10)*tt);
+    ctx.fillText((val>=10? val.toFixed(0): val.toFixed(1)), ax.ix + ax.iw + 10, gy+4);
+  }
+
+  // plot peak (scaled to left axis using mapping)
+  // map y_right in [0,Pmax*1.1] to y_left in [0,Emax*1.1]
+  const Pscaled = Ppks.map(p=> (p/1e9) * (Emax*1.10)/(Pmax*1.10));
+  plotLine(ctx, ax, R2s, Pscaled, r2min, r2max, 0, Emax*1.10, "rgba(167,139,250,.92)", 2.5);
+
+  drawLegend(ctx, ax.ix + 10, ax.iy + 10, [
+    {label:"E_out (J)", color:"rgba(52,211,153,.92)"},
+    {label:"P_peak (GW)", color:"rgba(167,139,250,.92)"}
+  ]);
+}
+
+/* =========================
+   UI wiring + recompute
+   ========================= */
+
+function sliderToN0(){
+  // The slider is labeled log10, but we clamp to a realistic range for this problem.
+  // We map x in [3,12] to N0 in [1e18, 1.2e19] smoothly.
+  const s = parseFloat(document.getElementById("n0Slider").value);
+  // Normalize
+  const t = (s - 3)/(12-3);
+  const Nmin = 1e18, Nmax = 1.2e19;
+  // smooth mapping (power curve) to give more resolution near 1e19
+  const gamma = 2.2;
+  const u = Math.pow(t, gamma);
+  return Nmin + (Nmax - Nmin)*u;
+}
+
+function recomputeAll(){
+  const N0_cm3 = sliderToN0();
+  const R2 = parseFloat(document.getElementById("r2Select").value);
+
+  document.getElementById("n0Read").textContent = fmtSI(N0_cm3, "");
+  document.getElementById("r2Read").textContent = R2.toFixed(2);
+
+  // fixed N2 requested in (a,b)
+  const N2_cm3 = 1e19;
+
+  const Ppump = pumpPower_W(N2_cm3);
+  const Psp = spontPower_W(N2_cm3);
+
+  const Nth = thresholdInversion_cm3(R2);
+  const sim = simulatePulse(N0_cm3, R2, {tmax:220e-9, dt:0.02e-9});
+
+  const out = [
+    `Given (a,b) use N2 = 1.0e19 cm^-3 and V = 15 cm^3`,
+    `Pump power to maintain N2:  P_pump ≈ ${fmtEng(Ppump,"W")}  (≈ ${fmtSI(Ppump,"W")})`,
+    `Spontaneous power proxy:    P_sp   ≈ ${fmtEng(Psp,"W")}  (≈ ${fmtSI(Psp,"W")})`,
+    ``,
+    `Current Q-switch settings (for plots):`,
+    `N0 = ${fmtSI(N0_cm3,"cm^-3")},  R1 = 0.95,  R2 = ${R2.toFixed(2)}`,
+    `Threshold inversion:        N_th ≈ ${fmtSI(Nth,"cm^-3")}`,
+    `Photon lifetime:            τ_ph ≈ ${fmtEng(sim.tau_ph,"s")}`,
+    `Output fraction estimate:   f_out ≈ ${sim.fOut.toFixed(3)}`,
+    ``,
+    `Pulse results (model):`,
+    `Output energy:              E_out ≈ ${fmtEng(sim.E,"J")}  (≈ ${fmtSI(sim.E,"J")})`,
+    `Peak output power:          P_peak ≈ ${fmtEng(sim.Ppk,"W")}  (≈ ${(sim.Ppk/1e9).toFixed(2)} GW)`,
+    `Peak time:                 t_peak ≈ ${(sim.tpk*1e9).toFixed(2)} ns`,
+    `Pulse width (FWHM):         τ_FWHM ≈ ${(sim.fwhm*1e9).toFixed(2)} ns`
+  ].join("\n");
+  document.getElementById("liveOut").textContent = out;
+
+  // draw
+  drawDiagram(N0_cm3, R2);
+  drawMainPlot(sim);
+  drawSweepPlot(N0_cm3);
+}
+
+// Initial wiring
+document.getElementById("n0Slider").addEventListener("input", ()=>recomputeAll());
+document.getElementById("r2Select").addEventListener("change", ()=>recomputeAll());
+window.addEventListener("resize", ()=>recomputeAll());
+
+// Kick off
+recomputeAll();
+</script>
+</body>
+</html>

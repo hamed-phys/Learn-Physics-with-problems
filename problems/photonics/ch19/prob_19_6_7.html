@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Noise in an Analog APD Receiver — RMS Noise Currents & SNR</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --card:#101827;
+      --card2:#0f1624;
+      --text:#e8eefc;
+      --muted:#b7c3df;
+      --faint:#7f8aa6;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#86efac;
+      --warn:#fde68a;
+      --bad:#fca5a5;
+      --line:rgba(255,255,255,.10);
+      --shadow:0 12px 30px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 15% 10%, rgba(125,211,252,.18), transparent 60%),
+                  radial-gradient(900px 650px at 75% 0%, rgba(167,139,250,.16), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    header{
+      padding: clamp(18px, 3.5vw, 34px) clamp(16px, 4vw, 44px);
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+    }
+    header h1{
+      margin:0 0 6px 0;
+      letter-spacing:.2px;
+      font-size: clamp(22px, 3vw, 34px);
+    }
+    header p{margin:0;color:var(--muted);max-width:78ch}
+    main{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      padding: 18px clamp(14px, 4vw, 44px) 44px;
+      align-items:start;
+    }
+    aside{
+      position:sticky;
+      top: 14px;
+      align-self:start;
+      background: rgba(16,24,39,.72);
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      padding: 14px;
+    }
+    .toc-title{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .toc-title strong{font-size:14px;letter-spacing:.3px}
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      margin: 3px 0;
+      color: var(--muted);
+      text-decoration:none;
+      border-radius:10px;
+      border:1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size: 14px;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.20);
+      color: var(--text);
+      transform: translateX(2px);
+    }
+    .mini{
+      margin-top:12px;
+      padding:10px;
+      border-radius:12px;
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      color: var(--muted);
+      font-size:13px;
+    }
+
+    article{
+      background: rgba(16,24,39,.55);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+    section{
+      padding: 18px clamp(16px, 3vw, 28px);
+      border-top:1px solid var(--line);
+    }
+    section:first-child{border-top:none}
+    h2{
+      margin: 0 0 10px 0;
+      font-size: clamp(18px, 2.2vw, 26px);
+      letter-spacing:.2px;
+    }
+    h3{
+      margin: 14px 0 8px 0;
+      font-size: 16px;
+      color: var(--text);
+    }
+    p{margin: 10px 0; color: var(--text)}
+    ul,ol{margin: 8px 0 8px 22px; color: var(--muted)}
+    li{margin: 6px 0}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 14px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr}
+      aside{position:relative; top:0}
+      .grid2{grid-template-columns:1fr}
+      .grid3{grid-template-columns:1fr}
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding: 14px;
+    }
+    .callout{
+      border-left: 4px solid rgba(125,211,252,.8);
+      background: rgba(125,211,252,.06);
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(125,211,252,.18);
+      margin: 12px 0;
+    }
+    .callout.warn{
+      border-left-color: rgba(253,230,138,.9);
+      background: rgba(253,230,138,.07);
+      border-color: rgba(253,230,138,.20);
+    }
+    .callout.good{
+      border-left-color: rgba(134,239,172,.9);
+      background: rgba(134,239,172,.07);
+      border-color: rgba(134,239,172,.18);
+    }
+    .callout.bad{
+      border-left-color: rgba(252,165,165,.9);
+      background: rgba(252,165,165,.07);
+      border-color: rgba(252,165,165,.18);
+    }
+    .eq{
+      font-family: var(--mono);
+      font-size: 13.5px;
+      background: rgba(0,0,0,.25);
+      border:1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      overflow:auto;
+      position:relative;
+      margin: 10px 0;
+    }
+    .eq .label{
+      position:absolute;
+      top:10px; right:12px;
+      color: var(--faint);
+      font-family: var(--sans);
+      font-size: 12px;
+    }
+    .copybar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top: 8px;
+    }
+    button.copy{
+      cursor:pointer;
+      background: rgba(125,211,252,.14);
+      border:1px solid rgba(125,211,252,.25);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      transition: transform .15s ease, background .15s ease;
+    }
+    button.copy:hover{transform: translateY(-1px); background: rgba(125,211,252,.20)}
+    button.copy:active{transform: translateY(0px)}
+    .kpi{
+      display:flex; gap:12px; flex-wrap:wrap;
+      margin-top: 10px;
+    }
+    .pill{
+      border:1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 10px;
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pill strong{color: var(--text)}
+    figure{
+      margin: 0;
+      padding: 0;
+    }
+    .canvasWrap{
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+      background: rgba(0,0,0,.25);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+    canvas{display:block; width:100%; height:100%}
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 700px){
+      .controls{grid-template-columns:1fr}
+    }
+    .control{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding: 12px;
+      background: rgba(255,255,255,.03);
+    }
+    .control label{
+      display:flex; justify-content:space-between; align-items:baseline;
+      gap:12px;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    input[type="range"]{width:100%}
+    select{
+      width:100%;
+      background: rgba(0,0,0,.25);
+      border:1px solid var(--line);
+      color: var(--text);
+      padding:10px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+    .mono{font-family:var(--mono)}
+    footer{
+      padding: 16px clamp(16px, 3vw, 28px) 22px;
+      color: var(--faint);
+      font-size: 12.5px;
+      border-top:1px solid var(--line);
+      background: rgba(255,255,255,.02);
+    }
+    .badge{
+      display:inline-block;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      margin-left: 8px;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff;color:#000}
+      header, aside, .controls, button.copy{display:none !important}
+      main{display:block; padding:0}
+      article{box-shadow:none; border:none; background:#fff}
+      section{page-break-inside:avoid}
+      .eq{background:#f6f6f6; border:1px solid #ddd}
+      .callout{background:#f6f6ff}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Noise in an Analog APD Receiver <span class="badge">RMS Noise Currents + SNR</span></h1>
+  <p>
+    We compute the photogenerated current from optical power, include avalanche multiplication noise via the excess noise factor,
+    add thermal (Johnson) noise for a resistance-limited receiver, and assemble the total RMS noise current and SNR.
+  </p>
+</header>
+
+<main>
+  <aside aria-label="Table of contents">
+    <div class="toc-title">
+      <strong>Table of Contents</strong>
+      <span class="mono" style="color:var(--faint);font-size:12px;">sticky</span>
+    </div>
+    <nav class="toc">
+      <a href="#quick">Quick Summary</a>
+      <a href="#part0">PART 0 — Concept Primer</a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a href="#part2">PART 2 — Strategy & Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a href="#part4">PART 4 — Deeper Understanding</a>
+      <a href="#part5">PART 5 — Visualization Guide</a>
+    </nav>
+    <div class="mini">
+      <div><strong>Interactive:</strong> slide the APD gain <span class="mono">M</span> or change the optical power. All plots update live.</div>
+    </div>
+  </aside>
+
+  <article>
+    <section id="quick">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><strong>Topic:</strong> Noise in an <strong>analog APD</strong> optical receiver (shot noise + avalanche excess noise + thermal noise).</li>
+        <li><strong>Key idea:</strong> Avalanche multiplication boosts signal current by <span class="mono">M</span> but boosts shot-noise variance by <span class="mono">M²F(M)</span>.</li>
+        <li><strong>Photocurrent:</strong> <span class="mono">I<sub>p</sub> = R·P</span>, where <span class="mono">R = η q λ/(hc)</span>.</li>
+        <li><strong>Excess noise factor (McIntyre):</strong> <span class="mono">F(M)=kM+(1−k)(2−1/M)</span>.</li>
+        <li><strong>Shot-noise RMS (APD output):</strong> <span class="mono">i<sub>sh</sub> = √(2 q (I) M² F B)</span> with <span class="mono">I</span> being the relevant primary current (signal or dark).</li>
+        <li><strong>Thermal noise (resistance-limited):</strong> <span class="mono">i<sub>th</sub> = √(4 k<sub>B</sub> T B / R<sub>L</sub>)</span>.</li>
+        <li><strong>SNR (current mode):</strong> <span class="mono">SNR = (M I<sub>p</sub>)² / (i<sub>n,total</sub>)²</span>.</li>
+        <li><strong>Numeric results (given values):</strong> RMS noise currents and <span class="mono">SNR ≈ 2.87×10³</span> (~<span class="mono">34.6 dB</span>).</li>
+      </ul>
+    </section>
+
+    <section id="part0">
+      <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+      <div class="grid2">
+        <div>
+          <h3>Core definitions (symbols & units)</h3>
+          <ul>
+            <li><span class="mono">P</span> — received optical power (W)</li>
+            <li><span class="mono">η</span> — quantum efficiency (dimensionless)</li>
+            <li><span class="mono">λ</span> — optical wavelength (m)</li>
+            <li><span class="mono">R</span> — responsivity (A/W), converting optical power to <em>primary</em> photocurrent</li>
+            <li><span class="mono">I<sub>p</sub></span> — primary (pre-avalanche) photocurrent (A)</li>
+            <li><span class="mono">M</span> — mean avalanche gain (dimensionless)</li>
+            <li><span class="mono">k</span> — ionization ratio (dimensionless) controlling multiplication noise</li>
+            <li><span class="mono">F(M)</span> — excess noise factor (dimensionless)</li>
+            <li><span class="mono">B</span> — electrical noise bandwidth (Hz)</li>
+            <li><span class="mono">R<sub>L</sub></span> — load resistance (Ω)</li>
+            <li><span class="mono">T</span> — absolute temperature (K)</li>
+            <li><span class="mono">i<sub>n,rms</sub></span> — RMS noise current in bandwidth <span class="mono">B</span> (A)</li>
+          </ul>
+
+          <h3>Physical meaning (what’s really happening)</h3>
+          <p>
+            An APD converts photons into electron-hole pairs. Even if the optical power is steady, the
+            <em>arrival of photons</em> is random (Poisson statistics), creating <strong>shot noise</strong>.
+            The avalanche process multiplies carriers, increasing the mean current by <span class="mono">M</span>—but the multiplication itself is stochastic,
+            causing extra fluctuations captured by <span class="mono">F(M)</span>.
+            In a resistance-limited receiver, the load resistor contributes <strong>thermal (Johnson) noise</strong>.
+          </p>
+
+          <div class="callout">
+            <strong>When these models are valid</strong>
+            <ul>
+              <li>Shot noise: requires discrete charge carriers and Poisson-like statistics (good for photodetection).</li>
+              <li>Excess noise factor: assumes standard APD avalanche statistics (McIntyre model) and a defined ionization ratio <span class="mono">k</span>.</li>
+              <li>Thermal noise: assumes resistor noise dominates amplifier noise (the problem states “resistance limited”).</li>
+              <li>Bandwidth-limited RMS: noise integrated over an equivalent rectangular bandwidth <span class="mono">B</span>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Key equations (copy-friendly)</h3>
+
+          <div class="eq" id="eq_resp">
+            <div class="label">Responsivity</div>
+            R = η q λ / (h c)
+          </div>
+          <div class="copybar">
+            <button class="copy" data-copy-target="eq_resp">Copy equation</button>
+          </div>
+
+          <div class="eq" id="eq_excess">
+            <div class="label">Excess noise</div>
+            F(M) = k M + (1 − k) (2 − 1/M)
+          </div>
+          <div class="copybar">
+            <button class="copy" data-copy-target="eq_excess">Copy equation</button>
+          </div>
+
+          <div class="eq" id="eq_shot">
+            <div class="label">APD shot noise (RMS)</div>
+            i_sh = sqrt( 2 q I · M^2 · F(M) · B )
+          </div>
+          <div class="copybar">
+            <button class="copy" data-copy-target="eq_shot">Copy equation</button>
+          </div>
+
+          <div class="eq" id="eq_thermal">
+            <div class="label">Thermal noise (RMS)</div>
+            i_th = sqrt( 4 k_B T B / R_L )
+          </div>
+          <div class="copybar">
+            <button class="copy" data-copy-target="eq_thermal">Copy equation</button>
+          </div>
+
+          <h3>Mini intuition examples</h3>
+          <ul>
+            <li><strong>No avalanche (M=1):</strong> <span class="mono">F(1)=1</span>, so shot noise reduces to ordinary photodiode shot noise.</li>
+            <li><strong>Large gain:</strong> signal grows ~<span class="mono">M</span>, but shot-noise RMS grows ~<span class="mono">M √F</span> (and if <span class="mono">F≈kM</span>, that’s ~<span class="mono">M√(kM)</</span>).</li>
+          </ul>
+
+          <div class="callout warn">
+            <strong>What to watch for (common pitfalls)</strong>
+            <ul>
+              <li>Using <span class="mono">M</span> instead of <span class="mono">M²</span> in the shot-noise variance.</li>
+              <li>Forgetting the excess noise factor <span class="mono">F(M)</span>.</li>
+              <li>Mixing “primary” current (<span class="mono">I<sub>p</sub></span>) with multiplied output current (<span class="mono">M I<sub>p</sub></span>).</li>
+              <li>Thermal noise: using <span class="mono">4kBT/R</span> without multiplying by bandwidth <span class="mono">B</span>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="part1">
+      <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+      <h3>Restate the problem (in plain words)</h3>
+      <p>
+        A conventional APD receiver detects an optical signal of <span class="mono">P = 10 nW</span> at <span class="mono">λ = 0.87 μm</span>.
+        Given the APD quantum efficiency, avalanche gain, ionization ratio, load resistance, temperature, bandwidth, and dark current,
+        compute the <strong>RMS noise currents</strong> from the main noise mechanisms and the resulting <strong>SNR</strong>.
+        The receiver is <strong>resistance limited</strong>, and the dark-current noise follows the same shot-noise law as the photocurrent noise.
+      </p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Given quantities</h3>
+          <ul>
+            <li><span class="mono">η = 0.8</span></li>
+            <li><span class="mono">M = 100</span> (mean gain)</li>
+            <li><span class="mono">k = 0.5</span> (ionization ratio)</li>
+            <li><span class="mono">R_L = 1 kΩ</span></li>
+            <li><span class="mono">T = 300 K</span></li>
+            <li><span class="mono">B = 100 kHz</span></li>
+            <li><span class="mono">i_d = 1 nA</span> (dark/leakage current, primary)</li>
+            <li><span class="mono">P = 10 nW</span>, <span class="mono">λ = 0.87 μm</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Unknowns to determine</h3>
+          <ul>
+            <li>Primary photocurrent <span class="mono">I_p</span> and multiplied signal current <span class="mono">I_s = M I_p</span></li>
+            <li>RMS shot noise from signal photocurrent <span class="mono">i_sh,p</span></li>
+            <li>RMS shot noise from dark current <span class="mono">i_sh,d</span></li>
+            <li>RMS thermal noise current <span class="mono">i_th</span></li>
+            <li>Total RMS noise <span class="mono">i_n</span> and SNR</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Relevant physics principles (and why they apply)</h3>
+      <ul>
+        <li><strong>Photon-to-electron conversion:</strong> responsivity from quantum efficiency gives <span class="mono">I_p = R P</span>.</li>
+        <li><strong>Shot noise:</strong> photocurrent and dark current are carried by discrete electrons → Poisson fluctuations → <span class="mono">2qI</span> spectral density.</li>
+        <li><strong>Avalanche multiplication statistics:</strong> APD gain introduces extra noise described by <span class="mono">F(M)</span>.</li>
+        <li><strong>Thermal noise:</strong> receiver is explicitly “resistance limited” → Johnson noise of <span class="mono">R_L</span> dominates electronics.</li>
+      </ul>
+
+      <div class="callout">
+        <strong>Assumptions (explicit)</strong>
+        <ul>
+          <li>Steady-state average currents; noise integrated over an equivalent noise bandwidth <span class="mono">B</span>.</li>
+          <li>Shot-noise contributions (signal and dark) are statistically independent and add in variance.</li>
+          <li>Load resistor thermal noise appears as an equivalent input current noise: <span class="mono">i_th^2 = 4kBTB/R_L</span>.</li>
+          <li>Excess noise factor follows the McIntyre form given the ionization ratio <span class="mono">k</span>.</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (2–3) and comparison</h3>
+      <ol>
+        <li><strong>Direct current-noise method (best here):</strong> compute <span class="mono">I_p</span>, compute <span class="mono">F(M)</span>, compute RMS noises and SNR. <em>Pros:</em> shortest, matches problem statement. <em>Cons:</em> assumes bandwidth model is known.</li>
+        <li><strong>Noise spectral density integration:</strong> write current-noise PSDs and integrate over <span class="mono">B</span>. <em>Pros:</em> conceptually deep. <em>Cons:</em> longer, yields same RMS results.</li>
+        <li><strong>Equivalent noise charge method:</strong> convert to electrons over integration time. <em>Pros:</em> intuition for photon counting. <em>Cons:</em> unnecessary for this analog spec.</li>
+      </ol>
+      <p><strong>Chosen approach:</strong> Direct current-noise method—fast, standard, and exactly aligned with “RMS noise currents” and “resistance limited.”</p>
+    </section>
+
+    <section id="part2">
+      <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+      <ol>
+        <li>
+          <strong>Compute responsivity</strong> <span class="mono">R</span>
+          <div class="mono" style="color:var(--muted);margin-top:4px;">Use: R = η q λ/(hc). Meaning: amps per watt of received power.</div>
+        </li>
+        <li>
+          <strong>Find primary photocurrent</strong> <span class="mono">I_p</span>
+          <div class="mono" style="color:var(--muted);margin-top:4px;">Use: I_p = R P. Meaning: average current before avalanche multiplication.</div>
+        </li>
+        <li>
+          <strong>Compute excess noise factor</strong> <span class="mono">F(M)</span>
+          <div class="mono" style="color:var(--muted);margin-top:4px;">Use: F(M)=kM+(1−k)(2−1/M). Meaning: extra variance from avalanche randomness.</div>
+        </li>
+        <li>
+          <strong>Compute signal shot-noise RMS</strong> <span class="mono">i_sh,p</span>
+          <div class="mono" style="color:var(--muted);margin-top:4px;">Use: i_sh = √(2 q I · M² F B) with I = I_p.</div>
+        </li>
+        <li>
+          <strong>Compute dark shot-noise RMS</strong> <span class="mono">i_sh,d</span>
+          <div class="mono" style="color:var(--muted);margin-top:4px;">Same formula with I = I_d. Meaning: fluctuations even with no light.</div>
+        </li>
+        <li>
+          <strong>Compute thermal noise RMS</strong> <span class="mono">i_th</span>
+          <div class="mono" style="color:var(--muted);margin-top:4px;">Use: i_th = √(4 k_B T B / R_L). Meaning: resistor agitation noise.</div>
+        </li>
+        <li>
+          <strong>Combine noises in quadrature</strong>
+          <div class="mono" style="color:var(--muted);margin-top:4px;">Use: i_n = √(i_sh,p² + i_sh,d² + i_th²).</div>
+        </li>
+        <li>
+          <strong>Compute signal current and SNR</strong>
+          <div class="mono" style="color:var(--muted);margin-top:4px;">Signal: I_s = M I_p. SNR = I_s² / i_n².</div>
+        </li>
+      </ol>
+
+      <div class="callout warn">
+        <strong>Common mistakes & quick tips</strong>
+        <ul>
+          <li><strong>Tip:</strong> Keep “primary” currents (<span class="mono">I_p, I_d</span>) separate from multiplied mean signal (<span class="mono">M I_p</span>).</li>
+          <li><strong>Mistake:</strong> adding RMS noises directly. <em>Correct:</em> add variances (square, sum, sqrt).</li>
+          <li><strong>Mistake:</strong> using <span class="mono">F</span> without <span class="mono">M²</span>. Shot-noise variance scales as <span class="mono">M²F</span>.</li>
+          <li><strong>Tip:</strong> sanity-check units: all RMS noises must come out in amperes.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="part3">
+      <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+      <h3>Qualitative expectation (before numbers)</h3>
+      <p>
+        With only <span class="mono">10 nW</span> of light, the primary photocurrent is in the nanoamp range.
+        Avalanche gain <span class="mono">M=100</span> will raise the signal to sub-microamp levels, likely dominating thermal noise.
+        However, because avalanche noise grows strongly with <span class="mono">M</span> (through <span class="mono">M²F</span>), the shot-noise terms may become the largest contributions.
+      </p>
+
+      <h3>Step 1 — Responsivity and primary photocurrent</h3>
+      <p>
+        For a photodiode/APD, the responsivity (assuming each detected photon yields one electron-hole pair) is
+      </p>
+      <div class="eq" id="eq1">
+        <div class="label">Step 1</div>
+        R = η q / (hν) = η q λ / (h c)
+      </div>
+      <p>
+        Now plug in <span class="mono">η=0.8</span>, <span class="mono">λ=0.87 μm = 0.87×10⁻⁶ m</span>,
+        <span class="mono">q=1.602×10⁻¹⁹ C</span>, <span class="mono">h=6.626×10⁻³⁴ J·s</span>, <span class="mono">c=2.998×10⁸ m/s</span>.
+      </p>
+      <div class="eq" id="eq2">
+        <div class="label">Compute R</div>
+        R = 0.8 · (1.602×10^-19) · (0.87×10^-6) / (6.626×10^-34 · 2.998×10^8)
+          ≈ 0.561 A/W
+      </div>
+      <p>
+        Therefore the <strong>primary</strong> photocurrent (before multiplication) for <span class="mono">P=10 nW = 10×10⁻⁹ W</span> is:
+      </p>
+      <div class="eq" id="eq3">
+        <div class="label">Compute I_p</div>
+        I_p = R P = (0.561 A/W)(10×10^-9 W) ≈ 5.61×10^-9 A = 5.61 nA
+      </div>
+      <p>
+        <em>Meaning:</em> on average, the detector produces about <span class="mono">5.6 nA</span> of primary photocharge flow from the signal alone.
+      </p>
+
+      <h3>Step 2 — Excess noise factor for APD multiplication</h3>
+      <p>
+        The McIntyre expression (for electron/hole ionization asymmetry encoded by <span class="mono">k</span>) is:
+      </p>
+      <div class="eq" id="eq4">
+        <div class="label">Step 2</div>
+        F(M) = k M + (1 − k)(2 − 1/M)
+      </div>
+      <p>
+        With <span class="mono">M=100</span>, <span class="mono">k=0.5</span>:
+      </p>
+      <div class="eq" id="eq5">
+        <div class="label">Compute F</div>
+        F(100) = 0.5·100 + 0.5·(2 − 1/100)
+              = 50 + 0.5·1.99
+              = 50.995
+      </div>
+      <p>
+        <em>Meaning:</em> multiplication adds large extra variance; for this <span class="mono">k</span> and large <span class="mono">M</span>, <span class="mono">F</span> is roughly ~<span class="mono">kM</span>.
+      </p>
+
+      <h3>Step 3 — RMS shot-noise currents (signal and dark)</h3>
+      <p>
+        For an APD, the <strong>output</strong> shot-noise RMS in bandwidth <span class="mono">B</span> is modeled as:
+      </p>
+      <div class="eq" id="eq6">
+        <div class="label">Step 3</div>
+        i_sh = sqrt( 2 q I · M^2 · F(M) · B )
+      </div>
+      <p>
+        Here <span class="mono">I</span> is the relevant <strong>primary</strong> current that is being multiplied (e.g., <span class="mono">I_p</span> for the signal, <span class="mono">I_d</span> for the dark current).
+        We are told the dark/leakage noise obeys the same law as the photocurrent noise, so we apply the same formula to <span class="mono">I_d</span>.
+      </p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Signal shot noise (from photocurrent)</h3>
+          <p class="mono" style="color:var(--muted);margin-top:-6px;">
+            Use I = I_p = 5.61 nA, B = 100 kHz, M = 100, F = 50.995
+          </p>
+          <div class="eq" id="eq7">
+            <div class="label">Compute i_sh,p</div>
+            i_sh,p = sqrt( 2 q I_p M^2 F B )
+                   ≈ 9.58×10^-9 A
+                   = 9.58 nA (rms)
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Dark shot noise (from dark current)</h3>
+          <p class="mono" style="color:var(--muted);margin-top:-6px;">
+            Use I = I_d = 1 nA (given), same M, F, B
+          </p>
+          <div class="eq" id="eq8">
+            <div class="label">Compute i_sh,d</div>
+            i_sh,d = sqrt( 2 q I_d M^2 F B )
+                   ≈ 4.04×10^-9 A
+                   = 4.04 nA (rms)
+          </div>
+        </div>
+      </div>
+
+      <p>
+        <em>What did we do and why?</em> We treated both photo- and dark-generated carriers as Poisson processes.
+        Multiplication increases mean current by <span class="mono">M</span> but increases the noise power by <span class="mono">M²F</span>, hence the strong gain dependence.
+      </p>
+
+      <h3>Step 4 — Thermal (Johnson) noise current from the load resistor</h3>
+      <p>
+        For a resistance-limited receiver, the load resistor contributes an equivalent RMS current noise:
+      </p>
+      <div class="eq" id="eq9">
+        <div class="label">Step 4</div>
+        i_th = sqrt( 4 k_B T B / R_L )
+      </div>
+      <p>
+        Insert <span class="mono">k_B = 1.381×10⁻²³ J/K</span>, <span class="mono">T=300 K</span>, <span class="mono">B=100 kHz</span>,
+        <span class="mono">R_L=1 kΩ</span>:
+      </p>
+      <div class="eq" id="eq10">
+        <div class="label">Compute i_th</div>
+        i_th = sqrt( 4 (1.381×10^-23)(300)(1.00×10^5) / (1000) )
+             ≈ 1.29×10^-9 A
+             = 1.29 nA (rms)
+      </div>
+      <p>
+        <em>Meaning:</em> thermal noise is smaller than the avalanche-amplified shot-noise terms for this case.
+      </p>
+
+      <h3>Step 5 — Total RMS noise current</h3>
+      <p>
+        Independent noise sources add in <strong>variance</strong> (mean-square). Therefore:
+      </p>
+      <div class="eq" id="eq11">
+        <div class="label">Step 5</div>
+        i_n = sqrt( i_sh,p^2 + i_sh,d^2 + i_th^2 )
+      </div>
+      <p>
+        With the computed values:
+      </p>
+      <div class="eq" id="eq12">
+        <div class="label">Compute i_n</div>
+        i_n = sqrt( (9.58 nA)^2 + (4.04 nA)^2 + (1.29 nA)^2 )
+            ≈ 10.48 nA (rms)
+      </div>
+
+      <h3>Step 6 — Signal current and SNR</h3>
+      <p>
+        The mean <strong>multiplied</strong> signal current is:
+      </p>
+      <div class="eq" id="eq13">
+        <div class="label">Signal</div>
+        I_s = M I_p = 100 · 5.61 nA ≈ 561 nA = 0.561 μA
+      </div>
+      <p>
+        In an analog current receiver, a common definition is:
+      </p>
+      <div class="eq" id="eq14">
+        <div class="label">SNR</div>
+        SNR = (I_s)^2 / (i_n)^2
+      </div>
+      <div class="eq" id="eq15">
+        <div class="label">Compute SNR</div>
+        SNR ≈ (0.561 μA)^2 / (10.48 nA)^2
+            ≈ 2.87×10^3
+            ≈ 34.6 dB
+      </div>
+
+      <div class="callout good" style="margin-top:14px;">
+        <strong>Final Answers (RMS noise currents, B = 100 kHz)</strong>
+        <ul>
+          <li><span class="mono">R ≈ 0.561 A/W</span>, <span class="mono">I_p ≈ 5.61 nA</span>, <span class="mono">F(100) ≈ 50.995</span></li>
+          <li><strong>Signal shot noise:</strong> <span class="mono">i_sh,p ≈ 9.58 nA rms</span></li>
+          <li><strong>Dark shot noise:</strong> <span class="mono">i_sh,d ≈ 4.04 nA rms</span></li>
+          <li><strong>Thermal noise:</strong> <span class="mono">i_th ≈ 1.29 nA rms</span></li>
+          <li><strong>Total noise:</strong> <span class="mono">i_n ≈ 10.48 nA rms</span></li>
+          <li><strong>Signal current:</strong> <span class="mono">I_s = M I_p ≈ 0.561 μA</span></li>
+          <li><strong>SNR:</strong> <span class="mono">≈ 2.87×10^3</span> (≈ <span class="mono">34.6 dB</span>)</li>
+        </ul>
+        <div class="copybar">
+          <button class="copy" data-copy-text="R ≈ 0.561 A/W
+Ip ≈ 5.61 nA
+F(100) ≈ 50.995
+i_sh,p ≈ 9.58 nA rms
+i_sh,d ≈ 4.04 nA rms
+i_th ≈ 1.29 nA rms
+i_total ≈ 10.48 nA rms
+Is ≈ 0.561 μA
+SNR ≈ 2.87×10^3 (34.6 dB)">Copy final answer (plain text)</button>
+        </div>
+      </div>
+
+      <h3>Sanity checks</h3>
+      <ul>
+        <li><strong>Units:</strong> every noise expression returns amperes after taking the square root (good).</li>
+        <li><strong>Limiting case:</strong> if <span class="mono">M→1</span>, then <span class="mono">F→1</span> and APD formulas reduce to PIN-diode shot noise.</li>
+        <li><strong>Dominance:</strong> at <span class="mono">M=100</span>, shot-noise terms (boosted by <span class="mono">M²F</span>) exceed thermal noise, consistent with results.</li>
+        <li><strong>Physical interpretation:</strong> high gain helps the mean signal, but it also amplifies randomness; <span class="mono">F(M)</span> determines how “noisy” the multiplication is.</li>
+      </ul>
+
+      <p>
+        In the plots below, you will see how <span class="mono">M</span> simultaneously increases the signal and the noise—and how the balance can change with parameters such as <span class="mono">k</span>, <span class="mono">R_L</span>, and optical power.
+      </p>
+    </section>
+
+    <section id="part4">
+      <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+      <h3>Re-interpreting the formulas</h3>
+      <ul>
+        <li><span class="mono">I_p = RP</span>: more optical power increases the mean signal linearly.</li>
+        <li><span class="mono">i_sh ∝ √I</span>: shot noise grows like the square root of current (Poisson statistics).</li>
+        <li><span class="mono">M²F(M)</span>: avalanche multiplication boosts noise power strongly; the factor <span class="mono">F</span> captures the extra randomness beyond deterministic gain.</li>
+        <li><span class="mono">i_th ∝ √(B/R_L)</span>: thermal noise falls with larger load resistance and rises with bandwidth.</li>
+      </ul>
+
+      <h3>How parameter changes affect outcomes (connect to the interactive plots)</h3>
+      <ul>
+        <li><strong>Increasing gain <span class="mono">M</span>:</strong> signal <span class="mono">I_s</span> increases linearly, but shot-noise RMS increases roughly as <span class="mono">M√F</span>. For large <span class="mono">M</span> and moderate <span class="mono">k</span>, <span class="mono">F≈kM</span> so <span class="mono">i_sh ∝ M√(kM)</</span> grows very fast.</li>
+        <li><strong>Lowering <span class="mono">k</span> (more favorable ionization asymmetry):</strong> reduces <span class="mono">F</span>, improving SNR at high gain.</li>
+        <li><strong>Increasing optical power:</strong> increases both signal and shot noise; SNR typically improves when thermal noise is significant, but can saturate when shot noise dominates.</li>
+        <li><strong>Changing <span class="mono">R_L</span>:</strong> larger <span class="mono">R_L</span> reduces thermal noise, making shot noise more dominant.</li>
+      </ul>
+
+      <h3>Alternative derivation idea (brief)</h3>
+      <p>
+        Instead of using RMS formulas directly, you can start from the current-noise power spectral density (PSD):
+        <span class="mono">S_i(f) = 2qI M²F</span> for shot noise and <span class="mono">S_i(f)=4kBT/R_L</span> for thermal noise,
+        then integrate PSD over the receiver noise bandwidth <span class="mono">B</span> to obtain mean-square noise.
+        This produces the same RMS expressions.
+      </p>
+
+      <h3>Concept checks (quick self-test)</h3>
+      <ul>
+        <li><strong>Q:</strong> Why does APD shot-noise variance scale with <span class="mono">M²</span> instead of <span class="mono">M</span>? <strong>A:</strong> because noise power relates to squared fluctuations; multiplication scales current amplitudes by <span class="mono">M</span>, so variance scales by <span class="mono">M²</span>, plus the extra <span class="mono">F</span>.</li>
+        <li><strong>Q:</strong> If <span class="mono">k→0</span> (very favorable ionization), what happens? <strong>A:</strong> <span class="mono">F</span> becomes much smaller for large <span class="mono">M</span>, improving SNR at high gain.</li>
+        <li><strong>Q:</strong> If bandwidth doubles, how do RMS noises change? <strong>A:</strong> each RMS noise scales as <span class="mono">√B</span>, so they increase by <span class="mono">√2</span>.</li>
+        <li><strong>Q:</strong> In a shot-noise-limited regime, does raising optical power always raise SNR? <strong>A:</strong> SNR improves more slowly and can approach a regime where shot noise dominates; the exact scaling depends on which noises dominate.</li>
+      </ul>
+    </section>
+
+    <section id="part5">
+      <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+
+      <div class="grid2">
+        <div>
+          <h3>What each canvas shows</h3>
+          <ul>
+            <li><strong>Diagram canvas:</strong> optical power <span class="mono">P</span> enters an APD (with <span class="mono">η</span>, <span class="mono">M</span>, <span class="mono">k</span>) feeding a load resistor <span class="mono">R_L</span>. Noise sources (shot + thermal) are indicated.</li>
+            <li><strong>Main plot:</strong> <strong>SNR vs gain</strong> <span class="mono">M</span> for the chosen optical power. You’ll see how SNR changes with gain when excess noise is included.</li>
+            <li><strong>Secondary plot:</strong> <strong>RMS noise currents vs gain</strong> (<span class="mono">i_sh,p</span>, <span class="mono">i_sh,d</span>, <span class="mono">i_th</span>, total). This reveals which noise source dominates across gains.</li>
+          </ul>
+
+          <h3>Interactive controls</h3>
+          <ul>
+            <li><strong>Gain slider (<span class="mono">M</span>):</strong> updates the operating point marker on both plots and recomputes <span class="mono">F(M)</span>.</li>
+            <li><strong>Optical power (<span class="mono">P</span>):</strong> changes the primary photocurrent <span class="mono">I_p</span>, shifting shot-noise levels and SNR.</li>
+            <li><strong>Ionization ratio (<span class="mono">k</span>):</strong> changes excess noise <span class="mono">F(M)</span>, most visible at high gain.</li>
+          </ul>
+
+          <div class="callout">
+            <strong>Reading tip:</strong> If the total noise curve nearly overlaps the signal shot-noise curve,
+            the receiver is <em>shot-noise dominated</em>. If it overlaps the thermal curve at low gains,
+            the receiver is <em>thermal-noise dominated</em>.
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Interactive visualization</h3>
+
+          <figure class="canvasWrap" style="height:220px;">
+            <canvas id="cnvDiagram" aria-label="APD receiver diagram"></canvas>
+          </figure>
+
+          <div class="controls">
+            <div class="control">
+              <label for="gain">
+                <span>APD mean gain <span class="mono">M</span></span>
+                <span class="mono" id="gainVal">100</span>
+              </label>
+              <input id="gain" type="range" min="1" max="200" step="1" value="100"/>
+            </div>
+
+            <div class="control">
+              <label for="power">
+                <span>Optical power <span class="mono">P</span> (nW)</span>
+                <span class="mono" id="powerVal">10.0</span>
+              </label>
+              <input id="power" type="range" min="0.1" max="100" step="0.1" value="10"/>
+            </div>
+
+            <div class="control">
+              <label for="kSelect">
+                <span>Ionization ratio <span class="mono">k</span></span>
+                <span class="mono" id="kVal">0.50</span>
+              </label>
+              <input id="kSelect" type="range" min="0.0" max="1.0" step="0.01" value="0.50"/>
+            </div>
+
+            <div class="control">
+              <label for="scaleMode">
+                <span>Plot scaling</span>
+                <span class="mono" id="scaleVal">Linear</span>
+              </label>
+              <select id="scaleMode">
+                <option value="linear" selected>Linear</option>
+                <option value="log">Log (y-axis)</option>
+              </select>
+            </div>
+          </div>
+
+          <figure class="canvasWrap" style="height:280px; margin-top:12px;">
+            <canvas id="cnvMain" aria-label="SNR vs gain plot"></canvas>
+          </figure>
+
+          <figure class="canvasWrap" style="height:300px; margin-top:12px;">
+            <canvas id="cnvSecondary" aria-label="Noise currents vs gain plot"></canvas>
+          </figure>
+
+          <div class="kpi" id="kpiRow" aria-label="computed key values"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Computations assume rectangular noise bandwidth <span class="mono">B</span> and standard APD excess noise model.
+      If your receiver front-end has a known equivalent noise bandwidth different from the 3 dB bandwidth, replace <span class="mono">B</span> accordingly.
+    </footer>
+  </article>
+</main>
+
+<script>
+/* ---------- Utilities ---------- */
+const QS = (s)=>document.querySelector(s);
+const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+function fmtSI(x, unit){
+  const ax = Math.abs(x);
+  const prefixes = [
+    {p:1e-12, s:"p"}, {p:1e-9, s:"n"}, {p:1e-6, s:"µ"},
+    {p:1e-3, s:"m"},  {p:1, s:""},    {p:1e3, s:"k"},
+    {p:1e6, s:"M"}
+  ];
+  let chosen = prefixes[4];
+  for (let i=0;i<prefixes.length;i++){
+    const pr = prefixes[i];
+    if (ax >= pr.p && ax < pr.p*1000){ chosen = pr; break; }
+    if (ax===0){ chosen = prefixes[4]; break; }
+    if (ax >= 1e6) chosen = prefixes[6];
+  }
+  const val = x / chosen.p;
+  const digits = (Math.abs(val) >= 100) ? 1 : (Math.abs(val) >= 10 ? 2 : 3);
+  return `${val.toFixed(digits)} ${chosen.s}${unit}`;
+}
+function fmt(x, digits=3){ return Number(x).toFixed(digits); }
+
+/* ---------- Copy buttons ---------- */
+function getPlainTextFromEq(el){
+  // Extract text content and collapse whitespace
+  return el.textContent.replace(/\s+/g,' ').trim()
+    .replace(/Responsivity|Excess noise|APD shot noise \(RMS\)|Thermal noise \(RMS\)|Step \d+|Compute [A-Za-z_,]+|Signal|SNR/g,'')
+    .replace(/\s+\./g,'.')
+    .trim();
+}
+document.addEventListener('click', async (e)=>{
+  const btn = e.target.closest('button.copy');
+  if(!btn) return;
+  const tId = btn.getAttribute('data-copy-target');
+  const tText = btn.getAttribute('data-copy-text');
+  let text = '';
+  if (tText){
+    text = tText;
+  } else if (tId){
+    const el = document.getElementById(tId);
+    if(el) text = getPlainTextFromEq(el);
+  }
+  if(!text) return;
+  try{
+    await navigator.clipboard.writeText(text);
+    const old = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(()=>btn.textContent=old, 900);
+  }catch(err){
+    alert("Copy failed (browser permission). You can manually select the text.");
+  }
+});
+
+/* ---------- Physics model (constants + functions) ---------- */
+const CONST = {
+  q: 1.602176634e-19,
+  h: 6.62607015e-34,
+  c: 299792458,
+  kB: 1.380649e-23
+};
+const fixed = {
+  eta: 0.8,
+  lambda: 0.87e-6,
+  RL: 1e3,
+  T: 300,
+  B: 100e3,
+  Id: 1e-9
+};
+
+function responsivity(eta, lambda){
+  return eta * CONST.q * lambda / (CONST.h * CONST.c);
+}
+function F_excess(M, k){
+  return k*M + (1-k)*(2 - 1/M);
+}
+function ish_rms(Iprimary, M, k, B){
+  const F = F_excess(M,k);
+  return Math.sqrt(2*CONST.q*Iprimary*M*M*F*B);
+}
+function ith_rms(T, B, RL){
+  return Math.sqrt(4*CONST.kB*T*B/RL);
+}
+
+/* ---------- Canvas plotting helpers ---------- */
+function setupCanvas(canvas){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(320, rect.width);
+  const h = Math.max(160, rect.height);
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx, w, h, dpr};
+}
+function clear(ctx,w,h){
+  ctx.clearRect(0,0,w,h);
+}
+function roundRect(ctx,x,y,w,h,r){
+  const rr = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rr);
+  ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr);
+  ctx.arcTo(x,y,x+w,y,rr);
+  ctx.closePath();
+}
+function drawGrid(ctx, box, xTicks=6, yTicks=5){
+  const {x,y,w,h} = box;
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,.10)";
+  ctx.lineWidth = 1;
+  // vertical
+  for(let i=0;i<=xTicks;i++){
+    const xx = x + (w*i/xTicks);
+    ctx.beginPath(); ctx.moveTo(xx,y); ctx.lineTo(xx,y+h); ctx.stroke();
+  }
+  // horizontal
+  for(let j=0;j<=yTicks;j++){
+    const yy = y + (h*j/yTicks);
+    ctx.beginPath(); ctx.moveTo(x,yy); ctx.lineTo(x+w,yy); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawAxes(ctx, box, xLabel, yLabel, title){
+  const {x,y,w,h} = box;
+  ctx.save();
+  ctx.fillStyle = "rgba(232,238,252,.95)";
+  ctx.font = "600 14px ui-sans-serif, system-ui";
+  ctx.fillText(title, x, y-10);
+
+  ctx.strokeStyle = "rgba(255,255,255,.55)";
+  ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+h); ctx.lineTo(x+w,y+h); ctx.stroke();
+
+  ctx.fillStyle = "rgba(183,195,223,.95)";
+  ctx.font = "12px ui-sans-serif, system-ui";
+
+  // labels
+  ctx.fillText(xLabel, x + w/2 - ctx.measureText(xLabel).width/2, y+h+34);
+
+  ctx.save();
+  ctx.translate(x-38, y + h/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, -ctx.measureText(yLabel).width/2, 0);
+  ctx.restore();
+  ctx.restore();
+}
+function mapLinear(v, vmin, vmax, pmin, pmax){
+  const t = (v - vmin) / (vmax - vmin);
+  return pmin + t*(pmax - pmin);
+}
+function niceTicks(vmin, vmax, n=5){
+  const span = vmax - vmin;
+  if(span <= 0) return {min:vmin, max:vmax, step:1};
+  const raw = span / n;
+  const pow10 = Math.pow(10, Math.floor(Math.log10(raw)));
+  const scaled = raw / pow10;
+  let step = 1;
+  if(scaled >= 5) step = 5;
+  else if(scaled >= 2) step = 2;
+  else step = 1;
+  step *= pow10;
+  const min = Math.floor(vmin/step)*step;
+  const max = Math.ceil(vmax/step)*step;
+  return {min, max, step};
+}
+function drawTickLabels(ctx, box, xMin,xMax, yMin,yMax, xUnit="", yUnit="", xTicks=6, yTicks=5, yScale="linear"){
+  const {x,y,w,h} = box;
+  ctx.save();
+  ctx.fillStyle="rgba(183,195,223,.95)";
+  ctx.font="12px ui-sans-serif, system-ui";
+
+  // x ticks
+  for(let i=0;i<=xTicks;i++){
+    const xv = xMin + (xMax-xMin)*i/xTicks;
+    const xx = x + w*i/xTicks;
+    ctx.strokeStyle="rgba(255,255,255,.35)";
+    ctx.beginPath(); ctx.moveTo(xx,y+h); ctx.lineTo(xx,y+h+5); ctx.stroke();
+    const lab = (xv>=100? xv.toFixed(0): xv.toFixed(0)) + xUnit;
+    ctx.fillText(lab, xx-ctx.measureText(lab).width/2, y+h+18);
+  }
+
+  // y ticks
+  let yt = niceTicks(yMin,yMax,yTicks);
+  if(yScale==="log"){
+    // yMin/yMax are already log10 values. Use integer ticks.
+    yt = {min: Math.floor(yMin), max: Math.ceil(yMax), step:1};
+  }
+  for(let v=yt.min; v<=yt.max+1e-12; v+=yt.step){
+    const yy = mapLinear(v, yt.min, yt.max, y+h, y);
+    ctx.strokeStyle="rgba(255,255,255,.35)";
+    ctx.beginPath(); ctx.moveTo(x-5,yy); ctx.lineTo(x,yy); ctx.stroke();
+    let lab;
+    if(yScale==="log"){
+      const val = Math.pow(10,v);
+      lab = fmtSI(val, yUnit);
+    }else{
+      lab = (Math.abs(v)>=1000? v.toFixed(0): (Math.abs(v)>=10? v.toFixed(1): v.toFixed(2))) + yUnit;
+    }
+    ctx.fillText(lab, x-10-ctx.measureText(lab).width, yy+4);
+    // grid line
+    ctx.strokeStyle="rgba(255,255,255,.10)";
+    ctx.beginPath(); ctx.moveTo(x,yy); ctx.lineTo(x+w,yy); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawLine(ctx, points){
+  ctx.beginPath();
+  for(let i=0;i<points.length;i++){
+    const p=points[i];
+    if(i===0) ctx.moveTo(p.x,p.y);
+    else ctx.lineTo(p.x,p.y);
+  }
+  ctx.stroke();
+}
+function legend(ctx, items, x, y){
+  ctx.save();
+  ctx.font="12px ui-sans-serif, system-ui";
+  ctx.fillStyle="rgba(232,238,252,.95)";
+  const pad=10, row=18, boxW=260, boxH=pad*2 + row*items.length;
+  ctx.fillStyle="rgba(0,0,0,.25)";
+  ctx.strokeStyle="rgba(255,255,255,.10)";
+  roundRect(ctx,x,y,boxW,boxH,12);
+  ctx.fill(); ctx.stroke();
+  for(let i=0;i<items.length;i++){
+    const it=items[i];
+    const yy=y+pad + i*row + 8;
+    ctx.strokeStyle=it.color;
+    ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(x+12,yy); ctx.lineTo(x+34,yy); ctx.stroke();
+    ctx.fillStyle="rgba(232,238,252,.92)";
+    ctx.fillText(it.label, x+42, yy+4);
+  }
+  ctx.restore();
+}
+
+/* ---------- Rendering: diagram ---------- */
+function renderDiagram(state){
+  const canvas = QS("#cnvDiagram");
+  const {ctx,w,h} = setupCanvas(canvas);
+  clear(ctx,w,h);
+
+  // background
+  ctx.save();
+  ctx.fillStyle = "rgba(255,255,255,.02)";
+  ctx.fillRect(0,0,w,h);
+  ctx.restore();
+
+  // title
+  ctx.fillStyle = "rgba(232,238,252,.95)";
+  ctx.font = "700 14px ui-sans-serif, system-ui";
+  ctx.fillText("Physical Setup: APD Receiver (Resistance-Limited)", 14, 20);
+
+  // Blocks
+  const y0 = 60;
+  const apd = {x: w*0.36, y: y0, w: w*0.26, h: 90};
+  const load = {x: w*0.70, y: y0+10, w: w*0.22, h: 70};
+
+  // input arrow
+  ctx.strokeStyle="rgba(125,211,252,.9)";
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(20, y0+45);
+  ctx.lineTo(apd.x-14, y0+45);
+  ctx.stroke();
+  // arrow head
+  ctx.beginPath();
+  ctx.moveTo(apd.x-14, y0+45);
+  ctx.lineTo(apd.x-24, y0+39);
+  ctx.lineTo(apd.x-24, y0+51);
+  ctx.closePath();
+  ctx.fillStyle="rgba(125,211,252,.9)";
+  ctx.fill();
+
+  ctx.fillStyle="rgba(183,195,223,.95)";
+  ctx.font="12px ui-sans-serif, system-ui";
+  ctx.fillText("Optical signal", 22, y0+28);
+  ctx.fillText(`P = ${state.PnW.toFixed(1)} nW,  λ = 0.87 µm`, 22, y0+46);
+
+  // APD block
+  ctx.fillStyle="rgba(167,139,250,.10)";
+  ctx.strokeStyle="rgba(167,139,250,.35)";
+  ctx.lineWidth=1.5;
+  roundRect(ctx, apd.x, apd.y, apd.w, apd.h, 16);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle="rgba(232,238,252,.95)";
+  ctx.font="700 13px ui-sans-serif, system-ui";
+  ctx.fillText("APD", apd.x+12, apd.y+22);
+  ctx.fillStyle="rgba(183,195,223,.95)";
+  ctx.font="12px ui-sans-serif, system-ui";
+  ctx.fillText(`η = ${fixed.eta}`, apd.x+12, apd.y+44);
+  ctx.fillText(`M = ${state.M}`, apd.x+12, apd.y+62);
+  ctx.fillText(`k = ${state.k.toFixed(2)}`, apd.x+12, apd.y+80);
+
+  // APD output arrow to load
+  ctx.strokeStyle="rgba(232,238,252,.65)";
+  ctx.lineWidth=3;
+  const midY = apd.y + apd.h/2;
+  ctx.beginPath();
+  ctx.moveTo(apd.x+apd.w+10, midY);
+  ctx.lineTo(load.x-12, midY);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(load.x-12, midY);
+  ctx.lineTo(load.x-22, midY-6);
+  ctx.lineTo(load.x-22, midY+6);
+  ctx.closePath();
+  ctx.fillStyle="rgba(232,238,252,.65)";
+  ctx.fill();
+  ctx.fillStyle="rgba(183,195,223,.95)";
+  ctx.fillText("Output current →", apd.x+apd.w+18, midY-10);
+
+  // Load resistor block
+  ctx.fillStyle="rgba(125,211,252,.08)";
+  ctx.strokeStyle="rgba(125,211,252,.30)";
+  ctx.lineWidth=1.5;
+  roundRect(ctx, load.x, load.y, load.w, load.h, 16);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle="rgba(232,238,252,.95)";
+  ctx.font="700 13px ui-sans-serif, system-ui";
+  ctx.fillText("Load", load.x+12, load.y+22);
+  ctx.fillStyle="rgba(183,195,223,.95)";
+  ctx.font="12px ui-sans-serif, system-ui";
+  ctx.fillText(`R_L = ${fmtSI(fixed.RL,"Ω")}`, load.x+12, load.y+44);
+  ctx.fillText(`Thermal noise`, load.x+12, load.y+62);
+
+  // Noise callouts
+  ctx.fillStyle="rgba(252,165,165,.10)";
+  ctx.strokeStyle="rgba(252,165,165,.35)";
+  roundRect(ctx, apd.x-10, apd.y+apd.h+14, apd.w+20, 52, 14);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle="rgba(232,238,252,.95)";
+  ctx.font="700 12px ui-sans-serif, system-ui";
+  ctx.fillText("Noise sources in this problem", apd.x+4, apd.y+apd.h+34);
+  ctx.fillStyle="rgba(183,195,223,.95)";
+  ctx.font="12px ui-sans-serif, system-ui";
+  ctx.fillText("• Shot noise (photocurrent + dark) with M²F(M)", apd.x+4, apd.y+apd.h+52);
+
+  ctx.restore();
+}
+
+/* ---------- Plots ---------- */
+function computeAt(state, M){
+  const R = responsivity(fixed.eta, fixed.lambda);
+  const P = state.PnW * 1e-9;
+  const Ip = R * P;
+  const Id = fixed.Id;
+  const k = state.k;
+  const F = F_excess(M, k);
+  const ish_p = ish_rms(Ip, M, k, fixed.B);
+  const ish_d = ish_rms(Id, M, k, fixed.B);
+  const ith = ith_rms(fixed.T, fixed.B, fixed.RL);
+  const inTot = Math.sqrt(ish_p*ish_p + ish_d*ish_d + ith*ith);
+  const Is = M * Ip;
+  const SNR = (Is*Is)/(inTot*inTot);
+  return {R,P,Ip,Id,M,k,F,ish_p,ish_d,ith,inTot,Is,SNR};
+}
+
+function renderMainPlot(state){
+  const canvas = QS("#cnvMain");
+  const {ctx,w,h} = setupCanvas(canvas);
+  clear(ctx,w,h);
+
+  const pad = {l:70, r:16, t:34, b:54};
+  const box = {x:pad.l, y:pad.t, w:w-pad.l-pad.r, h:h-pad.t-pad.b};
+
+  // background panel
+  ctx.fillStyle="rgba(255,255,255,.02)";
+  ctx.fillRect(0,0,w,h);
+
+  drawGrid(ctx, box, 7, 6);
+
+  // Data
+  const Mmin = 1, Mmax = 200;
+  const pts = [];
+  let yVals = [];
+  for(let M=Mmin; M<=Mmax; M++){
+    const d = computeAt(state, M);
+    let y = d.SNR;
+    if(state.scale==="log"){
+      y = Math.log10(Math.max(y, 1e-20));
+    }
+    yVals.push(y);
+  }
+  let yMin = Math.min(...yVals), yMax = Math.max(...yVals);
+  if(state.scale==="linear"){
+    // add headroom
+    const span = (yMax-yMin)||1;
+    yMin = Math.max(0, yMin - 0.08*span);
+    yMax = yMax + 0.10*span;
+  }else{
+    // log: add small padding
+    yMin -= 0.15;
+    yMax += 0.15;
+  }
+
+  for(let M=Mmin; M<=Mmax; M++){
+    const d = computeAt(state, M);
+    let y = d.SNR;
+    if(state.scale==="log"){
+      y = Math.log10(Math.max(y, 1e-20));
+    }
+    const px = mapLinear(M, Mmin, Mmax, box.x, box.x+box.w);
+    const py = mapLinear(y, yMin, yMax, box.y+box.h, box.y);
+    pts.push({x:px,y:py});
+  }
+
+  // axes and labels
+  drawAxes(ctx, box, "Gain M (dimensionless)", state.scale==="log" ? "SNR (log10 scale)" : "SNR (linear)", "Main Plot: SNR vs APD Gain");
+  drawTickLabels(ctx, box, Mmin, Mmax, yMin, yMax, "", state.scale==="log" ? "" : "", 7, 6, state.scale);
+
+  // line
+  ctx.save();
+  ctx.strokeStyle="rgba(125,211,252,.95)";
+  ctx.lineWidth=2.5;
+  drawLine(ctx, pts);
+  ctx.restore();
+
+  // operating point marker
+  const d0 = computeAt(state, state.M);
+  let y0 = d0.SNR;
+  if(state.scale==="log") y0 = Math.log10(Math.max(y0,1e-20));
+  const x0 = mapLinear(state.M, Mmin, Mmax, box.x, box.x+box.w);
+  const y0p = mapLinear(y0, yMin, yMax, box.y+box.h, box.y);
+
+  ctx.save();
+  ctx.fillStyle="rgba(167,139,250,.95)";
+  ctx.beginPath(); ctx.arc(x0,y0p,4.8,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle="rgba(0,0,0,.35)"; ctx.lineWidth=2;
+  ctx.stroke();
+  ctx.fillStyle="rgba(232,238,252,.95)";
+  ctx.font="12px ui-sans-serif, system-ui";
+  const label = `M=${state.M}, SNR=${state.scale==="log" ? (d0.SNR.toExponential(2)) : (Math.round(d0.SNR)).toLocaleString()}`;
+  const lx = clamp(x0+10, box.x+8, box.x+box.w-ctx.measureText(label).width-10);
+  const ly = clamp(y0p-10, box.y+14, box.y+box.h-10);
+  ctx.fillText(label, lx, ly);
+  ctx.restore();
+
+  legend(ctx, [{label:"SNR(M)", color:"rgba(125,211,252,.95)"},{label:"Operating point", color:"rgba(167,139,250,.95)"}], box.x+box.w-280, box.y+10);
+}
+
+function renderSecondaryPlot(state){
+  const canvas = QS("#cnvSecondary");
+  const {ctx,w,h} = setupCanvas(canvas);
+  clear(ctx,w,h);
+
+  const pad = {l:70, r:16, t:34, b:54};
+  const box = {x:pad.l, y:pad.t, w:w-pad.l-pad.r, h:h-pad.t-pad.b};
+
+  ctx.fillStyle="rgba(255,255,255,.02)";
+  ctx.fillRect(0,0,w,h);
+
+  drawGrid(ctx, box, 7, 6);
+
+  const Mmin=1, Mmax=200;
+  const series = {
+    isp: [], isd: [], ith: [], itot: []
+  };
+  let yAll = [];
+  for(let M=Mmin; M<=Mmax; M++){
+    const d = computeAt(state, M);
+    const vals = [d.ish_p, d.ish_d, d.ith, d.inTot];
+    vals.forEach(v=>{
+      let yy = v;
+      if(state.scale==="log") yy = Math.log10(Math.max(yy, 1e-30));
+      yAll.push(yy);
+    });
+  }
+  let yMin = Math.min(...yAll), yMax = Math.max(...yAll);
+  if(state.scale==="linear"){
+    const span=(yMax-yMin)||1;
+    yMin = Math.max(0, yMin - 0.08*span);
+    yMax = yMax + 0.12*span;
+  }else{
+    yMin -= 0.15; yMax += 0.15;
+  }
+
+  for(let M=Mmin; M<=Mmax; M++){
+    const d = computeAt(state, M);
+    const x = mapLinear(M, Mmin, Mmax, box.x, box.x+box.w);
+    const pushPoint = (arr, val)=>{
+      let y = val;
+      if(state.scale==="log") y = Math.log10(Math.max(y, 1e-30));
+      const py = mapLinear(y, yMin, yMax, box.y+box.h, box.y);
+      arr.push({x, y:py});
+    };
+    pushPoint(series.isp, d.ish_p);
+    pushPoint(series.isd, d.ish_d);
+    pushPoint(series.ith, d.ith);
+    pushPoint(series.itot, d.inTot);
+  }
+
+  drawAxes(ctx, box, "Gain M (dimensionless)", state.scale==="log" ? "Noise current (log scale, A)" : "Noise current (A)", "Secondary Plot: RMS Noise Currents vs Gain");
+  drawTickLabels(ctx, box, Mmin, Mmax, yMin, yMax, "", state.scale==="log" ? "A" : " A", 7, 6, state.scale);
+
+  const colors = {
+    isp:"rgba(125,211,252,.95)",
+    isd:"rgba(252,165,165,.95)",
+    ith:"rgba(253,230,138,.95)",
+    itot:"rgba(134,239,172,.95)"
+  };
+
+  ctx.save();
+  ctx.lineWidth=2.2;
+
+  ctx.strokeStyle=colors.isp; drawLine(ctx, series.isp);
+  ctx.strokeStyle=colors.isd; drawLine(ctx, series.isd);
+  ctx.strokeStyle=colors.ith; drawLine(ctx, series.ith);
+
+  ctx.lineWidth=2.8;
+  ctx.strokeStyle=colors.itot; drawLine(ctx, series.itot);
+
+  ctx.restore();
+
+  // operating point marker on total
+  const d0 = computeAt(state, state.M);
+  let y0 = d0.inTot;
+  if(state.scale==="log") y0 = Math.log10(Math.max(y0,1e-30));
+  const x0 = mapLinear(state.M, Mmin, Mmax, box.x, box.x+box.w);
+  const y0p = mapLinear(y0, yMin, yMax, box.y+box.h, box.y);
+
+  ctx.save();
+  ctx.fillStyle="rgba(167,139,250,.95)";
+  ctx.beginPath(); ctx.arc(x0,y0p,4.8,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle="rgba(0,0,0,.35)"; ctx.lineWidth=2; ctx.stroke();
+
+  ctx.fillStyle="rgba(232,238,252,.95)";
+  ctx.font="12px ui-sans-serif, system-ui";
+  const label = `Total @ M=${state.M}: ${fmtSI(d0.inTot,"A")}`;
+  const lx = clamp(x0+10, box.x+8, box.x+box.w-ctx.measureText(label).width-10);
+  const ly = clamp(y0p-10, box.y+14, box.y+box.h-10);
+  ctx.fillText(label, lx, ly);
+  ctx.restore();
+
+  legend(ctx, [
+    {label:"i_sh,p (signal)", color:colors.isp},
+    {label:"i_sh,d (dark)", color:colors.isd},
+    {label:"i_th (thermal)", color:colors.ith},
+    {label:"i_total", color:colors.itot},
+  ], box.x+box.w-280, box.y+10);
+}
+
+/* ---------- KPI strip ---------- */
+function renderKPI(state){
+  const d = computeAt(state, state.M);
+  const R = d.R;
+  const kpi = [
+    {k:"R", v:`${R.toFixed(3)} A/W`},
+    {k:"I_p", v:fmtSI(d.Ip,"A")},
+    {k:"F(M)", v:d.F.toFixed(3)},
+    {k:"I_s = M I_p", v:fmtSI(d.Is,"A")},
+    {k:"i_sh,p", v:fmtSI(d.ish_p,"A")},
+    {k:"i_sh,d", v:fmtSI(d.ish_d,"A")},
+    {k:"i_th", v:fmtSI(d.ith,"A")},
+    {k:"i_total", v:fmtSI(d.inTot,"A")},
+    {k:"SNR", v:`${d.SNR.toExponential(3)} (${(10*Math.log10(d.SNR)).toFixed(2)} dB)`}
+  ];
+  const row = QS("#kpiRow");
+  row.innerHTML = kpi.map(x=>`<div class="pill"><strong>${x.k}:</strong> ${x.v}</div>`).join("");
+}
+
+/* ---------- App state & render loop ---------- */
+const state = {
+  M: 100,
+  PnW: 10.0,
+  k: 0.50,
+  scale: "linear"
+};
+
+function renderAll(){
+  QS("#gainVal").textContent = state.M.toString();
+  QS("#powerVal").textContent = state.PnW.toFixed(1);
+  QS("#kVal").textContent = state.k.toFixed(2);
+  QS("#scaleVal").textContent = state.scale==="log" ? "Log" : "Linear";
+
+  renderDiagram(state);
+  renderMainPlot(state);
+  renderSecondaryPlot(state);
+  renderKPI(state);
+}
+
+function attach(){
+  QS("#gain").addEventListener("input", (e)=>{
+    state.M = parseInt(e.target.value,10);
+    renderAll();
+  });
+  QS("#power").addEventListener("input", (e)=>{
+    state.PnW = parseFloat(e.target.value);
+    renderAll();
+  });
+  QS("#kSelect").addEventListener("input", (e)=>{
+    state.k = parseFloat(e.target.value);
+    renderAll();
+  });
+  QS("#scaleMode").addEventListener("change", (e)=>{
+    state.scale = e.target.value;
+    renderAll();
+  });
+
+  window.addEventListener("resize", ()=>{
+    // re-render at new sizes (handles DPR and responsiveness)
+    renderAll();
+  }, {passive:true});
+}
+
+attach();
+renderAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dependence of Digital Receiver Sensitivity on Wavelength</title>
+<style>
+  :root{
+    --bg:#0b1220;
+    --panel:#111a2e;
+    --panel2:#0f172a;
+    --text:#e5e7eb;
+    --muted:#9ca3af;
+    --accent:#38bdf8;
+    --accent2:#22c55e;
+    --warn:#fbbf24;
+    --danger:#fb7185;
+    --border:rgba(255,255,255,.10);
+    --shadow: 0 14px 40px rgba(0,0,0,.35);
+    --radius:18px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:var(--sans);
+    background: radial-gradient(1000px 600px at 15% 10%, rgba(56,189,248,.18), transparent 60%),
+                radial-gradient(900px 500px at 85% 20%, rgba(34,197,94,.14), transparent 55%),
+                radial-gradient(900px 700px at 50% 120%, rgba(251,191,36,.10), transparent 55%),
+                linear-gradient(180deg, #071025, #050816 70%);
+    color:var(--text);
+    line-height:1.55;
+  }
+
+  a{color:var(--accent); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  .wrap{
+    max-width:1200px;
+    margin:0 auto;
+    padding:24px 18px 80px;
+  }
+
+  header.hero{
+    background: linear-gradient(135deg, rgba(56,189,248,.16), rgba(34,197,94,.10));
+    border:1px solid var(--border);
+    box-shadow:var(--shadow);
+    border-radius:var(--radius);
+    padding:24px 22px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.hero:before{
+    content:"";
+    position:absolute;
+    inset:-80px -120px auto auto;
+    width:320px;height:320px;
+    background: radial-gradient(circle at 30% 30%, rgba(56,189,248,.35), transparent 60%);
+    transform: rotate(12deg);
+    pointer-events:none;
+  }
+  .hero h1{
+    margin:0 0 8px;
+    font-weight:800;
+    letter-spacing:-.02em;
+    font-size:clamp(1.3rem, 1.2rem + 1.2vw, 2.0rem);
+  }
+  .hero p{
+    margin:6px 0 0;
+    color:var(--muted);
+    max-width:85ch;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 320px 1fr;
+    gap:18px;
+    margin-top:18px;
+    align-items:start;
+  }
+  @media (max-width: 980px){
+    .grid{grid-template-columns:1fr;}
+  }
+
+  nav.toc{
+    position:sticky;
+    top:14px;
+    align-self:start;
+    background: linear-gradient(180deg, rgba(17,26,46,.92), rgba(15,23,42,.88));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow: var(--shadow);
+    padding:14px 14px 10px;
+    backdrop-filter: blur(10px);
+  }
+  nav.toc h2{
+    font-size:0.95rem;
+    margin:0 0 8px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  nav.toc ul{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  nav.toc a{
+    display:block;
+    padding:8px 10px;
+    border-radius:12px;
+    border:1px solid transparent;
+    color:var(--text);
+    font-size:0.92rem;
+  }
+  nav.toc a:hover{
+    border-color:rgba(56,189,248,.35);
+    background: rgba(56,189,248,.07);
+  }
+
+  main{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  section.card{
+    background: linear-gradient(180deg, rgba(17,26,46,.86), rgba(15,23,42,.82));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow: var(--shadow);
+    padding:18px 18px 16px;
+    backdrop-filter: blur(8px);
+  }
+  section.card h2{
+    margin:0 0 10px;
+    font-size:1.15rem;
+    letter-spacing:-.01em;
+  }
+  section.card h3{
+    margin:14px 0 8px;
+    font-size:1.02rem;
+    color:#dbeafe;
+  }
+
+  .bullets{
+    margin:10px 0 0;
+    padding-left:18px;
+    color:var(--text);
+  }
+  .bullets li{margin:6px 0;}
+  .muted{color:var(--muted);}
+
+  .callouts{
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap:12px;
+    margin-top:10px;
+  }
+  .callout{
+    grid-column: span 12;
+    border:1px solid var(--border);
+    border-radius:16px;
+    background: rgba(255,255,255,.04);
+    padding:12px 12px 10px;
+  }
+  .callout strong{display:inline-block;margin-bottom:4px;}
+  .callout.assumptions{border-color: rgba(34,197,94,.35);}
+  .callout.keyeq{border-color: rgba(56,189,248,.40);}
+  .callout.mistakes{border-color: rgba(251,191,36,.45);}
+  .callout.answer{border-color: rgba(251,113,133,.55); background: rgba(251,113,133,.08);}
+  .callout .mono{
+    font-family:var(--mono);
+    font-size:0.94rem;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+
+  .eqrow{
+    display:flex;
+    gap:10px;
+    align-items:stretch;
+    margin-top:8px;
+    flex-wrap:wrap;
+  }
+  .eqbox{
+    flex: 1 1 420px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    background: rgba(255,255,255,.04);
+    padding:12px;
+    position:relative;
+    overflow:hidden;
+  }
+  .eqbox .label{
+    font-size:0.82rem;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .eq{
+    font-family:var(--mono);
+    font-size:0.96rem;
+    line-height:1.45;
+    white-space:pre-wrap;
+  }
+  button.copy{
+    border:1px solid rgba(56,189,248,.35);
+    background: rgba(56,189,248,.10);
+    color:var(--text);
+    border-radius:12px;
+    padding:8px 10px;
+    cursor:pointer;
+    font-size:0.9rem;
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    transition: transform .08s ease, background .2s ease;
+    user-select:none;
+  }
+  button.copy:hover{background: rgba(56,189,248,.18);}
+  button.copy:active{transform: scale(.98);}
+  .copyline{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px;}
+  .tag{
+    font-size:0.78rem;
+    padding:3px 8px;
+    border-radius:999px;
+    border:1px solid var(--border);
+    color:var(--muted);
+    background: rgba(255,255,255,.03);
+  }
+
+  .vizgrid{
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap:12px;
+    margin-top:10px;
+  }
+  .vizpanel{
+    grid-column: span 12;
+    border:1px solid var(--border);
+    border-radius:16px;
+    background: rgba(255,255,255,.03);
+    padding:12px;
+  }
+  @media (min-width: 900px){
+    .vizpanel.half{grid-column: span 6;}
+  }
+  .vizpanel h3{margin:0 0 8px; font-size:1.0rem;}
+  canvas{
+    width:100%;
+    height:320px;
+    display:block;
+    border-radius:14px;
+    background: rgba(5,8,22,.65);
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .small canvas{height:280px;}
+  .controls{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+    margin:10px 0 0;
+  }
+  .ctrl{
+    flex: 1 1 240px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:10px 12px 8px;
+    background: rgba(255,255,255,.03);
+  }
+  .ctrl label{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    gap:10px;
+    font-size:0.9rem;
+    color:var(--text);
+  }
+  .ctrl .val{
+    font-family:var(--mono);
+    color:var(--accent);
+    font-size:0.9rem;
+  }
+  input[type="range"]{
+    width:100%;
+    margin-top:8px;
+    accent-color: var(--accent);
+  }
+  .note{
+    margin-top:10px;
+    font-size:0.92rem;
+    color:var(--muted);
+  }
+
+  footer{
+    margin-top:16px;
+    color:var(--muted);
+    font-size:0.9rem;
+    text-align:center;
+  }
+
+  /* Subtle section entrance */
+  section.card{
+    animation: rise .5s ease both;
+  }
+  @keyframes rise{
+    from{opacity:0; transform: translateY(6px);}
+    to{opacity:1; transform: translateY(0);}
+  }
+
+  /* Print-friendly */
+  @media print{
+    body{background:white; color:black;}
+    nav.toc{display:none;}
+    header.hero, section.card{box-shadow:none; background:white; border:1px solid #ddd;}
+    .callout, .eqbox, .vizpanel{background:white;}
+    canvas{border:1px solid #bbb; background:white;}
+    button.copy{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <h1>Dependence of Digital Receiver Sensitivity on Wavelength (Ideal Quantum-Limited Receiver)</h1>
+    <p>
+      We compare the sensitivity (minimum optical power to meet a target BER) at two wavelengths for an
+      <span class="muted">ideal digital receiver</span> with <b>unity quantum efficiency</b> and <b>no circuit noise</b>.
+      In this limit, performance is set by <b>photon (shot) statistics</b>, and at the same data rate the required
+      <b>photons per bit</b> is (approximately) constant—so required power scales as photon energy ∝ 1/λ.
+    </p>
+  </header>
+
+  <div class="grid">
+    <nav class="toc" aria-label="Table of Contents">
+      <h2>📌 Table of Contents</h2>
+      <ul>
+        <li><a href="#qs">Quick Summary</a></li>
+        <li><a href="#p0">PART 0 — Concept Primer</a></li>
+        <li><a href="#p1">PART 1 — Problem Analysis</a></li>
+        <li><a href="#p2">PART 2 — Strategy & Tips</a></li>
+        <li><a href="#p3">PART 3 — Full Solution</a></li>
+        <li><a href="#p4">PART 4 — Deeper Understanding</a></li>
+        <li><a href="#p5">PART 5 — Visualization Guide</a></li>
+      </ul>
+      <div class="note">Tip: the slider updates <b>all</b> plots live.</div>
+    </nav>
+
+    <main>
+
+      <section id="qs" class="card">
+        <h2>Quick Summary</h2>
+        <ul class="bullets">
+          <li><b>What this is about:</b> How the <b>receiver sensitivity</b> (minimum optical power for target BER) changes when wavelength changes.</li>
+          <li><b>Key physics idea:</b> In an <b>ideal quantum-limited digital receiver</b>, the required <b>photons per bit</b> to hit a given BER is approximately constant at a fixed data rate.</li>
+          <li><b>Photon energy:</b> One photon has energy <span class="muted">E<sub>ph</sub>=hc/λ</span>, so longer wavelength → lower energy per photon → you need less power for the same photon count.</li>
+          <li><b>Governing proportionality:</b> For fixed data rate and same BER target: <span class="muted">P<sub>min</sub> ∝ E<sub>ph</sub> ∝ 1/λ</span>.</li>
+          <li><b>Main equation:</b> <span class="muted">P<sub>2</sub> = P<sub>1</sub>·(λ<sub>1</sub>/λ<sub>2</sub>)</span>.</li>
+          <li><b>Numeric result type:</b> Convert dBm → mW, scale by ratio λ<sub>1</sub>/λ<sub>2</sub>, convert back to dBm.</li>
+          <li><b>Final answer:</b> Sensitivity at 1300 nm is about <b>−77.7 dBm</b> (≈ 1.85 dB better than at 870 nm).</li>
+        </ul>
+
+        <div class="eqrow">
+          <div class="eqbox">
+            <div class="copyline">
+              <span class="tag">Key equation (copy)</span>
+              <button class="copy" data-copy="P2 = P1 * (λ1/λ2)">📋 Copy</button>
+            </div>
+            <div class="eq">P₂ = P₁ · (λ₁/λ₂)   (same data rate, ideal quantum-limited digital receiver)</div>
+          </div>
+
+          <div class="eqbox">
+            <div class="copyline">
+              <span class="tag">Final result (copy)</span>
+              <button class="copy" data-copy="Sensitivity at 1300 nm ≈ −77.74 dBm">📋 Copy</button>
+            </div>
+            <div class="eq">Sensitivity at 1300 nm ≈ −77.74 dBm</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="p0" class="card">
+        <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+        <h3>Core definitions</h3>
+        <ul class="bullets">
+          <li><b>Receiver sensitivity</b> (dBm): the <b>minimum average received optical power</b> needed to achieve a specified BER at a given data rate.</li>
+          <li><b>Quantum efficiency</b> η (unitless): fraction of incident photons that generate detected carriers. Here: <b>η = 1</b>.</li>
+          <li><b>Photon energy</b> E<sub>ph</sub> (J): <b>E<sub>ph</sub> = hc/λ</b>, where h is Planck’s constant, c speed of light, λ wavelength.</li>
+          <li><b>Photon rate</b> Φ (photons/s): <b>Φ = P / E<sub>ph</sub> = Pλ/(hc)</b>.</li>
+          <li><b>Photons per bit</b> N<sub>b</sub> (photons/bit): <b>N<sub>b</sub> = Φ / R<sub>b</sub></b>, where R<sub>b</sub> is data rate (bit/s).</li>
+        </ul>
+
+        <h3>Physical meaning</h3>
+        <ul class="bullets">
+          <li>Sensitivity ultimately says: “How many photons per bit do I need so the <b>randomness</b> of photon arrivals doesn’t cause too many errors?”</li>
+          <li>In the <b>quantum-limited</b> case (no electronics noise), the noise is set by <b>Poisson counting statistics</b> of photons (shot noise / quantum noise).</li>
+        </ul>
+
+        <h3>Key principles & validity</h3>
+        <div class="callouts">
+          <div class="callout assumptions">
+            <strong>Assumptions for this wavelength scaling</strong>
+            <div class="mono">
+• Ideal receiver: η = 1, no thermal/circuit noise.
+• Same modulation format and same BER target.
+• Same data rate Rb ⇒ same bit period Tb = 1/Rb.
+• Decision is photon-count-limited ⇒ required photons/bit ≈ constant for fixed BER.
+            </div>
+          </div>
+          <div class="callout keyeq">
+            <strong>Governing relationships</strong>
+            <div class="mono">Eph = hc/λ
+Φ = P/Eph = Pλ/(hc)
+Nb = Φ/Rb = (Pλ)/(hc Rb)</div>
+          </div>
+        </div>
+
+        <h3>Why we use the “constant photons/bit” model</h3>
+        <p class="muted">
+          For a given digital detection scheme and target BER, the quantum-limited performance is controlled by
+          the average detected quanta per bit. If η=1 and electronics noise is absent, the detection thresholding
+          problem depends mainly on Poisson statistics, so the required <b>N<sub>b</sub></b> is essentially fixed.
+          Therefore, at fixed R<sub>b</sub>, the required power is proportional to photon energy: <b>P ∝ hc/λ</b>.
+        </p>
+
+        <h3>Mini intuition examples</h3>
+        <ul class="bullets">
+          <li><b>Example 1:</b> If you need 100 photons/bit at 1 Gb/s, then you need 100×(1e9)=1e11 photons/s. Multiply by E<sub>ph</sub> to get power. Longer λ → smaller E<sub>ph</sub> → smaller P.</li>
+          <li><b>Example 2:</b> Going from 870 nm to 1300 nm reduces photon energy by the factor 870/1300 ≈ 0.669, so power requirement drops by the same factor.</li>
+        </ul>
+
+        <h3>What to watch for (common pitfalls)</h3>
+        <div class="callouts">
+          <div class="callout mistakes">
+            <strong>Pitfalls</strong>
+            <div class="mono">
+• Confusing “more photons” with “more power”: photons/bit may be constant, but power changes with λ.
+• Scaling power with λ instead of 1/λ (it is P ∝ 1/λ in this limit).
+• Forgetting that dBm is logarithmic: you must scale in linear mW, then convert back.
+• Mixing up whether η changes with wavelength (here explicitly ideal η=1).
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="p1" class="card">
+        <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+        <h3>Restate the problem</h3>
+        <p>
+          An ideal digital optical receiver (η=1, no circuit noise) has sensitivity <b>−76 dBm</b> at
+          <b>λ<sub>1</sub>=870 nm</b>. If it operates at the <b>same data rate</b>, what is the sensitivity at
+          <b>λ<sub>2</sub>=1300 nm</b>?
+        </p>
+
+        <h3>Given</h3>
+        <ul class="bullets">
+          <li>λ<sub>1</sub> = 870 nm</li>
+          <li>Sensitivity at λ<sub>1</sub>: P<sub>1</sub> = −76 dBm</li>
+          <li>λ<sub>2</sub> = 1300 nm</li>
+          <li>Same data rate R<sub>b</sub></li>
+          <li>Ideal receiver: η=1, no circuit noise</li>
+        </ul>
+
+        <h3>Unknown</h3>
+        <ul class="bullets">
+          <li>Sensitivity at λ<sub>2</sub>: P<sub>2</sub> (in dBm)</li>
+        </ul>
+
+        <h3>Relevant principles (and why)</h3>
+        <ul class="bullets">
+          <li><b>Photon energy:</b> E<sub>ph</sub>=hc/λ because optical energy is quantized in photons.</li>
+          <li><b>Photon counting statistics:</b> With no circuit noise, detection is limited by shot/quantum noise → required photons/bit is fixed for fixed BER.</li>
+          <li><b>Scaling at fixed R<sub>b</sub>:</b> N<sub>b</sub> = (Pλ)/(hcR<sub>b</sub>) → holding N<sub>b</sub>,R<sub>b</sub> constant implies P ∝ 1/λ.</li>
+        </ul>
+
+        <h3>Assumptions (explicit)</h3>
+        <div class="callouts">
+          <div class="callout assumptions">
+            <strong>Assumptions used for the calculation</strong>
+            <div class="mono">
+• Same modulation/detection format and target BER at both wavelengths.
+• Unity quantum efficiency (η=1) at both wavelengths.
+• No additional wavelength-dependent losses or detector physics changes.
+• Data rate is unchanged ⇒ same bit duration.
+            </div>
+          </div>
+        </div>
+
+        <h3>Possible approaches</h3>
+        <ul class="bullets">
+          <li><b>Approach A (best):</b> Use photons-per-bit scaling: P₂ = P₁(λ₁/λ₂). Fast, transparent, minimal constants.</li>
+          <li><b>Approach B:</b> Convert −76 dBm → photons/bit using E<sub>ph</sub>,R<sub>b</sub>, then reconstruct at 1300 nm. Equivalent but longer (and R<sub>b</sub> cancels anyway).</li>
+          <li><b>Approach C:</b> Use a specific BER formula (e.g., Poisson threshold detection) to compute required N<sub>b</sub>. Overkill because N<sub>b</sub> is already encoded in the given sensitivity at λ₁.</li>
+        </ul>
+        <p class="muted">
+          We choose <b>Approach A</b> because the problem explicitly describes an ideal quantum-limited receiver and asks for wavelength dependence at the same data rate.
+        </p>
+      </section>
+
+      <section id="p2" class="card">
+        <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+        <ol class="bullets">
+          <li><b>Goal:</b> Relate sensitivity power at two wavelengths. <b>Tool:</b> photon energy E<sub>ph</sub>=hc/λ. <b>Meaning:</b> photons are cheaper (less energy) at longer λ.</li>
+          <li><b>Goal:</b> Express photons/bit N<sub>b</sub>. <b>Tool:</b> N<sub>b</sub> = (P/E<sub>ph</sub>)/R<sub>b</sub>. <b>Meaning:</b> how many detected quanta per decision interval.</li>
+          <li><b>Goal:</b> Apply ideal quantum-limited condition. <b>Tool:</b> N<sub>b</sub> constant for same BER & scheme. <b>Meaning:</b> performance is pinned to a fixed photon budget per bit.</li>
+          <li><b>Goal:</b> Derive scaling P ∝ 1/λ and compute ratio P₂/P₁ = λ₁/λ₂. <b>Meaning:</b> longer λ → lower required power.</li>
+          <li><b>Goal:</b> Convert dBm to linear mW, apply ratio, convert back to dBm. <b>Meaning:</b> do scaling in linear units.</li>
+          <li><b>Goal:</b> Sanity-check: is P₂ smaller? does dBm get more negative? <b>Meaning:</b> lower power requirement = better sensitivity.</li>
+        </ol>
+
+        <div class="callouts">
+          <div class="callout mistakes">
+            <strong>Quick tips</strong>
+            <div class="mono">
+• Always scale powers in linear units (mW), not in dB.
+• Expect P₂ < P₁ because λ₂ > λ₁ (photon energy drops).
+• A factor 0.669 in power corresponds to 10 log10(0.669) ≈ −1.75 dB improvement.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="p3" class="card">
+        <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+        <h3>Qualitative expectation</h3>
+        <p>
+          At longer wavelength (1300 nm), each photon carries <b>less energy</b> than at 870 nm.
+          If the receiver needs the same <b>number of photons per bit</b> to meet the BER at the same data rate,
+          then the required <b>power</b> should be lower at 1300 nm. Therefore, sensitivity should improve
+          (become a more negative dBm number).
+        </p>
+
+        <h3>Step 1: Write photons per bit in terms of power and wavelength</h3>
+        <div class="eqrow">
+          <div class="eqbox">
+            <div class="copyline">
+              <span class="tag">Equation</span>
+              <button class="copy" data-copy="Eph = h c / λ">📋 Copy</button>
+            </div>
+            <div class="eq">Eph = h c / λ</div>
+          </div>
+          <div class="eqbox">
+            <div class="copyline">
+              <span class="tag">Equation</span>
+              <button class="copy" data-copy="Φ = P/Eph = P λ /(h c)">📋 Copy</button>
+            </div>
+            <div class="eq">Φ = P / Eph = P λ /(h c)</div>
+          </div>
+        </div>
+
+        <p class="muted">
+          Here <b>P</b> is the received optical power (W), <b>Φ</b> is photons per second, <b>h</b> is Planck’s constant,
+          <b>c</b> is the speed of light, and <b>λ</b> is wavelength.
+        </p>
+
+        <p>
+          For a data rate R<sub>b</sub> (bit/s), the bit duration is T<sub>b</sub>=1/R<sub>b</sub>.
+          Photons per bit are:
+        </p>
+
+        <div class="eqrow">
+          <div class="eqbox">
+            <div class="copyline">
+              <span class="tag">Key derivation</span>
+              <button class="copy" data-copy="Nb = Φ / Rb = (P λ) / (h c Rb)">📋 Copy</button>
+            </div>
+            <div class="eq">Nb = Φ / Rb = (P λ) / (h c Rb)</div>
+          </div>
+        </div>
+
+        <p class="muted">
+          This is the core bridge: it connects a <b>bit-level quantity</b> (photons/bit) to a measurable <b>power</b>.
+        </p>
+
+        <h3>Step 2: Apply the ideal quantum-limited condition</h3>
+        <p>
+          In an ideal receiver with η=1 and no circuit noise, for the same BER and modulation/detection method,
+          the required <b>N<sub>b</sub></b> is (approximately) constant. If the data rate is also the same, then
+          the product <b>Pλ</b> must stay constant:
+        </p>
+
+        <div class="eqrow">
+          <div class="eqbox">
+            <div class="copyline">
+              <span class="tag">Scaling law</span>
+              <button class="copy" data-copy="Nb constant and Rb constant ⇒ P λ = constant ⇒ P ∝ 1/λ">📋 Copy</button>
+            </div>
+            <div class="eq">Nb constant and Rb constant ⇒ P λ = constant ⇒ P ∝ 1/λ</div>
+          </div>
+        </div>
+
+        <p>
+          Therefore, comparing two wavelengths:
+        </p>
+
+        <div class="eqrow">
+          <div class="eqbox">
+            <div class="copyline">
+              <span class="tag">Main working equation</span>
+              <button class="copy" data-copy="P2/P1 = λ1/λ2">📋 Copy</button>
+            </div>
+            <div class="eq">P₂ / P₁ = λ₁ / λ₂</div>
+          </div>
+          <div class="eqbox">
+            <div class="copyline">
+              <span class="tag">Main working equation</span>
+              <button class="copy" data-copy="P2 = P1 * (λ1/λ2)">📋 Copy</button>
+            </div>
+            <div class="eq">P₂ = P₁ · (λ₁/λ₂)</div>
+          </div>
+        </div>
+
+        <h3>Step 3: Compute in linear units and convert back to dBm</h3>
+        <p>
+          Given P<sub>1</sub> = −76 dBm at λ<sub>1</sub>=870 nm, λ<sub>2</sub>=1300 nm.
+        </p>
+
+        <p><b>Convert −76 dBm to mW:</b></p>
+        <div class="eqrow">
+          <div class="eqbox">
+            <div class="copyline">
+              <span class="tag">dBm conversion</span>
+              <button class="copy" data-copy="P(mW) = 10^(P(dBm)/10)">📋 Copy</button>
+            </div>
+            <div class="eq">P(mW) = 10^(P(dBm)/10)</div>
+          </div>
+        </div>
+
+        <p class="muted">
+          So P₁(mW) = 10^(−76/10) = 10^(−7.6) mW.
+        </p>
+
+        <p><b>Scale to λ₂:</b></p>
+        <p class="muted">
+          Ratio λ₁/λ₂ = 870/1300 = 0.669230...
+        </p>
+
+        <p class="muted">
+          P₂(mW) = P₁(mW) · (870/1300).
+        </p>
+
+        <p><b>Convert back to dBm:</b></p>
+        <div class="eqrow">
+          <div class="eqbox">
+            <div class="copyline">
+              <span class="tag">Back to dBm</span>
+              <button class="copy" data-copy="P(dBm) = 10 log10(P(mW))">📋 Copy</button>
+            </div>
+            <div class="eq">P(dBm) = 10 log10(P(mW))</div>
+          </div>
+        </div>
+
+        <p>
+          Instead of carrying tiny numbers, use dB algebra:
+        </p>
+
+        <div class="eqrow">
+          <div class="eqbox">
+            <div class="copyline">
+              <span class="tag">dB step</span>
+              <button class="copy" data-copy="P2(dBm) = P1(dBm) + 10 log10(λ1/λ2)">📋 Copy</button>
+            </div>
+            <div class="eq">P₂(dBm) = P₁(dBm) + 10 log10(λ₁/λ₂)</div>
+          </div>
+        </div>
+
+        <p class="muted">
+          Compute the correction:
+          10 log10(870/1300) = 10 log10(0.66923) ≈ 10(−0.1741) ≈ −1.741 dB.
+        </p>
+
+        <div class="callouts">
+          <div class="callout answer">
+            <strong>Final Answer</strong>
+            <div class="mono" id="finalAnswerText">P₂ ≈ −76 dBm − 1.74 dB = −77.74 dBm  (at 1300 nm, same data rate)</div>
+            <div style="margin-top:10px;">
+              <button class="copy" data-copy="P2 ≈ −77.74 dBm (at 1300 nm, same data rate)">📋 Copy final answer</button>
+            </div>
+          </div>
+        </div>
+
+        <h3>Sanity checks</h3>
+        <ul class="bullets">
+          <li><b>Direction:</b> λ increases (870 → 1300 nm) ⇒ photon energy decreases ⇒ required power decreases ⇒ dBm becomes more negative. We got −77.74 dBm (< −76 dBm). ✅</li>
+          <li><b>Magnitude:</b> Power ratio is 0.669, which is ~1.75 dB. A modest improvement—reasonable. ✅</li>
+          <li><b>Units:</b> Ratio λ₁/λ₂ is dimensionless; adding 10log10(ratio) to dBm is consistent. ✅</li>
+        </ul>
+
+        <p class="muted">
+          Connection to the plots: the main plot shows <b>required sensitivity vs wavelength</b> for this
+          quantum-limited scaling, anchored at the known point (870 nm, −76 dBm). The slider changes the
+          reference sensitivity and updates all curves consistently.
+        </p>
+      </section>
+
+      <section id="p4" class="card">
+        <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+        <h3>Reinterpreting the final formula</h3>
+        <p>
+          The scaling
+          <span class="muted">P<sub>min</sub> ∝ 1/λ</span>
+          is simply “same photons per bit” expressed in power units.
+          Since each photon carries energy hc/λ, longer wavelength means you spend less energy per photon, hence less power for the same photon budget.
+        </p>
+
+        <h3>Parameter dependence (what changes what)</h3>
+        <ul class="bullets">
+          <li><b>Increase λ:</b> decreases required power linearly → sensitivity improves in dBm by <span class="muted">10 log10(λ)</span> relative trend.</li>
+          <li><b>Change data rate:</b> If R<sub>b</sub> increased while keeping photons/bit fixed, the required photon rate increases, so power scales with R<sub>b</sub>. (Not used here because R<sub>b</sub> is constant.)</li>
+          <li><b>Quantum efficiency η:</b> If η&lt;1, you need more incident photons to get the same detected photons ⇒ P increases by 1/η. (But here η=1.)</li>
+        </ul>
+
+        <h3>Alternative derivation idea</h3>
+        <p class="muted">
+          You can start from an explicit Poisson BER expression for on–off keying (or another format),
+          compute the required mean detected photons per “1” bit for the target BER, then convert photons/bit to power.
+          When you take the ratio at fixed BER and fixed R<sub>b</sub>, the required photons/bit cancels, leaving the same scaling P ∝ 1/λ.
+        </p>
+
+        <h3>Concept checks (quick self-test)</h3>
+        <ul class="bullets">
+          <li><b>Q:</b> If you doubled the wavelength (λ → 2λ) at the same data rate, what happens to required power? <b>A:</b> It halves (P → P/2) in this ideal limit.</li>
+          <li><b>Q:</b> Why do we not need h and c numerically? <b>A:</b> They cancel when taking the ratio between two wavelengths.</li>
+          <li><b>Q:</b> Would this scaling hold if circuit noise dominated? <b>A:</b> Not necessarily—electronics noise introduces different wavelength dependence through responsivity, bandwidth, etc.</li>
+          <li><b>Q:</b> Does “better sensitivity” mean larger or smaller dBm? <b>A:</b> Smaller (more negative) dBm means less required power → better.</li>
+        </ul>
+      </section>
+
+      <section id="p5" class="card">
+        <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+
+        <div class="vizgrid">
+          <div class="vizpanel half">
+            <h3>Canvas 1 — Physical setup diagram (photon counting per bit)</h3>
+            <canvas id="diagram"></canvas>
+            <div class="note">
+              Shows a transmitter sending digital bits into an ideal photodetector. The key idea is a fixed photon budget per bit, while photon energy changes with wavelength.
+            </div>
+          </div>
+
+          <div class="vizpanel half">
+            <h3>Canvas 2 — Main plot: Sensitivity vs wavelength (anchored at reference)</h3>
+            <canvas id="plotMain"></canvas>
+            <div class="note">
+              Curve follows <span class="muted">P(dBm)=P<sub>ref</sub>(dBm)+10log10(λ<sub>ref</sub>/λ)</span>.
+              The marked points show the reference (870 nm) and target (1300 nm).
+            </div>
+          </div>
+
+          <div class="vizpanel half small">
+            <h3>Canvas 3 — Secondary plot: Improvement Δ(dB) relative to 870 nm</h3>
+            <canvas id="plotDelta"></canvas>
+            <div class="note">
+              Displays <span class="muted">Δ(dB)=10log10(λ/λ<sub>ref</sub>)</span>, i.e., how many dB better/worse sensitivity becomes vs the reference wavelength.
+            </div>
+          </div>
+
+          <div class="vizpanel half">
+            <h3>Interactive controls</h3>
+            <div class="controls">
+              <div class="ctrl">
+                <label>
+                  Reference sensitivity at λ<sub>ref</sub>=870 nm (dBm)
+                  <span class="val" id="prefVal">−76.0</span>
+                </label>
+                <input id="pref" type="range" min="-90" max="-50" step="0.1" value="-76.0" />
+                <div class="note">Move this slider to see how the entire sensitivity curve shifts.</div>
+              </div>
+
+              <div class="ctrl">
+                <label>
+                  Target wavelength λ<sub>2</sub> (nm)
+                  <span class="val" id="lam2Val">1300</span>
+                </label>
+                <input id="lam2" type="range" min="800" max="1600" step="1" value="1300" />
+                <div class="note">Updates the computed sensitivity at the target wavelength and highlights it on plots.</div>
+              </div>
+            </div>
+
+            <div class="callouts" style="margin-top:12px;">
+              <div class="callout keyeq">
+                <strong>What should change when you move the sliders?</strong>
+                <div class="mono">
+• Pref slider: shifts the whole sensitivity-vs-λ curve up/down (in dBm) and updates both marked points.
+• λ2 slider: moves the target marker horizontally and updates P2(dBm) via the 1/λ scaling.
+                </div>
+              </div>
+            </div>
+
+            <div class="callouts" style="margin-top:12px;">
+              <div class="callout answer">
+                <strong>Live computed target sensitivity</strong>
+                <div class="mono" id="liveResult">P2 ≈ −77.74 dBm (at 1300 nm)</div>
+                <div style="margin-top:10px;">
+                  <button class="copy" id="copyLive">📋 Copy live result</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        Built with vanilla HTML/CSS/JS. Interactive canvases render crisply with devicePixelRatio and resize responsively.
+      </footer>
+
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---------- Utilities ----------
+  const h = (sel) => document.querySelector(sel);
+
+  function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+  function log10(x){ return Math.log(x)/Math.LN10; }
+
+  function dBm_to_mW(dBm){ return Math.pow(10, dBm/10); }
+  function mW_to_dBm(mW){ return 10*log10(mW); }
+
+  function fmt(x, n=2){
+    const p = Math.pow(10,n);
+    return (Math.round(x*p)/p).toFixed(n);
+  }
+
+  async function copyText(txt){
+    try{
+      await navigator.clipboard.writeText(txt);
+      flashToast("Copied!");
+    }catch(e){
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = txt;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      flashToast("Copied!");
+    }
+  }
+
+  // Simple toast
+  let toastTimer=null;
+  function flashToast(msg){
+    let el = document.getElementById("toast");
+    if(!el){
+      el = document.createElement("div");
+      el.id="toast";
+      el.style.position="fixed";
+      el.style.left="50%";
+      el.style.bottom="22px";
+      el.style.transform="translateX(-50%)";
+      el.style.padding="10px 14px";
+      el.style.borderRadius="999px";
+      el.style.border="1px solid rgba(56,189,248,.35)";
+      el.style.background="rgba(17,26,46,.92)";
+      el.style.color="#e5e7eb";
+      el.style.fontFamily="var(--sans)";
+      el.style.boxShadow="0 10px 30px rgba(0,0,0,.35)";
+      el.style.zIndex="9999";
+      el.style.opacity="0";
+      el.style.transition="opacity .18s ease";
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.opacity="1";
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>{ el.style.opacity="0"; }, 900);
+  }
+
+  // ---------- Copy buttons ----------
+  document.querySelectorAll("button.copy[data-copy]").forEach(btn=>{
+    btn.addEventListener("click", ()=> copyText(btn.getAttribute("data-copy")));
+  });
+
+  // ---------- Canvas helpers ----------
+  function setupCanvas(canvas){
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(320, rect.width);
+    const h = Math.max(220, rect.height);
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {ctx, w, h, dpr};
+  }
+
+  function clear(ctx, w, h){
+    ctx.clearRect(0,0,w,h);
+    // subtle background vignette
+    const g = ctx.createRadialGradient(w*0.3,h*0.2, 20, w*0.5,h*0.5, Math.max(w,h)*0.75);
+    g.addColorStop(0, "rgba(56,189,248,0.10)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,w,h);
+  }
+
+  function drawPanelTitle(ctx, w, title){
+    ctx.save();
+    ctx.fillStyle="rgba(229,231,235,.95)";
+    ctx.font="700 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.fillText(title, 12, 20);
+    ctx.restore();
+  }
+
+  function drawAxes(ctx, box, xlab, ylab, xticks, yticks){
+    const {x,y,w,h} = box;
+    ctx.save();
+    ctx.strokeStyle="rgba(255,255,255,.20)";
+    ctx.lineWidth=1;
+    ctx.strokeRect(x,y,w,h);
+
+    // grid + ticks
+    ctx.strokeStyle="rgba(255,255,255,.10)";
+    ctx.fillStyle="rgba(229,231,235,.75)";
+    ctx.font="12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+
+    // x grid
+    xticks.forEach(t=>{
+      const xx = x + t.pos*w;
+      ctx.beginPath();
+      ctx.moveTo(xx, y);
+      ctx.lineTo(xx, y+h);
+      ctx.stroke();
+      ctx.fillText(t.label, xx-12, y+h+16);
+    });
+
+    // y grid
+    yticks.forEach(t=>{
+      const yy = y + (1-t.pos)*h;
+      ctx.beginPath();
+      ctx.moveTo(x, yy);
+      ctx.lineTo(x+w, yy);
+      ctx.stroke();
+      ctx.fillText(t.label, x-42, yy+4);
+    });
+
+    // labels
+    ctx.fillStyle="rgba(156,163,175,.95)";
+    ctx.fillText(xlab, x + w/2 - ctx.measureText(xlab).width/2, y+h+36);
+
+    // y label rotated
+    ctx.save();
+    ctx.translate(x-58, y + h/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText(ylab, -ctx.measureText(ylab).width/2, 0);
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function mapX(box, t){ return box.x + t*box.w; }
+  function mapY(box, t){ return box.y + (1-t)*box.h; }
+
+  function line(ctx, x1,y1,x2,y2, stroke, width=2){
+    ctx.save();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function circle(ctx, cx,cy,r, fill, stroke=null){
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fillStyle=fill;
+    ctx.fill();
+    if(stroke){
+      ctx.strokeStyle=stroke;
+      ctx.lineWidth=2;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function labelBox(ctx, x,y, text){
+    ctx.save();
+    ctx.font="12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    const pad=6;
+    const tw = ctx.measureText(text).width;
+    ctx.fillStyle="rgba(17,26,46,.86)";
+    ctx.strokeStyle="rgba(255,255,255,.18)";
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    const w = tw + pad*2;
+    const h = 22;
+    ctx.roundRect(x, y-h+3, w, h, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle="rgba(229,231,235,.92)";
+    ctx.fillText(text, x+pad, y);
+    ctx.restore();
+  }
+
+  if(!CanvasRenderingContext2D.prototype.roundRect){
+    CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+      const rr = Math.min(r, w/2, h/2);
+      this.beginPath();
+      this.moveTo(x+rr, y);
+      this.arcTo(x+w, y, x+w, y+h, rr);
+      this.arcTo(x+w, y+h, x, y+h, rr);
+      this.arcTo(x, y+h, x, y, rr);
+      this.arcTo(x, y, x+w, y, rr);
+      this.closePath();
+      return this;
+    }
+  }
+
+  // ---------- Physics model ----------
+  const lamRef_nm = 870;
+
+  function P2_dBm_from(Pref_dBm, lam2_nm){
+    // P2(dBm) = Pref(dBm) + 10 log10(lamRef/lam2)
+    return Pref_dBm + 10*log10(lamRef_nm/lam2_nm);
+  }
+
+  function sensitivityCurve(Pref_dBm, lamMin=800, lamMax=1600, n=200){
+    const xs=[], ys=[];
+    for(let i=0;i<n;i++){
+      const lam = lamMin + (lamMax-lamMin)*i/(n-1);
+      const PdBm = Pref_dBm + 10*log10(lamRef_nm/lam);
+      xs.push(lam);
+      ys.push(PdBm);
+    }
+    return {xs, ys};
+  }
+
+  function deltaCurve(lamMin=800, lamMax=1600, n=200){
+    // Δ(dB) relative to ref: P(lam) - P(ref) = 10 log10(lamRef/lam)
+    // Improvement (how many dB lower power) = -Δ = 10 log10(lam/lamRef)
+    const xs=[], ys=[];
+    for(let i=0;i<n;i++){
+      const lam = lamMin + (lamMax-lamMin)*i/(n-1);
+      const improve = 10*log10(lam/lamRef_nm);
+      xs.push(lam);
+      ys.push(improve);
+    }
+    return {xs, ys};
+  }
+
+  // ---------- Drawing: Diagram ----------
+  function drawDiagram(state){
+    const canvas = h("#diagram");
+    const {ctx, w, h:hh} = setupCanvas(canvas);
+    clear(ctx,w,hh);
+    drawPanelTitle(ctx,w,"Physical setup: photons per bit set the sensitivity");
+
+    // layout
+    const midY = hh*0.56;
+    const txX = w*0.12;
+    const rxX = w*0.82;
+
+    // transmitter block
+    ctx.save();
+    ctx.fillStyle="rgba(56,189,248,.12)";
+    ctx.strokeStyle="rgba(56,189,248,.35)";
+    ctx.lineWidth=2;
+    ctx.roundRect(txX-55, midY-55, 110, 110, 18);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle="rgba(229,231,235,.95)";
+    ctx.font="700 13px ui-sans-serif, system-ui";
+    ctx.fillText("TX", txX-12, midY-18);
+    ctx.font="12px ui-sans-serif, system-ui";
+    ctx.fillStyle="rgba(156,163,175,.95)";
+    ctx.fillText("Digital bits", txX-36, midY+8);
+    ctx.restore();
+
+    // bit stream
+    ctx.save();
+    ctx.fillStyle="rgba(229,231,235,.9)";
+    ctx.font="12px var(--mono)";
+    ctx.fillText("1 0 1 1 0 0 1", txX-48, midY+38);
+    ctx.restore();
+
+    // optical link arrow
+    ctx.save();
+    ctx.strokeStyle="rgba(229,231,235,.50)";
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(txX+65, midY);
+    ctx.lineTo(rxX-75, midY);
+    ctx.stroke();
+    // arrowhead
+    ctx.fillStyle="rgba(229,231,235,.50)";
+    ctx.beginPath();
+    ctx.moveTo(rxX-75, midY);
+    ctx.lineTo(rxX-92, midY-8);
+    ctx.lineTo(rxX-92, midY+8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // photons as dots along the path
+    const N = 18;
+    for(let i=0;i<N;i++){
+      const t = i/(N-1);
+      const x = txX+75 + t*(rxX-160 - (txX+75));
+      const y = midY + Math.sin(t*6*Math.PI)*10;
+      circle(ctx, x, y, 2.4, "rgba(56,189,248,.9)");
+    }
+
+    // receiver block
+    ctx.save();
+    ctx.fillStyle="rgba(34,197,94,.10)";
+    ctx.strokeStyle="rgba(34,197,94,.35)";
+    ctx.lineWidth=2;
+    ctx.roundRect(rxX-55, midY-55, 110, 110, 18);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle="rgba(229,231,235,.95)";
+    ctx.font="700 13px ui-sans-serif, system-ui";
+    ctx.fillText("RX", rxX-12, midY-18);
+    ctx.font="12px ui-sans-serif, system-ui";
+    ctx.fillStyle="rgba(156,163,175,.95)";
+    ctx.fillText("Ideal PD", rxX-28, midY+8);
+    ctx.restore();
+
+    // key annotation
+    const P2 = P2_dBm_from(state.Pref_dBm, state.lam2_nm);
+    labelBox(ctx, 14, hh-18, `Eph = hc/λ   ⇒   Pmin ∝ 1/λ  (η=1, no circuit noise)`);
+    labelBox(ctx, 14, hh-44, `Reference: λref = ${lamRef_nm} nm, Pref = ${fmt(state.Pref_dBm,1)} dBm`);
+    labelBox(ctx, 14, hh-70, `Target: λ2 = ${state.lam2_nm} nm  ⇒  P2 ≈ ${fmt(P2,2)} dBm`);
+  }
+
+  // ---------- Drawing: Main plot ----------
+  function drawMainPlot(state){
+    const canvas = h("#plotMain");
+    const {ctx, w, h:hh} = setupCanvas(canvas);
+    clear(ctx,w,hh);
+    drawPanelTitle(ctx,w,"Sensitivity vs wavelength (quantum-limited scaling)");
+
+    const padL=64, padR=18, padT=34, padB=54;
+    const box = {x:padL, y:padT, w:w-padL-padR, h:hh-padT-padB};
+
+    const lamMin=800, lamMax=1600;
+    const curve = sensitivityCurve(state.Pref_dBm, lamMin, lamMax, 260);
+
+    // y range from curve
+    let yMin=+1e9, yMax=-1e9;
+    curve.ys.forEach(v=>{ yMin=Math.min(yMin,v); yMax=Math.max(yMax,v); });
+    // pad
+    const yPad=1.0;
+    yMin -= yPad; yMax += yPad;
+
+    // ticks
+    const xtickVals=[800,900,1000,1100,1200,1300,1400,1500,1600];
+    const yticks=[];
+    // choose 6 ticks
+    const nY=6;
+    for(let i=0;i<nY;i++){
+      const val = yMin + (yMax-yMin)*i/(nY-1);
+      yticks.push({val, label: fmt(val,1)});
+    }
+    const xticks=xtickVals.map(v=>({val:v, label:String(v)}));
+
+    // map ticks to pos
+    const xt = xticks.map(t=>({pos:(t.val-lamMin)/(lamMax-lamMin), label:t.label}));
+    const yt = yticks.map(t=>({pos:(t.val-yMin)/(yMax-yMin), label:t.label}));
+
+    drawAxes(ctx, box, "Wavelength λ (nm)", "Sensitivity Pmin (dBm)", xt, yt);
+
+    // draw curve
+    ctx.save();
+    ctx.strokeStyle="rgba(56,189,248,.95)";
+    ctx.lineWidth=2.5;
+    ctx.beginPath();
+    for(let i=0;i<curve.xs.length;i++){
+      const lam = curve.xs[i];
+      const PdBm = curve.ys[i];
+      const tx = (lam-lamMin)/(lamMax-lamMin);
+      const ty = (PdBm-yMin)/(yMax-yMin);
+      const X = mapX(box, tx);
+      const Y = mapY(box, ty);
+      if(i===0) ctx.moveTo(X,Y);
+      else ctx.lineTo(X,Y);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // markers: reference and target
+    const pref = state.Pref_dBm;
+    const lam2 = state.lam2_nm;
+    const p2 = P2_dBm_from(pref, lam2);
+
+    function markPoint(lam, PdBm, color, label){
+      const tx = (lam-lamMin)/(lamMax-lamMin);
+      const ty = (PdBm-yMin)/(yMax-yMin);
+      const X = mapX(box, tx);
+      const Y = mapY(box, ty);
+      circle(ctx, X, Y, 6, color, "rgba(255,255,255,.35)");
+      labelBox(ctx, clamp(X+8, box.x+6, box.x+box.w-160), clamp(Y-6, box.y+22, box.y+box.h-6),
+               `${label}: (${Math.round(lam)} nm, ${fmt(PdBm,2)} dBm)`);
+    }
+
+    markPoint(lamRef_nm, pref, "rgba(34,197,94,.95)", "Ref");
+    markPoint(lam2, p2, "rgba(251,113,133,.95)", "Target");
+
+    // legend
+    ctx.save();
+    ctx.font="12px ui-sans-serif, system-ui";
+    ctx.fillStyle="rgba(229,231,235,.9)";
+    ctx.fillText("Legend:", box.x+10, box.y+18);
+    // line
+    line(ctx, box.x+68, box.y+14, box.x+110, box.y+14, "rgba(56,189,248,.95)", 3);
+    ctx.fillStyle="rgba(229,231,235,.85)";
+    ctx.fillText("Pmin(λ)", box.x+118, box.y+18);
+    circle(ctx, box.x+210, box.y+14, 5, "rgba(34,197,94,.95)");
+    ctx.fillText("Ref", box.x+222, box.y+18);
+    circle(ctx, box.x+270, box.y+14, 5, "rgba(251,113,133,.95)");
+    ctx.fillText("Target", box.x+282, box.y+18);
+    ctx.restore();
+  }
+
+  // ---------- Drawing: Delta plot ----------
+  function drawDeltaPlot(state){
+    const canvas = h("#plotDelta");
+    const {ctx, w, h:hh} = setupCanvas(canvas);
+    clear(ctx,w,hh);
+    drawPanelTitle(ctx,w,"Sensitivity improvement relative to 870 nm");
+
+    const padL=64, padR=18, padT=34, padB=54;
+    const box = {x:padL, y:padT, w:w-padL-padR, h:hh-padT-padB};
+
+    const lamMin=800, lamMax=1600;
+    const curve = deltaCurve(lamMin, lamMax, 260);
+
+    // y range
+    let yMin=+1e9, yMax=-1e9;
+    curve.ys.forEach(v=>{ yMin=Math.min(yMin,v); yMax=Math.max(yMax,v); });
+    // pad
+    yMin = Math.floor((yMin-0.2)*10)/10;
+    yMax = Math.ceil((yMax+0.2)*10)/10;
+
+    // ticks
+    const xtickVals=[800,900,1000,1100,1200,1300,1400,1500,1600];
+    const yticks=[];
+    const nY=6;
+    for(let i=0;i<nY;i++){
+      const val = yMin + (yMax-yMin)*i/(nY-1);
+      yticks.push({val, label: fmt(val,2)});
+    }
+    const xticks=xtickVals.map(v=>({val:v, label:String(v)}));
+
+    const xt = xticks.map(t=>({pos:(t.val-lamMin)/(lamMax-lamMin), label:t.label}));
+    const yt = yticks.map(t=>({pos:(t.val-yMin)/(yMax-yMin), label:t.label}));
+
+    drawAxes(ctx, box, "Wavelength λ (nm)", "Improvement vs 870 nm (dB)", xt, yt);
+
+    // curve
+    ctx.save();
+    ctx.strokeStyle="rgba(34,197,94,.95)";
+    ctx.lineWidth=2.5;
+    ctx.beginPath();
+    for(let i=0;i<curve.xs.length;i++){
+      const lam = curve.xs[i];
+      const imp = curve.ys[i];
+      const tx = (lam-lamMin)/(lamMax-lamMin);
+      const ty = (imp-yMin)/(yMax-yMin);
+      const X = mapX(box, tx);
+      const Y = mapY(box, ty);
+      if(i===0) ctx.moveTo(X,Y);
+      else ctx.lineTo(X,Y);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // zero line
+    const ty0 = (0-yMin)/(yMax-yMin);
+    if(ty0>=0 && ty0<=1){
+      line(ctx, box.x, mapY(box, ty0), box.x+box.w, mapY(box, ty0), "rgba(255,255,255,.25)", 1.5);
+    }
+
+    // target marker
+    const lam2 = state.lam2_nm;
+    const imp2 = 10*log10(lam2/lamRef_nm);
+    const tx = (lam2-lamMin)/(lamMax-lamMin);
+    const ty = (imp2-yMin)/(yMax-yMin);
+    const X = mapX(box, tx);
+    const Y = mapY(box, ty);
+
+    circle(ctx, X, Y, 6, "rgba(251,191,36,.95)", "rgba(255,255,255,.35)");
+    labelBox(ctx, clamp(X+8, box.x+6, box.x+box.w-190), clamp(Y-6, box.y+22, box.y+box.h-6),
+             `At ${Math.round(lam2)} nm: improvement ≈ ${fmt(imp2,2)} dB`);
+
+    // legend
+    ctx.save();
+    ctx.font="12px ui-sans-serif, system-ui";
+    ctx.fillStyle="rgba(229,231,235,.85)";
+    ctx.fillText("Improvement = 10 log10(λ/λref)", box.x+10, box.y+18);
+    ctx.restore();
+  }
+
+  // ---------- State + UI ----------
+  const state = {
+    Pref_dBm: parseFloat(h("#pref").value),
+    lam2_nm: parseFloat(h("#lam2").value)
+  };
+
+  function updateUI(){
+    h("#prefVal").textContent = fmt(state.Pref_dBm,1);
+    h("#lam2Val").textContent = String(Math.round(state.lam2_nm));
+
+    const p2 = P2_dBm_from(state.Pref_dBm, state.lam2_nm);
+    h("#liveResult").textContent = `P2 ≈ ${fmt(p2,2)} dBm (at ${Math.round(state.lam2_nm)} nm)`;
+
+    h("#copyLive").onclick = ()=> copyText(`P2 ≈ ${fmt(p2,2)} dBm (at ${Math.round(state.lam2_nm)} nm, same data rate)`);
+
+    // redraw all
+    drawDiagram(state);
+    drawMainPlot(state);
+    drawDeltaPlot(state);
+  }
+
+  h("#pref").addEventListener("input", (e)=>{
+    state.Pref_dBm = parseFloat(e.target.value);
+    updateUI();
+  });
+  h("#lam2").addEventListener("input", (e)=>{
+    state.lam2_nm = parseFloat(e.target.value);
+    updateUI();
+  });
+
+  // handle resize
+  let rAF=null;
+  window.addEventListener("resize", ()=>{
+    cancelAnimationFrame(rAF);
+    rAF=requestAnimationFrame(updateUI);
+  });
+
+  // initial render
+  updateUI();
+
+})();
+</script>
+</body>
+</html>

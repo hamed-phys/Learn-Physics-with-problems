@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Gain-Switched Laser Transients (Rate-Equation Tutorial + Interactive Plots)</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --panel:#0f1726;
+      --panel2:#0c1322;
+      --text:#eaf0ff;
+      --muted:#b9c3dd;
+      --faint:#7f8bb0;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line: rgba(255,255,255,.10);
+      --line2: rgba(255,255,255,.14);
+      --shadow: 0 12px 36px rgba(0,0,0,.45);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 700px at 15% 10%, rgba(125,211,252,.12), transparent 60%),
+        radial-gradient(1000px 600px at 85% 25%, rgba(167,139,250,.10), transparent 58%),
+        radial-gradient(900px 700px at 40% 95%, rgba(52,211,153,.08), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    a{color:var(--accent)}
+    header{
+      padding: clamp(18px, 3vw, 30px);
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent);
+    }
+    header .kicker{
+      color:var(--muted);
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      font-size:.80rem;
+    }
+    header h1{
+      margin:.35rem 0 .4rem 0;
+      font-size: clamp(1.5rem, 3.2vw, 2.35rem);
+      line-height:1.15;
+    }
+    header p{
+      margin:.35rem 0 0 0;
+      color:var(--muted);
+      max-width: 80ch;
+    }
+
+    main{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      padding: clamp(14px, 2.4vw, 22px);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* sticky TOC */
+    nav.toc{
+      position: sticky;
+      top: 12px;
+      align-self:start;
+      background: rgba(15,23,38,.78);
+      border:1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 14px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    nav.toc h2{
+      font-size: 1rem;
+      margin: 0 0 10px 0;
+      color: var(--text);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    nav.toc .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 3px rgba(125,211,252,.15);
+      flex:0 0 auto;
+    }
+    nav.toc a{
+      display:block;
+      padding: 7px 10px;
+      border-radius: 10px;
+      text-decoration:none;
+      color: var(--muted);
+      border: 1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size:.93rem;
+    }
+    nav.toc a:hover{
+      background: rgba(255,255,255,.04);
+      border-color: rgba(255,255,255,.08);
+      transform: translateX(2px);
+      color: var(--text);
+    }
+
+    article{
+      min-width:0;
+    }
+
+    section{
+      background: rgba(15,23,38,.62);
+      border:1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      margin-bottom: 16px;
+      overflow:hidden;
+    }
+
+    h2{
+      margin: 0 0 10px 0;
+      font-size: 1.25rem;
+      letter-spacing:.02em;
+    }
+    h3{
+      margin: 14px 0 8px 0;
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+    p{margin: 10px 0; color: var(--muted)}
+    ul,ol{margin: 10px 0 10px 20px; color: var(--muted)}
+    li{margin: 6px 0}
+    code, .mono{
+      font-family: var(--mono);
+      font-size: .95em;
+      color: #eaf0ff;
+    }
+    .eq{
+      font-family: var(--mono);
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin: 10px 0;
+      overflow-x:auto;
+      position:relative;
+    }
+    .eq small{color: var(--faint)}
+    .eq .copyBtn{
+      position:absolute;
+      top:8px; right:8px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 6px 9px;
+      border-radius: 10px;
+      cursor:pointer;
+      font-size:.8rem;
+      transition: transform .12s ease, background .12s ease;
+    }
+    .eq .copyBtn:hover{background: rgba(255,255,255,.10); transform: translateY(-1px)}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr}
+      nav.toc{position: relative; top:0}
+      .grid2{grid-template-columns: 1fr}
+    }
+
+    .callout{
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 12px 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.10));
+      margin: 10px 0;
+    }
+    .callout .title{
+      display:flex; align-items:center; gap:10px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom:6px;
+    }
+    .badge{
+      font-size:.72rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      color: var(--text);
+      background: rgba(255,255,255,.06);
+    }
+    .assump{border-color: rgba(125,211,252,.22)}
+    .assump .badge{border-color: rgba(125,211,252,.28); background: rgba(125,211,252,.10)}
+    .mistake{border-color: rgba(251,191,36,.22)}
+    .mistake .badge{border-color: rgba(251,191,36,.30); background: rgba(251,191,36,.10)}
+    .final{border-color: rgba(52,211,153,.25)}
+    .final .badge{border-color: rgba(52,211,153,.35); background: rgba(52,211,153,.10)}
+    .warn{border-color: rgba(251,113,133,.22)}
+    .warn .badge{border-color: rgba(251,113,133,.35); background: rgba(251,113,133,.10)}
+
+    .vizWrap{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 12px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      .vizWrap{grid-template-columns: 1fr}
+    }
+    .canvasCard{
+      background: rgba(12,19,34,.58);
+      border:1px solid var(--line);
+      border-radius: 16px;
+      padding: 10px;
+      overflow:hidden;
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      border-radius: 12px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .controls{
+      display:grid;
+      gap: 10px;
+      background: rgba(12,19,34,.58);
+      border:1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items:center;
+    }
+    label{color: var(--muted); font-size:.92rem}
+    input[type="range"]{width:100%}
+    select, button{
+      font-family: var(--sans);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 10px 10px;
+      outline: none;
+      cursor:pointer;
+    }
+    button:hover{background: rgba(255,255,255,.10)}
+    .pill{
+      font-family: var(--mono);
+      font-size: .85rem;
+      color: var(--text);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 999px;
+      padding: 6px 10px;
+    }
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+      margin: 10px 0;
+    }
+    th,td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      text-align:left;
+      color: var(--muted);
+      font-size:.92rem;
+    }
+    th{color: var(--text); background: rgba(255,255,255,.05)}
+    tr:last-child td{border-bottom:none}
+    .note{color: var(--faint); font-size:.92rem}
+    footer{
+      max-width:1200px;
+      margin: 0 auto;
+      padding: 10px 22px 28px 22px;
+      color: var(--faint);
+      font-size:.92rem;
+    }
+    @media print{
+      body{background:white;color:black}
+      header, section, nav.toc{box-shadow:none; backdrop-filter:none}
+      header{border-bottom:1px solid #ccc}
+      section, nav.toc{border:1px solid #ccc; background:white}
+      a{color:#000}
+      .eq{background:#f7f7f7;border-color:#ddd}
+      canvas{border-color:#ddd}
+      .controls{display:none}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="kicker">Photonics • Laser Dynamics • Rate Equations</div>
+  <h1>Transients in a Gain-Switched Laser (Three-Level Model): theory → derivation → interactive simulation</h1>
+  <p>
+    We nondimensionalize the coupled photon/inversion rate equations, then analyze switching <span class="mono">Y₀: 0→2</span> (turn-on)
+    and <span class="mono">Y₀: 2→0</span> (turn-off), quantify transient times for
+    <span class="mono">a = τp/τsp = 10⁻³, 1, 10³</span>, and connect the results to physical intuition.
+  </p>
+</header>
+
+<main>
+  <nav class="toc" aria-label="Table of contents">
+    <h2><span class="dot"></span>Table of Contents</h2>
+    <a href="#quick">Quick Summary</a>
+    <a href="#p0">PART 0 — Concept Primer</a>
+    <a href="#p1">PART 1 — Problem Analysis</a>
+    <a href="#p2">PART 2 — Strategy & Tips</a>
+    <a href="#p3">PART 3 — Full Solution</a>
+    <a href="#p4">PART 4 — Deeper Understanding</a>
+    <a href="#p5">PART 5 — Visualization Guide</a>
+  </nav>
+
+  <article>
+    <section id="quick">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><b>Topic:</b> transient dynamics (“gain switching”) of a laser when the pump is stepped on/off.</li>
+        <li><b>Key idea:</b> photon number grows/decays fast (cavity lifetime <span class="mono">τp</span>) while inversion changes slower/faster depending on <span class="mono">a = τp/τsp</span>.</li>
+        <li><b>Governing equations (dimensional):</b> photon rate: <span class="mono">dn/dt = -(n/τp) + (N/Nt)(n/τp)</span>; inversion rate: <span class="mono">dN/dt = (N₀-N)/τsp − 2Nn/(Nt τp)</span>.</li>
+        <li><b>Nondimensional form:</b> with normalized time <span class="mono">s=t/τp</span> and <span class="mono">Y=N/Nt</span>, the dynamics reduce to a compact 2-ODE system.</li>
+        <li><b>Switching:</b> the pump sets <span class="mono">Y₀=N₀/Nt</span>; turning on means <span class="mono">Y₀:0→2</span>, turning off means <span class="mono">Y₀:2→0</span>.</li>
+        <li><b>Transient time behavior:</b> small <span class="mono">a</span> → large turn-on delay (slow inversion build); large <span class="mono">a</span> → very rapid inversion change and strong overshoot/oscillation on the <span class="mono">τp</span> scale.</li>
+        <li><b>Numbers requested:</b> the interactive simulation below computes the turn-on and turn-off transient times for <span class="mono">a=10⁻³, 1, 10³</span> using a consistent settling criterion.</li>
+      </ul>
+    </section>
+
+    <section id="p0">
+      <h2>PART 0 — Concept Primer (THEORY BEFORE SOLVING)</h2>
+
+      <h3>Core definitions (symbols + units)</h3>
+      <ul>
+        <li><span class="mono">n</span> — photon number (or photon density) in the cavity mode (dimensionless count or m⁻³ depending on convention).</li>
+        <li><span class="mono">N</span> — population difference (inversion) for the lasing transition (m⁻³).</li>
+        <li><span class="mono">Nt</span> — “threshold inversion” scale: when <span class="mono">N=Nt</span>, gain balances cavity loss.</li>
+        <li><span class="mono">τp</span> — photon lifetime in the cavity (s). Sets the fastest intensity time scale.</li>
+        <li><span class="mono">τsp</span> — spontaneous lifetime of the upper level (s). Sets inversion recovery/decay scale.</li>
+        <li><span class="mono">N₀</span> — pump-controlled small-signal inversion (m⁻³), i.e., inversion the medium would approach if stimulated emission were absent.</li>
+      </ul>
+
+      <h3>Physical meaning (what these quantities represent)</h3>
+      <ul>
+        <li><b>Photon equation:</b> photons leak out of the cavity (loss term <span class="mono">−n/τp</span>) and are amplified by stimulated emission (gain term proportional to inversion).</li>
+        <li><b>Inversion equation:</b> pumping/relaxation tries to drive <span class="mono">N</span> toward <span class="mono">N₀</span> (first two terms), while stimulated emission depletes inversion at a rate proportional to <span class="mono">N × n</span>.</li>
+      </ul>
+
+      <h3>Key laws/principles and validity</h3>
+      <ul>
+        <li><b>Rate-equation model:</b> assumes a single dominant mode, spatial averaging, and that the field can be represented by photon number rather than full Maxwell–Bloch dynamics.</li>
+        <li><b>Gain proportional to inversion:</b> linear gain model <span class="mono">g ∝ N</span> near threshold; valid when saturation is captured mainly by the <span class="mono">N n</span> coupling term.</li>
+        <li><b>Three-level approximation:</b> the specific inversion equation used corresponds to the three-level form shown in the problem statement (the factor “2” in the stimulated term matters).</li>
+      </ul>
+
+      <div class="callout assump">
+        <div class="title"><span class="badge">Assumptions</span>What we are implicitly assuming in this model</div>
+        <ul>
+          <li>Single longitudinal/transverse mode (no mode competition).</li>
+          <li>Homogeneous gain medium; <span class="mono">N</span> and <span class="mono">n</span> are spatial averages.</li>
+          <li>No explicit noise term; a tiny initial <span class="mono">n</span> represents a seed (spontaneous emission, etc.).</li>
+          <li>Pump switching is treated as an instantaneous step in <span class="mono">N₀</span> (equivalently <span class="mono">Y₀</span>).</li>
+        </ul>
+      </div>
+
+      <h3>Common models/approximations (why we use them)</h3>
+      <ul>
+        <li><b>Early turn-on:</b> when <span class="mono">n</span> is tiny, stimulated depletion is negligible, so <span class="mono">N</span> follows a simple exponential toward <span class="mono">N₀</span>.</li>
+        <li><b>After threshold:</b> once <span class="mono">N &gt; Nt</span>, photons grow exponentially until they become large enough to clamp inversion near threshold and produce relaxation oscillations.</li>
+        <li><b>Timescale separation:</b> controlled by <span class="mono">a = τp/τsp</span>. Small <span class="mono">a</span> means inversion changes slowly compared with photons.</li>
+      </ul>
+
+      <h3>Mini intuition examples</h3>
+      <ul>
+        <li><b>Slow inversion build (a ≪ 1):</b> photons react instantly, but nothing happens until inversion crawls above threshold → a big “turn-on delay.”</li>
+        <li><b>Fast inversion change (a ≫ 1):</b> inversion jumps quickly; photons surge and can overshoot strongly, causing ringing on the cavity time scale.</li>
+      </ul>
+
+      <div class="callout mistake">
+        <div class="title"><span class="badge">What to watch for</span>Typical pitfalls</div>
+        <ul>
+          <li>Mixing dimensional and nondimensional variables (keep a clean mapping).</li>
+          <li>Assuming <span class="mono">N</span> instantly clamps at threshold right at switch-on (it clamps only after photons grow).</li>
+          <li>Ignoring the seed photons; without a seed, the deterministic model stays at <span class="mono">n=0</span> forever.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="p1">
+      <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <h3>Problem restatement (in plain words)</h3>
+      <p>
+        You are given the photon and inversion rate equations for a gain medium in a cavity. You must:
+        (a) introduce normalized variables to rewrite the equations in compact nondimensional form;
+        (b) analyze step switching of the pump parameter <span class="mono">Y₀</span>:
+        turn on (<span class="mono">Y₀: 0→2</span>) and turn off (<span class="mono">Y₀: 2→0</span>).
+        Starting from a very small photon seed, estimate/compute the transient (switching) times for
+        <span class="mono">a=10⁻³, 1, 10³</span>, and comment on physical significance.
+      </p>
+
+      <h3>Given quantities</h3>
+      <ul>
+        <li>Rate equations (from the statement):</li>
+      </ul>
+      <div class="eq" id="eq-dim">
+        <button class="copyBtn" data-copy="dn/dt = -(n/τp) + (N/Nt)(n/τp)
+dN/dt = (N0/τsp) - (N/τsp) - (2N n)/(Nt τp)">Copy</button>
+        <div class="mono">
+          dn/dt = -(n/τp) + (N/Nt)(n/τp)<br/>
+          dN/dt = (N0/τsp) - (N/τsp) - (2N n)/(Nt τp)
+        </div>
+        <small>These are (16.4-3) and (16.4-6) in the prompt images.</small>
+      </div>
+      <ul>
+        <li>Definitions to introduce: <span class="mono">Y = N/Nt</span>, <span class="mono">s = t/τp</span>, <span class="mono">a = τp/τsp</span>, <span class="mono">Y₀ = N₀/Nt</span>.</li>
+        <li>Seed: initially very small photon flux corresponding to <span class="mono">X(0) = 10⁻⁵</span> (see below for the exact nondimensional definition used consistently).</li>
+        <li>Switch: <span class="mono">Y₀</span> is stepped 0→2 (on) and 2→0 (off).</li>
+      </ul>
+
+      <h3>Unknowns / what must be found</h3>
+      <ul>
+        <li>Nondimensional ODE system in <span class="mono">X(s)</span>, <span class="mono">Y(s)</span>.</li>
+        <li>Transient (switching) times for the three values of <span class="mono">a</span>, for both switching directions.</li>
+        <li>Interpretation + the physical origin of the initial tiny photon seed.</li>
+      </ul>
+
+      <h3>Why these principles apply (and why others don’t)</h3>
+      <ul>
+        <li>We use <b>rate equations</b> because the problem explicitly provides them and focuses on time dynamics of photon number and inversion.</li>
+        <li>We do <b>not</b> need full wave optics or Maxwell equations here because coherence/field phase is not being tracked—only intensities/populations.</li>
+        <li>We do <b>not</b> assume steady state except when defining “transient time” relative to the new steady solution after switching.</li>
+      </ul>
+
+      <div class="callout assump">
+        <div class="title"><span class="badge">Assumptions</span>Stated explicitly for the switching calculation</div>
+        <ul>
+          <li><span class="mono">Y₀</span> changes instantly (ideal step).</li>
+          <li>We define transient time by a <b>settling criterion</b> (stated in PART 3) rather than an ambiguous “looks settled.”</li>
+          <li>Seed photons exist (otherwise the deterministic system stays at <span class="mono">X=0</span> forever on turn-on).</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (pros/cons)</h3>
+      <ol>
+        <li><b>Piecewise analytic approximation (early-time + threshold crossing):</b> good intuition and scaling; struggles to capture oscillations and settling precisely.</li>
+        <li><b>Linearization about steady state (small-signal stability):</b> predicts relaxation oscillation frequency/damping; doesn’t capture the large nonlinear surge immediately after switching.</li>
+        <li><b>Direct numerical integration (RK4):</b> captures full nonlinear transient and lets us define consistent “transient time” for different <span class="mono">a</span>. Best for the requested numeric comparisons.</li>
+      </ol>
+      <p><b>Choice:</b> we will derive the nondimensional equations analytically, then compute switching transients by numerical integration (with clear criteria), while also extracting simple analytic scaling estimates to interpret the results.</p>
+    </section>
+
+    <section id="p2">
+      <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+      <ol>
+        <li>
+          <b>Define normalized variables</b><br/>
+          <span class="note">Goal:</span> convert the two dimensional ODEs into a compact dimensionless form.<br/>
+          <span class="note">Tool:</span> chain rule with <span class="mono">s=t/τp</span>, <span class="mono">Y=N/Nt</span>, <span class="mono">Y₀=N₀/Nt</span>, and a properly scaled <span class="mono">X</span> so the coupling term is dimensionless.<br/>
+          <span class="note">Meaning:</span> makes timescale comparisons depend mainly on <span class="mono">a=τp/τsp</span>.
+        </li>
+        <li>
+          <b>Find the steady states for a given pump level</b><br/>
+          <span class="note">Tool:</span> set <span class="mono">dX/ds=0</span>, <span class="mono">dY/ds=0</span>.<br/>
+          <span class="note">Meaning:</span> tells us the “target” state after switching.
+        </li>
+        <li>
+          <b>Turn-on: estimate threshold crossing time</b><br/>
+          <span class="note">Tool:</span> ignore stimulated depletion when <span class="mono">X</span> is tiny → solve <span class="mono">dY/ds ≈ a(Y₀−Y)</span> to find when <span class="mono">Y</span> reaches 1.<br/>
+          <span class="note">Meaning:</span> predicts turn-on delay scaling like <span class="mono">~(1/a)</span>.
+        </li>
+        <li>
+          <b>Integrate the full nonlinear system</b><br/>
+          <span class="note">Tool:</span> stable fixed-step RK4; define a consistent “settling time.”<br/>
+          <span class="note">Meaning:</span> captures overshoot and relaxation oscillations.
+        </li>
+        <li>
+          <b>Turn-off: analyze rapid photon decay vs inversion decay</b><br/>
+          <span class="note">Tool:</span> after switch-off, gain vanishes and photons decay on <span class="mono">τp</span>; inversion decays on <span class="mono">τsp</span> (encoded by <span class="mono">a</span>).<br/>
+          <span class="note">Meaning:</span> turn-off is typically fast in photons, but inversion “memory” can persist.
+        </li>
+      </ol>
+
+      <div class="callout mistake">
+        <div class="title"><span class="badge">Quick tips</span>Common mistakes to avoid</div>
+        <ul>
+          <li>Don’t define “transient time” without a criterion (we’ll use a tolerance band + hold time).</li>
+          <li>Don’t forget that <span class="mono">X</span> must be scaled so the term <span class="mono">2YX</span> is dimensionless; otherwise units won’t match.</li>
+          <li>For <span class="mono">a≪1</span>, integrate long enough in <span class="mono">s</span> to see the delayed onset.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="p3">
+      <h2>PART 3 — Full Solution (DETAILED + TEACHING)</h2>
+
+      <h3>Physical intuition first (before math)</h3>
+      <p>
+        The photon number changes on the cavity time <span class="mono">τp</span>, so it can grow or decay extremely fast.
+        The inversion changes on <span class="mono">τsp</span>, but in normalized time <span class="mono">s=t/τp</span> it changes with rate <span class="mono">a=τp/τsp</span>.
+        Therefore:
+      </p>
+      <ul>
+        <li><span class="mono">a ≪ 1</span>: inversion is slow in <span class="mono">s</span>, so the laser waits a long time to reach threshold → large turn-on delay.</li>
+        <li><span class="mono">a ≫ 1</span>: inversion is fast, so photons are suddenly above threshold and surge → strong overshoot and fast dynamics.</li>
+      </ul>
+
+      <h3>Step 1 — Write the dimensional equations</h3>
+      <p>We start from the given pair:</p>
+      <div class="eq" id="eq1">
+        <button class="copyBtn" data-copy="dn/dt = (Y - 1) n / τp  where Y = N/Nt
+dN/dt = (N0 - N)/τsp - 2 N n /(Nt τp)">Copy</button>
+        <div class="mono">
+          dn/dt = -(n/τp) + (N/Nt)(n/τp) = ( (N/Nt) − 1 ) (n/τp)<br/>
+          dN/dt = (N0 − N)/τsp − (2N n)/(Nt τp)
+        </div>
+      </div>
+
+      <h3>Step 2 — Choose nondimensional variables (and define every symbol)</h3>
+      <p>
+        The problem requests <span class="mono">Y=N/Nt</span> and <span class="mono">s=t/τp</span> and defines
+        <span class="mono">a=τp/τsp</span> and <span class="mono">Y0=N0/Nt</span>.
+        The stimulated-coupling term contains <span class="mono">n/(Nt τp)</span>, so it is most convenient to define a photon variable
+        that makes <span class="mono">2YX</span> dimensionless:
+      </p>
+
+      <div class="callout warn">
+        <div class="title"><span class="badge">Important</span>About the photon variable <span class="mono">X</span></div>
+        <p class="note">
+          The statement says “introduce <span class="mono">X=n/τp</span>.” That quantity has units of (photons)/s and is fine for the photon equation,
+          but the inversion equation naturally involves the dimensionless ratio <span class="mono">n/(Nt τp)</span>.
+          To keep the final ODEs fully dimensionless (and match the standard normalized form used for relaxation oscillations),
+          we define the <b>dimensionless intensity variable</b>:
+        </p>
+        <div class="eq" id="eqXdef">
+          <button class="copyBtn" data-copy="s = t/τp
+Y = N/Nt
+Y0 = N0/Nt
+a = τp/τsp
+X = n/(Nt)">Copy</button>
+          <div class="mono">
+            s = t/τp, &nbsp; Y = N/Nt, &nbsp; Y0 = N0/Nt, &nbsp; a = τp/τsp,<br/>
+            <b>X = n/Nt</b>  (dimensionless photon measure)
+          </div>
+          <small>
+            If you prefer the exact prompt’s <span class="mono">X̄=n/τp</span>, then <span class="mono">X̄ = (Nt/τp) X</span>;
+            the dynamics are identical up to this constant scale factor. Below, <b>we use X dimensionless</b> so the coupling term is clean.
+          </small>
+        </div>
+      </div>
+
+      <p>
+        With these definitions, we will rewrite the system entirely in terms of <span class="mono">X(s)</span> and <span class="mono">Y(s)</span>.
+      </p>
+
+      <h3>Step 3 — Transform the photon equation</h3>
+      <p>
+        Start from:
+        <span class="mono">dn/dt = ((N/Nt)−1)(n/τp)</span>.
+        Substitute <span class="mono">n = Nt X</span>, <span class="mono">Y=N/Nt</span>, and use <span class="mono">s=t/τp</span>.
+      </p>
+
+      <div class="eq" id="eqPhotonDerive">
+        <button class="copyBtn" data-copy="n = Nt X,  s = t/τp  ⇒  dn/dt = Nt dX/dt = Nt (1/τp) dX/ds
+So: Nt (1/τp) dX/ds = (Y - 1) (Nt X)/τp  ⇒  dX/ds = (Y - 1) X">Copy</button>
+        <div class="mono">
+          n = Nt X, &nbsp; s = t/τp  ⇒  dn/dt = Nt dX/dt = Nt (1/τp) dX/ds<br/>
+          Nt (1/τp) dX/ds = (Y − 1)(Nt X)/τp<br/>
+          <b>⇒ dX/ds = (Y − 1) X</b>
+        </div>
+      </div>
+
+      <p class="note">
+        Interpretation: if <span class="mono">Y&gt;1</span> (inversion above threshold), photons grow exponentially; if <span class="mono">Y&lt;1</span>, they decay.
+      </p>
+
+      <h3>Step 4 — Transform the inversion equation</h3>
+      <p>
+        Start from:
+        <span class="mono">dN/dt = (N0 − N)/τsp − 2Nn/(Nt τp)</span>.
+        Substitute <span class="mono">N=Nt Y</span>, <span class="mono">N0=Nt Y0</span>, <span class="mono">n=Nt X</span>, and convert to <span class="mono">s</span>.
+      </p>
+
+      <div class="eq" id="eqInvDerive">
+        <button class="copyBtn" data-copy="N = Nt Y  ⇒  dN/dt = Nt dY/dt = Nt (1/τp) dY/ds
+RHS: (N0-N)/τsp = Nt(Y0-Y)/τsp
+and 2Nn/(Nt τp) = 2 (Nt Y)(Nt X)/(Nt τp) = 2 Nt Y X / τp
+So: Nt (1/τp) dY/ds = Nt(Y0-Y)/τsp - 2 Nt Y X / τp
+Divide by Nt and multiply by τp: dY/ds = (τp/τsp)(Y0-Y) - 2 Y X
+⇒ dY/ds = a (Y0 - Y) - 2 Y X">Copy</button>
+        <div class="mono">
+          N = Nt Y ⇒ dN/dt = Nt dY/dt = Nt (1/τp) dY/ds<br/>
+          (N0−N)/τsp = Nt (Y0−Y)/τsp<br/>
+          2Nn/(Nt τp) = 2 (Nt Y)(Nt X)/(Nt τp) = 2 Nt Y X / τp<br/>
+          Nt (1/τp) dY/ds = Nt (Y0−Y)/τsp − 2 Nt Y X / τp<br/>
+          <b>⇒ dY/ds = a (Y0 − Y) − 2 Y X</b>
+        </div>
+      </div>
+
+      <div class="callout final">
+        <div class="title"><span class="badge">Key equations</span>Final nondimensional rate equations</div>
+        <div class="eq" id="eqFinal">
+          <button class="copyBtn" data-copy="dX/ds = (Y - 1) X
+dY/ds = a (Y0 - Y) - 2 Y X
+with s=t/τp,  Y=N/Nt,  Y0=N0/Nt,  a=τp/τsp">Copy</button>
+          <div class="mono">
+            dX/ds = (Y − 1) X<br/>
+            dY/ds = a (Y0 − Y) − 2 Y X<br/>
+            <small>s=t/τp, Y=N/Nt, Y0=N0/Nt, a=τp/τsp</small>
+          </div>
+        </div>
+      </div>
+
+      <h3>Step 5 — Steady state for the “ON” pump level <span class="mono">Y0=2</span></h3>
+      <p>
+        A steady state satisfies <span class="mono">dX/ds=0</span>, <span class="mono">dY/ds=0</span>.
+      </p>
+      <ul>
+        <li>From <span class="mono">dX/ds=(Y−1)X</span>: either <span class="mono">X=0</span> (no lasing) or <span class="mono">Y=1</span> (gain clamping at threshold).</li>
+        <li>In the lasing steady state, take <span class="mono">Y=1</span> and plug into the second equation:</li>
+      </ul>
+      <div class="eq" id="eqSteady">
+        <button class="copyBtn" data-copy="At steady lasing: Yss = 1
+0 = a(Y0 - 1) - 2(1) Xss  ⇒  Xss = a(Y0 - 1)/2
+For Y0=2: Xss = a/2">Copy</button>
+        <div class="mono">
+          Y<sub>ss</sub> = 1<br/>
+          0 = a(Y0 − 1) − 2 X<sub>ss</sub>  ⇒  X<sub>ss</sub> = a(Y0 − 1)/2<br/>
+          For Y0=2: <b>X<sub>ss</sub> = a/2</b>
+        </div>
+      </div>
+
+      <h3>Step 6 — Switching ON: qualitative + analytic delay estimate</h3>
+      <p>
+        On turn-on, the system begins with almost no photons (seed <span class="mono">X(0)=10⁻⁵</span>) and low inversion (<span class="mono">Y(0)=0</span>).
+        While photons are tiny, the depletion term <span class="mono">2YX</span> is negligible, so
+        <span class="mono">dY/ds ≈ a(Y0−Y)</span>.
+        For a step to <span class="mono">Y0=2</span>:
+      </p>
+      <div class="eq" id="eqYapprox">
+        <button class="copyBtn" data-copy="If X≈0: dY/ds = a(2 - Y)
+With Y(0)=0: Y(s) = 2(1 - e^{-a s})
+Threshold Y=1 occurs at s_th = (1/a) ln 2">Copy</button>
+        <div class="mono">
+          X≈0 ⇒ dY/ds = a(2 − Y)<br/>
+          Y(0)=0 ⇒ Y(s) = 2(1 − e<sup>−a s</sup>)<br/>
+          Y=1 ⇒ <b>s<sub>th</sub> = (1/a) ln 2</b>
+        </div>
+      </div>
+      <p class="note">
+        This <span class="mono">s_th</span> is an estimate of the <b>turn-on delay</b> (time to reach threshold). For <span class="mono">a=10⁻³</span>,
+        <span class="mono">s_th ≈ 693</span> cavity lifetimes—huge. For <span class="mono">a=10³</span>, <span class="mono">s_th ≈ 6.93×10⁻⁴</span>—nearly instantaneous.
+      </p>
+
+      <h3>Step 7 — Switching OFF: qualitative behavior</h3>
+      <p>
+        If the laser is initially in the ON steady state (<span class="mono">Y=1</span>, <span class="mono">X=a/2</span>) and we step to <span class="mono">Y0=0</span>,
+        then inversion is driven down and photons lose gain. Photons typically decay on the <span class="mono">τp</span> time scale
+        once <span class="mono">Y&lt;1</span>, while inversion decays on <span class="mono">τsp</span> (encoded by <span class="mono">a</span>).
+      </p>
+
+      <h3>Step 8 — Define “switching transient time” (so we can compute it consistently)</h3>
+      <p>
+        “Transient time” can mean different things (time to first peak, time to settle, etc.).
+        Here we use a settling-time definition that works for both turn-on and turn-off:
+      </p>
+      <div class="callout final">
+        <div class="title"><span class="badge">Definition</span>Settling / transient time used for the table and plots</div>
+        <ul>
+          <li><b>Turn-on transient time</b> <span class="mono">s_on</span>: earliest time after the step when <span class="mono">X</span> and <span class="mono">Y</span> both stay within ±5% of their ON steady values (<span class="mono">Xss=a/2</span>, <span class="mono">Yss=1</span>) for a continuous hold window of <span class="mono">Δs_hold=10</span>.</li>
+          <li><b>Turn-off transient time</b> <span class="mono">s_off</span>: earliest time after the step when <span class="mono">X</span> stays below <span class="mono">10⁻⁶</span> and <span class="mono">Y</span> stays below <span class="mono">10⁻³</span> for the same hold window.</li>
+        </ul>
+        <p class="note">
+          These criteria are conservative (they demand “stay there,” not just “cross once”).
+          The interactive tool lets you see the full waveforms so you can also discuss “first pulse time” if desired.
+        </p>
+      </div>
+
+      <h3>Step 9 — Numerical results for <span class="mono">a = 10⁻³, 1, 10³</span></h3>
+      <p>
+        The table below is computed by the same RK4 integration used in the plots (live, in your browser).
+        Times are reported in normalized units <span class="mono">s=t/τp</span> and also as physical time <span class="mono">t = s τp</span>.
+      </p>
+
+      <table aria-label="Computed transient times">
+        <thead>
+          <tr>
+            <th>Parameter a = τp/τsp</th>
+            <th>Turn-on transient s_on (in τp)</th>
+            <th>Turn-off transient s_off (in τp)</th>
+            <th>Notes (dominant physics)</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody">
+          <tr><td colspan="4">Computing…</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout assump">
+        <div class="title"><span class="badge">Seed photons</span>Where does the tiny initial <span class="mono">X(0)=10⁻⁵</span> come from?</div>
+        <ul>
+          <li><b>Spontaneous emission into the lasing mode</b> (the most common physical origin).</li>
+          <li><b>Thermal/background photons</b> (typically negligible at optical frequencies, more relevant at microwave).</li>
+          <li><b>Vacuum fluctuations</b> appear as quantum noise; semiclassically this is represented by a spontaneous-emission “source term.”</li>
+          <li><b>Stray feedback/leakage</b> from other optical fields, scattering, or cavity reflections (laboratory reality).</li>
+        </ul>
+        <p class="note">
+          In a more complete model, one adds an explicit noise/source term to <span class="mono">dX/ds</span>; here the seed is a stand-in so turn-on can start.
+        </p>
+      </div>
+
+      <h3>Sanity checks</h3>
+      <ul>
+        <li><b>Units:</b> <span class="mono">s</span>, <span class="mono">X</span>, <span class="mono">Y</span>, <span class="mono">a</span>, <span class="mono">Y0</span> are dimensionless → both ODEs are dimensionless and consistent.</li>
+        <li><b>Limiting case (no pump):</b> if <span class="mono">Y0=0</span> and <span class="mono">X</span> is small, then <span class="mono">Y→0</span> and <span class="mono">dX/ds≈-X</span> → photons decay with lifetime <span class="mono">τp</span>.</li>
+        <li><b>Above threshold steady state:</b> for <span class="mono">Y0&gt;1</span>, the lasing steady state has <span class="mono">Yss=1</span> and <span class="mono">Xss=a(Y0-1)/2</span> → inversion clamping appears naturally.</li>
+      </ul>
+
+      <p class="note">
+        Connection to the diagram/plots: the diagram shows the pump switch changing <span class="mono">Y0</span>.
+        The plots show how inversion rises toward the pump-set value but gets “pulled back” by stimulated emission as photons build,
+        producing oscillations before settling.
+      </p>
+
+      <div class="eq" id="eqFinalAnswer">
+        <button class="copyBtn" data-copy="Nondimensional system (used for switching):
+dX/ds = (Y - 1) X
+dY/ds = a (Y0 - Y) - 2 Y X
+Steady ON (Y0=2): Yss=1, Xss=a/2
+Early turn-on threshold estimate (X≈0): s_th=(1/a) ln 2">Copy</button>
+        <div class="mono">
+          <b>Final answer (core results):</b><br/>
+          dX/ds = (Y − 1) X<br/>
+          dY/ds = a (Y0 − Y) − 2 Y X<br/>
+          ON steady (Y0=2): Y<sub>ss</sub>=1, X<sub>ss</sub>=a/2<br/>
+          Early turn-on threshold estimate: s<sub>th</sub>=(1/a) ln 2
+        </div>
+      </div>
+    </section>
+
+    <section id="p4">
+      <h2>PART 4 — Deeper Understanding (THEORY AROUND THE RESULT)</h2>
+
+      <h3>Re-interpreting the equations term by term</h3>
+      <ul>
+        <li><b>Photon growth rate:</b> <span class="mono">(Y−1)</span> is the net gain margin; it is positive above threshold.</li>
+        <li><b>Inversion recovery:</b> <span class="mono">a(Y0−Y)</span> drives the medium toward the pump-defined inversion.</li>
+        <li><b>Saturation / depletion:</b> <span class="mono">2YX</span> is nonlinear stimulated emission that couples the equations and causes oscillations.</li>
+      </ul>
+
+      <h3>How changing parameters affects the outcome</h3>
+      <ul>
+        <li><b>Decrease a (τp ≪ τsp):</b> inversion changes slowly; long turn-on delay; typically weaker oscillations (more “adiabatic” inversion).</li>
+        <li><b>Increase a (τp ≫ τsp):</b> inversion changes very fast in normalized time; photons get a sudden strong gain; large overshoot and pronounced ringing before settling.</li>
+        <li><b>Change Y0 step size:</b> bigger steps push the system further from steady state → stronger oscillations and potentially multiple spikes (“gain switching” pulses).</li>
+      </ul>
+
+      <h3>An alternative derivation idea (brief)</h3>
+      <p class="note">
+        Instead of directly nondimensionalizing, you can (i) write the system in matrix form around the steady state,
+        (ii) linearize to get a second-order equation for small perturbations, and (iii) identify the relaxation-oscillation frequency and damping.
+        That approach explains <i>why</i> oscillations occur, but it does not capture the large nonlinear turn-on spike as cleanly as full integration.
+      </p>
+
+      <h3>Concept checks (self-test)</h3>
+      <ul>
+        <li><b>Q:</b> Why does the laser not start in a purely deterministic model if <span class="mono">X(0)=0</span>?<br/>
+            <b>A:</b> Because <span class="mono">dX/ds=(Y−1)X</span> has <span class="mono">X=0</span> as an invariant solution; without a source/noise term, it stays zero forever.</li>
+        <li><b>Q:</b> What does <span class="mono">Y=1</span> represent physically?<br/>
+            <b>A:</b> Threshold inversion: gain exactly balances cavity loss (photon number neither grows nor decays in the linear sense).</li>
+        <li><b>Q:</b> Why can turn-on delay scale like <span class="mono">1/a</span>?<br/>
+            <b>A:</b> Because inversion approaches its pumped value with rate <span class="mono">a</span> in normalized time, so reaching threshold takes longer when <span class="mono">a</span> is small.</li>
+        <li><b>Q:</b> During steady lasing, why is <span class="mono">Y</span> clamped near 1 even if <span class="mono">Y0=2</span>?<br/>
+            <b>A:</b> Stimulated emission depletes inversion; the system balances recovery against depletion such that net gain stays near zero.</li>
+      </ul>
+    </section>
+
+    <section id="p5">
+      <h2>PART 5 — Visualization Guide (HOW TO READ THE PLOTS)</h2>
+
+      <div class="vizWrap">
+        <div class="canvasCard">
+          <h3 style="margin:4px 6px 10px 6px;">Interactive diagram + dynamics</h3>
+          <canvas id="diagramCanvas" aria-label="Laser setup diagram"></canvas>
+          <div class="note" style="padding:8px 6px 0 6px;">
+            Diagram: a cavity with a gain medium. The “pump switch” changes <span class="mono">Y0</span> (small-signal inversion) abruptly.
+          </div>
+        </div>
+
+        <div class="controls" aria-label="Interactive controls">
+          <div class="row">
+            <label for="modeSel"><b>Switching mode</b></label>
+            <select id="modeSel">
+              <option value="on">Turn ON (Y0: 0 → 2)</option>
+              <option value="off">Turn OFF (Y0: 2 → 0)</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label for="logaRange"><b>log10(a = τp/τsp)</b></label>
+            <span class="pill" id="aReadout">a = 1</span>
+          </div>
+          <input id="logaRange" type="range" min="-3" max="3" step="0.01" value="0" />
+
+          <div class="row">
+            <label for="y0Sel"><b>Target pump level</b> <span class="note">(example)</span></label>
+            <select id="y0Sel">
+              <option value="2">Y0 = 2 (problem value)</option>
+              <option value="1.2">Y0 = 1.2 (near threshold)</option>
+              <option value="3">Y0 = 3 (stronger step)</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <label for="seedRange"><b>Seed X(0)</b></label>
+            <span class="pill" id="seedReadout">1e-5</span>
+          </div>
+          <input id="seedRange" type="range" min="-10" max="-2" step="0.1" value="-5"/>
+
+          <div class="row">
+            <button id="recomputeBtn">Recompute & Update Plots</button>
+            <button id="resetBtn" title="Reset to the problem's parameters">Reset</button>
+          </div>
+
+          <div class="callout final" style="margin:0;">
+            <div class="title"><span class="badge">Reading the plots</span>What changes when you move the slider?</div>
+            <ul style="margin:6px 0 0 18px;">
+              <li>Increasing <span class="mono">a</span> makes inversion respond faster in <span class="mono">s</span>, often producing faster, stronger spikes.</li>
+              <li>Decreasing <span class="mono">a</span> increases turn-on delay dramatically (threshold crossing shifts right).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="canvasCard">
+          <h3 style="margin:4px 6px 10px 6px;">Main plot: X(s) and Y(s) vs time</h3>
+          <canvas id="mainPlot" aria-label="Main quantitative plot"></canvas>
+          <div class="note" style="padding:8px 6px 0 6px;">
+            Axes: <span class="mono">s=t/τp</span> (horizontal), and <span class="mono">X</span>, <span class="mono">Y</span> (vertical).
+            The steady ON values are <span class="mono">Yss=1</span> and <span class="mono">Xss=a(Y0−1)/2</span>.
+          </div>
+        </div>
+
+        <div class="canvasCard">
+          <h3 style="margin:4px 6px 10px 6px;">Secondary plot: transient time vs a (sweep)</h3>
+          <canvas id="sweepPlot" aria-label="Parameter sweep plot"></canvas>
+          <div class="note" style="padding:8px 6px 0 6px;">
+            This plot sweeps <span class="mono">a</span> across a log range and shows the computed transient time under the same criteria as the table.
+            The dot marks your current <span class="mono">a</span>.
+          </div>
+        </div>
+      </div>
+    </section>
+  </article>
+</main>
+
+<footer>
+  <div>
+    Built as a self-contained educational article (vanilla HTML/CSS/JS, no external libraries). The numeric results are computed locally in your browser.
+  </div>
+</footer>
+
+<script>
+/* =========================
+   Smooth scrolling for TOC
+========================= */
+document.querySelectorAll('nav.toc a').forEach(a=>{
+  a.addEventListener('click', (e)=>{
+    const href = a.getAttribute('href');
+    if(!href || !href.startsWith('#')) return;
+    e.preventDefault();
+    const el = document.querySelector(href);
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+});
+
+/* =========================
+   Copy buttons for equations
+========================= */
+function copyText(txt){
+  navigator.clipboard.writeText(txt).then(()=>{
+    // tiny feedback (non-intrusive)
+  }).catch(()=>{
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+  });
+}
+document.querySelectorAll('.copyBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    copyText(btn.getAttribute('data-copy') || '');
+    const old = btn.textContent;
+    btn.textContent = 'Copied ✓';
+    setTimeout(()=>btn.textContent = old, 800);
+  });
+});
+
+/* =========================
+   Model + numerics
+   ODE:
+     dX/ds = (Y-1)X
+     dY/ds = a(Y0 - Y) - 2 Y X
+   Switching:
+     ON:  Y0:0->Y0target, start (Xseed, Y=0)
+     OFF: Y0:Y0target->0, start at ON steady (Y=1, X=a(Y0target-1)/2)
+========================= */
+
+// RK4 step
+function rk4Step(state, s, h, deriv){
+  const k1 = deriv(state, s);
+  const s2 = s + 0.5*h;
+  const st2 = [state[0] + 0.5*h*k1[0], state[1] + 0.5*h*k1[1]];
+  const k2 = deriv(st2, s2);
+  const st3 = [state[0] + 0.5*h*k2[0], state[1] + 0.5*h*k2[1]];
+  const k3 = deriv(st3, s2);
+  const s4 = s + h;
+  const st4 = [state[0] + h*k3[0], state[1] + h*k3[1]];
+  const k4 = deriv(st4, s4);
+  return [
+    state[0] + (h/6)*(k1[0] + 2*k2[0] + 2*k3[0] + k4[0]),
+    state[1] + (h/6)*(k1[1] + 2*k2[1] + 2*k3[1] + k4[1])
+  ];
+}
+
+function simulate({a, mode, Y0target, Xseed, h=0.002, sMax=5000}){
+  // choose Y0(s) as step at s=0
+  const Y0 = (mode === 'on') ? Y0target : 0;
+
+  // initial conditions
+  let X0, Y0init;
+  if(mode === 'on'){
+    X0 = Xseed;
+    Y0init = 0;
+  } else {
+    // start from ON steady (lasing) just before switch-off
+    // for general target:
+    // steady lasing exists only if Y0target>1; if not, just start near 0
+    if(Y0target > 1){
+      X0 = a*(Y0target - 1)/2;
+      Y0init = 1;
+    } else {
+      X0 = Xseed;
+      Y0init = Math.min(Y0target, 1);
+    }
+  }
+
+  const deriv = (st, s)=>{
+    const X = Math.max(st[0], 0);
+    const Y = Math.max(st[1], 0);
+    // for turn-on, Y0 is constant = Y0target after s=0
+    // for turn-off, Y0 is constant = 0 after s=0
+    const dX = (Y - 1)*X;
+    const dY = a*(Y0 - Y) - 2*Y*X;
+    return [dX, dY];
+  };
+
+  // integrate
+  const nSteps = Math.ceil(sMax / h);
+  const S = new Float64Array(nSteps+1);
+  const Xarr = new Float64Array(nSteps+1);
+  const Yarr = new Float64Array(nSteps+1);
+
+  let st = [X0, Y0init];
+  let s = 0;
+  S[0] = 0; Xarr[0] = st[0]; Yarr[0] = st[1];
+
+  // adaptive-ish sMax for small a turn-on: ensure we can reach threshold + settle
+  // we'll keep the passed sMax, but caller can set it based on a.
+  for(let i=1;i<=nSteps;i++){
+    st = rk4Step(st, s, h, deriv);
+    s += h;
+
+    // numerical safety
+    if(!Number.isFinite(st[0]) || !Number.isFinite(st[1])) break;
+    st[0] = Math.max(st[0], 0);
+    st[1] = Math.max(st[1], 0);
+
+    S[i] = s;
+    Xarr[i] = st[0];
+    Yarr[i] = st[1];
+  }
+
+  return {S, Xarr, Yarr, a, mode, Y0target, Xseed, h};
+}
+
+// settling criteria from PART 3
+function computeTransientTime(sim){
+  const {S, Xarr, Yarr, a, mode, Y0target} = sim;
+  const hold = 10; // Δs_hold
+  const tol = 0.05; // ±5%
+  const h = sim.h;
+  const holdN = Math.max(1, Math.floor(hold/h));
+
+  if(mode === 'on'){
+    const Xss = (Y0target > 1) ? a*(Y0target - 1)/2 : 0;
+    const Yss = (Y0target > 1) ? 1 : Y0target; // if below threshold, steady is non-lasing
+    // If below threshold, transient is just approach to (X=0, Y=Y0target)
+    const startIdx = 0;
+    for(let i=startIdx; i+holdN < S.length; i++){
+      let ok = true;
+      for(let j=i; j<i+holdN; j++){
+        const X = Xarr[j], Y = Yarr[j];
+        if(Y0target > 1){
+          if(Math.abs(Y - Yss) > tol*Math.max(1e-12, Yss)) { ok=false; break; }
+          if(Math.abs(X - Xss) > tol*Math.max(1e-12, Xss)) { ok=false; break; }
+        } else {
+          if(Y > (1+tol)*Yss + 1e-12) { ok=false; break; }
+          if(X > 1e-6) { ok=false; break; }
+        }
+      }
+      if(ok) return S[i];
+    }
+    return NaN;
+  } else {
+    // off: want X < 1e-6 and Y < 1e-3 (hold window)
+    const Xthr = 1e-6;
+    const Ythr = 1e-3;
+    for(let i=0; i+holdN < S.length; i++){
+      let ok = true;
+      for(let j=i; j<i+holdN; j++){
+        if(Xarr[j] > Xthr || Yarr[j] > Ythr){ ok=false; break; }
+      }
+      if(ok) return S[i];
+    }
+    return NaN;
+  }
+}
+
+/* =========================
+   Plot helpers (Canvas)
+========================= */
+function setupHiDPICanvas(canvas){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(10, Math.floor(rect.width * dpr));
+  const h = Math.max(10, Math.floor(rect.height * dpr));
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w; canvas.height = h;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(dpr, dpr);
+  return {ctx, dpr, w: rect.width, h: rect.height};
+}
+
+function clear(ctx, w, h){
+  ctx.clearRect(0,0,w,h);
+}
+
+// draw axes with ticks/grid
+function drawAxes(ctx, w, h, box, xMin, xMax, yMin, yMax, xLabel, yLabel, title){
+  const {x, y, W, H} = box;
+
+  // panel background
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.fillRect(x,y,W,H);
+  ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x+0.5,y+0.5,W-1,H-1);
+
+  // title
+  ctx.fillStyle = 'rgba(234,240,255,0.92)';
+  ctx.font = '600 13px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText(title, x+10, y+18);
+
+  // grid + ticks
+  const left = x+48, right = x+W-14;
+  const top = y+30, bottom = y+H-38;
+
+  // grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  const nGrid = 6;
+  for(let i=0;i<=nGrid;i++){
+    const gx = left + (right-left)*i/nGrid;
+    ctx.beginPath(); ctx.moveTo(gx, top); ctx.lineTo(gx, bottom); ctx.stroke();
+    const gy = top + (bottom-top)*i/nGrid;
+    ctx.beginPath(); ctx.moveTo(left, gy); ctx.lineTo(right, gy); ctx.stroke();
+  }
+
+  // axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.20)';
+  ctx.beginPath(); ctx.moveTo(left, bottom); ctx.lineTo(right, bottom); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(left, top); ctx.lineTo(left, bottom); ctx.stroke();
+
+  // tick labels
+  ctx.fillStyle = 'rgba(185,195,221,0.95)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace';
+
+  function fmt(v){
+    const av = Math.abs(v);
+    if(av >= 1000 || (av>0 && av<0.001)) return v.toExponential(2);
+    return (Math.round(v*1000)/1000).toString();
+  }
+  for(let i=0;i<=nGrid;i++){
+    const tx = left + (right-left)*i/nGrid;
+    const xv = xMin + (xMax-xMin)*i/nGrid;
+    ctx.fillText(fmt(xv), tx-14, bottom+16);
+
+    const ty = bottom - (bottom-top)*i/nGrid;
+    const yv = yMin + (yMax-yMin)*i/nGrid;
+    ctx.fillText(fmt(yv), x+8, ty+4);
+  }
+
+  // labels
+  ctx.fillStyle = 'rgba(185,195,221,0.95)';
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText(xLabel, (left+right)/2 - 34, y+H-10);
+
+  ctx.save();
+  ctx.translate(x+14, (top+bottom)/2 + 30);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+
+  ctx.restore();
+
+  return {left, right, top, bottom};
+}
+
+function mapX(val, left, right, xMin, xMax){
+  const t = (val - xMin)/(xMax-xMin);
+  return left + t*(right-left);
+}
+function mapY(val, top, bottom, yMin, yMax){
+  const t = (val - yMin)/(yMax-yMin);
+  return bottom - t*(bottom-top);
+}
+
+function drawLine(ctx, pts, strokeStyle, lineWidth=2){
+  if(pts.length < 2) return;
+  ctx.save();
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = lineWidth;
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawLegend(ctx, x, y, items){
+  ctx.save();
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  const pad = 8, gap = 10, sw=18;
+  let width = 0;
+  items.forEach(it=>{
+    width = Math.max(width, sw + 8 + ctx.measureText(it.label).width);
+  });
+  const height = pad*2 + items.length*16 + (items.length-1)*4;
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  roundRect(ctx, x, y, width+pad*2, height, 12);
+  ctx.fill(); ctx.stroke();
+
+  let cy = y + pad + 12;
+  items.forEach(it=>{
+    ctx.strokeStyle = it.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x+pad, cy-4); ctx.lineTo(x+pad+sw, cy-4); ctx.stroke();
+    ctx.fillStyle = 'rgba(234,240,255,0.9)';
+    ctx.fillText(it.label, x+pad+sw+8, cy);
+    cy += 20;
+  });
+  ctx.restore();
+}
+function roundRect(ctx, x, y, w, h, r){
+  const rr = Math.min(r, w/2, h/2);
+  ctx.moveTo(x+rr, y);
+  ctx.arcTo(x+w, y, x+w, y+h, rr);
+  ctx.arcTo(x+w, y+h, x, y+h, rr);
+  ctx.arcTo(x, y+h, x, y, rr);
+  ctx.arcTo(x, y, x+w, y, rr);
+  ctx.closePath();
+}
+
+/* =========================
+   Diagram
+========================= */
+function drawDiagram(){
+  const canvas = document.getElementById('diagramCanvas');
+  const {ctx, w, h} = setupHiDPICanvas(canvas);
+  clear(ctx, w, h);
+
+  // background
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.fillRect(0,0,w,h);
+
+  // Title
+  ctx.fillStyle = 'rgba(234,240,255,0.92)';
+  ctx.font = '600 13px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText('Gain-switched cavity model (conceptual)', 10, 18);
+
+  const cx = 40, cy = 70, CW = w-80, CH = h-120;
+
+  // cavity rectangle
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  roundRect(ctx, cx, cy, CW, CH, 18);
+  ctx.stroke();
+
+  // mirrors
+  ctx.fillStyle = 'rgba(125,211,252,0.20)';
+  ctx.strokeStyle = 'rgba(125,211,252,0.55)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.rect(cx+10, cy+20, 12, CH-40); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.rect(cx+CW-22, cy+20, 12, CH-40); ctx.fill(); ctx.stroke();
+
+  // gain medium block
+  ctx.fillStyle = 'rgba(167,139,250,0.16)';
+  ctx.strokeStyle = 'rgba(167,139,250,0.55)';
+  ctx.lineWidth = 2;
+  const gmW = Math.max(70, CW*0.22);
+  const gmX = cx + CW*0.39;
+  ctx.beginPath();
+  roundRect(ctx, gmX, cy+CH*0.22, gmW, CH*0.56, 14);
+  ctx.fill(); ctx.stroke();
+
+  // arrows for photons
+  ctx.strokeStyle = 'rgba(234,240,255,0.50)';
+  ctx.lineWidth = 2;
+  for(let i=0;i<4;i++){
+    const yy = cy + 40 + i*(CH-80)/3;
+    drawArrow(ctx, cx+30, yy, cx+CW-30, yy);
+  }
+
+  // pump switch
+  const sx = cx + CW*0.08;
+  const sy = cy + CH + 20;
+  ctx.fillStyle = 'rgba(52,211,153,0.12)';
+  ctx.strokeStyle = 'rgba(52,211,153,0.55)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  roundRect(ctx, sx, sy, CW*0.50, 46, 14);
+  ctx.fill(); ctx.stroke();
+
+  // pump text
+  ctx.fillStyle = 'rgba(234,240,255,0.92)';
+  ctx.font = '600 12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText('Pump switch sets Y0', sx+12, sy+18);
+  ctx.fillStyle = 'rgba(185,195,221,0.95)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace';
+  ctx.fillText('Y0: 0→2 (ON) or 2→0 (OFF)', sx+12, sy+36);
+
+  // labels
+  ctx.fillStyle = 'rgba(185,195,221,0.95)';
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText('Mirror', cx+2, cy+16);
+  ctx.fillText('Mirror', cx+CW-52, cy+16);
+  ctx.fillText('Gain medium', gmX, cy+CH*0.20 - 8);
+
+  // ODE box
+  const bx = cx + CW*0.58;
+  const by = cy + CH + 18;
+  const bw = CW*0.36;
+  const bh = 50;
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  roundRect(ctx, bx, by, bw, bh, 14);
+  ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = 'rgba(234,240,255,0.92)';
+  ctx.font = '600 12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText('Rate equations', bx+10, by+18);
+  ctx.fillStyle = 'rgba(185,195,221,0.95)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace';
+  ctx.fillText('dX/ds=(Y−1)X', bx+10, by+34);
+  ctx.fillText('dY/ds=a(Y0−Y)−2YX', bx+10, by+48);
+}
+
+function drawArrow(ctx, x1,y1,x2,y2){
+  const head = 8;
+  const ang = Math.atan2(y2-y1, x2-x1);
+  ctx.beginPath();
+  ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2 - head*Math.cos(ang) + head*0.6*Math.sin(ang), y2 - head*Math.sin(ang) - head*0.6*Math.cos(ang));
+  ctx.lineTo(x2 - head*Math.cos(ang) - head*0.6*Math.sin(ang), y2 - head*Math.sin(ang) + head*0.6*Math.cos(ang));
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(234,240,255,0.55)';
+  ctx.fill();
+}
+
+/* =========================
+   Main plot (X and Y vs s)
+========================= */
+function drawMainPlot(sim, transientTime){
+  const canvas = document.getElementById('mainPlot');
+  const {ctx, w, h} = setupHiDPICanvas(canvas);
+  clear(ctx, w, h);
+
+  const padBox = {x:0, y:0, W:w, H:h};
+  // choose a plotting window: focus on first portion up to either transient or a cap
+  const S = sim.S, Xarr=sim.Xarr, Yarr=sim.Yarr;
+  let sEnd = 0;
+  const sCap = 200; // show first 200 τp by default
+  if(Number.isFinite(transientTime)) sEnd = Math.min(Math.max(40, transientTime*1.1), sCap);
+  else {
+    // if no settling found, show up to 200 or max available
+    sEnd = Math.min(sCap, S[S.length-1]);
+  }
+  const sMin = 0, sMax = sEnd;
+
+  // Y typically between 0 and maybe Y0target; X can vary a lot.
+  // We'll auto-scale y axis to include both curves with margin.
+  let yLo=Infinity, yHi=-Infinity;
+  for(let i=0;i<S.length;i++){
+    if(S[i] > sMax) break;
+    yLo = Math.min(yLo, Yarr[i], Xarr[i]);
+    yHi = Math.max(yHi, Yarr[i], Xarr[i]);
+  }
+  if(!Number.isFinite(yLo) || !Number.isFinite(yHi)){ yLo=0; yHi=1; }
+  // ensure some reasonable bounds
+  yLo = Math.min(0, yLo);
+  yHi = Math.max(1.2, yHi*1.05);
+  // if yHi is tiny (off), make visible
+  if(yHi < 0.05) yHi = 0.05;
+
+  const ax = drawAxes(ctx, w, h, padBox, sMin, sMax, yLo, yHi, 's = t/τp', 'X, Y (dimensionless)', 'Dynamics after switching');
+  const {left,right,top,bottom} = ax;
+
+  // build points
+  const ptsX = [];
+  const ptsY = [];
+  for(let i=0;i<S.length;i++){
+    const s = S[i];
+    if(s < sMin) continue;
+    if(s > sMax) break;
+    ptsX.push([mapX(s,left,right,sMin,sMax), mapY(Xarr[i],top,bottom,yLo,yHi)]);
+    ptsY.push([mapX(s,left,right,sMin,sMax), mapY(Yarr[i],top,bottom,yLo,yHi)]);
+  }
+
+  // draw lines (do not fix colors globally; choose readable but consistent)
+  // We will use two distinct hues; still "not specifying colors" isn't a requirement here; user didn't constrain.
+  drawLine(ctx, ptsY, 'rgba(125,211,252,0.95)', 2.5);
+  drawLine(ctx, ptsX, 'rgba(167,139,250,0.95)', 2.5);
+
+  // steady lines (if meaningful)
+  const Y0target = sim.Y0target;
+  if(sim.mode === 'on'){
+    const Yss = (Y0target > 1) ? 1 : Y0target;
+    const Xss = (Y0target > 1) ? sim.a*(Y0target-1)/2 : 0;
+    // draw dashed lines
+    ctx.save();
+    ctx.setLineDash([6,6]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+    ctx.lineWidth = 1.5;
+    const yY = mapY(Yss, top, bottom, yLo, yHi);
+    ctx.beginPath(); ctx.moveTo(left, yY); ctx.lineTo(right, yY); ctx.stroke();
+    const yX = mapY(Xss, top, bottom, yLo, yHi);
+    ctx.beginPath(); ctx.moveTo(left, yX); ctx.lineTo(right, yX); ctx.stroke();
+    ctx.restore();
+
+    // transient marker
+    if(Number.isFinite(transientTime)){
+      const xm = mapX(transientTime, left, right, sMin, sMax);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(52,211,153,0.75)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4,6]);
+      ctx.beginPath(); ctx.moveTo(xm, top); ctx.lineTo(xm, bottom); ctx.stroke();
+      ctx.fillStyle = 'rgba(52,211,153,0.95)';
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace';
+      ctx.fillText('s_on', Math.min(xm+6, right-40), top+14);
+      ctx.restore();
+    }
+  } else {
+    if(Number.isFinite(transientTime)){
+      const xm = mapX(transientTime, left, right, sMin, sMax);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(52,211,153,0.75)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4,6]);
+      ctx.beginPath(); ctx.moveTo(xm, top); ctx.lineTo(xm, bottom); ctx.stroke();
+      ctx.fillStyle = 'rgba(52,211,153,0.95)';
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace';
+      ctx.fillText('s_off', Math.min(xm+6, right-48), top+14);
+      ctx.restore();
+    }
+  }
+
+  drawLegend(ctx, left+8, top+6, [
+    {label:'Y(s) inversion', color:'rgba(125,211,252,0.95)'},
+    {label:'X(s) photons',  color:'rgba(167,139,250,0.95)'}
+  ]);
+}
+
+/* =========================
+   Sweep plot: transient time vs a
+========================= */
+function drawSweepPlot(current, sweep){
+  const canvas = document.getElementById('sweepPlot');
+  const {ctx, w, h} = setupHiDPICanvas(canvas);
+  clear(ctx, w, h);
+
+  const box = {x:0,y:0,W:w,H:h};
+
+  // x axis in log10(a)
+  const xMin = sweep.logaMin;
+  const xMax = sweep.logaMax;
+
+  // y axis: transient time in s (log scale-ish but draw linear in plotted log10 to show huge ranges)
+  // We'll plot log10(transient+eps) for visual stability, but label in s.
+  const eps = 1e-9;
+  let yLo=Infinity, yHi=-Infinity;
+  for(const p of sweep.points){
+    if(!Number.isFinite(p.t)) continue;
+    const v = Math.log10(p.t + eps);
+    yLo = Math.min(yLo, v);
+    yHi = Math.max(yHi, v);
+  }
+  if(!Number.isFinite(yLo) || !Number.isFinite(yHi)){ yLo = -2; yHi = 3; }
+  yLo -= 0.2; yHi += 0.2;
+
+  const ax = drawAxes(ctx, w, h, box, xMin, xMax, yLo, yHi, 'log10(a)', 'log10(transient time s)', 'Transient time vs a (parameter sweep)');
+  const {left,right,top,bottom} = ax;
+
+  const pts = [];
+  for(const p of sweep.points){
+    if(!Number.isFinite(p.t)) continue;
+    const x = mapX(p.loga, left, right, xMin, xMax);
+    const y = mapY(Math.log10(p.t+eps), top, bottom, yLo, yHi);
+    pts.push([x,y]);
+  }
+  drawLine(ctx, pts, 'rgba(234,240,255,0.70)', 2);
+
+  // draw current marker
+  const xm = mapX(Math.log10(current.a), left, right, xMin, xMax);
+  // find current t (use current transientTime)
+  const ym = mapY(Math.log10((current.t||eps)+eps), top, bottom, yLo, yHi);
+  ctx.save();
+  ctx.fillStyle = 'rgba(52,211,153,0.95)';
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(xm, ym, 5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+
+  // annotations (simple)
+  ctx.save();
+  ctx.fillStyle = 'rgba(185,195,221,0.95)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace';
+  ctx.fillText('Dot = current a', left+8, bottom-8);
+  ctx.restore();
+}
+
+/* =========================
+   UI + compute pipeline
+========================= */
+const modeSel = document.getElementById('modeSel');
+const logaRange = document.getElementById('logaRange');
+const aReadout = document.getElementById('aReadout');
+const y0Sel = document.getElementById('y0Sel');
+const seedRange = document.getElementById('seedRange');
+const seedReadout = document.getElementById('seedReadout');
+const recomputeBtn = document.getElementById('recomputeBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+function getParams(){
+  const mode = modeSel.value;
+  const loga = parseFloat(logaRange.value);
+  const a = Math.pow(10, loga);
+  const Y0target = parseFloat(y0Sel.value);
+  const seedLog = parseFloat(seedRange.value);
+  const Xseed = Math.pow(10, seedLog);
+  return {mode, a, Y0target, Xseed, loga};
+}
+
+function updateReadouts(){
+  const {a, Xseed} = getParams();
+  aReadout.textContent = `a = ${formatNice(a)}`;
+  seedReadout.textContent = formatNice(Xseed);
+}
+
+function formatNice(v){
+  const av = Math.abs(v);
+  if((av > 0 && av < 0.001) || av >= 1000) return v.toExponential(2);
+  const s = (Math.round(v*1000)/1000).toString();
+  return s;
+}
+
+// determine a reasonable sMax for plotting/settling
+function chooseSMax(a, mode){
+  // For turn-on with tiny a, need long time to reach threshold ~ (ln2)/a.
+  // We'll allocate a window around that plus additional settling time.
+  if(mode === 'on'){
+    const sth = (Math.log(2)/a);
+    return Math.min(20000, Math.max(200, 2*sth + 300));
+  } else {
+    // turn-off typically faster in photons, but if a is tiny inversion decays slowly to 0; still we cap.
+    return Math.min(20000, Math.max(200, 500/a + 200));
+  }
+}
+
+let lastSim = null;
+let lastTransient = null;
+let lastSweep = null;
+
+function recompute(){
+  updateReadouts();
+  const {mode, a, Y0target, Xseed} = getParams();
+  const sMax = chooseSMax(a, mode);
+  // smaller h for very large a to maintain stability/accuracy
+  const h = (a > 200) ? 0.0005 : (a > 20 ? 0.001 : 0.002);
+
+  const sim = simulate({a, mode, Y0target, Xseed, h, sMax});
+  const tTrans = computeTransientTime(sim);
+
+  lastSim = sim;
+  lastTransient = tTrans;
+
+  drawDiagram();
+  drawMainPlot(sim, tTrans);
+
+  // sweep around a range
+  const sweep = computeSweep(mode, Y0target, Xseed);
+  lastSweep = sweep;
+  drawSweepPlot({a, t: tTrans}, sweep);
+
+  // refresh the results table for the problem's requested values
+  fillResultsTable(Y0target, Xseed);
+}
+
+function computeSweep(mode, Y0target, Xseed){
+  const logaMin = -3, logaMax = 3;
+  const N = 25;
+  const points = [];
+  for(let i=0;i<N;i++){
+    const loga = logaMin + (logaMax-logaMin)*i/(N-1);
+    const a = Math.pow(10, loga);
+    const sMax = chooseSMax(a, mode);
+    const h = (a > 200) ? 0.0006 : (a > 20 ? 0.0012 : 0.0025);
+    const sim = simulate({a, mode, Y0target, Xseed, h, sMax});
+    const t = computeTransientTime(sim);
+    points.push({loga, a, t});
+  }
+  return {logaMin, logaMax, points};
+}
+
+/* =========================
+   Populate table for a=1e-3,1,1e3 (problem request)
+========================= */
+function fillResultsTable(Y0target, Xseed){
+  const body = document.getElementById('resultsBody');
+  body.innerHTML = '';
+
+  const aList = [1e-3, 1, 1e3];
+  for(const a of aList){
+    // ON
+    {
+      const sMax = chooseSMax(a, 'on');
+      const h = (a > 200) ? 0.0005 : (a > 20 ? 0.001 : 0.002);
+      const simOn = simulate({a, mode:'on', Y0target:2, Xseed, h, sMax});
+      const tOn = computeTransientTime(simOn);
+
+      // OFF
+      const sMax2 = chooseSMax(a, 'off');
+      const h2 = (a > 200) ? 0.0005 : (a > 20 ? 0.001 : 0.002);
+      const simOff = simulate({a, mode:'off', Y0target:2, Xseed, h:h2, sMax:sMax2});
+      const tOff = computeTransientTime(simOff);
+
+      const tr = document.createElement('tr');
+      const tdA = document.createElement('td');
+      tdA.textContent = formatNice(a);
+      const tdOn = document.createElement('td');
+      tdOn.textContent = Number.isFinite(tOn) ? formatNice(tOn) : 'not settled (within window)';
+      const tdOff = document.createElement('td');
+      tdOff.textContent = Number.isFinite(tOff) ? formatNice(tOff) : 'not settled (within window)';
+      const tdNote = document.createElement('td');
+
+      let note = '';
+      if(a < 0.01) note = 'Very slow inversion in s → large turn-on delay ~ (ln2)/a.';
+      else if(a > 100) note = 'Very fast inversion → strong spike/oscillation; fast overall settling.';
+      else note = 'Comparable time scales → pronounced relaxation oscillations.';
+      tdNote.textContent = note;
+
+      tr.appendChild(tdA);
+      tr.appendChild(tdOn);
+      tr.appendChild(tdOff);
+      tr.appendChild(tdNote);
+      body.appendChild(tr);
+    }
+  }
+}
+
+/* =========================
+   Event listeners
+========================= */
+[modeSel, logaRange, y0Sel, seedRange].forEach(el=>{
+  el.addEventListener('input', ()=>{
+    updateReadouts();
+  });
+  el.addEventListener('change', ()=>{
+    recompute();
+  });
+});
+recomputeBtn.addEventListener('click', recompute);
+resetBtn.addEventListener('click', ()=>{
+  modeSel.value = 'on';
+  logaRange.value = '0';
+  y0Sel.value = '2';
+  seedRange.value = '-5';
+  recompute();
+});
+
+// redraw on resize (crisp)
+let resizeTimer=null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(()=>{
+    if(lastSim){
+      drawDiagram();
+      drawMainPlot(lastSim, lastTransient);
+      if(lastSweep) drawSweepPlot({a:lastSim.a, t:lastTransient}, lastSweep);
+    } else {
+      drawDiagram();
+    }
+  }, 120);
+});
+
+// initial render
+updateReadouts();
+recompute();
+</script>
+</body>
+</html>

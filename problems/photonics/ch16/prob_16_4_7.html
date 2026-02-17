@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Mode Locking with Lorentzian Amplitudes — Mean Power, Peak Power, and FWHM</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#101a33;
+      --card:#0f1730;
+      --text:#eaf0ff;
+      --muted:#b9c6ff;
+      --faint:#7f92d6;
+      --accent:#7cf0ff;
+      --accent2:#a7ff83;
+      --warn:#ffd27c;
+      --danger:#ff7ca8;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 12px 35px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 800px at 10% -10%, rgba(124,240,255,.18), transparent 55%),
+        radial-gradient(1000px 800px at 90% 0%, rgba(167,255,131,.14), transparent 60%),
+        radial-gradient(900px 700px at 60% 120%, rgba(255,124,168,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg), #070a14 70%);
+      color:var(--text);
+      line-height:1.55;
+      overflow-x:hidden;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding:32px 18px 18px;
+      max-width:1180px;
+      margin:0 auto;
+    }
+    .title{
+      display:grid;
+      gap:10px;
+    }
+    h1{
+      font-size:clamp(1.7rem, 2.6vw, 2.6rem);
+      letter-spacing:.2px;
+      margin:0;
+    }
+    .subtitle{
+      color:var(--muted);
+      max-width:90ch;
+      font-size:1.02rem;
+    }
+    .layout{
+      max-width:1180px;
+      margin:0 auto;
+      padding:0 18px 60px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .layout{grid-template-columns: 1fr}
+    }
+
+    /* Sticky TOC */
+    nav#toc{
+      position:sticky;
+      top:14px;
+      padding:16px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(16,26,51,.88), rgba(16,26,51,.62));
+      backdrop-filter: blur(10px);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+    }
+    nav#toc .toc-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .chip{
+      font-size:.78rem;
+      color:var(--muted);
+      border:1px solid var(--line);
+      padding:4px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+    nav#toc ul{
+      list-style:none;
+      padding:0;
+      margin:0;
+      display:grid;
+      gap:8px;
+    }
+    nav#toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid transparent;
+      color:var(--text);
+      background:rgba(255,255,255,.03);
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size:.95rem;
+    }
+    nav#toc a:hover{
+      background:rgba(124,240,255,.08);
+      border-color:rgba(124,240,255,.25);
+      transform: translateY(-1px);
+      text-decoration:none;
+    }
+
+    main{
+      display:grid;
+      gap:16px;
+    }
+    section{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15,23,48,.85), rgba(15,23,48,.58));
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    section > .sec-head{
+      padding:16px 16px 10px;
+      border-bottom:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+    }
+    section > .sec-body{
+      padding:16px;
+    }
+    h2{
+      margin:0;
+      font-size:1.25rem;
+      letter-spacing:.2px;
+    }
+    .meta{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:14px;
+    }
+    @media (max-width: 900px){ .grid2{grid-template-columns:1fr} }
+
+    .card{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius:16px;
+      padding:14px;
+    }
+    .callout{
+      border-left:4px solid var(--accent);
+      padding:12px 12px 12px 12px;
+      background: rgba(124,240,255,.06);
+      border-radius:14px;
+      border:1px solid rgba(124,240,255,.16);
+    }
+    .warn{
+      border-left-color: var(--warn);
+      background: rgba(255,210,124,.07);
+      border-color: rgba(255,210,124,.18);
+    }
+    .danger{
+      border-left-color: var(--danger);
+      background: rgba(255,124,168,.07);
+      border-color: rgba(255,124,168,.18);
+    }
+    .assump{
+      border-left-color: var(--accent2);
+      background: rgba(167,255,131,.07);
+      border-color: rgba(167,255,131,.18);
+    }
+    .callout h3{
+      margin:0 0 6px 0;
+      font-size:1.02rem;
+    }
+    .eq{
+      font-family:var(--mono);
+      font-size:.95rem;
+      white-space:pre-wrap;
+      word-break:break-word;
+      line-height:1.55;
+      background: rgba(0,0,0,.25);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      position:relative;
+      overflow:hidden;
+    }
+    .eq .label{
+      position:absolute;
+      top:8px;
+      right:8px;
+      font-size:.75rem;
+      color:var(--faint);
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      padding:2px 8px;
+      border-radius:999px;
+    }
+    .copybar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    button.copy{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      padding:9px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-weight:600;
+      font-size:.92rem;
+    }
+    button.copy:hover{
+      background: rgba(124,240,255,.08);
+      border-color: rgba(124,240,255,.25);
+      transform: translateY(-1px);
+    }
+    button.copy:active{transform: translateY(0px)}
+    .small{font-size:.93rem; color:var(--muted)}
+    ul.tight{margin:8px 0 0 18px}
+    li{margin:6px 0}
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (max-width: 720px){ .kpi{grid-template-columns:1fr} }
+    .kpi .box{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius:16px;
+      padding:12px;
+    }
+    .kpi .name{
+      font-size:.86rem;
+      color:var(--muted);
+    }
+    .kpi .val{
+      font-family:var(--mono);
+      font-size:1.05rem;
+      margin-top:6px;
+    }
+
+    /* Visualization */
+    .vizwrap{
+      display:grid;
+      gap:12px;
+    }
+    .vizgrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    @media (min-width: 860px){
+      .vizgrid{ grid-template-columns: 1fr 1fr; }
+    }
+    figure{
+      margin:0;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background: rgba(255,255,255,.02);
+      overflow:hidden;
+    }
+    figcaption{
+      padding:10px 12px;
+      border-top:1px solid var(--line);
+      color:var(--muted);
+      font-size:.92rem;
+      background: rgba(255,255,255,.02);
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      background: radial-gradient(700px 420px at 10% 10%, rgba(124,240,255,.06), transparent 65%),
+                  radial-gradient(650px 420px at 90% 20%, rgba(167,255,131,.05), transparent 70%),
+                  rgba(0,0,0,.18);
+    }
+    .controls{
+      display:grid;
+      gap:10px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius:16px;
+      padding:12px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:12px;
+      align-items:center;
+    }
+    .row label{
+      font-weight:700;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+    .pill{
+      font-family:var(--mono);
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-size:.9rem;
+      min-width: 110px;
+      text-align:center;
+    }
+    footer{
+      max-width:1180px;
+      margin:0 auto;
+      padding:18px 18px 40px;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+    .print-note{display:none}
+    @media print{
+      body{background:white; color:black}
+      nav#toc{display:none}
+      section{box-shadow:none; background:white; border-color:#ccc}
+      .eq{background:#f5f5f5}
+      canvas{display:none}
+      .print-note{display:block; color:#333}
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">
+    <h1>Mode Locking with Lorentzian Mode Amplitudes</h1>
+    <div class="subtitle">
+      We derive closed-form expressions for the <b>mean power</b>, <b>peak power</b>, and <b>pulse duration (FWHM)</b>
+      of a mode-locked pulse train when the <b>spectral line amplitudes</b> follow a Lorentzian envelope and all phases are equal.
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav id="toc" aria-label="Table of contents">
+    <div class="toc-title">
+      <div style="font-weight:800">Table of Contents</div>
+      <div class="chip">sticky</div>
+    </div>
+    <ul>
+      <li><a href="#quick">Quick Summary</a></li>
+      <li><a href="#part0">PART 0 — Concept Primer</a></li>
+      <li><a href="#part1">PART 1 — Problem Analysis</a></li>
+      <li><a href="#part2">PART 2 — Strategy & Tips</a></li>
+      <li><a href="#part3">PART 3 — Full Solution</a></li>
+      <li><a href="#part4">PART 4 — Deeper Understanding</a></li>
+      <li><a href="#part5">PART 5 — Visualization Guide</a></li>
+    </ul>
+
+    <div class="controls" style="margin-top:14px">
+      <div class="row">
+        <label for="alpha">Control: α = (Δν/2)/ν<sub>F</sub></label>
+        <div class="pill" id="alphaVal">α = 1.50</div>
+      </div>
+      <input id="alpha" type="range" min="0.25" max="6.0" step="0.01" value="1.50" />
+      <div class="small">
+        This dimensionless ratio controls how many cavity modes fit under the Lorentzian spectral envelope.
+        Larger α → broader spectrum → shorter pulses and higher peak-to-average power ratio.
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <label for="nuF">Example ν<sub>F</sub> (MHz)</label>
+        <div class="pill" id="nuFVal">100.0</div>
+      </div>
+      <input id="nuF" type="range" min="10" max="500" step="1" value="100" />
+      <div class="small">
+        ν<sub>F</sub> sets the pulse repetition period T = 1/ν<sub>F</sub>.
+        The symbolic answers below remain general; ν<sub>F</sub> is only for plotting time in ns.
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <label for="Pbar">Example P̄ (arb. units)</label>
+        <div class="pill" id="PbarVal">1.00</div>
+      </div>
+      <input id="Pbar" type="range" min="0.2" max="5" step="0.01" value="1.00" />
+      <div class="small">
+        P̄ is used as the amplitude scale in the given spectrum. It rescales powers linearly.
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <section id="quick">
+      <div class="sec-head">
+        <h2>Quick Summary</h2>
+        <div class="meta">What this problem is, what physics matters, and what we will compute.</div>
+      </div>
+      <div class="sec-body">
+        <ul class="tight">
+          <li><b>Problem:</b> A mode-locked laser has longitudinal modes at spacing ν<sub>F</sub>. Their <b>field amplitudes</b> follow a Lorentzian envelope in mode index q, and <b>all phases are equal</b>. Find <b>mean power</b>, <b>peak power</b>, and <b>pulse FWHM</b>.</li>
+          <li><b>Key physics idea:</b> Equal phase across many modes makes them add <b>constructively at specific times</b>, producing a periodic pulse train (Fourier-series interference).</li>
+          <li><b>Governing representation:</b> The field is a Fourier series
+            <span style="font-family:var(--mono)">E(t) = Σ A_q e^{i 2π q ν_F t}</span>,
+            so time-domain pulses are the inverse transform of the spectral envelope.</li>
+          <li><b>Mean power:</b> Use Parseval/orthogonality over one period: ⟨P⟩ = Σ|A<sub>q</sub>|².</li>
+          <li><b>Peak power:</b> At pulse center, equal phases imply <span style="font-family:var(--mono)">E(0) = Σ A_q</span>, so P<sub>peak</sub> = |ΣA<sub>q</sub>|².</li>
+          <li><b>Closed-form sums:</b> Infinite sums of Lorentzian terms produce hyperbolic functions (coth, csch).</li>
+          <li><b>Final result type:</b> Fully <b>symbolic</b> formulas in terms of α = (Δν/2)/ν<sub>F</sub>, ν<sub>F</sub>, and P̄, plus a closed-form <b>pulse shape</b> used to get FWHM.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="part0">
+      <div class="sec-head">
+        <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+        <div class="meta">A short textbook-style refresher: mode locking, combs, envelopes, and power definitions.</div>
+      </div>
+      <div class="sec-body">
+        <div class="grid2">
+          <div class="card">
+            <h3 style="margin:0 0 8px 0">Core definitions (symbols & units)</h3>
+            <ul class="tight">
+              <li><b>Mode index</b> q ∈ ℤ: labels longitudinal cavity modes around a central optical carrier (carrier factored out).</li>
+              <li><b>Free spectral range</b> ν<sub>F</sub> (Hz): mode spacing; repetition period <b>T = 1/ν<sub>F</sub></b>.</li>
+              <li><b>Spectral envelope width</b> Δν (Hz): sets how quickly amplitudes drop vs frequency detuning.</li>
+              <li><b>Complex field envelope</b> E(t): slow envelope of the optical field (units √power if we identify |E|² with power).</li>
+              <li><b>Instantaneous power</b> P(t) = |E(t)|² (W), <b>mean power</b> ⟨P⟩ = (1/T)∫<sub>0</sub><sup>T</sup> P(t)dt (W), <b>peak power</b> P<sub>peak</sub> = max P(t).</li>
+              <li><b>FWHM duration</b> τ<sub>FWHM</sub> (s): width between points where P(t) = P<sub>peak</sub>/2.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3 style="margin:0 0 8px 0">Physical meaning</h3>
+            <ul class="tight">
+              <li>In a laser cavity, allowed frequencies form a <b>comb</b>: ν = ν<sub>0</sub> + qν<sub>F</sub>.</li>
+              <li><b>Mode locking</b> enforces fixed relative phases, so modes interfere to form <b>pulses</b> separated by T.</li>
+              <li>The <b>spectral amplitude envelope</b> (here Lorentzian) sets the <b>time-domain pulse shape</b>.</li>
+              <li>Broad spectrum (large Δν) typically means short pulses (Fourier relation), but the exact relation depends on the envelope shape.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout assump" style="margin-top:14px">
+          <h3>Key principles & validity</h3>
+          <ul class="tight">
+            <li><b>Fourier-series duality:</b> A periodic train in time corresponds to discrete spectral lines separated by ν<sub>F</sub>.</li>
+            <li><b>Orthogonality / Parseval:</b> Over one period, exponentials e^{i2πqν<sub>F</sub>t} are orthogonal, giving ⟨|E|²⟩ = Σ|A<sub>q</sub>|².</li>
+            <li><b>Equal phases:</b> Maximum constructive interference occurs when all phasors align (pulse center), giving peak scaling ~ (number of modes)².</li>
+            <li>Assumes a stationary, idealized comb with infinite integer q; real lasers have finite bandwidth and noise, but the math captures the core physics cleanly.</li>
+          </ul>
+        </div>
+
+        <div class="grid2" style="margin-top:14px">
+          <div class="callout">
+            <h3>Mini intuition examples</h3>
+            <ul class="tight">
+              <li><b>Two modes:</b> E(t) = A(1 + e^{i2πν<sub>F</sub>t}) → intensity oscillates; modest “pulsing.”</li>
+              <li><b>Many equal-amplitude modes:</b> E(t) ≈ Σ e^{i2πqν<sub>F</sub>t} → narrow peaks (Dirichlet kernel), strong pulsing.</li>
+            </ul>
+          </div>
+          <div class="callout warn">
+            <h3>What to watch for (pitfalls)</h3>
+            <ul class="tight">
+              <li><b>Amplitude vs power:</b> A<sub>q</sub> are field amplitudes (√power), so power involves squares and cross terms.</li>
+              <li><b>Mean power is not peak power:</b> ⟨P⟩ uses Σ|A<sub>q</sub>|², while P<sub>peak</sub> uses |ΣA<sub>q</sub>|².</li>
+              <li><b>FWHM depends on the exact pulse shape</b> (Lorentzian spectrum → hyperbolic-cosh pulse within one period).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="part1">
+      <div class="sec-head">
+        <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+        <div class="meta">Restate the task, list givens/unknowns, choose the best physics approach.</div>
+      </div>
+      <div class="sec-body">
+        <div class="card">
+          <b>Problem restatement (in plain words):</b><br/>
+          We have a frequency comb of cavity modes indexed by q = …, −1, 0, 1, … spaced by ν<sub>F</sub>.
+          The magnitude of each mode’s field amplitude is Lorentzian in q, and all modal phases are equal (perfect mode locking).
+          We must compute: (a) average power of the resulting periodic pulse train, (b) peak power, and (c) pulse duration at half-maximum.
+        </div>
+
+        <div class="grid2" style="margin-top:14px">
+          <div class="card">
+            <h3 style="margin:0 0 8px 0">Given</h3>
+            <div class="eq" id="eqGiven"><span class="label">given</span>
+A_q = sqrt(P̄) * ( (Δν/2)^2 ) / ( (q ν_F)^2 + (Δν/2)^2 ),   q = …, −1, 0, 1, …
+All phases are equal.
+            </div>
+            <div class="small" style="margin-top:8px">
+              Here P̄ is an amplitude scale (units of power), Δν is the Lorentzian width (Hz), and ν<sub>F</sub> is mode spacing (Hz).
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin:0 0 8px 0">Unknowns (to find)</h3>
+            <ul class="tight">
+              <li>Mean power ⟨P⟩ over one repetition period T.</li>
+              <li>Peak power P<sub>peak</sub> of a pulse.</li>
+              <li>Pulse duration τ<sub>FWHM</sub> such that P(±τ/2) = P<sub>peak</sub>/2.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout assump" style="margin-top:14px">
+          <h3>Relevant principles and assumptions</h3>
+          <ul class="tight">
+            <li><b>Field model:</b> Treat E(t) as a Fourier series of discrete modes: E(t) = Σ A<sub>q</sub> e^{i2πqν<sub>F</sub>t} (carrier removed).</li>
+            <li><b>Perfect phase locking:</b> All phases equal ⇒ A<sub>q</sub> can be taken real and nonnegative.</li>
+            <li><b>Infinite comb:</b> q runs over all integers. This makes sums evaluable in closed form (hyperbolic functions).</li>
+            <li><b>Power identification:</b> Use P(t) = |E(t)|² (consistent if A has units √W).</li>
+          </ul>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h3 style="margin:0 0 8px 0">Possible approaches (compare & choose)</h3>
+          <ol class="tight">
+            <li><b>Direct time-domain summation:</b> Numerically sum many modes for E(t), then compute mean/peak/FWHM.
+              <span class="small">Pro: intuitive; Con: not closed-form, needs truncation.</span>
+            </li>
+            <li><b>Use known Fourier-series identities:</b> Evaluate Σ e^{iqx}/(q²+α²) and Σ 1/(q²+α²)² analytically.
+              <span class="small">Pro: closed-form expressions; Con: requires special-function identities.</span>
+            </li>
+            <li><b>Complex analysis / residue theorem:</b> Derive the sums from scratch via poles at q = ±iα.
+              <span class="small">Pro: fundamental; Con: longer and less “plug-and-play.”</span>
+            </li>
+          </ol>
+          <div class="callout" style="margin-top:10px">
+            <b>Chosen approach:</b> Use Fourier-series identities (Approach 2) because the problem explicitly uses an infinite Lorentzian comb,
+            which is exactly the case where standard coth/csch closed forms appear—yielding neat formulas for mean, peak, and FWHM.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="part2">
+      <div class="sec-head">
+        <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+        <div class="meta">A minimal plan before diving into algebra.</div>
+      </div>
+      <div class="sec-body">
+        <ol class="tight">
+          <li><b>Normalize the problem with a dimensionless parameter.</b><br/>
+            <span class="small">Goal:</span> simplify sums using α = (Δν/2)/ν<sub>F</sub>.<br/>
+            <span class="small">Tool:</span> rewrite A<sub>q</sub> ∝ α²/(q²+α²).<br/>
+            <span class="small">Meaning:</span> α ≈ “how many mode spacings fit into the half-width.”</li>
+
+          <li><b>Write the field as a Fourier series.</b><br/>
+            <span class="small">Goal:</span> E(t) = Σ A<sub>q</sub> e^{i2πqν<sub>F</sub>t}.<br/>
+            <span class="small">Meaning:</span> equal phases ⇒ pulses at t = mT.</li>
+
+          <li><b>Compute mean power via Parseval.</b><br/>
+            <span class="small">Tool:</span> ⟨|E|²⟩ = Σ|A<sub>q</sub>|² over one period.<br/>
+            <span class="small">Meaning:</span> average energy per period comes from squared modal amplitudes, not interference.</li>
+
+          <li><b>Compute peak power from E(0).</b><br/>
+            <span class="small">Tool:</span> E(0) = Σ A<sub>q</sub> (all phasors aligned).<br/>
+            <span class="small">Meaning:</span> interference maximizes at pulse centers.</li>
+
+          <li><b>Find the full pulse shape E(t) in closed form.</b><br/>
+            <span class="small">Tool:</span> known identity for Σ e^{iqx}/(q²+α²).<br/>
+            <span class="small">Meaning:</span> converts spectral Lorentzian into a periodic cosh-shaped pulse in time.</li>
+
+          <li><b>Solve the half-maximum condition for FWHM.</b><br/>
+            <span class="small">Tool:</span> set P(t)/P<sub>peak</sub> = 1/2, solve for |t|.<br/>
+            <span class="small">Meaning:</span> τ<sub>FWHM</sub> quantifies pulse “temporal resolution.”</li>
+        </ol>
+
+        <div class="callout warn" style="margin-top:12px">
+          <h3>Common mistakes & quick tips</h3>
+          <ul class="tight">
+            <li>Don’t average E(t); average <b>|E(t)|²</b>.</li>
+            <li>Peak power uses <b>(ΣA<sub>q</sub>)²</b>, not ΣA<sub>q</sub>².</li>
+            <li>Keep track of the periodic variable x = 2πν<sub>F</sub>t; the closed-form pulse shape is defined within one period (|x| ≤ π).</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="part3">
+      <div class="sec-head">
+        <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+        <div class="meta">We derive ⟨P⟩, P<sub>peak</sub>, and τ<sub>FWHM</sub> step-by-step, with checks and interpretation.</div>
+      </div>
+      <div class="sec-body">
+
+        <div class="callout">
+          <h3>Qualitative expectation before calculating</h3>
+          <ul class="tight">
+            <li>Because all phases are equal, at t = 0 (and every T = 1/ν<sub>F</sub>) all modes add in phase ⇒ a strong peak.</li>
+            <li>A broader Lorentzian (larger Δν) includes more significant modes ⇒ narrower pulses and larger peak power.</li>
+            <li>Mean power depends on modal <b>energies</b> (squares), while peak power depends on coherent <b>field addition</b> (sum then square), so P<sub>peak</sub>/⟨P⟩ can be very large.</li>
+          </ul>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h3 style="margin:0 0 10px 0">Step 1 — Make the spectrum dimensionless</h3>
+          <div class="small">Define the key dimensionless bandwidth parameter:</div>
+          <div class="eq" id="eqAlpha"><span class="label">define</span>
+α = (Δν/2)/ν_F   (dimensionless)
+          </div>
+          <div class="small" style="margin-top:8px">
+            Now rewrite the given amplitudes by factoring out ν<sub>F</sub>:
+            (qν<sub>F</sub>)² + (Δν/2)² = ν<sub>F</sub>² (q² + α²).
+          </div>
+          <div class="eq" id="eqAq"><span class="label">rewrite</span>
+A_q = sqrt(P̄) * (α^2)/(q^2 + α^2)
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h3 style="margin:0 0 10px 0">Step 2 — Write the time-domain field</h3>
+          <div class="small">With equal phases, we can take A<sub>q</sub> real and write:</div>
+          <div class="eq" id="eqField"><span class="label">field</span>
+E(t) = Σ_{q=-∞}^{∞} A_q e^{i 2π q ν_F t}
+P(t) = |E(t)|^2
+          </div>
+          <div class="small" style="margin-top:8px">
+            Over one period T = 1/ν<sub>F</sub>, the basis functions e^{i2πqν<sub>F</sub>t} are orthogonal.
+            This is the doorway to a clean mean-power expression.
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h3 style="margin:0 0 10px 0">Step 3 — Mean power ⟨P⟩ via Parseval</h3>
+          <div class="small">
+            Parseval’s theorem for a Fourier series says the time-average of |E(t)|² equals the sum of squared Fourier coefficients:
+          </div>
+          <div class="eq" id="eqParseval"><span class="label">Parseval</span>
+⟨P⟩ = (1/T) ∫_0^T |E(t)|^2 dt = Σ_{q=-∞}^{∞} |A_q|^2
+          </div>
+          <div class="small" style="margin-top:8px">
+            Substitute A<sub>q</sub> = sqrt(P̄) α²/(q²+α²):
+          </div>
+          <div class="eq" id="eqMeanStart"><span class="label">substitute</span>
+⟨P⟩ = P̄ α^4 Σ_{q=-∞}^{∞} 1/(q^2 + α^2)^2
+          </div>
+
+          <div class="small" style="margin-top:8px">
+            Use the standard identity (for α &gt; 0):
+          </div>
+          <div class="eq" id="eqSum2"><span class="label">identity</span>
+Σ_{q=-∞}^{∞} 1/(q^2 + α^2)^2
+= (π/(2 α^3)) coth(π α) + (π^2/(2 α^2)) csch^2(π α)
+          </div>
+
+          <div class="small" style="margin-top:8px">
+            Therefore,
+          </div>
+          <div class="eq" id="eqMeanFinal"><span class="label">result</span>
+⟨P⟩
+= P̄ α^4 [ (π/(2 α^3)) coth(π α) + (π^2/(2 α^2)) csch^2(π α) ]
+= P̄ [ (π α/2) coth(π α) + (π^2 α^2/2) csch^2(π α) ].
+          </div>
+
+          <div class="callout assump" style="margin-top:12px">
+            <h3>Interpretation</h3>
+            ⟨P⟩ depends on modal <b>energies</b> (|A<sub>q</sub>|²). Interference terms average out over a period.
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h3 style="margin:0 0 10px 0">Step 4 — Peak power P<sub>peak</sub></h3>
+          <div class="small">
+            Peak occurs when all phasors align: at t = 0 (and t = mT). Then e^{i2πqν<sub>F</sub>t} = 1:
+          </div>
+          <div class="eq" id="eqPeakStart"><span class="label">pulse center</span>
+E(0) = Σ_{q=-∞}^{∞} A_q
+P_peak = |E(0)|^2 = (Σ A_q)^2   (A_q ≥ 0 here)
+          </div>
+
+          <div class="small" style="margin-top:8px">
+            Insert A<sub>q</sub>:
+          </div>
+          <div class="eq" id="eqSum1Start"><span class="label">substitute</span>
+Σ A_q = sqrt(P̄) α^2 Σ_{q=-∞}^{∞} 1/(q^2 + α^2)
+          </div>
+
+          <div class="small" style="margin-top:8px">
+            Use the standard identity:
+          </div>
+          <div class="eq" id="eqSum1"><span class="label">identity</span>
+Σ_{q=-∞}^{∞} 1/(q^2 + α^2) = (π/α) coth(π α)
+          </div>
+
+          <div class="small" style="margin-top:8px">
+            Then
+          </div>
+          <div class="eq" id="eqPeakFinal"><span class="label">result</span>
+Σ A_q = sqrt(P̄) α^2 (π/α) coth(π α) = sqrt(P̄) (π α) coth(π α)
+
+P_peak = P̄ [ (π α) coth(π α) ]^2.
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h3 style="margin:0 0 10px 0">Step 5 — Closed-form pulse shape and FWHM</h3>
+          <div class="small">
+            Let x be the dimensionless time variable over one period:
+          </div>
+          <div class="eq" id="eqX"><span class="label">define</span>
+x = 2π ν_F t,   with one period corresponding to x ∈ [−π, +π]
+          </div>
+
+          <div class="small" style="margin-top:8px">
+            We need the Fourier-series sum:
+          </div>
+          <div class="eq" id="eqSumExp"><span class="label">identity</span>
+For |x| ≤ π:
+Σ_{q=-∞}^{∞} e^{i q x}/(q^2 + α^2)
+= (π/α) * cosh( α(π − |x|) ) / sinh( π α )
+          </div>
+
+          <div class="small" style="margin-top:8px">
+            Apply this to E(t) = sqrt(P̄) α² Σ e^{iqx}/(q²+α²):
+          </div>
+          <div class="eq" id="eqEClosed"><span class="label">field</span>
+E(t) = sqrt(P̄) α^2 * (π/α) * cosh( α(π − |x|) ) / sinh(π α)
+     = sqrt(P̄) (π α) * cosh( α(π − |x|) ) / sinh(π α),
+where x = 2π ν_F t and |x| ≤ π.
+          </div>
+
+          <div class="small" style="margin-top:8px">
+            Therefore the instantaneous power (within one period) is
+          </div>
+          <div class="eq" id="eqPshape"><span class="label">power</span>
+P(t) = |E(t)|^2
+     = P̄ (π α)^2 [ cosh( α(π − |x|) ) / sinh(π α) ]^2.
+          </div>
+
+          <div class="small" style="margin-top:8px">
+            At x = 0, cosh(απ)/sinh(απ) = coth(απ), giving the peak power derived earlier — a good consistency check.
+          </div>
+
+          <div class="callout" style="margin-top:12px">
+            <h3>FWHM derivation (step-by-step)</h3>
+            <div class="small">Form the normalized power profile:</div>
+            <div class="eq" id="eqNorm"><span class="label">normalize</span>
+P(t)/P_peak
+= [ cosh( α(π − |x|) ) / cosh(π α) ]^2
+            </div>
+            <div class="small" style="margin-top:8px">
+              Set P(t)/P<sub>peak</sub> = 1/2 and solve for |x| = x<sub>1/2</sub>:
+            </div>
+            <div class="eq" id="eqHalf1"><span class="label">half max</span>
+[ cosh( α(π − x_1/2) ) / cosh(π α) ]^2 = 1/2
+⇒ cosh( α(π − x_1/2) ) = cosh(π α)/sqrt(2)
+            </div>
+            <div class="small" style="margin-top:8px">
+              Use arcosh (inverse hyperbolic cosine): arcosh(y) = ln(y + sqrt(y² − 1)).
+            </div>
+            <div class="eq" id="eqHalf2"><span class="label">solve</span>
+α(π − x_1/2) = arcosh( cosh(π α)/sqrt(2) )
+⇒ x_1/2 = π − (1/α) arcosh( cosh(π α)/sqrt(2) )
+            </div>
+            <div class="small" style="margin-top:8px">
+              Convert x back to time using x = 2πν<sub>F</sub>t. Since the pulse is symmetric, τ<sub>FWHM</sub> = 2 t<sub>1/2</sub>:
+            </div>
+            <div class="eq" id="eqFWHM"><span class="label">result</span>
+t_1/2 = x_1/2 / (2π ν_F)
+
+τ_FWHM = 2 t_1/2 = x_1/2 / (π ν_F)
+       = [ π − (1/α) arcosh( cosh(π α)/sqrt(2) ) ] / (π ν_F).
+            </div>
+          </div>
+
+          <div class="callout assump" style="margin-top:12px">
+            <h3>Sanity checks</h3>
+            <ul class="tight">
+              <li><b>Units:</b> τ<sub>FWHM</sub> has units 1/ν<sub>F</sub> (seconds). Good.</li>
+              <li><b>Limiting trend:</b> Increasing α (broader spectrum) increases cosh(π α), pushing the half-max point closer to t=0 ⇒ smaller τ<sub>FWHM</sub>.</li>
+              <li><b>Peak vs mean:</b> P<sub>peak</sub> scales roughly like (effective number of modes)², while ⟨P⟩ scales like that number, so their ratio grows with bandwidth.</li>
+            </ul>
+          </div>
+
+          <div class="callout danger" style="margin-top:12px">
+            <h3>Final Answer (boxed)</h3>
+            <div class="eq" id="eqFinal"><span class="label">FINAL</span>
+Let α = (Δν/2)/ν_F and A_q = sqrt(P̄) α^2/(q^2+α^2).
+
+Mean power:
+⟨P⟩ = P̄ [ (π α/2) coth(π α) + (π^2 α^2/2) csch^2(π α) ].
+
+Peak power:
+P_peak = P̄ [ (π α) coth(π α) ]^2.
+
+Pulse shape (|x| ≤ π, x = 2π ν_F t):
+P(t) = P̄ (π α)^2 [ cosh( α(π − |x|) ) / sinh(π α) ]^2.
+
+FWHM:
+τ_FWHM = [ π − (1/α) arcosh( cosh(π α)/sqrt(2) ) ] / (π ν_F).
+            </div>
+
+            <div class="copybar">
+              <button class="copy" data-copy="#eqFinal">Copy final answer (plain text)</button>
+              <button class="copy" data-copy="#eqMeanFinal">Copy ⟨P⟩</button>
+              <button class="copy" data-copy="#eqPeakFinal">Copy P_peak</button>
+              <button class="copy" data-copy="#eqFWHM">Copy τ_FWHM</button>
+            </div>
+            <div class="small print-note" style="margin-top:10px">
+              Print note: canvases are hidden in print view. Use the copied formulas above.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="part4">
+      <div class="sec-head">
+        <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+        <div class="meta">What the formulas mean, how parameters control pulses, and quick self-check questions.</div>
+      </div>
+      <div class="sec-body">
+        <div class="grid2">
+          <div class="card">
+            <h3 style="margin:0 0 8px 0">Re-interpreting the formulas</h3>
+            <ul class="tight">
+              <li><b>α = (Δν/2)/ν<sub>F</sub></b> controls “comb span in units of mode spacing.” Larger α → more modes contribute appreciably.</li>
+              <li><b>Peak power:</b> P<sub>peak</sub> ∝ [α coth(π α)]². For moderate/large α, coth(π α) ≈ 1, so P<sub>peak</sub> grows ~ α².</li>
+              <li><b>Mean power:</b> ⟨P⟩ contains two terms: one ~ α coth(π α) and one ~ α² csch²(π α). For large α, csch²(π α) becomes tiny, leaving ⟨P⟩ ≈ P̄(π α/2).</li>
+              <li><b>Pulse width:</b> τ<sub>FWHM</sub> scales like 1/ν<sub>F</sub> times a dimensionless factor that decreases with α.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3 style="margin:0 0 8px 0">How changing parameters affects outcomes</h3>
+            <ul class="tight">
+              <li>Increase <b>Δν</b> (at fixed ν<sub>F</sub>) ⇒ α ↑ ⇒ <b>shorter pulses</b>, <b>higher peak power</b>, larger P<sub>peak</sub>/⟨P⟩.</li>
+              <li>Increase <b>ν<sub>F</sub></b> (at fixed Δν) ⇒ α ↓ and also period T ↓.
+                Pulses repeat faster, but (for fixed Δν) fewer modes fit under the envelope, making pulses broader relative to T.</li>
+              <li>Scale <b>P̄</b> ⇒ both ⟨P⟩ and P<sub>peak</sub> scale linearly with P̄; τ<sub>FWHM</sub> is unchanged.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout" style="margin-top:14px">
+          <h3>Alternative derivation idea (brief)</h3>
+          You can derive the needed sums using <b>complex analysis</b>: treat q as an integer sampling of a meromorphic function,
+          sum via residues using π cot(πz) or π csc(πz) kernels, and evaluate poles at z = ±iα.
+          This reproduces the coth/csch identities and yields the same closed forms.
+        </div>
+
+        <div class="callout assump" style="margin-top:14px">
+          <h3>Concept checks (with answers)</h3>
+          <ul class="tight">
+            <li><b>Q:</b> Why does P<sub>peak</sub> depend on (ΣA<sub>q</sub>)² while ⟨P⟩ depends on ΣA<sub>q</sub>²?<br/>
+                <b>A:</b> Peak is coherent addition (fields add then square); mean averages away cross terms, leaving incoherent energy sum.</li>
+            <li><b>Q:</b> If phases were random, what changes most dramatically?<br/>
+                <b>A:</b> P<sub>peak</sub> collapses (no strong constructive interference), while ⟨P⟩ stays essentially Σ|A<sub>q</sub>|².</li>
+            <li><b>Q:</b> What does “Lorentzian spectrum” imply in time?<br/>
+                <b>A:</b> Here, for a discrete periodic comb, it produces a <b>cosh-shaped</b> pulse within each period (not a Gaussian).</li>
+            <li><b>Q:</b> What sets repetition rate?<br/>
+                <b>A:</b> ν<sub>F</sub>; pulses repeat every T = 1/ν<sub>F</sub>, independent of Δν.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="part5">
+      <div class="sec-head">
+        <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+        <div class="meta">Interactive canvases: a mode-locking diagram, a pulse-shape plot, and a parameter sweep.</div>
+      </div>
+      <div class="sec-body">
+        <div class="vizwrap">
+
+          <div class="vizgrid">
+            <figure>
+              <canvas id="diag"></canvas>
+              <figcaption>
+                <b>Diagram:</b> Frequency-comb modes spaced by ν<sub>F</sub> under a Lorentzian amplitude envelope (width Δν). Equal phases ⇒ pulses in time.
+              </figcaption>
+            </figure>
+
+            <figure>
+              <canvas id="pulse"></canvas>
+              <figcaption>
+                <b>Main plot:</b> Instantaneous power P(t) over one period (example values). The FWHM is marked and updates with α and ν<sub>F</sub>.
+              </figcaption>
+            </figure>
+          </div>
+
+          <figure>
+            <canvas id="sweep"></canvas>
+            <figcaption>
+              <b>Secondary plot:</b> Parameter sweep vs α showing peak-to-average ratio P<sub>peak</sub>/⟨P⟩ and the dimensionless width τ<sub>FWHM</sub>·ν<sub>F</sub>.
+              The vertical cursor indicates your current α.
+            </figcaption>
+          </figure>
+
+          <div class="card">
+            <h3 style="margin:0 0 8px 0">Interactive controls (what should change and why)</h3>
+            <ul class="tight">
+              <li><b>α slider:</b> increases/decreases spectral width in units of mode spacing. Larger α makes the pulse narrower and increases P<sub>peak</sub>/⟨P⟩.</li>
+              <li><b>ν<sub>F</sub> slider:</b> changes repetition period T = 1/ν<sub>F</sub>, so the time axis in ns rescales. The dimensionless width τ<sub>FWHM</sub>·ν<sub>F</sub> stays controlled mainly by α.</li>
+              <li><b>P̄ slider:</b> rescales powers linearly; pulse shape and FWHM are unchanged.</li>
+            </ul>
+
+            <div class="kpi" id="kpis">
+              <div class="box">
+                <div class="name">Mean power ⟨P⟩ (example)</div>
+                <div class="val" id="kpiMean">—</div>
+              </div>
+              <div class="box">
+                <div class="name">Peak power P<sub>peak</sub> (example)</div>
+                <div class="val" id="kpiPeak">—</div>
+              </div>
+              <div class="box">
+                <div class="name">FWHM τ<sub>FWHM</sub> (ns, example)</div>
+                <div class="val" id="kpiFwhm">—</div>
+              </div>
+            </div>
+
+            <div class="small" style="margin-top:10px">
+              Note: these KPI numbers use the same closed-form formulas from the solution; no truncation of modes is required.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <div class="small">
+    Built as a self-contained learning article (vanilla HTML/CSS/JS). Hyperbolic functions:
+    coth(z)=cosh(z)/sinh(z), csch(z)=1/sinh(z), arcosh(y)=ln(y+sqrt(y²−1)).
+  </div>
+</footer>
+
+<script>
+/* =========================
+   Copy buttons (plain text)
+   ========================= */
+(function(){
+  function getPlainText(sel){
+    const el = document.querySelector(sel);
+    if(!el) return "";
+    return el.innerText.replace(/\u00A0/g,' ').trim();
+  }
+  async function copyText(txt){
+    try{
+      await navigator.clipboard.writeText(txt);
+      return true;
+    }catch(e){
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = txt;
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand('copy'); }catch(_){}
+      document.body.removeChild(ta);
+      return true;
+    }
+  }
+  document.querySelectorAll('button.copy').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const target = btn.getAttribute('data-copy');
+      const txt = getPlainText(target);
+      const ok = await copyText(txt);
+      const old = btn.textContent;
+      btn.textContent = ok ? "Copied ✓" : "Copy failed";
+      setTimeout(()=>btn.textContent = old, 900);
+    });
+  });
+})();
+
+/* ==========================================
+   Math helpers (no external libraries)
+   ========================================== */
+function sinh(x){ return (Math.exp(x)-Math.exp(-x))/2; }
+function cosh(x){ return (Math.exp(x)+Math.exp(-x))/2; }
+function tanh(x){ return sinh(x)/cosh(x); }
+function coth(x){ return cosh(x)/sinh(x); }
+function csch(x){ return 1/sinh(x); }
+function arcosh(y){
+  // y >= 1
+  return Math.log(y + Math.sqrt(Math.max(0, y*y - 1)));
+}
+
+/* ==========================================
+   Physics formulas for this problem
+   ========================================== */
+function meanPower(alpha, Pbar){
+  const pa = Math.PI * alpha;
+  return Pbar * ( (pa/2)*coth(pa) + (pa*pa/2)*Math.pow(csch(pa),2) );
+}
+function peakPower(alpha, Pbar){
+  const pa = Math.PI * alpha;
+  return Pbar * Math.pow( (pa)*coth(pa), 2 );
+}
+function fwhm(alpha, nuF){
+  // nuF in Hz
+  const pa = Math.PI * alpha;
+  const xhalf = Math.PI - (1/alpha) * arcosh( cosh(pa)/Math.SQRT2 );
+  return xhalf / (Math.PI * nuF); // seconds
+}
+function pulsePowerAt(t, alpha, nuF, Pbar){
+  // closed form within one period: use x = 2πνF t reduced to [-π, π]
+  // We fold into principal period: map phase to [-π, π]
+  const T = 1/nuF;
+  let tt = t % T;
+  if(tt > T/2) tt -= T;
+  if(tt < -T/2) tt += T;
+  const x = 2*Math.PI*nuF*tt; // in [-π, π]
+  const pa = Math.PI * alpha;
+  const num = cosh( alpha*(Math.PI - Math.abs(x)) );
+  const den = sinh(pa);
+  const E2 = Pbar * Math.pow(Math.PI*alpha,2) * Math.pow(num/den,2);
+  return E2;
+}
+
+/* ==========================================
+   Canvas rendering utilities (hi-DPI + responsive)
+   ========================================== */
+function setupHiDPICanvas(canvas){
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(320, Math.floor(rect.width));
+  const h = Math.max(240, Math.floor(rect.height));
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx, w, h, dpr};
+}
+
+function drawAxes(ctx, box, xMin, xMax, yMin, yMax, xLabel, yLabel, title){
+  const {x, y, w, h} = box;
+
+  // background panel
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.fillRect(x, y, w, h);
+
+  // title
+  ctx.fillStyle = "rgba(234,240,255,0.95)";
+  ctx.font = "700 13px ui-sans-serif, system-ui";
+  ctx.fillText(title, x+10, y+18);
+
+  // plot area
+  const padL=52, padR=14, padT=30, padB=42;
+  const px = x + padL, py = y + padT, pw = w - padL - padR, ph = h - padT - padB;
+
+  // grid
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
+  ctx.lineWidth = 1;
+  const nx=6, ny=5;
+  for(let i=0;i<=nx;i++){
+    const gx = px + (pw*i/nx);
+    ctx.beginPath(); ctx.moveTo(gx, py); ctx.lineTo(gx, py+ph); ctx.stroke();
+  }
+  for(let j=0;j<=ny;j++){
+    const gy = py + (ph*j/ny);
+    ctx.beginPath(); ctx.moveTo(px, gy); ctx.lineTo(px+pw, gy); ctx.stroke();
+  }
+
+  // axes
+  ctx.strokeStyle = "rgba(255,255,255,0.35)";
+  ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(px, py+ph); ctx.lineTo(px+pw, py+ph); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py+ph); ctx.stroke();
+
+  // ticks + labels
+  ctx.fillStyle = "rgba(185,198,255,0.95)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+
+  function niceTick(v){ // compact
+    const av = Math.abs(v);
+    if(av >= 1000) return (v/1000).toFixed(1)+"k";
+    if(av >= 100) return v.toFixed(0);
+    if(av >= 10) return v.toFixed(1);
+    if(av >= 1) return v.toFixed(2);
+    return v.toExponential(2);
+  }
+
+  for(let i=0;i<=nx;i++){
+    const xv = xMin + (xMax-xMin)*i/nx;
+    const gx = px + (pw*i/nx);
+    ctx.beginPath(); ctx.moveTo(gx, py+ph); ctx.lineTo(gx, py+ph+6); ctx.strokeStyle="rgba(255,255,255,0.35)"; ctx.stroke();
+    const txt = niceTick(xv);
+    ctx.fillText(txt, gx - ctx.measureText(txt).width/2, py+ph+20);
+  }
+  for(let j=0;j<=ny;j++){
+    const yv = yMax - (yMax-yMin)*j/ny;
+    const gy = py + (ph*j/ny);
+    ctx.beginPath(); ctx.moveTo(px-6, gy); ctx.lineTo(px, gy); ctx.strokeStyle="rgba(255,255,255,0.35)"; ctx.stroke();
+    const txt = niceTick(yv);
+    ctx.fillText(txt, px-10-ctx.measureText(txt).width, gy+4);
+  }
+
+  // axis labels
+  ctx.fillStyle = "rgba(234,240,255,0.9)";
+  ctx.font = "700 12px ui-sans-serif, system-ui";
+  ctx.fillText(xLabel, px + pw/2 - ctx.measureText(xLabel).width/2, y + h - 12);
+
+  ctx.save();
+  ctx.translate(x+14, py + ph/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, -ctx.measureText(yLabel).width/2, 0);
+  ctx.restore();
+
+  ctx.restore();
+
+  // coordinate transforms
+  function X(u){ return px + (u - xMin) * pw / (xMax - xMin); }
+  function Y(v){ return py + (yMax - v) * ph / (yMax - yMin); }
+
+  return {plot:{px,py,pw,ph}, X, Y};
+}
+
+function drawLine(ctx, pts, strokeStyle, lineWidth){
+  if(pts.length<2) return;
+  ctx.save();
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = lineWidth;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawLegend(ctx, x, y, items){
+  ctx.save();
+  ctx.font = "12px ui-sans-serif, system-ui";
+  const pad=8, rowH=18;
+  let w=0;
+  items.forEach(it=>{ w = Math.max(w, 28 + ctx.measureText(it.label).width); });
+  const h = pad*2 + rowH*items.length;
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.fillRect(x, y, w+pad*2, h);
+  ctx.strokeStyle = "rgba(255,255,255,0.12)";
+  ctx.strokeRect(x, y, w+pad*2, h);
+
+  items.forEach((it, i)=>{
+    const yy = y + pad + i*rowH + 12;
+    ctx.strokeStyle = it.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x+pad, yy-4); ctx.lineTo(x+pad+18, yy-4); ctx.stroke();
+    ctx.fillStyle = "rgba(234,240,255,0.95)";
+    ctx.fillText(it.label, x+pad+26, yy);
+  });
+  ctx.restore();
+}
+
+/* ==========================================
+   Diagram canvas (frequency comb + Lorentzian)
+   ========================================== */
+function renderDiagram(alpha, nuF, Pbar){
+  const canvas = document.getElementById('diag');
+  const {ctx, w, h} = setupHiDPICanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+
+  // Panel title
+  ctx.fillStyle = "rgba(234,240,255,0.95)";
+  ctx.font = "800 14px ui-sans-serif, system-ui";
+  ctx.fillText("Mode-locked comb under Lorentzian envelope", 14, 22);
+
+  // Draw axes (frequency)
+  const margin = {L:60, R:18, T:46, B:56};
+  const px = margin.L, py = margin.T, pw = w - margin.L - margin.R, ph = h - margin.T - margin.B;
+
+  // Background
+  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.fillRect(px, py, pw, ph);
+
+  // Grid
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
+  for(let i=0;i<=10;i++){
+    const gx = px + pw*i/10;
+    ctx.beginPath(); ctx.moveTo(gx, py); ctx.lineTo(gx, py+ph); ctx.stroke();
+  }
+  for(let j=0;j<=5;j++){
+    const gy = py + ph*j/5;
+    ctx.beginPath(); ctx.moveTo(px, gy); ctx.lineTo(px+pw, gy); ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle="rgba(255,255,255,0.35)";
+  ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(px, py+ph); ctx.lineTo(px+pw, py+ph); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py+ph); ctx.stroke();
+
+  // Labels
+  ctx.fillStyle="rgba(234,240,255,0.9)";
+  ctx.font="700 12px ui-sans-serif, system-ui";
+  ctx.fillText("Frequency detuning (q·νF)", px+pw/2-70, py+ph+38);
+  ctx.save();
+  ctx.translate(18, py+ph/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText("Field amplitude A_q (arb.)", 0, 0);
+  ctx.restore();
+
+  // Draw Lorentzian envelope in q units
+  // We'll show q from -Q..Q
+  const Q = 12;
+  function Aofq(q){
+    return (alpha*alpha)/(q*q+alpha*alpha); // normalized to sqrt(Pbar) suppressed
+  }
+  // Map q to x
+  function Xq(q){ return px + (q + Q) * pw / (2*Q); }
+  function YA(a){ return py + ph - a * (ph*0.85); }
+
+  // Envelope curve
+  const envPts=[];
+  for(let i=0;i<=400;i++){
+    const q = -Q + (2*Q)*i/400;
+    envPts.push({x:Xq(q), y:YA(Aofq(q))});
+  }
+  drawLine(ctx, envPts, "rgba(124,240,255,0.95)", 2.2);
+
+  // Draw comb lines at integer q
+  ctx.strokeStyle="rgba(167,255,131,0.85)";
+  ctx.lineWidth=2;
+  for(let q=-Q;q<=Q;q++){
+    const a = Aofq(q);
+    const x = Xq(q);
+    const y0 = py+ph;
+    const y1 = YA(a);
+    ctx.beginPath();
+    ctx.moveTo(x, y0);
+    ctx.lineTo(x, y1);
+    ctx.stroke();
+  }
+
+  // Annotate Δν (approx) and νF
+  ctx.fillStyle="rgba(185,198,255,0.95)";
+  ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+
+  // Indicate spacing νF with bracket between q=0 and q=1
+  const x0 = Xq(0), x1 = Xq(1);
+  const yb = py+ph+10;
+  ctx.strokeStyle="rgba(255,255,255,0.45)";
+  ctx.lineWidth=1.2;
+  ctx.beginPath();
+  ctx.moveTo(x0, yb); ctx.lineTo(x1, yb);
+  ctx.moveTo(x0, yb-4); ctx.lineTo(x0, yb+4);
+  ctx.moveTo(x1, yb-4); ctx.lineTo(x1, yb+4);
+  ctx.stroke();
+  ctx.fillText("νF", (x0+x1)/2 - 10, yb+18);
+
+  // Indicate Δν ~ 2α νF (half-width at A=1/2)
+  // A(q)=α^2/(q^2+α^2)=1/2 => q=α
+  const qHW = Math.min(Q, alpha);
+  const xHW1 = Xq(-qHW), xHW2 = Xq(qHW);
+  const yHW = YA(0.5);
+  ctx.strokeStyle="rgba(255,210,124,0.9)";
+  ctx.lineWidth=1.6;
+  ctx.beginPath();
+  ctx.moveTo(xHW1, yHW); ctx.lineTo(xHW2, yHW);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(xHW1, yHW-5); ctx.lineTo(xHW1, yHW+5);
+  ctx.moveTo(xHW2, yHW-5); ctx.lineTo(xHW2, yHW+5);
+  ctx.stroke();
+  ctx.fillStyle="rgba(255,210,124,0.95)";
+  ctx.fillText("≈ Δν (FWHM of envelope)", (xHW1+xHW2)/2 - 92, yHW-10);
+
+  // Text: equal phases -> pulses
+  ctx.fillStyle="rgba(234,240,255,0.92)";
+  ctx.font="700 12px ui-sans-serif, system-ui";
+  ctx.fillText("Equal phases  →  constructive interference at t = mT", 14, h-14);
+}
+
+/* ==========================================
+   Main pulse plot (P(t) over one period)
+   ========================================== */
+function renderPulsePlot(alpha, nuF_Hz, Pbar){
+  const canvas = document.getElementById('pulse');
+  const {ctx, w, h} = setupHiDPICanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+
+  const T = 1/nuF_Hz;
+  const tMin = -T/2, tMax = T/2;
+
+  const Ppk = peakPower(alpha, Pbar);
+  // choose y range
+  const yMin = 0;
+  const yMax = Ppk * 1.05;
+
+  // axis in ns for display
+  const toNs = (t)=> t*1e9;
+  const xMin = toNs(tMin), xMax = toNs(tMax);
+
+  const ax = drawAxes(
+    ctx,
+    {x:0,y:0,w:w,h:h},
+    xMin, xMax, yMin, yMax,
+    "Time t (ns) over one period (−T/2 … +T/2)",
+    "Power P(t) (arb.)",
+    "Pulse train within one repetition period"
+  );
+
+  // compute line
+  const N = 700;
+  const pts=[];
+  for(let i=0;i<=N;i++){
+    const t = tMin + (tMax-tMin)*i/N;
+    const P = pulsePowerAt(t, alpha, nuF_Hz, Pbar);
+    pts.push({x: ax.X(toNs(t)), y: ax.Y(P)});
+  }
+  drawLine(ctx, pts, "rgba(124,240,255,0.95)", 2.2);
+
+  // FWHM markers
+  const tau = fwhm(alpha, nuF_Hz);
+  const th = tau/2;
+  const P_half = Ppk/2;
+
+  ctx.save();
+  // half-max line
+  ctx.strokeStyle="rgba(255,210,124,0.85)";
+  ctx.lineWidth=1.6;
+  ctx.setLineDash([6,6]);
+  ctx.beginPath();
+  ctx.moveTo(ax.X(xMin), ax.Y(P_half));
+  ctx.lineTo(ax.X(xMax), ax.Y(P_half));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // vertical lines at ±th
+  ctx.strokeStyle="rgba(167,255,131,0.9)";
+  ctx.lineWidth=1.6;
+  const xL = ax.X(toNs(-th));
+  const xR = ax.X(toNs(+th));
+  ctx.beginPath(); ctx.moveTo(xL, ax.Y(0)); ctx.lineTo(xL, ax.Y(Ppk)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(xR, ax.Y(0)); ctx.lineTo(xR, ax.Y(Ppk)); ctx.stroke();
+
+  // annotate
+  ctx.fillStyle="rgba(234,240,255,0.92)";
+  ctx.font="700 12px ui-sans-serif, system-ui";
+  const lbl = `FWHM = ${(tau*1e9).toFixed(3)} ns`;
+  ctx.fillText(lbl, 14, 22);
+
+  ctx.restore();
+
+  drawLegend(ctx, w-250, 42, [
+    {label:"P(t)", color:"rgba(124,240,255,0.95)"},
+    {label:"P_peak/2", color:"rgba(255,210,124,0.85)"},
+    {label:"± τ_FWHM/2", color:"rgba(167,255,131,0.9)"}
+  ]);
+}
+
+/* ==========================================
+   Sweep plot (ratio and dimensionless width vs alpha)
+   ========================================== */
+function renderSweep(alphaNow, nuF_Hz, Pbar){
+  const canvas = document.getElementById('sweep');
+  const {ctx, w, h} = setupHiDPICanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+
+  const aMin=0.25, aMax=6.0;
+  const N=420;
+
+  const ratios=[];
+  const widths=[];
+  let rMax=0, wMax=0;
+  for(let i=0;i<=N;i++){
+    const a = aMin + (aMax-aMin)*i/N;
+    const mean = meanPower(a, 1); // scale cancels in ratio
+    const peak = peakPower(a, 1);
+    const ratio = peak/mean;
+    const wdim = fwhm(a, 1) * 1; // τ*νF dimensionless; set νF=1 Hz in function => returns seconds => equals τ, multiply by 1 => τ*νF
+    ratios.push({a, v:ratio});
+    widths.push({a, v:wdim});
+    rMax = Math.max(rMax, ratio);
+    wMax = Math.max(wMax, wdim);
+  }
+
+  // Two y-axes are messy on one canvas; we’ll normalize and plot both with different scales + legend:
+  // left axis: ratio; right axis: τ*νF.
+  // We'll draw left axis on main, and annotate right scale in legend and tick marks on the right.
+  const yMin=0;
+  const yMax=rMax*1.05;
+
+  const ax = drawAxes(
+    ctx,
+    {x:0,y:0,w:w,h:h},
+    aMin, aMax, yMin, yMax,
+    "α = (Δν/2)/νF (dimensionless)",
+    "Peak-to-average ratio  P_peak / ⟨P⟩",
+    "Parameter sweep: pulse 'spikiness' and dimensionless width"
+  );
+
+  // Plot ratio
+  const ptsR=[];
+  for(const p of ratios){
+    ptsR.push({x:ax.X(p.a), y:ax.Y(p.v)});
+  }
+  drawLine(ctx, ptsR, "rgba(124,240,255,0.95)", 2.2);
+
+  // Plot width on the same axes by mapping width to an overlay scale:
+  // Map width v in [0, wMax] to y in [0, yMax] by v*(yMax/wMax).
+  const ptsW=[];
+  for(const p of widths){
+    const yScaled = p.v * (yMax / wMax);
+    ptsW.push({x:ax.X(p.a), y:ax.Y(yScaled)});
+  }
+  drawLine(ctx, ptsW, "rgba(255,124,168,0.92)", 2.0);
+
+  // Draw right-side ticks for width scale
+  ctx.save();
+  const {px,py,pw,ph} = ax.plot;
+  ctx.strokeStyle="rgba(255,255,255,0.35)";
+  ctx.fillStyle="rgba(185,198,255,0.95)";
+  ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+  const ny=5;
+  for(let j=0;j<=ny;j++){
+    const wv = wMax * (ny-j)/ny; // top to bottom
+    const yScaled = (wv) * (yMax / wMax);
+    const yy = ax.Y(yScaled);
+    // tick on right axis
+    ctx.beginPath();
+    ctx.moveTo(px+pw, yy);
+    ctx.lineTo(px+pw+6, yy);
+    ctx.stroke();
+    const txt = wv.toFixed(3);
+    ctx.fillText(txt, px+pw+10, yy+4);
+  }
+  // right axis label
+  ctx.save();
+  ctx.translate(px+pw+46, py+ph/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.font="700 12px ui-sans-serif, system-ui";
+  ctx.fillStyle="rgba(234,240,255,0.9)";
+  ctx.fillText("Dimensionless width  τ_FWHM · νF", -96, 0);
+  ctx.restore();
+
+  // Vertical cursor at current alpha
+  const xc = ax.X(alphaNow);
+  ctx.strokeStyle="rgba(167,255,131,0.9)";
+  ctx.lineWidth=1.6;
+  ctx.setLineDash([6,6]);
+  ctx.beginPath(); ctx.moveTo(xc, py); ctx.lineTo(xc, py+ph); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.restore();
+
+  drawLegend(ctx, 14, 42, [
+    {label:"P_peak / ⟨P⟩ (left axis)", color:"rgba(124,240,255,0.95)"},
+    {label:"τ_FWHM·νF (right axis)", color:"rgba(255,124,168,0.92)"},
+    {label:"current α", color:"rgba(167,255,131,0.9)"}
+  ]);
+}
+
+/* ==========================================
+   UI binding + live updates
+   ========================================== */
+const elAlpha = document.getElementById('alpha');
+const elNuF = document.getElementById('nuF');
+const elPbar = document.getElementById('Pbar');
+const alphaVal = document.getElementById('alphaVal');
+const nuFVal = document.getElementById('nuFVal');
+const PbarVal = document.getElementById('PbarVal');
+
+const kpiMean = document.getElementById('kpiMean');
+const kpiPeak = document.getElementById('kpiPeak');
+const kpiFwhm = document.getElementById('kpiFwhm');
+
+function updateAll(){
+  const alpha = parseFloat(elAlpha.value);
+  const nuF_MHz = parseFloat(elNuF.value);
+  const nuF_Hz = nuF_MHz * 1e6;
+  const Pbar = parseFloat(elPbar.value);
+
+  alphaVal.textContent = `α = ${alpha.toFixed(2)}`;
+  nuFVal.textContent = `${nuF_MHz.toFixed(1)}`;
+  PbarVal.textContent = `${Pbar.toFixed(2)}`;
+
+  const mean = meanPower(alpha, Pbar);
+  const peak = peakPower(alpha, Pbar);
+  const tau = fwhm(alpha, nuF_Hz);
+
+  kpiMean.textContent = mean.toFixed(6);
+  kpiPeak.textContent = peak.toFixed(6);
+  kpiFwhm.textContent = (tau*1e9).toFixed(4);
+
+  renderDiagram(alpha, nuF_Hz, Pbar);
+  renderPulsePlot(alpha, nuF_Hz, Pbar);
+  renderSweep(alpha, nuF_Hz, Pbar);
+}
+
+['input','change'].forEach(evt=>{
+  elAlpha.addEventListener(evt, updateAll);
+  elNuF.addEventListener(evt, updateAll);
+  elPbar.addEventListener(evt, updateAll);
+});
+
+window.addEventListener('resize', ()=>{
+  // re-render on resize (debounced lightly)
+  clearTimeout(window.__rt);
+  window.__rt = setTimeout(updateAll, 80);
+});
+
+// initial render
+updateAll();
+</script>
+</body>
+</html>

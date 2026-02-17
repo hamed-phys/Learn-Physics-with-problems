@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Electron–Hole Recombination Under Strong Injection (Power-Law Decay)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1733;
+      --card:#111c3d;
+      --ink:#e8ecff;
+      --muted:#b8c0ffcc;
+      --faint:#b8c0ff66;
+      --accent:#7cf1c5;
+      --accent2:#79a8ff;
+      --warn:#ffce6a;
+      --danger:#ff6b8b;
+      --grid:rgba(255,255,255,0.08);
+      --shadow: 0 18px 55px rgba(0,0,0,0.35);
+      --radius:18px;
+      --radius2:22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 15% 10%, rgba(121,168,255,0.18), transparent 55%),
+                  radial-gradient(900px 600px at 85% 20%, rgba(124,241,197,0.12), transparent 55%),
+                  radial-gradient(900px 700px at 45% 90%, rgba(255,206,106,0.10), transparent 55%),
+                  var(--bg);
+      color:var(--ink);
+      line-height:1.55;
+    }
+
+    header{
+      padding:28px 18px 16px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .title{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px 16px;
+      align-items:flex-end;
+      justify-content:space-between;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(1.5rem, 2.2vw, 2.2rem);
+      letter-spacing:-0.02em;
+    }
+    .subtitle{
+      margin:10px 0 0;
+      color:var(--muted);
+      max-width:72ch;
+    }
+
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding: 0 18px 60px;
+      display:grid;
+      grid-template-columns: 290px 1fr;
+      gap:18px;
+    }
+
+    nav{
+      position:sticky;
+      top:14px;
+      align-self:start;
+      background: linear-gradient(180deg, rgba(17,28,61,0.95), rgba(15,23,51,0.88));
+      border:1px solid rgba(255,255,255,0.10);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius2);
+      padding:14px 14px 12px;
+      backdrop-filter: blur(10px);
+    }
+    nav .toc-title{
+      font-weight:700;
+      font-size:0.95rem;
+      letter-spacing:0.01em;
+      margin:0 0 10px;
+      color:var(--ink);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .pill{
+      font-size:0.72rem;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.16);
+      color:var(--muted);
+      background: rgba(255,255,255,0.06);
+    }
+    nav a{
+      display:block;
+      padding:8px 10px;
+      margin:2px 0;
+      border-radius: 12px;
+      color: var(--muted);
+      text-decoration:none;
+      border:1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size:0.92rem;
+    }
+    nav a:hover{
+      background: rgba(121,168,255,0.12);
+      border-color: rgba(121,168,255,0.28);
+      transform: translateY(-1px);
+      color: var(--ink);
+    }
+    nav .small{
+      margin-top:10px;
+      font-size:0.83rem;
+      color: var(--faint);
+      padding:8px 10px 2px;
+    }
+
+    article{
+      min-width:0;
+    }
+
+    section{
+      background: linear-gradient(180deg, rgba(17,28,61,0.75), rgba(15,23,51,0.62));
+      border:1px solid rgba(255,255,255,0.10);
+      border-radius: var(--radius2);
+      padding:18px 18px 16px;
+      box-shadow: var(--shadow);
+      margin-bottom:18px;
+      backdrop-filter: blur(8px);
+    }
+    section h2{
+      margin:0 0 10px;
+      font-size:1.15rem;
+      letter-spacing:-0.01em;
+    }
+    section h3{
+      margin:14px 0 8px;
+      font-size:1.02rem;
+      color: var(--ink);
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr;}
+      nav{position:relative; top:auto;}
+      .grid2{grid-template-columns:1fr;}
+    }
+
+    .card{
+      background: rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.10);
+      border-radius: var(--radius);
+      padding:14px;
+    }
+
+    .callout{
+      border-radius: var(--radius);
+      padding:14px 14px 12px;
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      position:relative;
+      overflow:hidden;
+    }
+    .callout::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(90deg, rgba(124,241,197,0.15), transparent 45%, rgba(121,168,255,0.12));
+      opacity:0.55;
+      pointer-events:none;
+    }
+    .callout > *{position:relative}
+    .callout strong{color:var(--ink)}
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-weight:700;
+      font-size:0.82rem;
+      letter-spacing:0.02em;
+      color:var(--ink);
+      margin-bottom:6px;
+    }
+    .dot{
+      width:9px;height:9px;border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,241,197,0.15);
+      display:inline-block;
+    }
+    .dot.warn{background:var(--warn); box-shadow:0 0 0 3px rgba(255,206,106,0.16);}
+    .dot.danger{background:var(--danger); box-shadow:0 0 0 3px rgba(255,107,139,0.16);}
+    ul{margin:8px 0 0 20px; color: var(--muted)}
+    li{margin:6px 0}
+
+    .eqrow{
+      display:flex;
+      gap:10px;
+      align-items:stretch;
+      flex-wrap:wrap;
+      margin:10px 0;
+    }
+    pre.eq{
+      margin:0;
+      padding:12px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.22);
+      border:1px solid rgba(255,255,255,0.12);
+      color: #f3f6ff;
+      font-family: var(--mono);
+      font-size: 0.92rem;
+      overflow:auto;
+      flex: 1 1 540px;
+      min-width: 260px;
+    }
+    button.copy{
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      color: var(--ink);
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:700;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      flex: 0 0 auto;
+      align-self:flex-start;
+    }
+    button.copy:hover{
+      transform: translateY(-1px);
+      background: rgba(124,241,197,0.12);
+      border-color: rgba(124,241,197,0.30);
+    }
+    .mini{
+      color: var(--faint);
+      font-size:0.88rem;
+      margin-top:8px;
+    }
+
+    .vizWrap{
+      display:grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap:14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .vizWrap{grid-template-columns:1fr;}
+    }
+    .canvasCard{
+      background: rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.10);
+      border-radius: var(--radius2);
+      padding:12px;
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.18);
+      border:1px solid rgba(255,255,255,0.10);
+    }
+    .canvasTitle{
+      margin:0 0 8px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      color:var(--muted);
+      font-weight:700;
+      font-size:0.92rem;
+    }
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (max-width: 600px){
+      .controls{grid-template-columns:1fr;}
+    }
+    label{
+      display:block;
+      font-size:0.85rem;
+      color: var(--muted);
+      margin-bottom:6px;
+    }
+    input[type="range"]{
+      width:100%;
+    }
+    .ctrl{
+      background: rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.10);
+      border-radius: 16px;
+      padding:10px 10px 8px;
+    }
+    .readout{
+      font-family: var(--mono);
+      color: var(--ink);
+      font-size:0.9rem;
+      margin-top:6px;
+    }
+
+    footer{
+      max-width:1200px;
+      margin:0 auto;
+      padding: 0 18px 32px;
+      color: var(--faint);
+      font-size:0.9rem;
+    }
+
+    /* subtle motion */
+    @media (prefers-reduced-motion: no-preference){
+      section{animation: fadeUp .35s ease both}
+      section:nth-child(1){animation-delay:.02s}
+      section:nth-child(2){animation-delay:.05s}
+      section:nth-child(3){animation-delay:.08s}
+      section:nth-child(4){animation-delay:.11s}
+      section:nth-child(5){animation-delay:.14s}
+      section:nth-child(6){animation-delay:.17s}
+      @keyframes fadeUp{
+        from{opacity:0; transform: translateY(10px)}
+        to{opacity:1; transform: translateY(0)}
+      }
+    }
+
+    /* print friendly */
+    @media print{
+      body{background:#fff; color:#000}
+      nav{display:none}
+      main{grid-template-columns:1fr}
+      section{box-shadow:none; border:1px solid #ddd; background:#fff}
+      canvas{border:1px solid #ccc; background:#fff}
+      .callout{border:1px solid #ddd}
+      .callout::before{display:none}
+      pre.eq{background:#f7f7f7; border:1px solid #ddd; color:#000}
+      button.copy{display:none}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">
+      <h1>Electron–Hole Recombination Under Strong Injection (Why the Decay Becomes a Power Law)</h1>
+      <div class="pill">Semiconductor dynamics • strong injection</div>
+    </div>
+    <p class="subtitle">
+      When excess carriers are large, recombination can become <em>nonlinear</em>. This changes the time-dependence of the
+      carrier concentration after the injection is turned off: instead of exponential decay, you get a <b>hyperbolic (power-law)</b> decay.
+    </p>
+  </header>
+
+  <main>
+    <nav aria-label="Table of contents">
+      <div class="toc-title">Table of Contents <span class="pill">sticky</span></div>
+      <a href="#quick">Quick Summary</a>
+      <a href="#part0">PART 0 — Concept Primer</a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a href="#part2">PART 2 — Strategy & Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a href="#part4">PART 4 — Deeper Understanding</a>
+      <a href="#part5">PART 5 — Visualization Guide</a>
+      <div class="small">Tip: Use the sliders to see how <span style="color:var(--accent)">r</span> and <span style="color:var(--accent2)">Δn(t0)</span> reshape the decay and half-life.</div>
+    </nav>
+
+    <article>
+      <section id="quick">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li><b>What it’s about:</b> Excess carrier decay after injection is shut off in a semiconductor under <b>strong injection</b>.</li>
+          <li><b>Key physics idea:</b> The recombination “lifetime” depends on carrier density: <code>τ = 1/(r Δn)</code>, so the recombination rate is <b>nonlinear</b>.</li>
+          <li><b>Governing rate equation (after turn-off):</b> <code>d(Δn)/dt = −U(Δn)</code> with <code>U = r (Δn)^2</code>.</li>
+          <li><b>Analytical result:</b> <code>Δn(t) = Δn0 / (1 + r Δn0 (t − t0))</code>, where <code>Δn0 = Δn(t0)</code>.</li>
+          <li><b>Behavior type:</b> <b>Power-law / hyperbolic</b> decay (<code>Δn ~ 1/t</code> for large <code>t</code>), not exponential.</li>
+          <li><b>Key timescale:</b> The “half-life” is <code>t1/2 = 1/(r Δn0)</code> (depends on initial excess density).</li>
+        </ul>
+      </section>
+
+      <section id="part0">
+        <h2>PART 0 — Concept Primer (THEORY BEFORE SOLVING)</h2>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>Core definitions (symbols & units)</h3>
+            <ul>
+              <li><code>n, p</code> — electron and hole concentrations (typically <span class="mini">cm⁻³</span>).</li>
+              <li><code>Δn, Δp</code> — <b>excess</b> electron and hole concentrations above equilibrium (cm⁻³).</li>
+              <li><code>U</code> — recombination rate per unit volume (cm⁻³·s⁻¹).</li>
+              <li><code>R</code> — injection/generation source term (cm⁻³·s⁻¹). (Some texts use <code>G</code>.)</li>
+              <li><code>τ</code> — recombination lifetime (s), defined via <code>τ = Δn/U</code> for the relevant regime.</li>
+              <li><code>r</code> — (bimolecular) recombination coefficient (cm³·s⁻¹).</li>
+              <li><code>t0</code> — time when injection is turned off (s).</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Physical meaning (what these represent)</h3>
+            <ul>
+              <li><code>Δn(t)</code> is “how many extra electrons exist” because of earlier injection (e.g., optical pulse or forward bias).</li>
+              <li><code>U(Δn)</code> tells how fast electrons and holes annihilate each other into photons/phonons (recombination events).</li>
+              <li>If <code>U ∝ Δn</code> you get exponential decay (linear system).</li>
+              <li>If <code>U ∝ (Δn)²</code> you get hyperbolic/power-law decay (nonlinear system).</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Key principle: carrier rate equation</h3>
+        <div class="callout">
+          <div class="tag"><span class="dot"></span>Key law</div>
+          <div class="eqrow">
+            <pre class="eq" id="eq_rate">Rate equation (uniform region):
+d(Δn)/dt = R(t) − U(Δn)</pre>
+            <button class="copy" data-copy="#eq_rate">Copy</button>
+          </div>
+          <div class="mini">
+            This is a “lumped” (spatially averaged) model: we ignore diffusion and assume uniform excess concentration in the region of interest.
+          </div>
+        </div>
+
+        <h3>Strong injection model used here</h3>
+        <ul>
+          <li>The problem states: <code>τ = 1/(r Δn)</code>.</li>
+          <li>Using the definition <code>τ = Δn / U</code>, this implies <code>U = r (Δn)²</code>.</li>
+          <li>This is typical of <b>bimolecular radiative recombination</b> or any regime where recombination needs an electron and a hole and both are abundant.</li>
+        </ul>
+
+        <h3>Mini intuition examples</h3>
+        <ul>
+          <li><b>Linear (low injection):</b> if each excess electron has an independent chance per unit time to recombine, <code>dΔn/dt = −Δn/τ0</code> ⇒ exponential.</li>
+          <li><b>Nonlinear (strong injection):</b> recombination requires finding a partner; the “collision rate” scales like density×density ⇒ <code>dΔn/dt ∝ −(Δn)²</code> ⇒ hyperbolic decay.</li>
+        </ul>
+
+        <div class="callout" style="margin-top:12px;">
+          <div class="tag"><span class="dot warn"></span>What to watch for (pitfalls)</div>
+          <ul>
+            <li>Don’t plug <code>τ(Δn)</code> into an exponential form; the system is not linear.</li>
+            <li>Keep units consistent: <code>r</code> in cm³/s and <code>Δn</code> in cm⁻³ gives <code>rΔn</code> in s⁻¹.</li>
+            <li>After turn-off, set <code>R=0</code> only for <code>t ≥ t0</code>; initial condition is <code>Δn(t0)=Δn0</code>.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="part1">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+        <h3>Restate the problem (in plain language)</h3>
+        <p style="color:var(--muted); margin-top:6px;">
+          Under strong carrier-pair injection in a semiconductor, the recombination lifetime depends on the excess carrier concentration
+          as <code>τ = 1/(rΔn)</code>. When the injection source is switched off at time <code>t=t0</code> (so <code>R=0</code> thereafter),
+          find an analytical expression for <code>Δn(t)</code> and show that the decay is power-law (not exponential).
+        </p>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>Given</h3>
+            <ul>
+              <li><code>τ(Δn) = 1/(r Δn)</code></li>
+              <li><code>R(t) = 0</code> for <code>t ≥ t0</code></li>
+              <li><code>r</code> is a constant recombination coefficient</li>
+              <li>Initial condition at turn-off: <code>Δn(t0)=Δn0</code> (implicitly needed)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Unknowns / must show</h3>
+            <ul>
+              <li>Find <code>Δn(t)</code> for <code>t ≥ t0</code>.</li>
+              <li>Demonstrate the decay is <b>hyperbolic / power-law</b> rather than exponential.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Which physics applies (and why)</h3>
+        <ul>
+          <li><b>Carrier continuity / rate equation</b> applies because we track time evolution of a population of excess carriers.</li>
+          <li><b>Spatial transport</b> (diffusion/drift) is omitted because the problem frames a recombination-lifetime model; we assume a uniform region or that we’re tracking a spatial average.</li>
+          <li><b>Nonlinear recombination</b> applies because <code>τ</code> depends on <code>Δn</code>; that is the hallmark of strong injection.</li>
+        </ul>
+
+        <h3>Assumptions (explicit)</h3>
+        <div class="callout">
+          <div class="tag"><span class="dot"></span>Assumptions</div>
+          <ul>
+            <li>Uniform excess concentration: <code>Δn(t)</code> is spatially constant in the considered region.</li>
+            <li>Strong injection regime remains valid for the time window of interest.</li>
+            <li>Single effective recombination coefficient <code>r</code> (constant in time, temperature, etc.).</li>
+            <li>After <code>t0</code>, the source term is truly off: <code>R=0</code>.</li>
+          </ul>
+        </div>
+
+        <h3>Possible approaches (compare 2–3)</h3>
+        <ul>
+          <li><b>Direct ODE solve (separable):</b> Use <code>U = Δn/τ</code> to get <code>dΔn/dt = −r(Δn)²</code>; separate variables and integrate. <b>Best</b>: fastest and most transparent.</li>
+          <li><b>Dimensional/physical argument:</b> Identify timescale <code>1/(rΔn0)</code> and infer hyperbolic form. Great for intuition, but needs math to be rigorous.</li>
+          <li><b>Compare with linearized regime:</b> Show how low-injection gives exponential while strong injection gives power-law; useful context, but still requires the ODE solve.</li>
+        </ul>
+
+        <p class="mini"><b>Chosen approach:</b> the direct separable ODE method, because it produces an exact analytical expression and makes the power-law behavior unavoidable.</p>
+      </section>
+
+      <section id="part2">
+        <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+        <ol style="color:var(--muted); margin:10px 0 0 20px;">
+          <li>
+            <b>Translate lifetime to recombination rate</b><br/>
+            <span class="mini">Use <code>τ = Δn/U</code> ⇒ compute <code>U(Δn)</code> from the given <code>τ(Δn)</code>.</span>
+          </li>
+          <li>
+            <b>Write the post-turn-off rate equation</b><br/>
+            <span class="mini">Set <code>R=0</code> for <code>t≥t0</code> in <code>dΔn/dt = R − U</code>.</span>
+          </li>
+          <li>
+            <b>Recognize a separable ODE</b><br/>
+            <span class="mini">You should get <code>dΔn/dt = −r(Δn)²</code>.</span>
+          </li>
+          <li>
+            <b>Separate variables and integrate</b><br/>
+            <span class="mini">Integrate from <code>t0</code> to <code>t</code> using the initial condition <code>Δn(t0)=Δn0</code>.</span>
+          </li>
+          <li>
+            <b>Solve for Δn(t)</b><br/>
+            <span class="mini">Algebra should yield a rational function, not an exponential.</span>
+          </li>
+          <li>
+            <b>Show power-law behavior</b><br/>
+            <span class="mini">Take the large-time limit: <code>Δn(t) ~ 1/[r(t−t0)]</code>.</span>
+          </li>
+          <li>
+            <b>Sanity checks</b><br/>
+            <span class="mini">Check units; check that <code>Δn</code> decreases and stays positive.</span>
+          </li>
+        </ol>
+
+        <div class="callout" style="margin-top:12px;">
+          <div class="tag"><span class="dot warn"></span>Common mistakes & quick tips</div>
+          <ul>
+            <li><b>Mistake:</b> writing <code>Δn(t)=Δn0 exp(−t/τ)</code> even though <code>τ</code> depends on <code>Δn</code>.<br/>
+                <b>Tip:</b> if the “time constant” changes with the state, solve the ODE directly.</li>
+            <li><b>Mistake:</b> forgetting to anchor time at <code>t0</code>.<br/>
+                <b>Tip:</b> use <code>(t−t0)</code> everywhere after integration.</li>
+            <li><b>Mistake:</b> sign errors.<br/>
+                <b>Tip:</b> recombination reduces excess carriers ⇒ <code>dΔn/dt</code> must be negative.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="part3">
+        <h2>PART 3 — Full Solution (DETAILED + TEACHING)</h2>
+
+        <h3>Physical intuition first (before math)</h3>
+        <p style="color:var(--muted); margin-top:6px;">
+          In strong injection, electrons and holes are both present in large excess. Recombination events require an electron–hole “meeting,”
+          so the recombination rate grows with the product of densities. If <code>Δn</code> is large, recombination is very fast; as <code>Δn</code>
+          decreases, recombination slows down. That “self-slowing” behavior typically produces a decay that is slower than exponential at late times.
+        </p>
+
+        <h3>Step 1 — Convert the given lifetime into a recombination rate</h3>
+        <p style="color:var(--muted); margin-top:6px;">
+          A commonly used definition for an effective lifetime in a given regime is:
+        </p>
+
+        <div class="eqrow">
+          <pre class="eq" id="eq_tau_def">Effective lifetime definition:
+τ(Δn) ≡ Δn / U(Δn)</pre>
+          <button class="copy" data-copy="#eq_tau_def">Copy</button>
+        </div>
+
+        <p style="color:var(--muted);">
+          The problem gives <code>τ = 1/(r Δn)</code>. Substitute into <code>τ = Δn/U</code> and solve for <code>U</code>:
+        </p>
+
+        <div class="eqrow">
+          <pre class="eq" id="eq_Uderive">Given: τ = 1/(r Δn)
+But τ = Δn / U  ⇒  U = Δn / τ
+So: U(Δn) = Δn / (1/(r Δn)) = r (Δn)^2</pre>
+          <button class="copy" data-copy="#eq_Uderive">Copy</button>
+        </div>
+
+        <p class="mini">
+          <b>Meaning:</b> the recombination rate scales quadratically with excess carrier density. This is the key reason the decay won’t be exponential.
+        </p>
+
+        <h3>Step 2 — Write the post-turn-off rate equation</h3>
+        <p style="color:var(--muted);">
+          The general rate equation is <code>d(Δn)/dt = R(t) − U(Δn)</code>. After injection is switched off at <code>t=t0</code>,
+          we have <code>R=0</code> for <code>t ≥ t0</code>. Therefore:
+        </p>
+
+        <div class="eqrow">
+          <pre class="eq" id="eq_ode">For t ≥ t0:
+d(Δn)/dt = −U(Δn) = − r (Δn)^2</pre>
+          <button class="copy" data-copy="#eq_ode">Copy</button>
+        </div>
+
+        <p class="mini">
+          <b>Check the sign:</b> right-hand side is negative, so <code>Δn</code> decreases with time, as expected.
+        </p>
+
+        <h3>Step 3 — Solve the separable differential equation</h3>
+        <p style="color:var(--muted);">
+          The ODE <code>dΔn/dt = −r(Δn)²</code> is separable: collect all <code>Δn</code> terms on one side and <code>t</code> terms on the other.
+        </p>
+
+        <div class="eqrow">
+          <pre class="eq" id="eq_sep">d(Δn)/dt = − r (Δn)^2
+⇒ d(Δn)/(Δn)^2 = − r dt</pre>
+          <button class="copy" data-copy="#eq_sep">Copy</button>
+        </div>
+
+        <p style="color:var(--muted);">
+          Integrate from the turn-off time <code>t0</code> (where <code>Δn=Δn0</code>) to a later time <code>t</code>:
+        </p>
+
+        <div class="eqrow">
+          <pre class="eq" id="eq_int">∫_{Δn0}^{Δn(t)} d(Δn)/(Δn)^2 = − r ∫_{t0}^{t} dt
+
+Left side: ∫ d(Δn)/(Δn)^2 = ∫ (Δn)^{−2} d(Δn) = − (Δn)^{−1}
+
+So:
+[ −1/Δn ]_{Δn0}^{Δn(t)} = − r (t − t0)</pre>
+          <button class="copy" data-copy="#eq_int">Copy</button>
+        </div>
+
+        <p style="color:var(--muted);">
+          Evaluate the bracket:
+        </p>
+
+        <div class="eqrow">
+          <pre class="eq" id="eq_eval">−1/Δn(t) − (−1/Δn0) = − r (t − t0)
+⇒ −1/Δn(t) + 1/Δn0 = − r (t − t0)
+Multiply by −1:
+1/Δn(t) − 1/Δn0 = r (t − t0)</pre>
+          <button class="copy" data-copy="#eq_eval">Copy</button>
+        </div>
+
+        <p style="color:var(--muted);">
+          Solve for <code>Δn(t)</code>:
+        </p>
+
+        <div class="eqrow">
+          <pre class="eq" id="eq_sol">1/Δn(t) = 1/Δn0 + r (t − t0)
+
+⇒ Δn(t) = 1 / [ (1/Δn0) + r (t − t0) ]
+⇒ Δn(t) = Δn0 / [ 1 + r Δn0 (t − t0) ]</pre>
+          <button class="copy" data-copy="#eq_sol">Copy</button>
+        </div>
+
+        <div class="callout" style="margin-top:12px;">
+          <div class="tag"><span class="dot"></span>Final Answer (boxed)</div>
+          <div class="eqrow">
+            <pre class="eq" id="eq_final">For t ≥ t0 with Δn(t0)=Δn0 and R=0:
+Δn(t) = Δn0 / (1 + r Δn0 (t − t0))
+
+This is a hyperbolic (power-law) decay; for large t:
+Δn(t) ≈ 1 / [ r (t − t0) ]</pre>
+            <button class="copy" data-copy="#eq_final">Copy</button>
+          </div>
+        </div>
+
+        <h3>Sanity checks</h3>
+        <div class="grid2">
+          <div class="card">
+            <h3>Units / dimensions</h3>
+            <ul>
+              <li><code>r</code> has units cm³/s and <code>Δn0</code> has units cm⁻³ ⇒ <code>rΔn0</code> has units s⁻¹.</li>
+              <li><code>rΔn0(t−t0)</code> is dimensionless ⇒ denominator is dimensionless ⇒ <code>Δn(t)</code> stays in cm⁻³.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Limiting cases</h3>
+            <ul>
+              <li>At <code>t=t0</code>: denominator <code>1</code> ⇒ <code>Δn(t0)=Δn0</code> (correct).</li>
+              <li>As <code>t→∞</code>: <code>Δn(t) ~ 1/[r(t−t0)]</code> ⇒ slow tail (power-law).</li>
+              <li>Larger <code>r</code> or larger <code>Δn0</code> ⇒ faster early decay (bigger initial recombination rate).</li>
+            </ul>
+          </div>
+        </div>
+
+        <p class="mini">
+          Connection to the plots below: the main plot shows <code>Δn(t)</code> bending from fast early decay to slower late decay;
+          the secondary plot highlights how the characteristic half-life <code>t1/2 = 1/(rΔn0)</code> shifts with parameters.
+        </p>
+
+        <h3>Interactive visualizations</h3>
+        <div class="vizWrap">
+          <div class="canvasCard">
+            <div class="canvasTitle">
+              <span>Diagram: injection turn-off and recombination in a uniform slab</span>
+              <span class="pill">canvas</span>
+            </div>
+            <canvas id="cDiagram" aria-label="Physical setup diagram"></canvas>
+            <div class="mini">A conceptual picture: injection creates excess carriers; after <code>t0</code>, recombination removes them at a rate <code>U=r(Δn)^2</code>.</div>
+          </div>
+
+          <div class="canvasCard">
+            <div class="canvasTitle">
+              <span>Main plot: Δn(t) after turn-off (power-law decay)</span>
+              <span class="pill">updates live</span>
+            </div>
+            <canvas id="cMain" aria-label="Main plot of Delta n vs time"></canvas>
+            <div class="mini">Also shows an exponential curve for comparison (what you’d get in a linear lifetime model).</div>
+          </div>
+        </div>
+
+        <div class="vizWrap" style="margin-top:14px;">
+          <div class="canvasCard">
+            <div class="canvasTitle">
+              <span>Secondary plot: half-life vs r (parameter sweep)</span>
+              <span class="pill">sweep</span>
+            </div>
+            <canvas id="cSweep" aria-label="Parameter sweep plot"></canvas>
+            <div class="mini">Half-life here is <code>t1/2 = 1/(r Δn0)</code>, so it decreases as <code>r</code> increases.</div>
+          </div>
+
+          <div class="canvasCard">
+            <div class="canvasTitle">
+              <span>Interactive controls (change parameters)</span>
+              <span class="pill">sliders</span>
+            </div>
+
+            <div class="controls" role="group" aria-label="Interactive controls">
+              <div class="ctrl">
+                <label for="rSlider">Recombination coefficient r (cm³/s)</label>
+                <input id="rSlider" type="range" min="-12" max="-8" step="0.01" value="-10" />
+                <div class="readout" id="rReadout"></div>
+                <div class="mini">Log slider: r = 10<sup>x</sup> cm³/s</div>
+              </div>
+
+              <div class="ctrl">
+                <label for="n0Slider">Initial excess Δn0 at t0 (cm⁻³)</label>
+                <input id="n0Slider" type="range" min="13" max="17" step="0.01" value="15" />
+                <div class="readout" id="n0Readout"></div>
+                <div class="mini">Log slider: Δn0 = 10<sup>y</sup> cm⁻³</div>
+              </div>
+
+              <div class="ctrl">
+                <label for="tmaxSlider">Time window (µs)</label>
+                <input id="tmaxSlider" type="range" min="0.5" max="200" step="0.5" value="50" />
+                <div class="readout" id="tmaxReadout"></div>
+                <div class="mini">Controls the plot range after turn-off.</div>
+              </div>
+
+              <div class="ctrl">
+                <label for="expTauSlider">Comparison exponential lifetime τ<sub>exp</sub> (µs)</label>
+                <input id="expTauSlider" type="range" min="0.5" max="200" step="0.5" value="20" />
+                <div class="readout" id="expTauReadout"></div>
+                <div class="mini">Only for the comparison curve (not part of the strong-injection model).</div>
+              </div>
+            </div>
+
+            <div class="callout" style="margin-top:12px;">
+              <div class="tag"><span class="dot danger"></span>Example values for plotting</div>
+              <div class="mini" style="color:var(--muted);">
+                The problem gives no numbers. The sliders choose plausible <b>example</b> values (common in semiconductor optics/electronics)
+                to visualize the symbolic solution.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="part4">
+        <h2>PART 4 — Deeper Understanding (THEORY AROUND THE RESULT)</h2>
+
+        <h3>Re-interpreting the final formula</h3>
+        <ul>
+          <li><code>Δn(t) = Δn0 / (1 + rΔn0(t−t0))</code> has a single dimensionless “progress variable” <code>rΔn0(t−t0)</code>.</li>
+          <li><b>Early times</b> (<code>rΔn0(t−t0) ≪ 1</code>): <code>Δn(t) ≈ Δn0 [1 − rΔn0(t−t0)]</code> (initially almost linear drop).</li>
+          <li><b>Late times</b> (<code>rΔn0(t−t0) ≫ 1</code>): <code>Δn(t) ≈ 1/[r(t−t0)]</code> (forgets <code>Δn0</code>, becomes universal ~1/t).</li>
+        </ul>
+
+        <h3>How parameter changes affect behavior (connect to sliders)</h3>
+        <ul>
+          <li>Increase <code>r</code> ⇒ increases recombination strength ⇒ curves drop faster; half-life shrinks as <code>t1/2 ∝ 1/r</code>.</li>
+          <li>Increase <code>Δn0</code> ⇒ makes initial recombination much faster (<code>U(t0)=rΔn0²</code>) and also shrinks <code>t1/2 ∝ 1/Δn0</code>.</li>
+          <li>At late times the decay slope depends mainly on <code>1/r</code> because <code>Δn(t) ≈ 1/[r(t−t0)]</code>.</li>
+        </ul>
+
+        <h3>Alternative derivation idea (brief)</h3>
+        <p style="color:var(--muted); margin-top:6px;">
+          You can derive the same result by noting that the instantaneous “lifetime” is <code>τ(t)=1/(rΔn(t))</code>, so
+          <code>dΔn/dt = −Δn/τ(t) = −Δn·rΔn</code>, again giving <code>−rΔn²</code>. The key is recognizing that a state-dependent lifetime makes the equation nonlinear.
+        </p>
+
+        <h3>Concept checks (quick self-test)</h3>
+        <ul>
+          <li><b>Q:</b> Why isn’t the decay exponential? <b>A:</b> Because the decay rate depends on <code>Δn</code> itself (<code>U∝Δn²</code>), making the ODE nonlinear.</li>
+          <li><b>Q:</b> What sets the half-life? <b>A:</b> <code>t1/2 = 1/(rΔn0)</code>, so it depends on the initial excess density.</li>
+          <li><b>Q:</b> What happens if <code>Δn0</code> is doubled? <b>A:</b> Half-life halves; early recombination rate quadruples (<code>U∝Δn0²</code>).</li>
+          <li><b>Q:</b> In the long-time limit, does the curve remember <code>Δn0</code>? <b>A:</b> No; <code>Δn(t)≈1/[r(t−t0)]</code>.</li>
+        </ul>
+      </section>
+
+      <section id="part5">
+        <h2>PART 5 — Visualization Guide (HOW TO READ THE PLOTS)</h2>
+
+        <h3>What each canvas shows</h3>
+        <ul>
+          <li><b>Diagram canvas:</b> A uniform semiconductor slab. Injection (source term <code>R</code>) is “on” before <code>t0</code> and “off” after.
+              After <code>t0</code>, recombination follows <code>U=r(Δn)²</code>.</li>
+          <li><b>Main plot:</b> <code>Δn(t)</code> vs time after turn-off (µs). The solid curve is the strong-injection solution (hyperbolic).
+              A dashed curve shows an exponential with user-chosen <code>τexp</code> for comparison only.</li>
+          <li><b>Secondary plot:</b> Half-life <code>t1/2</code> vs <code>r</code> across a range (parameter sweep), with a marker at the current <code>r</code>.</li>
+        </ul>
+
+        <h3>How the controls affect the plots (and why)</h3>
+        <ul>
+          <li><b>r slider:</b> changes the recombination strength. Since <code>Δn(t)=Δn0/[1+rΔn0(t−t0)]</code>, increasing <code>r</code> makes the denominator grow faster ⇒ faster decay; also <code>t1/2=1/(rΔn0)</code> moves down in the sweep plot.</li>
+          <li><b>Δn0 slider:</b> changes the starting point and the timescale; larger <code>Δn0</code> yields faster initial drop and shorter half-life.</li>
+          <li><b>Time window slider:</b> zooms out/in along the time axis so you can see early vs late behavior (the <code>1/t</code> tail).</li>
+          <li><b>Exponential τexp slider:</b> only adjusts the comparison curve to highlight how exponential decay differs from the hyperbolic decay.</li>
+        </ul>
+
+        <div class="callout" style="margin-top:12px;">
+          <div class="tag"><span class="dot warn"></span>Reading tip</div>
+          <div class="mini" style="color:var(--muted);">
+            The strong-injection curve bends: steep at first, then progressively flatter. Exponential decay keeps the same fractional drop per unit time.
+            That difference is the visual signature of nonlinear recombination.
+          </div>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer>
+    <p>
+      Built for learning: symbolic derivation + interactive plots. All visuals use example parameter values for intuition while the final result remains fully general.
+    </p>
+  </footer>
+
+  <script>
+    // ---------- Copy buttons ----------
+    (function(){
+      const btns = document.querySelectorAll('button.copy');
+      btns.forEach(b=>{
+        b.addEventListener('click', async ()=>{
+          const sel = b.getAttribute('data-copy');
+          const el = document.querySelector(sel);
+          if(!el) return;
+          const text = el.innerText.replace(/\u00A0/g,' ');
+          try{
+            await navigator.clipboard.writeText(text);
+            const old = b.textContent;
+            b.textContent = "Copied ✓";
+            setTimeout(()=>b.textContent = old, 900);
+          }catch(e){
+            // fallback
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+            const old = b.textContent;
+            b.textContent = "Copied ✓";
+            setTimeout(()=>b.textContent = old, 900);
+          }
+        });
+      });
+    })();
+
+    // ---------- Utilities ----------
+    function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
+    function niceTicks(min, max, target=6){
+      // returns array of ticks, inclusive
+      const span = max - min;
+      if(span <= 0) return [min];
+      const rawStep = span / target;
+      const pow10 = Math.pow(10, Math.floor(Math.log10(rawStep)));
+      const steps = [1,2,5,10].map(m=>m*pow10);
+      let step = steps[0];
+      for(const s of steps){ if(Math.abs(rawStep - s) < Math.abs(rawStep - step)) step = s; }
+      const t0 = Math.ceil(min/step)*step;
+      const ticks = [];
+      for(let t=t0; t<=max+1e-12; t+=step) ticks.push(t);
+      if(ticks.length===0) ticks.push(min, max);
+      return ticks;
+    }
+
+    function fmtSci(x, sig=3){
+      if(x===0) return "0";
+      const ax = Math.abs(x);
+      if(ax>=0.001 && ax<10000) return x.toPrecision(sig).replace(/\.?0+$/,'');
+      const e = Math.floor(Math.log10(ax));
+      const m = x / Math.pow(10,e);
+      return m.toPrecision(sig).replace(/\.?0+$/,'') + "e" + e;
+    }
+
+    function setupCanvas(canvas){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(1, Math.floor(rect.width * dpr));
+      const h = Math.max(1, Math.floor(rect.height * dpr));
+      if(canvas.width !== w || canvas.height !== h){
+        canvas.width = w;
+        canvas.height = h;
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+      return {ctx, w: rect.width, h: rect.height, dpr};
+    }
+
+    function drawAxes(ctx, box, xlim, ylim, labels, title){
+      const {x,y,w,h} = box;
+      // background grid
+      ctx.save();
+      ctx.translate(x,y);
+
+      // Title
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.font = "700 13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText(title, 0, -10);
+
+      // frame
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0,0,w,h);
+
+      // ticks
+      const xt = niceTicks(xlim[0], xlim[1], 7);
+      const yt = niceTicks(ylim[0], ylim[1], 6);
+
+      // gridlines
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+      for(const xv of xt){
+        const px = (xv-xlim[0])/(xlim[1]-xlim[0]) * w;
+        ctx.beginPath();
+        ctx.moveTo(px,0); ctx.lineTo(px,h);
+        ctx.stroke();
+      }
+      for(const yv of yt){
+        const py = h - (yv-ylim[0])/(ylim[1]-ylim[0]) * h;
+        ctx.beginPath();
+        ctx.moveTo(0,py); ctx.lineTo(w,py);
+        ctx.stroke();
+      }
+
+      // tick marks + labels
+      ctx.fillStyle = "rgba(255,255,255,0.70)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+
+      for(const xv of xt){
+        const px = (xv-xlim[0])/(xlim[1]-xlim[0]) * w;
+        ctx.beginPath();
+        ctx.moveTo(px,h); ctx.lineTo(px,h+5);
+        ctx.stroke();
+        const s = fmtSci(xv,3);
+        const tw = ctx.measureText(s).width;
+        ctx.fillText(s, px - tw/2, h + 18);
+      }
+      for(const yv of yt){
+        const py = h - (yv-ylim[0])/(ylim[1]-ylim[0]) * h;
+        ctx.beginPath();
+        ctx.moveTo(-5,py); ctx.lineTo(0,py);
+        ctx.stroke();
+        const s = fmtSci(yv,3);
+        const tw = ctx.measureText(s).width;
+        ctx.fillText(s, -10 - tw, py + 4);
+      }
+
+      // axis labels
+      ctx.fillStyle = "rgba(255,255,255,0.78)";
+      ctx.font = "700 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText(labels.x, w - ctx.measureText(labels.x).width, h + 36);
+
+      // y label rotated
+      ctx.save();
+      ctx.translate(-54, h/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(labels.y, 0, 0);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function plotLine(ctx, box, xlim, ylim, xs, ys, strokeStyle, dashed=false){
+      const {x,y,w,h} = box;
+      ctx.save();
+      ctx.translate(x,y);
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = 2;
+      if(dashed) ctx.setLineDash([6,5]); else ctx.setLineDash([]);
+      ctx.beginPath();
+      for(let i=0;i<xs.length;i++){
+        const px = (xs[i]-xlim[0])/(xlim[1]-xlim[0]) * w;
+        const py = h - (ys[i]-ylim[0])/(ylim[1]-ylim[0]) * h;
+        if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLegend(ctx, x, y, items){
+      ctx.save();
+      ctx.translate(x,y);
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      let yy = 0;
+      for(const it of items){
+        ctx.strokeStyle = it.color;
+        ctx.lineWidth = 3;
+        ctx.setLineDash(it.dashed ? [6,5] : []);
+        ctx.beginPath();
+        ctx.moveTo(0, yy+4); ctx.lineTo(18, yy+4);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.fillText(it.label, 24, yy+8);
+        yy += 18;
+      }
+      ctx.restore();
+    }
+
+    // ---------- Model functions ----------
+    // Strong injection: Δn(t) = Δn0 / (1 + r Δn0 (t - t0))
+    function deltaN_strong(t, t0, n0, r){
+      const dt = Math.max(0, t - t0);
+      return n0 / (1 + r*n0*dt);
+    }
+    // Comparison exponential: Δn(t) = Δn0 exp(-(t-t0)/tauExp)
+    function deltaN_exp(t, t0, n0, tauExp){
+      const dt = Math.max(0, t - t0);
+      return n0 * Math.exp(-dt/tauExp);
+    }
+
+    // ---------- State ----------
+    const state = {
+      t0: 0,              // we plot time after turn-off, so set t0=0 for visuals
+      log10r: -10,
+      log10n0: 15,
+      tmax_us: 50,
+      tauExp_us: 20
+    };
+
+    // ---------- DOM ----------
+    const rSlider = document.getElementById('rSlider');
+    const n0Slider = document.getElementById('n0Slider');
+    const tmaxSlider = document.getElementById('tmaxSlider');
+    const expTauSlider = document.getElementById('expTauSlider');
+    const rReadout = document.getElementById('rReadout');
+    const n0Readout = document.getElementById('n0Readout');
+    const tmaxReadout = document.getElementById('tmaxReadout');
+    const expTauReadout = document.getElementById('expTauReadout');
+
+    function syncReadouts(){
+      const r = Math.pow(10, state.log10r);
+      const n0 = Math.pow(10, state.log10n0);
+      rReadout.textContent = `r = ${fmtSci(r,3)} cm^3/s  (10^${state.log10r.toFixed(2)})`;
+      n0Readout.textContent = `Δn0 = ${fmtSci(n0,3)} cm^-3  (10^${state.log10n0.toFixed(2)})`;
+      tmaxReadout.textContent = `tmax = ${state.tmax_us.toFixed(1)} µs`;
+      expTauReadout.textContent = `τexp = ${state.tauExp_us.toFixed(1)} µs`;
+    }
+
+    // ---------- Draw: Diagram ----------
+    function drawDiagram(){
+      const canvas = document.getElementById('cDiagram');
+      const {ctx,w,h} = setupCanvas(canvas);
+
+      // Clear
+      ctx.clearRect(0,0,w,h);
+
+      // Coordinate system in CSS pixels
+      const pad = 18;
+      const slab = {x: pad+18, y: 58, w: w - 2*(pad+18), h: h - 110};
+
+      // Title label band
+      ctx.fillStyle = "rgba(255,255,255,0.06)";
+      ctx.fillRect(pad, 14, w-2*pad, 34);
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      ctx.strokeRect(pad, 14, w-2*pad, 34);
+      ctx.fillStyle = "rgba(255,255,255,0.82)";
+      ctx.font = "700 13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText("Uniform region model (lumped carrier population)", pad+10, 36);
+
+      // Slab
+      ctx.fillStyle = "rgba(121,168,255,0.10)";
+      ctx.strokeStyle = "rgba(121,168,255,0.35)";
+      ctx.lineWidth = 2;
+      roundRect(ctx, slab.x, slab.y, slab.w, slab.h, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      // Inside: carriers as dots
+      const r = Math.pow(10, state.log10r);
+      const n0 = Math.pow(10, state.log10n0);
+      // density to dot count (visual heuristic)
+      const dots = Math.round(clamp((state.log10n0 - 13) / (17-13) * 90 + 20, 20, 110));
+      const rand = mulberry32(12345); // deterministic
+      for(let i=0;i<dots;i++){
+        const px = slab.x + 16 + rand()*(slab.w-32);
+        const py = slab.y + 16 + rand()*(slab.h-32);
+        const isElectron = rand() < 0.5;
+        ctx.fillStyle = isElectron ? "rgba(124,241,197,0.85)" : "rgba(255,206,106,0.85)";
+        ctx.beginPath();
+        ctx.arc(px, py, isElectron?2.2:2.1, 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      // Labels
+      ctx.fillStyle = "rgba(255,255,255,0.80)";
+      ctx.font = "700 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText("Semiconductor region (assumed uniform Δn(t))", slab.x+12, slab.y+18);
+
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+      ctx.fillStyle = "rgba(255,255,255,0.72)";
+      ctx.fillText("After t0: R=0,   U = r (Δn)^2,   dΔn/dt = −r(Δn)^2", slab.x+12, slab.y+38);
+
+      // Injection arrow (before t0)
+      const ax = slab.x - 8, ay = slab.y + slab.h*0.35;
+      drawArrow(ctx, ax, ay, slab.x+30, ay, "rgba(124,241,197,0.9)", 3);
+      ctx.fillStyle = "rgba(124,241,197,0.9)";
+      ctx.font = "700 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText("Injection ON (t < t0)", slab.x-2, ay-10);
+
+      // Turn-off marker
+      const bx = slab.x + slab.w + 8, by = slab.y + slab.h*0.65;
+      drawArrow(ctx, slab.x+slab.w-30, by, bx, by, "rgba(255,107,139,0.9)", 3);
+      ctx.fillStyle = "rgba(255,107,139,0.9)";
+      ctx.fillText("Injection OFF at t0", slab.x+slab.w-160, by-10);
+
+      // Legend
+      ctx.fillStyle = "rgba(0,0,0,0.22)";
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      roundRect(ctx, slab.x+12, slab.y+slab.h-54, 240, 42, 14);
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = "rgba(124,241,197,0.9)";
+      ctx.beginPath(); ctx.arc(slab.x+28, slab.y+slab.h-33, 4, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.75)";
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText("electrons (excess)", slab.x+42, slab.y+slab.h-29);
+
+      ctx.fillStyle = "rgba(255,206,106,0.9)";
+      ctx.beginPath(); ctx.arc(slab.x+150, slab.y+slab.h-33, 4, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.75)";
+      ctx.fillText("holes (excess)", slab.x+164, slab.y+slab.h-29);
+
+      // Parameter mini caption
+      const tHalf = 1/(r*n0); // seconds
+      ctx.fillStyle = "rgba(255,255,255,0.66)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+      ctx.fillText(`Example: r=${fmtSci(r,3)} cm^3/s, Δn0=${fmtSci(n0,3)} cm^-3 → t1/2=${(tHalf*1e6).toFixed(2)} µs`,
+        pad+10, h-14);
+    }
+
+    // ---------- Draw: Main plot ----------
+    function drawMainPlot(){
+      const canvas = document.getElementById('cMain');
+      const {ctx,w,h} = setupCanvas(canvas);
+      ctx.clearRect(0,0,w,h);
+
+      const padL = 64, padR = 16, padT = 38, padB = 52;
+      const box = {x: padL, y: padT, w: w - padL - padR, h: h - padT - padB};
+
+      const r = Math.pow(10, state.log10r);
+      const n0 = Math.pow(10, state.log10n0);
+      const tmax = state.tmax_us * 1e-6;
+      const tauExp = state.tauExp_us * 1e-6;
+
+      // sample
+      const N = 500;
+      const xs = [], ysStrong = [], ysExp = [];
+      for(let i=0;i<=N;i++){
+        const t = (i/N) * tmax; // seconds after t0
+        xs.push(t*1e6); // store in µs for axis
+        ysStrong.push(deltaN_strong(t, state.t0, n0, r));
+        ysExp.push(deltaN_exp(t, state.t0, n0, tauExp));
+      }
+
+      // y-limits
+      let ymax = n0;
+      let ymin = Math.min(...ysStrong.slice(-50)); // tail
+      ymin = Math.max(0, ymin);
+      // give margin
+      ymin = 0;
+      ymax = n0 * 1.05;
+
+      const xlim = [0, state.tmax_us];
+      const ylim = [ymin, ymax];
+
+      drawAxes(ctx, box, xlim, ylim,
+        {x: "time after t0 (µs)", y: "Δn (cm^-3)"},
+        "Δn(t) after injection turn-off"
+      );
+
+      // plot lines
+      plotLine(ctx, box, xlim, ylim, xs, ysStrong, "rgba(124,241,197,0.95)", false);
+      plotLine(ctx, box, xlim, ylim, xs, ysExp, "rgba(121,168,255,0.92)", true);
+
+      // reference: half-life marker for strong injection
+      const tHalf_s = 1/(r*n0);
+      const tHalf_us = tHalf_s * 1e6;
+      const yHalf = n0/2;
+      if(tHalf_us >= 0 && tHalf_us <= xlim[1]){
+        // draw marker
+        ctx.save();
+        ctx.translate(box.x, box.y);
+        const px = (tHalf_us - xlim[0])/(xlim[1]-xlim[0]) * box.w;
+        const py = box.h - (yHalf - ylim[0])/(ylim[1]-ylim[0]) * box.h;
+        ctx.strokeStyle = "rgba(255,206,106,0.85)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5,5]);
+        ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,box.h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0,py); ctx.lineTo(box.w,py); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(255,206,106,0.95)";
+        ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.78)";
+        ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+        const label = `t1/2≈${tHalf_us.toFixed(2)} µs`;
+        ctx.fillText(label, clamp(px+8, 6, box.w-140), clamp(py-10, 14, box.h-10));
+        ctx.restore();
+      }
+
+      // legend
+      drawLegend(ctx, box.x + 10, box.y + 10, [
+        {label:"Strong injection: Δn0/(1 + rΔn0 t)", color:"rgba(124,241,197,0.95)", dashed:false},
+        {label:"Exponential comparison: Δn0 exp(−t/τexp)", color:"rgba(121,168,255,0.92)", dashed:true},
+      ]);
+    }
+
+    // ---------- Draw: Sweep plot ----------
+    function drawSweepPlot(){
+      const canvas = document.getElementById('cSweep');
+      const {ctx,w,h} = setupCanvas(canvas);
+      ctx.clearRect(0,0,w,h);
+
+      const padL = 68, padR = 16, padT = 38, padB = 52;
+      const box = {x: padL, y: padT, w: w - padL - padR, h: h - padT - padB};
+
+      const n0 = Math.pow(10, state.log10n0);
+
+      // Sweep r over log range shown by slider bounds
+      const rMin = Math.pow(10, -12);
+      const rMax = Math.pow(10, -8);
+
+      const N = 260;
+      const xs = [], ys = [];
+      for(let i=0;i<=N;i++){
+        const f = i/N;
+        const lr = Math.log10(rMin) + f*(Math.log10(rMax)-Math.log10(rMin));
+        const r = Math.pow(10, lr);
+        const tHalf = 1/(r*n0); // seconds
+        xs.push(r);
+        ys.push(tHalf*1e6); // µs
+      }
+
+      // axes in log-x, linear-y (we'll draw custom mapping)
+      const xlim = [rMin, rMax];
+      const yMin = 0;
+      const yMax = Math.max(...ys) * 1.05;
+
+      // Draw axes frame & y ticks; x ticks in log
+      ctx.save();
+      // Title
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.font = "700 13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText("Half-life sweep: t1/2 = 1/(r Δn0)", box.x, box.y - 10);
+
+      // Frame
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(box.x, box.y, box.w, box.h);
+
+      // Grid & ticks
+      const yTicks = niceTicks(yMin, yMax, 6);
+      // y grid
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      for(const yv of yTicks){
+        const py = box.y + box.h - (yv - yMin)/(yMax - yMin) * box.h;
+        ctx.beginPath();
+        ctx.moveTo(box.x, py); ctx.lineTo(box.x + box.w, py);
+        ctx.stroke();
+      }
+
+      // x grid at decades and maybe midpoints
+      const decades = [-12,-11,-10,-9,-8];
+      for(const e of decades){
+        const rv = Math.pow(10,e);
+        const px = box.x + (Math.log10(rv)-Math.log10(xlim[0]))/(Math.log10(xlim[1])-Math.log10(xlim[0])) * box.w;
+        ctx.beginPath();
+        ctx.moveTo(px, box.y); ctx.lineTo(px, box.y+box.h);
+        ctx.stroke();
+      }
+
+      // tick labels
+      ctx.fillStyle = "rgba(255,255,255,0.70)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+
+      // y tick marks
+      for(const yv of yTicks){
+        const py = box.y + box.h - (yv - yMin)/(yMax - yMin) * box.h;
+        ctx.beginPath();
+        ctx.moveTo(box.x-5, py); ctx.lineTo(box.x, py);
+        ctx.stroke();
+        const s = fmtSci(yv,3);
+        const tw = ctx.measureText(s).width;
+        ctx.fillText(s, box.x - 10 - tw, py + 4);
+      }
+
+      // x tick marks + labels
+      for(const e of decades){
+        const rv = Math.pow(10,e);
+        const px = box.x + (e - Math.log10(xlim[0]))/(Math.log10(xlim[1])-Math.log10(xlim[0])) * box.w;
+        ctx.beginPath();
+        ctx.moveTo(px, box.y+box.h); ctx.lineTo(px, box.y+box.h+5);
+        ctx.stroke();
+        const s = `1e${e}`;
+        const tw = ctx.measureText(s).width;
+        ctx.fillText(s, px - tw/2, box.y + box.h + 18);
+      }
+
+      // axis labels
+      ctx.fillStyle = "rgba(255,255,255,0.78)";
+      ctx.font = "700 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      const xl = "r (cm^3/s) [log scale]";
+      ctx.fillText(xl, box.x + box.w - ctx.measureText(xl).width, box.y + box.h + 36);
+
+      ctx.save();
+      ctx.translate(box.x - 56, box.y + box.h/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText("t1/2 (µs)", 0, 0);
+      ctx.restore();
+
+      // plot sweep line
+      ctx.strokeStyle = "rgba(121,168,255,0.92)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for(let i=0;i<xs.length;i++){
+        const px = box.x + (Math.log10(xs[i]) - Math.log10(xlim[0]))/(Math.log10(xlim[1])-Math.log10(xlim[0])) * box.w;
+        const py = box.y + box.h - (ys[i]-yMin)/(yMax-yMin) * box.h;
+        if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+
+      // marker at current r
+      const rNow = Math.pow(10, state.log10r);
+      const tHalfNow = 1/(rNow*n0) * 1e6; // µs
+      const pxNow = box.x + (Math.log10(rNow)-Math.log10(xlim[0]))/(Math.log10(xlim[1])-Math.log10(xlim[0])) * box.w;
+      const pyNow = box.y + box.h - (tHalfNow - yMin)/(yMax - yMin) * box.h;
+
+      ctx.fillStyle = "rgba(124,241,197,0.95)";
+      ctx.beginPath(); ctx.arc(pxNow, pyNow, 4.5, 0, Math.PI*2); ctx.fill();
+
+      ctx.strokeStyle = "rgba(124,241,197,0.60)";
+      ctx.setLineDash([5,5]);
+      ctx.beginPath(); ctx.moveTo(pxNow, box.y); ctx.lineTo(pxNow, box.y+box.h); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(box.x, pyNow); ctx.lineTo(box.x+box.w, pyNow); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // label
+      ctx.fillStyle = "rgba(255,255,255,0.78)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+      const lab = `t1/2=${tHalfNow.toFixed(2)} µs`;
+      ctx.fillText(lab, clamp(pxNow+8, box.x+6, box.x+box.w-140), clamp(pyNow-10, box.y+14, box.y+box.h-10));
+
+      // tiny legend
+      drawLegend(ctx, box.x + 10, box.y + 10, [
+        {label:"t1/2 sweep (Δn0 fixed)", color:"rgba(121,168,255,0.92)", dashed:false},
+        {label:"current r selection", color:"rgba(124,241,197,0.95)", dashed:false},
+      ]);
+
+      ctx.restore();
+    }
+
+    // ---------- Geometry helpers ----------
+    function roundRect(ctx,x,y,w,h,r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+    function drawArrow(ctx, x1,y1,x2,y2, color, width){
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.stroke();
+
+      const ang = Math.atan2(y2-y1, x2-x1);
+      const head = 10;
+      ctx.beginPath();
+      ctx.moveTo(x2,y2);
+      ctx.lineTo(x2 - head*Math.cos(ang - Math.PI/7), y2 - head*Math.sin(ang - Math.PI/7));
+      ctx.lineTo(x2 - head*Math.cos(ang + Math.PI/7), y2 - head*Math.sin(ang + Math.PI/7));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    function mulberry32(a){
+      return function(){
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      }
+    }
+
+    // ---------- Render all ----------
+    function renderAll(){
+      syncReadouts();
+      drawDiagram();
+      drawMainPlot();
+      drawSweepPlot();
+    }
+
+    // ---------- Events ----------
+    rSlider.addEventListener('input', ()=>{
+      state.log10r = parseFloat(rSlider.value);
+      renderAll();
+    });
+    n0Slider.addEventListener('input', ()=>{
+      state.log10n0 = parseFloat(n0Slider.value);
+      renderAll();
+    });
+    tmaxSlider.addEventListener('input', ()=>{
+      state.tmax_us = parseFloat(tmaxSlider.value);
+      renderAll();
+    });
+    expTauSlider.addEventListener('input', ()=>{
+      state.tauExp_us = parseFloat(expTauSlider.value);
+      renderAll();
+    });
+
+    // responsive redraw
+    window.addEventListener('resize', ()=>renderAll());
+
+    // init slider positions and render
+    (function init(){
+      rSlider.value = String(state.log10r);
+      n0Slider.value = String(state.log10n0);
+      tmaxSlider.value = String(state.tmax_us);
+      expTauSlider.value = String(state.tauExp_us);
+      renderAll();
+    })();
+  </script>
+</body>
+</html>

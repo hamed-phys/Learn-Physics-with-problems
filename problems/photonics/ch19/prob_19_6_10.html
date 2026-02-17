@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Noise Comparison for Three Photodetectors (p-i-n, APD, PMT)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1730;
+      --card:#121c3a;
+      --text:#e9eeff;
+      --muted:#a9b4da;
+      --line:rgba(255,255,255,.12);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0; padding:0; background:radial-gradient(1200px 800px at 15% 10%, #14214a 0%, var(--bg) 55%); color:var(--text); font-family:var(--sans); line-height:1.55}
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding:34px 18px 18px;
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(125,211,252,.10), rgba(0,0,0,0));
+    }
+    header .wrap{max-width:1100px; margin:0 auto; display:grid; grid-template-columns: 1.35fr .65fr; gap:18px; align-items:end}
+    h1{margin:0 0 8px; font-size:clamp(1.55rem, 2.6vw, 2.25rem); letter-spacing:.2px}
+    .subtitle{margin:0; color:var(--muted); font-size:1.02rem}
+    .meta{
+      display:flex; flex-wrap:wrap; gap:10px; justify-content:flex-end;
+      color:var(--muted); font-size:.92rem
+    }
+    .pill{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      padding:6px 10px;
+      border-radius:999px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 8px 22px rgba(0,0,0,.18);
+    }
+
+    main{max-width:1100px; margin:0 auto; padding:18px}
+    .layout{
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap:16px;
+      align-items:start;
+    }
+    nav.toc{
+      position:sticky;
+      top:14px;
+      align-self:start;
+      padding:14px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(18,28,58,.65);
+      box-shadow:var(--shadow);
+    }
+    nav.toc h2{
+      margin:0 0 10px;
+      font-size:1.02rem;
+      color:var(--text);
+    }
+    nav.toc a{
+      display:block;
+      padding:7px 10px;
+      margin:4px 0;
+      border-radius:12px;
+      border:1px solid transparent;
+      color:var(--muted);
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    nav.toc a:hover{
+      background:rgba(255,255,255,.06);
+      border-color:rgba(255,255,255,.10);
+      transform: translateX(2px);
+      color:var(--text);
+      text-decoration:none;
+    }
+
+    article{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    section{
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:rgba(18,28,58,.55);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    section .hd{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+    }
+    section .hd h2, section .hd h3{
+      margin:0;
+      font-size:1.05rem;
+      letter-spacing:.2px;
+    }
+    section .bd{padding:16px}
+    p{margin:10px 0}
+    ul{margin:10px 0 10px 20px}
+    li{margin:6px 0}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+    .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px}
+    .card{
+      border:1px solid var(--line);
+      background:rgba(15,23,48,.65);
+      border-radius:16px;
+      padding:14px;
+    }
+    .callout{
+      border-left:4px solid var(--accent);
+      background:rgba(125,211,252,.08);
+      padding:12px 12px 12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(125,211,252,.18);
+    }
+    .warn{
+      border-left-color:var(--warn);
+      background:rgba(251,191,36,.08);
+      border-color:rgba(251,191,36,.18);
+    }
+    .ok{
+      border-left-color:var(--good);
+      background:rgba(52,211,153,.08);
+      border-color:rgba(52,211,153,.18);
+    }
+    .bad{
+      border-left-color:var(--bad);
+      background:rgba(251,113,133,.08);
+      border-color:rgba(251,113,133,.18);
+    }
+    .eq{
+      font-family:var(--mono);
+      font-size:.95rem;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.22);
+      overflow:auto;
+      white-space:pre;
+      position:relative;
+    }
+    .eqbar{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:space-between;
+      margin:10px 0 6px;
+    }
+    .btn{
+      cursor:pointer;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:7px 10px;
+      border-radius:12px;
+      font-size:.88rem;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:hover{transform:translateY(-1px); background:rgba(255,255,255,.10); border-color:rgba(255,255,255,.20)}
+    .btn:active{transform:translateY(0px)}
+    .mini{font-size:.86rem; color:var(--muted)}
+    .table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+    }
+    .table th, .table td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      text-align:left;
+      font-size:.92rem;
+      vertical-align:top;
+    }
+    .table th{color:var(--text); background:rgba(255,255,255,.06)}
+    .table tr:last-child td{border-bottom:none}
+    .tag{
+      display:inline-flex; align-items:center; gap:8px;
+      font-family:var(--mono);
+      font-size:.85rem;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      color:var(--muted);
+    }
+
+    figure{margin:0}
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.22);
+    }
+    .canvasTall{height:360px}
+    .controls{
+      display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;
+      margin-top:10px;
+    }
+    .control{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      padding:10px 12px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+    }
+    label{color:var(--muted); font-size:.92rem}
+    input[type="range"]{width:min(320px, 60vw)}
+    select{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      color:var(--text);
+      padding:7px 10px;
+      border-radius:12px;
+      outline:none;
+    }
+
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:12px;
+      margin-top:10px;
+    }
+    .kpi .box{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:rgba(15,23,48,.55);
+      padding:12px;
+    }
+    .kpi .lab{color:var(--muted); font-size:.86rem}
+    .kpi .val{font-family:var(--mono); font-size:1.02rem; margin-top:6px}
+    .kpi .note{color:var(--muted); font-size:.84rem; margin-top:6px}
+
+    footer{
+      margin:22px 0 10px;
+      color:var(--muted);
+      font-size:.9rem;
+      text-align:center;
+    }
+
+    @media (max-width: 980px){
+      header .wrap{grid-template-columns:1fr; align-items:start}
+      .meta{justify-content:flex-start}
+      .layout{grid-template-columns:1fr}
+      nav.toc{position:relative; top:auto}
+    }
+    @media print{
+      :root{--bg:#fff; --panel:#fff; --card:#fff; --text:#000; --muted:#333; --line:#ddd}
+      body{background:#fff}
+      nav.toc{display:none}
+      .btn{display:none}
+      section{box-shadow:none}
+      canvas{border:1px solid #ccc}
+    }
+
+    /* subtle entrance */
+    section{animation: pop .35s ease both}
+    @keyframes pop{from{opacity:0; transform: translateY(6px)} to{opacity:1; transform: translateY(0)}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div>
+        <h1>Noise Comparison for Three Photodetectors (p–i–n, APD, PMT)</h1>
+        <p class="subtitle">
+          Compute the <b>photocurrent SNR</b> in a 1&nbsp;GHz analog optical receiver with a <b>50&nbsp;Ω</b> load at <b>77&nbsp;K</b>,
+          for the same incoming photon flux, and decide which devices make the signal detectable.
+        </p>
+      </div>
+      <div class="meta">
+        <span class="pill">λ = 1&nbsp;µm</span>
+        <span class="pill">B = 1&nbsp;GHz</span>
+        <span class="pill">R<sub>L</sub> = 50&nbsp;Ω</span>
+        <span class="pill">T = 77&nbsp;K</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <nav class="toc" aria-label="Table of contents">
+      <h2>Table of Contents</h2>
+      <a href="#quick">Quick Summary</a>
+      <a href="#part0">PART 0 — Concept Primer</a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a href="#part2">PART 2 — Strategy &amp; Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a href="#part4">PART 4 — Deeper Understanding</a>
+      <a href="#part5">PART 5 — Visualization Guide</a>
+    </nav>
+
+    <article>
+      <!-- Quick Summary -->
+      <section id="quick">
+        <div class="hd">
+          <h2>Quick Summary</h2>
+          <span class="tag">Goal: SNR and detectability</span>
+        </div>
+        <div class="bd">
+          <ul>
+            <li>We compare a <b>p–i–n photodiode</b>, an <b>APD</b>, and a <b>10-stage PMT</b> when illuminated by the same photon flux.</li>
+            <li>Key idea: the output current has a <b>mean signal</b> and a <b>noise variance</b> from <b>shot noise</b> and <b>thermal (Johnson) noise</b>.</li>
+            <li>Photocurrent from photon flux Φ: <span class="tag">I = q&nbsp;η&nbsp;Φ&nbsp;Ḡ</span> (gain Ḡ = 1 for p–i–n).</li>
+            <li>Shot-noise (including multiplication noise): <span class="tag">⟨i<sub>sh</sub><sup>2</sup>⟩ = 2q (qηΦ) Ḡ<sup>2</sup> F B</span> where <b>F</b> is the excess-noise factor.</li>
+            <li>Thermal current noise of the 50&nbsp;Ω load: <span class="tag">⟨i<sub>th</sub><sup>2</sup>⟩ = 4k<sub>B</sub>T B / R<sub>L</sub></span>.</li>
+            <li>SNR for photocurrent detection: <span class="tag">SNR = I<sup>2</sup> / (⟨i<sub>sh</sub><sup>2</sup>⟩ + ⟨i<sub>th</sub><sup>2</sup>⟩)</span>.</li>
+            <li>Numerical result at Φ = 10<sup>10</sup>&nbsp;s<sup>−1</sup>, B = 1&nbsp;GHz: p–i–n SNR ≈ <b>2.45×10<sup>−5</sup></b>, APD SNR ≈ <b>0.101</b>, PMT SNR ≈ <b>1.20</b>.</li>
+            <li>Detectability (typical criterion SNR ≥ 1): <b>only the PMT</b> makes the signal clearly detectable in this configuration.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Part 0 -->
+      <section id="part0">
+        <div class="hd">
+          <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+          <span class="tag">Noise in optical receivers</span>
+        </div>
+        <div class="bd">
+          <div class="grid2">
+            <div class="card">
+              <h3 style="margin:0 0 8px;">Core definitions</h3>
+              <ul>
+                <li><b>Photon flux</b> Φ [s<sup>−1</sup>]: photons arriving per second.</li>
+                <li><b>Quantum efficiency</b> η [dimensionless]: fraction of photons that produce a primary electron-hole pair (or photoelectron).</li>
+                <li><b>Photocurrent</b> I [A]: mean electrical current due to detected photons.</li>
+                <li><b>Bandwidth</b> B [Hz]: the electrical noise is integrated over this measurement bandwidth.</li>
+                <li><b>Load resistor</b> R<sub>L</sub> [Ω] at temperature T [K]: produces Johnson (thermal) noise.</li>
+                <li><b>Internal gain</b> Ḡ [dimensionless]: mean multiplication gain (APD avalanche gain, PMT dynode gain).</li>
+                <li><b>Excess-noise factor</b> F [dimensionless]: quantifies extra noise from stochastic multiplication (F = 1 means noiseless gain).</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3 style="margin:0 0 8px;">Physical meaning</h3>
+              <ul>
+                <li><b>Shot noise</b>: randomness of discrete charge arrivals. Even with constant average flux, the detected electrons fluctuate.</li>
+                <li><b>Thermal noise</b>: random voltage/current from resistor due to microscopic thermal agitation; independent of light.</li>
+                <li><b>Multiplication noise</b>: in APDs/PMTs the gain is random, so the output current fluctuates more than a simple amplified Poisson process.</li>
+              </ul>
+              <div class="callout warn" style="margin-top:10px;">
+                <b>Validity conditions.</b> The formulas below assume (i) linear operation (no saturation), (ii) stationary noise, (iii) white noise across the band, and (iv) dark current/background are negligible (not given in the problem).
+              </div>
+            </div>
+          </div>
+
+          <div class="eqbar">
+            <div class="mini"><b>Key equations</b> used throughout (copyable plain text)</div>
+            <button class="btn" data-copy="#eqKey">Copy equations</button>
+          </div>
+          <div class="eq" id="eqKey">I = q * η * Φ * Ḡ
+⟨i_sh^2⟩ = 2 * q * (q * η * Φ) * Ḡ^2 * F * B
+⟨i_th^2⟩ = 4 * k_B * T * B / R_L
+SNR = I^2 / (⟨i_sh^2⟩ + ⟨i_th^2⟩)</div>
+
+          <div class="grid2" style="margin-top:14px;">
+            <div class="card">
+              <h3 style="margin:0 0 8px;">Common models/approximations (and why)</h3>
+              <ul>
+                <li><b>Poisson photo-detection</b>: detected photoelectrons are Poisson with mean ηΦ per second → shot noise spectral density 2qI.</li>
+                <li><b>White thermal noise</b>: a resistor has (approximately) flat noise PSD over GHz ranges for typical receiver modeling.</li>
+                <li><b>Excess-noise factor</b> F: compresses the detailed multiplication statistics into one number that scales shot noise.</li>
+              </ul>
+              <div class="callout" style="margin-top:10px;">
+                <b>Mini intuition.</b> If the load is very noisy (large T, large B, small R), then increasing internal gain can help by making the signal larger than the thermal noise—until multiplication noise takes over.
+              </div>
+            </div>
+            <div class="card">
+              <h3 style="margin:0 0 8px;">What to watch for (pitfalls)</h3>
+              <ul>
+                <li>Mixing up <b>primary photocurrent</b> I<sub>p</sub> = qηΦ and <b>output current</b> I = ḠI<sub>p</sub>.</li>
+                <li>For APDs/PMTs, shot noise scales like <b>Ḡ<sup>2</sup>F</b>, not just Ḡ.</li>
+                <li>Bandwidth matters twice: signal is independent of B (for DC current), but noise grows with B → SNR typically falls as 1/B.</li>
+                <li>Thermal noise can dominate at low currents even at cryogenic temperatures if B is large (here: 1 GHz).</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Part 1 -->
+      <section id="part1">
+        <div class="hd">
+          <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+          <span class="tag">Given → Find</span>
+        </div>
+        <div class="bd">
+          <p>
+            We have an analog optical receiver at wavelength λ = 1&nbsp;µm. A photodetector is connected in series with a
+            load resistor R<sub>L</sub> = 50&nbsp;Ω held at T = 77&nbsp;K, and the receiver bandwidth is B = 1&nbsp;GHz.
+            The detector is illuminated by a photon flux Φ = 10<sup>10</sup>&nbsp;s<sup>−1</sup>. We compare three detectors:
+          </p>
+          <ul>
+            <li><b>p–i–n</b>: η = 0.9, gain Ḡ = 1.</li>
+            <li><b>APD</b>: η = 0.6, gain Ḡ = 100, ionization ratio k = 0.</li>
+            <li><b>PMT (10-stage)</b>: η = 0.3, mean gain Ḡ = 4<sup>10</sup>, gain variance σ<sub>G</sub><sup>2</sup> = Ḡ<sup>2</sup>/4.</li>
+          </ul>
+
+          <div class="grid2">
+            <div class="card">
+              <h3 style="margin:0 0 8px;">Given quantities</h3>
+              <ul>
+                <li>Φ = 10<sup>10</sup> s<sup>−1</sup></li>
+                <li>B = 1×10<sup>9</sup> Hz</li>
+                <li>R<sub>L</sub> = 50 Ω</li>
+                <li>T = 77 K</li>
+                <li>q = 1.602×10<sup>−19</sup> C, k<sub>B</sub> = 1.381×10<sup>−23</sup> J/K</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3 style="margin:0 0 8px;">Unknowns / tasks</h3>
+              <ul>
+                <li>(a) Photocurrent SNR for each device.</li>
+                <li>(b) Which devices make the signal detectable (practically: SNR ≥ 1)?</li>
+              </ul>
+              <div class="callout warn" style="margin-top:10px;">
+                <b>Assumption (explicit).</b> Dark current and background optical noise are not provided, so we compare using only
+                shot noise from the signal plus Johnson noise from the 50 Ω load.
+              </div>
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:14px;">
+            <div class="card">
+              <h3 style="margin:0 0 8px;">Relevant principles (and why)</h3>
+              <ul>
+                <li><b>Photodetection statistics</b>: photon-to-electron conversion is random → shot noise.</li>
+                <li><b>Johnson-Nyquist noise</b>: any resistor at temperature T contributes thermal noise.</li>
+                <li><b>Multiplication noise</b>: APD/PMT gain is stochastic → use F (excess-noise factor).</li>
+              </ul>
+              <p class="mini">We do not need wave optics, interference, or semiconductor bandstructure because the problem gives η and gain directly.</p>
+            </div>
+            <div class="card">
+              <h3 style="margin:0 0 8px;">Possible approaches</h3>
+              <ol style="margin:10px 0 10px 20px;">
+                <li><b>Noise PSD approach</b> (best): write mean current, write noise variances integrated over bandwidth.</li>
+                <li><b>Electron-counting approach</b>: compute detected electrons in time 1/(2B) and use counting SNR; equivalent but less direct for thermal noise.</li>
+                <li><b>Power/voltage SNR</b>: convert current to voltage across R<sub>L</sub>; same SNR if you treat both signal and noise consistently.</li>
+              </ol>
+              <div class="callout ok" style="margin-top:10px;">
+                <b>Choice.</b> We use the PSD/variance approach because it cleanly combines shot noise, thermal noise, and multiplication noise in one formula.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Part 2 -->
+      <section id="part2">
+        <div class="hd">
+          <h2>PART 2 — Strategy &amp; Tips (Roadmap Only)</h2>
+          <span class="tag">Plan</span>
+        </div>
+        <div class="bd">
+          <ol style="margin:10px 0 10px 20px;">
+            <li><b>Compute primary photocurrent</b> I<sub>p</sub> = qηΦ. (Goal: electrons per second → amps.)</li>
+            <li><b>Include internal gain</b> to get mean output current I = Ḡ I<sub>p</sub>. (Goal: actual delivered signal current.)</li>
+            <li><b>Write thermal noise</b> ⟨i<sub>th</sub><sup>2</sup>⟩ = 4k<sub>B</sub>TB/R<sub>L</sub>. (Goal: noise floor independent of light.)</li>
+            <li><b>Write shot noise</b> with multiplication: ⟨i<sub>sh</sub><sup>2</sup>⟩ = 2q I<sub>p</sub> Ḡ<sup>2</sup> F B. (Goal: light-dependent noise.)</li>
+            <li><b>Determine F</b>:
+              <ul>
+                <li>p–i–n: F = 1.</li>
+                <li>APD with k = 0: F = 2 − 1/Ḡ.</li>
+                <li>PMT: F = 1 + σ<sub>G</sub><sup>2</sup>/Ḡ<sup>2</sup>.</li>
+              </ul>
+            </li>
+            <li><b>Compute SNR</b> = I<sup>2</sup> /(⟨i<sub>sh</sub><sup>2</sup>⟩ + ⟨i<sub>th</sub><sup>2</sup>⟩).</li>
+            <li><b>Decide detectability</b> using a practical threshold (typically SNR ≥ 1 for “detectable with confidence” in a single measurement bandwidth).</li>
+          </ol>
+
+          <div class="grid2" style="margin-top:12px;">
+            <div class="callout warn">
+              <b>Common mistakes.</b>
+              <ul>
+                <li>Using I instead of I<sub>p</sub> inside the “2qI” formula when gain is present (the standard APD/PMT form is 2qI<sub>p</sub>Ḡ<sup>2</sup>F B).</li>
+                <li>Forgetting that thermal noise scales with bandwidth B.</li>
+                <li>Confusing SNR (power ratio) with SNR in dB: SNR<sub>dB</sub> = 10 log<sub>10</sub>(SNR).</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <b>Quick tips.</b>
+              <ul>
+                <li>If thermal noise dominates: SNR ≈ I<sup>2</sup> / (4k<sub>B</sub>TB/R<sub>L</sub>) → gain helps a lot.</li>
+                <li>If shot noise dominates: increasing gain doesn’t improve SNR much because both signal and shot noise scale similarly (with extra factor F).</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Part 3 -->
+      <section id="part3">
+        <div class="hd">
+          <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+          <span class="tag">Numbers + checks</span>
+        </div>
+        <div class="bd">
+          <div class="callout">
+            <b>Qualitative expectation (before calculating).</b>
+            <ul>
+              <li>The p–i–n current will be tiny (only ~ηΦ electrons per second), so in a 1&nbsp;GHz receiver the <b>thermal noise of 50&nbsp;Ω</b> may dwarf it.</li>
+              <li>An APD multiplies the current by 100, helping against thermal noise, but adds <b>excess multiplication noise</b> (F ≈ 2 for k=0).</li>
+              <li>A PMT with huge gain should push the signal far above thermal noise; then SNR will be set mainly by shot + gain statistics.</li>
+            </ul>
+          </div>
+
+          <h3 style="margin:14px 0 6px;">Step 1 — Mean photocurrents</h3>
+          <p>
+            The detected electron rate is ηΦ [s<sup>−1</sup>]. Multiplying by the electron charge q gives the <b>primary photocurrent</b>:
+          </p>
+          <div class="eqbar">
+            <div class="mini">Primary and output photocurrent</div>
+            <button class="btn" data-copy="#eqI">Copy</button>
+          </div>
+          <div class="eq" id="eqI">I_p = q * η * Φ
+I = Ḡ * I_p = q * η * Φ * Ḡ</div>
+
+          <p>Insert Φ = 10<sup>10</sup> s<sup>−1</sup> and device parameters:</p>
+
+          <div class="grid3">
+            <div class="card">
+              <h3 style="margin:0 0 6px;">p–i–n (η=0.9, Ḡ=1)</h3>
+              <div class="eq" style="margin:8px 0 0">I = q*(0.9)*1e10 ≈ 1.44e-9 A</div>
+              <p class="mini">About <b>1.44 nA</b>.</p>
+            </div>
+            <div class="card">
+              <h3 style="margin:0 0 6px;">APD (η=0.6, Ḡ=100)</h3>
+              <div class="eq" style="margin:8px 0 0">I = q*(0.6)*1e10*100 ≈ 9.61e-8 A</div>
+              <p class="mini">About <b>96 nA</b>.</p>
+            </div>
+            <div class="card">
+              <h3 style="margin:0 0 6px;">PMT (η=0.3, Ḡ=4^10)</h3>
+              <div class="eq" style="margin:8px 0 0">Ḡ = 4^10 = 1,048,576
+I = q*(0.3)*1e10*Ḡ ≈ 5.04e-4 A</div>
+              <p class="mini">About <b>0.504 mA</b>.</p>
+            </div>
+          </div>
+
+          <h3 style="margin:16px 0 6px;">Step 2 — Thermal noise from the 50 Ω load</h3>
+          <p>
+            The Johnson-Nyquist noise voltage PSD of a resistor is 4k<sub>B</sub>T R. Equivalently, the <b>current noise variance</b>
+            over bandwidth B across the resistor is:
+          </p>
+          <div class="eqbar">
+            <div class="mini">Thermal current noise (mean-square)</div>
+            <button class="btn" data-copy="#eqTh">Copy</button>
+          </div>
+          <div class="eq" id="eqTh">⟨i_th^2⟩ = 4 * k_B * T * B / R_L</div>
+
+          <p>
+            Insert T = 77 K, B = 1×10<sup>9</sup> Hz, R<sub>L</sub>=50 Ω:
+          </p>
+          <div class="eq">⟨i_th^2⟩ = 4*(1.380649e-23)*77*(1e9)/50 ≈ 8.50e-14 A^2
+i_th,rms ≈ 9.22e-7 A</div>
+          <p class="mini">So the load contributes roughly <b>0.92 µA rms</b> over 1 GHz — surprisingly large compared with nanoamp signals.</p>
+
+          <h3 style="margin:16px 0 6px;">Step 3 — Shot noise with multiplication (excess-noise factor)</h3>
+          <p>
+            For Poisson photodetection, the shot-noise mean-square current over bandwidth B is 2qI<sub>p</sub>B when there is no gain.
+            With stochastic gain, shot noise is amplified by Ḡ<sup>2</sup> and inflated by F:
+          </p>
+          <div class="eqbar">
+            <div class="mini">Shot noise (mean-square) including multiplication noise</div>
+            <button class="btn" data-copy="#eqShot">Copy</button>
+          </div>
+          <div class="eq" id="eqShot">⟨i_sh^2⟩ = 2 * q * I_p * Ḡ^2 * F * B
+where I_p = q * η * Φ</div>
+
+          <div class="grid2" style="margin-top:12px;">
+            <div class="card">
+              <h3 style="margin:0 0 8px;">Excess-noise factor F for each device</h3>
+              <ul>
+                <li><b>p–i–n</b>: no multiplication → F = 1.</li>
+                <li><b>APD</b>: for ionization ratio k = 0, the standard result is
+                  <div class="eq" style="margin-top:8px;">F = 2 - 1/Ḡ</div>
+                  so at Ḡ=100, F ≈ 1.99.
+                </li>
+                <li><b>PMT</b>: given gain variance σ<sub>G</sub><sup>2</sup> = Ḡ<sup>2</sup>/4, use
+                  <div class="eq" style="margin-top:8px;">F = 1 + (σ_G^2 / Ḡ^2) = 1 + 1/4 = 1.25</div>
+                </li>
+              </ul>
+            </div>
+            <div class="callout warn">
+              <b>Why PMT F = 1 + σ<sub>G</sub><sup>2</sup>/Ḡ<sup>2</sup>?</b>
+              <p class="mini" style="margin-top:8px;">
+                If the output current is proportional to a random gain G multiplying a Poisson-distributed primary electron stream,
+                the variance contains a Poisson term and a gain-variance term. Those combine into a multiplicative factor
+                (1 + σ<sub>G</sub><sup>2</sup>/Ḡ<sup>2</sup>) on the shot-noise contribution.
+              </p>
+            </div>
+          </div>
+
+          <h3 style="margin:16px 0 6px;">Step 4 — SNR definition and computation</h3>
+          <p>
+            We treat the mean photocurrent I as the “signal” and the total mean-square noise current as the sum of independent
+            shot and thermal contributions:
+          </p>
+          <div class="eqbar">
+            <div class="mini">SNR for photocurrent measurement</div>
+            <button class="btn" data-copy="#eqSNR">Copy</button>
+          </div>
+          <div class="eq" id="eqSNR">SNR = I^2 / (⟨i_sh^2⟩ + ⟨i_th^2⟩)</div>
+
+          <p>Now compute each device at Φ = 10<sup>10</sup> s<sup>−1</sup>, B=1 GHz, T=77 K, R<sub>L</sub>=50 Ω:</p>
+
+          <table class="table" aria-label="SNR results table">
+            <thead>
+              <tr>
+                <th>Detector</th>
+                <th>η</th>
+                <th>Ḡ</th>
+                <th>F</th>
+                <th>Mean current I (A)</th>
+                <th>⟨i<sub>sh</sub><sup>2</sup>⟩ (A²)</th>
+                <th>⟨i<sub>th</sub><sup>2</sup>⟩ (A²)</th>
+                <th>SNR</th>
+                <th>SNR (dB)</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              <!-- Filled by JS for consistency with plots -->
+            </tbody>
+          </table>
+
+          <div class="callout bad" style="margin-top:14px;">
+            <b>Answer (a): Photocurrent SNRs at Φ = 10<sup>10</sup> s<sup>−1</sup>, B = 1 GHz</b>
+            <div class="eq" id="finalA" style="margin-top:10px;">p–i–n: SNR ≈ 2.45×10^−5
+APD:   SNR ≈ 1.01×10^−1
+PMT:   SNR ≈ 1.20</div>
+            <div class="controls" style="margin-top:10px;">
+              <span class="mini">These values include thermal noise of the 50 Ω load at 77 K.</span>
+              <button class="btn" data-copy="#finalA">Copy part (a)</button>
+            </div>
+          </div>
+
+          <div class="callout ok" style="margin-top:14px;">
+            <b>Answer (b): Detectability</b>
+            <p style="margin:8px 0 0;">
+              Using the common criterion <b>SNR ≥ 1</b> for “detectable within the measurement bandwidth,”
+              <b>only the PMT</b> meets the threshold here (SNR ≈ 1.20). The p–i–n and APD are <b>thermal-noise limited</b> at 1&nbsp;GHz.
+            </p>
+            <div class="eq" id="finalB" style="margin-top:10px;">Detectable (SNR ≥ 1): PMT only
+Not detectable in this setup: p–i–n, APD</div>
+            <div class="controls" style="margin-top:10px;">
+              <span class="mini">If you reduced B or used a transimpedance amplifier with lower input noise, the ranking could change.</span>
+              <button class="btn" data-copy="#finalB">Copy part (b)</button>
+            </div>
+          </div>
+
+          <h3 style="margin:16px 0 6px;">Sanity checks</h3>
+          <div class="grid2">
+            <div class="card">
+              <h4 style="margin:0 0 8px;">Units/dimensions</h4>
+              <ul>
+                <li>I = qηΦḠ → C × (1/s) = A ✔</li>
+                <li>⟨i<sub>th</sub><sup>2</sup>⟩ = 4kTB/R → (J/K·K·Hz)/Ω = (J·Hz)/Ω = (V·C·Hz)/Ω = A² ✔</li>
+                <li>⟨i<sub>sh</sub><sup>2</sup>⟩ = 2qI<sub>p</sub>Ḡ²FB → C·A·Hz = A² ✔</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4 style="margin:0 0 8px;">Limiting-case reasoning</h4>
+              <ul>
+                <li>If B → 0: noises → 0, so SNR → ∞ (for a DC current measurement) ✔</li>
+                <li>If T increases: thermal noise rises linearly → SNR falls ✔</li>
+                <li>If gain becomes huge: thermal becomes negligible; SNR becomes shot/multiplication-limited ✔</li>
+              </ul>
+            </div>
+          </div>
+
+          <p class="mini" style="margin-top:10px;">
+            Connection to the physical setup: the diagram below shows the detector driving a 50 Ω load. The resistor’s Johnson noise is a current noise
+            that adds to the random (shot) photocurrent fluctuations, and the receiver bandwidth sets how much noise is integrated.
+          </p>
+        </div>
+      </section>
+
+      <!-- Visualization block -->
+      <section>
+        <div class="hd">
+          <h2>Interactive Visualizations</h2>
+          <span class="tag">Canvas + live parameter control</span>
+        </div>
+        <div class="bd">
+          <div class="grid2">
+            <figure class="card">
+              <figcaption class="mini" style="margin-bottom:10px;">
+                <b>Diagram:</b> optical flux → detector → 50 Ω load (77 K). Live labels update with photon flux.
+              </figcaption>
+              <canvas id="diag" class="canvasTall" aria-label="Physical setup diagram"></canvas>
+            </figure>
+
+            <figure class="card">
+              <figcaption class="mini" style="margin-bottom:10px;">
+                <b>Main plot:</b> SNR versus photon flux Φ (three detectors). Marker shows current Φ slider.
+              </figcaption>
+              <canvas id="plotMain" class="canvasTall" aria-label="SNR vs photon flux plot"></canvas>
+            </figure>
+          </div>
+
+          <div class="grid2" style="margin-top:14px;">
+            <figure class="card">
+              <figcaption class="mini" style="margin-bottom:10px;">
+                <b>Secondary plot:</b> SNR versus bandwidth B (1 MHz → 10 GHz) for the current Φ (three detectors).
+              </figcaption>
+              <canvas id="plotB" aria-label="SNR vs bandwidth plot"></canvas>
+            </figure>
+
+            <div class="card">
+              <h3 style="margin:0 0 10px;">Interactive controls</h3>
+              <div class="control">
+                <label for="phiSlider"><b>Photon flux</b> log<sub>10</sub>(Φ / s⁻¹)</label>
+                <input id="phiSlider" type="range" min="8" max="14" step="0.01" value="10" />
+                <span class="tag" id="phiRead">Φ = 1.00×10¹⁰ s⁻¹</span>
+              </div>
+
+              <div class="control" style="margin-top:10px;">
+                <label for="modeSel"><b>Plot scale</b></label>
+                <select id="modeSel">
+                  <option value="db" selected>SNR in dB</option>
+                  <option value="lin">SNR (linear)</option>
+                </select>
+                <label for="detSel" style="margin-left:6px;"><b>Detector highlight</b></label>
+                <select id="detSel">
+                  <option value="pin" selected>p–i–n</option>
+                  <option value="apd">APD</option>
+                  <option value="pmt">PMT</option>
+                </select>
+              </div>
+
+              <div class="kpi" aria-label="Live KPIs">
+                <div class="box">
+                  <div class="lab">p–i–n SNR</div>
+                  <div class="val" id="kpiPin">—</div>
+                  <div class="note" id="kpiPinN">—</div>
+                </div>
+                <div class="box">
+                  <div class="lab">APD SNR</div>
+                  <div class="val" id="kpiApd">—</div>
+                  <div class="note" id="kpiApdN">—</div>
+                </div>
+                <div class="box">
+                  <div class="lab">PMT SNR</div>
+                  <div class="val" id="kpiPmt">—</div>
+                  <div class="note" id="kpiPmtN">—</div>
+                </div>
+              </div>
+
+              <div class="callout warn" style="margin-top:12px;">
+                <b>Interpretation tip.</b> In this problem’s baseline (Φ=10¹⁰ s⁻¹, B=1 GHz), the p–i–n and APD are dominated by
+                thermal noise of the 50 Ω load. The PMT’s huge gain moves the receiver into a shot/multiplication-noise regime.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Part 4 -->
+      <section id="part4">
+        <div class="hd">
+          <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+          <span class="tag">What controls SNR?</span>
+        </div>
+        <div class="bd">
+          <h3 style="margin:0 0 8px;">Re-interpreting the final formula</h3>
+          <p>
+            Substitute I = qηΦḠ and I<sub>p</sub> = qηΦ into the SNR expression:
+          </p>
+          <div class="eqbar">
+            <div class="mini">SNR in terms of Φ, gain, and noise sources</div>
+            <button class="btn" data-copy="#eqRe">Copy</button>
+          </div>
+          <div class="eq" id="eqRe">Let I_p = q * η * Φ.
+Signal: I = Ḡ * I_p.
+
+Noise:
+⟨i_sh^2⟩ = 2 * q * I_p * Ḡ^2 * F * B
+⟨i_th^2⟩ = 4 * k_B * T * B / R_L
+
+So:
+SNR = (Ḡ^2 * I_p^2) / (2*q*I_p*Ḡ^2*F*B + 4*k_B*T*B/R_L)
+    = I_p^2 / (2*q*I_p*F*B + (4*k_B*T*B)/(R_L*Ḡ^2))</div>
+
+          <p>
+            This reveals two regimes:
+          </p>
+          <ul>
+            <li><b>Thermal-noise limited</b> (second term dominates): SNR ∝ Ḡ<sup>2</sup> and ∝ Φ<sup>2</sup>. Internal gain helps a lot.</li>
+            <li><b>Shot/multiplication-noise limited</b> (first term dominates): SNR ≈ I<sub>p</sub> / (2qF B) ∝ Φ and does <b>not</b> improve with gain (because gain boosts both signal and shot noise similarly, with penalty F).</li>
+          </ul>
+
+          <div class="grid2" style="margin-top:12px;">
+            <div class="card">
+              <h3 style="margin:0 0 8px;">How parameter changes affect outcome</h3>
+              <ul>
+                <li>Increase Φ: all SNR curves rise; in thermal-limited regime SNR rises faster (≈Φ²).</li>
+                <li>Increase B: SNR falls roughly as 1/B (noise integrates over more bandwidth).</li>
+                <li>Increase T or decrease R<sub>L</sub>: thermal noise rises → p–i–n/APD suffer more.</li>
+                <li>Increase gain Ḡ: helps only while thermal noise matters; once shot noise dominates, gain mostly stops helping.</li>
+                <li>Lower excess noise F: always helps in the shot-noise-limited regime (APD with k→0 gives larger F; k closer to 1 can reduce F depending on device physics).</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3 style="margin:0 0 8px;">Alternative derivation idea</h3>
+              <p class="mini">
+                You can derive the same SNR by choosing an “effective measurement time” of order 1/(2B) and treating detected electrons as counts:
+                the mean count is ηΦ/(2B), the shot variance equals the mean (Poisson), and then you add the equivalent thermal noise converted into an
+                electron-count variance over that time. The PSD method used here is cleaner for electrical receivers.
+              </p>
+
+              <h3 style="margin:12px 0 8px;">Concept checks (with answers)</h3>
+              <ul>
+                <li><b>Q:</b> Why does thermal noise depend on B? <b>A:</b> Wider bandwidth includes more noise power from a (nearly) white PSD.</li>
+                <li><b>Q:</b> Why doesn’t gain always increase SNR? <b>A:</b> Shot noise scales with the signal; after gain, both grow together (plus excess-noise penalty).</li>
+                <li><b>Q:</b> Why can a PMT outperform an APD here? <b>A:</b> The PMT’s very large gain makes thermal noise negligible, and its given F (1.25) is not too large.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Part 5 -->
+      <section id="part5">
+        <div class="hd">
+          <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+          <span class="tag">What you’re seeing</span>
+        </div>
+        <div class="bd">
+          <div class="grid2">
+            <div class="card">
+              <h3 style="margin:0 0 8px;">Diagram canvas</h3>
+              <ul>
+                <li>Shows incoming photon flux Φ at λ=1 µm illuminating a detector.</li>
+                <li>Detector drives a 50 Ω load at 77 K; thermal noise is labeled.</li>
+                <li>Live readouts show mean currents for p–i–n / APD / PMT at the selected Φ.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3 style="margin:0 0 8px;">Main plot: SNR vs photon flux</h3>
+              <ul>
+                <li><b>x-axis:</b> log<sub>10</sub>(Φ) in s<sup>−1</sup>.</li>
+                <li><b>y-axis:</b> SNR (linear or dB, selectable).</li>
+                <li>Three curves correspond to p–i–n, APD, and PMT using the same formulas as in the solution.</li>
+                <li>A vertical marker shows the currently chosen Φ.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:12px;">
+            <div class="card">
+              <h3 style="margin:0 0 8px;">Secondary plot: SNR vs bandwidth</h3>
+              <ul>
+                <li><b>x-axis:</b> log<sub>10</sub>(B) from 10<sup>6</sup> to 10<sup>10</sup> Hz.</li>
+                <li>At fixed Φ (your slider), increasing B increases both thermal and shot noise linearly → SNR trends downward.</li>
+                <li>Comparing detectors across B shows where each becomes thermal-limited or shot-limited.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3 style="margin:0 0 8px;">Interactive controls</h3>
+              <ul>
+                <li><b>Photon flux slider:</b> changes Φ and updates the diagram plus both plots live.</li>
+                <li><b>Plot scale:</b> toggles between linear SNR and SNR in dB.</li>
+                <li><b>Detector highlight:</b> emphasizes one detector in plots to make comparisons easier.</li>
+              </ul>
+              <p class="mini">
+                The baseline problem corresponds to Φ = 10<sup>10</sup> s<sup>−1</sup> and B = 10<sup>9</sup> Hz: you can return to it by setting the slider to 10.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        Built as a self-contained learning article (vanilla HTML/CSS/JS). Copy buttons copy plain-text equations/results.
+      </footer>
+    </article>
+  </main>
+
+  <script>
+    // ---------- Copy buttons ----------
+    function copyTextFromSelector(sel){
+      const el = document.querySelector(sel);
+      if(!el) return;
+      const text = el.innerText.replace(/\u00A0/g,' ');
+      navigator.clipboard.writeText(text).catch(()=>{});
+    }
+    document.addEventListener('click', (e)=>{
+      const btn = e.target.closest('[data-copy]');
+      if(!btn) return;
+      copyTextFromSelector(btn.getAttribute('data-copy'));
+      const old = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(()=>btn.textContent = old, 900);
+    });
+
+    // ---------- Physics constants ----------
+    const q = 1.602176634e-19;
+    const kB = 1.380649e-23;
+
+    // Baseline given
+    const T = 77.0;
+    const RL = 50.0;
+    const B0 = 1e9;
+
+    // Devices (problem data)
+    const devices = {
+      pin: {name:'p–i–n', eta:0.9, G:1,    F:1},
+      apd: {name:'APD',   eta:0.6, G:100,  F:(2 - 1/100)}, // k=0 => F=2-1/G
+      pmt: {name:'PMT',   eta:0.3, G:Math.pow(4,10), F:(1 + 1/4)} // F = 1 + σG^2/G^2, with σG^2=G^2/4
+    };
+
+    function thermalVar(B){
+      return 4*kB*T*B/RL; // A^2
+    }
+
+    function stats(devKey, Phi, B){
+      const d = devices[devKey];
+      const Ip = q*d.eta*Phi;               // primary photocurrent (A)
+      const I  = d.G*Ip;                    // mean output current (A)
+      const shot = 2*q*Ip*(d.G*d.G)*d.F*B;  // A^2
+      const th = thermalVar(B);             // A^2
+      const snr = (I*I)/(shot + th);
+      return {Ip,I,shot,th,snr};
+    }
+
+    function fmtSI(x, sig=3){
+      if(!isFinite(x)) return '—';
+      const ax = Math.abs(x);
+      if(ax === 0) return '0';
+      const exp = Math.floor(Math.log10(ax));
+      const mant = x/Math.pow(10,exp);
+      const m = mant.toFixed(sig-1);
+      return `${m}×10^${exp}`;
+    }
+    function fmtA(x){
+      // choose readable unit
+      const ax = Math.abs(x);
+      if(ax>=1e-3) return (x*1e3).toFixed(3)+' mA';
+      if(ax>=1e-6) return (x*1e6).toFixed(3)+' µA';
+      if(ax>=1e-9) return (x*1e9).toFixed(3)+' nA';
+      if(ax>=1e-12) return (x*1e12).toFixed(3)+' pA';
+      return x.toExponential(3)+' A';
+    }
+    function toDB(x){
+      if(x<=0) return -Infinity;
+      return 10*Math.log10(x);
+    }
+
+    // ---------- Fill solution table (baseline Φ = 1e10) ----------
+    function fillBaselineTable(){
+      const Phi = 1e10;
+      const tbody = document.getElementById('resultsBody');
+      tbody.innerHTML = '';
+      ['pin','apd','pmt'].forEach(k=>{
+        const d = devices[k];
+        const s = stats(k, Phi, B0);
+        const tr = document.createElement('tr');
+        const snrdb = toDB(s.snr);
+        tr.innerHTML = `
+          <td><b>${d.name}</b></td>
+          <td>${d.eta.toFixed(2)}</td>
+          <td>${(k==='pmt') ? d.G.toLocaleString() : d.G}</td>
+          <td>${d.F.toFixed(2)}</td>
+          <td><span style="font-family:var(--mono)">${s.I.toExponential(3)}</span></td>
+          <td><span style="font-family:var(--mono)">${s.shot.toExponential(3)}</span></td>
+          <td><span style="font-family:var(--mono)">${s.th.toExponential(3)}</span></td>
+          <td><span style="font-family:var(--mono)">${s.snr.toExponential(3)}</span></td>
+          <td><span style="font-family:var(--mono)">${isFinite(snrdb)?snrdb.toFixed(2):'—'}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ---------- Canvas helpers (HiDPI + responsive) ----------
+    function setupCanvas(canvas){
+      const ctx = canvas.getContext('2d');
+      function resize(){
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.max(2, Math.floor(rect.width*dpr));
+        canvas.height = Math.max(2, Math.floor(rect.height*dpr));
+        ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+      }
+      resize();
+      return {ctx, resize};
+    }
+
+    function clear(ctx, w, h){
+      ctx.clearRect(0,0,w,h);
+    }
+
+    function roundRect(ctx, x,y,w,h,r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr,y);
+      ctx.arcTo(x+w,y,x+w,y+h,rr);
+      ctx.arcTo(x+w,y+h,x,y+h,rr);
+      ctx.arcTo(x,y+h,x,y,rr);
+      ctx.arcTo(x,y,x+w,y,rr);
+      ctx.closePath();
+    }
+
+    function drawAxes(ctx, plot){
+      const {x,y,w,h} = plot;
+      // background
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.lineWidth = 1;
+      roundRect(ctx, x, y, w, h, 14);
+      ctx.stroke();
+
+      // grid + ticks
+      const nx = 6, ny = 6;
+      ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+      for(let i=1;i<nx;i++){
+        const xx = x + (w*i/nx);
+        ctx.beginPath(); ctx.moveTo(xx, y); ctx.lineTo(xx, y+h); ctx.stroke();
+      }
+      for(let j=1;j<ny;j++){
+        const yy = y + (h*j/ny);
+        ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x+w, yy); ctx.stroke();
+      }
+
+      // axes lines
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.beginPath(); ctx.moveTo(x, y+h); ctx.lineTo(x+w, y+h); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y+h); ctx.stroke();
+      ctx.restore();
+    }
+
+    function mapLin(v, vmin, vmax, outMin, outMax){
+      const t = (v - vmin)/(vmax - vmin);
+      return outMin + t*(outMax - outMin);
+    }
+
+    function drawText(ctx, txt, x,y, size=12, color='rgba(233,238,255,0.92)', align='left'){
+      ctx.save();
+      ctx.font = `${size}px ${getComputedStyle(document.documentElement).getPropertyValue('--sans')}`;
+      ctx.fillStyle = color;
+      ctx.textAlign = align;
+      ctx.textBaseline = 'top';
+      ctx.fillText(txt, x, y);
+      ctx.restore();
+    }
+
+    function drawLegend(ctx, items, x,y){
+      ctx.save();
+      ctx.font = `12px ${getComputedStyle(document.documentElement).getPropertyValue('--sans')}`;
+      ctx.textBaseline = 'middle';
+      let yy = y;
+      items.forEach(it=>{
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = it.color;
+        ctx.lineWidth = it.width || 2;
+        ctx.beginPath();
+        ctx.moveTo(x, yy);
+        ctx.lineTo(x+22, yy);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(233,238,255,0.88)';
+        ctx.fillText(it.label, x+28, yy);
+        yy += 18;
+      });
+      ctx.restore();
+    }
+
+    function colorFor(k){
+      // no fixed palette requirement in prompt for plots, but fine to have consistent colors without external libs
+      if(k==='pin') return 'rgba(125,211,252,0.95)';   // accent
+      if(k==='apd') return 'rgba(167,139,250,0.95)';   // accent2
+      return 'rgba(52,211,153,0.95)';                  // good
+    }
+
+    // ---------- Diagram ----------
+    const diagC = setupCanvas(document.getElementById('diag'));
+    function drawDiagram(Phi){
+      const canvas = document.getElementById('diag');
+      const ctx = diagC.ctx;
+      const w = canvas.getBoundingClientRect().width;
+      const h = canvas.getBoundingClientRect().height;
+
+      clear(ctx, w, h);
+
+      // Title
+      drawText(ctx, 'Physical setup (analog receiver)', 16, 12, 14, 'rgba(233,238,255,0.95)');
+
+      // Light beam
+      ctx.save();
+      ctx.strokeStyle = 'rgba(125,211,252,0.85)';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10,7]);
+      ctx.beginPath();
+      ctx.moveTo(20, 90);
+      ctx.lineTo(w*0.42, 90);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(125,211,252,0.12)';
+      ctx.beginPath();
+      ctx.ellipse(w*0.24, 90, 90, 24, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+
+      // Detector block
+      const dx = w*0.42, dy = 60, dw = w*0.20, dh = 70;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+      ctx.lineWidth = 1;
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      roundRect(ctx, dx, dy, dw, dh, 14);
+      ctx.fill(); ctx.stroke();
+      drawText(ctx, 'Photodetector', dx+12, dy+10, 13, 'rgba(233,238,255,0.90)');
+      drawText(ctx, 'η, gain Ḡ, excess noise F', dx+12, dy+32, 11, 'rgba(169,180,218,0.95)');
+      ctx.restore();
+
+      // Wire to resistor
+      const midy = dy + dh/2;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(233,238,255,0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(dx+dw, midy);
+      ctx.lineTo(w*0.74, midy);
+      ctx.stroke();
+      ctx.restore();
+
+      // Resistor symbol
+      const rx = w*0.74, ry = midy-18, rw = w*0.18, rh = 36;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.20)';
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      roundRect(ctx, rx, ry, rw, rh, 12);
+      ctx.fill(); ctx.stroke();
+      drawText(ctx, 'Load R_L = 50 Ω', rx+12, ry+8, 12, 'rgba(233,238,255,0.90)');
+      drawText(ctx, 'T = 77 K', rx+12, ry+24, 11, 'rgba(169,180,218,0.95)');
+      ctx.restore();
+
+      // Current arrow
+      ctx.save();
+      ctx.strokeStyle = 'rgba(233,238,255,0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(w*0.58, midy+50);
+      ctx.lineTo(w*0.78, midy+50);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(w*0.78, midy+50);
+      ctx.lineTo(w*0.76, midy+44);
+      ctx.lineTo(w*0.76, midy+56);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(233,238,255,0.55)';
+      ctx.fill();
+      drawText(ctx, 'Measured current (signal + noise)', w*0.58, midy+58, 11, 'rgba(169,180,218,0.95)');
+      ctx.restore();
+
+      // Label beam
+      const phiStr = `Φ = ${Phi.toExponential(2)} s⁻¹  (λ = 1 µm)`;
+      drawText(ctx, 'Incident photons', 18, 64, 12, 'rgba(169,180,218,0.95)');
+      drawText(ctx, phiStr, 18, 106, 12, 'rgba(233,238,255,0.90)');
+
+      // Compute currents for labels
+      const sPin = stats('pin', Phi, B0);
+      const sApd = stats('apd', Phi, B0);
+      const sPmt = stats('pmt', Phi, B0);
+      const thRms = Math.sqrt(thermalVar(B0));
+
+      // Bottom info panel
+      const px = 16, py = h-110, pw = w-32, ph = 96;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      roundRect(ctx, px, py, pw, ph, 16);
+      ctx.fill(); ctx.stroke();
+
+      drawText(ctx, `Bandwidth: B = ${B0.toExponential(0)} Hz`, px+14, py+12, 12, 'rgba(233,238,255,0.90)');
+      drawText(ctx, `Thermal noise: i_th,rms ≈ ${fmtA(thRms)} (over B)`, px+14, py+32, 12, 'rgba(169,180,218,0.95)');
+
+      drawText(ctx, `Mean currents at this Φ:`, px+14, py+54, 12, 'rgba(233,238,255,0.90)');
+      drawText(ctx, `p–i–n: ${fmtA(sPin.I)}   |   APD: ${fmtA(sApd.I)}   |   PMT: ${fmtA(sPmt.I)}`, px+14, py+72, 12, 'rgba(169,180,218,0.95)');
+      ctx.restore();
+    }
+
+    // ---------- Plots ----------
+    const mainC = setupCanvas(document.getElementById('plotMain'));
+    const bC = setupCanvas(document.getElementById('plotB'));
+
+    function niceTicks(vmin, vmax, n=6){
+      // linear ticks
+      const span = vmax - vmin;
+      const raw = span/(n-1);
+      const pow = Math.pow(10, Math.floor(Math.log10(Math.abs(raw))));
+      const frac = raw/pow;
+      let nice;
+      if(frac < 1.5) nice = 1;
+      else if(frac < 3) nice = 2;
+      else if(frac < 7) nice = 5;
+      else nice = 10;
+      const step = nice*pow;
+      const start = Math.ceil(vmin/step)*step;
+      const ticks = [];
+      for(let v=start; v<=vmax+1e-12; v+=step) ticks.push(v);
+      return ticks;
+    }
+
+    function drawSNRvsPhi(PhiMark, mode, highlight){
+      const canvas = document.getElementById('plotMain');
+      const ctx = mainC.ctx;
+      const W = canvas.getBoundingClientRect().width;
+      const H = canvas.getBoundingClientRect().height;
+      clear(ctx, W, H);
+
+      const pad = {l:56, r:18, t:34, b:46};
+      const plot = {x:pad.l, y:pad.t, w:W-pad.l-pad.r, h:H-pad.t-pad.b};
+      drawAxes(ctx, plot);
+
+      // Ranges
+      const xMin = 8, xMax = 14; // log10 Phi
+      let yMin, yMax;
+      if(mode==='db'){
+        yMin = -60; yMax = 20;
+      }else{
+        yMin = 1e-6; yMax = 1e3;
+      }
+
+      // Title
+      drawText(ctx, 'SNR vs photon flux Φ (B = 1 GHz, T = 77 K, R_L = 50 Ω)', 16, 10, 13, 'rgba(233,238,255,0.92)');
+
+      // Axis labels
+      drawText(ctx, 'log10(Φ / s⁻¹)', plot.x + plot.w/2, H-28, 12, 'rgba(169,180,218,0.95)', 'center');
+      drawText(ctx, (mode==='db') ? 'SNR (dB)' : 'SNR (linear)', 14, plot.y + plot.h/2 - 20, 12, 'rgba(169,180,218,0.95)');
+
+      // y ticks
+      ctx.save();
+      ctx.font = `12px ${getComputedStyle(document.documentElement).getPropertyValue('--sans')}`;
+      ctx.fillStyle = 'rgba(169,180,218,0.95)';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      if(mode==='db'){
+        const yt = niceTicks(yMin, yMax, 6);
+        yt.forEach(v=>{
+          const yy = mapLin(v, yMin, yMax, plot.y+plot.h, plot.y);
+          ctx.fillText(v.toFixed(0), plot.x-8, yy);
+        });
+      }else{
+        // log ticks: 1e-6 to 1e3
+        const pmin = -6, pmax = 3;
+        for(let p=pmin; p<=pmax; p++){
+          const v = Math.pow(10,p);
+          const yy = mapLin(p, pmin, pmax, plot.y+plot.h, plot.y);
+          ctx.fillText(`1e${p}`, plot.x-8, yy);
+        }
+      }
+      // x ticks
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for(let xv=xMin; xv<=xMax; xv++){
+        const xx = mapLin(xv, xMin, xMax, plot.x, plot.x+plot.w);
+        ctx.fillText(xv.toString(), xx, plot.y+plot.h+8);
+      }
+      ctx.restore();
+
+      function yMap(snr){
+        if(mode==='db'){
+          const yv = toDB(snr);
+          return mapLin(yv, yMin, yMax, plot.y+plot.h, plot.y);
+        }else{
+          const p = Math.log10(Math.max(snr, 1e-12));
+          const pmin=-6, pmax=3;
+          return mapLin(p, pmin, pmax, plot.y+plot.h, plot.y);
+        }
+      }
+
+      // Curves
+      const keys = ['pin','apd','pmt'];
+      keys.forEach(k=>{
+        const col = colorFor(k);
+        ctx.save();
+        ctx.strokeStyle = col;
+        ctx.lineWidth = (k===highlight)? 3.2 : 2.0;
+        ctx.globalAlpha = (k===highlight)? 1.0 : 0.7;
+        ctx.beginPath();
+        let first=true;
+        for(let i=0;i<=240;i++){
+          const xlog = xMin + (xMax-xMin)*i/240;
+          const Phi = Math.pow(10, xlog);
+          const s = stats(k, Phi, B0);
+          const xx = mapLin(xlog, xMin, xMax, plot.x, plot.x+plot.w);
+          const yy = yMap(s.snr);
+          if(first){ ctx.moveTo(xx,yy); first=false; }
+          else ctx.lineTo(xx,yy);
+        }
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // Marker at current Phi
+      const xMark = Math.log10(PhiMark);
+      const xxm = mapLin(xMark, xMin, xMax, plot.x, plot.x+plot.w);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(233,238,255,0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6,6]);
+      ctx.beginPath();
+      ctx.moveTo(xxm, plot.y);
+      ctx.lineTo(xxm, plot.y+plot.h);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // Legend
+      drawLegend(ctx, [
+        {label:'p–i–n', color:colorFor('pin'), width:(highlight==='pin'?3:2)},
+        {label:'APD',   color:colorFor('apd'), width:(highlight==='apd'?3:2)},
+        {label:'PMT',   color:colorFor('pmt'), width:(highlight==='pmt'?3:2)},
+      ], plot.x+12, plot.y+14);
+
+      // SNR=1 line
+      ctx.save();
+      ctx.strokeStyle = 'rgba(251,191,36,0.55)';
+      ctx.lineWidth = 1.6;
+      ctx.setLineDash([4,6]);
+      const y1 = (mode==='db') ? mapLin(0, yMin, yMax, plot.y+plot.h, plot.y) : yMap(1);
+      ctx.beginPath();
+      ctx.moveTo(plot.x, y1);
+      ctx.lineTo(plot.x+plot.w, y1);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      drawText(ctx, 'SNR = 1', plot.x+plot.w-10, y1-16, 11, 'rgba(251,191,36,0.85)', 'right');
+      ctx.restore();
+    }
+
+    function drawSNRvsB(Phi, mode, highlight){
+      const canvas = document.getElementById('plotB');
+      const ctx = bC.ctx;
+      const W = canvas.getBoundingClientRect().width;
+      const H = canvas.getBoundingClientRect().height;
+      clear(ctx, W, H);
+
+      const pad = {l:56, r:18, t:34, b:46};
+      const plot = {x:pad.l, y:pad.t, w:W-pad.l-pad.r, h:H-pad.t-pad.b};
+      drawAxes(ctx, plot);
+
+      // x is log10(B)
+      const xMin = 6, xMax = 10; // 1 MHz to 10 GHz
+      let yMin, yMax;
+      if(mode==='db'){ yMin = -60; yMax = 20; }
+      else { yMin = 1e-6; yMax = 1e3; }
+
+      drawText(ctx, 'SNR vs bandwidth B (at current Φ)', 16, 10, 13, 'rgba(233,238,255,0.92)');
+      drawText(ctx, 'log10(B / Hz)', plot.x + plot.w/2, H-28, 12, 'rgba(169,180,218,0.95)', 'center');
+      drawText(ctx, (mode==='db') ? 'SNR (dB)' : 'SNR (linear)', 14, plot.y + plot.h/2 - 20, 12, 'rgba(169,180,218,0.95)');
+
+      // ticks
+      ctx.save();
+      ctx.font = `12px ${getComputedStyle(document.documentElement).getPropertyValue('--sans')}`;
+      ctx.fillStyle = 'rgba(169,180,218,0.95)';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      if(mode==='db'){
+        niceTicks(yMin, yMax, 6).forEach(v=>{
+          const yy = mapLin(v, yMin, yMax, plot.y+plot.h, plot.y);
+          ctx.fillText(v.toFixed(0), plot.x-8, yy);
+        });
+      }else{
+        const pmin=-6, pmax=3;
+        for(let p=pmin;p<=pmax;p++){
+          const yy = mapLin(p, pmin, pmax, plot.y+plot.h, plot.y);
+          ctx.fillText(`1e${p}`, plot.x-8, yy);
+        }
+      }
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for(let xv=xMin; xv<=xMax; xv++){
+        const xx = mapLin(xv, xMin, xMax, plot.x, plot.x+plot.w);
+        ctx.fillText(xv.toString(), xx, plot.y+plot.h+8);
+      }
+      ctx.restore();
+
+      function yMap(snr){
+        if(mode==='db'){
+          return mapLin(toDB(snr), yMin, yMax, plot.y+plot.h, plot.y);
+        }else{
+          const p = Math.log10(Math.max(snr, 1e-12));
+          const pmin=-6, pmax=3;
+          return mapLin(p, pmin, pmax, plot.y+plot.h, plot.y);
+        }
+      }
+
+      ['pin','apd','pmt'].forEach(k=>{
+        const col = colorFor(k);
+        ctx.save();
+        ctx.strokeStyle = col;
+        ctx.lineWidth = (k===highlight)? 3.2 : 2.0;
+        ctx.globalAlpha = (k===highlight)? 1.0 : 0.7;
+        ctx.beginPath();
+        let first=true;
+        for(let i=0;i<=220;i++){
+          const blog = xMin + (xMax-xMin)*i/220;
+          const B = Math.pow(10, blog);
+          const s = stats(k, Phi, B);
+          const xx = mapLin(blog, xMin, xMax, plot.x, plot.x+plot.w);
+          const yy = yMap(s.snr);
+          if(first){ ctx.moveTo(xx,yy); first=false; }
+          else ctx.lineTo(xx,yy);
+        }
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // legend
+      drawLegend(ctx, [
+        {label:'p–i–n', color:colorFor('pin'), width:(highlight==='pin'?3:2)},
+        {label:'APD',   color:colorFor('apd'), width:(highlight==='apd'?3:2)},
+        {label:'PMT',   color:colorFor('pmt'), width:(highlight==='pmt'?3:2)},
+      ], plot.x+12, plot.y+14);
+
+      // SNR=1 line
+      ctx.save();
+      ctx.strokeStyle = 'rgba(251,191,36,0.55)';
+      ctx.lineWidth = 1.6;
+      ctx.setLineDash([4,6]);
+      const y1 = (mode==='db') ? mapLin(0, yMin, yMax, plot.y+plot.h, plot.y) : yMap(1);
+      ctx.beginPath(); ctx.moveTo(plot.x, y1); ctx.lineTo(plot.x+plot.w, y1); ctx.stroke();
+      ctx.setLineDash([]);
+      drawText(ctx, 'SNR = 1', plot.x+plot.w-10, y1-16, 11, 'rgba(251,191,36,0.85)', 'right');
+      ctx.restore();
+    }
+
+    // ---------- UI wiring ----------
+    const phiSlider = document.getElementById('phiSlider');
+    const phiRead = document.getElementById('phiRead');
+    const modeSel = document.getElementById('modeSel');
+    const detSel = document.getElementById('detSel');
+
+    function updateKPIs(Phi){
+      const mode = modeSel.value;
+      const keys = ['pin','apd','pmt'];
+      const ids = {pin:['kpiPin','kpiPinN'], apd:['kpiApd','kpiApdN'], pmt:['kpiPmt','kpiPmtN']};
+      keys.forEach(k=>{
+        const s = stats(k, Phi, B0);
+        const snrdb = toDB(s.snr);
+        const line1 = (mode==='db')
+          ? `${isFinite(snrdb)?snrdb.toFixed(2):'—'} dB`
+          : `${s.snr.toExponential(3)}`;
+        const thR = Math.sqrt(s.th);
+        const shR = Math.sqrt(s.shot);
+        const note = `I=${fmtA(s.I)} · i_th,rms=${fmtA(thR)} · i_sh,rms=${fmtA(shR)}`;
+        document.getElementById(ids[k][0]).textContent = line1;
+        document.getElementById(ids[k][1]).textContent = note;
+      });
+    }
+
+    function updateAll(){
+      const logPhi = parseFloat(phiSlider.value);
+      const Phi = Math.pow(10, logPhi);
+      phiRead.textContent = `Φ = ${Phi.toExponential(2)} s⁻¹`;
+      const mode = modeSel.value;
+      const highlight = detSel.value;
+
+      drawDiagram(Phi);
+      drawSNRvsPhi(Phi, mode, highlight);
+      drawSNRvsB(Phi, mode, highlight);
+      updateKPIs(Phi);
+    }
+
+    // ---------- Resize handling ----------
+    function resizeAll(){
+      diagC.resize();
+      mainC.resize();
+      bC.resize();
+      updateAll();
+    }
+    window.addEventListener('resize', ()=>{ resizeAll(); });
+
+    // ---------- Initialize ----------
+    fillBaselineTable();
+    updateAll();
+
+    phiSlider.addEventListener('input', updateAll);
+    modeSel.addEventListener('change', updateAll);
+    detSel.addEventListener('change', updateAll);
+
+    // Smooth scrolling for TOC
+    document.querySelectorAll('nav.toc a').forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        const href = a.getAttribute('href');
+        if(!href || !href.startsWith('#')) return;
+        const target = document.querySelector(href);
+        if(!target) return;
+        e.preventDefault();
+        target.scrollIntoView({behavior:'smooth', block:'start'});
+        history.replaceState(null, '', href);
+      });
+    });
+  </script>
+</body>
+</html>

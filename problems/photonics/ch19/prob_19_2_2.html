@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Photoconductivity in Intrinsic Silicon — Worked Example with Interactive Plots</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --panel:#111827;
+      --panel2:#0f172a;
+      --text:#e5e7eb;
+      --muted:#a3a3a3;
+      --accent:#60a5fa;
+      --accent2:#34d399;
+      --warn:#fbbf24;
+      --danger:#fb7185;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --radius2:22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1100px 700px at 18% 0%, rgba(96,165,250,.20), transparent 60%),
+        radial-gradient(900px 600px at 85% 25%, rgba(52,211,153,.14), transparent 55%),
+        radial-gradient(900px 600px at 50% 110%, rgba(251,191,36,.08), transparent 55%),
+        var(--bg);
+      line-height:1.55;
+    }
+
+    header{
+      padding: 34px 18px 18px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .title{
+      display:grid;
+      gap:10px;
+      align-items:start;
+    }
+    h1{
+      font-size: clamp(1.55rem, 2.2vw + 1rem, 2.6rem);
+      margin:0;
+      letter-spacing:-0.02em;
+    }
+    .subtitle{
+      color:var(--muted);
+      max-width: 85ch;
+      margin:0;
+    }
+
+    main{
+      max-width:1200px;
+      margin: 0 auto;
+      padding: 10px 18px 60px;
+      display:grid;
+      grid-template-columns: 330px 1fr;
+      gap: 18px;
+      align-items:start;
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: linear-gradient(180deg, rgba(17,24,39,.92), rgba(17,24,39,.78));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 14px 10px;
+      backdrop-filter: blur(8px);
+    }
+    .toc h2{
+      font-size: 0.95rem;
+      margin: 4px 0 8px;
+      letter-spacing: .02em;
+      color: #dbeafe;
+    }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      text-decoration:none;
+      color: var(--text);
+      font-size: 0.92rem;
+      border:1px solid transparent;
+    }
+    .toc a:hover{
+      border-color: rgba(96,165,250,.35);
+      background: rgba(96,165,250,.08);
+    }
+    .toc .hint{
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin: 10px 8px 4px;
+    }
+
+    article{
+      display:grid;
+      gap: 16px;
+      min-width:0;
+    }
+
+    section{
+      background: linear-gradient(180deg, rgba(17,24,39,.88), rgba(15,23,42,.76));
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+      overflow:hidden;
+      backdrop-filter: blur(8px);
+    }
+    section h2{
+      margin: 0 0 10px;
+      font-size: 1.25rem;
+      letter-spacing:-0.01em;
+    }
+    section h3{
+      margin: 14px 0 8px;
+      font-size: 1.05rem;
+      color: #dbeafe;
+    }
+    p{ margin: 10px 0; color: rgba(229,231,235,.96); }
+    ul{ margin: 10px 0 10px 20px; }
+    li{ margin: 6px 0; color: rgba(229,231,235,.96); }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items:start;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      main{ grid-template-columns: 1fr; }
+      nav.toc{ position: relative; top: 0; }
+      .grid2, .grid3{ grid-template-columns: 1fr; }
+    }
+
+    .callout{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 12px 10px;
+      background: rgba(0,0,0,.12);
+    }
+    .callout strong{ color:#fff; }
+    .callout.assumptions{ border-color: rgba(96,165,250,.35); }
+    .callout.keyeq{ border-color: rgba(52,211,153,.35); }
+    .callout.mistakes{ border-color: rgba(251,191,36,.38); }
+    .callout.answer{ border-color: rgba(251,113,133,.40); background: rgba(251,113,133,.08); }
+
+    .eqwrap{
+      display:grid;
+      gap:10px;
+    }
+    pre.eq{
+      margin:0;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      font-family: var(--mono);
+      font-size: 0.93rem;
+      overflow:auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .copyRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    button.copy{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(96,165,250,.10);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-size: 0.9rem;
+      transition: transform .08s ease, background .2s ease, border-color .2s ease;
+    }
+    button.copy:hover{
+      background: rgba(96,165,250,.16);
+      border-color: rgba(96,165,250,.35);
+    }
+    button.copy:active{ transform: translateY(1px); }
+    .copystatus{
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    figure{
+      margin:0;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      overflow:hidden;
+    }
+    figcaption{
+      padding: 10px 12px 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    canvas{
+      width: 100%;
+      height: 320px;
+      display:block;
+    }
+    .canvasTall canvas{ height: 360px; }
+
+    .controls{
+      display:grid;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .control{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items:center;
+      padding: 10px 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+    }
+    .control label{
+      font-size: 0.92rem;
+      color: rgba(229,231,235,.96);
+    }
+    .control .val{
+      font-family: var(--mono);
+      color: #e0f2fe;
+      font-size: 0.92rem;
+      padding: 4px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(96,165,250,.25);
+      background: rgba(96,165,250,.08);
+      min-width: 120px;
+      text-align:right;
+    }
+    input[type="range"]{ width: 100%; }
+    select{
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+    }
+    .results{
+      display:grid;
+      gap: 10px;
+      padding: 12px 12px;
+      border-radius: 16px;
+      border:1px solid rgba(52,211,153,.28);
+      background: rgba(52,211,153,.07);
+    }
+    .kpiRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .kpi{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+      border-radius: 16px;
+      padding: 10px 10px;
+      min-width:0;
+    }
+    .kpi .k{
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 4px;
+    }
+    .kpi .v{
+      font-family: var(--mono);
+      font-size: 1.02rem;
+      color:#ecfeff;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    @media (max-width: 680px){
+      .kpiRow{ grid-template-columns: 1fr; }
+    }
+
+    .divider{
+      height:1px;
+      background: var(--line);
+      margin: 10px 0;
+    }
+
+    footer{
+      max-width:1200px;
+      margin: 0 auto;
+      padding: 0 18px 40px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    /* subtle entrance */
+    section{
+      animation: fadeUp .5s ease both;
+    }
+    @keyframes fadeUp{
+      from{ opacity:0; transform: translateY(6px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+
+    /* print-friendly */
+    @media print{
+      body{ background:#fff; color:#000; }
+      header, main, footer{ max-width: 100%; }
+      nav.toc{ display:none; }
+      section{ box-shadow:none; border:1px solid #ccc; background:#fff; }
+      pre.eq{ background:#f6f6f6; color:#000; }
+      canvas{ display:none; }
+      .controls, .results, button.copy{ display:none; }
+      a{ color:#000; text-decoration:none; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">
+    <h1>Photoconductivity in Intrinsic Silicon: Percentage Increase in Conductivity</h1>
+    <p class="subtitle">
+      We compute how much the conductivity of intrinsic Si rises when it absorbs a given optical power density.
+      Along the way you’ll learn the steady-state photogeneration–recombination model and why the answer (here) does
+      <em>not</em> require carrier mobilities.
+    </p>
+  </div>
+</header>
+
+<main>
+  <nav class="toc" aria-label="Table of contents">
+    <h2>Contents</h2>
+    <a href="#quick">Quick Summary</a>
+    <a href="#part0">PART 0 — Concept Primer</a>
+    <a href="#part1">PART 1 — Problem Analysis</a>
+    <a href="#part2">PART 2 — Strategy & Tips</a>
+    <a href="#part3">PART 3 — Full Solution</a>
+    <a href="#part4">PART 4 — Deeper Understanding</a>
+    <a href="#part5">PART 5 — Visualization Guide</a>
+    <div class="hint">Tip: The sliders update <b>all</b> plots and the computed result.</div>
+  </nav>
+
+  <article>
+    <section id="quick">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><b>Topic:</b> photoconductivity of intrinsic silicon under uniform illumination (steady state).</li>
+        <li><b>Key idea:</b> absorbed photons generate electron–hole pairs; recombination limits the steady excess carriers.</li>
+        <li><b>Photon → carrier rate:</b> volumetric generation rate <span style="font-family:var(--mono)">G = η·P_abs / (h c / λ)</span>.</li>
+        <li><b>Steady excess density:</b> <span style="font-family:var(--mono)">Δn = Δp = G·τ</span> (low-level injection, uniform, steady).</li>
+        <li><b>Conductivity:</b> <span style="font-family:var(--mono)">σ = q(n μn + p μp)</span>. For intrinsic Si with <span style="font-family:var(--mono)">n=p</span>, the fractional change is <b>mobility-independent</b>.</li>
+        <li><b>Result form:</b> <span style="font-family:var(--mono)">Δσ/σ0 = Δn/ni</span> ⇒ % increase = <span style="font-family:var(--mono)">100·Δn/ni</span>.</li>
+        <li><b>Numeric answer (given data):</b> <b>~168% increase</b> (conductivity becomes ~2.68× the dark value).</li>
+      </ul>
+    </section>
+
+    <section id="part0">
+      <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+      <h3>Core definitions (symbols & units)</h3>
+      <ul>
+        <li><b>Carrier densities</b>: electron density <span style="font-family:var(--mono)">n</span> and hole density <span style="font-family:var(--mono)">p</span> (units: <span style="font-family:var(--mono)">cm⁻³</span> or <span style="font-family:var(--mono)">m⁻³</span>).</li>
+        <li><b>Intrinsic carrier concentration</b>: <span style="font-family:var(--mono)">n_i</span> (for intrinsic material, equilibrium <span style="font-family:var(--mono)">n0=p0=ni</span>).</li>
+        <li><b>Mobility</b>: <span style="font-family:var(--mono)">μn, μp</span> (units: <span style="font-family:var(--mono)">cm²/(V·s)</span>).</li>
+        <li><b>Conductivity</b>: <span style="font-family:var(--mono)">σ</span> (units: <span style="font-family:var(--mono)">S/cm</span> or <span style="font-family:var(--mono)">S/m</span>), with
+          <span style="font-family:var(--mono)">σ = q(n μn + p μp)</span>.</li>
+        <li><b>Recombination lifetime</b>: <span style="font-family:var(--mono)">τ</span> (units: seconds), the characteristic time excess carriers survive before recombining.</li>
+        <li><b>Quantum efficiency</b>: <span style="font-family:var(--mono)">η</span> (dimensionless), fraction of absorbed photons that create collected electron–hole pairs.</li>
+        <li><b>Absorbed optical power density</b>: <span style="font-family:var(--mono)">P_abs</span> (units: <span style="font-family:var(--mono)">W/cm³</span> here), energy absorbed per time per volume.</li>
+      </ul>
+
+      <h3>Physical meaning of key quantities</h3>
+      <p>
+        Illumination injects energy into the semiconductor. Each absorbed photon of energy
+        <span style="font-family:var(--mono)">E_ph = h c / λ</span> can promote an electron to the conduction band,
+        leaving behind a hole—an electron–hole pair.
+        The pair density does not grow without bound: recombination continuously removes carriers, described (in a simple model)
+        by a lifetime <span style="font-family:var(--mono)">τ</span>.
+      </p>
+
+      <div class="grid2">
+        <div class="callout keyeq">
+          <strong>Key steady-state model</strong>
+          <div class="eqwrap" style="margin-top:10px;">
+            <pre class="eq" id="eq0">Photon energy: E_ph = h c / λ
+
+Generation rate (per volume): G = η · P_abs / E_ph
+
+Steady excess carriers (uniform): Δn = Δp = G · τ</pre>
+            <div class="copyRow">
+              <button class="copy" data-copy-target="eq0">Copy equations</button>
+              <span class="copystatus" id="status-eq0"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout assumptions">
+          <strong>When this is valid (assumptions)</strong>
+          <ul>
+            <li>Illumination creates carriers uniformly in the region considered (or we use an average).</li>
+            <li>Steady state: generation and recombination have reached balance.</li>
+            <li>Low-level injection relative to transport laws: conductivity uses the standard drift form <span style="font-family:var(--mono)">σ = q(nμn+pμp)</span>.</li>
+            <li>One effective lifetime <span style="font-family:var(--mono)">τ</span> captures recombination (lumped model).</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Common models/approximations and why we use them</h3>
+      <ul>
+        <li><b>Lumped lifetime model:</b> treats recombination as <span style="font-family:var(--mono)">R_excess = Δn/τ</span>. Great for quick photoconductivity estimates.</li>
+        <li><b>Uniform generation from absorbed power density:</b> if you’re told “<em>power density absorbed</em>,” you can directly convert energy → photon rate → pair rate without modeling absorption vs depth.</li>
+        <li><b>Intrinsic symmetry:</b> in intrinsic Si, <span style="font-family:var(--mono)">n0=p0=ni</span> and optical generation creates equal excess <span style="font-family:var(--mono)">Δn=Δp</span>. This causes a major simplification in the conductivity ratio.</li>
+      </ul>
+
+      <h3>Mini intuition examples</h3>
+      <ul>
+        <li>If you <b>double</b> the absorbed power density <span style="font-family:var(--mono)">P_abs</span>, you double <span style="font-family:var(--mono)">G</span>, hence double <span style="font-family:var(--mono)">Δn</span>, and the conductivity increase doubles.</li>
+        <li>If carriers live <b>10× longer</b> (larger <span style="font-family:var(--mono)">τ</span>), the steady excess density becomes 10× larger—like filling a bathtub with the same faucet but a slower drain.</li>
+      </ul>
+
+      <div class="callout mistakes">
+        <strong>What to watch for (typical pitfalls)</strong>
+        <ul>
+          <li>Confusing <span style="font-family:var(--mono)">mW/cm²</span> (area) with <span style="font-family:var(--mono)">mW/cm³</span> (volume). This problem gives a <b>volumetric</b> absorbed power density.</li>
+          <li>Forgetting quantum efficiency <span style="font-family:var(--mono)">η</span> (not every photon yields a pair).</li>
+          <li>Mixing units: if <span style="font-family:var(--mono)">ni</span> is in <span style="font-family:var(--mono)">cm⁻³</span>, keep <span style="font-family:var(--mono)">G</span> and <span style="font-family:var(--mono)">Δn</span> in <span style="font-family:var(--mono)">cm⁻³</span> too.</li>
+          <li>Overcomplicating: mobilities cancel in the fractional increase for intrinsic material under equal excess carriers.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="part1">
+      <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+      <h3>Restate the problem</h3>
+      <p>
+        An intrinsic silicon sample has intrinsic carrier concentration <span style="font-family:var(--mono)">ni</span>
+        and recombination lifetime <span style="font-family:var(--mono)">τ</span>.
+        Light of wavelength <span style="font-family:var(--mono)">λ0 = 1 μm</span> is absorbed with volumetric absorbed power density
+        <span style="font-family:var(--mono)">P_abs = 1 mW/cm³</span>.
+        With quantum efficiency <span style="font-family:var(--mono)">η = 1/2</span>, find the <b>percentage increase</b> in conductivity.
+      </p>
+
+      <div class="grid2">
+        <div class="callout">
+          <strong>Given</strong>
+          <ul>
+            <li><span style="font-family:var(--mono)">ni = 1.5 × 10^10 cm⁻³</span></li>
+            <li><span style="font-family:var(--mono)">τ = 10 μs</span></li>
+            <li><span style="font-family:var(--mono)">P_abs = 1 mW/cm³</span> (absorbed)</li>
+            <li><span style="font-family:var(--mono)">λ = 1 μm</span></li>
+            <li><span style="font-family:var(--mono)">η = 1/2</span></li>
+          </ul>
+        </div>
+        <div class="callout">
+          <strong>Unknown / find</strong>
+          <ul>
+            <li>Percent increase in conductivity: <span style="font-family:var(--mono)">100 × (σ - σ0)/σ0</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Relevant physics and why it applies</h3>
+      <ul>
+        <li><b>Photon energy relation</b> <span style="font-family:var(--mono)">E_ph = hc/λ</span> converts absorbed power into absorbed photon rate.</li>
+        <li><b>Generation–recombination balance</b> in steady state: <span style="font-family:var(--mono)">G = Δn/τ</span> (simple lifetime model) gives the excess carrier density.</li>
+        <li><b>Drift conductivity</b> <span style="font-family:var(--mono)">σ = q(nμn + pμp)</span> links carrier densities to conductivity.</li>
+      </ul>
+      <p>
+        We do <em>not</em> need diffusion equations or detailed absorption depth because the problem already specifies the
+        <b>absorbed power per volume</b>. We do <em>not</em> need explicit mobilities because we are asked for a <b>fractional change</b>
+        in an intrinsic sample where <span style="font-family:var(--mono)">Δn=Δp</span>.
+      </p>
+
+      <div class="callout assumptions">
+        <strong>Assumptions stated explicitly</strong>
+        <ul>
+          <li>Steady-state illumination (carrier densities have reached a constant value).</li>
+          <li>Intrinsic material: equilibrium <span style="font-family:var(--mono)">n0=p0=ni</span>.</li>
+          <li>Each effective photogeneration event creates one electron and one hole: <span style="font-family:var(--mono)">Δn=Δp</span>.</li>
+          <li>Uniform volumetric absorption in the region of interest (or we treat given value as uniform average).</li>
+          <li>A single lifetime <span style="font-family:var(--mono)">τ</span> describes recombination of excess carriers.</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (compare 2–3)</h3>
+      <ul>
+        <li><b>Energy-to-photon-to-carrier approach (best here):</b> Use <span style="font-family:var(--mono)">G = η P_abs / (hc/λ)</span>, then <span style="font-family:var(--mono)">Δn = Gτ</span>, then conductivity ratio. <b>Pros:</b> minimal data needed. <b>Cons:</b> assumes uniform absorption/lumped lifetime.</li>
+        <li><b>Optical absorption coefficient approach:</b> If given intensity and absorption coefficient, compute depth-dependent generation <span style="font-family:var(--mono)">G(x)</span> and integrate. <b>Pros:</b> more realistic. <b>Cons:</b> unnecessary because <span style="font-family:var(--mono)">P_abs</span> is already given.</li>
+        <li><b>Full continuity/transport solution:</b> Solve for spatial profiles with boundary conditions. <b>Pros:</b> high fidelity. <b>Cons:</b> overkill and underdetermined for this problem.</li>
+      </ul>
+      <p><b>Chosen approach:</b> energy-to-photon-to-carrier (direct, matches given inputs exactly).</p>
+    </section>
+
+    <section id="part2">
+      <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+      <ol>
+        <li>
+          <b>Convert absorbed optical power density into photon absorption rate.</b><br/>
+          Use <span style="font-family:var(--mono)">E_ph = hc/λ</span> and <span style="font-family:var(--mono)">Φ = P_abs/E_ph</span> (photons·s⁻¹·cm⁻³).<br/>
+          <span style="color:var(--muted)">Meaning:</span> how many photons are absorbed each second in each cubic centimeter.
+        </li>
+        <li>
+          <b>Apply quantum efficiency to get carrier generation rate.</b><br/>
+          <span style="font-family:var(--mono)">G = η Φ</span> (pairs·s⁻¹·cm⁻³).<br/>
+          <span style="color:var(--muted)">Meaning:</span> only a fraction becomes useful electron–hole pairs.
+        </li>
+        <li>
+          <b>Use steady-state lifetime model to get excess carriers.</b><br/>
+          <span style="font-family:var(--mono)">Δn = Gτ</span> and <span style="font-family:var(--mono)">Δp = Gτ</span>.<br/>
+          <span style="color:var(--muted)">Meaning:</span> steady “inventory” of carriers equals “inflow rate” times “survival time.”
+        </li>
+        <li>
+          <b>Write dark and illuminated conductivity.</b><br/>
+          Dark: <span style="font-family:var(--mono)">σ0 = q(ni μn + ni μp)</span>.<br/>
+          Light: <span style="font-family:var(--mono)">σ = q((ni+Δn)μn + (ni+Δp)μp)</span>.
+        </li>
+        <li>
+          <b>Form the fractional change and simplify.</b><br/>
+          Use <span style="font-family:var(--mono)">Δn=Δp</span> and intrinsic <span style="font-family:var(--mono)">n0=p0=ni</span> to show <span style="font-family:var(--mono)">Δσ/σ0 = Δn/ni</span>.
+        </li>
+        <li>
+          <b>Compute the percentage increase.</b><br/>
+          <span style="font-family:var(--mono)">% increase = 100·Δn/ni</span>.
+        </li>
+      </ol>
+
+      <div class="callout mistakes">
+        <strong>Common mistakes & quick tips</strong>
+        <ul>
+          <li><b>Tip:</b> Keep everything in <span style="font-family:var(--mono)">cm</span>-based units since <span style="font-family:var(--mono)">ni</span> is given in <span style="font-family:var(--mono)">cm⁻³</span>.</li>
+          <li><b>Mistake:</b> Using <span style="font-family:var(--mono)">λ</span> in μm without converting to meters in <span style="font-family:var(--mono)">hc/λ</span>. (We’ll handle conversions explicitly.)</li>
+          <li><b>Mistake:</b> Thinking mobilities are needed—here they cancel in the ratio.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="part3">
+      <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+      <h3>Qualitative expectation (before calculating)</h3>
+      <p>
+        Intrinsic Si starts with a relatively small carrier density <span style="font-family:var(--mono)">ni</span>.
+        If illumination produces an excess carrier density <span style="font-family:var(--mono)">Δn</span> comparable to <span style="font-family:var(--mono)">ni</span>,
+        the conductivity should rise by a comparable factor. So if we find <span style="font-family:var(--mono)">Δn ≈ ni</span>, expect roughly a 100% increase;
+        if <span style="font-family:var(--mono)">Δn > ni</span>, expect more than doubling of conductivity.
+      </p>
+
+      <h3>Step 1 — Photon energy at λ = 1 μm</h3>
+      <p>
+        Photon energy:
+        <span style="font-family:var(--mono)">E_ph = h c / λ</span>.
+        Use <span style="font-family:var(--mono)">h = 6.626×10⁻³⁴ J·s</span>,
+        <span style="font-family:var(--mono)">c = 3.00×10⁸ m/s</span>,
+        and <span style="font-family:var(--mono)">λ = 1 μm = 1×10⁻⁶ m</span>.
+      </p>
+
+      <div class="eqwrap">
+        <pre class="eq" id="eq1">E_ph = (6.626×10^-34 J·s)(3.00×10^8 m/s) / (1.00×10^-6 m)
+     = 1.9878×10^-19 J</pre>
+        <div class="copyRow">
+          <button class="copy" data-copy-target="eq1">Copy this calculation</button>
+          <span class="copystatus" id="status-eq1"></span>
+        </div>
+      </div>
+
+      <p>
+        <span style="color:var(--muted)">Interpretation:</span> each absorbed photon carries about <span style="font-family:var(--mono)">2×10⁻¹⁹ J</span> of energy.
+      </p>
+
+      <h3>Step 2 — Convert absorbed power density to absorbed photon rate</h3>
+      <p>
+        The problem states an <b>absorbed optical power density</b>:
+        <span style="font-family:var(--mono)">P_abs = 1 mW/cm³ = 1×10⁻³ J·s⁻¹·cm⁻³</span>.
+        The absorbed photon rate per volume is
+        <span style="font-family:var(--mono)">Φ = P_abs / E_ph</span>.
+      </p>
+
+      <div class="eqwrap">
+        <pre class="eq" id="eq2">Φ = P_abs / E_ph
+  = (1.0×10^-3 J·s^-1·cm^-3) / (1.9878×10^-19 J)
+  = 5.03×10^15 photons·s^-1·cm^-3</pre>
+        <div class="copyRow">
+          <button class="copy" data-copy-target="eq2">Copy this calculation</button>
+          <span class="copystatus" id="status-eq2"></span>
+        </div>
+      </div>
+
+      <p>
+        <span style="color:var(--muted)">What we did and why:</span> Since power is energy per time, dividing by energy per photon gives photons per time.
+        Because the power density is per volume, the result is also per volume.
+      </p>
+
+      <h3>Step 3 — Apply quantum efficiency to get carrier generation rate</h3>
+      <p>
+        Quantum efficiency <span style="font-family:var(--mono)">η = 1/2</span> means only half the absorbed photons produce an electron–hole pair that contributes to photoconductivity:
+        <span style="font-family:var(--mono)">G = η Φ</span>.
+      </p>
+
+      <div class="eqwrap">
+        <pre class="eq" id="eq3">G = η Φ = 0.5 × 5.03×10^15
+  = 2.52×10^15 pairs·s^-1·cm^-3</pre>
+        <div class="copyRow">
+          <button class="copy" data-copy-target="eq3">Copy this calculation</button>
+          <span class="copystatus" id="status-eq3"></span>
+        </div>
+      </div>
+
+      <h3>Step 4 — Steady-state excess carrier density from lifetime</h3>
+      <p>
+        In the simple lifetime model under steady state, the excess carriers satisfy
+        <span style="font-family:var(--mono)">G = Δn/τ</span>, hence <span style="font-family:var(--mono)">Δn = Gτ</span>.
+        Since generation makes equal electrons and holes:
+        <span style="font-family:var(--mono)">Δp = Δn</span>.
+        With <span style="font-family:var(--mono)">τ = 10 μs = 1.0×10⁻⁵ s</span>:
+      </p>
+
+      <div class="eqwrap">
+        <pre class="eq" id="eq4">Δn = G τ
+   = (2.52×10^15 cm^-3·s^-1)(1.0×10^-5 s)
+   = 2.52×10^10 cm^-3
+
+Δp = Δn = 2.52×10^10 cm^-3</pre>
+        <div class="copyRow">
+          <button class="copy" data-copy-target="eq4">Copy this calculation</button>
+          <span class="copystatus" id="status-eq4"></span>
+        </div>
+      </div>
+
+      <p>
+        <span style="color:var(--muted)">Interpretation:</span> carriers are created at a huge rate, but they only survive about 10 μs,
+        so the steady “inventory” is on the order of <span style="font-family:var(--mono)">10^10 cm⁻³</span>, comparable to the intrinsic density.
+      </p>
+
+      <h3>Step 5 — Relate excess carriers to conductivity increase</h3>
+      <p>
+        Conductivity is
+        <span style="font-family:var(--mono)">σ = q(n μn + p μp)</span>.
+        For intrinsic Si in the dark: <span style="font-family:var(--mono)">n0=p0=ni</span>, so
+        <span style="font-family:var(--mono)">σ0 = q ni (μn + μp)</span>.
+      </p>
+      <p>
+        Under illumination (steady):
+        <span style="font-family:var(--mono)">n = ni + Δn</span> and <span style="font-family:var(--mono)">p = ni + Δp</span>.
+        With <span style="font-family:var(--mono)">Δp = Δn</span>:
+      </p>
+
+      <div class="eqwrap">
+        <pre class="eq" id="eq5">σ = q[(ni+Δn)μn + (ni+Δn)μp]
+  = q[ni(μn+μp) + Δn(μn+μp)]
+  = σ0 + q Δn(μn+μp)
+
+Therefore, Δσ = σ - σ0 = q Δn(μn+μp)
+and  Δσ/σ0 = Δn/ni</pre>
+        <div class="copyRow">
+          <button class="copy" data-copy-target="eq5">Copy derivation</button>
+          <span class="copystatus" id="status-eq5"></span>
+        </div>
+      </div>
+
+      <p>
+        <span style="color:var(--muted)">What we did and why:</span> We formed a ratio so that the unknown mobilities cancel.
+        This works because electrons and holes both increase by the same amount in an intrinsic sample.
+      </p>
+
+      <h3>Step 6 — Compute the percentage increase</h3>
+      <p>
+        Using <span style="font-family:var(--mono)">ni = 1.5×10^10 cm⁻³</span> and <span style="font-family:var(--mono)">Δn = 2.52×10^10 cm⁻³</span>:
+      </p>
+
+      <div class="eqwrap">
+        <pre class="eq" id="eq6">Δσ/σ0 = Δn/ni = (2.52×10^10) / (1.5×10^10) = 1.68
+
+Percentage increase = 100 × Δσ/σ0 = 168%</pre>
+        <div class="copyRow">
+          <button class="copy" data-copy-target="eq6">Copy final math</button>
+          <span class="copystatus" id="status-eq6"></span>
+        </div>
+      </div>
+
+      <div class="callout answer">
+        <strong>Final Answer</strong>
+        <div class="eqwrap" style="margin-top:10px;">
+          <pre class="eq" id="finalAns">Excess carrier density: Δn = Δp = 2.52×10^10 cm^-3
+
+Fractional conductivity increase: Δσ/σ0 = Δn/ni = 1.68
+
+Percentage increase in conductivity: 168%
+
+(So σ ≈ 2.68 σ0 under the stated conditions.)</pre>
+          <div class="copyRow">
+            <button class="copy" data-copy-target="finalAns">Copy final answer (plain text)</button>
+            <span class="copystatus" id="status-finalAns"></span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Sanity checks</h3>
+      <ul>
+        <li><b>Units:</b> <span style="font-family:var(--mono)">P_abs/E_ph</span> gives s⁻¹·cm⁻³; multiplying by <span style="font-family:var(--mono)">τ</span> gives cm⁻³. Ratio <span style="font-family:var(--mono)">Δn/ni</span> is unitless → % is valid.</li>
+        <li><b>Limiting cases:</b> If <span style="font-family:var(--mono)">P_abs → 0</span> or <span style="font-family:var(--mono)">τ → 0</span>, then <span style="font-family:var(--mono)">Δn → 0</span> and the conductivity increase goes to 0 (makes sense).</li>
+        <li><b>Magnitude:</b> Here <span style="font-family:var(--mono)">Δn</span> is slightly larger than <span style="font-family:var(--mono)">ni</span>, so an increase larger than 100% is expected.</li>
+      </ul>
+
+      <div class="divider"></div>
+
+      <h3>Interactive visualization panel (diagram + plots)</h3>
+      <div class="grid2">
+        <figure class="canvasTall">
+          <canvas id="diagram"></canvas>
+          <figcaption>
+            Labeled setup: intrinsic Si volume absorbing light. The absorbed power density determines the carrier generation rate.
+          </figcaption>
+        </figure>
+
+        <div>
+          <div class="results" aria-live="polite">
+            <div class="kpiRow">
+              <div class="kpi">
+                <div class="k">Generation rate <span style="font-family:var(--mono)">G</span> (cm⁻³·s⁻¹)</div>
+                <div class="v" id="kpiG">—</div>
+              </div>
+              <div class="kpi">
+                <div class="k">Excess carriers <span style="font-family:var(--mono)">Δn</span> (cm⁻³)</div>
+                <div class="v" id="kpiDn">—</div>
+              </div>
+              <div class="kpi">
+                <div class="k">Conductivity increase (%)</div>
+                <div class="v" id="kpiPct">—</div>
+              </div>
+            </div>
+            <div class="callout keyeq" style="margin-top:10px;">
+              <strong>Live formula used</strong>
+              <pre class="eq" id="eqLive" style="margin-top:10px;">Δσ/σ0 = Δn/ni  with  Δn = (η P_abs τ) / (h c / λ)</pre>
+            </div>
+          </div>
+
+          <div class="controls" role="group" aria-label="Interactive controls">
+            <div class="control" style="grid-template-columns: 1fr;">
+              <label for="lambdaSel">
+                Wavelength <span style="font-family:var(--mono)">λ</span> (μm)
+              </label>
+              <select id="lambdaSel" aria-label="Select wavelength in micrometers">
+                <option value="0.80">0.80</option>
+                <option value="1.00" selected>1.00</option>
+                <option value="1.30">1.30</option>
+                <option value="1.55">1.55</option>
+              </select>
+              <div class="hint" style="color:var(--muted); font-size:.85rem; padding: 2px 2px 0;">
+                (Shorter λ → higher photon energy → fewer photons for same absorbed power → smaller Δn.)
+              </div>
+            </div>
+
+            <div class="control">
+              <div>
+                <label for="pabs">Absorbed power density <span style="font-family:var(--mono)">P_abs</span> (mW/cm³)</label>
+                <input id="pabs" type="range" min="0" max="5" step="0.05" value="1"/>
+              </div>
+              <div class="val" id="pabsVal">1.00</div>
+            </div>
+
+            <div class="control">
+              <div>
+                <label for="tau">Lifetime <span style="font-family:var(--mono)">τ</span> (μs)</label>
+                <input id="tau" type="range" min="0.5" max="50" step="0.5" value="10"/>
+              </div>
+              <div class="val" id="tauVal">10.0</div>
+            </div>
+
+            <div class="control">
+              <div>
+                <label for="eta">Quantum efficiency <span style="font-family:var(--mono)">η</span></label>
+                <input id="eta" type="range" min="0" max="1" step="0.01" value="0.5"/>
+              </div>
+              <div class="val" id="etaVal">0.50</div>
+            </div>
+
+            <div class="control" style="grid-template-columns:1fr;">
+              <label for="niInput">Intrinsic concentration <span style="font-family:var(--mono)">n_i</span> (cm⁻³)</label>
+              <select id="niInput" aria-label="Select intrinsic concentration">
+                <option value="1.5e10" selected>1.5×10^10 (given)</option>
+                <option value="1.0e10">1.0×10^10</option>
+                <option value="2.0e10">2.0×10^10</option>
+                <option value="5.0e10">5.0×10^10</option>
+              </select>
+              <div class="hint" style="color:var(--muted); font-size:.85rem; padding: 2px 2px 0;">
+                (This is for exploration; the problem’s given value is selected by default.)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:14px;">
+        <figure>
+          <canvas id="plotMain"></canvas>
+          <figcaption>
+            Main plot: conductivity increase (%) vs absorbed power density <span style="font-family:var(--mono)">P_abs</span> for the current <span style="font-family:var(--mono)">λ, τ, η</span>.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <canvas id="plotSecondary"></canvas>
+          <figcaption>
+            Secondary plot: conductivity increase (%) vs wavelength <span style="font-family:var(--mono)">λ</span> for the current <span style="font-family:var(--mono)">P_abs, τ, η</span>.
+          </figcaption>
+        </figure>
+      </div>
+
+      <p>
+        Connection to the diagram/plots: the diagram emphasizes that the given quantity is <b>absorbed power per volume</b>.
+        That directly sets the generation rate, which then sets the excess carrier density, and finally the conductivity increase.
+        The plots visualize the two most important levers: energy flux into carriers (through <span style="font-family:var(--mono)">P_abs</span>) and photon energy (through <span style="font-family:var(--mono)">λ</span>).
+      </p>
+    </section>
+
+    <section id="part4">
+      <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+      <h3>Re-interpreting the final formula</h3>
+      <div class="callout keyeq">
+        <strong>Compact control law</strong>
+        <pre class="eq" id="eq7" style="margin-top:10px;">Δσ/σ0 = Δn/ni = (η P_abs τ) / (ni (h c / λ))</pre>
+        <div class="copyRow">
+          <button class="copy" data-copy-target="eq7">Copy</button>
+          <span class="copystatus" id="status-eq7"></span>
+        </div>
+      </div>
+
+      <ul>
+        <li><span style="font-family:var(--mono)">η</span> increases the fraction of photons that actually create carriers → linear effect.</li>
+        <li><span style="font-family:var(--mono)">P_abs</span> sets how much energy per time per volume is available → linear effect.</li>
+        <li><span style="font-family:var(--mono)">τ</span> is a “storage time” for carriers → linear effect.</li>
+        <li><span style="font-family:var(--mono)">λ</span> appears in the numerator because <span style="font-family:var(--mono)">1/E_ph ∝ λ</span>: longer wavelengths mean lower photon energy, hence more photons for the same absorbed power.</li>
+        <li><span style="font-family:var(--mono)">ni</span> is the baseline carrier density in intrinsic material: larger <span style="font-family:var(--mono)">ni</span> makes the same excess less significant (smaller fractional change).</li>
+      </ul>
+
+      <h3>How parameters affect the outcome (connect to the sliders)</h3>
+      <ul>
+        <li>If you slide <span style="font-family:var(--mono)">P_abs</span> up, the main plot rises linearly because <span style="font-family:var(--mono)">Δn ∝ P_abs</span>.</li>
+        <li>If you increase <span style="font-family:var(--mono)">τ</span>, the same generation rate accumulates more carriers before recombining: <span style="font-family:var(--mono)">Δn ∝ τ</span>.</li>
+        <li>If you increase <span style="font-family:var(--mono)">η</span>, you convert photons into pairs more efficiently: <span style="font-family:var(--mono)">Δn ∝ η</span>.</li>
+        <li>If you increase <span style="font-family:var(--mono)">λ</span>, each photon is “cheaper” in energy, so you get more photons per joule absorbed, increasing <span style="font-family:var(--mono)">Δn</span> (secondary plot trends upward with λ).</li>
+      </ul>
+
+      <h3>Alternative derivation idea (brief)</h3>
+      <p>
+        Instead of starting from absorbed power density, you could start from an incident intensity <span style="font-family:var(--mono)">I</span> and absorption coefficient <span style="font-family:var(--mono)">α</span>,
+        compute a depth-dependent generation <span style="font-family:var(--mono)">G(x) = η α I e^{-αx} / (hc/λ)</span>,
+        then average <span style="font-family:var(--mono)">Δn(x)=G(x)τ</span> over the sample thickness. The present problem sidesteps this by giving <span style="font-family:var(--mono)">P_abs</span> directly.
+      </p>
+
+      <h3>Concept check (quick self-test)</h3>
+      <ul>
+        <li><b>Q:</b> Why does the fractional conductivity increase not require mobilities here?<br/>
+          <b>A:</b> Because both dark and photo terms contain the same factor <span style="font-family:var(--mono)">(μn+μp)</span> for intrinsic material with <span style="font-family:var(--mono)">Δn=Δp</span>, so it cancels in <span style="font-family:var(--mono)">Δσ/σ0</span>.</li>
+        <li><b>Q:</b> If <span style="font-family:var(--mono)">τ</span> doubles, what happens to the % increase?<br/>
+          <b>A:</b> It doubles (linear in <span style="font-family:var(--mono)">τ</span>).</li>
+        <li><b>Q:</b> If the wavelength decreases (higher photon energy) while absorbed power stays fixed, what happens to <span style="font-family:var(--mono)">Δn</span>?<br/>
+          <b>A:</b> It decreases because fewer photons are absorbed per second for the same absorbed joules per second.</li>
+        <li><b>Q:</b> If the same <span style="font-family:var(--mono)">Δn</span> were produced in a heavily doped semiconductor, would the percent increase likely be larger or smaller?<br/>
+          <b>A:</b> Smaller, because the baseline carrier density is much larger than <span style="font-family:var(--mono)">ni</span> (the excess is a smaller fraction of the total).</li>
+      </ul>
+    </section>
+
+    <section id="part5">
+      <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+
+      <h3>What each canvas shows</h3>
+      <ul>
+        <li><b>Diagram canvas:</b> A silicon slab/volume with an incident light beam and a labeled absorbed power density. It highlights the conversion chain: absorbed power → photons → generated pairs → increased conductivity.</li>
+        <li><b>Main plot:</b> Conductivity increase (%) vs absorbed power density <span style="font-family:var(--mono)">P_abs</span>. Expect a straight line through the origin because <span style="font-family:var(--mono)">Δσ/σ0 ∝ P_abs</span>.</li>
+        <li><b>Secondary plot:</b> Conductivity increase (%) vs wavelength <span style="font-family:var(--mono)">λ</span>. With fixed absorbed power, longer wavelength (lower photon energy) yields more photons per second → larger generation → larger increase.</li>
+      </ul>
+
+      <h3>Interactive controls</h3>
+      <ul>
+        <li><span style="font-family:var(--mono)">λ</span> select: changes photon energy <span style="font-family:var(--mono)">E_ph</span> and therefore the conversion from absorbed power to photons.</li>
+        <li><span style="font-family:var(--mono)">P_abs</span> slider: changes generation linearly and updates the KPI values and both plots.</li>
+        <li><span style="font-family:var(--mono)">τ</span> slider: changes how long carriers survive, scaling <span style="font-family:var(--mono)">Δn</span> linearly.</li>
+        <li><span style="font-family:var(--mono)">η</span> slider: changes the fraction of absorbed photons that yield useful electron–hole pairs.</li>
+        <li><span style="font-family:var(--mono)">ni</span> select (exploration): changes the baseline conductivity reference, affecting only the fractional increase <span style="font-family:var(--mono)">Δσ/σ0</span>.</li>
+      </ul>
+
+      <p>
+        To reproduce the exact problem statement, keep <span style="font-family:var(--mono)">λ=1.00 μm</span>, <span style="font-family:var(--mono)">P_abs=1.00 mW/cm³</span>,
+        <span style="font-family:var(--mono)">τ=10 μs</span>, <span style="font-family:var(--mono)">η=0.50</span>, and <span style="font-family:var(--mono)">ni=1.5×10^10 cm⁻³</span>.
+        You should read ~168% in the KPI panel.
+      </p>
+    </section>
+  </article>
+</main>
+
+<footer>
+  Built with vanilla HTML/CSS/JS. Equations are shown as plain text (no MathJax). Plots are rendered on &lt;canvas&gt; with high-DPI handling.
+</footer>
+
+<script>
+/* =========================
+   Utilities
+   ========================= */
+function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+function fmtSci(x, sig=3){
+  if(!isFinite(x)) return "—";
+  if(x === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(x)));
+  const m = x / Math.pow(10, e);
+  const mStr = m.toFixed(Math.max(0, sig-1));
+  return `${mStr}×10^${e}`;
+}
+function fmtNum(x, digits=2){
+  if(!isFinite(x)) return "—";
+  return Number(x).toFixed(digits);
+}
+function copyTextFromElement(el){
+  const txt = el.innerText;
+  return navigator.clipboard.writeText(txt);
+}
+
+/* =========================
+   Physics model (cm-based)
+   =========================
+   Given: P_abs in mW/cm^3
+          λ in μm
+          τ in μs
+          η dimensionless
+          ni in cm^-3
+*/
+const CONST = {
+  h: 6.626e-34,     // J·s
+  c: 3.0e8,         // m/s
+};
+
+function photonEnergy_J(lambda_um){
+  const lambda_m = lambda_um * 1e-6;
+  return CONST.h * CONST.c / lambda_m;
+}
+
+function generationRate_cm3s(Pabs_mW_cm3, lambda_um, eta){
+  // P_abs: mW/cm^3 -> W/cm^3
+  const Pabs_W_cm3 = Pabs_mW_cm3 * 1e-3;
+  const Eph = photonEnergy_J(lambda_um); // J
+  const photonRate = Pabs_W_cm3 / Eph;   // photons/s/cm^3
+  return eta * photonRate;               // pairs/s/cm^3
+}
+
+function excessCarrier_cm3(Pabs_mW_cm3, lambda_um, eta, tau_us){
+  const G = generationRate_cm3s(Pabs_mW_cm3, lambda_um, eta);
+  const tau_s = tau_us * 1e-6;
+  return G * tau_s;
+}
+
+function percentIncrease(Pabs_mW_cm3, lambda_um, eta, tau_us, ni_cm3){
+  const dn = excessCarrier_cm3(Pabs_mW_cm3, lambda_um, eta, tau_us);
+  return 100 * (dn / ni_cm3);
+}
+
+/* =========================
+   Canvas plotting helpers
+   ========================= */
+function setupCanvas(canvas){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(1, Math.floor(rect.width * dpr));
+  const h = Math.max(1, Math.floor(rect.height * dpr));
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w; canvas.height = h;
+  }
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  return {ctx, wCSS: rect.width, hCSS: rect.height, dpr};
+}
+
+function drawPanelBackground(ctx, w, h){
+  // subtle gradient
+  const g = ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0, "rgba(255,255,255,0.04)");
+  g.addColorStop(1, "rgba(0,0,0,0.10)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,w,h);
+}
+
+function drawAxes(ctx, box, xTicks, yTicks, xLabel, yLabel, title){
+  const {x, y, w, h} = box;
+  // grid
+  ctx.save();
+  ctx.translate(0.5,0.5);
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
+  ctx.lineWidth = 1;
+  for(const t of xTicks){
+    ctx.beginPath();
+    ctx.moveTo(t, y);
+    ctx.lineTo(t, y+h);
+    ctx.stroke();
+  }
+  for(const t of yTicks){
+    ctx.beginPath();
+    ctx.moveTo(x, t);
+    ctx.lineTo(x+w, t);
+    ctx.stroke();
+  }
+  // axes border
+  ctx.strokeStyle = "rgba(255,255,255,0.18)";
+  ctx.strokeRect(x, y, w, h);
+  ctx.restore();
+
+  // labels
+  ctx.fillStyle = "rgba(229,231,235,0.95)";
+  ctx.font = "600 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(title, x, y - 14);
+
+  ctx.fillStyle = "rgba(229,231,235,0.85)";
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(xLabel, x + w - ctx.measureText(xLabel).width, y + h + 28);
+
+  ctx.save();
+  ctx.translate(x - 34, y + 2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+}
+
+function mapLinear(x, x0, x1, y0, y1){
+  return y0 + ( (x - x0) * (y1 - y0) / (x1 - x0) );
+}
+
+function niceTicks(min, max, count){
+  if(min === max) return {min, max, step:1};
+  const span = Math.abs(max-min);
+  const raw = span / Math.max(1,(count-1));
+  const p10 = Math.pow(10, Math.floor(Math.log10(raw)));
+  const candidates = [1,2,5,10].map(m=>m*p10);
+  let step = candidates[0];
+  for(const c of candidates){
+    if(raw <= c){ step = c; break; }
+  }
+  const niceMin = Math.floor(min/step)*step;
+  const niceMax = Math.ceil(max/step)*step;
+  return {min:niceMin, max:niceMax, step};
+}
+
+function drawLineSeries(ctx, box, xs, ys, xMin, xMax, yMin, yMax, strokeStyle){
+  const {x, y, w, h} = box;
+  ctx.save();
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for(let i=0;i<xs.length;i++){
+    const px = mapLinear(xs[i], xMin, xMax, x, x+w);
+    const py = mapLinear(ys[i], yMin, yMax, y+h, y);
+    if(i===0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawLegend(ctx, x, y, items){
+  ctx.save();
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  let offsetY = 0;
+  for(const it of items){
+    ctx.fillStyle = it.color;
+    ctx.fillRect(x, y + offsetY - 8, 14, 3);
+    ctx.fillStyle = "rgba(229,231,235,0.85)";
+    ctx.fillText(it.label, x + 20, y + offsetY - 4);
+    offsetY += 18;
+  }
+  ctx.restore();
+}
+
+function drawTicks(ctx, box, xMin, xMax, yMin, yMax, xTickCount, yTickCount){
+  const {x, y, w, h} = box;
+  const nx = niceTicks(xMin, xMax, xTickCount);
+  const ny = niceTicks(yMin, yMax, yTickCount);
+
+  // compute pixel positions
+  const xTicks = [];
+  const yTicks = [];
+  for(let xv = nx.min; xv <= nx.max + 1e-12; xv += nx.step){
+    const px = mapLinear(xv, nx.min, nx.max, x, x+w);
+    xTicks.push(px);
+  }
+  for(let yv = ny.min; yv <= ny.max + 1e-12; yv += ny.step){
+    const py = mapLinear(yv, ny.min, ny.max, y+h, y);
+    yTicks.push(py);
+  }
+
+  // tick labels
+  ctx.save();
+  ctx.fillStyle = "rgba(163,163,163,0.95)";
+  ctx.font = "11px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+
+  for(let xv = nx.min; xv <= nx.max + 1e-12; xv += nx.step){
+    const px = mapLinear(xv, nx.min, nx.max, x, x+w);
+    const label = (Math.abs(xv) >= 1000 || Math.abs(xv) < 0.01) ? xv.toExponential(1) : xv.toFixed(2).replace(/\.00$/,"");
+    ctx.fillText(label, px - ctx.measureText(label).width/2, y + h + 14);
+  }
+  for(let yv = ny.min; yv <= ny.max + 1e-12; yv += ny.step){
+    const py = mapLinear(yv, ny.min, ny.max, y+h, y);
+    const label = (Math.abs(yv) >= 1000 || Math.abs(yv) < 0.01) ? yv.toExponential(1) : yv.toFixed(1).replace(/\.0$/,"");
+    ctx.fillText(label, x - 8 - ctx.measureText(label).width, py + 4);
+  }
+  ctx.restore();
+
+  return {nx, ny, xTicks, yTicks};
+}
+
+/* =========================
+   Drawing: Diagram
+   ========================= */
+function drawDiagram(canvas, state){
+  const {ctx, wCSS:w, hCSS:h} = setupCanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+  drawPanelBackground(ctx, w, h);
+
+  // Layout
+  const pad = 18;
+  const slab = {x: pad+40, y: 90, w: w - (pad+40) - pad, h: 150};
+
+  // Title
+  ctx.fillStyle = "rgba(229,231,235,0.95)";
+  ctx.font = "600 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("Physical setup (conceptual)", pad, 24);
+
+  // Draw incoming beam arrow
+  const beamX0 = pad;
+  const beamX1 = slab.x - 10;
+  const beamY = slab.y + slab.h/2;
+  ctx.strokeStyle = "rgba(96,165,250,0.95)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(beamX0, beamY);
+  ctx.lineTo(beamX1, beamY);
+  ctx.stroke();
+  // arrow head
+  ctx.beginPath();
+  ctx.moveTo(beamX1, beamY);
+  ctx.lineTo(beamX1-10, beamY-6);
+  ctx.lineTo(beamX1-10, beamY+6);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(96,165,250,0.95)";
+  ctx.fill();
+
+  // Beam label
+  ctx.fillStyle = "rgba(219,234,254,0.95)";
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(`Light (λ = ${fmtNum(state.lambda_um,2)} μm)`, pad, beamY - 12);
+
+  // Silicon slab
+  const g = ctx.createLinearGradient(slab.x, slab.y, slab.x+slab.w, slab.y+slab.h);
+  g.addColorStop(0, "rgba(52,211,153,0.20)");
+  g.addColorStop(1, "rgba(52,211,153,0.08)");
+  ctx.fillStyle = g;
+  ctx.strokeStyle = "rgba(52,211,153,0.45)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(slab.x, slab.y, slab.w, slab.h, 16);
+  ctx.fill();
+  ctx.stroke();
+
+  // slab label
+  ctx.fillStyle = "rgba(236,254,255,0.95)";
+  ctx.font = "600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("Intrinsic Si", slab.x + 12, slab.y + 22);
+  ctx.fillStyle = "rgba(229,231,235,0.85)";
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(`n0 = p0 = ni = ${fmtSci(state.ni_cm3,3)} cm⁻³`, slab.x + 12, slab.y + 42);
+  ctx.fillText(`Lifetime τ = ${fmtNum(state.tau_us,1)} μs`, slab.x + 12, slab.y + 60);
+
+  // absorbed power density label inside slab
+  ctx.fillStyle = "rgba(251,191,36,0.92)";
+  ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(`Absorbed power density`, slab.x + 12, slab.y + slab.h - 44);
+  ctx.fillStyle = "rgba(229,231,235,0.88)";
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(`P_abs = ${fmtNum(state.Pabs_mW_cm3,2)} mW/cm³`, slab.x + 12, slab.y + slab.h - 26);
+
+  // simple "pair generation" icons
+  const nDots = 10;
+  for(let i=0;i<nDots;i++){
+    const px = slab.x + 40 + (slab.w-80) * (i/(nDots-1));
+    const py = slab.y + 85 + 22*Math.sin(i*0.7);
+    // electron dot
+    ctx.fillStyle = "rgba(96,165,250,0.95)";
+    ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI*2); ctx.fill();
+    // hole ring
+    ctx.strokeStyle = "rgba(251,113,133,0.95)";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(px+10, py+10, 4, 0, Math.PI*2); ctx.stroke();
+  }
+
+  // bottom text: conversion chain
+  ctx.fillStyle = "rgba(163,163,163,0.95)";
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("Chain: P_abs → photons (E_ph = hc/λ) → G = η·P_abs/E_ph → Δn = Gτ → σ increases", pad, h - 18);
+}
+
+/* =========================
+   Drawing: Plots
+   ========================= */
+function drawMainPlot(canvas, state){
+  const {ctx, wCSS:w, hCSS:h} = setupCanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+  drawPanelBackground(ctx, w, h);
+
+  const box = {x: 56, y: 50, w: w - 56 - 18, h: h - 50 - 52};
+
+  // Data: % increase vs P_abs
+  const Pmax = 5.0;
+  const N = 120;
+  const xs = [];
+  const ys = [];
+  for(let i=0;i<=N;i++){
+    const P = Pmax * (i/N);
+    xs.push(P);
+    ys.push(percentIncrease(P, state.lambda_um, state.eta, state.tau_us, state.ni_cm3));
+  }
+
+  const yMax = Math.max(10, ...ys) * 1.08;
+  const yMin = 0;
+
+  const {xTicks, yTicks} = drawTicks(ctx, box, 0, Pmax, yMin, yMax, 6, 6);
+
+  drawAxes(
+    ctx, box,
+    xTicks, yTicks,
+    "P_abs (mW/cm³)",
+    "Increase (%)",
+    "Photoconductivity: % increase vs absorbed power density"
+  );
+
+  // line
+  drawLineSeries(ctx, box, xs, ys, 0, Pmax, yMin, yMax, "rgba(96,165,250,0.95)");
+
+  // marker at current P_abs
+  const P = state.Pabs_mW_cm3;
+  const y = percentIncrease(P, state.lambda_um, state.eta, state.tau_us, state.ni_cm3);
+  const px = mapLinear(P, 0, Pmax, box.x, box.x+box.w);
+  const py = mapLinear(y, yMin, yMax, box.y+box.h, box.y);
+  ctx.fillStyle = "rgba(251,191,36,0.95)";
+  ctx.beginPath(); ctx.arc(px, py, 4.5, 0, Math.PI*2); ctx.fill();
+
+  drawLegend(ctx, box.x + 10, box.y + 18, [
+    {label:"Model curve", color:"rgba(96,165,250,0.95)"},
+    {label:"Current setting", color:"rgba(251,191,36,0.95)"}
+  ]);
+
+  // info
+  ctx.fillStyle = "rgba(163,163,163,0.95)";
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(`λ=${fmtNum(state.lambda_um,2)} μm, τ=${fmtNum(state.tau_us,1)} μs, η=${fmtNum(state.eta,2)}, ni=${fmtSci(state.ni_cm3,2)} cm⁻³`,
+               box.x, box.y + box.h + 42);
+}
+
+function drawSecondaryPlot(canvas, state){
+  const {ctx, wCSS:w, hCSS:h} = setupCanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+  drawPanelBackground(ctx, w, h);
+
+  const box = {x: 56, y: 50, w: w - 56 - 18, h: h - 50 - 52};
+
+  // Data: % increase vs lambda
+  const lamMin = 0.6, lamMax = 1.6;
+  const N = 160;
+  const xs = [];
+  const ys = [];
+  for(let i=0;i<=N;i++){
+    const lam = lamMin + (lamMax-lamMin)*(i/N);
+    xs.push(lam);
+    ys.push(percentIncrease(state.Pabs_mW_cm3, lam, state.eta, state.tau_us, state.ni_cm3));
+  }
+  const yMax = Math.max(10, ...ys) * 1.08;
+  const yMin = 0;
+
+  const {xTicks, yTicks} = drawTicks(ctx, box, lamMin, lamMax, yMin, yMax, 6, 6);
+
+  drawAxes(
+    ctx, box,
+    xTicks, yTicks,
+    "λ (μm)",
+    "Increase (%)",
+    "Sensitivity: % increase vs wavelength (fixed P_abs, τ, η)"
+  );
+
+  drawLineSeries(ctx, box, xs, ys, lamMin, lamMax, yMin, yMax, "rgba(52,211,153,0.95)");
+
+  // marker at current λ
+  const lam = state.lambda_um;
+  const y = percentIncrease(state.Pabs_mW_cm3, lam, state.eta, state.tau_us, state.ni_cm3);
+  const px = mapLinear(lam, lamMin, lamMax, box.x, box.x+box.w);
+  const py = mapLinear(y, yMin, yMax, box.y+box.h, box.y);
+  ctx.fillStyle = "rgba(251,191,36,0.95)";
+  ctx.beginPath(); ctx.arc(px, py, 4.5, 0, Math.PI*2); ctx.fill();
+
+  drawLegend(ctx, box.x + 10, box.y + 18, [
+    {label:"Model curve", color:"rgba(52,211,153,0.95)"},
+    {label:"Current setting", color:"rgba(251,191,36,0.95)"}
+  ]);
+
+  ctx.fillStyle = "rgba(163,163,163,0.95)";
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(`P_abs=${fmtNum(state.Pabs_mW_cm3,2)} mW/cm³, τ=${fmtNum(state.tau_us,1)} μs, η=${fmtNum(state.eta,2)}, ni=${fmtSci(state.ni_cm3,2)} cm⁻³`,
+               box.x, box.y + box.h + 42);
+}
+
+/* =========================
+   State + UI wiring
+   ========================= */
+const els = {
+  lambdaSel: document.getElementById("lambdaSel"),
+  pabs: document.getElementById("pabs"),
+  tau: document.getElementById("tau"),
+  eta: document.getElementById("eta"),
+  niInput: document.getElementById("niInput"),
+  pabsVal: document.getElementById("pabsVal"),
+  tauVal: document.getElementById("tauVal"),
+  etaVal: document.getElementById("etaVal"),
+  kpiG: document.getElementById("kpiG"),
+  kpiDn: document.getElementById("kpiDn"),
+  kpiPct: document.getElementById("kpiPct"),
+  diagram: document.getElementById("diagram"),
+  plotMain: document.getElementById("plotMain"),
+  plotSecondary: document.getElementById("plotSecondary"),
+};
+
+function getState(){
+  return {
+    lambda_um: parseFloat(els.lambdaSel.value),
+    Pabs_mW_cm3: parseFloat(els.pabs.value),
+    tau_us: parseFloat(els.tau.value),
+    eta: parseFloat(els.eta.value),
+    ni_cm3: parseFloat(els.niInput.value),
+  };
+}
+
+function render(){
+  const s = getState();
+
+  // update readouts
+  els.pabsVal.textContent = fmtNum(s.Pabs_mW_cm3,2);
+  els.tauVal.textContent = fmtNum(s.tau_us,1);
+  els.etaVal.textContent = fmtNum(s.eta,2);
+
+  // compute KPIs
+  const G = generationRate_cm3s(s.Pabs_mW_cm3, s.lambda_um, s.eta);
+  const dn = excessCarrier_cm3(s.Pabs_mW_cm3, s.lambda_um, s.eta, s.tau_us);
+  const pct = 100*(dn/s.ni_cm3);
+
+  els.kpiG.textContent  = fmtSci(G,3) + " cm⁻³·s⁻¹";
+  els.kpiDn.textContent = fmtSci(dn,3) + " cm⁻³";
+  els.kpiPct.textContent = fmtNum(pct,1) + " %";
+
+  // draw canvases
+  drawDiagram(els.diagram, s);
+  drawMainPlot(els.plotMain, s);
+  drawSecondaryPlot(els.plotSecondary, s);
+}
+
+["change","input"].forEach(evt=>{
+  els.lambdaSel.addEventListener(evt, render);
+  els.pabs.addEventListener(evt, render);
+  els.tau.addEventListener(evt, render);
+  els.eta.addEventListener(evt, render);
+  els.niInput.addEventListener(evt, render);
+});
+
+window.addEventListener("resize", ()=>{ render(); });
+
+/* =========================
+   Copy buttons
+   ========================= */
+document.querySelectorAll("button.copy").forEach(btn=>{
+  btn.addEventListener("click", async ()=>{
+    const id = btn.getAttribute("data-copy-target");
+    const el = document.getElementById(id);
+    const status = document.getElementById("status-"+id);
+    try{
+      await copyTextFromElement(el);
+      if(status) status.textContent = "Copied ✓";
+      setTimeout(()=>{ if(status) status.textContent = ""; }, 1200);
+    }catch(e){
+      if(status) status.textContent = "Copy failed (browser blocked)";
+      setTimeout(()=>{ if(status) status.textContent = ""; }, 1600);
+    }
+  });
+});
+
+/* Initial draw */
+render();
+</script>
+</body>
+</html>

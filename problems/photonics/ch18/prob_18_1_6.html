@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Extraction Efficiency for an LED — Including Angular Fresnel Reflection</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --panel:#0f1624;
+      --card:#121b2c;
+      --ink:#e9eefc;
+      --muted:#b7c2e3;
+      --faint:#7f8bb3;
+      --accent:#7aa7ff;
+      --accent2:#7affc8;
+      --warn:#ffcc66;
+      --bad:#ff6b8b;
+      --ok:#79ffa8;
+      --border:rgba(255,255,255,.10);
+      --shadow: 0 14px 35px rgba(0,0,0,.35);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background:
+        radial-gradient(900px 600px at 20% 5%, rgba(122,167,255,.18), transparent 55%),
+        radial-gradient(850px 550px at 80% 10%, rgba(122,255,200,.14), transparent 60%),
+        radial-gradient(900px 650px at 40% 95%, rgba(255,204,102,.10), transparent 60%),
+        var(--bg);
+      line-height:1.55;
+    }
+
+    header{
+      padding:28px 18px 10px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .title{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:flex-end;
+      gap:12px 18px;
+      margin-bottom:10px;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(1.55rem, 2.4vw, 2.35rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      color:var(--muted);
+      font-size:1rem;
+      max-width:75ch;
+      margin:6px 0 0;
+    }
+
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding: 10px 18px 40px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:18px;
+    }
+
+    nav#toc{
+      position:sticky;
+      top:14px;
+      align-self:start;
+      background: linear-gradient(180deg, rgba(18,27,44,.95), rgba(15,22,36,.92));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:14px 14px 10px;
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+    #toc h2{
+      margin:0 0 8px;
+      font-size:1rem;
+      letter-spacing:.3px;
+      color: var(--ink);
+    }
+    #toc a{
+      display:block;
+      padding:7px 10px;
+      margin:3px 0;
+      border-radius: 12px;
+      color: var(--muted);
+      text-decoration:none;
+      border:1px solid transparent;
+      transition: transform .12s ease, background .12s ease, color .12s ease, border-color .12s ease;
+      font-size:.95rem;
+    }
+    #toc a:hover{
+      background: rgba(122,167,255,.10);
+      border-color: rgba(122,167,255,.20);
+      color: var(--ink);
+      transform: translateX(2px);
+    }
+
+    .content{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      min-width:0;
+    }
+
+    section, article{
+      background: linear-gradient(180deg, rgba(18,27,44,.92), rgba(15,22,36,.88));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:18px 18px 14px;
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+
+    h2{
+      margin:0 0 10px;
+      font-size:1.25rem;
+    }
+    h3{
+      margin:14px 0 8px;
+      font-size:1.05rem;
+      color:var(--ink);
+    }
+    p{margin:8px 0; color:var(--muted)}
+    ul{margin:8px 0 10px 22px; color:var(--muted)}
+    li{margin:6px 0}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:12px;
+    }
+    .card{
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding:12px 12px 10px;
+      overflow:hidden;
+    }
+    .callout{
+      border-left:4px solid var(--accent);
+      padding:12px 12px 10px;
+      border-radius: 14px;
+      background: rgba(122,167,255,.08);
+      border-top:1px solid rgba(122,167,255,.20);
+      border-right:1px solid rgba(122,167,255,.15);
+      border-bottom:1px solid rgba(122,167,255,.10);
+    }
+    .callout.warn{
+      border-left-color: var(--warn);
+      background: rgba(255,204,102,.08);
+      border-top-color: rgba(255,204,102,.20);
+      border-right-color: rgba(255,204,102,.15);
+      border-bottom-color: rgba(255,204,102,.10);
+    }
+    .callout.bad{
+      border-left-color: var(--bad);
+      background: rgba(255,107,139,.08);
+      border-top-color: rgba(255,107,139,.20);
+      border-right-color: rgba(255,107,139,.15);
+      border-bottom-color: rgba(255,107,139,.10);
+    }
+    .callout.ok{
+      border-left-color: var(--ok);
+      background: rgba(121,255,168,.08);
+      border-top-color: rgba(121,255,168,.20);
+      border-right-color: rgba(121,255,168,.15);
+      border-bottom-color: rgba(121,255,168,.10);
+    }
+    .label{
+      font-size:.85rem;
+      color:var(--faint);
+      letter-spacing:.2px;
+      margin-bottom:6px;
+    }
+
+    .eqrow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      margin:10px 0;
+    }
+    .eq{
+      font-family: var(--mono);
+      color:#f3f6ff;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding:10px 10px;
+      overflow:auto;
+      max-width:100%;
+      white-space: pre;
+    }
+    .copyBtn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--ink);
+      border-radius: 12px;
+      padding:9px 10px;
+      cursor:pointer;
+      font-size:.9rem;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .copyBtn:hover{
+      transform: translateY(-1px);
+      background: rgba(122,167,255,.12);
+      border-color: rgba(122,167,255,.25);
+    }
+    .copyNote{
+      font-size:.85rem;
+      color: var(--faint);
+      margin-left:auto;
+    }
+
+    .vizWrap{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+      margin-top:10px;
+    }
+    .canvasCard{
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding:10px;
+      overflow:hidden;
+    }
+    canvas{
+      width:100%;
+      height:360px;
+      display:block;
+      border-radius: 12px;
+      background: rgba(10,14,23,.55);
+    }
+    .canvasRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .controls{
+      display:grid;
+      grid-template-columns: 1.3fr .9fr;
+      gap:12px;
+      align-items:start;
+    }
+    .controlBox{
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.09);
+      border-radius: 16px;
+      padding:12px;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin:8px 0 10px;
+      flex-wrap:wrap;
+    }
+    .row label{
+      color: var(--muted);
+      font-size:.95rem;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+    select{
+      width:100%;
+      padding:9px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.20);
+      color: var(--ink);
+      outline:none;
+    }
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:8px;
+    }
+    .kpi .pill{
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      padding:10px 10px 9px;
+    }
+    .pill .big{
+      font-family: var(--mono);
+      font-size: 1.05rem;
+      color: #f4f7ff;
+    }
+    .pill .small{
+      font-size: .85rem;
+      color: var(--faint);
+      margin-top:4px;
+    }
+
+    footer{
+      max-width:1200px;
+      margin: 0 auto;
+      padding: 0 18px 30px;
+      color: var(--faint);
+      font-size:.9rem;
+    }
+
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr}
+      nav#toc{position:relative; top:auto}
+      .canvasRow{grid-template-columns: 1fr}
+      .controls{grid-template-columns: 1fr}
+      canvas{height:340px}
+    }
+    @media print{
+      body{background:#fff; color:#000}
+      header, main, footer{max-width:100%; padding:0}
+      nav#toc{display:none}
+      section, article{box-shadow:none; border:1px solid #bbb; background:#fff}
+      .eq{background:#f7f7f7; color:#000}
+      .copyBtn{display:none}
+      canvas{border:1px solid #bbb; background:#fff}
+    }
+
+    /* subtle motion */
+    @keyframes floatIn{
+      from{transform: translateY(6px); opacity:.0}
+      to{transform: translateY(0px); opacity:1}
+    }
+    section, article, nav#toc{animation: floatIn .35s ease both}
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">
+    <h1>18.1–6 — Extraction Efficiency for an LED (with angular Fresnel reflection)</h1>
+  </div>
+  <p class="subtitle">
+    We derive a physically correct expression for the <b>extraction efficiency</b> of internally generated <b>unpolarized</b> light escaping a high-index semiconductor into air, explicitly including the <b>angle-dependent Fresnel reflection</b> at the boundary.
+  </p>
+</header>
+
+<main>
+  <nav id="toc" aria-label="Table of Contents">
+    <h2>Contents</h2>
+    <a href="#qs">Quick Summary</a>
+    <a href="#p0">PART 0 — Concept Primer</a>
+    <a href="#p1">PART 1 — Problem Analysis</a>
+    <a href="#p2">PART 2 — Strategy & Tips</a>
+    <a href="#p3">PART 3 — Full Solution</a>
+    <a href="#p4">PART 4 — Deeper Understanding</a>
+    <a href="#p5">PART 5 — Visualization Guide</a>
+  </nav>
+
+  <div class="content">
+    <section id="qs">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><b>Goal:</b> find the LED <b>extraction efficiency</b> &eta;<sub>e</sub>: the fraction of internally generated optical power that escapes a planar semiconductor–air interface.</li>
+        <li><b>Key physics:</b> only rays within the <b>escape cone</b> (&theta; &le; &theta;<sub>c</sub>) can transmit; outside it, <b>total internal reflection</b> traps light.</li>
+        <li><b>Governing ingredients:</b> isotropic internal emission + projected-area (cos&theta;) weighting + <b>Fresnel power transmission</b> T<sub>s</sub>(&theta;), T<sub>p</sub>(&theta;).</li>
+        <li><b>Critical angle:</b> sin&theta;<sub>c</sub> = n<sub>2</sub>/n<sub>1</sub> (for n<sub>1</sub> &gt; n<sub>2</sub>).</li>
+        <li><b>Main result type:</b> a compact <b>integral expression</b> for &eta;<sub>e</sub> including angular Fresnel loss, suitable for evaluation numerically.</li>
+        <li><b>Unpolarized light:</b> use the average transmission T<sub>avg</sub> = (T<sub>s</sub>+T<sub>p</sub>)/2.</li>
+        <li><b>Common baseline:</b> if Fresnel effects are ignored (T=1 inside the cone), &eta;<sub>e</sub> reduces to the simple escape-cone fraction &eta;<sub>e</sub> &approx; (n<sub>2</sub>/n<sub>1</sub>)<sup>2</sup>.</li>
+      </ul>
+    </section>
+
+    <article id="p0">
+      <h2>PART 0 — Concept Primer (THEORY BEFORE SOLVING)</h2>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="label">Core definitions</div>
+          <ul>
+            <li><b>Extraction efficiency</b> &eta;<sub>e</sub> (dimensionless): fraction of optical power generated inside the LED that leaves into the outside medium.</li>
+            <li><b>Refractive indices</b> n<sub>1</sub> (semiconductor), n<sub>2</sub> (outside, e.g. air &approx; 1).</li>
+            <li><b>Internal angle</b> &theta;: incidence angle inside medium 1 measured from the surface normal.</li>
+            <li><b>Critical angle</b> &theta;<sub>c</sub> (radians): sin&theta;<sub>c</sub> = n<sub>2</sub>/n<sub>1</sub>, when n<sub>1</sub> &gt; n<sub>2</sub>.</li>
+            <li><b>Fresnel reflectance</b> R<sub>s</sub>(&theta;), R<sub>p</sub>(&theta;) (dimensionless): fraction of incident power reflected for s/p polarization.</li>
+            <li><b>Fresnel transmittance</b> T<sub>s</sub>(&theta;), T<sub>p</sub>(&theta;) (dimensionless): fraction of incident power transmitted (power flux) for s/p polarization.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="label">Physical meaning (what these measure)</div>
+          <ul>
+            <li>Because the LED material has <b>high index</b>, many internal rays hit the surface at large &theta; and are <b>trapped</b> by total internal reflection.</li>
+            <li>Even rays within the escape cone suffer <b>partial reflection</b>, described by the <b>angle-dependent Fresnel coefficients</b>. This is why extraction is usually small for a flat LED chip.</li>
+            <li>The factor <b>cos&theta;</b> appears because the power crossing a surface depends on the <b>normal component</b> of the ray direction (projected area / Poynting flux).</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Key laws and validity</h3>
+      <div class="callout">
+        <ul>
+          <li><b>Snell’s law:</b> n<sub>1</sub> sin&theta; = n<sub>2</sub> sin&theta;<sub>t</sub> (defines the transmitted angle &theta;<sub>t</sub>).</li>
+          <li><b>Fresnel equations:</b> give R<sub>s</sub>, R<sub>p</sub> and corresponding power transmittances T<sub>s</sub>, T<sub>p</sub> for a <b>planar</b>, <b>smooth</b> interface between <b>lossless</b> dielectrics.</li>
+          <li><b>Radiometric weighting:</b> for isotropic internal emission, the distribution of power incident on a surface element scales as <b>sin&theta; d&theta d&phi</b> (solid angle) and the crossing flux includes <b>cos&theta;</b>.</li>
+        </ul>
+        <p style="margin-top:8px;color:var(--muted)">
+          These results assume geometric optics (rays), no strong near-field effects, and a locally planar interface.
+        </p>
+      </div>
+
+      <h3>Common models/approximations (and why)</h3>
+      <ul>
+        <li><b>Lambertian/isotropic internal source:</b> a good first model for spontaneous emission in a thick, scattering, or multimode LED cavity.</li>
+        <li><b>Single pass extraction:</b> count only what transmits on first encounter; trapped light is assumed to be lost (absorbed) or randomized later. This matches the meaning of “extraction efficiency” in many introductory treatments.</li>
+        <li><b>Ignore Fresnel (crude):</b> set T=1 inside the cone to get a simple scaling &eta;<sub>e</sub> &sim; (n<sub>2</sub>/n<sub>1</sub>)<sup>2</sup>. Fresnel generally reduces it further.</li>
+      </ul>
+
+      <h3>Mini intuition examples</h3>
+      <ul>
+        <li>If n<sub>1</sub>=3.5 and n<sub>2</sub>=1 (semiconductor to air), then sin&theta;<sub>c</sub>=1/3.5 &Rightarrow; &theta;<sub>c</sub> is small, so only near-normal rays escape.</li>
+        <li>At normal incidence (&theta;=0), Fresnel reflection is already sizable: R(0)=((n<sub>1</sub>-n<sub>2</sub>)/(n<sub>1</sub>+n<sub>2</sub>))<sup>2</sup>, which can be &gt; 25% for high-index materials.</li>
+      </ul>
+
+      <div class="callout.warn">
+        <div class="label" style="color:var(--warn)">What to watch for (pitfalls)</div>
+        <ul>
+          <li>Using <b>1−R</b> incorrectly: the correct <b>power</b> transmittance depends on the Fresnel formulas (it equals 1−R only when T is defined as power fraction, not field amplitude).</li>
+          <li>Forgetting the <b>cos&theta;</b> factor when averaging over angles (it matters a lot).</li>
+          <li>Integrating beyond &theta;<sub>c</sub>: for n<sub>1</sub>&gt;n<sub>2</sub>, transmission is zero for &theta;&gt;&theta;<sub>c</sub> (total internal reflection).</li>
+        </ul>
+      </div>
+    </article>
+
+    <article id="p1">
+      <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <h3>Restate the problem</h3>
+      <p>
+        We want an expression for the LED extraction efficiency &eta;<sub>e</sub> for <b>internal unpolarized light</b>
+        escaping from a <b>semiconductor (index n<sub>1</sub>)</b> into <b>air (index n<sub>2</sub>)</b>, accounting for the
+        <b>angular dependence</b> of Fresnel reflection at the planar boundary.
+      </p>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="label">Given</div>
+          <ul>
+            <li>Planar interface between two lossless media.</li>
+            <li>Internal light is <b>unpolarized</b> and effectively isotropic inside the semiconductor.</li>
+            <li>Refractive indices: n<sub>1</sub> (LED), n<sub>2</sub> (outside, typically 1).</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="label">Unknown</div>
+          <ul>
+            <li>Extraction efficiency &eta;<sub>e</sub> including Fresnel angular dependence.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Relevant principles (and why they apply)</h3>
+      <ul>
+        <li><b>Snell’s law</b> determines which internal angles lead to real transmitted angles; it gives the <b>escape cone</b>.</li>
+        <li><b>Fresnel reflection/transmission</b> gives the transmitted fraction for each incidence angle and polarization at a smooth interface.</li>
+        <li><b>Radiometric averaging over directions</b> converts an angle-dependent single-ray transmission into a net extracted fraction for isotropic internal light.</li>
+      </ul>
+      <p>
+        Effects not included here (by assumption): surface roughness scattering, photonic-crystal extraction, micro-lenses, absorption in layers,
+        interference in thin films, and near-field tunneling. Those require more detailed models than a single planar Fresnel boundary.
+      </p>
+
+      <div class="callout ok">
+        <div class="label" style="color:var(--ok)">Assumptions (explicit)</div>
+        <ul>
+          <li>Planar, smooth semiconductor–air interface.</li>
+          <li>Lossless dielectric indices (no absorption in Fresnel step).</li>
+          <li>Internal light is isotropic and unpolarized (equal s and p power on average).</li>
+          <li>We compute <b>single-pass</b> extraction at the boundary: what transmits out on encounter.</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (compare)</h3>
+      <div class="grid3">
+        <div class="card">
+          <div class="label">Approach A — Solid-angle + Fresnel (best here)</div>
+          <p>Compute &eta;<sub>e</sub> by integrating transmitted power over internal angles with the proper cos&theta; and Fresnel T(&theta;).</p>
+          <p style="color:var(--faint)">Pros: direct, rigorous under assumptions. Cons: final form is an integral (usually numeric).</p>
+        </div>
+        <div class="card">
+          <div class="label">Approach B — Radiance invariance</div>
+          <p>Use etendue/radiance conservation to connect internal and external radiance, then apply interface transmission.</p>
+          <p style="color:var(--faint)">Pros: deep insight. Cons: still needs Fresnel angular factors; can be easy to misapply.</p>
+        </div>
+        <div class="card">
+          <div class="label">Approach C — Crude escape-cone estimate</div>
+          <p>Ignore Fresnel and compute fraction of rays in the cone: &eta;<sub>e</sub> &sim; (n<sub>2</sub>/n<sub>1</sub>)<sup>2</sup>.</p>
+          <p style="color:var(--faint)">Pros: simple scaling. Cons: misses real Fresnel loss and polarization dependence.</p>
+        </div>
+      </div>
+
+      <p><b>We choose Approach A</b> because the problem explicitly asks to include the angular dependence of Fresnel reflection.</p>
+    </article>
+
+    <article id="p2">
+      <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+      <ol style="color:var(--muted); margin:8px 0 10px 22px;">
+        <li><b>Define geometry and angles</b>: internal incidence &theta;, transmitted angle &theta;<sub>t</sub>. <span style="color:var(--faint)">Tool: Snell’s law.</span></li>
+        <li><b>Find the escape cone</b>: &theta; &le; &theta;<sub>c</sub> where sin&theta;<sub>c</sub>=n<sub>2</sub>/n<sub>1</sub>. <span style="color:var(--faint)">Meaning: beyond this, T=0 (TIR).</span></li>
+        <li><b>Write Fresnel power transmittances</b> T<sub>s</sub>(&theta;), T<sub>p</sub>(&theta;). <span style="color:var(--faint)">Meaning: angular “filter” at the surface.</span></li>
+        <li><b>Average over unpolarized light</b>: T<sub>avg</sub> = (T<sub>s</sub>+T<sub>p</sub>)/2.</li>
+        <li><b>Set up the angular weighting</b>: incident power on the interface from isotropic internal directions carries a factor sin&theta; d&theta d&phi and a crossing factor cos&theta;. <span style="color:var(--faint)">Meaning: flux projection.</span></li>
+        <li><b>Form the ratio</b>: extracted power (integral over escape cone with T<sub>avg</sub>) divided by total incident power (integral over entire hemisphere). <span style="color:var(--faint)">This yields &eta;<sub>e</sub>.</span></li>
+        <li><b>Sanity-check</b> limiting cases: n<sub>1</sub>→n<sub>2</sub> gives high extraction; n<sub>1</sub>≫n<sub>2</sub> gives tiny extraction.</li>
+      </ol>
+
+      <div class="callout.warn">
+        <div class="label" style="color:var(--warn)">Common mistakes & quick tips</div>
+        <ul>
+          <li><b>Tip:</b> keep &theta; as the <b>internal</b> incidence angle; &theta;<sub>t</sub> follows from Snell’s law.</li>
+          <li><b>Tip:</b> use Fresnel formulas for <b>power</b> transmission T, not field amplitude t.</li>
+          <li><b>Mistake:</b> averaging over angles without cos&theta; can overestimate extraction.</li>
+        </ul>
+      </div>
+    </article>
+
+    <article id="p3">
+      <h2>PART 3 — Full Solution (DETAILED + TEACHING)</h2>
+
+      <h3>Qualitative intuition first</h3>
+      <p>
+        Inside a high-index LED, light travels in many directions. Only the rays close to the normal can refract out.
+        Rays at larger angles see the interface like a mirror (total internal reflection), so they stay trapped.
+        Even within the escape cone, Fresnel reflection increases with angle, so transmission typically drops as &theta; approaches &theta;<sub>c</sub>.
+        Therefore, &eta;<sub>e</sub> is usually small for a flat semiconductor–air boundary.
+      </p>
+
+      <h3>Step 1 — Geometry and escape cone</h3>
+      <p>
+        Let medium 1 (LED) have refractive index n<sub>1</sub>, and medium 2 (air) have index n<sub>2</sub>.
+        A ray inside medium 1 hits the boundary with incidence angle &theta; measured from the surface normal.
+        The transmitted angle in medium 2 is &theta;<sub>t</sub>.
+      </p>
+
+      <div class="eqrow">
+        <div class="eq" id="eq_snell" data-copy="Snell: n1 sin(theta) = n2 sin(theta_t)">
+Snell's law:   n1 sin(θ) = n2 sin(θt)
+</div>
+        <button class="copyBtn" data-copy-target="eq_snell">Copy</button>
+        <span class="copyNote">copies plain text</span>
+      </div>
+
+      <p>
+        For real transmission we need sin&theta;<sub>t</sub> &le; 1, so from Snell:
+      </p>
+
+      <div class="eqrow">
+        <div class="eq" id="eq_critical" data-copy="Critical angle: sin(theta_c) = n2/n1 (for n1>n2), and transmission exists only for theta <= theta_c.">
+Critical angle:   sin(θc) = n2 / n1   (n1 > n2)
+Escape condition: θ ≤ θc
+</div>
+        <button class="copyBtn" data-copy-target="eq_critical">Copy</button>
+      </div>
+
+      <p>
+        Thus transmission is possible only within the <b>escape cone</b> &theta; &in; [0, &theta;<sub>c</sub>].
+        For &theta; &gt; &theta;<sub>c</sub>, the transmission is zero (total internal reflection).
+      </p>
+
+      <h3>Step 2 — Fresnel power transmission at angle &theta;</h3>
+      <p>
+        For a plane wave incident from medium 1 onto medium 2, the Fresnel <b>power</b> reflectances for s and p polarization are:
+      </p>
+
+      <div class="eqrow">
+        <div class="eq" id="eq_RsRp" data-copy="Rs(θ)=((n1 cosθ - n2 cosθt)/(n1 cosθ + n2 cosθt))^2 ; Rp(θ)=((n1 cosθt - n2 cosθ)/(n1 cosθt + n2 cosθ))^2 with n1 sinθ = n2 sinθt.">
+Rs(θ) = ((n1 cosθ − n2 cosθt) / (n1 cosθ + n2 cosθt))^2
+Rp(θ) = ((n1 cosθt − n2 cosθ) / (n1 cosθt + n2 cosθ))^2
+with Snell: n1 sinθ = n2 sinθt
+</div>
+        <button class="copyBtn" data-copy-target="eq_RsRp">Copy</button>
+      </div>
+
+      <p>
+        For lossless media, the corresponding <b>power transmittances</b> are (equivalently, T = 1 − R when T is defined as power fraction):
+      </p>
+
+      <div class="eqrow">
+        <div class="eq" id="eq_TsTp" data-copy="Ts(θ)=4 n1 n2 cosθ cosθt / (n1 cosθ + n2 cosθt)^2 ; Tp(θ)=4 n1 n2 cosθ cosθt / (n1 cosθt + n2 cosθ)^2 ; valid for θ<=θc.">
+Ts(θ) = [4 n1 n2 cosθ cosθt] / (n1 cosθ + n2 cosθt)^2
+Tp(θ) = [4 n1 n2 cosθ cosθt] / (n1 cosθt + n2 cosθ)^2
+(valid only for θ ≤ θc; for θ > θc, Ts=Tp=0)
+</div>
+        <button class="copyBtn" data-copy-target="eq_TsTp">Copy</button>
+      </div>
+
+      <p>
+        For <b>unpolarized</b> light, we average over polarizations:
+      </p>
+
+      <div class="eqrow">
+        <div class="eq" id="eq_Tavg" data-copy="Tavg(θ) = (Ts(θ)+Tp(θ))/2  (unpolarized).">
+Tavg(θ) = (Ts(θ) + Tp(θ)) / 2
+</div>
+        <button class="copyBtn" data-copy-target="eq_Tavg">Copy</button>
+      </div>
+
+      <h3>Step 3 — Angular weighting for isotropic internal light</h3>
+      <p>
+        Assume the internal light is isotropic: directions are uniformly distributed over the internal hemisphere.
+        The differential solid angle is d&Omega; = sin&theta; d&theta d&phi.
+        The power crossing the interface from rays at angle &theta; carries an extra factor cos&theta; because only the normal component of the Poynting flux crosses the surface.
+      </p>
+
+      <div class="callout">
+        <div class="label">Key idea</div>
+        <p style="margin:0;color:var(--muted)">
+          For isotropic incidence on a surface, the incident flux weighting is proportional to <b>cos&theta; d&Omega;</b> = cos&theta; sin&theta; d&theta d&phi.
+        </p>
+      </div>
+
+      <h3>Step 4 — Build &eta;<sub>e</sub> as “transmitted / incident”</h3>
+      <p>
+        Let the total incident power on the interface (from the internal hemisphere) be proportional to:
+      </p>
+      <div class="eqrow">
+        <div class="eq" id="eq_den" data-copy="Incident weighting integral: ∫∫_hemisphere cosθ dΩ = 2π ∫_0^(π/2) cosθ sinθ dθ = π.">
+∬(hemisphere) cosθ dΩ = 2π ∫[0→π/2] cosθ sinθ dθ = π
+</div>
+        <button class="copyBtn" data-copy-target="eq_den">Copy</button>
+      </div>
+
+      <p>
+        The extracted (transmitted) power is the same integral but only over the escape cone and multiplied by the transmission factor T<sub>avg</sub>(&theta;):
+      </p>
+      <div class="eqrow">
+        <div class="eq" id="eq_num" data-copy="Extracted weighting integral: 2π ∫_0^(θc) Tavg(θ) cosθ sinθ dθ.">
+Extracted ∝ 2π ∫[0→θc] Tavg(θ) cosθ sinθ dθ
+</div>
+        <button class="copyBtn" data-copy-target="eq_num">Copy</button>
+      </div>
+
+      <p>
+        Therefore the extraction efficiency (ratio) is:
+      </p>
+
+      <div class="eqrow">
+        <div class="eq" id="eq_final" data-copy="Final: ηe = ( ∫_0^(θc) Tavg(θ) sinθ cosθ dθ ) / ( ∫_0^(π/2) sinθ cosθ dθ ) = 2 ∫_0^(θc) Tavg(θ) sinθ cosθ dθ, with θc = arcsin(n2/n1), Tavg=(Ts+Tp)/2, Ts,Tp Fresnel power transmittances.">
+ηe = [ ∫(0→θc) Tavg(θ) sinθ cosθ dθ ] / [ ∫(0→π/2) sinθ cosθ dθ ]
+   = 2 ∫(0→θc) Tavg(θ) sinθ cosθ dθ
+
+where θc = arcsin(n2/n1),
+Tavg(θ) = (Ts(θ)+Tp(θ))/2,
+Ts,Tp are Fresnel power transmittances.
+</div>
+        <button class="copyBtn" data-copy-target="eq_final">Copy</button>
+      </div>
+
+      <div class="callout ok">
+        <div class="label" style="color:var(--ok)">FINAL ANSWER (boxed)</div>
+        <p style="margin:8px 0 10px;color:var(--muted)">
+          The extraction efficiency for internal <b>unpolarized</b> light at a planar semiconductor–air boundary is
+        </p>
+        <div class="eq" id="eq_box" data-copy="ηe = 2 ∫_0^(θc) [(Ts(θ)+Tp(θ))/2] sinθ cosθ dθ,  θc=arcsin(n2/n1),  Ts(θ)=4 n1 n2 cosθ cosθt/(n1 cosθ + n2 cosθt)^2,  Tp(θ)=4 n1 n2 cosθ cosθt/(n1 cosθt + n2 cosθ)^2,  with n1 sinθ = n2 sinθt; for θ>θc, Ts=Tp=0.">
+ηe = 2 ∫0→θc  [(Ts(θ)+Tp(θ))/2] sinθ cosθ dθ
+
+θc = arcsin(n2/n1)
+
+Ts(θ) = 4 n1 n2 cosθ cosθt / (n1 cosθ + n2 cosθt)^2
+Tp(θ) = 4 n1 n2 cosθ cosθt / (n1 cosθt + n2 cosθ)^2
+
+Snell: n1 sinθ = n2 sinθt
+(and Ts=Tp=0 for θ>θc)
+</div>
+        <div class="eqrow" style="margin-top:10px">
+          <button class="copyBtn" data-copy-target="eq_box">Copy final answer</button>
+        </div>
+      </div>
+
+      <h3>Sanity checks</h3>
+      <div class="grid2">
+        <div class="card">
+          <div class="label">Units/dimensions</div>
+          <p>
+            &eta;<sub>e</sub> is dimensionless. The integrand uses sin&theta; cos&theta; d&theta (dimensionless) multiplied by T (dimensionless). Good.
+          </p>
+        </div>
+        <div class="card">
+          <div class="label">Limiting cases</div>
+          <ul>
+            <li>If n<sub>1</sub>=n<sub>2</sub>, then &theta;<sub>c</sub>=&pi;/2 and Fresnel reflection is small; &eta;<sub>e</sub> approaches near 1 (for a single interface).</li>
+            <li>If n<sub>1</sub> &gg; n<sub>2</sub>, then &theta;<sub>c</sub> is tiny; the integral is small &Rightarrow; poor extraction.</li>
+            <li>If you ignore Fresnel and set T<sub>avg</sub>=1 for &theta;&le;&theta;<sub>c</sub>, then
+              <span class="eq" style="display:inline-block; padding:4px 6px; border-radius:10px;">&eta;<sub>e</sub> = sin<sup>2</sup>&theta;<sub>c</sub> = (n<sub>2</sub>/n<sub>1</sub>)<sup>2</sup></span>.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <p>
+        Connection to the diagram/plots: the diagram shows the escape cone and angles &theta; and &theta;<sub>t</sub>.
+        The plots show T<sub>s</sub>, T<sub>p</sub>, and T<sub>avg</sub> versus &theta; up to &theta;<sub>c</sub>, and how the integrated &eta;<sub>e</sub> changes with refractive index contrast.
+      </p>
+    </article>
+
+    <article id="p4">
+      <h2>PART 4 — Deeper Understanding (THEORY AROUND THE RESULT)</h2>
+
+      <h3>Re-interpreting the final formula</h3>
+      <ul>
+        <li><b>2</b> in front: comes from normalizing by the hemisphere integral &int;<sub>0</sub><sup>&pi;/2</sup> sin&theta; cos&theta; d&theta = 1/2.</li>
+        <li><b>sin&theta;</b>: counts how much solid angle lives at that polar angle (more directions near grazing incidence).</li>
+        <li><b>cos&theta;</b>: projected flux through the surface (grazing rays contribute little normal power).</li>
+        <li><b>T<sub>avg</sub>(&theta;)</b>: the boundary’s angle-dependent “filter” (Fresnel + total internal reflection).</li>
+        <li><b>&theta;<sub>c</sub></b>: geometric optics “gate” set purely by index ratio.</li>
+      </ul>
+
+      <h3>Parameter effects (tie to interactive plots)</h3>
+      <ul>
+        <li>Increasing n<sub>1</sub> with fixed n<sub>2</sub> shrinks &theta;<sub>c</sub> and increases Fresnel reflection at small angles: <b>&eta;<sub>e</sub> drops sharply</b>.</li>
+        <li>Increasing n<sub>2</sub> (e.g., adding an encapsulant or dome) increases &theta;<sub>c</sub>: <b>more angles can escape</b>, improving extraction.</li>
+        <li>Polarization: near Brewster’s angle (when n<sub>1</sub> &lt; n<sub>2</sub>) p-polarized reflection can vanish, but for LED-to-air (n<sub>1</sub> &gt; n<sub>2</sub>) the dominant limitation is still the escape cone.</li>
+      </ul>
+
+      <h3>Alternative derivation idea (brief)</h3>
+      <p>
+        You can derive the same result by starting from <b>radiance</b> (brightness) conservation and etendue:
+        internal isotropic radiance produces a cosine angular flux distribution at the boundary; then apply angular-dependent Fresnel transmission and integrate over the escape cone.
+        The key is that the surface-crossing power must be weighted by <b>cos&theta;</b>.
+      </p>
+
+      <h3>Concept checks (with answers)</h3>
+      <ul>
+        <li><b>Q:</b> Why do we integrate only to &theta;<sub>c</sub>? <b>A:</b> For &theta;&gt;&theta;<sub>c</sub>, Snell’s law gives no real transmitted angle and the wave is totally internally reflected.</li>
+        <li><b>Q:</b> Why does cos&theta; appear? <b>A:</b> It is the normal component of the ray direction; grazing rays carry little power through the surface.</li>
+        <li><b>Q:</b> If you roughen the surface, would &eta;<sub>e</sub> likely increase or decrease? <b>A:</b> Often <b>increase</b>, because scattering can redirect trapped rays back into the escape cone (but modeling changes).</li>
+        <li><b>Q:</b> What’s the simplest way to improve extraction without changing n<sub>1</sub>? <b>A:</b> Increase effective outside index n<sub>2</sub> with an encapsulant or dome to widen the escape cone.</li>
+      </ul>
+    </article>
+
+    <article id="p5">
+      <h2>PART 5 — Visualization Guide (HOW TO READ THE PLOTS)</h2>
+
+      <div class="controls">
+        <div class="controlBox">
+          <h3 style="margin-top:0">Interactive controls</h3>
+
+          <div class="row">
+            <label for="n1">Semiconductor index <b>n<sub>1</sub></b></label>
+            <span class="eq" id="n1read" style="padding:4px 8px;border-radius:10px">3.50</span>
+          </div>
+          <input id="n1" type="range" min="1.2" max="4.2" step="0.01" value="3.50"/>
+
+          <div class="row">
+            <label for="n2">Outside index <b>n<sub>2</sub></b> (air/encapsulant)</label>
+            <span class="eq" id="n2read" style="padding:4px 8px;border-radius:10px">1.00</span>
+          </div>
+          <input id="n2" type="range" min="1.0" max="2.0" step="0.01" value="1.00"/>
+
+          <div class="row">
+            <label for="pol">Polarization shown in main plot</label>
+          </div>
+          <select id="pol">
+            <option value="unpol" selected>Unpolarized (average)</option>
+            <option value="s">s-polarized</option>
+            <option value="p">p-polarized</option>
+          </select>
+
+          <div class="kpi">
+            <div class="pill">
+              <div class="big" id="thetacRead">θc = 0.291 rad</div>
+              <div class="small">critical angle (internal)</div>
+            </div>
+            <div class="pill">
+              <div class="big" id="etaRead">ηe = 0.027</div>
+              <div class="small">extraction efficiency (single-pass)</div>
+            </div>
+          </div>
+
+          <div class="callout warn" style="margin-top:12px">
+            <div class="label" style="color:var(--warn)">What changes when you move sliders?</div>
+            <ul style="margin-top:6px">
+              <li>Both plots update live because n<sub>1</sub> and n<sub>2</sub> change the <b>escape cone</b> and Fresnel coefficients.</li>
+              <li>Main plot: transmission vs angle up to &theta;<sub>c</sub>.</li>
+              <li>Secondary plot: sweep of &eta;<sub>e</sub> vs n<sub>1</sub> (holding n<sub>2</sub> fixed to your chosen value).</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="controlBox">
+          <h3 style="margin-top:0">What each canvas shows</h3>
+          <ul>
+            <li><b>Diagram:</b> LED (n<sub>1</sub>) to outside (n<sub>2</sub>), ray at angle &theta; and refracted ray at &theta;<sub>t</sub>, plus escape cone boundary &theta;<sub>c</sub>.</li>
+            <li><b>Main plot:</b> Fresnel power transmission (T<sub>s</sub>, T<sub>p</sub>, or average) vs internal angle &theta; (degrees), with the critical angle marked.</li>
+            <li><b>Secondary plot:</b> &eta;<sub>e</sub>(n<sub>1</sub>) sweep for your chosen n<sub>2</sub>, comparing
+              (i) full Fresnel integral and (ii) “no-Fresnel” escape-cone estimate (n<sub>2</sub>/n<sub>1</sub>)<sup>2</sup>.</li>
+          </ul>
+          <p style="color:var(--faint); margin-top:10px">
+            Note: If n<sub>1</sub> &le; n<sub>2</sub>, there is <b>no total internal reflection</b>, so &theta;<sub>c</sub> becomes 90° and all angles can transmit (subject to Fresnel reflection).
+          </p>
+        </div>
+      </div>
+
+      <div class="vizWrap">
+        <div class="canvasCard">
+          <canvas id="diag" aria-label="LED extraction geometry diagram"></canvas>
+        </div>
+
+        <div class="canvasRow">
+          <div class="canvasCard">
+            <canvas id="plot1" aria-label="Angular transmission plot"></canvas>
+          </div>
+          <div class="canvasCard">
+            <canvas id="plot2" aria-label="Extraction efficiency parameter sweep plot"></canvas>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+</main>
+
+<footer>
+  <p>
+    Built as a self-contained learning page: derivation + sanity checks + live visualizations.
+    Example plotting values can be adjusted using the sliders.
+  </p>
+</footer>
+
+<script>
+/* ---------------------------
+   Utilities: crisp canvas, axes, ticks
+---------------------------- */
+function setupCanvas(canvas){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(2, Math.floor(rect.width * dpr));
+  const h = Math.max(2, Math.floor(rect.height * dpr));
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w; canvas.height = h;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  return {ctx, wCss: rect.width, hCss: rect.height, dpr};
+}
+
+function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
+
+function niceTicks(min, max, target=6){
+  const span = max - min;
+  if(span <= 0) return {step:1, start:min, end:max};
+  const raw = span / target;
+  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / pow;
+  let step;
+  if(norm < 1.5) step = 1 * pow;
+  else if(norm < 3) step = 2 * pow;
+  else if(norm < 7) step = 5 * pow;
+  else step = 10 * pow;
+  const start = Math.ceil(min / step) * step;
+  const end = Math.floor(max / step) * step;
+  return {step, start, end};
+}
+
+function drawAxes(ctx, box, xMin, xMax, yMin, yMax, xLabel, yLabel, title, opts={}){
+  const {x, y, w, h} = box;
+  ctx.save();
+  ctx.clearRect(0,0,ctx.canvas.width, ctx.canvas.height);
+
+  // background subtle
+  ctx.fillStyle = "rgba(10,14,23,0.25)";
+  ctx.fillRect(0,0,box.fullW,box.fullH);
+
+  // title
+  ctx.fillStyle = "rgba(233,238,252,0.92)";
+  ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(title, x, y - 12);
+
+  // plot frame
+  ctx.strokeStyle = "rgba(255,255,255,0.14)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x, y, w, h);
+
+  // ticks + grid
+  const xt = niceTicks(xMin, xMax, 6);
+  const yt = niceTicks(yMin, yMax, 6);
+
+  function xToPx(xv){ return x + (xv - xMin) * w / (xMax - xMin); }
+  function yToPx(yv){ return y + h - (yv - yMin) * h / (yMax - yMin); }
+
+  // grid
+  ctx.strokeStyle = "rgba(255,255,255,0.07)";
+  ctx.lineWidth = 1;
+
+  // vertical grid
+  for(let v=xt.start; v<=xt.end+1e-12; v+=xt.step){
+    const xp = xToPx(v);
+    ctx.beginPath();
+    ctx.moveTo(xp, y);
+    ctx.lineTo(xp, y+h);
+    ctx.stroke();
+  }
+  // horizontal grid
+  for(let v=yt.start; v<=yt.end+1e-12; v+=yt.step){
+    const yp = yToPx(v);
+    ctx.beginPath();
+    ctx.moveTo(x, yp);
+    ctx.lineTo(x+w, yp);
+    ctx.stroke();
+  }
+
+  // ticks + labels
+  ctx.fillStyle = "rgba(183,194,227,0.95)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+
+  ctx.strokeStyle = "rgba(255,255,255,0.14)";
+  ctx.lineWidth = 1;
+
+  // x axis ticks
+  for(let v=xt.start; v<=xt.end+1e-12; v+=xt.step){
+    const xp = xToPx(v);
+    ctx.beginPath();
+    ctx.moveTo(xp, y+h);
+    ctx.lineTo(xp, y+h+6);
+    ctx.stroke();
+    const s = formatTick(v);
+    ctx.fillText(s, xp - ctx.measureText(s).width/2, y+h+18);
+  }
+  // y axis ticks
+  for(let v=yt.start; v<=yt.end+1e-12; v+=yt.step){
+    const yp = yToPx(v);
+    ctx.beginPath();
+    ctx.moveTo(x-6, yp);
+    ctx.lineTo(x, yp);
+    ctx.stroke();
+    const s = formatTick(v);
+    ctx.fillText(s, x-10-ctx.measureText(s).width, yp+4);
+  }
+
+  // axis labels
+  ctx.fillStyle = "rgba(233,238,252,0.92)";
+  ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(xLabel, x + w/2 - ctx.measureText(xLabel).width/2, y + h + 40);
+
+  // y label rotated
+  ctx.save();
+  ctx.translate(x - 46, y + h/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, -ctx.measureText(yLabel).width/2, 0);
+  ctx.restore();
+
+  ctx.restore();
+  return {xToPx, yToPx};
+}
+
+function formatTick(v){
+  const av = Math.abs(v);
+  if(av >= 100) return v.toFixed(0);
+  if(av >= 10) return v.toFixed(1);
+  if(av >= 1) return v.toFixed(2);
+  if(av >= 0.1) return v.toFixed(3);
+  return v.toExponential(1);
+}
+
+/* ---------------------------
+   Fresnel physics (power transmission)
+---------------------------- */
+function fresnel(n1, n2, theta){
+  // theta in radians: incidence in medium 1
+  // Return Ts,Tp,Rs,Rp, thetat (or NaN if TIR)
+  const s = Math.sin(theta);
+  const sin_t = (n1/n2) * s; // Snell: n1 sinθ = n2 sinθt => sinθt = (n1/n2) sinθ
+  if(sin_t > 1){
+    return {Ts:0, Tp:0, Rs:1, Rp:1, thetat: NaN, tir:true};
+  }
+  const thetat = Math.asin(clamp(sin_t, -1, 1));
+  const c = Math.cos(theta);
+  const ct = Math.cos(thetat);
+
+  // Fresnel power transmittance (lossless interface)
+  const denomS = (n1*c + n2*ct);
+  const denomP = (n1*ct + n2*c);
+
+  const Ts = (4*n1*n2*c*ct) / (denomS*denomS);
+  const Tp = (4*n1*n2*c*ct) / (denomP*denomP);
+
+  // Reflectances (for reference)
+  const Rs = ((n1*c - n2*ct)/denomS)**2;
+  const Rp = ((n1*ct - n2*c)/denomP)**2;
+
+  return {Ts, Tp, Rs, Rp, thetat, tir:false};
+}
+
+function criticalAngle(n1, n2){
+  if(n1 <= n2) return Math.PI/2; // no TIR
+  return Math.asin(n2/n1);
+}
+
+/* ---------------------------
+   Extraction efficiency integral
+   ηe = 2 ∫_0^{θc} Tavg(θ) sinθ cosθ dθ
+---------------------------- */
+function simpsonIntegrate(f, a, b, n=1200){
+  // n must be even
+  n = Math.max(10, Math.floor(n/2)*2);
+  const h = (b-a)/n;
+  let s = f(a) + f(b);
+  for(let i=1;i<n;i++){
+    const x = a + i*h;
+    s += (i%2===0 ? 2 : 4) * f(x);
+  }
+  return s*h/3;
+}
+
+function extractionEfficiency(n1, n2){
+  const tc = criticalAngle(n1,n2);
+  const f = (theta)=>{
+    const fr = fresnel(n1,n2,theta);
+    const Tavg = 0.5*(fr.Ts + fr.Tp);
+    return Tavg * Math.sin(theta) * Math.cos(theta);
+  };
+  const val = 2 * simpsonIntegrate(f, 0, tc, 1200);
+  return {eta: val, thetac: tc};
+}
+
+/* ---------------------------
+   Plot helpers
+---------------------------- */
+function polyline(ctx, xs, ys, mapX, mapY, style){
+  ctx.save();
+  ctx.strokeStyle = style.stroke || "rgba(122,167,255,0.95)";
+  ctx.lineWidth = style.width || 2;
+  ctx.beginPath();
+  for(let i=0;i<xs.length;i++){
+    const x = mapX(xs[i]);
+    const y = mapY(ys[i]);
+    if(i===0) ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawLegend(ctx, items, x, y){
+  ctx.save();
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  let yy = y;
+  for(const it of items){
+    ctx.strokeStyle = it.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, yy);
+    ctx.lineTo(x+22, yy);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(233,238,252,0.92)";
+    ctx.fillText(it.label, x+28, yy+4);
+    yy += 18;
+  }
+  ctx.restore();
+}
+
+/* ---------------------------
+   Diagram
+---------------------------- */
+function drawDiagram(canvas, n1, n2){
+  const {ctx, wCss, hCss} = setupCanvas(canvas);
+  const W = wCss, H = hCss;
+  ctx.clearRect(0,0,W,H);
+
+  // background
+  ctx.fillStyle = "rgba(10,14,23,0.25)";
+  ctx.fillRect(0,0,W,H);
+
+  // layout
+  const midY = H*0.55;
+  const margin = 24;
+
+  // interface line
+  ctx.strokeStyle = "rgba(255,255,255,0.20)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(margin, midY);
+  ctx.lineTo(W-margin, midY);
+  ctx.stroke();
+
+  // regions shading
+  ctx.fillStyle = "rgba(122,167,255,0.10)";
+  ctx.fillRect(margin, margin, W-2*margin, midY-margin);
+  ctx.fillStyle = "rgba(122,255,200,0.08)";
+  ctx.fillRect(margin, midY, W-2*margin, H-midY-margin);
+
+  // labels
+  ctx.fillStyle = "rgba(233,238,252,0.92)";
+  ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("Medium 2 (outside)", margin+10, margin+20);
+  ctx.fillText("Medium 1 (LED)", margin+10, midY+22);
+
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  ctx.fillStyle = "rgba(183,194,227,0.95)";
+  ctx.fillText(`n2 = ${n2.toFixed(2)}`, margin+10, margin+40);
+  ctx.fillText(`n1 = ${n1.toFixed(2)}`, margin+10, midY+42);
+
+  // normal
+  const x0 = W*0.52;
+  ctx.strokeStyle = "rgba(255,255,255,0.25)";
+  ctx.setLineDash([6,6]);
+  ctx.beginPath();
+  ctx.moveTo(x0, midY-140);
+  ctx.lineTo(x0, midY+140);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = "rgba(183,194,227,0.95)";
+  ctx.fillText("normal", x0+8, midY-125);
+
+  // choose an example incident angle (within escape cone if possible)
+  const tc = criticalAngle(n1,n2);
+  const theta = Math.min(tc*0.75, 0.7); // radians
+  const fr = fresnel(n1,n2,theta);
+
+  // ray in medium 1 hitting interface
+  const start = {x: x0 - 140*Math.sin(theta), y: midY + 140*Math.cos(theta)};
+  const hit = {x: x0, y: midY};
+
+  ctx.strokeStyle = "rgba(122,167,255,0.95)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+  ctx.lineTo(hit.x, hit.y);
+  ctx.stroke();
+
+  // refracted ray (if not TIR)
+  if(!fr.tir){
+    const tt = fr.thetat;
+    const end = {x: x0 + 140*Math.sin(tt), y: midY - 140*Math.cos(tt)};
+    ctx.strokeStyle = "rgba(122,255,200,0.95)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(hit.x, hit.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+  }
+
+  // angle arcs
+  function arcAngle(color, ang, radius, side){
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    // arc around hit point, from normal to ray
+    const a0 = -Math.PI/2;
+    const a1 = a0 + (side===1? ang : -ang);
+    ctx.arc(hit.x, hit.y, radius, a0, a1, side!==1);
+    ctx.stroke();
+  }
+
+  arcAngle("rgba(122,167,255,0.85)", theta, 42, -1);
+  ctx.fillStyle = "rgba(233,238,252,0.92)";
+  ctx.fillText("θ", hit.x-26, hit.y+40);
+
+  if(!fr.tir){
+    arcAngle("rgba(122,255,200,0.85)", fr.thetat, 42, 1);
+    ctx.fillStyle = "rgba(233,238,252,0.92)";
+    ctx.fillText("θt", hit.x+10, hit.y-22);
+  }
+
+  // escape cone boundary
+  const tcDeg = tc * 180/Math.PI;
+  // draw two boundary rays in medium 1 at theta=theta_c
+  const rayLen = 170;
+  const bx1 = x0 - rayLen*Math.sin(tc);
+  const by1 = midY + rayLen*Math.cos(tc);
+  const bx2 = x0 + rayLen*Math.sin(tc);
+  const by2 = midY + rayLen*Math.cos(tc);
+
+  ctx.strokeStyle = "rgba(255,204,102,0.85)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([7,6]);
+  ctx.beginPath(); ctx.moveTo(x0, midY); ctx.lineTo(bx1, by1); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x0, midY); ctx.lineTo(bx2, by2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = "rgba(255,204,102,0.95)";
+  ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(`escape cone boundary (θc ≈ ${tcDeg.toFixed(1)}°)`, margin+10, H-margin-10);
+
+  // title
+  ctx.fillStyle = "rgba(233,238,252,0.92)";
+  ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("Geometry: internal ray, refraction, and escape cone", margin, 22);
+}
+
+/* ---------------------------
+   Plot 1: angular transmission vs theta
+---------------------------- */
+function drawPlot1(canvas, n1, n2, polMode){
+  const {ctx, wCss, hCss} = setupCanvas(canvas);
+  const W = wCss, H = hCss;
+
+  const padL=64, padR=18, padT=44, padB=58;
+  const box = {x:padL, y:padT, w:W-padL-padR, h:H-padT-padB, fullW:W, fullH:H};
+
+  const tc = criticalAngle(n1,n2);
+  const tcDeg = tc*180/Math.PI;
+  const xMin = 0, xMax = Math.max(1, tcDeg);
+  const yMin = 0, yMax = 1.02;
+
+  const map = drawAxes(
+    ctx, box,
+    xMin, xMax, yMin, yMax,
+    "internal angle θ (deg)", "power transmission T (–)",
+    "Angular Fresnel transmission into outside medium"
+  );
+
+  // generate data
+  const N=400;
+  const xs=[], Ts=[], Tp=[], Ta=[];
+  for(let i=0;i<=N;i++){
+    const thDeg = xMin + (xMax-xMin)*i/N;
+    const th = thDeg*Math.PI/180;
+    const fr = fresnel(n1,n2,th);
+    xs.push(thDeg);
+    Ts.push(fr.Ts);
+    Tp.push(fr.Tp);
+    Ta.push(0.5*(fr.Ts+fr.Tp));
+  }
+
+  // choose which to emphasize
+  const colorS = "rgba(122,167,255,0.92)";
+  const colorP = "rgba(122,255,200,0.92)";
+  const colorA = "rgba(255,204,102,0.92)";
+
+  // draw curves
+  if(polMode==="s"){
+    polyline(ctx, xs, Ts, map.xToPx, map.yToPx, {stroke:colorS, width:2.4});
+    drawLegend(ctx, [{label:"Ts(θ)", color:colorS}], box.x+10, box.y+16);
+  }else if(polMode==="p"){
+    polyline(ctx, xs, Tp, map.xToPx, map.yToPx, {stroke:colorP, width:2.4});
+    drawLegend(ctx, [{label:"Tp(θ)", color:colorP}], box.x+10, box.y+16);
+  }else{
+    polyline(ctx, xs, Ts, map.xToPx, map.yToPx, {stroke:colorS, width:2.0});
+    polyline(ctx, xs, Tp, map.xToPx, map.yToPx, {stroke:colorP, width:2.0});
+    polyline(ctx, xs, Ta, map.xToPx, map.yToPx, {stroke:colorA, width:2.8});
+    drawLegend(ctx, [
+      {label:"Ts(θ)", color:colorS},
+      {label:"Tp(θ)", color:colorP},
+      {label:"Tavg(θ)", color:colorA},
+    ], box.x+10, box.y+16);
+  }
+
+  // critical angle line
+  const xCrit = map.xToPx(tcDeg);
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,204,102,0.7)";
+  ctx.setLineDash([6,6]);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(xCrit, box.y);
+  ctx.lineTo(xCrit, box.y+box.h);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(255,204,102,0.92)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  const lbl = `θc=${tcDeg.toFixed(1)}°`;
+  ctx.fillText(lbl, clamp(xCrit+6, box.x+4, box.x+box.w-ctx.measureText(lbl).width-4), box.y+box.h-10);
+  ctx.restore();
+}
+
+/* ---------------------------
+   Plot 2: sweep ηe vs n1
+---------------------------- */
+function drawPlot2(canvas, n1, n2){
+  const {ctx, wCss, hCss} = setupCanvas(canvas);
+  const W = wCss, H = hCss;
+
+  const padL=64, padR=18, padT=44, padB=58;
+  const box = {x:padL, y:padT, w:W-padL-padR, h:H-padT-padB, fullW:W, fullH:H};
+
+  const n1Min = 1.2, n1Max = 4.2;
+  const yMin = 0, yMax = 0.32; // display range; values beyond clip
+
+  const map = drawAxes(
+    ctx, box,
+    n1Min, n1Max, yMin, yMax,
+    "semiconductor index n1 (–)", "extraction ηe (–)",
+    "Extraction efficiency vs index (holding n2 fixed)"
+  );
+
+  // sweep
+  const N=120;
+  const xs=[], yF=[], yNoF=[];
+  for(let i=0;i<=N;i++){
+    const nn1 = n1Min + (n1Max-n1Min)*i/N;
+    const res = extractionEfficiency(nn1, n2).eta;
+    xs.push(nn1);
+    yF.push(res);
+    const noF = (n2/nn1)**2; // escape-cone estimate (no Fresnel), valid when nn1>n2; still a helpful reference
+    yNoF.push(noF);
+  }
+
+  // draw lines
+  const cF = "rgba(255,204,102,0.92)";
+  const cN = "rgba(183,194,227,0.70)";
+  polyline(ctx, xs, yNoF.map(v=>clamp(v, yMin, yMax)), map.xToPx, map.yToPx, {stroke:cN, width:2.0});
+  polyline(ctx, xs, yF.map(v=>clamp(v, yMin, yMax)), map.xToPx, map.yToPx, {stroke:cF, width:2.8});
+
+  drawLegend(ctx, [
+    {label:"ηe (no Fresnel) ≈ (n2/n1)^2", color:cN},
+    {label:"ηe (with Fresnel integral)", color:cF}
+  ], box.x+10, box.y+16);
+
+  // mark current n1
+  const xNow = map.xToPx(n1);
+  const yNow = map.yToPx(clamp(extractionEfficiency(n1,n2).eta, yMin, yMax));
+  ctx.save();
+  ctx.fillStyle = "rgba(122,255,200,0.95)";
+  ctx.strokeStyle = "rgba(122,255,200,0.95)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(xNow, yNow, 5, 0, Math.PI*2);
+  ctx.fill();
+  // vertical guide
+  ctx.setLineDash([6,6]);
+  ctx.strokeStyle = "rgba(122,255,200,0.45)";
+  ctx.beginPath();
+  ctx.moveTo(xNow, box.y);
+  ctx.lineTo(xNow, box.y+box.h);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // annotate
+  ctx.save();
+  ctx.fillStyle = "rgba(122,255,200,0.92)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  const txt = `current n1=${n1.toFixed(2)}`;
+  ctx.fillText(txt, clamp(xNow - ctx.measureText(txt).width/2, box.x+6, box.x+box.w-ctx.measureText(txt).width-6), box.y+box.h-10);
+  ctx.restore();
+}
+
+/* ---------------------------
+   UI wiring
+---------------------------- */
+const elN1 = document.getElementById('n1');
+const elN2 = document.getElementById('n2');
+const elPol = document.getElementById('pol');
+const n1read = document.getElementById('n1read');
+const n2read = document.getElementById('n2read');
+const thetacRead = document.getElementById('thetacRead');
+const etaRead = document.getElementById('etaRead');
+
+const cDiag = document.getElementById('diag');
+const cP1 = document.getElementById('plot1');
+const cP2 = document.getElementById('plot2');
+
+function update(){
+  const n1 = parseFloat(elN1.value);
+  const n2 = parseFloat(elN2.value);
+  n1read.textContent = n1.toFixed(2);
+  n2read.textContent = n2.toFixed(2);
+
+  const res = extractionEfficiency(n1,n2);
+  const tc = res.thetac;
+  const tcDeg = tc*180/Math.PI;
+  thetacRead.textContent = `θc = ${tc.toFixed(3)} rad (${tcDeg.toFixed(1)}°)`;
+  etaRead.textContent = `ηe = ${res.eta.toFixed(4)}`;
+
+  drawDiagram(cDiag, n1, n2);
+  drawPlot1(cP1, n1, n2, elPol.value);
+  drawPlot2(cP2, n1, n2);
+}
+
+elN1.addEventListener('input', update);
+elN2.addEventListener('input', update);
+elPol.addEventListener('change', update);
+window.addEventListener('resize', update);
+
+/* ---------------------------
+   Copy buttons
+---------------------------- */
+function copyText(text){
+  navigator.clipboard.writeText(text).catch(()=>{});
+}
+document.querySelectorAll('.copyBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const id = btn.getAttribute('data-copy-target');
+    const node = document.getElementById(id);
+    if(!node) return;
+    const txt = node.getAttribute('data-copy') || node.textContent.trim();
+    copyText(txt);
+    const old = btn.textContent;
+    btn.textContent = "Copied ✓";
+    setTimeout(()=>btn.textContent = old, 900);
+  });
+});
+
+update();
+</script>
+</body>
+</html>

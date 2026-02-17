@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>1D Blackbody Radiation: Mode Density and Spectral Energy Density</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1733;
+      --card:#111b3d;
+      --ink:#e9eeff;
+      --muted:#b9c2ffcc;
+      --faint:#b9c2ff66;
+      --accent:#7aa7ff;
+      --accent2:#7dffcc;
+      --warn:#ffcc66;
+      --ok:#7dffcc;
+      --bad:#ff7a9d;
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(122,167,255,.18), transparent 55%),
+        radial-gradient(900px 650px at 85% 25%, rgba(125,255,204,.12), transparent 60%),
+        radial-gradient(700px 700px at 60% 90%, rgba(255,122,157,.10), transparent 55%),
+        var(--bg);
+      line-height:1.55;
+    }
+    header{
+      padding:32px 20px 18px;
+      max-width:1200px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:18px;
+      align-items:end;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(1.55rem, 2.2vw, 2.35rem);
+      letter-spacing:.2px;
+    }
+    header p{
+      margin:10px 0 0;
+      color:var(--muted);
+      max-width:72ch;
+    }
+    .meta{
+      justify-self:end;
+      text-align:right;
+      color:var(--faint);
+      font-size:.92rem;
+    }
+    .wrap{
+      max-width:1200px;
+      margin:0 auto 40px;
+      padding:0 20px 40px;
+      display:grid;
+      grid-template-columns: 310px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    nav{
+      position:sticky;
+      top:14px;
+      background: linear-gradient(180deg, rgba(17,27,61,.9), rgba(17,27,61,.72));
+      border:1px solid rgba(185,194,255,.18);
+      border-radius: var(--radius);
+      padding:14px 14px 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    nav .tocTitle{
+      font-weight:700;
+      letter-spacing:.3px;
+      margin:4px 0 10px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #fff, var(--accent));
+      box-shadow: 0 0 18px rgba(122,167,255,.35);
+      flex:0 0 auto;
+    }
+    nav a{
+      display:block;
+      color:var(--muted);
+      text-decoration:none;
+      padding:8px 10px;
+      border-radius:12px;
+      transition: transform .15s ease, background .15s ease, color .15s ease;
+      font-size:.95rem;
+    }
+    nav a:hover{
+      background: rgba(122,167,255,.10);
+      color:var(--ink);
+      transform: translateX(2px);
+    }
+    main{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      min-width:0;
+    }
+    section{
+      background: linear-gradient(180deg, rgba(17,27,61,.86), rgba(17,27,61,.68));
+      border:1px solid rgba(185,194,255,.18);
+      border-radius: var(--radius);
+      padding:18px 18px 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+    section h2{
+      margin:0 0 10px;
+      font-size:1.25rem;
+      letter-spacing:.2px;
+    }
+    section h3{
+      margin:16px 0 8px;
+      font-size:1.05rem;
+      color:var(--ink);
+    }
+    .subtle{
+      color:var(--muted);
+      margin:0 0 10px;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      align-items:start;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:12px;
+      align-items:start;
+    }
+    .card{
+      background: rgba(11,16,32,.55);
+      border:1px solid rgba(185,194,255,.14);
+      border-radius: 16px;
+      padding:12px 12px 10px;
+    }
+    .callout{
+      border-left:4px solid var(--accent);
+      padding:12px 12px 10px;
+      background: rgba(122,167,255,.10);
+      border-radius: 14px;
+      margin:10px 0;
+    }
+    .callout.warn{ border-left-color: var(--warn); background: rgba(255,204,102,.10); }
+    .callout.ok{ border-left-color: var(--ok); background: rgba(125,255,204,.10); }
+    ul{ margin:8px 0 0 18px; padding:0; }
+    li{ margin:6px 0; color: var(--muted); }
+    .eq{
+      font-family: var(--mono);
+      font-size: .95rem;
+      color: #f1f5ff;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(185,194,255,.18);
+      border-radius: 14px;
+      padding:10px 10px;
+      margin:10px 0;
+      overflow:auto;
+      position:relative;
+    }
+    .eq .lbl{
+      position:absolute;
+      top:8px; right:10px;
+      font-size:.78rem;
+      color:var(--faint);
+    }
+    .btnRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:8px;
+    }
+    button.copyBtn{
+      appearance:none;
+      border:none;
+      border-radius: 14px;
+      padding:9px 12px;
+      background: rgba(122,167,255,.16);
+      color: var(--ink);
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease;
+      font-weight:650;
+      letter-spacing:.2px;
+    }
+    button.copyBtn:hover{ transform: translateY(-1px); background: rgba(122,167,255,.23); }
+    button.copyBtn:active{ transform: translateY(0px) scale(.99); }
+    .tiny{
+      font-size:.9rem;
+      color: var(--faint);
+      margin-top:6px;
+    }
+    .visGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    .visTop{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:12px;
+      align-items:stretch;
+    }
+    .controls{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      background: rgba(11,16,32,.55);
+      border:1px solid rgba(185,194,255,.14);
+      border-radius: 16px;
+      padding:12px;
+    }
+    .ctrl{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+    }
+    .ctrl label{
+      color: var(--muted);
+      font-weight:650;
+      letter-spacing:.2px;
+      font-size:.95rem;
+    }
+    input[type="range"]{ width:100%; }
+    select{
+      width:100%;
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(185,194,255,.22);
+      border-radius:12px;
+      color:var(--ink);
+      padding:8px 10px;
+      font-weight:600;
+    }
+    .readout{
+      font-family: var(--mono);
+      color:#f2f6ff;
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(185,194,255,.16);
+      border-radius:12px;
+      padding:6px 8px;
+      font-size:.92rem;
+      text-align:right;
+      min-width: 118px;
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      background: rgba(5,8,18,.55);
+      border:1px solid rgba(185,194,255,.16);
+      border-radius: 16px;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.22);
+      display:block;
+    }
+    .canvasTall{ height:360px; }
+    .canvasShort{ height:280px; }
+    footer{
+      max-width:1200px;
+      margin:0 auto;
+      padding:0 20px 30px;
+      color: var(--faint);
+      font-size:.92rem;
+    }
+    .pill{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(185,194,255,.20);
+      background: rgba(0,0,0,.22);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size:.85rem;
+      margin:2px 6px 2px 0;
+    }
+    .fadeIn{
+      animation: fadeUp .45s ease both;
+    }
+    @keyframes fadeUp{
+      from{ opacity:0; transform: translateY(8px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+    @media (max-width: 980px){
+      header{ grid-template-columns:1fr; }
+      .meta{ justify-self:start; text-align:left; }
+      .wrap{ grid-template-columns:1fr; }
+      nav{ position:relative; top:auto; }
+      .visTop{ grid-template-columns:1fr; }
+      canvas{ height:300px; }
+    }
+    @media print{
+      body{ background:#fff; color:#000; }
+      header, .wrap, footer{ max-width: unset; }
+      nav{ display:none; }
+      section, .card, .controls, canvas{ box-shadow:none; backdrop-filter:none; }
+      section{ background:#fff; border:1px solid #ddd; }
+      .eq{ background:#f7f7f7; color:#000; }
+      button{ display:none; }
+    }
+  </style>
+</head>
+<body>
+<header class="fadeIn">
+  <div>
+    <h1>14.4–6 — Spectral Energy Density of One-Dimensional Blackbody Radiation</h1>
+    <p>
+      We model electromagnetic radiation confined to a one-dimensional cavity of length <span class="pill">L</span> in thermal equilibrium at temperature
+      <span class="pill">T</span>. The goal is to (a) count the allowed standing-wave modes per unit frequency and unit length, and (b) multiply by the
+      Planck mean energy per mode to get the 1D blackbody spectrum <span class="pill">q(ν)</span>.
+    </p>
+  </div>
+  <div class="meta">
+    <div class="pill">vanilla HTML/CSS/JS</div>
+    <div class="pill">interactive canvases</div>
+    <div class="pill">print-friendly</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav aria-label="Table of contents" class="fadeIn">
+    <div class="tocTitle"><span class="dot"></span>Table of Contents</div>
+    <a href="#quick" data-scroll>Quick Summary</a>
+    <a href="#part0" data-scroll>PART 0 — Concept Primer</a>
+    <a href="#part1" data-scroll>PART 1 — Problem Analysis</a>
+    <a href="#part2" data-scroll>PART 2 — Strategy &amp; Tips</a>
+    <a href="#part3" data-scroll>PART 3 — Full Solution</a>
+    <a href="#part4" data-scroll>PART 4 — Deeper Understanding</a>
+    <a href="#part5" data-scroll>PART 5 — Visualization Guide</a>
+    <a href="#vis" data-scroll>Interactive Visualizations</a>
+  </nav>
+
+  <main>
+    <section id="quick" class="fadeIn">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><b>What this is:</b> 1D version of blackbody radiation—count standing-wave modes in a line cavity and compute energy per unit length in a frequency band.</li>
+        <li><b>Key physics idea:</b> In thermal equilibrium, each allowed mode is a harmonic oscillator with mean energy given by the <b>Planck distribution</b>.</li>
+        <li><b>Mode density result:</b> With reflecting ends, allowed frequencies are <span class="pill">ν<sub>n</sub> = n c/(2L)</span>, so the spacing is <span class="pill">Δν = c/(2L)</span>.</li>
+        <li><b>Density of modes (per unit length per unit frequency):</b> <span class="pill">M(ν)= (2g)/c</span>, where <span class="pill">g</span> is the polarization degeneracy (<span class="pill">g=2</span> for EM).</li>
+        <li><b>Mean energy per mode:</b> <span class="pill">Ē(ν)= hν / (exp(hν/kT) − 1)</span> (zero-point energy does not contribute to thermal emission spectrum in this context).</li>
+        <li><b>Spectral energy density per unit length:</b> <span class="pill">q(ν)= M(ν)Ē(ν)= (2g hν / c) / (exp(hν/kT) − 1)</span> [J·m⁻¹·Hz⁻¹].</li>
+        <li><b>Shape:</b> In 1D, <span class="pill">q(ν) → (2g kT)/c</span> as <span class="pill">ν→0</span> (a low-frequency plateau), then it decays exponentially at high frequency.</li>
+      </ul>
+
+      <div class="btnRow">
+        <button class="copyBtn" data-copy-target="eqKey1">Copy key equations</button>
+        <button class="copyBtn" data-copy-target="eqFinal">Copy final answer</button>
+      </div>
+
+      <div class="eq" id="eqKey1"><span class="lbl">Key equations (plain text)</span>
+ν_n = n c/(2L)  (n=1,2,3,...)
+Δν = c/(2L)
+M(ν) = (2g)/c   [modes·(Hz·m)^−1]
+Ē(ν) = hν / (exp(hν/(kT)) − 1)
+q(ν) = M(ν) Ē(ν) = (2g hν / c) / (exp(hν/(kT)) − 1)
+      </div>
+
+      <div class="eq" id="eqFinal"><span class="lbl">Final answer (plain text)</span>
+(a) M(ν) = (2g)/c  modes per unit frequency per unit length, where g is polarization degeneracy (g=2 for EM → M=4/c).
+(b) q(ν) = (2g hν / c) / (exp(hν/(kT)) − 1)  [J·m^−1·Hz^−1].  Low-ν limit: q(ν) → (2g kT)/c (constant). High-ν: q(ν) ~ (2g hν/c) e^(−hν/(kT)).
+      </div>
+      <p class="tiny">Tip: use the buttons above to copy equations as plain text (no formatting), useful for notes.</p>
+    </section>
+
+    <section id="part0" class="fadeIn">
+      <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Core definitions (symbols &amp; units)</h3>
+          <ul>
+            <li><b>ν</b> (nu): frequency [Hz]. Related angular frequency <b>ω</b> by <span class="pill">ω=2πν</span>.</li>
+            <li><b>L</b>: cavity length [m]. In 1D we consider waves only along the cavity axis.</li>
+            <li><b>c</b>: wave speed (for EM in vacuum, speed of light) [m/s].</li>
+            <li><b>M(ν)</b>: density of modes = number of allowed modes per unit frequency per unit length [modes·(Hz·m)⁻¹].</li>
+            <li><b>Ē(ν)</b>: mean energy in one mode at temperature <b>T</b> [J].</li>
+            <li><b>q(ν)</b>: spectral energy density per unit length = energy per unit length in frequency band <span class="pill">[ν, ν+dν]</span> divided by <span class="pill">dν</span> [J·m⁻¹·Hz⁻¹].</li>
+            <li><b>h</b>, <b>k</b>: Planck constant and Boltzmann constant.</li>
+            <li><b>g</b>: degeneracy per spatial mode. For EM radiation, <span class="pill">g=2</span> (two transverse polarizations).</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Physical meaning</h3>
+          <ul>
+            <li><b>Modes</b> are the cavity’s allowed standing-wave patterns. Think of “notes” on a string, but for EM fields.</li>
+            <li><b>M(ν)</b> tells you how densely those notes are packed in frequency space (more room → more closely spaced).</li>
+            <li><b>Ē(ν)</b> comes from quantum statistics: each mode behaves like a harmonic oscillator with quantized energy.</li>
+            <li><b>q(ν)</b> is then “how much energy per meter is carried by waves near frequency ν.”</li>
+          </ul>
+
+          <div class="callout ok">
+            <b>Key equilibrium idea:</b> In thermal equilibrium, the average energy in each mode depends only on ν and T (not on L),
+            while the <i>number</i> of modes available does depend on the geometry.
+          </div>
+        </div>
+      </div>
+
+      <h3>Key laws/principles &amp; validity</h3>
+      <ul>
+        <li><b>Standing-wave boundary conditions:</b> Reflecting ends force nodes/antinodes and quantize the allowed wavenumbers.</li>
+        <li><b>Dispersion relation:</b> For waves with speed c, <span class="pill">ω = c|k|</span> (hence <span class="pill">ν = c|k|/(2π)</span>).</li>
+        <li><b>Planck distribution:</b> For a mode of frequency ν, the mean thermal energy is
+          <span class="pill">Ē(ν)=hν/(e^{hν/(kT)}−1)</span>, valid for bosonic modes in equilibrium.</li>
+        <li><b>Assumptions:</b> cavity is ideal (perfect reflection), equilibrium holds, linear waves, and the field is effectively 1D.</li>
+      </ul>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Common models/approximations (why used)</h3>
+          <ul>
+            <li><b>Continuum approximation:</b> For large L, mode spacing Δν is tiny, so we treat the spectrum as continuous and use a density of states.</li>
+            <li><b>Low-frequency (Rayleigh–Jeans) limit:</b> if <span class="pill">hν ≪ kT</span>, then <span class="pill">Ē≈kT</span>.</li>
+            <li><b>High-frequency (Wien) tail:</b> if <span class="pill">hν ≫ kT</span>, then <span class="pill">Ē≈hν e^{−hν/(kT)}</span>.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Mini intuition examples</h3>
+          <ul>
+            <li><b>Longer cavity ⇒ more modes:</b> doubling L halves Δν, so twice as many allowed frequencies fit in the same band.</li>
+            <li><b>1D vs 3D “shape” difference:</b> in 3D, the density of states grows like ν², producing a finite peak; in 1D the density is constant, so the spectrum starts flat at low ν.</li>
+          </ul>
+          <div class="callout warn">
+            <b>What to watch for (pitfalls):</b>
+            <ul>
+              <li>For standing waves, don’t double-count ±k: the boundary conditions already produce discrete positive n.</li>
+              <li>Keep track of whether you include polarization (factor g).</li>
+              <li>Remember: in 1D, the low-ν limit becomes a constant plateau (not ∝ ν² like in 3D).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="part1" class="fadeIn">
+      <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+      <h3>Restating the problem</h3>
+      <p class="subtle">
+        A one-dimensional blackbody radiator of length <b>L</b> is in thermal equilibrium at temperature <b>T</b>.
+        (a) Find the density of modes <b>M(ν)</b> (modes per unit frequency per unit length).
+        (b) Using the Planck mean energy per mode <b>Ē(ν)</b>, find the spectral energy density <b>q(ν)</b> (energy per unit length per unit frequency),
+        and sketch its dependence on ν.
+      </p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Given</h3>
+          <ul>
+            <li>1D cavity length: <span class="pill">L</span></li>
+            <li>Equilibrium temperature: <span class="pill">T</span></li>
+            <li>Wave speed: <span class="pill">c</span> (implicitly EM radiation, unless otherwise stated)</li>
+            <li>Quantum constants: <span class="pill">h</span>, <span class="pill">k</span></li>
+            <li>Mean energy per mode: <span class="pill">Ē(ν)=hν/(e^{hν/(kT)}−1)</span></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Unknowns / what to find</h3>
+          <ul>
+            <li><b>M(ν)</b>: density of standing-wave modes per Hz per meter.</li>
+            <li><b>q(ν)</b>: spectral energy density per unit length.</li>
+            <li>Qualitative sketch of <b>q(ν)</b> vs ν and its limiting behaviors.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Relevant principles (and why they apply)</h3>
+      <ul>
+        <li><b>Boundary-condition quantization</b> applies because the cavity ends reflect waves, producing standing waves with discrete wavelengths.</li>
+        <li><b>Dispersion ω=ck</b> applies for nondispersive propagation (e.g., EM in vacuum/air).</li>
+        <li><b>Planck oscillator energy</b> applies because each mode is a bosonic harmonic oscillator at temperature T.</li>
+      </ul>
+      <div class="callout">
+        <b>Why not use 3D density of states?</b> Because the problem explicitly restricts the geometry to one spatial dimension; the ν² factor in 3D comes from counting wavevectors in 3D k-space, which is absent here.
+      </div>
+
+      <h3>Assumptions (explicit)</h3>
+      <div class="callout ok">
+        <ul>
+          <li>1D cavity with perfectly reflecting ends (standing waves).</li>
+          <li>Large L so we can treat mode spacing as small and define a smooth mode density.</li>
+          <li>Thermal equilibrium at temperature T (Planck distribution applies).</li>
+          <li>Polarization degeneracy <span class="pill">g</span> is included as a simple multiplicative factor (default <span class="pill">g=2</span> for EM).</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (compare &amp; choose)</h3>
+      <div class="grid3">
+        <div class="card">
+          <h3>Approach A: Standing-wave counting</h3>
+          <ul>
+            <li>Use <span class="pill">λ_n = 2L/n</span> ⇒ <span class="pill">ν_n = nc/(2L)</span>.</li>
+            <li><b>Pros:</b> most direct in 1D, minimal machinery.</li>
+            <li><b>Cons:</b> must be careful with degeneracy/polarization.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Approach B: k-space density</h3>
+          <ul>
+            <li>Count states in 1D k, then map k→ν using ω=ck.</li>
+            <li><b>Pros:</b> generalizes to higher dimensions neatly.</li>
+            <li><b>Cons:</b> slightly more abstract for 1D.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Approach C: Thermodynamic partition function</h3>
+          <ul>
+            <li>Derive energy density from free energy / Bose occupation and DOS.</li>
+            <li><b>Pros:</b> deep statistical mechanics view.</li>
+            <li><b>Cons:</b> overkill for this problem.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="subtle"><b>Best choice:</b> Approach A (standing-wave counting) + multiply by Planck mean energy, because it matches exactly what the problem asks for and keeps the derivation transparent.</p>
+    </section>
+
+    <section id="part2" class="fadeIn">
+      <h2>PART 2 — Strategy &amp; Tips (Roadmap Only)</h2>
+      <ol style="margin:8px 0 0 18px; color:var(--muted);">
+        <li><b>Quantize wavelengths:</b> enforce standing-wave boundary conditions to get allowed λ<sub>n</sub>. <span class="pill">Goal:</span> discrete set of frequencies.</li>
+        <li><b>Convert to frequencies:</b> use <span class="pill">ν=c/λ</span>. <span class="pill">Meaning:</span> “notes” of the cavity.</li>
+        <li><b>Find mode spacing Δν:</b> subtract adjacent ν<sub>n</sub>. <span class="pill">Meaning:</span> how tightly frequencies are packed.</li>
+        <li><b>Convert spacing to density:</b> modes per Hz is <span class="pill">dN/dν ≈ 1/Δν</span>. Then divide by L for “per unit length.”</li>
+        <li><b>Include degeneracy:</b> multiply by polarization factor <span class="pill">g</span> if appropriate.</li>
+        <li><b>Multiply by mean energy:</b> <span class="pill">q(ν)=M(ν)Ē(ν)</span>. <span class="pill">Meaning:</span> energy stored near ν per meter.</li>
+        <li><b>Check limits &amp; units:</b> ensure q has units J·m⁻¹·Hz⁻¹, and verify low/high ν behaviors.</li>
+        <li><b>Sketch shape:</b> use limiting forms to draw the plateau and the exponential tail.</li>
+      </ol>
+
+      <div class="callout warn">
+        <b>Common mistakes &amp; quick tips</b>
+        <ul>
+          <li><b>Double counting:</b> in a standing-wave cavity, n already enumerates distinct patterns—don’t add an extra factor of 2 for ±k.</li>
+          <li><b>Forgetting “per unit length”:</b> compute dN/dν first (for length L), then divide by L.</li>
+          <li><b>Units:</b> keep c in m/s and ν in Hz to avoid silent scale errors.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="part3" class="fadeIn">
+      <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+      <h3>Physical intuition first</h3>
+      <p class="subtle">
+        In 1D, the number of standing-wave modes per Hz per meter turns out to be <i>constant</i> (it does not grow with ν).
+        The Planck mean energy per mode grows ~kT at low ν and ~hν e<sup>−hν/kT</sup> at high ν.
+        Therefore the product <b>q(ν)</b> starts at a constant plateau as ν→0 and then falls off exponentially—unlike the familiar 3D blackbody curve that rises and has a finite peak.
+      </p>
+
+      <article>
+        <h3>(a) Density of modes M(ν) in one dimension</h3>
+
+        <p class="subtle">
+          Consider a 1D cavity (a line segment) of length <b>L</b> with perfectly reflecting ends.
+          Standing waves must fit an integer number of half-wavelengths into the cavity:
+        </p>
+
+        <div class="eq"><span class="lbl">Standing-wave condition</span>
+λ_n/2 = L/n  ⇒  λ_n = 2L/n,  n = 1,2,3,...
+        </div>
+
+        <p class="subtle">
+          The wave frequency is related to wavelength by <span class="pill">ν = c/λ</span> (nondispersive speed c), so:
+        </p>
+
+        <div class="eq"><span class="lbl">Allowed frequencies</span>
+ν_n = c/λ_n = c / (2L/n) = n c/(2L),  n = 1,2,3,...
+        </div>
+
+        <p class="subtle">
+          Adjacent modes are evenly spaced in frequency:
+        </p>
+
+        <div class="eq"><span class="lbl">Mode spacing</span>
+Δν = ν_{n+1} − ν_n = [(n+1)c/(2L)] − [nc/(2L)] = c/(2L)
+        </div>
+
+        <p class="subtle">
+          If the spacing is Δν, then the number of modes in a small interval dν is approximately:
+        </p>
+
+        <div class="eq"><span class="lbl">Modes in an interval</span>
+dN ≈ (dν)/(Δν) = dν / (c/(2L)) = (2L/c) dν
+        </div>
+
+        <p class="subtle">
+          Divide by length L to get modes per unit length:
+        </p>
+
+        <div class="eq"><span class="lbl">Density per unit length</span>
+(dN/L) = (2/c) dν
+⇒  M(ν) = (1/L)(dN/dν) = 2/c   [modes·(Hz·m)^−1]
+        </div>
+
+        <p class="subtle">
+          For electromagnetic radiation, each spatial standing-wave mode supports <b>two transverse polarizations</b>.
+          We include this via a degeneracy factor <span class="pill">g</span> (default <span class="pill">g=2</span> for EM):
+        </p>
+
+        <div class="eq"><span class="lbl">Final result for part (a)</span>
+M(ν) = (2g)/c
+        </div>
+
+        <div class="callout ok">
+          <b>Interpretation:</b> In 1D, the number of modes per Hz per meter is a constant. Geometry sets the spacing, but once normalized “per length,” it becomes simply proportional to 1/c.
+        </div>
+
+        <h3>(b) Spectral energy density q(ν) per unit length</h3>
+
+        <p class="subtle">
+          In thermal equilibrium, the mean energy in a single bosonic mode of frequency ν is the Planck mean energy:
+        </p>
+
+        <div class="eq"><span class="lbl">Planck mean energy per mode</span>
+Ē(ν) = hν / (exp(hν/(kT)) − 1)
+        </div>
+
+        <p class="subtle">
+          The spectral energy density per unit length (energy per unit length in the band [ν, ν+dν] divided by dν) is:
+        </p>
+
+        <div class="eq"><span class="lbl">Definition of q(ν)</span>
+q(ν) = M(ν) Ē(ν)
+        </div>
+
+        <p class="subtle">
+          Substituting <span class="pill">M(ν) = (2g)/c</span> gives:
+        </p>
+
+        <div class="eq" id="boxedFinal"><span class="lbl">1D blackbody spectrum</span>
+q(ν) = [(2g)/c] * [hν / (exp(hν/(kT)) − 1)]
+     = (2g hν / c) / (exp(hν/(kT)) − 1)
+        </div>
+
+        <div class="callout">
+          <b>Units sanity check:</b><br/>
+          <span class="pill">hν</span> has units J, <span class="pill">M</span> has units modes·(Hz·m)⁻¹, so <span class="pill">q</span> has units J·m⁻¹·Hz⁻¹. ✔
+        </div>
+
+        <h3>Limiting cases (sketch guidance)</h3>
+        <p class="subtle"><b>Low frequency</b> (<span class="pill">hν ≪ kT</span>): use <span class="pill">exp(x)−1 ≈ x</span> with <span class="pill">x=hν/(kT)</span>:</p>
+        <div class="eq"><span class="lbl">Low-ν (Rayleigh–Jeans) limit in 1D</span>
+Ē(ν) ≈ hν / (hν/(kT)) = kT
+q(ν) ≈ [(2g)/c] kT = (2g kT)/c   (constant plateau)
+        </div>
+
+        <p class="subtle"><b>High frequency</b> (<span class="pill">hν ≫ kT</span>): <span class="pill">exp(x)−1 ≈ exp(x)</span>:</p>
+        <div class="eq"><span class="lbl">High-ν (Wien tail)</span>
+q(ν) ≈ (2g hν / c) exp(−hν/(kT))
+        </div>
+
+        <div class="callout warn">
+          <b>Important qualitative outcome:</b> Because 1D has <b>constant</b> mode density, the spectrum does not rise from zero at ν=0. It approaches a finite constant and then decays—so the “peak” is at ν→0 (a flat maximum).
+        </div>
+
+        <h3>Connection to the diagram &amp; plots</h3>
+        <p class="subtle">
+          The diagram shows standing waves with <span class="pill">n</span> half-wavelengths inside length <span class="pill">L</span>.
+          The main plot graphs <span class="pill">q(ν)</span> and its low-frequency classical approximation
+          <span class="pill">q_RJ=(2gkT)/c</span> for comparison. The secondary plot shows the total energy per unit length,
+          <span class="pill">u(T)=∫_0^∞ q(ν)dν</span>, which grows like <span class="pill">T²</span> in 1D.
+        </p>
+      </article>
+    </section>
+
+    <section id="part4" class="fadeIn">
+      <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+      <h3>Re-interpreting the final formula</h3>
+      <div class="grid2">
+        <div class="card">
+          <p class="subtle">
+            <b>q(ν) = (2g/c) · [hν/(e^{hν/(kT)}−1)]</b> is a product of:
+          </p>
+          <ul>
+            <li><b>(2g/c)</b>: the 1D density of modes per Hz per meter (geometry + polarization).</li>
+            <li><b>hν/(e^{hν/(kT)}−1)</b>: the quantum thermal energy in one harmonic oscillator mode.</li>
+          </ul>
+          <p class="subtle">
+            In 3D, density of modes scales like ν², but in 1D it is constant—this single change reshapes the spectrum dramatically.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Parameter dependence (link to plots)</h3>
+          <ul>
+            <li><b>Increase T:</b> the plateau level <span class="pill">(2gkT)/c</span> rises linearly with T, and the exponential cutoff shifts to higher ν (since the scale is <span class="pill">kT/h</span>).</li>
+            <li><b>Change polarization g:</b> q(ν) scales linearly with g (doubling g doubles the spectrum everywhere).</li>
+            <li><b>Total energy per length:</b> integrating over ν yields <span class="pill">u(T) ∝ T²</span> in 1D (shown in the secondary plot).</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Alternative derivation idea (brief)</h3>
+      <p class="subtle">
+        Instead of standing-wave counting, you can count states in 1D k-space: allowed k values are spaced by <span class="pill">Δk=π/L</span>
+        for standing waves. Using <span class="pill">ν=c|k|/(2π)</span> gives the same constant density of states in ν.
+      </p>
+
+      <h3>Concept checks (self-test)</h3>
+      <ul>
+        <li><b>Q:</b> Why does 1D q(ν) not go to zero at ν→0? <b>A:</b> Because the 1D mode density is constant and the mean energy per mode tends to kT, giving a constant product.</li>
+        <li><b>Q:</b> What sets the “rolloff” frequency scale? <b>A:</b> The dimensionless ratio <span class="pill">hν/(kT)</span>; rolloff occurs around ν ~ kT/h.</li>
+        <li><b>Q:</b> If c increased, what happens to q(ν)? <b>A:</b> It decreases as 1/c because the mode density per Hz per meter is ∝ 1/c.</li>
+        <li><b>Q:</b> In 1D, where is the maximum of q(ν)? <b>A:</b> At ν→0 (a plateau), unlike 3D where there is a finite ν peak.</li>
+      </ul>
+    </section>
+
+    <section id="part5" class="fadeIn">
+      <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+      <div class="grid2">
+        <div class="card">
+          <h3>Diagram canvas</h3>
+          <ul>
+            <li>Shows a 1D cavity of length <span class="pill">L</span> with reflecting ends.</li>
+            <li>Illustrates standing-wave patterns and the rule <span class="pill">λ_n = 2L/n</span>.</li>
+            <li>Connects the integer mode index n to discrete frequencies <span class="pill">ν_n = nc/(2L)</span>.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Main plot canvas</h3>
+          <ul>
+            <li>Plots <span class="pill">q(ν)</span> vs frequency ν (in THz for readability).</li>
+            <li>Also plots the classical 1D Rayleigh–Jeans plateau <span class="pill">q_RJ=(2gkT)/c</span> as a reference.</li>
+            <li>Look for: low-ν plateau, then exponential decay.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div class="card">
+          <h3>Secondary plot canvas</h3>
+          <ul>
+            <li>Shows the <b>total energy per unit length</b> <span class="pill">u(T)=∫_0^∞ q(ν)dν</span> versus T.</li>
+            <li>The curve follows <span class="pill">u(T) ∝ T²</span> in 1D; a marker indicates the current slider temperature.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Interactive controls</h3>
+          <ul>
+            <li><b>Temperature slider T:</b> updates plateau level and cutoff frequency in the main plot, and moves the marker in the T² curve.</li>
+            <li><b>Polarization selector g:</b> scales all energy quantities linearly (use g=2 for EM, g=1 for a scalar wave model).</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="vis" class="fadeIn">
+      <h2>Interactive Visualizations</h2>
+      <p class="subtle">
+        The plots use <b>example values</b> for visualization (you can change them). The symbolic results in the solution remain general.
+        Frequency axis is chosen automatically up to about <span class="pill">ν_max ≈ 10 kT/h</span> so you can see the plateau and decay.
+      </p>
+
+      <div class="visTop">
+        <div class="controls" aria-label="Interactive controls">
+          <div class="ctrl">
+            <div>
+              <label for="Tslider">Temperature T (K)</label>
+              <input id="Tslider" type="range" min="50" max="2000" step="10" value="600" />
+            </div>
+            <div class="readout" id="Tread">600 K</div>
+          </div>
+
+          <div class="ctrl">
+            <div>
+              <label for="gSelect">Polarization degeneracy g</label>
+              <select id="gSelect">
+                <option value="2" selected>g = 2 (EM: two polarizations)</option>
+                <option value="1">g = 1 (scalar 1D wave model)</option>
+              </select>
+              <div class="tiny">g scales M(ν), q(ν), and u(T) linearly.</div>
+            </div>
+            <div class="readout" id="gread">g=2</div>
+          </div>
+
+          <div class="card" style="margin-top:2px;">
+            <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+              <span class="pill" id="plateauPill">q_RJ = …</span>
+              <span class="pill" id="scalePill">ν_T = kT/h = …</span>
+            </div>
+            <p class="tiny" style="margin:8px 0 0;">
+              <b>q_RJ</b> is the low-frequency plateau; <b>ν_T</b> is the thermal frequency scale where the exponential suppression begins.
+            </p>
+          </div>
+
+          <div class="btnRow">
+            <button class="copyBtn" id="copyCurrent">Copy current numeric readout</button>
+          </div>
+          <div class="eq" id="numReadout"><span class="lbl">Current values (plain text)</span>
+T = 600 K
+g = 2
+q_RJ = ...
+ν_T = ...
+u(T) = ...
+          </div>
+        </div>
+
+        <div class="visGrid">
+          <figure style="margin:0;">
+            <canvas id="diagramCanvas" class="canvasShort" aria-label="1D cavity diagram"></canvas>
+            <figcaption class="tiny">Diagram: 1D cavity standing waves and mode quantization.</figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <figure style="margin:0;">
+          <canvas id="mainPlot" class="canvasTall" aria-label="Main plot: q(nu) vs nu"></canvas>
+          <figcaption class="tiny">Main plot: 1D Planck spectrum q(ν) and the Rayleigh–Jeans plateau.</figcaption>
+        </figure>
+        <figure style="margin:0;">
+          <canvas id="secondaryPlot" class="canvasTall" aria-label="Secondary plot: total energy per length vs temperature"></canvas>
+          <figcaption class="tiny">Secondary plot: u(T)=∫q(ν)dν grows like T² in 1D; marker shows current T.</figcaption>
+        </figure>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer class="fadeIn">
+  <p>
+    Notes: This is the <b>1D</b> analog of blackbody radiation. The qualitative difference from the familiar 3D spectrum comes entirely from the
+    density of states: 1D has constant mode density in ν, while 3D has ∝ν². The interactive plots use physical constants (h, k, c) and update in real time.
+  </p>
+</footer>
+
+<script>
+/* ------------------------- Smooth scrolling TOC ------------------------- */
+document.querySelectorAll('a[data-scroll]').forEach(a=>{
+  a.addEventListener('click', (e)=>{
+    e.preventDefault();
+    const id = a.getAttribute('href');
+    const el = document.querySelector(id);
+    if(!el) return;
+    const y = el.getBoundingClientRect().top + window.scrollY - 10;
+    window.scrollTo({top:y, behavior:'smooth'});
+  });
+});
+
+/* ------------------------- Copy buttons ------------------------- */
+function copyTextFromElement(el){
+  const txt = el.innerText.replace(/\n{3,}/g, "\n\n").trim();
+  navigator.clipboard.writeText(txt);
+}
+document.querySelectorAll('button.copyBtn[data-copy-target]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const id = btn.getAttribute('data-copy-target');
+    const el = document.getElementById(id);
+    if(el) copyTextFromElement(el);
+    btn.textContent = "Copied ✓";
+    setTimeout(()=>btn.textContent="Copy " + (id==="eqFinal"?"final answer":"key equations"), 900);
+  });
+});
+
+/* ------------------------- Physics constants ------------------------- */
+const h = 6.62607015e-34;      // J*s
+const kB = 1.380649e-23;       // J/K
+const c = 299792458;           // m/s
+
+/* ------------------------- State ------------------------- */
+const state = {
+  T: 600,   // K
+  g: 2,     // degeneracy
+  // plotting
+  nuMaxFactor: 10, // plot to nu_max = nuMaxFactor*(kT/h)
+};
+
+/* ------------------------- Controls ------------------------- */
+const Tslider = document.getElementById('Tslider');
+const Tread = document.getElementById('Tread');
+const gSelect = document.getElementById('gSelect');
+const gread = document.getElementById('gread');
+const plateauPill = document.getElementById('plateauPill');
+const scalePill = document.getElementById('scalePill');
+const numReadout = document.getElementById('numReadout');
+const copyCurrent = document.getElementById('copyCurrent');
+
+function fmtSI(x, unit){
+  // simple SI formatter with 3 sig figs + engineering prefixes for readability
+  const prefixes = [
+    {p:1e-24, s:"y"}, {p:1e-21, s:"z"}, {p:1e-18, s:"a"}, {p:1e-15, s:"f"},
+    {p:1e-12, s:"p"}, {p:1e-9, s:"n"}, {p:1e-6, s:"µ"}, {p:1e-3, s:"m"},
+    {p:1, s:""}, {p:1e3, s:"k"}, {p:1e6, s:"M"}, {p:1e9, s:"G"},
+    {p:1e12, s:"T"}, {p:1e15, s:"P"}, {p:1e18, s:"E"}, {p:1e21, s:"Z"}, {p:1e24, s:"Y"}
+  ];
+  const ax = Math.abs(x);
+  if(ax === 0) return `0 ${unit}`;
+  let best = prefixes[8]; // ""
+  for(const pr of prefixes){
+    if(ax/pr.p >= 1 && ax/pr.p < 1000){ best = pr; break; }
+  }
+  const val = x/best.p;
+  const str = (Math.abs(val) >= 100 ? val.toFixed(0) : Math.abs(val) >= 10 ? val.toFixed(1) : val.toFixed(2));
+  return `${str} ${best.s}${unit}`.trim();
+}
+
+function updateReadouts(){
+  Tread.textContent = `${state.T} K`;
+  gread.textContent = `g=${state.g}`;
+  const qRJ = (2*state.g*kB*state.T)/c;           // J m^-1 Hz^-1
+  const nuT = (kB*state.T)/h;                     // Hz
+  const uT = totalEnergyPerLength(state.T, state.g); // J m^-1
+  plateauPill.textContent = `q_RJ = ${(qRJ).toExponential(3)} J·m⁻¹·Hz⁻¹`;
+  scalePill.textContent = `ν_T = kT/h = ${fmtSI(nuT, "Hz")}`;
+  numReadout.innerText =
+`T = ${state.T} K
+g = ${state.g}
+q_RJ = ${qRJ.toExponential(6)} J·m^−1·Hz^−1
+ν_T = ${(nuT).toExponential(6)} Hz
+u(T) = ${uT.toExponential(6)} J·m^−1`;
+}
+
+Tslider.addEventListener('input', ()=>{
+  state.T = Number(Tslider.value);
+  updateAll();
+});
+gSelect.addEventListener('change', ()=>{
+  state.g = Number(gSelect.value);
+  updateAll();
+});
+copyCurrent.addEventListener('click', ()=>{
+  copyTextFromElement(numReadout);
+  copyCurrent.textContent = "Copied ✓";
+  setTimeout(()=>copyCurrent.textContent="Copy current numeric readout", 900);
+});
+
+/* ------------------------- Core formulas ------------------------- */
+function M_nu(g){ // modes per (Hz*m)
+  return (2*g)/c;
+}
+function Ebar(nu, T){
+  const x = h*nu/(kB*T);
+  if(x < 1e-6) return kB*T; // avoid 0/0; correct limit
+  return (h*nu)/(Math.expm1(x)); // exp(x)-1 stable
+}
+function q_nu(nu, T, g){
+  return M_nu(g) * Ebar(nu, T);
+}
+// Total energy per unit length u(T) = ∫_0^∞ q(ν) dν.
+// Analytic integral: ∫_0^∞ [hν/(e^{hν/kT}-1)] dν = (kT)^2/h * (π^2/6)
+// so u(T) = (2g/c) * (kT)^2/h * (π^2/6) = (g π^2/3) (k^2 T^2)/(h c)
+function totalEnergyPerLength(T, g){
+  return (g * Math.PI*Math.PI/3) * (kB*kB*T*T) / (h*c);
+}
+
+/* ------------------------- Canvas helpers ------------------------- */
+function setupCanvas(canvas){
+  const ctx = canvas.getContext('2d');
+  function resize(){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.max(2, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(2, Math.floor(rect.height * dpr));
+    ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  }
+  return {ctx, resize};
+}
+
+function drawAxes(ctx, rect, xMin, xMax, yMin, yMax, opts){
+  // rect: {x,y,w,h} in CSS pixels
+  const pad = opts.pad ?? {l:60,r:18,t:36,b:50};
+  const plot = {
+    x: rect.x + pad.l,
+    y: rect.y + pad.t,
+    w: rect.w - pad.l - pad.r,
+    h: rect.h - pad.t - pad.b
+  };
+
+  // background
+  ctx.save();
+  ctx.fillStyle = 'rgba(5,8,18,.25)';
+  ctx.fillRect(plot.x, plot.y, plot.w, plot.h);
+
+  // gridlines
+  const nx = opts.nx ?? 6;
+  const ny = opts.ny ?? 6;
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(185,194,255,.10)';
+  ctx.beginPath();
+  for(let i=0;i<=nx;i++){
+    const x = plot.x + plot.w*i/nx;
+    ctx.moveTo(x, plot.y);
+    ctx.lineTo(x, plot.y + plot.h);
+  }
+  for(let j=0;j<=ny;j++){
+    const y = plot.y + plot.h*j/ny;
+    ctx.moveTo(plot.x, y);
+    ctx.lineTo(plot.x + plot.w, y);
+  }
+  ctx.stroke();
+
+  // axes
+  ctx.strokeStyle = 'rgba(185,194,255,.35)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(plot.x, plot.y + plot.h);
+  ctx.lineTo(plot.x + plot.w, plot.y + plot.h);
+  ctx.moveTo(plot.x, plot.y);
+  ctx.lineTo(plot.x, plot.y + plot.h);
+  ctx.stroke();
+
+  // ticks + labels
+  ctx.fillStyle = 'rgba(233,238,255,.9)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+
+  for(let i=0;i<=nx;i++){
+    const t = i/nx;
+    const x = plot.x + plot.w*t;
+    const val = xMin + (xMax-xMin)*t;
+    ctx.strokeStyle = 'rgba(185,194,255,.30)';
+    ctx.beginPath();
+    ctx.moveTo(x, plot.y + plot.h);
+    ctx.lineTo(x, plot.y + plot.h + 6);
+    ctx.stroke();
+    ctx.fillText(opts.xTickFormatter ? opts.xTickFormatter(val) : val.toFixed(2), x, plot.y + plot.h + 8);
+  }
+
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for(let j=0;j<=ny;j++){
+    const t = j/ny;
+    const y = plot.y + plot.h*(1-t);
+    const val = yMin + (yMax-yMin)*t;
+    ctx.strokeStyle = 'rgba(185,194,255,.30)';
+    ctx.beginPath();
+    ctx.moveTo(plot.x - 6, y);
+    ctx.lineTo(plot.x, y);
+    ctx.stroke();
+    ctx.fillText(opts.yTickFormatter ? opts.yTickFormatter(val) : val.toExponential(2), plot.x - 9, y);
+  }
+
+  // title + labels
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.font = '700 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+  ctx.fillStyle = 'rgba(233,238,255,.95)';
+  ctx.fillText(opts.title ?? '', rect.x + 12, rect.y + 10);
+
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+  ctx.fillStyle = 'rgba(185,194,255,.85)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(opts.xLabel ?? '', plot.x + plot.w/2, rect.y + rect.h - 20);
+
+  ctx.save();
+  ctx.translate(rect.x + 16, plot.y + plot.h/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(opts.yLabel ?? '', 0, 0);
+  ctx.restore();
+
+  ctx.restore();
+
+  function xToPx(x){
+    return plot.x + (x - xMin) * plot.w / (xMax - xMin);
+  }
+  function yToPx(y){
+    return plot.y + plot.h - (y - yMin) * plot.h / (yMax - yMin);
+  }
+
+  return {plot, xToPx, yToPx};
+}
+
+function drawLegend(ctx, rect, items){
+  // items: [{name, styleFn}]
+  const x = rect.x + rect.w - 14;
+  const y0 = rect.y + 10;
+  ctx.save();
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'top';
+
+  let y = y0 + 18;
+  items.forEach((it, idx)=>{
+    const yy = y + idx*18;
+    // line sample
+    ctx.lineWidth = 2.2;
+    ctx.strokeStyle = it.stroke;
+    ctx.beginPath();
+    ctx.moveTo(x - 110, yy + 7);
+    ctx.lineTo(x - 80, yy + 7);
+    ctx.stroke();
+
+    if(it.dash){
+      ctx.setLineDash(it.dash);
+      ctx.beginPath();
+      ctx.moveTo(x - 110, yy + 7);
+      ctx.lineTo(x - 80, yy + 7);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.fillStyle = 'rgba(233,238,255,.9)';
+    ctx.fillText(it.name, x, yy);
+  });
+
+  ctx.restore();
+}
+
+/* ------------------------- Diagram ------------------------- */
+const diagramCanvas = document.getElementById('diagramCanvas');
+const diag = setupCanvas(diagramCanvas);
+
+function drawDiagram(){
+  const ctx = diag.ctx;
+  const rect = diagramCanvas.getBoundingClientRect();
+  const w = rect.width, hgt = rect.height;
+
+  ctx.clearRect(0,0,w,hgt);
+
+  // title
+  ctx.fillStyle = 'rgba(233,238,255,.95)';
+  ctx.font = '700 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+  ctx.fillText('1D cavity standing-wave modes', 12, 10);
+
+  const margin = 18;
+  const x0 = margin;
+  const x1 = w - margin;
+  const yMid = hgt*0.58;
+
+  // cavity walls
+  ctx.strokeStyle = 'rgba(185,194,255,.55)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x0, yMid-70);
+  ctx.lineTo(x0, yMid+70);
+  ctx.moveTo(x1, yMid-70);
+  ctx.lineTo(x1, yMid+70);
+  ctx.stroke();
+
+  // cavity axis line
+  ctx.strokeStyle = 'rgba(185,194,255,.20)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(x0, yMid);
+  ctx.lineTo(x1, yMid);
+  ctx.stroke();
+
+  // length arrow
+  ctx.strokeStyle = 'rgba(122,167,255,.9)';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(x0+10, yMid+92);
+  ctx.lineTo(x1-10, yMid+92);
+  ctx.stroke();
+  // arrowheads
+  function arrowHead(x,y,dir){
+    ctx.beginPath();
+    ctx.moveTo(x,y);
+    ctx.lineTo(x+10*dir, y-6);
+    ctx.lineTo(x+10*dir, y+6);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(122,167,255,.9)';
+    ctx.fill();
+  }
+  arrowHead(x0+10, yMid+92, -1);
+  arrowHead(x1-10, yMid+92, +1);
+
+  ctx.fillStyle = 'rgba(185,194,255,.9)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('L', (x0+x1)/2, yMid+100);
+
+  // draw a couple of standing-wave examples
+  // pick n=1 and n=3 patterns
+  const patterns = [
+    {n:1, y:yMid-35, label:'n=1  (λ=2L)'},
+    {n:3, y:yMid+35, label:'n=3  (λ=2L/3)'}
+  ];
+
+  patterns.forEach(p=>{
+    const n = p.n;
+    const y = p.y;
+    ctx.strokeStyle = 'rgba(125,255,204,.85)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const N = 240;
+    for(let i=0;i<=N;i++){
+      const t = i/N;
+      const x = x0 + (x1-x0)*t;
+      // standing wave: sin(nπx/L)
+      const val = Math.sin(n*Math.PI*t);
+      const amp = 22;
+      const yy = y - val*amp;
+      if(i===0) ctx.moveTo(x, yy);
+      else ctx.lineTo(x, yy);
+    }
+    ctx.stroke();
+
+    // nodes dots at ends + internal nodes
+    ctx.fillStyle = 'rgba(233,238,255,.85)';
+    for(let m=0;m<=n;m++){
+      const t = m/n;
+      const x = x0 + (x1-x0)*t;
+      ctx.beginPath();
+      ctx.arc(x, y, 3.2, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = 'rgba(185,194,255,.9)';
+    ctx.textAlign = 'left';
+    ctx.fillText(p.label, x0+6, y-34);
+  });
+
+  // annotate quantization rule
+  ctx.fillStyle = 'rgba(255,204,102,.95)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('λ_n = 2L/n', x0+6, 34);
+  ctx.fillText('ν_n = n c/(2L)', x0+6, 52);
+
+  // small note
+  ctx.fillStyle = 'rgba(185,194,255,.7)';
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+  ctx.fillText('Reflecting ends → standing waves → discrete frequencies', x0+6, hgt-26);
+}
+
+/* ------------------------- Main plot: q(nu) vs nu ------------------------- */
+const mainPlotCanvas = document.getElementById('mainPlot');
+const mainPlot = setupCanvas(mainPlotCanvas);
+
+function drawMainPlot(){
+  const ctx = mainPlot.ctx;
+  const rect = mainPlotCanvas.getBoundingClientRect();
+  const w = rect.width, hgt = rect.height;
+  ctx.clearRect(0,0,w,hgt);
+
+  const T = state.T;
+  const g = state.g;
+
+  const nuT = (kB*T)/h;
+  const nuMax = state.nuMaxFactor * nuT; // Hz
+  const nuMin = 0;
+
+  // generate curve
+  const N = 450;
+  const nus = new Array(N);
+  const qs = new Array(N);
+  let qMax = 0;
+  for(let i=0;i<N;i++){
+    const t = i/(N-1);
+    const nu = nuMin + (nuMax - nuMin)*t;
+    const qv = q_nu(nu, T, g);
+    nus[i]=nu;
+    qs[i]=qv;
+    if(qv>qMax) qMax=qv;
+  }
+  // y-range: from 0 to slightly above plateau (max occurs at ν→0)
+  const qRJ = (2*g*kB*T)/c;
+  const yMax = Math.max(qRJ, qMax) * 1.10;
+  const yMin = 0;
+
+  // x-axis in THz
+  const xScale = 1e12;
+  const xMinTHz = nuMin/xScale;
+  const xMaxTHz = nuMax/xScale;
+
+  const axes = drawAxes(ctx,
+    {x:0,y:0,w:w,h:hgt},
+    xMinTHz, xMaxTHz,
+    yMin, yMax,
+    {
+      title: 'Spectral energy density per unit length: q(ν)',
+      xLabel: 'Frequency ν (THz)',
+      yLabel: 'q(ν) (J·m⁻¹·Hz⁻¹)',
+      nx: 6, ny: 6,
+      xTickFormatter: (v)=> v.toFixed(1),
+      yTickFormatter: (v)=> (v===0 ? "0" : v.toExponential(2))
+    }
+  );
+
+  // draw q(ν)
+  ctx.save();
+  ctx.strokeStyle = 'rgba(125,255,204,.95)';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  for(let i=0;i<N;i++){
+    const x = axes.xToPx(nus[i]/xScale);
+    const y = axes.yToPx(qs[i]);
+    if(i===0) ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // draw RJ plateau (horizontal line)
+  ctx.save();
+  ctx.strokeStyle = 'rgba(122,167,255,.95)';
+  ctx.lineWidth = 2.2;
+  ctx.setLineDash([8,6]);
+  const yRJ = axes.yToPx(qRJ);
+  ctx.beginPath();
+  ctx.moveTo(axes.plot.x, yRJ);
+  ctx.lineTo(axes.plot.x + axes.plot.w, yRJ);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // annotate plateau + thermal frequency scale
+  ctx.save();
+  ctx.fillStyle = 'rgba(233,238,255,.88)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(`q_RJ = (2gkT)/c = ${qRJ.toExponential(2)}`, axes.plot.x + 8, axes.plot.y + 8);
+  ctx.fillText(`ν_T = kT/h = ${(nuT/xScale).toFixed(2)} THz`, axes.plot.x + 8, axes.plot.y + 26);
+
+  // mark ν_T on x-axis
+  const xNuT = axes.xToPx((nuT)/xScale);
+  ctx.strokeStyle = 'rgba(255,204,102,.85)';
+  ctx.lineWidth = 1.8;
+  ctx.setLineDash([5,5]);
+  ctx.beginPath();
+  ctx.moveTo(xNuT, axes.plot.y);
+  ctx.lineTo(xNuT, axes.plot.y + axes.plot.h);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(255,204,102,.95)';
+  ctx.fillText('ν_T', xNuT + 6, axes.plot.y + 8);
+  ctx.restore();
+
+  drawLegend(ctx, {x:0,y:0,w:w,h:hgt}, [
+    {name:'q(ν) (Planck, 1D)', stroke:'rgba(125,255,204,.95)'},
+    {name:'q_RJ (low-ν plateau)', stroke:'rgba(122,167,255,.95)', dash:[8,6]}
+  ]);
+}
+
+/* ------------------------- Secondary plot: u(T) vs T ------------------------- */
+const secondaryCanvas = document.getElementById('secondaryPlot');
+const secPlot = setupCanvas(secondaryCanvas);
+
+function drawSecondaryPlot(){
+  const ctx = secPlot.ctx;
+  const rect = secondaryCanvas.getBoundingClientRect();
+  const w = rect.width, hgt = rect.height;
+  ctx.clearRect(0,0,w,hgt);
+
+  const g = state.g;
+
+  // temperature range shown (match slider)
+  const Tmin = Number(Tslider.min);
+  const Tmax = Number(Tslider.max);
+
+  // compute curve
+  const N = 250;
+  const Ts = [];
+  const us = [];
+  let uMax = 0;
+  for(let i=0;i<N;i++){
+    const t = i/(N-1);
+    const T = Tmin + (Tmax-Tmin)*t;
+    const u = totalEnergyPerLength(T, g);
+    Ts.push(T);
+    us.push(u);
+    if(u>uMax) uMax=u;
+  }
+
+  const axes = drawAxes(ctx,
+    {x:0,y:0,w:w,h:hgt},
+    Tmin, Tmax,
+    0, uMax*1.08,
+    {
+      title: 'Total energy per unit length: u(T) = ∫₀^∞ q(ν) dν',
+      xLabel: 'Temperature T (K)',
+      yLabel: 'u(T) (J·m⁻¹)',
+      nx: 6, ny: 6,
+      xTickFormatter: (v)=> v.toFixed(0),
+      yTickFormatter: (v)=> (v===0 ? "0" : v.toExponential(2))
+    }
+  );
+
+  // draw curve
+  ctx.save();
+  ctx.strokeStyle = 'rgba(125,255,204,.95)';
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  for(let i=0;i<N;i++){
+    const x = axes.xToPx(Ts[i]);
+    const y = axes.yToPx(us[i]);
+    if(i===0) ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // draw marker at current T
+  const T0 = state.T;
+  const u0 = totalEnergyPerLength(T0, g);
+  const x0 = axes.xToPx(T0);
+  const y0 = axes.yToPx(u0);
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,204,102,.9)';
+  ctx.lineWidth = 1.8;
+  ctx.setLineDash([6,5]);
+  ctx.beginPath();
+  ctx.moveTo(x0, axes.plot.y);
+  ctx.lineTo(x0, axes.plot.y + axes.plot.h);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(255,204,102,.95)';
+  ctx.beginPath();
+  ctx.arc(x0, y0, 5.2, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(233,238,255,.88)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(`u(T)= (gπ²/3)(k²T²)/(hc)`, axes.plot.x + 8, axes.plot.y + 8);
+  ctx.fillText(`T = ${T0} K`, axes.plot.x + 8, axes.plot.y + 26);
+  ctx.fillText(`u(T) = ${u0.toExponential(2)} J·m⁻¹`, axes.plot.x + 8, axes.plot.y + 44);
+  ctx.restore();
+
+  drawLegend(ctx, {x:0,y:0,w:w,h:hgt}, [
+    {name:'u(T) (analytic)', stroke:'rgba(125,255,204,.95)'},
+    {name:'current T marker', stroke:'rgba(255,204,102,.95)'}
+  ]);
+}
+
+/* ------------------------- Update cycle ------------------------- */
+function updateAll(){
+  updateReadouts();
+  drawDiagram();
+  drawMainPlot();
+  drawSecondaryPlot();
+}
+
+function resizeAll(){
+  diag.resize();
+  mainPlot.resize();
+  secPlot.resize();
+  updateAll();
+}
+
+window.addEventListener('resize', ()=>{
+  // debounce-ish
+  clearTimeout(window.__bb1dResizeTimer);
+  window.__bb1dResizeTimer = setTimeout(resizeAll, 60);
+});
+
+/* ------------------------- Initialize ------------------------- */
+(function init(){
+  diag.resize(); mainPlot.resize(); secPlot.resize();
+  updateAll();
+})();
+</script>
+</body>
+</html>

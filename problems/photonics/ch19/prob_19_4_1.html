@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quantum Efficiency and Photocurrent of an APD (Avalanche Photodiode)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1733;
+      --card:#111c3d;
+      --ink:#e9eefc;
+      --muted:#b9c3e6;
+      --faint:#7f8bb8;
+      --accent:#7cf7c3;
+      --accent2:#8aa6ff;
+      --warn:#ffd37a;
+      --danger:#ff7a95;
+      --grid:rgba(255,255,255,.08);
+      --border:rgba(255,255,255,.12);
+      --shadow: 0 16px 40px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --radius: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 900px at 15% 10%, rgba(138,166,255,.18), transparent 60%),
+        radial-gradient(1000px 800px at 85% 20%, rgba(124,247,195,.14), transparent 55%),
+        radial-gradient(900px 700px at 60% 90%, rgba(255,122,149,.10), transparent 60%),
+        var(--bg);
+      color:var(--ink);
+      line-height:1.55;
+    }
+
+    header{
+      padding:28px 18px 10px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .hero{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) + 6px);
+      box-shadow: var(--shadow);
+      padding: 20px 18px;
+      overflow:hidden;
+      position:relative;
+    }
+    .hero:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(500px 160px at 20% 20%, rgba(124,247,195,.22), transparent 70%),
+        radial-gradient(520px 170px at 70% 30%, rgba(138,166,255,.20), transparent 70%);
+      pointer-events:none;
+      filter: blur(8px);
+      opacity:.9;
+    }
+    .hero > *{ position:relative; }
+    h1{
+      margin:0 0 8px;
+      font-size: clamp(1.35rem, 2.4vw, 2.15rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      max-width: 70ch;
+    }
+
+    main{
+      max-width:1200px;
+      margin: 14px auto 40px;
+      padding: 0 18px;
+      display:grid;
+      grid-template-columns: 1fr 290px;
+      gap: 18px;
+      align-items:start;
+    }
+
+    @media (max-width: 980px){
+      main{ grid-template-columns: 1fr; }
+      .tocWrap{ position:static !important; top:auto !important; }
+    }
+
+    section{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 26px rgba(0,0,0,.25);
+      padding: 18px 16px;
+      margin-bottom: 14px;
+      overflow:hidden;
+    }
+
+    h2{
+      margin: 0 0 10px;
+      font-size: 1.18rem;
+      letter-spacing:.2px;
+    }
+    h3{
+      margin: 14px 0 8px;
+      font-size: 1.02rem;
+      color: var(--ink);
+    }
+    p{ margin: 8px 0; color: var(--ink); }
+    .muted{ color: var(--muted); }
+    .small{ font-size:.95rem; }
+    .tiny{ font-size:.85rem; color: var(--muted); }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 760px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .callouts{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .card{
+      grid-column: span 6;
+      background: rgba(17,28,61,.65);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 12px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.22);
+    }
+    .card strong{ color: var(--accent); }
+    .card.warn strong{ color: var(--warn); }
+    .card.danger strong{ color: var(--danger); }
+    @media (max-width: 760px){
+      .card{ grid-column: span 12; }
+    }
+
+    .eq{
+      font-family: var(--mono);
+      font-size: .96rem;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding: 10px 10px;
+      overflow:auto;
+      position:relative;
+    }
+    .eq kbd{
+      font-family: var(--mono);
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      padding:2px 6px;
+      border-radius: 8px;
+    }
+    .eq .copyBtn{
+      position:absolute;
+      top: 8px;
+      right: 8px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--ink);
+      padding: 6px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size: .86rem;
+      user-select:none;
+    }
+    .eq .copyBtn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.22); }
+    .eq .copied{
+      display:none;
+      position:absolute;
+      top: 10px;
+      right: 92px;
+      font-size: .82rem;
+      color: var(--accent);
+    }
+
+    ul{ margin: 8px 0 8px 18px; color: var(--ink); }
+    li{ margin: 6px 0; }
+
+    .tocWrap{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 12px;
+      box-shadow: 0 10px 22px rgba(0,0,0,.22);
+    }
+    .tocTitle{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .tocTitle span{ font-weight:700; letter-spacing:.2px; }
+    .pill{
+      font-size:.78rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    nav a{
+      display:block;
+      padding: 8px 10px;
+      margin: 6px 0;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      color: var(--muted);
+      text-decoration:none;
+      transition: background .15s ease, border-color .15s ease, transform .15s ease;
+    }
+    nav a:hover{
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.12);
+      transform: translateY(-1px);
+      color: var(--ink);
+    }
+    nav a.active{
+      background: rgba(124,247,195,.10);
+      border-color: rgba(124,247,195,.25);
+      color: var(--ink);
+    }
+
+    .vizGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .vizCard{
+      background: rgba(17,28,61,.55);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 12px;
+      overflow:hidden;
+    }
+    .vizHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .vizHeader h3{ margin: 0; }
+    .controls{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .control{
+      grid-column: span 6;
+      padding: 10px 10px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+    }
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      font-size: .92rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .control input[type="range"]{ width:100%; }
+    .control select{
+      width:100%;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--ink);
+      outline:none;
+    }
+    .control .readout{
+      font-family: var(--mono);
+      color: var(--ink);
+    }
+    @media (max-width: 760px){
+      .control{ grid-column: span 12; }
+    }
+
+    canvas{
+      width:100%;
+      height: 320px;
+      display:block;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+    }
+
+    .finalBox{
+      border: 1px solid rgba(124,247,195,.28);
+      background: rgba(124,247,195,.08);
+      border-radius: var(--radius);
+      padding: 12px 12px;
+      margin-top: 10px;
+    }
+    .finalBox h3{ margin-top:0; color: var(--accent); }
+    .finalRow{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .finalText{
+      font-family: var(--mono);
+      font-size: .95rem;
+      white-space:pre-wrap;
+      margin: 8px 0 0;
+    }
+    .copyBig{
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color: var(--ink);
+      padding: 8px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      transition: transform .15s ease, background .15s ease;
+      user-select:none;
+      font-size: .9rem;
+    }
+    .copyBig:hover{ transform: translateY(-1px); background: rgba(255,255,255,.10); }
+
+    .assump{
+      border-left: 4px solid rgba(138,166,255,.8);
+      padding-left: 10px;
+      margin: 10px 0;
+      color: var(--muted);
+    }
+
+    .printHint{
+      margin-top: 10px;
+      color: var(--faint);
+      font-size:.9rem;
+    }
+
+    footer{
+      max-width:1200px;
+      margin: 0 auto 50px;
+      padding: 0 18px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    @media print{
+      body{ background:#fff; color:#000; }
+      header, main, section, .tocWrap, footer{
+        box-shadow:none !important;
+        background:#fff !important;
+        border-color:#ccc !important;
+      }
+      .tocWrap{ display:none; }
+      canvas{ border-color:#999 !important; background:#fff !important; }
+      .eq{ background:#fff !important; }
+      .copyBtn, .copyBig{ display:none !important; }
+    }
+
+    /* subtle entrance */
+    .fadeIn{
+      animation: pop .5s ease both;
+    }
+    @keyframes pop{
+      from{ opacity:0; transform: translateY(6px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="hero fadeIn">
+      <h1>Quantum Efficiency of an APD &amp; Output Photocurrent from Photon Flux</h1>
+      <p class="subtitle">
+        We connect <strong>responsivity</strong> (A/W) to <strong>quantum efficiency</strong> (electrons per photon) and
+        <strong>avalanche gain</strong> in an avalanche photodiode (APD), then compute the output photocurrent produced by a given photon flux.
+      </p>
+    </div>
+  </header>
+
+  <main>
+    <article>
+      <!-- Quick Summary -->
+      <section id="quick-summary" class="fadeIn">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li><strong>What this is about:</strong> Finding the APD’s <em>quantum efficiency</em> η from a measured responsivity <span style="font-family:var(--mono)">R</span> at wavelength <span style="font-family:var(--mono)">λ</span>, given avalanche gain <span style="font-family:var(--mono)">G</span>.</li>
+          <li><strong>Key physics idea:</strong> Optical power becomes electron-hole pairs; APD multiplication boosts charge by <span style="font-family:var(--mono)">G</span>.</li>
+          <li><strong>Governing link:</strong> <span class="muted">responsivity</span> <span style="font-family:var(--mono)">R = (G·η·q)/(hν) = G·η·q·λ/(h c)</span>.</li>
+          <li><strong>Photon-flux to current:</strong> <span style="font-family:var(--mono)">i<sub>p</sub> = q·G·η·Φ</span> (assuming one collected carrier per absorbed photon before gain).</li>
+          <li><strong>Given:</strong> <span style="font-family:var(--mono)">G=20</span>, <span style="font-family:var(--mono)">λ=1550 nm</span>, <span style="font-family:var(--mono)">R=12 A/W</span>, photon flux <span style="font-family:var(--mono)">Φ=10<sup>10</sup> s⁻¹</span>.</li>
+          <li><strong>Numerical results:</strong> <span style="font-family:var(--mono)">η ≈ 0.480</span> (≈48.0%), and <span style="font-family:var(--mono)">i<sub>p</sub> ≈ 1.54×10⁻⁸ A</span> (≈15.4 nA).</li>
+          <li><strong>Result type:</strong> symbolic formulas + numeric evaluation.</li>
+        </ul>
+      </section>
+
+      <!-- PART 0 -->
+      <section id="part0" class="fadeIn">
+        <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+        <div class="callouts">
+          <div class="card">
+            <strong>Core quantities (symbols &amp; units)</strong>
+            <ul class="small">
+              <li><span style="font-family:var(--mono)">R</span> — responsivity (A/W): output photocurrent per incident optical power.</li>
+              <li><span style="font-family:var(--mono)">η</span> — quantum efficiency (dimensionless): collected primary carriers per incident photon.</li>
+              <li><span style="font-family:var(--mono)">G</span> — avalanche gain (dimensionless): multiplication factor for carriers inside an APD.</li>
+              <li><span style="font-family:var(--mono)">λ</span> — wavelength (m); <span style="font-family:var(--mono)">ν</span> — optical frequency (Hz).</li>
+              <li><span style="font-family:var(--mono)">Φ</span> — photon flux (photons/s) arriving at the detector.</li>
+              <li><span style="font-family:var(--mono)">q</span> — electron charge (C); <span style="font-family:var(--mono)">h</span> — Planck constant; <span style="font-family:var(--mono)">c</span> — speed of light.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <strong>Physical meaning</strong>
+            <p class="small muted">
+              Photons carry energy <span style="font-family:var(--mono)">E<sub>ph</sub>=hν=hc/λ</span>. If a photon is absorbed and generates a
+              carrier pair that is successfully collected, it contributes roughly one elementary charge <span style="font-family:var(--mono)">q</span>
+              to the external circuit (before avalanche). In an APD, the high electric field triggers impact ionization so the collected charge becomes
+              <span style="font-family:var(--mono)">G·q</span> per collected primary carrier.
+            </p>
+          </div>
+
+          <div class="card warn">
+            <strong>Key laws &amp; validity</strong>
+            <ul class="small">
+              <li><strong>Energy per photon:</strong> <span style="font-family:var(--mono)">E<sub>ph</sub>=hc/λ</span> (valid always for monochromatic light).</li>
+              <li><strong>Responsivity model:</strong> linear detector regime: photocurrent ∝ power, no saturation.</li>
+              <li><strong>APD gain:</strong> treated as a constant multiplier <span style="font-family:var(--mono)">G</span> (steady-state, fixed bias).</li>
+            </ul>
+          </div>
+
+          <div class="card danger">
+            <strong>What to watch for (pitfalls)</strong>
+            <ul class="small">
+              <li>Mixing up <span style="font-family:var(--mono)">η</span> (primary conversion) with <span style="font-family:var(--mono)">G</span> (multiplication). <span style="font-family:var(--mono)">R</span> includes both.</li>
+              <li>Using <span style="font-family:var(--mono)">λ</span> in nm without converting to meters.</li>
+              <li>Confusing photon flux <span style="font-family:var(--mono)">Φ</span> with optical power <span style="font-family:var(--mono)">P</span>. They are related by <span style="font-family:var(--mono)">P=Φ·hc/λ</span>.</li>
+              <li>For APDs: some texts define “effective quantum efficiency” including gain; here <span style="font-family:var(--mono)">η</span> is the primary (pre-gain) quantum efficiency.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Common models/approximations (and why we use them)</h3>
+        <p class="muted">
+          In many photodetector problems, we assume: (i) monochromatic light at a single wavelength, (ii) linear response
+          (no space-charge or saturation), and (iii) a single number <span style="font-family:var(--mono)">η</span> summarizes absorption + carrier collection.
+          These models let us relate electrical output to optical input with compact formulas that are accurate for small-signal operation.
+        </p>
+
+        <h3>Mini intuition examples</h3>
+        <ul>
+          <li><strong>Example A (no avalanche):</strong> If <span style="font-family:var(--mono)">η=1</span>, then each photon gives one collected electron → current is <span style="font-family:var(--mono)">i=qΦ</span>.</li>
+          <li><strong>Example B (with avalanche):</strong> If <span style="font-family:var(--mono)">η=0.5</span> and <span style="font-family:var(--mono)">G=20</span>, then average collected electrons per photon is <span style="font-family:var(--mono)">ηG=10</span> → big current from modest flux.</li>
+        </ul>
+      </section>
+
+      <!-- PART 1 -->
+      <section id="part1" class="fadeIn">
+        <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+        <h3>Problem restatement (in plain words)</h3>
+        <p class="muted">
+          An avalanche photodiode (APD) has gain <span style="font-family:var(--mono)">G=20</span>. At wavelength
+          <span style="font-family:var(--mono)">λ=1550 nm</span>, its measured responsivity is <span style="font-family:var(--mono)">R=12 A/W</span>.
+          (1) Find the APD’s quantum efficiency <span style="font-family:var(--mono)">η</span> at that wavelength.
+          (2) If a photon flux <span style="font-family:var(--mono)">Φ=10<sup>10</sup> photons/s</span> at the same wavelength hits it, find the output photocurrent <span style="font-family:var(--mono)">i<sub>p</sub></span>.
+        </p>
+
+        <div class="grid2">
+          <div>
+            <h3>Given</h3>
+            <ul>
+              <li><span style="font-family:var(--mono)">G = 20</span> (dimensionless)</li>
+              <li><span style="font-family:var(--mono)">λ = 1550 nm</span></li>
+              <li><span style="font-family:var(--mono)">R = 12 A/W</span></li>
+              <li><span style="font-family:var(--mono)">Φ = 10<sup>10</sup> photons/s</span></li>
+            </ul>
+          </div>
+          <div>
+            <h3>Unknowns</h3>
+            <ul>
+              <li><span style="font-family:var(--mono)">η</span> (quantum efficiency, dimensionless)</li>
+              <li><span style="font-family:var(--mono)">i<sub>p</sub></span> (photocurrent, A)</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Relevant principles (and why they apply)</h3>
+        <ul>
+          <li><strong>Photon energy:</strong> monochromatic photons at <span style="font-family:var(--mono)">λ</span> carry energy <span style="font-family:var(--mono)">hc/λ</span>, connecting flux to power.</li>
+          <li><strong>Linear responsivity model:</strong> since <span style="font-family:var(--mono)">R</span> is given, we assume small-signal linear operation: <span style="font-family:var(--mono)">i = R·P</span>.</li>
+          <li><strong>APD gain as multiplication:</strong> gain <span style="font-family:var(--mono)">G</span> multiplies collected charge, so <span style="font-family:var(--mono)">R</span> includes <span style="font-family:var(--mono)">G</span>.</li>
+        </ul>
+
+        <div class="assump">
+          <strong>Assumptions:</strong> steady-state operation; constant gain <span style="font-family:var(--mono)">G</span>;
+          no saturation; unity charge per collected primary carrier; monochromatic light; negligible reflection/collection losses beyond η.
+        </div>
+
+        <h3>Possible approaches (compare briefly)</h3>
+        <ul>
+          <li><strong>Approach 1 (direct responsivity formula):</strong> Use <span style="font-family:var(--mono)">R = Gηqλ/(hc)</span> → fastest and most direct.</li>
+          <li><strong>Approach 2 (flux → power → current):</strong> Compute power <span style="font-family:var(--mono)">P=Φhc/λ</span>, then use <span style="font-family:var(--mono)">i=RP</span>. Great for part (2) and cross-checking.</li>
+          <li><strong>Approach 3 (counting charges):</strong> Use <span style="font-family:var(--mono)">i=qGηΦ</span> directly from carrier counting; physically transparent.</li>
+        </ul>
+
+        <p class="muted">
+          <strong>Best choice:</strong> Combine Approach 1 (to get η) with Approach 2 or 3 (to get current and verify consistency).
+        </p>
+      </section>
+
+      <!-- PART 2 -->
+      <section id="part2" class="fadeIn">
+        <h2>PART 2 — Strategy &amp; Tips (Roadmap Only)</h2>
+
+        <ol>
+          <li>
+            <strong>Goal:</strong> Write the responsivity–quantum-efficiency relation for an APD.<br/>
+            <span class="muted">Use:</span> <span style="font-family:var(--mono)">R = (Gηq)/(hν) = Gηqλ/(hc)</span>.<br/>
+            <span class="muted">Meaning:</span> converts “electrons per photon” into “amps per watt”.
+          </li>
+          <li>
+            <strong>Goal:</strong> Solve that relation for <span style="font-family:var(--mono)">η</span>.<br/>
+            <span class="muted">Use:</span> algebra → <span style="font-family:var(--mono)">η = R hc /(G q λ)</span>.<br/>
+            <span class="muted">Meaning:</span> primary conversion efficiency implied by measured <span style="font-family:var(--mono)">R</span>.
+          </li>
+          <li>
+            <strong>Goal:</strong> Convert photon flux to optical power.<br/>
+            <span class="muted">Use:</span> <span style="font-family:var(--mono)">P = Φ·(hc/λ)</span>.<br/>
+            <span class="muted">Meaning:</span> “how many photons per second” → “watts”.
+          </li>
+          <li>
+            <strong>Goal:</strong> Compute output photocurrent two ways and compare.<br/>
+            <span class="muted">Use:</span> (a) <span style="font-family:var(--mono)">i = R·P</span>, and (b) <span style="font-family:var(--mono)">i = qGηΦ</span>.<br/>
+            <span class="muted">Meaning:</span> builds confidence and catches unit mistakes.
+          </li>
+          <li>
+            <strong>Goal:</strong> Sanity checks.<br/>
+            <span class="muted">Use:</span> dimensions, limits (<span style="font-family:var(--mono)">η≤1</span> typically), sign and scaling.<br/>
+            <span class="muted">Meaning:</span> ensure the result is physically plausible.
+          </li>
+        </ol>
+
+        <div class="callouts">
+          <div class="card warn">
+            <strong>Common mistakes</strong>
+            <ul class="small">
+              <li>Forgetting <span style="font-family:var(--mono)">G</span> in the responsivity relation.</li>
+              <li>Using <span style="font-family:var(--mono)">λ=1550</span> without “nm → m”.</li>
+              <li>Mixing “photons/s” with “photons/(s·m²)” (here it’s total flux incident on the device).</li>
+            </ul>
+          </div>
+          <div class="card">
+            <strong>Quick tips</strong>
+            <ul class="small">
+              <li>Keep a unit tag on every symbol: A/W, C, J·s, m/s, m.</li>
+              <li>Compute <span style="font-family:var(--mono)">E<sub>ph</sub>=hc/λ</span> once; reuse it.</li>
+              <li>If <span style="font-family:var(--mono)">R</span> is large, check whether it’s because <span style="font-family:var(--mono)">G</span> is large (APD) rather than <span style="font-family:var(--mono)">η</span> exceeding 1.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- PART 3 -->
+      <section id="part3" class="fadeIn">
+        <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+        <h3>Physical intuition (before calculating)</h3>
+        <p class="muted">
+          At <span style="font-family:var(--mono)">1550 nm</span>, each photon has relatively low energy (near-infrared), so for a given optical power you get a large photon rate.
+          Responsivity in an APD can be quite high because avalanche multiplication effectively yields multiple electrons per absorbed photon.
+          Since <span style="font-family:var(--mono)">R</span> is <span style="font-family:var(--mono)">12 A/W</span> and <span style="font-family:var(--mono)">G=20</span>, we expect a reasonable primary quantum efficiency <span style="font-family:var(--mono)">η</span> below 1, perhaps around a few tenths to one-half.
+        </p>
+
+        <h3>Step 1: Relate responsivity to quantum efficiency (APD)</h3>
+        <p>
+          Define:
+          <span style="font-family:var(--mono)">R</span> = photocurrent / optical power (A/W),
+          <span style="font-family:var(--mono)">η</span> = collected primary electrons per incident photon (dimensionless),
+          <span style="font-family:var(--mono)">G</span> = avalanche multiplication (dimensionless),
+          <span style="font-family:var(--mono)">q</span> = electron charge (C),
+          <span style="font-family:var(--mono)">ν</span> = optical frequency (Hz),
+          <span style="font-family:var(--mono)">λ</span> = wavelength (m).
+        </p>
+
+        <div class="eq" id="eq1">
+          <button class="copyBtn" data-copy="R = (G*eta*q)/(h*nu) = (G*eta*q*lambda)/(h*c)">Copy</button>
+          <span class="copied">Copied ✓</span>
+          <div><strong>Key equation (APD responsivity)</strong></div>
+          <div style="margin-top:8px;">
+            <span style="font-family:var(--mono)">R = (G · η · q)/(hν) = (G · η · q · λ)/(h c)</span>
+          </div>
+          <div class="tiny" style="margin-top:8px;">
+            Here <span style="font-family:var(--mono)">hν</span> is photon energy, and avalanche gain multiplies the collected charge.
+          </div>
+        </div>
+
+        <p class="muted">
+          Why this works: For optical power <span style="font-family:var(--mono)">P</span>, the photon rate is <span style="font-family:var(--mono)">P/(hν)</span>.
+          A fraction <span style="font-family:var(--mono)">η</span> produces collected primary carriers, and each becomes <span style="font-family:var(--mono)">G</span> carriers on average.
+          So current is <span style="font-family:var(--mono)">i = (P/(hν)) · η · (Gq)</span>, hence <span style="font-family:var(--mono)">R=i/P</span>.
+        </p>
+
+        <h3>Step 2: Solve for quantum efficiency η</h3>
+        <p>
+          Rearranging the key equation:
+        </p>
+
+        <div class="eq" id="eq2">
+          <button class="copyBtn" data-copy="eta = (R*h*c)/(G*q*lambda)">Copy</button>
+          <span class="copied">Copied ✓</span>
+          <div><strong>Quantum efficiency from responsivity</strong></div>
+          <div style="margin-top:8px;">
+            <span style="font-family:var(--mono)">η = (R · h · c)/(G · q · λ)</span>
+          </div>
+        </div>
+
+        <p>Now substitute the given numbers (convert nm → m):</p>
+        <ul>
+          <li><span style="font-family:var(--mono)">R = 12 A/W</span></li>
+          <li><span style="font-family:var(--mono)">G = 20</span></li>
+          <li><span style="font-family:var(--mono)">λ = 1550 nm = 1550×10⁻⁹ m</span></li>
+          <li>Constants: <span style="font-family:var(--mono)">h = 6.62607015×10⁻³⁴ J·s</span>, <span style="font-family:var(--mono)">c = 2.99792458×10⁸ m/s</span>, <span style="font-family:var(--mono)">q = 1.602176634×10⁻¹⁹ C</span></li>
+        </ul>
+
+        <p class="muted">
+          Plugging in:
+          <span style="font-family:var(--mono)">η = (12 · h · c) / (20 · q · 1550×10⁻⁹)</span>
+          → <span style="font-family:var(--mono)">η ≈ 0.47994</span>.
+        </p>
+
+        <h3>Step 3: Photocurrent for a photon flux Φ</h3>
+        <p>
+          With photon flux <span style="font-family:var(--mono)">Φ</span> (photons/s) incident on the APD:
+          collected primary electrons per second ≈ <span style="font-family:var(--mono)">ηΦ</span>,
+          multiplied electrons per second ≈ <span style="font-family:var(--mono)">GηΦ</span>.
+          Current is charge per second:
+        </p>
+
+        <div class="eq" id="eq3">
+          <button class="copyBtn" data-copy="i_p = q*G*eta*Phi">Copy</button>
+          <span class="copied">Copied ✓</span>
+          <div><strong>Photon-flux to photocurrent</strong></div>
+          <div style="margin-top:8px;">
+            <span style="font-family:var(--mono)">i<sub>p</sub> = q · G · η · Φ</span>
+          </div>
+        </div>
+
+        <p>Substitute <span style="font-family:var(--mono)">Φ = 10^10 s⁻¹</span> and <span style="font-family:var(--mono)">η ≈ 0.47994</span>:</p>
+        <p class="muted">
+          <span style="font-family:var(--mono)">
+            i<sub>p</sub> = (1.602×10⁻¹⁹ C) · 20 · 0.47994 · (10¹⁰ s⁻¹)
+            ≈ 1.54×10⁻⁸ A
+          </span>
+        </p>
+
+        <h3>Sanity checks</h3>
+        <ul>
+          <li><strong>Units:</strong> <span style="font-family:var(--mono)">q</span>(C) × (1/s) → A, correct.</li>
+          <li><strong>η range:</strong> <span style="font-family:var(--mono)">η≈0.48</span> is physically reasonable (less than 1).</li>
+          <li><strong>Scaling:</strong> doubling photon flux doubles current; doubling gain doubles current (if η fixed).</li>
+          <li><strong>Cross-check via power:</strong> photon energy <span style="font-family:var(--mono)">hc/λ</span> gives power <span style="font-family:var(--mono)">P=Φhc/λ≈1.28 nW</span>; then <span style="font-family:var(--mono)">i=RP≈12×1.28 nW≈15.4 nA</span>, consistent.</li>
+        </ul>
+
+        <div class="finalBox" id="final">
+          <div class="finalRow">
+            <h3 style="margin:0;">Final Answer</h3>
+            <button class="copyBig" id="copyFinal">Copy final (plain text)</button>
+          </div>
+          <div class="finalText" id="finalText">Quantum efficiency:
+η = (R h c)/(G q λ) ≈ 0.480  (≈ 48.0%)
+
+Photon-flux photocurrent (output):
+i_p = q G η Φ = R·(Φ h c/λ) ≈ 1.54×10^-8 A  (≈ 15.4 nA)</div>
+          <div class="printHint">Tip: print this page to PDF to keep the derivation and plots in one place.</div>
+        </div>
+      </section>
+
+      <!-- PART 4 -->
+      <section id="part4" class="fadeIn">
+        <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+        <h3>Re-interpreting the final formulas</h3>
+        <p class="muted">
+          The responsivity relation
+          <span style="font-family:var(--mono)">R = Gηqλ/(hc)</span>
+          shows three levers:
+        </p>
+        <ul>
+          <li><strong><span style="font-family:var(--mono)">η</span> (primary conversion):</strong> absorption + carrier collection. Better material/structure increases η and therefore R.</li>
+          <li><strong><span style="font-family:var(--mono)">G</span> (avalanche gain):</strong> multiplies the collected charge. Raising bias usually increases G, but also increases noise and can lead to breakdown.</li>
+          <li><strong><span style="font-family:var(--mono)">λ</span> (wavelength):</strong> longer wavelengths mean lower photon energy, so more photons per watt → larger R for the same η and G (as long as the detector still absorbs at that λ).</li>
+        </ul>
+
+        <h3>How changing parameters affects outcomes (connect to the interactive plots)</h3>
+        <ul>
+          <li>If you hold measured <span style="font-family:var(--mono)">R</span> fixed and increase <span style="font-family:var(--mono)">G</span>, the inferred <span style="font-family:var(--mono)">η</span> decreases proportionally (<span style="font-family:var(--mono)">η∝1/G</span>). This is what the main plot visualizes.</li>
+          <li>For a given <span style="font-family:var(--mono)">η</span> and <span style="font-family:var(--mono)">G</span>, the photocurrent is linear in photon flux: <span style="font-family:var(--mono)">i<sub>p</sub>∝Φ</span>. The secondary plot shows this straight-line relationship.</li>
+          <li>Changing <span style="font-family:var(--mono)">λ</span> changes photon energy and thus the conversion between flux and power; it also affects η in real devices via absorption (not modeled here), but the formula captures the photon-energy part exactly.</li>
+        </ul>
+
+        <h3>Alternative derivation idea (brief)</h3>
+        <p class="muted">
+          Start from <span style="font-family:var(--mono)">i = R·P</span>. If the light has photon flux <span style="font-family:var(--mono)">Φ</span>,
+          then <span style="font-family:var(--mono)">P=Φhc/λ</span>, so <span style="font-family:var(--mono)">i=RΦhc/λ</span>.
+          Then compare with carrier counting <span style="font-family:var(--mono)">i=qGηΦ</span> to recover
+          <span style="font-family:var(--mono)">η = R hc/(G q λ)</span>.
+        </p>
+
+        <h3>Concept checks (quick self-test)</h3>
+        <ul>
+          <li><strong>Q:</strong> If <span style="font-family:var(--mono)">G=1</span>, what does responsivity reduce to? <strong>A:</strong> <span style="font-family:var(--mono)">R = ηqλ/(hc)</span> (PIN photodiode model).</li>
+          <li><strong>Q:</strong> If photon flux doubles, what happens to <span style="font-family:var(--mono)">i<sub>p</sub></span>? <strong>A:</strong> It doubles (linear regime).</li>
+          <li><strong>Q:</strong> Can <span style="font-family:var(--mono)">R</span> exceed <span style="font-family:var(--mono)">qλ/(hc)</span>? <strong>A:</strong> Yes—APDs can because avalanche gain multiplies charge.</li>
+          <li><strong>Q:</strong> Why does longer <span style="font-family:var(--mono)">λ</span> tend to increase <span style="font-family:var(--mono)">R</span> in the formula? <strong>A:</strong> Each photon carries less energy, so 1 watt corresponds to more photons per second.</li>
+        </ul>
+      </section>
+
+      <!-- Visualizations -->
+      <section id="part5" class="fadeIn">
+        <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+
+        <p class="muted">
+          Below are three live canvases: a labeled APD diagram and two quantitative plots. Use the controls to change parameters
+          and watch how the inferred quantum efficiency and predicted photocurrent respond.
+        </p>
+
+        <div class="vizCard">
+          <div class="vizHeader">
+            <h3>Interactive Controls (updates diagram + both plots)</h3>
+            <div class="pill">live update</div>
+          </div>
+
+          <div class="controls">
+            <div class="control">
+              <label>
+                <span>APD gain <span style="font-family:var(--mono)">G</span> (dimensionless)</span>
+                <span class="readout" id="readG">20</span>
+              </label>
+              <input id="sliderG" type="range" min="1" max="100" step="1" value="20" />
+              <div class="tiny">Holding measured <span style="font-family:var(--mono)">R</span> fixed, changing <span style="font-family:var(--mono)">G</span> changes the inferred <span style="font-family:var(--mono)">η</span> via <span style="font-family:var(--mono)">η ∝ 1/G</span>.</div>
+            </div>
+
+            <div class="control">
+              <label>
+                <span>Wavelength <span style="font-family:var(--mono)">λ</span> (nm)</span>
+                <span class="readout" id="readLam">1550</span>
+              </label>
+              <input id="sliderLam" type="range" min="800" max="2000" step="10" value="1550" />
+              <div class="tiny">Changes photon energy <span style="font-family:var(--mono)">hc/λ</span>, affecting inferred <span style="font-family:var(--mono)">η</span> for fixed <span style="font-family:var(--mono)">R</span>, and flux→power conversion.</div>
+            </div>
+
+            <div class="control">
+              <label>
+                <span>Photon flux <span style="font-family:var(--mono)">Φ</span> (photons/s)</span>
+                <span class="readout" id="readPhi">1.00e10</span>
+              </label>
+              <input id="sliderPhi" type="range" min="8" max="12" step="0.01" value="10" />
+              <div class="tiny">Slider is log10 scale: <span style="font-family:var(--mono)">Φ = 10^{value}</span>. Updates the marked operating point on the photocurrent plot.</div>
+            </div>
+
+            <div class="control">
+              <label>
+                <span>Measured responsivity <span style="font-family:var(--mono)">R</span> (A/W)</span>
+                <span class="readout" id="readR">12.0</span>
+              </label>
+              <input id="sliderR" type="range" min="0.5" max="20" step="0.1" value="12" />
+              <div class="tiny">Exploration control: higher <span style="font-family:var(--mono)">R</span> implies higher inferred <span style="font-family:var(--mono)">η</span> (for fixed <span style="font-family:var(--mono)">G</span>, <span style="font-family:var(--mono)">λ</span>).</div>
+            </div>
+          </div>
+
+          <div class="finalBox" style="margin-top:12px;">
+            <h3 style="margin:0 0 6px;">Live computed outputs (from the same equations used in the solution)</h3>
+            <div class="tiny muted">These update with the sliders; the original problem values correspond to G=20, λ=1550 nm, R=12 A/W, Φ=1e10 photons/s.</div>
+            <p class="finalText" id="liveOut" style="margin-top:10px;"></p>
+          </div>
+        </div>
+
+        <div class="vizGrid">
+          <div class="vizCard">
+            <div class="vizHeader">
+              <h3>Diagram: APD converting light to multiplied photocurrent</h3>
+              <div class="pill">canvas diagram</div>
+            </div>
+            <canvas id="cnvDiagram" aria-label="APD diagram"></canvas>
+            <p class="tiny muted">
+              Read it left-to-right: incident photons → absorption/collection (η) → avalanche region (gain G) → output photocurrent.
+            </p>
+          </div>
+
+          <div class="vizCard">
+            <div class="vizHeader">
+              <h3>Main plot: Inferred quantum efficiency η vs APD gain G (for fixed measured R and λ)</h3>
+              <div class="pill">key relationship</div>
+            </div>
+            <canvas id="cnvPlot1" aria-label="eta vs gain plot"></canvas>
+            <p class="tiny muted">
+              Curve uses <span style="font-family:var(--mono)">η = R h c /(G q λ)</span>. The highlighted point is your current slider setting.
+            </p>
+          </div>
+
+          <div class="vizCard">
+            <div class="vizHeader">
+              <h3>Secondary plot: Photocurrent i<sub>p</sub> vs photon flux Φ (with current operating point marked)</h3>
+              <div class="pill">parameter sweep</div>
+            </div>
+            <canvas id="cnvPlot2" aria-label="photocurrent vs photon flux plot"></canvas>
+            <p class="tiny muted">
+              Line uses <span style="font-family:var(--mono)">i<sub>p</sub>=qGηΦ</span>. Because η is inferred from R, the plot remains consistent with <span style="font-family:var(--mono)">i=RP</span>.
+            </p>
+          </div>
+        </div>
+
+        <h3>How to read the canvases</h3>
+        <ul>
+          <li><strong>Diagram canvas:</strong> shows the physical flow and displays the current values of <span style="font-family:var(--mono)">G</span>, <span style="font-family:var(--mono)">η</span>, <span style="font-family:var(--mono)">λ</span>, <span style="font-family:var(--mono)">Φ</span>, and <span style="font-family:var(--mono)">i<sub>p</sub></span>.</li>
+          <li><strong>Main plot (η vs G):</strong> illustrates that for fixed measured <span style="font-family:var(--mono)">R</span> and <span style="font-family:var(--mono)">λ</span>, increasing gain reduces the inferred primary efficiency (since the same responsivity could be achieved by more gain and less primary conversion).</li>
+          <li><strong>Secondary plot (i vs Φ):</strong> demonstrates the linear conversion from photon arrival rate to current. The marker shows the current flux slider value.</li>
+          <li><strong>Controls:</strong> adjusting <span style="font-family:var(--mono)">G</span>, <span style="font-family:var(--mono)">λ</span>, <span style="font-family:var(--mono)">R</span>, or <span style="font-family:var(--mono)">Φ</span> updates the diagram and both plots immediately.</li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- Sticky ToC -->
+    <aside class="tocWrap fadeIn" aria-label="Table of contents">
+      <div class="tocTitle">
+        <span>Table of Contents</span>
+        <span class="pill">sticky</span>
+      </div>
+      <nav id="toc">
+        <a href="#quick-summary">Quick Summary</a>
+        <a href="#part0">PART 0 — Concept Primer</a>
+        <a href="#part1">PART 1 — Problem Analysis</a>
+        <a href="#part2">PART 2 — Strategy &amp; Tips</a>
+        <a href="#part3">PART 3 — Full Solution</a>
+        <a href="#part4">PART 4 — Deeper Understanding</a>
+        <a href="#part5">PART 5 — Visualization Guide</a>
+      </nav>
+      <div class="tiny muted" style="margin-top:10px;">
+        Tip: click sections to scroll. Copy buttons grab plain-text equations/results.
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <p>
+      Built as a self-contained learning article: theory → analysis → strategy → full solution → interpretation → interactive visualizations.
+      (No external libraries; all plots drawn with HTML canvas.)
+    </p>
+  </footer>
+
+  <script>
+    // ---------- Constants ----------
+    const CONST = {
+      h: 6.62607015e-34,     // J*s
+      c: 299792458,          // m/s
+      q: 1.602176634e-19     // C
+    };
+
+    // ---------- Helpers ----------
+    function fmtSci(x, sig=3){
+      if (!isFinite(x)) return "—";
+      if (x === 0) return "0";
+      const exp = Math.floor(Math.log10(Math.abs(x)));
+      const mant = x / Math.pow(10, exp);
+      return mant.toFixed(sig-1) + "e" + (exp>=0?"+":"") + exp;
+    }
+    function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+    function lerp(a,b,t){ return a+(b-a)*t; }
+
+    // Nicely formatted with units
+    function fmtA(x){
+      const ax = Math.abs(x);
+      if (ax >= 1) return x.toFixed(3) + " A";
+      if (ax >= 1e-3) return (x*1e3).toFixed(3) + " mA";
+      if (ax >= 1e-6) return (x*1e6).toFixed(3) + " µA";
+      if (ax >= 1e-9) return (x*1e9).toFixed(3) + " nA";
+      if (ax >= 1e-12) return (x*1e12).toFixed(3) + " pA";
+      return fmtSci(x,3) + " A";
+    }
+
+    // ---------- Copy buttons ----------
+    function setupCopyButtons(){
+      document.querySelectorAll("[data-copy]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const text = btn.getAttribute("data-copy") || "";
+          try{
+            await navigator.clipboard.writeText(text);
+            const wrap = btn.closest(".eq");
+            if (wrap){
+              const badge = wrap.querySelector(".copied");
+              if (badge){
+                badge.style.display = "inline";
+                setTimeout(()=> badge.style.display = "none", 900);
+              }
+            }
+          }catch(e){
+            alert("Copy failed (clipboard permission). You can manually select the text.");
+          }
+        });
+      });
+
+      const copyFinal = document.getElementById("copyFinal");
+      copyFinal.addEventListener("click", async ()=>{
+        const text = document.getElementById("finalText").textContent.trim();
+        try{
+          await navigator.clipboard.writeText(text);
+          copyFinal.textContent = "Copied ✓";
+          setTimeout(()=> copyFinal.textContent = "Copy final (plain text)", 900);
+        }catch(e){
+          alert("Copy failed (clipboard permission).");
+        }
+      });
+    }
+
+    // ---------- Smooth scrolling + active ToC ----------
+    function setupTOC(){
+      const tocLinks = Array.from(document.querySelectorAll("#toc a"));
+      tocLinks.forEach(a=>{
+        a.addEventListener("click", (ev)=>{
+          ev.preventDefault();
+          const id = a.getAttribute("href");
+          const el = document.querySelector(id);
+          if (el) el.scrollIntoView({behavior:"smooth", block:"start"});
+        });
+      });
+
+      const sections = tocLinks.map(a => document.querySelector(a.getAttribute("href"))).filter(Boolean);
+      const obs = new IntersectionObserver((entries)=>{
+        entries.forEach(en=>{
+          if (en.isIntersecting){
+            tocLinks.forEach(a=>a.classList.remove("active"));
+            const idx = sections.indexOf(en.target);
+            if (idx >= 0) tocLinks[idx].classList.add("active");
+          }
+        });
+      }, { root:null, threshold: 0.22 });
+      sections.forEach(s=>obs.observe(s));
+    }
+
+    // ---------- Canvas utilities ----------
+    function setupHiDPICanvas(canvas){
+      const ctx = canvas.getContext("2d");
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.max(2, Math.round(rect.width * dpr));
+        const h = Math.max(2, Math.round(rect.height * dpr));
+        if (canvas.width !== w || canvas.height !== h){
+          canvas.width = w;
+          canvas.height = h;
+        }
+        ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+        return {w: rect.width, h: rect.height, dpr};
+      }
+      return {ctx, resize};
+    }
+
+    function drawAxes(ctx, box, xMin, xMax, yMin, yMax, opts){
+      const {
+        title="",
+        xLabel="x",
+        yLabel="y",
+        xTicks=6,
+        yTicks=6
+      } = opts || {};
+
+      const {x,y,w,h} = box;
+      ctx.save();
+      ctx.translate(x,y);
+
+      // Background
+      ctx.clearRect(0,0,w,h);
+
+      // Plot margins
+      const m = {l: 56, r: 16, t: 40, b: 48};
+      const pw = w - m.l - m.r;
+      const ph = h - m.t - m.b;
+
+      // Helpers
+      function X(v){ return m.l + (v - xMin) * pw / (xMax - xMin); }
+      function Y(v){ return m.t + ph - (v - yMin) * ph / (yMax - yMin); }
+
+      // Grid + ticks
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+
+      // grid x
+      for(let i=0;i<=xTicks;i++){
+        const t = i/xTicks;
+        const xv = lerp(xMin, xMax, t);
+        const px = X(xv);
+        ctx.beginPath();
+        ctx.moveTo(px, m.t);
+        ctx.lineTo(px, m.t+ph);
+        ctx.stroke();
+      }
+      // grid y
+      for(let j=0;j<=yTicks;j++){
+        const t = j/yTicks;
+        const yv = lerp(yMin, yMax, t);
+        const py = Y(yv);
+        ctx.beginPath();
+        ctx.moveTo(m.l, py);
+        ctx.lineTo(m.l+pw, py);
+        ctx.stroke();
+      }
+
+      // Axes
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(m.l, m.t);
+      ctx.lineTo(m.l, m.t+ph);
+      ctx.lineTo(m.l+pw, m.t+ph);
+      ctx.stroke();
+
+      // Tick labels
+      ctx.fillStyle = "rgba(233,238,252,0.90)";
+      ctx.font = "12px " + getComputedStyle(document.documentElement).getPropertyValue("--mono");
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+
+      for(let i=0;i<=xTicks;i++){
+        const t = i/xTicks;
+        const xv = lerp(xMin, xMax, t);
+        const px = X(xv);
+        ctx.fillText((Math.abs(xMax-xMin) >= 20) ? xv.toFixed(0) : xv.toFixed(2), px, m.t+ph+8);
+      }
+
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for(let j=0;j<=yTicks;j++){
+        const t = j/yTicks;
+        const yv = lerp(yMin, yMax, t);
+        const py = Y(yv);
+        const label = (Math.abs(yMax-yMin) >= 2) ? yv.toFixed(2) : yv.toFixed(3);
+        ctx.fillText(label, m.l-8, py);
+      }
+
+      // Titles/labels
+      ctx.fillStyle = "rgba(233,238,252,0.96)";
+      ctx.font = "600 14px " + getComputedStyle(document.documentElement).getPropertyValue("--sans");
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText(title, 10, 10);
+
+      ctx.fillStyle = "rgba(185,195,230,0.95)";
+      ctx.font = "12px " + getComputedStyle(document.documentElement).getPropertyValue("--sans");
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(xLabel, m.l + pw/2, h - 10);
+
+      ctx.save();
+      ctx.translate(14, m.t + ph/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+
+      ctx.restore();
+      return {m, pw, ph, X, Y};
+    }
+
+    function plotLine(ctx, box, axes, xs, ys, style){
+      const {x,y,w,h} = box;
+      const {m, X, Y} = axes;
+      ctx.save();
+      ctx.translate(x,y);
+
+      ctx.strokeStyle = style?.stroke || "rgba(124,247,195,0.9)";
+      ctx.lineWidth = style?.width || 2.2;
+
+      ctx.beginPath();
+      for(let i=0;i<xs.length;i++){
+        const px = X(xs[i]);
+        const py = Y(ys[i]);
+        if(i===0) ctx.moveTo(px,py);
+        else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function plotMarker(ctx, box, axes, xVal, yVal, label){
+      const {x,y} = box;
+      const {X,Y} = axes;
+      ctx.save();
+      ctx.translate(x,y);
+
+      const px = X(xVal);
+      const py = Y(yVal);
+
+      ctx.fillStyle = "rgba(255,211,122,0.95)";
+      ctx.strokeStyle = "rgba(0,0,0,0.35)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(px, py, 5.5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+
+      if(label){
+        ctx.font = "12px " + getComputedStyle(document.documentElement).getPropertyValue("--sans");
+        ctx.fillStyle = "rgba(255,211,122,0.95)";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(label, px + 8, py - 6);
+      }
+
+      ctx.restore();
+    }
+
+    // ---------- Physics calculations ----------
+    function compute(G, lam_nm, R, phi){
+      const lam = lam_nm * 1e-9;                   // m
+      const eta = (R * CONST.h * CONST.c) / (G * CONST.q * lam);
+      const Eph = (CONST.h * CONST.c) / lam;       // J
+      const P = phi * Eph;                         // W
+      const i_from_RP = R * P;                     // A
+      const i_from_count = CONST.q * G * eta * phi;// A
+      return {lam, eta, Eph, P, i_from_RP, i_from_count};
+    }
+
+    // ---------- Drawing: Diagram ----------
+    function drawDiagram(state){
+      const {cnv, ctx, size} = state.diagram;
+      const {w,h} = size;
+
+      ctx.clearRect(0,0,w,h);
+
+      // Layout in CSS pixels (we draw in CSS pixels thanks to setTransform in setupHiDPICanvas)
+      const pad = 18;
+      const midY = h*0.55;
+      const boxW = w*0.32;
+      const boxH = h*0.44;
+      const x0 = pad + w*0.18;
+      const y0 = midY - boxH/2;
+
+      // Title
+      ctx.fillStyle = "rgba(233,238,252,0.96)";
+      ctx.font = "600 14px " + getComputedStyle(document.documentElement).getPropertyValue("--sans");
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText("APD physical picture (light → carriers → avalanche → current)", 10, 10);
+
+      // Incoming photons (arrow + dots)
+      const leftX = pad;
+      const rightX = x0;
+      ctx.strokeStyle = "rgba(138,166,255,0.85)";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(leftX, midY);
+      ctx.lineTo(rightX-10, midY);
+      ctx.stroke();
+      // arrow head
+      ctx.beginPath();
+      ctx.moveTo(rightX-10, midY);
+      ctx.lineTo(rightX-22, midY-7);
+      ctx.lineTo(rightX-22, midY+7);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(138,166,255,0.85)";
+      ctx.fill();
+
+      // photon dots
+      ctx.fillStyle = "rgba(138,166,255,0.9)";
+      for(let i=0;i<14;i++){
+        const t = i/13;
+        const px = lerp(leftX+6, rightX-28, t);
+        const py = midY + Math.sin(i*0.9)*10;
+        ctx.beginPath();
+        ctx.arc(px, py, 2.2, 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      // APD block
+      ctx.fillStyle = "rgba(17,28,61,0.80)";
+      ctx.strokeStyle = "rgba(255,255,255,0.16)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      roundRect(ctx, x0, y0, boxW, boxH, 16);
+      ctx.fill();
+      ctx.stroke();
+
+      // Regions inside APD (absorption + multiplication)
+      const reg1W = boxW*0.52;
+      const reg2W = boxW*0.40;
+      const gap = boxW*0.04;
+
+      // Absorption/collection region
+      ctx.fillStyle = "rgba(124,247,195,0.10)";
+      ctx.strokeStyle = "rgba(124,247,195,0.30)";
+      ctx.lineWidth = 1.1;
+      roundRect(ctx, x0+12, y0+14, reg1W-16, boxH-28, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      // Multiplication region
+      ctx.fillStyle = "rgba(255,211,122,0.10)";
+      ctx.strokeStyle = "rgba(255,211,122,0.35)";
+      roundRect(ctx, x0+12+reg1W+gap, y0+14, reg2W-10, boxH-28, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      // Labels
+      ctx.fillStyle = "rgba(233,238,252,0.92)";
+      ctx.font = "600 12px " + getComputedStyle(document.documentElement).getPropertyValue("--sans");
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText("Absorption / collection", x0+12+(reg1W-16)/2, y0+18);
+      ctx.font = "12px " + getComputedStyle(document.documentElement).getPropertyValue("--sans");
+      ctx.fillStyle = "rgba(185,195,230,0.95)";
+      ctx.fillText("probability η", x0+12+(reg1W-16)/2, y0+38);
+
+      ctx.fillStyle = "rgba(233,238,252,0.92)";
+      ctx.font = "600 12px " + getComputedStyle(document.documentElement).getPropertyValue("--sans");
+      ctx.fillText("Avalanche region", x0+12+reg1W+gap+(reg2W-10)/2, y0+18);
+      ctx.font = "12px " + getComputedStyle(document.documentElement).getPropertyValue("--sans");
+      ctx.fillStyle = "rgba(185,195,230,0.95)";
+      ctx.fillText("gain G", x0+12+reg1W+gap+(reg2W-10)/2, y0+38);
+
+      // Output current arrow
+      const outX0 = x0 + boxW;
+      const outX1 = w - pad;
+      ctx.strokeStyle = "rgba(124,247,195,0.85)";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(outX0+10, midY);
+      ctx.lineTo(outX1-10, midY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(outX1-10, midY);
+      ctx.lineTo(outX1-22, midY-7);
+      ctx.lineTo(outX1-22, midY+7);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(124,247,195,0.85)";
+      ctx.fill();
+
+      // Output label
+      ctx.fillStyle = "rgba(233,238,252,0.92)";
+      ctx.font = "600 12px " + getComputedStyle(document.documentElement).getPropertyValue("--sans");
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("Output photocurrent i_p", outX1-12, midY-10);
+
+      // Annotated numbers
+      const eta = state.values.eta;
+      const G = state.params.G;
+      const lam_nm = state.params.lam_nm;
+      const Phi = state.params.phi;
+      const i = state.values.i;
+
+      ctx.fillStyle = "rgba(185,195,230,0.95)";
+      ctx.font = "12px " + getComputedStyle(document.documentElement).getPropertyValue("--mono");
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      const infoX = pad;
+      const infoY = h*0.12;
+      const lines = [
+        `λ = ${lam_nm.toFixed(0)} nm`,
+        `G = ${G.toFixed(0)}`,
+        `η = ${eta.toFixed(4)}`,
+        `Φ = ${fmtSci(Phi,3)} photons/s`,
+        `i_p = ${fmtA(i)}`
+      ];
+      // subtle panel behind text
+      ctx.fillStyle = "rgba(0,0,0,0.22)";
+      roundRect(ctx, infoX-6, infoY-6, 260, 88, 12);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(185,195,230,0.95)";
+      for(let k=0;k<lines.length;k++){
+        ctx.fillText(lines[k], infoX+4, infoY + k*16);
+      }
+
+      // incident label
+      ctx.font = "12px " + getComputedStyle(document.documentElement).getPropertyValue("--sans");
+      ctx.fillStyle = "rgba(138,166,255,0.95)";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("Incident photons", pad, midY-10);
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    // ---------- Drawing: Plot 1 (eta vs G) ----------
+    function drawPlot1(state){
+      const {ctx, size} = state.plot1;
+      const {w,h} = size;
+      const R = state.params.R;
+      const lam_nm = state.params.lam_nm;
+
+      // Sweep G
+      const Gmin = 1, Gmax = 100;
+      const xs = [];
+      const ys = [];
+      for(let G=Gmin; G<=Gmax; G++){
+        const {eta} = compute(G, lam_nm, R, state.params.phi);
+        xs.push(G);
+        ys.push(eta);
+      }
+
+      // y bounds (include point, clamp to a reasonable window)
+      const yMax = Math.max(0.05, Math.min(1.2, Math.max(...ys)*1.10));
+      const yMin = 0;
+
+      const axes = drawAxes(ctx,
+        {x:0,y:0,w,h},
+        Gmin, Gmax,
+        yMin, yMax,
+        {
+          title: "η vs G (inferred from R and λ)",
+          xLabel: "Gain G (dimensionless)",
+          yLabel: "Quantum efficiency η (—)",
+          xTicks: 5,
+          yTicks: 5
+        }
+      );
+
+      plotLine(ctx, {x:0,y:0,w,h}, axes, xs, ys, {stroke:"rgba(124,247,195,0.90)", width:2.4});
+
+      // Marker at current G
+      const G0 = state.params.G;
+      const eta0 = state.values.eta;
+      plotMarker(ctx, {x:0,y:0,w,h}, axes, G0, eta0, `(${G0.toFixed(0)}, ${eta0.toFixed(3)})`);
+
+      // Legend
+      ctx.save();
+      ctx.fillStyle = "rgba(233,238,252,0.92)";
+      ctx.font = "12px " + getComputedStyle(document.documentElement).getPropertyValue("--sans");
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText("Curve: η = R h c / (G q λ)", 68, 44);
+      ctx.restore();
+    }
+
+    // ---------- Drawing: Plot 2 (i vs Phi) ----------
+    function drawPlot2(state){
+      const {ctx, size} = state.plot2;
+      const {w,h} = size;
+
+      // Sweep photon flux (linear) from 0 to 1e12
+      const phiMax = 1e12;
+      const n = 180;
+      const xs = [];
+      const ys = [];
+
+      const G = state.params.G;
+      const R = state.params.R;
+      const lam_nm = state.params.lam_nm;
+
+      for(let i=0;i<n;i++){
+        const phi = phiMax * (i/(n-1));
+        const {eta, i_from_count} = compute(G, lam_nm, R, phi);
+        xs.push(phi);
+        ys.push(i_from_count);
+      }
+
+      // y bounds
+      const yMax = Math.max(...ys) * 1.12;
+      const yMin = 0;
+
+      const axes = drawAxes(ctx,
+        {x:0,y:0,w,h},
+        0, phiMax,
+        yMin, yMax,
+        {
+          title: "Photocurrent i_p vs photon flux Φ",
+          xLabel: "Photon flux Φ (photons/s)",
+          yLabel: "Photocurrent i_p (A)",
+          xTicks: 5,
+          yTicks: 5
+        }
+      );
+
+      // Plot line
+      plotLine(ctx, {x:0,y:0,w,h}, axes, xs, ys, {stroke:"rgba(138,166,255,0.90)", width:2.4});
+
+      // Marker at current phi
+      const phi0 = state.params.phi;
+      const i0 = state.values.i;
+      plotMarker(ctx, {x:0,y:0,w,h}, axes, phi0, i0, `Φ=${fmtSci(phi0,3)}, i=${fmtSci(i0,3)} A`);
+
+      // Legend + note
+      ctx.save();
+      ctx.fillStyle = "rgba(233,238,252,0.92)";
+      ctx.font = "12px " + getComputedStyle(document.documentElement).getPropertyValue("--sans");
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText("Line: i_p = q G η Φ  (η inferred from R)", 68, 44);
+
+      // annotate slope
+      const slope = (phiMax>0) ? (ys[ys.length-1]/phiMax) : 0; // A per (photons/s)
+      ctx.fillStyle = "rgba(185,195,230,0.95)";
+      ctx.fillText(`Slope ≈ ${fmtSci(slope,3)} A per (photons/s)`, 68, 62);
+      ctx.restore();
+    }
+
+    // ---------- State & Wiring ----------
+    const state = {
+      params: {
+        G: 20,
+        lam_nm: 1550,
+        phi: 1e10,
+        R: 12
+      },
+      values: {
+        eta: 0,
+        Eph: 0,
+        P: 0,
+        i: 0,
+        i2: 0
+      },
+      diagram: null,
+      plot1: null,
+      plot2: null
+    };
+
+    function updateState(){
+      const G = Number(document.getElementById("sliderG").value);
+      const lam_nm = Number(document.getElementById("sliderLam").value);
+      const logPhi = Number(document.getElementById("sliderPhi").value);
+      const phi = Math.pow(10, logPhi);
+      const R = Number(document.getElementById("sliderR").value);
+
+      state.params.G = G;
+      state.params.lam_nm = lam_nm;
+      state.params.phi = phi;
+      state.params.R = R;
+
+      const out = compute(G, lam_nm, R, phi);
+      state.values.eta = out.eta;
+      state.values.Eph = out.Eph;
+      state.values.P = out.P;
+      state.values.i = out.i_from_count;
+      state.values.i2 = out.i_from_RP;
+
+      // Update readouts
+      document.getElementById("readG").textContent = G.toFixed(0);
+      document.getElementById("readLam").textContent = lam_nm.toFixed(0);
+      document.getElementById("readPhi").textContent = fmtSci(phi,3);
+      document.getElementById("readR").textContent = R.toFixed(1);
+
+      // Live outputs text
+      const live = document.getElementById("liveOut");
+      const eta = state.values.eta;
+      const Eph = state.values.Eph;
+      const P = state.values.P;
+      const i1 = state.values.i;
+      const i2 = state.values.i2;
+      live.textContent =
+        `η = (R h c)/(G q λ) = ${eta.toFixed(5)}  (≈ ${(eta*100).toFixed(2)}%)\n` +
+        `Photon energy E_ph = hc/λ = ${fmtSci(Eph,4)} J\n` +
+        `Optical power from flux: P = Φ E_ph = ${fmtSci(P,4)} W\n` +
+        `Photocurrent (counting): i_p = q G η Φ = ${fmtSci(i1,4)} A  (${fmtA(i1)})\n` +
+        `Cross-check (responsivity): i = R·P = ${fmtSci(i2,4)} A  (${fmtA(i2)})`;
+
+      // Red flag if inferred eta > 1 (possible if user chooses extreme sliders)
+      if (eta > 1.0){
+        live.textContent += `\n\n⚠ Note: η > 1 is unphysical for primary quantum efficiency; this indicates that your chosen (R, G, λ) combination cannot be explained by the simple model without revisiting assumptions (e.g., calibration, gain definition, or wavelength dependence).`;
+      }
+
+      redrawAll();
+    }
+
+    function redrawAll(){
+      // Resize (responsive) and draw
+      state.diagram.size = state.diagram.resize();
+      state.plot1.size = state.plot1.resize();
+      state.plot2.size = state.plot2.resize();
+
+      drawDiagram(state);
+      drawPlot1(state);
+      drawPlot2(state);
+    }
+
+    function setupCanvases(){
+      const diagram = setupHiDPICanvas(document.getElementById("cnvDiagram"));
+      const plot1 = setupHiDPICanvas(document.getElementById("cnvPlot1"));
+      const plot2 = setupHiDPICanvas(document.getElementById("cnvPlot2"));
+      state.diagram = { cnv: document.getElementById("cnvDiagram"), ctx: diagram.ctx, resize: diagram.resize, size: {w:0,h:0} };
+      state.plot1 = { cnv: document.getElementById("cnvPlot1"), ctx: plot1.ctx, resize: plot1.resize, size: {w:0,h:0} };
+      state.plot2 = { cnv: document.getElementById("cnvPlot2"), ctx: plot2.ctx, resize: plot2.resize, size: {w:0,h:0} };
+
+      // ResizeObserver for crisp responsiveness
+      const ro = new ResizeObserver(()=> redrawAll());
+      ro.observe(state.diagram.cnv);
+      ro.observe(state.plot1.cnv);
+      ro.observe(state.plot2.cnv);
+
+      window.addEventListener("resize", ()=> redrawAll(), {passive:true});
+    }
+
+    function setupControls(){
+      ["sliderG","sliderLam","sliderPhi","sliderR"].forEach(id=>{
+        document.getElementById(id).addEventListener("input", updateState, {passive:true});
+      });
+    }
+
+    // ---------- Initialize ----------
+    setupCopyButtons();
+    setupTOC();
+    setupCanvases();
+    setupControls();
+
+    // Start with the problem's original values
+    updateState();
+  </script>
+</body>
+</html>

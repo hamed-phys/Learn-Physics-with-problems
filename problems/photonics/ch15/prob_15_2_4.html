@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Two-Level Pumping System: Rate Equations & Why Steady-State Inversion Is Impossible</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1622;
+      --panel2:#0c1220;
+      --text:#e8eef7;
+      --muted:#a9b7cc;
+      --faint:#6f7f98;
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.07);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#86efac;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 600px at 20% 10%, rgba(125,211,252,.10), transparent 60%),
+                  radial-gradient(900px 500px at 90% 20%, rgba(167,139,250,.10), transparent 55%),
+                  radial-gradient(900px 700px at 55% 90%, rgba(134,239,172,.07), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+
+    header{
+      padding:42px 18px 26px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .top-grid{
+      display:grid;
+      grid-template-columns: 1.4fr .9fr;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .top-grid{ grid-template-columns:1fr; }
+    }
+    .hero{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:22px 22px 18px;
+      overflow:hidden;
+      position:relative;
+    }
+    .hero:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(600px 200px at 30% 0%, rgba(125,211,252,.15), transparent 60%),
+                  radial-gradient(600px 240px at 70% 10%, rgba(167,139,250,.15), transparent 62%);
+      pointer-events:none;
+      filter: blur(0px);
+      opacity:.9;
+    }
+    .hero > *{ position:relative; }
+    h1{
+      margin:0 0 10px;
+      font-size: clamp(1.55rem, 2.2vw, 2.2rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size:1.02rem;
+      max-width:78ch;
+    }
+    .meta{
+      margin-top:14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      color:var(--faint);
+      font-size:.92rem;
+    }
+    .chip{
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,.03);
+      padding:6px 10px;
+      border-radius:999px;
+    }
+
+    .toc{
+      position:sticky;
+      top:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px 14px 10px;
+    }
+    .toc h2{
+      font-size:1.02rem;
+      margin:0 0 8px;
+      color:var(--text);
+      letter-spacing:.2px;
+    }
+    .toc a{
+      display:block;
+      padding:7px 8px;
+      border-radius:10px;
+      color:var(--muted);
+      text-decoration:none;
+      border:1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size:.95rem;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,.08);
+      border-color: rgba(125,211,252,.18);
+      transform: translateX(2px);
+      color: var(--text);
+    }
+
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding: 0 18px 70px;
+      display:grid;
+      grid-template-columns: 1.45fr .85fr;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      main{ grid-template-columns:1fr; }
+      .toc{ position:relative; top:auto; }
+    }
+
+    section, article{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.025));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px 18px 16px;
+      overflow:hidden;
+    }
+    section h2, article h2{
+      margin:0 0 10px;
+      font-size:1.25rem;
+      letter-spacing:.2px;
+    }
+    h3{
+      margin:14px 0 8px;
+      font-size:1.08rem;
+      color: var(--text);
+    }
+    p{ margin: 10px 0; color: var(--text); }
+    ul{ margin: 10px 0 10px 18px; color: var(--text); }
+    li{ margin: 6px 0; color: var(--text); }
+    .muted{ color:var(--muted); }
+
+    .callouts{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      margin-top:12px;
+    }
+    @media (max-width: 720px){
+      .callouts{ grid-template-columns:1fr; }
+    }
+    .card{
+      border-radius:16px;
+      border:1px solid var(--line2);
+      background: rgba(0,0,0,.18);
+      padding:12px 12px 10px;
+    }
+    .card .label{
+      font-size:.86rem;
+      letter-spacing:.18px;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:6px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(125,211,252,.12);
+      flex:0 0 auto;
+    }
+    .dot.warn{ background: var(--warn); box-shadow:0 0 0 4px rgba(251,191,36,.12); }
+    .dot.bad{ background: var(--bad); box-shadow:0 0 0 4px rgba(251,113,133,.12); }
+    .dot.good{ background: var(--good); box-shadow:0 0 0 4px rgba(134,239,172,.12); }
+
+    .eqbox{
+      margin:12px 0;
+      border:1px solid rgba(125,211,252,.20);
+      background: rgba(125,211,252,.06);
+      border-radius:16px;
+      padding:12px 12px 10px;
+      position:relative;
+      overflow:hidden;
+    }
+    .eqbox:before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: radial-gradient(600px 160px at 25% 0%, rgba(125,211,252,.10), transparent 60%),
+                  radial-gradient(500px 140px at 80% 10%, rgba(167,139,250,.10), transparent 55%);
+      pointer-events:none;
+      opacity:.9;
+    }
+    .eqbox > *{ position:relative; }
+    .equation{
+      font-family:var(--mono);
+      font-size: .98rem;
+      color: var(--text);
+      white-space: pre-wrap;
+      margin: 8px 0 6px;
+    }
+    .copyrow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size:.92rem;
+    }
+    .btn:hover{
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.22);
+      transform: translateY(-1px);
+    }
+    .btn:active{ transform: translateY(0px); }
+    .smallnote{
+      font-size:.9rem;
+      color:var(--muted);
+      margin:0;
+    }
+
+    .vizwrap{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+    figure{
+      margin:0;
+      border:1px solid var(--line2);
+      background: rgba(0,0,0,.18);
+      border-radius:16px;
+      overflow:hidden;
+    }
+    figcaption{
+      padding:10px 12px 10px;
+      color:var(--muted);
+      font-size:.92rem;
+      border-top:1px solid var(--line2);
+    }
+    canvas{
+      display:block;
+      width:100%;
+      height:320px;
+      background: radial-gradient(600px 280px at 30% 20%, rgba(255,255,255,.03), transparent 60%),
+                  radial-gradient(700px 300px at 80% 10%, rgba(255,255,255,.02), transparent 60%),
+                  rgba(0,0,0,.10);
+    }
+    .controls{
+      border:1px solid var(--line2);
+      background: rgba(0,0,0,.18);
+      border-radius:16px;
+      padding:12px;
+    }
+    .controls h3{ margin:0 0 10px; }
+    .ctrl{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+      margin:10px 0;
+      padding:10px;
+      border-radius:14px;
+      border:1px solid transparent;
+      background: rgba(255,255,255,.02);
+    }
+    .ctrl:hover{ border-color: rgba(255,255,255,.08); }
+    label{
+      color:var(--muted);
+      font-size:.92rem;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    input[type="range"]{ width:100%; }
+    select{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding:8px 10px;
+      outline:none;
+    }
+    .value{
+      font-family:var(--mono);
+      color:var(--text);
+      font-size:.92rem;
+      padding:6px 10px;
+      border-radius:12px;
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,.03);
+      min-width: 150px;
+      text-align:right;
+    }
+    .hr{
+      height:1px;
+      background: var(--line2);
+      margin: 12px 0;
+    }
+
+    .final{
+      border-color: rgba(134,239,172,.22);
+      background: rgba(134,239,172,.06);
+    }
+    .final .dot{ background: var(--good); box-shadow:0 0 0 4px rgba(134,239,172,.12); }
+
+    .print-hint{ color: var(--faint); font-size:.9rem; }
+
+    footer{
+      max-width:1200px;
+      margin:0 auto;
+      padding: 18px 18px 36px;
+      color: var(--faint);
+      text-align:center;
+    }
+
+    @media print{
+      body{ background:#fff; color:#000; }
+      header, main, footer{ max-width: 100%; }
+      .toc{ display:none; }
+      section, article, figure, .controls, .hero{ box-shadow:none; background:#fff; border:1px solid #ddd; }
+      canvas{ background:#fff; }
+      .btn{ display:none; }
+      a{ color:#000; text-decoration:none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="top-grid">
+      <div class="hero">
+        <h1>Two-Level Pumping System: Rate Equations & Why Steady-State Inversion Cannot Be Achieved</h1>
+        <p class="subtitle">
+          We write the population rate equations for a <b>two-level</b> atom (levels 1 and 2) under <b>direct optical pumping</b>
+          on the 1↔2 transition and show—mathematically and physically—that <b>steady-state population inversion is impossible</b>.
+        </p>
+        <div class="meta">
+          <span class="chip">Topic: Laser physics • rate equations</span>
+          <span class="chip">Key result: two-level saturation ⇒ no inversion</span>
+          <span class="chip">Interactive: pump strength & degeneracy sweep</span>
+        </div>
+        <p class="print-hint" style="margin:12px 0 0;">
+          Tip: This page is print-friendly; diagrams/plots remain but buttons hide on print.
+        </p>
+      </div>
+
+      <nav class="toc" aria-label="Table of contents">
+        <h2>Table of Contents</h2>
+        <a href="#quick">Quick Summary</a>
+        <a href="#part0">PART 0 — Concept Primer</a>
+        <a href="#part1">PART 1 — Problem Analysis</a>
+        <a href="#part2">PART 2 — Strategy & Tips</a>
+        <a href="#part3">PART 3 — Full Solution</a>
+        <a href="#part4">PART 4 — Deeper Understanding</a>
+        <a href="#part5">PART 5 — Visualization Guide</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article id="content">
+      <section id="quick">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li><b>What this is about:</b> a <b>two-level</b> medium optically pumped directly on the 1↔2 transition.</li>
+          <li><b>Key physics idea:</b> the same light that excites <b>also drives stimulated emission</b>, which prevents inversion.</li>
+          <li><b>Governing equations:</b> coupled <b>rate equations</b> for populations <span class="muted">N₁, N₂</span> including absorption, stimulated emission, and spontaneous decay.</li>
+          <li><b>Core parameter:</b> pump (absorption) rate <span class="muted">W = B₁₂ ρ(ν)</span> (s⁻¹) with stimulated emission rate <span class="muted">W′ = B₂₁ ρ(ν)</span>.</li>
+          <li><b>Steady-state result:</b> for equal degeneracies, <span class="muted">ΔN = N₂ − N₁ = −N<sub>tot</sub>/(1+2Wτ)</span> which is always <b>&lt; 0</b> (no inversion), approaching 0 from below as pump increases.</li>
+          <li><b>More general result (with degeneracies):</b> the inversion criterion is <span class="muted">N₂/g₂ &gt; N₁/g₁</span>; direct pumping yields at best <span class="muted">N₂/g₂ = N₁/g₁</span> (saturation), never exceeding it.</li>
+          <li><b>Final result type:</b> fully <b>symbolic</b> (with example numeric values only for plotting).</li>
+        </ul>
+      </section>
+
+      <section id="part0">
+        <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+        <h3>0.1 Core definitions (symbols & units)</h3>
+        <ul>
+          <li><b>N₁, N₂</b> — populations (or number densities) in levels 1 and 2. Units: <span class="muted">[count]</span> or <span class="muted">m⁻³</span>.</li>
+          <li><b>N<sub>tot</sub> = N₁ + N₂</b> — total population (conserved in this closed two-level model).</li>
+          <li><b>ρ(ν)</b> — spectral energy density of the pump radiation at frequency ν. Units: <span class="muted">J·m⁻³·Hz⁻¹</span>.</li>
+          <li><b>B₁₂, B₂₁</b> — Einstein B coefficients for absorption (1→2) and stimulated emission (2→1). Units: chosen so that <span class="muted">Bρ</span> is a rate (s⁻¹).</li>
+          <li><b>A₂₁</b> — Einstein A coefficient for spontaneous emission (2→1). Units: <span class="muted">s⁻¹</span>.</li>
+          <li><b>τ = 1/A₂₁</b> — excited-state lifetime (in this simplest model). Units: <span class="muted">s</span>.</li>
+          <li><b>g₁, g₂</b> — degeneracies (statistical weights) of levels 1 and 2 (dimensionless).</li>
+        </ul>
+
+        <h3>0.2 Physical meaning of key quantities</h3>
+        <ul>
+          <li><b>Absorption rate:</b> <span class="muted">W = B₁₂ ρ</span> tells how quickly population in level 1 is promoted to level 2 by the pump field.</li>
+          <li><b>Stimulated emission rate:</b> <span class="muted">W′ = B₂₁ ρ</span> is driven by the <b>same field</b>, pushing population from 2 back to 1.</li>
+          <li><b>Spontaneous decay:</b> <span class="muted">A₂₁ N₂</span> drains population from level 2 regardless of the pump, emitting photons randomly in phase/direction.</li>
+        </ul>
+
+        <h3>0.3 Key principles and validity (assumptions)</h3>
+        <ul>
+          <li><b>Rate-equation regime:</b> populations change slowly compared with optical period; coherence is ignored (no full optical Bloch equations here).</li>
+          <li><b>Closed two-level system:</b> only levels 1 and 2 exist; no shelving levels, no external pumping routes.</li>
+          <li><b>Direct resonant pumping:</b> the pump addresses the <b>same transition</b> that provides gain (1↔2).</li>
+          <li><b>Einstein relations:</b> for the same transition, <span class="muted">B₂₁ = (g₁/g₂) B₁₂</span>.</li>
+        </ul>
+
+        <h3>0.4 Common model/approximation and why we use it</h3>
+        <p class="muted">
+          Laser textbooks often start with two-level rate equations because they expose the core obstacle:
+          the pump necessarily increases stimulated emission at the same time it increases absorption, producing
+          <b>saturation (equalized populations)</b> rather than inversion.
+        </p>
+
+        <h3>0.5 Mini intuition examples</h3>
+        <ul>
+          <li><b>Weak pump:</b> very few atoms reach level 2, and spontaneous decay returns them—so <span class="muted">N₂ ≪ N₁</span>.</li>
+          <li><b>Very strong pump:</b> the light drives 1→2 and 2→1 rapidly; the system “shuffles” so fast that it tends toward
+              <b>equal population per available substate</b> rather than piling everyone into level 2.</li>
+        </ul>
+
+        <div class="callouts">
+          <div class="card">
+            <div class="label"><span class="dot warn"></span>What to watch for</div>
+            <ul>
+              <li>Inversion in spectroscopy is about <b>population per degeneracy</b>: <span class="muted">N₂/g₂</span> vs <span class="muted">N₁/g₁</span>.</li>
+              <li>Direct pumping uses the <b>same photons</b> that can cause stimulated emission—this “back reaction” is the whole story.</li>
+              <li>At “infinite” pump you get <b>saturation</b>: equality, not inversion.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="label"><span class="dot bad"></span>Typical misconception</div>
+            <p class="muted" style="margin:0;">
+              “If I pump harder, I’ll eventually make <span class="muted">N₂ &gt; N₁</span>.”  
+              In a true two-level system, pumping harder also strengthens <b>stimulated emission</b>, preventing any steady-state inversion.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="part1">
+        <h2>PART 1 — Problem Analysis (No solving yet)</h2>
+
+        <h3>1.1 Restate the problem</h3>
+        <p>
+          Consider a <b>two-level system</b> with lower level ① and upper level ②. The system is pumped
+          <b>optically directly between the same two levels</b>.  
+          <b>Task:</b> write the population rate equations and show that a <b>steady-state population inversion</b> cannot be achieved.
+        </p>
+
+        <h3>1.2 Given, unknowns, and goal</h3>
+        <ul>
+          <li><b>Given:</b> two levels (1 and 2), direct optical pumping on 1↔2, spontaneous decay 2→1.</li>
+          <li><b>Unknowns:</b> <span class="muted">N₁(t), N₂(t)</span> and their steady-state values.</li>
+          <li><b>Must prove:</b> in steady state, you cannot have inversion:
+            <ul>
+              <li>For equal degeneracy: <span class="muted">N₂ &gt; N₁</span> is impossible.</li>
+              <li>In general: <span class="muted">N₂/g₂ &gt; N₁/g₁</span> is impossible.</li>
+            </ul>
+          </li>
+        </ul>
+
+        <h3>1.3 Relevant principles (and why they apply)</h3>
+        <ul>
+          <li><b>Einstein absorption/stimulated emission:</b> optical pumping on the transition produces both forward and backward stimulated processes.</li>
+          <li><b>Spontaneous emission:</b> upper level decays at rate <span class="muted">A₂₁</span>, providing an additional loss channel for level 2.</li>
+          <li><b>Population conservation:</b> in a closed two-level model, <span class="muted">N₁ + N₂ = N<sub>tot</sub></span> (constant).</li>
+          <li><b>Why not other laws?</b> We do not need wave equations or Maxwell’s equations here because the question is about <b>population dynamics</b>, not field propagation.</li>
+        </ul>
+
+        <div class="card" style="margin-top:12px;">
+          <div class="label"><span class="dot"></span>Assumptions (explicit)</div>
+          <ul class="muted" style="margin:0 0 0 18px;">
+            <li>Only two levels participate (no third level, no metastable storage).</li>
+            <li>Pump field is classical and characterized by constant <span class="muted">ρ(ν)</span> (or equivalently a constant intensity).</li>
+            <li>Rate-equation description: coherence effects neglected; populations are well-defined.</li>
+            <li>Einstein relation holds: <span class="muted">B₂₁ = (g₁/g₂) B₁₂</span>.</li>
+          </ul>
+        </div>
+
+        <h3>1.4 Possible approaches (compare)</h3>
+        <ul>
+          <li><b>Approach A: Rate equations + steady-state algebra</b>  
+              <span class="muted">Pros:</span> direct, minimal machinery, matches problem statement.  
+              <span class="muted">Cons:</span> doesn’t show transient oscillations (needs Bloch equations for that).</li>
+          <li><b>Approach B: Optical Bloch equations (OBE)</b>  
+              <span class="muted">Pros:</span> includes coherence, saturation, power broadening.  
+              <span class="muted">Cons:</span> heavier math than needed for the inversion impossibility result.</li>
+          <li><b>Approach C: Thermodynamic/detailed balance argument</b>  
+              <span class="muted">Pros:</span> very conceptual; highlights stimulated emission symmetry.  
+              <span class="muted">Cons:</span> less explicit about rates unless you re-derive them anyway.</li>
+        </ul>
+        <p><b>Best choice:</b> Approach A (rate equations) because the question explicitly asks for them and the proof is clean at steady state.</p>
+      </section>
+
+      <section id="part2">
+        <h2>PART 2 — Strategy & Tips (Roadmap only)</h2>
+        <ol>
+          <li><b>Define the rates</b>  
+            Goal: express optical pumping as absorption and stimulated emission rates.  
+            Tool: Einstein B coefficients: <span class="muted">W=B₁₂ρ</span>, <span class="muted">W′=B₂₁ρ</span>.  
+            Meaning: pump drives both directions on the same transition.</li>
+          <li><b>Write coupled rate equations</b>  
+            Goal: write <span class="muted">dN₂/dt</span> and <span class="muted">dN₁/dt</span>.  
+            Tool: “inflow − outflow” bookkeeping + spontaneous decay <span class="muted">A₂₁N₂</span>.  
+            Meaning: every process moving population must appear with opposite sign in the other equation.</li>
+          <li><b>Use population conservation</b>  
+            Goal: reduce to one variable using <span class="muted">N₁=N<sub>tot</sub>−N₂</span>.  
+            Tool: algebra.  
+            Meaning: closed two-level system has only one independent population variable.</li>
+          <li><b>Solve for steady state</b>  
+            Goal: set <span class="muted">dN₂/dt=0</span> and solve for <span class="muted">N₂</span>.  
+            Tool: linear equation in <span class="muted">N₂</span>.</li>
+          <li><b>Test inversion condition</b>  
+            Goal: show <span class="muted">N₂/g₂ − N₁/g₁ ≤ 0</span> always.  
+            Tool: substitute steady-state solution + Einstein relation.  
+            Meaning: the best you can do is equality (saturation), never inversion.</li>
+          <li><b>Sanity checks</b>  
+            Goal: confirm correct limits: weak pump and strong pump.  
+            Tool: limiting cases <span class="muted">W→0</span>, <span class="muted">W→∞</span>.</li>
+        </ol>
+
+        <div class="callouts">
+          <div class="card">
+            <div class="label"><span class="dot warn"></span>Common mistakes</div>
+            <ul class="muted" style="margin:0 0 0 18px;">
+              <li>Forgetting stimulated emission (keeping absorption only) ⇒ falsely predicts inversion.</li>
+              <li>Using inversion criterion <span class="muted">N₂&gt;N₁</span> even when <span class="muted">g₂≠g₁</span>.</li>
+              <li>Dropping spontaneous decay in the wrong place (it always reduces level 2).</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="label"><span class="dot good"></span>Quick tips</div>
+            <ul class="muted" style="margin:0 0 0 18px;">
+              <li>Write each term as “(rate) × (population available to undergo it)”.</li>
+              <li>Check that <span class="muted">d(N₁+N₂)/dt=0</span> automatically.</li>
+              <li>Strong pump should give “equalization per degeneracy”, not inversion.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="part3">
+        <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+        <h3>3.1 Physical intuition (before math)</h3>
+        <p>
+          Optical pumping on the 1↔2 line does two competing things:
+          <b>absorption</b> moves atoms up (1→2), while the same field also drives <b>stimulated emission</b> (2→1).
+          As you pump harder, you strengthen <i>both</i> directions. Therefore, you do not “pile up” population in level 2;
+          instead you approach a saturated state where upward and downward stimulated transitions nearly balance.
+          Spontaneous decay then keeps the upper level from ever dominating.
+        </p>
+
+        <h3>3.2 Define symbols and rates</h3>
+        <p>
+          Let <b>N₁(t)</b> and <b>N₂(t)</b> be populations of levels 1 and 2, with total
+          <b>N<sub>tot</sub> = N₁ + N₂</b> constant.
+        </p>
+        <p>
+          For pump spectral energy density <b>ρ(ν)</b> on the 1↔2 transition:
+        </p>
+
+        <div class="eqbox" id="eq_rates">
+          <div class="copyrow">
+            <div class="label" style="margin:0;"><span class="dot"></span><b>Key definitions (rates)</b></div>
+            <button class="btn" data-copy="#eq_rates_text">Copy</button>
+          </div>
+          <div class="equation" id="eq_rates_text">W  = B12 * ρ(ν)         (absorption rate, s^-1)
+W' = B21 * ρ(ν)         (stimulated emission rate, s^-1)
+A21                    (spontaneous emission coefficient, s^-1)
+τ = 1/A21               (excited-state lifetime, s)</div>
+          <p class="smallnote">All rates here are per-particle transition rates; multiplying by N gives particles/s.</p>
+        </div>
+
+        <h3>3.3 Write the rate equations (inflow − outflow)</h3>
+        <p>
+          Population flows <b>into</b> level 2 via absorption from level 1: <span class="muted">+ W N₁</span>.  
+          Population flows <b>out of</b> level 2 via stimulated emission and spontaneous emission: <span class="muted">− W′ N₂ − A₂₁ N₂</span>.
+        </p>
+
+        <div class="eqbox" id="eq_rateeq">
+          <div class="copyrow">
+            <div class="label" style="margin:0;"><span class="dot"></span><b>Two-level rate equations</b></div>
+            <button class="btn" data-copy="#eq_rateeq_text">Copy</button>
+          </div>
+          <div class="equation" id="eq_rateeq_text">dN2/dt = + W*N1  - W'*N2 - A21*N2
+dN1/dt = - W*N1  + W'*N2 + A21*N2</div>
+          <p class="smallnote">
+            Check: adding the equations gives <span class="muted">d(N₁+N₂)/dt = 0</span>, so total population is conserved (as assumed).
+          </p>
+        </div>
+
+        <h3>3.4 Reduce to one variable using conservation</h3>
+        <p>
+          Use <span class="muted">N₁ = N<sub>tot</sub> − N₂</span> in the equation for <span class="muted">dN₂/dt</span>:
+        </p>
+        <div class="eqbox">
+          <div class="equation">dN2/dt = W*(Ntot - N2) - W'*N2 - A21*N2
+      = W*Ntot - [W + W' + A21]*N2</div>
+          <p class="smallnote">This is a linear first-order ODE; steady state is immediate to compute.</p>
+        </div>
+
+        <h3>3.5 Solve for steady state</h3>
+        <p>At steady state, <span class="muted">dN₂/dt = 0</span>, so:</p>
+        <div class="eqbox" id="eq_steady_general">
+          <div class="copyrow">
+            <div class="label" style="margin:0;"><span class="dot"></span><b>Steady-state population (general)</b></div>
+            <button class="btn" data-copy="#eq_steady_general_text">Copy</button>
+          </div>
+          <div class="equation" id="eq_steady_general_text">0 = W*Ntot - (W + W' + A21)*N2
+=> N2_ss = [W / (W + W' + A21)] * Ntot
+and N1_ss = Ntot - N2_ss</div>
+          <p class="smallnote">This already shows saturation: as W increases, the denominator also contains W and W′.</p>
+        </div>
+
+        <h3>3.6 Use Einstein relation and test inversion</h3>
+        <p>
+          For the same transition, Einstein coefficients satisfy:
+        </p>
+        <div class="eqbox" id="eq_einstein">
+          <div class="copyrow">
+            <div class="label" style="margin:0;"><span class="dot"></span><b>Einstein B relation (degeneracy)</b></div>
+            <button class="btn" data-copy="#eq_einstein_text">Copy</button>
+          </div>
+          <div class="equation" id="eq_einstein_text">B21 = (g1/g2) * B12
+=> W' = (g1/g2) * W</div>
+          <p class="smallnote">This is the fundamental symmetry between absorption and stimulated emission.</p>
+        </div>
+
+        <p>
+          Substitute <span class="muted">W′=(g₁/g₂)W</span> and <span class="muted">A₂₁=1/τ</span> into the steady-state:
+        </p>
+
+        <div class="eqbox" id="eq_n2ss">
+          <div class="copyrow">
+            <div class="label" style="margin:0;"><span class="dot"></span><b>Steady-state populations with degeneracy</b></div>
+            <button class="btn" data-copy="#eq_n2ss_text">Copy</button>
+          </div>
+          <div class="equation" id="eq_n2ss_text">Let α = g1/g2.
+N2_ss = [ W / ( W*(1+α) + 1/τ ) ] * Ntot
+N1_ss = Ntot - N2_ss</div>
+        </div>
+
+        <h3>3.7 Prove “no inversion” in the correct sense</h3>
+        <p>
+          The laser-gain inversion condition for a transition with degeneracies is:
+          <span class="muted">N₂/g₂ &gt; N₁/g₁</span> (more population per upper sublevel than per lower sublevel).
+          Define the “inversion measure”
+        </p>
+        <div class="eqbox">
+          <div class="equation">Δ = (N2/g2) - (N1/g1)</div>
+          <p class="smallnote">If Δ &gt; 0 you have inversion; if Δ = 0 you are saturated (no net gain); if Δ &lt; 0 you have net absorption.</p>
+        </div>
+
+        <p>
+          Use <span class="muted">N₁=N<sub>tot</sub>−N₂</span> and write Δ in terms of N₂:
+        </p>
+        <div class="eqbox">
+          <div class="equation">Δ = N2*(1/g2 + 1/g1) - Ntot*(1/g1)</div>
+          <p class="smallnote">So Δ increases with N₂, but only up to what steady state allows.</p>
+        </div>
+
+        <p>
+          In the limit of very strong pumping <span class="muted">Wτ → ∞</span>, the steady-state formula gives:
+        </p>
+        <div class="eqbox">
+          <div class="equation">N2_ss  →  [ 1 / (1 + α) ] * Ntot = [ 1 / (1 + g1/g2) ] * Ntot = [ g2/(g1+g2) ] * Ntot
+N1_ss  →  [ g1/(g1+g2) ] * Ntot</div>
+          <p class="smallnote">This is “equal population per sublevel”: N₂/g₂ = N₁/g₁.</p>
+        </div>
+
+        <p>
+          Indeed,
+          <span class="muted">N₂/g₂ = N<sub>tot</sub>/(g₁+g₂)</span> and <span class="muted">N₁/g₁ = N<sub>tot</sub>/(g₁+g₂)</span>,
+          so
+          <b>Δ → 0</b> from below as the pump increases. Therefore Δ never becomes positive: no inversion.
+        </p>
+
+        <div class="eqbox final" id="final_answer">
+          <div class="copyrow">
+            <div class="label" style="margin:0;"><span class="dot"></span><b>Final Answer (what you must show)</b></div>
+            <button class="btn" data-copy="#final_text">Copy</button>
+          </div>
+          <div class="equation" id="final_text">Two-level rate equations (direct 1↔2 optical pumping):
+dN2/dt = W*N1 - W'*N2 - A21*N2
+dN1/dt = -W*N1 + W'*N2 + A21*N2
+with W = B12 ρ(ν), W' = B21 ρ(ν), A21 = 1/τ, and B21 = (g1/g2) B12.
+
+Steady state:
+N2_ss = [ W / ( W*(1 + g1/g2) + 1/τ ) ] * Ntot
+N1_ss = Ntot - N2_ss
+
+Inversion criterion:
+(N2/g2) > (N1/g1)  is NEVER satisfied at steady state.
+As W→∞, N2_ss→[g2/(g1+g2)]Ntot and N1_ss→[g1/(g1+g2)]Ntot, giving N2/g2 = N1/g1 (saturation), not inversion.
+For g1=g2, ΔN = N2 - N1 = -Ntot/(1+2Wτ) < 0 for all finite W (approaches 0 from below).</div>
+          <p class="smallnote">
+            Interpretation: direct pumping drives the transition toward saturation (zero net gain), not inversion.
+          </p>
+        </div>
+
+        <h3>3.8 Sanity checks</h3>
+        <ul>
+          <li><b>Units:</b> W, W′, A₂₁ all have units s⁻¹, so expressions like <span class="muted">W*(1+α)+1/τ</span> are rates (s⁻¹).</li>
+          <li><b>Weak pump:</b> W→0 ⇒ <span class="muted">N₂→0</span> and <span class="muted">N₁→N<sub>tot</sub></span> (all in ground state).</li>
+          <li><b>Strong pump:</b> W→∞ ⇒ <span class="muted">N₂/g₂ = N₁/g₁</span> (saturation), so no inversion.</li>
+          <li><b>Sign reasoning:</b> for equal degeneracy, ΔN is always negative; the pump merely reduces absorption toward zero.</li>
+        </ul>
+
+        <p class="muted">
+          Connection to the diagram/plots below: the pump arrow and the stimulated-emission arrow are both driven by the same field.
+          The plots show how increasing pump strength moves the system toward Δ = 0 (no gain), but never above it.
+        </p>
+      </section>
+
+      <section id="part4">
+        <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+        <h3>4.1 Re-interpret the final formula</h3>
+        <p>
+          The steady-state
+          <span class="muted">N₂ = [W / (W(1+α) + 1/τ)] N<sub>tot</sub></span>
+          contains two competing “downward” mechanisms:
+        </p>
+        <ul>
+          <li><b>Stimulated emission:</b> the term <span class="muted">Wα</span> grows with pump intensity (because the same photons stimulate emission).</li>
+          <li><b>Spontaneous emission:</b> the term <span class="muted">1/τ</span> is always present and always reduces N₂.</li>
+        </ul>
+        <p>
+          As W increases, the numerator and (most of) the denominator scale with W, so N₂ approaches a <b>finite fraction</b> of N<sub>tot</sub>;
+          it cannot run away to exceed the inversion threshold.
+        </p>
+
+        <h3>4.2 How parameter changes affect the outcome (connect to plots)</h3>
+        <ul>
+          <li><b>Increase pump strength (W):</b> Δ moves upward toward 0 (less absorption), but never becomes positive.</li>
+          <li><b>Increase lifetime (τ):</b> spontaneous loss weakens, so saturation is reached at lower Wτ; still Δ ≤ 0.</li>
+          <li><b>Change degeneracy ratio g₂/g₁:</b> strong pumping yields <span class="muted">N₂/N₁ → g₂/g₁</span>, but the inversion measure
+              <span class="muted">N₂/g₂ − N₁/g₁</span> still tends to 0, not positive.</li>
+        </ul>
+
+        <h3>4.3 Alternative derivation idea (brief)</h3>
+        <p class="muted">
+          Using optical Bloch equations, one finds that the steady-state population difference is
+          proportional to <span class="muted">1/(1+s)</span> where s is the saturation parameter (∝ intensity),
+          again giving a population difference that approaches zero but does not flip sign under resonant driving of a closed two-level transition.
+        </p>
+
+        <h3>4.4 Concept check (self-test)</h3>
+        <ul>
+          <li><b>Q:</b> If I ignore stimulated emission, can I get inversion? <b>A:</b> You can “predict” it, but it is unphysical because stimulated emission is unavoidable on the same transition.</li>
+          <li><b>Q:</b> What does “saturation” mean here? <b>A:</b> The pump equalizes populations per degeneracy: <span class="muted">N₂/g₂ = N₁/g₁</span>, giving zero net gain.</li>
+          <li><b>Q:</b> Why do real lasers use ≥3 levels? <b>A:</b> Because you pump into a different level than the lasing upper/lower pair, allowing population to accumulate without immediately being driven back by the same pump photons.</li>
+          <li><b>Q:</b> What is the best you can do in a two-level system? <b>A:</b> Reduce absorption to near zero (Δ → 0⁻), but not create positive gain (Δ &gt; 0).</li>
+        </ul>
+      </section>
+
+      <section id="part5">
+        <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+
+        <h3>5.1 What each canvas shows</h3>
+        <ul>
+          <li><b>Diagram canvas:</b> energy levels 1 and 2, pump-driven absorption (1→2), stimulated emission (2→1), and spontaneous decay (2→1).</li>
+          <li><b>Main plot:</b> inversion measure <span class="muted">Δ = N₂/g₂ − N₁/g₁</span> (normalized) versus saturation parameter <span class="muted">s = Wτ</span>.</li>
+          <li><b>Secondary plot:</b> population fractions <span class="muted">N₂/N<sub>tot</sub></span> and <span class="muted">N₁/N<sub>tot</sub></span> versus <span class="muted">s</span>.</li>
+        </ul>
+
+        <h3>5.2 Interactive controls</h3>
+        <ul>
+          <li><b>Pump parameter (s = Wτ):</b> moving the slider changes the operating point; the vertical marker updates on both plots.</li>
+          <li><b>Lifetime τ:</b> changes how quickly spontaneous emission competes; plotted curves update to reflect the new τ scaling.</li>
+          <li><b>Degeneracy ratio g₂/g₁:</b> changes the asymptotic saturated populations; curves update, but the inversion measure still never exceeds 0.</li>
+        </ul>
+
+        <p class="muted">
+          Watch for this signature: Δ(s) rises toward 0 but stays ≤ 0. That’s the graphical statement of “no steady-state inversion.”
+        </p>
+      </section>
+    </article>
+
+    <aside>
+      <section class="vizwrap" aria-label="Interactive visualizations">
+        <div class="controls">
+          <h2 style="margin:0 0 6px;">Interactive Controls</h2>
+          <p class="muted" style="margin:0 0 10px;">All plots update live. Parameters match the symbols in the text.</p>
+
+          <div class="ctrl">
+            <label>
+              Pump strength (dimensionless) <span class="muted">s = Wτ</span>
+              <span class="muted">Controls the vertical marker on the plots</span>
+              <input id="sSlider" type="range" min="-3" max="3" step="0.01" value="0.4"/>
+            </label>
+            <div class="value" id="sVal">s = 2.51</div>
+          </div>
+
+          <div class="ctrl">
+            <label>
+              Lifetime τ (example value, s)
+              <span class="muted">Used to convert between W and s; curves use s directly</span>
+              <input id="tauSlider" type="range" min="-9" max="-3" step="0.01" value="-7"/>
+            </label>
+            <div class="value" id="tauVal">τ = 1.00e-07 s</div>
+          </div>
+
+          <div class="ctrl">
+            <label>
+              Degeneracy ratio <span class="muted">g₂/g₁</span>
+              <span class="muted">Affects saturation limit; inversion measure uses N₂/g₂ − N₁/g₁</span>
+              <select id="gRatio">
+                <option value="1">1 (g₂ = g₁)</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="0.5">0.5</option>
+              </select>
+            </label>
+            <div class="value" id="gVal">g₂/g₁ = 1</div>
+          </div>
+
+          <div class="hr"></div>
+          <button class="btn" id="resetBtn" style="width:100%;">Reset to textbook default</button>
+          <p class="smallnote" style="margin-top:10px;">
+            Example values are only for visualization. The analytical proof is symbolic.
+          </p>
+        </div>
+
+        <figure>
+          <canvas id="diagramCanvas" height="320" aria-label="Two-level pumping diagram"></canvas>
+          <figcaption>
+            Diagram: Direct optical pumping on a two-level system drives both absorption and stimulated emission; spontaneous decay also empties level 2.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <canvas id="mainPlot" height="320" aria-label="Main plot: inversion measure vs pump"></canvas>
+          <figcaption>
+            Main plot: normalized inversion measure Δ̃(s) = (N₂/g₂ − N₁/g₁) / (N<sub>tot</sub>/g₁) stays ≤ 0 for all s.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <canvas id="secondaryPlot" height="320" aria-label="Secondary plot: populations vs pump"></canvas>
+          <figcaption>
+            Secondary plot: population fractions N₂/N<sub>tot</sub> and N₁/N<sub>tot</sub> approach saturation values as s increases.
+          </figcaption>
+        </figure>
+      </section>
+    </aside>
+  </main>
+
+  <footer>
+    Built as a self-contained learning article (vanilla HTML/CSS/JS). Copy buttons copy plain-text equations/results.
+  </footer>
+
+  <script>
+    // ---------- Copy buttons ----------
+    (function(){
+      const buttons = document.querySelectorAll('[data-copy]');
+      buttons.forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const sel = btn.getAttribute('data-copy');
+          const el = document.querySelector(sel);
+          if(!el) return;
+          const text = el.textContent.replace(/\u00a0/g,' ').trim();
+          try{
+            await navigator.clipboard.writeText(text);
+            const old = btn.textContent;
+            btn.textContent = "Copied ✓";
+            setTimeout(()=>btn.textContent=old, 900);
+          }catch(e){
+            // fallback
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            try{ document.execCommand('copy'); }catch(_){}
+            document.body.removeChild(ta);
+            const old = btn.textContent;
+            btn.textContent = "Copied ✓";
+            setTimeout(()=>btn.textContent=old, 900);
+          }
+        });
+      });
+    })();
+
+    // ---------- HiDPI canvas helpers ----------
+    function setupCanvas(canvas){
+      const ctx = canvas.getContext('2d');
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const cssW = Math.max(280, rect.width);
+        const cssH = Math.max(240, rect.height);
+        canvas.width = Math.round(cssW * dpr);
+        canvas.height = Math.round(cssH * dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+        return {w: cssW, h: cssH, dpr};
+      }
+      return {ctx, resize};
+    }
+
+    function lerp(a,b,t){ return a + (b-a)*t; }
+
+    // Drawing primitives (no fixed colors; use default palette derived from theme)
+    const palette = {
+      fg: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#e8eef7',
+      muted: getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#a9b7cc',
+      faint: getComputedStyle(document.documentElement).getPropertyValue('--faint').trim() || '#6f7f98',
+      grid: 'rgba(255,255,255,.08)',
+      axis: 'rgba(255,255,255,.18)',
+      accent: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#7dd3fc',
+      accent2: getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim() || '#a78bfa',
+      good: getComputedStyle(document.documentElement).getPropertyValue('--good').trim() || '#86efac',
+      bad: getComputedStyle(document.documentElement).getPropertyValue('--bad').trim() || '#fb7185',
+      warn: getComputedStyle(document.documentElement).getPropertyValue('--warn').trim() || '#fbbf24',
+    };
+
+    function drawAxes(ctx, box, xMin, xMax, yMin, yMax, xLabel, yLabel, title){
+      const {x,y,w,h,padL,padR,padT,padB} = box;
+      // background subtle
+      ctx.save();
+      ctx.clearRect(0,0, x+w, y+h);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = 'rgba(0,0,0,0)';
+      ctx.fillRect(x,y,w,h);
+
+      // Title
+      ctx.fillStyle = palette.fg;
+      ctx.font = '600 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText(title, x+padL, y+padT-8);
+
+      // Plot area
+      const px = x+padL, py = y+padT, pw = w-padL-padR, ph = h-padT-padB;
+
+      // Grid + ticks
+      const nX = 6, nY = 6;
+      ctx.strokeStyle = palette.grid;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for(let i=0;i<=nX;i++){
+        const tx = px + (pw*i/nX);
+        ctx.moveTo(tx, py);
+        ctx.lineTo(tx, py+ph);
+      }
+      for(let j=0;j<=nY;j++){
+        const ty = py + (ph*j/nY);
+        ctx.moveTo(px, ty);
+        ctx.lineTo(px+pw, ty);
+      }
+      ctx.stroke();
+
+      // Axes border
+      ctx.strokeStyle = palette.axis;
+      ctx.lineWidth = 1.25;
+      ctx.strokeRect(px, py, pw, ph);
+
+      // Tick labels
+      ctx.fillStyle = palette.muted;
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+
+      function fmt(v){
+        const av = Math.abs(v);
+        if((av>=1000)||(av>0 && av<0.01)) return v.toExponential(1);
+        return (Math.round(v*100)/100).toString();
+      }
+      for(let i=0;i<=nX;i++){
+        const xv = lerp(xMin, xMax, i/nX);
+        const tx = px + (pw*i/nX);
+        ctx.fillText(fmt(xv), tx-10, py+ph+18);
+      }
+      for(let j=0;j<=nY;j++){
+        const yv = lerp(yMax, yMin, j/nY); // top is yMax
+        const ty = py + (ph*j/nY);
+        ctx.fillText(fmt(yv), px-52, ty+4);
+      }
+
+      // Axis labels
+      ctx.fillStyle = palette.fg;
+      ctx.font = '600 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText(xLabel, px + pw - ctx.measureText(xLabel).width, py + ph + 38);
+
+      ctx.save();
+      ctx.translate(x+14, py + ph/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(yLabel, 0, 0);
+      ctx.restore();
+
+      ctx.restore();
+
+      return {px, py, pw, ph};
+    }
+
+    function toX(xv, xMin, xMax, area){
+      return area.px + (xv-xMin)/(xMax-xMin)*area.pw;
+    }
+    function toY(yv, yMin, yMax, area){
+      return area.py + (yMax-yv)/(yMax-yMin)*area.ph;
+    }
+
+    // ---------- Physics model ----------
+    // Define:
+    // α = g1/g2 = 1/(g2/g1)
+    // s = Wτ
+    // N2/Ntot = s / ( s(1+α) + 1 )
+    // N1/Ntot = 1 - N2/Ntot
+    // normalized inversion measure: Δ̃ = (N2/g2 - N1/g1) / (Ntot/g1)
+    // = (g1/g2)(N2/Ntot) - (N1/Ntot)
+    // = α*f2 - (1 - f2) = f2(α+1) - 1
+    // with f2 = s / ( s(1+α) + 1 )
+    // => Δ̃ = (α+1)* s / ( s(1+α) + 1 ) - 1 = -1 / ( s(1+α) + 1 ) ≤ 0
+
+    function fractions(s, g2_over_g1){
+      const alpha = 1 / g2_over_g1; // g1/g2
+      const denom = s*(1+alpha) + 1;
+      const f2 = (denom === 0) ? 0 : (s / denom);
+      const f1 = 1 - f2;
+      const invTilde = (f2*(1+alpha) - 1); // = -1/denom
+      return {f1, f2, invTilde, alpha, denom};
+    }
+
+    // ---------- Diagram ----------
+    const diagram = setupCanvas(document.getElementById('diagramCanvas'));
+    function drawDiagram(){
+      const {ctx, resize} = diagram;
+      const {w,h} = resize();
+
+      ctx.clearRect(0,0,w,h);
+
+      const pad = 18;
+      const left = pad, right = w-pad, top = pad, bottom = h-pad;
+
+      // Title
+      ctx.fillStyle = palette.fg;
+      ctx.font = '600 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText('Two-Level System with Direct Optical Pumping', left, top+4);
+
+      // Energy levels
+      const x0 = w*0.18;
+      const x1 = w*0.62;
+
+      const y1 = h*0.72; // level 1
+      const y2 = h*0.30; // level 2
+
+      ctx.strokeStyle = palette.axis;
+      ctx.lineWidth = 2;
+
+      // Level lines
+      ctx.beginPath();
+      ctx.moveTo(x0, y1); ctx.lineTo(x1, y1);
+      ctx.moveTo(x0, y2); ctx.lineTo(x1, y2);
+      ctx.stroke();
+
+      // Labels
+      ctx.fillStyle = palette.fg;
+      ctx.font = '600 13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText('Level 2 (upper)', x1+10, y2+4);
+      ctx.fillText('Level 1 (lower)', x1+10, y1+4);
+
+      // Energy axis
+      ctx.strokeStyle = palette.grid;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(w*0.10, bottom);
+      ctx.lineTo(w*0.10, top+18);
+      ctx.stroke();
+      ctx.fillStyle = palette.muted;
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText('Energy', w*0.10-10, top+14);
+
+      // Arrows: absorption (up), stimulated emission (down), spontaneous decay (wavy)
+      function arrow(xa, ya, xb, yb, color){
+        const dx = xb-xa, dy = yb-ya;
+        const L = Math.hypot(dx,dy) || 1;
+        const ux = dx/L, uy = dy/L;
+        const head = 10;
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(xa,ya); ctx.lineTo(xb,yb);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(xb,yb);
+        ctx.lineTo(xb - head*(ux) - head*0.55*(-uy), yb - head*(uy) - head*0.55*(ux));
+        ctx.lineTo(xb - head*(ux) - head*0.55*(uy),  yb - head*(uy) - head*0.55*(-ux));
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // absorption up
+      arrow(w*0.40, y1-6, w*0.40, y2+6, palette.accent);
+      ctx.fillStyle = palette.muted;
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+      ctx.fillText('Absorption: +W N1', w*0.40+10, (y1+y2)/2 - 18);
+
+      // stimulated emission down
+      arrow(w*0.48, y2+6, w*0.48, y1-6, palette.accent2);
+      ctx.fillStyle = palette.muted;
+      ctx.fillText('Stim. emission: -W\' N2', w*0.48+10, (y1+y2)/2 + 10);
+
+      // spontaneous emission (wavy)
+      const sx = w*0.30, sy = y2+8, ex = w*0.30, ey = y1-8;
+      ctx.strokeStyle = palette.warn;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      const steps = 20;
+      for(let i=0;i<=steps;i++){
+        const t = i/steps;
+        const yy = lerp(sy, ey, t);
+        const xx = sx + Math.sin(t*Math.PI*6)*10;
+        if(i===0) ctx.moveTo(xx,yy);
+        else ctx.lineTo(xx,yy);
+      }
+      ctx.stroke();
+      // arrowhead for wavy
+      arrow(w*0.30, y1-26, w*0.30, y1-8, palette.warn);
+      ctx.fillStyle = palette.muted;
+      ctx.fillText('Spontaneous: -A21 N2 (= -N2/τ)', w*0.30+14, (y1+y2)/2 + 44);
+
+      // Pump field box
+      ctx.strokeStyle = palette.grid;
+      ctx.lineWidth = 1.5;
+      const bx = w*0.68, by = h*0.18, bw = w*0.28, bh = h*0.18;
+      ctx.strokeRect(bx,by,bw,bh);
+      ctx.fillStyle = palette.muted;
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText('Pump field ρ(ν)', bx+10, by+24);
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+      ctx.fillText('W = B12 ρ', bx+10, by+46);
+      ctx.fillText("W' = B21 ρ", bx+10, by+66);
+
+      // Note: saturation statement
+      ctx.fillStyle = palette.faint;
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText('Direct pumping drives both directions ⇒ saturation, not inversion.', left, h - 12);
+    }
+
+    // ---------- Plots ----------
+    const mainPlot = setupCanvas(document.getElementById('mainPlot'));
+    const secondaryPlot = setupCanvas(document.getElementById('secondaryPlot'));
+
+    function drawMainPlot(params){
+      const {ctx, resize} = mainPlot;
+      const {w,h} = resize();
+
+      const box = {x:0,y:0,w,h,padL:66,padR:18,padT:34,padB:52};
+      const xMin = 0, xMax = 50;
+      const yMin = -1.05, yMax = 0.10;
+
+      const area = drawAxes(ctx, box, xMin, xMax, yMin, yMax,
+        's = Wτ (dimensionless)', 'Δ̃ (dimensionless)',
+        'Inversion Measure vs Pump (Δ̃ ≤ 0 always)'
+      );
+
+      const g2g1 = params.g2g1;
+
+      // curve
+      ctx.lineWidth = 2.25;
+      ctx.strokeStyle = palette.accent;
+      ctx.beginPath();
+      const N = 400;
+      for(let i=0;i<=N;i++){
+        const s = xMin + (xMax-xMin)*i/N;
+        const {invTilde} = fractions(s, g2g1); // Δ̃ = -1/(1+s(1+α))
+        const X = toX(s, xMin, xMax, area);
+        const Y = toY(invTilde, yMin, yMax, area);
+        if(i===0) ctx.moveTo(X,Y);
+        else ctx.lineTo(X,Y);
+      }
+      ctx.stroke();
+
+      // zero line
+      ctx.strokeStyle = 'rgba(255,255,255,.18)';
+      ctx.lineWidth = 1.25;
+      ctx.beginPath();
+      ctx.moveTo(area.px, toY(0, yMin, yMax, area));
+      ctx.lineTo(area.px+area.pw, toY(0, yMin, yMax, area));
+      ctx.stroke();
+
+      // marker at current s
+      const sm = Math.max(xMin, Math.min(xMax, params.s));
+      const {invTilde} = fractions(sm, g2g1);
+      const Xm = toX(sm, xMin, xMax, area);
+      const Ym = toY(invTilde, yMin, yMax, area);
+
+      ctx.strokeStyle = palette.accent2;
+      ctx.lineWidth = 1.75;
+      ctx.beginPath();
+      ctx.moveTo(Xm, area.py);
+      ctx.lineTo(Xm, area.py+area.ph);
+      ctx.stroke();
+
+      ctx.fillStyle = palette.accent2;
+      ctx.beginPath();
+      ctx.arc(Xm, Ym, 4.2, 0, Math.PI*2);
+      ctx.fill();
+
+      // legend
+      ctx.fillStyle = palette.muted;
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      const legendY = area.py + 14;
+      ctx.fillText('Curve: Δ̃(s) = (N₂/g₂ − N₁/g₁) / (Ntot/g₁) = −1 / (1 + s(1+g₁/g₂))', area.px, legendY);
+
+      // annotation at marker
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+      const txt = `at s=${sm.toFixed(2)}: Δ̃=${invTilde.toFixed(4)}`;
+      const tw = ctx.measureText(txt).width;
+      const bx = Math.min(area.px+area.pw - tw - 12, Xm + 10);
+      const by = Ym - 22;
+      ctx.fillStyle = 'rgba(0,0,0,.45)';
+      ctx.strokeStyle = 'rgba(255,255,255,.10)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      roundRect(ctx, bx-6, by-14, tw+12, 24, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = palette.fg;
+      ctx.fillText(txt, bx, by+2);
+    }
+
+    function roundRect(ctx, x,y,w,h,r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    function drawSecondaryPlot(params){
+      const {ctx, resize} = secondaryPlot;
+      const {w,h} = resize();
+
+      const box = {x:0,y:0,w,h,padL:66,padR:18,padT:34,padB:52};
+      const xMin = 0, xMax = 50;
+      const yMin = 0, yMax = 1.02;
+
+      const area = drawAxes(ctx, box, xMin, xMax, yMin, yMax,
+        's = Wτ (dimensionless)', 'Fraction of total population',
+        'Steady-State Populations vs Pump'
+      );
+
+      const g2g1 = params.g2g1;
+
+      // f2 curve
+      ctx.lineWidth = 2.25;
+      ctx.strokeStyle = palette.good;
+      ctx.beginPath();
+      const N = 400;
+      for(let i=0;i<=N;i++){
+        const s = xMin + (xMax-xMin)*i/N;
+        const {f2} = fractions(s, g2g1);
+        const X = toX(s, xMin, xMax, area);
+        const Y = toY(f2, yMin, yMax, area);
+        if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+      }
+      ctx.stroke();
+
+      // f1 curve
+      ctx.strokeStyle = palette.bad;
+      ctx.beginPath();
+      for(let i=0;i<=N;i++){
+        const s = xMin + (xMax-xMin)*i/N;
+        const {f1} = fractions(s, g2g1);
+        const X = toX(s, xMin, xMax, area);
+        const Y = toY(f1, yMin, yMax, area);
+        if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+      }
+      ctx.stroke();
+
+      // marker at current s
+      const sm = Math.max(xMin, Math.min(xMax, params.s));
+      const {f1,f2,alpha} = fractions(sm, g2g1);
+      const Xm = toX(sm, xMin, xMax, area);
+
+      ctx.strokeStyle = palette.accent2;
+      ctx.lineWidth = 1.75;
+      ctx.beginPath();
+      ctx.moveTo(Xm, area.py);
+      ctx.lineTo(Xm, area.py+area.ph);
+      ctx.stroke();
+
+      ctx.fillStyle = palette.good;
+      ctx.beginPath(); ctx.arc(Xm, toY(f2, yMin, yMax, area), 4.2, 0, Math.PI*2); ctx.fill();
+
+      ctx.fillStyle = palette.bad;
+      ctx.beginPath(); ctx.arc(Xm, toY(f1, yMin, yMax, area), 4.2, 0, Math.PI*2); ctx.fill();
+
+      // saturation asymptotes at large s:
+      // f2 -> 1/(1+alpha) = g2/(g1+g2)
+      const f2sat = 1/(1+alpha);
+      const f1sat = 1 - f2sat;
+
+      ctx.setLineDash([6,6]);
+      ctx.strokeStyle = 'rgba(255,255,255,.18)';
+      ctx.lineWidth = 1.25;
+      ctx.beginPath();
+      ctx.moveTo(area.px, toY(f2sat, yMin, yMax, area));
+      ctx.lineTo(area.px+area.pw, toY(f2sat, yMin, yMax, area));
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(area.px, toY(f1sat, yMin, yMax, area));
+      ctx.lineTo(area.px+area.pw, toY(f1sat, yMin, yMax, area));
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // legend
+      ctx.fillStyle = palette.muted;
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      const y0 = area.py + 14;
+      ctx.fillText('Green: N₂/Ntot   (upper level fraction)', area.px, y0);
+      ctx.fillText('Red:   N₁/Ntot   (lower level fraction)', area.px, y0+16);
+      ctx.fillText('Dashed: saturation limits as s→∞ (equalization per degeneracy)', area.px, y0+32);
+
+      // annotation
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+      const txt = `at s=${sm.toFixed(2)}: f2=${f2.toFixed(4)}, f1=${f1.toFixed(4)}`;
+      const tw = ctx.measureText(txt).width;
+      const bx = Math.min(area.px+area.pw - tw - 12, Xm + 10);
+      const by = toY(f2, yMin, yMax, area) - 40;
+      ctx.fillStyle = 'rgba(0,0,0,.45)';
+      ctx.strokeStyle = 'rgba(255,255,255,.10)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      roundRect(ctx, bx-6, by-14, tw+12, 24, 8);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = palette.fg;
+      ctx.fillText(txt, bx, by+2);
+    }
+
+    // ---------- Controls and state ----------
+    const sSlider = document.getElementById('sSlider');
+    const tauSlider = document.getElementById('tauSlider');
+    const gRatio = document.getElementById('gRatio');
+
+    const sVal = document.getElementById('sVal');
+    const tauVal = document.getElementById('tauVal');
+    const gVal = document.getElementById('gVal');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const state = {
+      // We make slider logarithmic in s: slider value is log10(s)
+      s: Math.pow(10, parseFloat(sSlider.value)),
+      tau: Math.pow(10, parseFloat(tauSlider.value)), // seconds
+      g2g1: parseFloat(gRatio.value)
+    };
+
+    function updateLabels(){
+      state.s = Math.pow(10, parseFloat(sSlider.value));
+      state.tau = Math.pow(10, parseFloat(tauSlider.value));
+      state.g2g1 = parseFloat(gRatio.value);
+
+      sVal.textContent = `s = ${state.s.toFixed(2)}  (Wτ)`;
+      tauVal.textContent = `τ = ${state.tau.toExponential(2)} s`;
+      gVal.textContent = `g₂/g₁ = ${state.g2g1}`;
+
+      // Extra derived: example W = s/τ
+      const W = state.s / state.tau;
+      // Append subtly to s label (keeps it compact)
+      sVal.title = `Example conversion: W = s/τ = ${W.toExponential(2)} s^-1 (for the selected τ)`;
+    }
+
+    function renderAll(){
+      updateLabels();
+      drawDiagram();
+      drawMainPlot(state);
+      drawSecondaryPlot(state);
+    }
+
+    sSlider.addEventListener('input', renderAll);
+    tauSlider.addEventListener('input', renderAll);
+    gRatio.addEventListener('change', renderAll);
+
+    resetBtn.addEventListener('click', ()=>{
+      sSlider.value = 0.4;     // log10(s) = 0.4 => s ~ 2.51
+      tauSlider.value = -7;    // 1e-7 s
+      gRatio.value = "1";
+      renderAll();
+    });
+
+    // Resize re-render
+    let resizeTimer = null;
+    window.addEventListener('resize', ()=>{
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(renderAll, 60);
+    });
+
+    // Initial render
+    renderAll();
+  </script>
+</body>
+</html>

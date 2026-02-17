@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Bit Error Rate with Poisson Photon Noise (PIN/APD Variations)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#111a33;
+      --card2:#0f1730;
+      --text:#e9eeff;
+      --muted:#b9c3ff;
+      --faint:rgba(233,238,255,.12);
+      --faint2:rgba(233,238,255,.08);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#86efac;
+      --warn:#fde68a;
+      --bad:#fb7185;
+      --shadow: 0 18px 50px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1000px 600px at 15% 10%, rgba(125,211,252,.18), transparent 60%),
+        radial-gradient(900px 600px at 80% 15%, rgba(167,139,250,.16), transparent 60%),
+        radial-gradient(900px 650px at 55% 95%, rgba(134,239,172,.09), transparent 65%),
+        linear-gradient(180deg, var(--bg), #070a14 70%, #050711);
+      line-height:1.55;
+    }
+    header{
+      padding:38px 20px 18px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .hero{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    @media (max-width: 980px){
+      .hero{grid-template-columns:1fr}
+    }
+    h1{
+      font-size: clamp(1.55rem, 2.6vw, 2.35rem);
+      margin:0 0 8px;
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:0;
+      max-width:70ch;
+    }
+    .meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:14px;
+    }
+    .pill{
+      font-size:.9rem;
+      padding:7px 10px;
+      border-radius:999px;
+      background:rgba(233,238,255,.08);
+      border:1px solid rgba(233,238,255,.12);
+      color:var(--muted);
+      backdrop-filter: blur(6px);
+      white-space:nowrap;
+    }
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding:10px 20px 70px;
+      display:grid;
+      grid-template-columns: 300px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns:1fr}
+    }
+    nav.toc{
+      position:sticky;
+      top:14px;
+      align-self:start;
+      border-radius: var(--radius);
+      background:linear-gradient(180deg, rgba(17,26,51,.92), rgba(15,23,48,.92));
+      border:1px solid rgba(233,238,255,.12);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .toc .toc-head{
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(233,238,255,.12);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .toc .toc-head strong{font-size:.95rem; letter-spacing:.2px}
+    .toc a{
+      display:block;
+      padding:10px 14px;
+      text-decoration:none;
+      color:var(--muted);
+      border-left:3px solid transparent;
+      transition: .18s ease;
+      font-size:.95rem;
+    }
+    .toc a:hover{
+      background:rgba(233,238,255,.06);
+      color:var(--text);
+      border-left-color: rgba(125,211,252,.65);
+    }
+    article{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    section{
+      border-radius: var(--radius);
+      background:linear-gradient(180deg, rgba(17,26,51,.84), rgba(15,23,48,.84));
+      border:1px solid rgba(233,238,255,.12);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    section .sec-h{
+      padding:16px 16px 12px;
+      border-bottom:1px solid rgba(233,238,255,.12);
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    section .sec-h h2{
+      margin:0;
+      font-size:1.16rem;
+      letter-spacing:.15px;
+    }
+    section .sec-b{
+      padding:16px;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 820px){
+      .grid2{grid-template-columns:1fr}
+    }
+
+    .callouts{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      margin-top:10px;
+    }
+    @media (max-width: 820px){
+      .callouts{grid-template-columns:1fr}
+    }
+    .card{
+      background:rgba(233,238,255,.06);
+      border:1px solid rgba(233,238,255,.12);
+      border-radius:14px;
+      padding:12px 12px;
+    }
+    .card h3{
+      margin:0 0 6px;
+      font-size:1rem;
+      letter-spacing:.1px;
+    }
+    .card p, .card ul{margin:0; color:var(--muted)}
+    .card ul{padding-left:18px}
+    .eq{
+      background:rgba(0,0,0,.22);
+      border:1px solid rgba(233,238,255,.12);
+      border-radius:14px;
+      padding:12px 12px 10px;
+      margin:10px 0;
+      position:relative;
+      overflow:hidden;
+    }
+    .eq pre{
+      margin:0;
+      font-family:var(--mono);
+      font-size:.96rem;
+      white-space:pre-wrap;
+      word-break:break-word;
+      color:rgba(233,238,255,.94);
+    }
+    .copy-btn{
+      position:absolute;
+      top:10px;
+      right:10px;
+      font-size:.82rem;
+      padding:7px 9px;
+      border-radius:999px;
+      border:1px solid rgba(233,238,255,.16);
+      background:rgba(125,211,252,.10);
+      color:var(--text);
+      cursor:pointer;
+      transition:.18s ease;
+    }
+    .copy-btn:hover{transform: translateY(-1px); background:rgba(125,211,252,.16)}
+    .copy-btn:active{transform: translateY(0px)}
+    .note{
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(233,238,255,.12);
+      background: rgba(233,238,255,.06);
+      color:var(--muted);
+    }
+    .note strong{color:var(--text)}
+    .assump{border-left:4px solid rgba(125,211,252,.75)}
+    .mistake{border-left:4px solid rgba(253,230,138,.85)}
+    .answer{border-left:4px solid rgba(134,239,172,.85)}
+    .warn{border-left:4px solid rgba(251,113,133,.85)}
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (max-width: 820px){ .kpi{grid-template-columns:1fr} }
+    .kpi .box{
+      border-radius:14px;
+      padding:12px;
+      background:rgba(233,238,255,.06);
+      border:1px solid rgba(233,238,255,.12);
+    }
+    .kpi .box .label{color:var(--muted); font-size:.9rem}
+    .kpi .box .value{font-size:1.18rem; margin-top:4px; font-family:var(--mono)}
+    figure{
+      margin:0;
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid rgba(233,238,255,.12);
+      background:rgba(0,0,0,.18);
+    }
+    figcaption{
+      padding:10px 12px;
+      color:var(--muted);
+      border-top:1px solid rgba(233,238,255,.12);
+      font-size:.92rem;
+    }
+    canvas{display:block; width:100%; height:auto}
+    .controls{
+      display:grid;
+      grid-template-columns: 1.3fr 1fr 1fr;
+      gap:12px;
+      margin-top:12px;
+    }
+    @media (max-width: 980px){
+      .controls{grid-template-columns:1fr}
+    }
+    .control{
+      padding:12px;
+      border-radius:14px;
+      background:rgba(233,238,255,.06);
+      border:1px solid rgba(233,238,255,.12);
+    }
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      color:var(--muted);
+      font-size:.92rem;
+      margin-bottom:6px;
+    }
+    input[type="range"]{width:100%}
+    select, button{
+      width:100%;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(233,238,255,.14);
+      background:rgba(0,0,0,.22);
+      color:var(--text);
+      font-size:.95rem;
+      cursor:pointer;
+    }
+    button{
+      background:rgba(167,139,250,.14);
+    }
+    button:hover{background:rgba(167,139,250,.22)}
+    footer{
+      max-width:1200px;
+      margin:0 auto;
+      padding:26px 20px 40px;
+      color:rgba(233,238,255,.65);
+      font-size:.92rem;
+    }
+    .fade-in{
+      animation: fadeIn .6s ease both;
+    }
+    @keyframes fadeIn{
+      from{opacity:0; transform: translateY(6px)}
+      to{opacity:1; transform: translateY(0px)}
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff; color:#111}
+      nav.toc{display:none}
+      section{box-shadow:none}
+      .eq, .card, .note, figure{break-inside:avoid}
+      a{color:#111}
+    }
+  </style>
+</head>
+<body>
+  <header class="fade-in">
+    <div class="hero">
+      <div>
+        <h1>Bit Error Rate for an Ideal Optical Digital Receiver (Poisson Photon Noise)</h1>
+        <p class="subtitle">
+          We calibrate an ideal receiver using a p-i-n photodiode (η = 1) so that the probability of mistaking a transmitted “1” (light present)
+          as a “0” (light absent) is 10<sup>−10</sup>. Then we predict how that error probability changes under wavelength, power, efficiency,
+          and APD (gain/excess-noise) modifications.
+        </p>
+        <div class="meta">
+          <span class="pill">Topic: Photon counting &amp; shot noise</span>
+          <span class="pill">Model: Poisson → Gaussian tail (Q-function)</span>
+          <span class="pill">OOK (on–off keying), ideal “0” state (no background)</span>
+        </div>
+      </div>
+      <div class="card" style="align-self:stretch">
+        <h3>Quick Summary</h3>
+        <ul>
+          <li><strong>What this is:</strong> BER (specifically, miss probability) for an optical receiver limited only by photon statistics.</li>
+          <li><strong>Key physics:</strong> photon arrivals are <em>Poisson</em>; for large counts we use a Gaussian approximation.</li>
+          <li><strong>Mean detected photons:</strong> μ = η·(P T<sub>b</sub>)/(hν) = η·(P T<sub>b</sub> λ)/(hc).</li>
+          <li><strong>Decision rule used here:</strong> compare integrated photoelectron count to a threshold ≈ μ/2 (equal priors, ideal “0”).</li>
+          <li><strong>Miss probability:</strong> p<sub>miss</sub> ≈ Q( √μ / (2√F) ), where F=1 for PIN; for APD, F is excess noise factor.</li>
+          <li><strong>Calibration:</strong> p<sub>miss,0</sub>=10<sup>−10</sup> ⇒ μ<sub>0</sub> ≈ 161.87 detected photoelectrons/bit.</li>
+          <li><strong>Results:</strong> (a) 3.74×10<sup>−15</sup>, (b) 1.17×10<sup>−19</sup>, (c) 3.43×10<sup>−6</sup>, (d) 10<sup>−10</sup>, (e) 3.43×10<sup>−6</sup>.</li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <main class="fade-in">
+    <nav class="toc" aria-label="Table of contents">
+      <div class="toc-head">
+        <strong>Mini Table of Contents</strong>
+        <span class="pill" style="padding:4px 9px; font-size:.8rem">sticky</span>
+      </div>
+      <a href="#part0">PART 0 — Concept Primer</a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a href="#part2">PART 2 — Strategy &amp; Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a href="#part4">PART 4 — Deeper Understanding</a>
+      <a href="#part5">PART 5 — Visualization Guide</a>
+      <a href="#viz">Interactive Visualizations</a>
+    </nav>
+
+    <article>
+      <section id="part0">
+        <div class="sec-h">
+          <h2>PART 0 — Concept Primer (Theory before solving)</h2>
+        </div>
+        <div class="sec-b">
+          <div class="grid2">
+            <div>
+              <div class="card">
+                <h3>Core definitions (symbols &amp; units)</h3>
+                <ul>
+                  <li><strong>P</strong> — optical power [W].</li>
+                  <li><strong>λ</strong> — wavelength [m]; <strong>ν</strong>=c/λ [Hz].</li>
+                  <li><strong>h</strong> — Planck’s constant [J·s]; <strong>c</strong> — speed of light [m/s].</li>
+                  <li><strong>T<sub>b</sub></strong> — bit duration [s].</li>
+                  <li><strong>η</strong> — quantum efficiency (0…1), fraction of incident photons that generate carriers [dimensionless].</li>
+                  <li><strong>μ</strong> — mean number of detected photoelectrons per bit [dimensionless count].</li>
+                  <li><strong>G</strong> — APD gain [dimensionless].</li>
+                  <li><strong>F</strong> — APD excess noise factor [dimensionless]; F=1 means noiseless gain.</li>
+                </ul>
+              </div>
+
+              <div class="card" style="margin-top:12px">
+                <h3>Physical meaning (what these represent)</h3>
+                <ul>
+                  <li><strong>Photon arrivals fluctuate:</strong> even with constant power, the number of photons in a bit interval is random.</li>
+                  <li><strong>μ controls reliability:</strong> larger μ makes it exponentially/tail-wise less likely that a “1” looks like a “0”.</li>
+                  <li><strong>η and λ matter via photon energy:</strong> at fixed power, longer λ means lower photon energy → more photons → larger μ.</li>
+                  <li><strong>APD gain G boosts signal</strong>, but <strong>excess noise F</strong> boosts fluctuations too, often canceling much of the benefit.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div>
+              <div class="card">
+                <h3>Key laws &amp; validity conditions</h3>
+                <ul>
+                  <li><strong>Poisson counting model:</strong> number of detected photoelectrons N in T<sub>b</sub> is Poisson with mean μ:
+                    N ~ Pois(μ). Valid when arrivals are independent and the light is “classical” (coherent/shot-noise limited).</li>
+                  <li><strong>Gaussian approximation:</strong> for μ ≳ 10–20, Pois(μ) ≈ Normal(μ, μ). This lets us express BER via a Q-function tail.</li>
+                  <li><strong>Ideal “0” state:</strong> absent light means μ<sub>0</sub>=0 (no background, no dark current, no thermal noise).</li>
+                </ul>
+              </div>
+
+              <div class="callouts">
+                <div class="note assump">
+                  <strong>Common model used in digital OOK:</strong><br/>
+                  Integrate current over a bit → compare to a threshold. For equal priors and well-separated distributions, a mid-level threshold is a common design choice.
+                </div>
+                <div class="note mistake">
+                  <strong>What to watch for:</strong>
+                  <ul>
+                    <li>Mixing “photons” and “photoelectrons”: include η.</li>
+                    <li>For fixed power, μ ∝ λ (because photon energy ∝ 1/λ).</li>
+                    <li>APD gain does not automatically improve BER if multiplication noise (F) is present.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="card" style="margin-top:12px">
+                <h3>Mini intuition examples</h3>
+                <ul>
+                  <li>If you double power, you roughly double μ, and the tail probability of being “too low” drops dramatically.</li>
+                  <li>If η halves, μ halves: the distribution shifts left and errors rise strongly.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="eq" data-copy="eq1">
+            <button class="copy-btn" data-copy-btn="eq1">Copy</button>
+            <pre id="eq1">Mean detected photoelectrons per bit:
+μ = η · (P Tb)/(hν) = η · (P Tb λ)/(h c)</pre>
+          </div>
+
+          <div class="eq" data-copy="eq2">
+            <button class="copy-btn" data-copy-btn="eq2">Copy</button>
+            <pre id="eq2">Poisson → Gaussian (large μ):
+N ~ Pois(μ)  ≈  Normal(mean=μ, variance=μ)</pre>
+          </div>
+
+          <div class="eq" data-copy="eq3">
+            <button class="copy-btn" data-copy-btn="eq3">Copy</button>
+            <pre id="eq3">Miss probability with mid-level threshold (ideal '0' state):
+p_miss ≈ Q( √μ / (2√F) )
+with F=1 for PIN; for APD, F is the excess-noise factor.</pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="part1">
+        <div class="sec-h">
+          <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+        </div>
+        <div class="sec-b">
+          <p class="note">
+            <strong>Restatement in plain language:</strong><br/>
+            An ideal OOK receiver uses a photodiode (η=1) and has no noise except photon counting statistics.
+            Under baseline conditions (λ=870 nm, power P, PIN diode), the probability of missing a “1” (deciding “0” even though light is present)
+            is 10<sup>−10</sup>. We must find the miss probability after changing λ, power, η, or replacing the detector with an APD having given G and F.
+          </p>
+
+          <div class="grid2" style="margin-top:12px">
+            <div class="card">
+              <h3>Given</h3>
+              <ul>
+                <li>Baseline wavelength: λ<sub>base</sub> = 870 nm</li>
+                <li>Baseline quantum efficiency: η<sub>base</sub> = 1</li>
+                <li>Only noise: Poisson photon (shot) noise</li>
+                <li>Baseline miss probability: p<sub>miss,base</sub> = 10<sup>−10</sup></li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Unknowns (what to find)</h3>
+              <ul>
+                <li>p<sub>miss</sub> under (a) λ=1300 nm</li>
+                <li>p<sub>miss</sub> under (b) power doubled</li>
+                <li>p<sub>miss</sub> under (c) η=0.5</li>
+                <li>p<sub>miss</sub> under (d) ideal APD, η=1, G=100, F=1</li>
+                <li>p<sub>miss</sub> under (e) same as (d) but F=2</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="note assump" style="margin-top:12px">
+            <strong>Relevant physics &amp; why it applies:</strong>
+            <ul>
+              <li>Photon arrivals in a time window are Poisson → the detected count distribution is Poisson.</li>
+              <li>Changing λ or P changes photon number per bit via μ ∝ (P λ) (for fixed bit time).</li>
+              <li>APD gain changes mean and variance; in the shot-noise-limited model, excess noise enters as a factor F in the variance.</li>
+            </ul>
+            <strong>Why other noise sources don’t appear:</strong> the problem explicitly states the receiver is “devoid of noise” except Poisson photon noise—so we exclude thermal noise, dark current, background light, amplifier noise, etc.
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Assumptions (made explicit)</h3>
+            <ul>
+              <li>On–off keying: “1” corresponds to constant optical power P during the bit; “0” corresponds to zero optical power.</li>
+              <li>Equal a priori probabilities for “0” and “1” (common BER convention), and a mid-level decision threshold for miss analysis.</li>
+              <li>Photon statistics dominate; μ is large enough to use a Gaussian tail approximation (we will verify μ is indeed large).</li>
+              <li>For APD: mean multiplication gain is G; shot-noise variance is scaled by F (standard APD noise model).</li>
+            </ul>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Possible approaches (and why we choose one)</h3>
+            <ul>
+              <li><strong>Exact Poisson tail:</strong> p<sub>miss</sub>=P(N&lt;N<sub>th</sub>|μ). Accurate but needs specifying threshold and computing sums.</li>
+              <li><strong>Gaussian approximation + Q-function:</strong> p<sub>miss</sub>≈Q( (μ−N<sub>th</sub>)/√μ ). Fast and gives clear scaling with μ and F.</li>
+              <li><strong>Photon-counting “any photon” rule:</strong> p<sub>miss</sub>=e<sup>−μ</sup> if the threshold is 1 count. Simple, but the presence of APD excess-noise factor in the problem strongly suggests using the variance-based (Q) model.</li>
+            </ul>
+            <p style="margin-top:8px; color:var(--muted)">
+              <strong>Choice:</strong> We use the Gaussian/Q-function model because it (i) matches the “noise factor F” language, (ii) provides a clean scaling law, and (iii) fits the extremely small target probability by using a tail parameter.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="part2">
+        <div class="sec-h">
+          <h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+        </div>
+        <div class="sec-b">
+          <ol style="margin:0; padding-left:20px; color:var(--muted)">
+            <li><strong>Connect μ to the optical signal</strong>: μ = η(P T<sub>b</sub> λ)/(hc). (Goal: see how λ, P, η rescale μ.)</li>
+            <li><strong>Adopt the miss-probability model</strong>: p<sub>miss</sub> ≈ Q( √μ /(2√F) ). (Goal: translate μ changes into probability changes.)</li>
+            <li><strong>Calibrate μ<sub>0</sub></strong> from baseline p<sub>miss,0</sub>=10<sup>−10</sup>. (Goal: infer the baseline mean count without knowing P or T<sub>b</sub>.)</li>
+            <li><strong>Compute μ for each alteration</strong>:
+              <ul>
+                <li>(a) μ scales by λ ratio</li>
+                <li>(b) μ scales by power ratio</li>
+                <li>(c) μ scales by η ratio</li>
+                <li>(d,e) incorporate F (G cancels in this noise-limited model)</li>
+              </ul>
+            </li>
+            <li><strong>Evaluate Q(·)</strong> numerically for each case; present clean scientific notation.</li>
+            <li><strong>Sanity checks</strong>: monotonicity (more μ → less error), and APD gain cancellation.</li>
+          </ol>
+
+          <div class="callouts" style="margin-top:12px">
+            <div class="note mistake">
+              <strong>Common mistakes</strong>
+              <ul>
+                <li>Forgetting photon energy: at longer λ, each photon is “cheaper” in energy → more photons for the same power.</li>
+                <li>Thinking APD gain automatically helps: if only shot noise exists, gain cancels unless thermal noise is present (not here).</li>
+                <li>Mixing F into μ: F does not change the mean count; it changes the variance (noise).</li>
+              </ul>
+            </div>
+            <div class="note assump">
+              <strong>Quick tips</strong>
+              <ul>
+                <li>Use scaling: you never need P or T<sub>b</sub> explicitly once μ<sub>0</sub> is inferred.</li>
+                <li>Remember: Q(x/√2) corresponds to degrading “effective μ” by a factor of 2 (since x ∝ √μ).</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="part3">
+        <div class="sec-h">
+          <h2>PART 3 — Full Solution (detailed + teaching)</h2>
+        </div>
+        <div class="sec-b">
+          <p class="note">
+            <strong>Physical intuition before math:</strong><br/>
+            A “miss” happens when the random detected count during a “1” bit is unusually low.
+            If we increase the mean number of detected photoelectrons μ (via larger power, longer wavelength, or higher η),
+            the distribution shifts right and the low-count tail shrinks rapidly. If we increase noise variance (via APD excess noise F),
+            the distribution broadens and the left tail grows, causing more misses.
+          </p>
+
+          <h3 style="margin:14px 0 6px">Step 1 — Mean detected photoelectrons per bit</h3>
+          <p style="margin:0; color:var(--muted)">
+            Over one bit of duration T<sub>b</sub>, the optical energy is E = P T<sub>b</sub> [J].
+            Each photon has energy hν = hc/λ, so the mean incident photon number is E/(hc/λ)= (P T<sub>b</sub> λ)/(hc).
+            Only a fraction η produces photoelectrons, so:
+          </p>
+
+          <div class="eq" data-copy="eq_mu">
+            <button class="copy-btn" data-copy-btn="eq_mu">Copy</button>
+            <pre id="eq_mu">μ = η · (P Tb λ)/(h c)</pre>
+          </div>
+
+          <p style="margin:0; color:var(--muted)">
+            <strong>Meaning:</strong> For fixed P and T<sub>b</sub>, μ scales linearly with η and λ.
+          </p>
+
+          <h3 style="margin:14px 0 6px">Step 2 — From Poisson to a Q-function miss probability</h3>
+          <p style="margin:0; color:var(--muted)">
+            With only photon shot noise, the detected count N is Poisson with mean μ.
+            For sufficiently large μ, we approximate N as Gaussian:
+            N ≈ Normal(μ, μ). We compare the integrated count to a threshold.
+            A common mid-level threshold for distinguishing “0” (near 0) and “1” (near μ) is N<sub>th</sub> ≈ μ/2.
+            Then a miss occurs if N &lt; μ/2.
+          </p>
+
+          <p style="margin:10px 0 0; color:var(--muted)">
+            Standardizing the Gaussian:
+            <span style="font-family:var(--mono)">(N−μ)/√μ</span> is ~ Normal(0,1), so:
+          </p>
+
+          <div class="eq" data-copy="eq_q_pin">
+            <button class="copy-btn" data-copy-btn="eq_q_pin">Copy</button>
+            <pre id="eq_q_pin">p_miss ≈ Q( (μ - μ/2)/√μ ) = Q( √μ / 2 )   (PIN: F=1)</pre>
+          </div>
+
+          <p style="margin:0; color:var(--muted)">
+            <strong>What did we do and why?</strong> We turned “rare low-count events” into a standard normal tail probability (Q-function),
+            which makes scaling with μ very transparent.
+          </p>
+
+          <h3 style="margin:14px 0 6px">Step 3 — Include an APD (gain &amp; excess noise)</h3>
+          <p style="margin:0; color:var(--muted)">
+            For an APD, the mean output charge scales by gain G, but the shot-noise variance is amplified by both G and excess noise F:
+            mean ∝ Gμ and variance ∝ F G<sup>2</sup> μ. With the same mid-level threshold fraction, the resulting tail becomes:
+          </p>
+
+          <div class="eq" data-copy="eq_q_apd">
+            <button class="copy-btn" data-copy-btn="eq_q_apd">Copy</button>
+            <pre id="eq_q_apd">p_miss ≈ Q( √μ / (2√F) )   (APD: gain G cancels; F≥1 increases noise)</pre>
+          </div>
+
+          <p style="margin:0; color:var(--muted)">
+            <strong>Key takeaway:</strong> In a purely shot-noise-limited receiver (no thermal noise), APD gain does not improve the miss probability;
+            only excess noise <em>worsens</em> it.
+          </p>
+
+          <h3 style="margin:14px 0 6px">Step 4 — Calibrate the baseline μ<sub>0</sub> from p<sub>miss,0</sub>=10<sup>−10</sup></h3>
+          <p style="margin:0; color:var(--muted)">
+            Baseline is a PIN diode ⇒ F=1, so:
+          </p>
+
+          <div class="eq" data-copy="eq_cal">
+            <button class="copy-btn" data-copy-btn="eq_cal">Copy</button>
+            <pre id="eq_cal">Given p_miss,0 = 1e-10:
+1e-10 = Q( √μ0 / 2 )
+⇒ √μ0 / 2 = Q^{-1}(1e-10)
+⇒ μ0 = [2 Q^{-1}(1e-10)]^2</pre>
+          </div>
+
+          <p style="margin:0; color:var(--muted)">
+            Numerically, Q<sup>−1</sup>(10<sup>−10</sup>) ≈ 6.36134, hence:
+            μ<sub>0</sub> ≈ (2×6.36134)<sup>2</sup> ≈ <strong>161.87</strong> detected photoelectrons per “1” bit.
+          </p>
+
+          <div class="kpi">
+            <div class="box">
+              <div class="label">Baseline tail argument</div>
+              <div class="value">Q⁻¹(10⁻¹⁰) ≈ 6.36134</div>
+            </div>
+            <div class="box">
+              <div class="label">Baseline mean count</div>
+              <div class="value">μ₀ ≈ 161.87</div>
+            </div>
+            <div class="box">
+              <div class="label">Model used</div>
+              <div class="value">p ≈ Q( √μ / (2√F) )</div>
+            </div>
+          </div>
+
+          <h3 style="margin:14px 0 6px">Step 5 — Apply each altered condition via scaling</h3>
+          <p style="margin:0; color:var(--muted)">
+            Since μ = η(P T<sub>b</sub> λ)/(hc), changes in λ, P, or η simply rescale μ by multiplicative factors,
+            while APD excess noise enters through F in the denominator of the Q-argument.
+          </p>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Compute μ and p<sub>miss</sub> for each case</h3>
+            <ul style="color:var(--muted)">
+              <li><strong>(a) λ = 1300 nm:</strong> μ<sub>a</sub> = μ<sub>0</sub>(1300/870) ⇒ p<sub>a</sub> = Q( √μ<sub>a</sub>/2 )</li>
+              <li><strong>(b) Power doubled:</strong> μ<sub>b</sub> = 2μ<sub>0</sub> ⇒ p<sub>b</sub> = Q( √(2μ<sub>0</sub>)/2 )</li>
+              <li><strong>(c) η = 0.5:</strong> μ<sub>c</sub> = 0.5μ<sub>0</sub> ⇒ p<sub>c</sub> = Q( √(0.5μ<sub>0</sub>)/2 )</li>
+              <li><strong>(d) APD with G=100, F=1:</strong> p<sub>d</sub> = Q( √μ<sub>0</sub>/(2√1) ) = p<sub>0</sub></li>
+              <li><strong>(e) APD with F=2:</strong> p<sub>e</sub> = Q( √μ<sub>0</sub>/(2√2) )</li>
+            </ul>
+          </div>
+
+          <h3 style="margin:14px 0 6px">Numerical results</h3>
+          <p style="margin:0; color:var(--muted)">
+            Evaluating the Q-function gives:
+          </p>
+
+          <div class="eq" data-copy="final_answers">
+            <button class="copy-btn" data-copy-btn="final_answers">Copy</button>
+            <pre id="final_answers">Final miss probabilities (mistake “1” → “0”):
+
+(a) λ = 1300 nm:          p ≈ 3.74 × 10^-15
+(b) Power doubled:        p ≈ 1.17 × 10^-19
+(c) η = 0.5:              p ≈ 3.43 × 10^-6
+(d) APD, G = 100, F = 1:  p ≈ 1.00 × 10^-10
+(e) APD, G = 100, F = 2:  p ≈ 3.43 × 10^-6</pre>
+          </div>
+
+          <div class="note answer">
+            <strong>Sanity checks:</strong>
+            <ul>
+              <li><strong>Units:</strong> μ is a pure count; Q(·) is dimensionless. Good.</li>
+              <li><strong>Limiting behavior:</strong> μ→∞ ⇒ p→0; μ→0 ⇒ p→Q(0)=0.5. Good.</li>
+              <li><strong>Parameter trends:</strong> increasing λ or P decreases error; lowering η increases error. Good.</li>
+              <li><strong>APD gain cancellation:</strong> with only shot noise, G cancels; only F matters. So (d) matches baseline. Good.</li>
+            </ul>
+          </div>
+
+          <p style="margin:0; color:var(--muted)">
+            <strong>Connection to the plots:</strong>
+            In the interactive graphs below, the “baseline point” sits at μ≈161.9 with p≈10<sup>−10</sup> on the F=1 curve.
+            Moving μ by changing λ, P, or η slides you left/right along the curve; turning on APD excess noise (F&gt;1) shifts you to a “worse” curve.
+          </p>
+        </div>
+      </section>
+
+      <section id="part4">
+        <div class="sec-h">
+          <h2>PART 4 — Deeper Understanding (theory around the result)</h2>
+        </div>
+        <div class="sec-b">
+          <div class="grid2">
+            <div class="card">
+              <h3>Re-interpreting the final formula</h3>
+              <p>
+                <span style="font-family:var(--mono); color:rgba(233,238,255,.94)">p ≈ Q( √μ / (2√F) )</span>
+                says the “distance to the threshold” in units of standard deviation is:
+              </p>
+              <ul>
+                <li><strong>√μ:</strong> signal separation grows like the square root of detected photons (counting statistics).</li>
+                <li><strong>1/√F:</strong> excess noise reduces that effective separation by broadening the distribution.</li>
+                <li><strong>Exponentially sensitive tails:</strong> small changes in √μ can yield huge changes in p at ultra-low BER.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>How parameters affect performance</h3>
+              <ul>
+                <li><strong>Wavelength:</strong> μ ∝ λ, so longer wavelength helps <em>if power is held fixed</em>.</li>
+                <li><strong>Power:</strong> μ ∝ P, and p typically drops super-fast in the tail region.</li>
+                <li><strong>Quantum efficiency:</strong> μ ∝ η, so imperfect η is a direct hit to photon budget.</li>
+                <li><strong>APD excess noise:</strong> p(F) behaves as if μ were reduced by F (since √μ/√F = √(μ/F)).</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Alternative derivation idea (brief)</h3>
+            <p style="margin:0; color:var(--muted)">
+              Instead of the Gaussian approximation, one can compute the exact Poisson tail:
+              p<sub>miss</sub>=P(N&lt;N<sub>th</sub>|μ) = ∑<sub>k=0</sub><sup>Nth−1</sup> e<sup>−μ</sup> μ<sup>k</sup>/k!.
+              If the threshold were explicitly specified (e.g., “decide 1 iff N≥1”), the result would be p=e<sup>−μ</sup>.
+              Here, because the problem explicitly mentions the APD excess noise factor F, we used the variance-based Q-form which naturally incorporates F.
+            </p>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Concept checks (with answers)</h3>
+            <ul style="color:var(--muted)">
+              <li><strong>Q:</strong> If λ increases but P is constant, do you always get more photons?<br/><strong>A:</strong> Yes; photon energy decreases, so the same energy contains more photons, hence μ increases ∝ λ.</li>
+              <li><strong>Q:</strong> Why does APD gain not help here?<br/><strong>A:</strong> With only shot noise, both mean and noise scale with G, so the normalized separation (mean/σ) is unchanged unless other noise sources exist.</li>
+              <li><strong>Q:</strong> What does F=2 do physically?<br/><strong>A:</strong> It doubles the effective multiplication noise contribution, broadening the distribution and increasing miss probability as if μ were halved.</li>
+              <li><strong>Q:</strong> Why is the BER so sensitive to η when targeting 10<sup>−10</sup>?<br/><strong>A:</strong> Because we are deep in the tail; shifting √μ even modestly can move the tail probability by many orders of magnitude.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="part5">
+        <div class="sec-h">
+          <h2>PART 5 — Visualization Guide (how to read the plots)</h2>
+        </div>
+        <div class="sec-b">
+          <div class="card">
+            <h3>What the canvases show</h3>
+            <ul style="color:var(--muted)">
+              <li><strong>Diagram canvas:</strong> OOK optical link → photodiode/APD → integrate over T<sub>b</sub> → compare to threshold.</li>
+              <li><strong>Main plot:</strong> p<sub>miss</sub> vs mean detected photoelectrons μ on a log scale. Curves for different excess noise F.</li>
+              <li><strong>Secondary plot:</strong> a parameter sweep showing how p<sub>miss</sub> changes when you scale μ by changing λ, P, or η.</li>
+            </ul>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Interactive controls (what changes and why)</h3>
+            <ul style="color:var(--muted)">
+              <li><strong>Scale slider (s):</strong> multiplies μ → μ = s·μ<sub>0</sub>. This mimics changing <em>λ</em>, <em>P</em>, or <em>η</em> (since μ ∝ ηPλ).</li>
+              <li><strong>F selector:</strong> switches excess noise factor. Increasing F shifts the miss probability up because the Q-argument shrinks by 1/√F.</li>
+              <li><strong>Preset buttons:</strong> jump to the exact problem cases (a–e) and update both plots + the numeric readout.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="viz">
+        <div class="sec-h">
+          <h2>Interactive Visualizations (live)</h2>
+        </div>
+        <div class="sec-b">
+          <div class="grid2">
+            <figure>
+              <canvas id="diagram" width="900" height="420" aria-label="Receiver diagram"></canvas>
+              <figcaption>Diagram: On–off keying receiver with photodiode/APD, integrator over bit time, and threshold decision.</figcaption>
+            </figure>
+            <div>
+              <div class="controls">
+                <div class="control">
+                  <label>
+                    <span>Scale factor s (μ = s·μ₀)</span>
+                    <span id="sVal" style="font-family:var(--mono)">1.000</span>
+                  </label>
+                  <input id="sSlider" type="range" min="0.05" max="3.0" step="0.001" value="1.0"/>
+                  <div style="color:var(--muted); font-size:.86rem; margin-top:6px">
+                    s can represent: s = (λ/870nm)·(P/P₀)·(η/1).
+                  </div>
+                </div>
+                <div class="control">
+                  <label>
+                    <span>Excess noise factor F</span>
+                    <span id="fVal" style="font-family:var(--mono)">1</span>
+                  </label>
+                  <select id="fSelect">
+                    <option value="1" selected>F = 1 (PIN / noiseless APD)</option>
+                    <option value="2">F = 2 (excess noise)</option>
+                    <option value="4">F = 4 (stronger excess noise)</option>
+                  </select>
+                  <div style="color:var(--muted); font-size:.86rem; margin-top:6px">
+                    In this shot-noise-limited model, APD gain G cancels; F controls degradation.
+                  </div>
+                </div>
+                <div class="control">
+                  <label>
+                    <span>Presets (problem cases)</span>
+                    <span style="font-family:var(--mono)" id="presetLabel">baseline</span>
+                  </label>
+                  <button id="btnA">Case (a): λ=1300 nm</button>
+                  <button id="btnB" style="margin-top:8px">Case (b): P doubled</button>
+                  <button id="btnC" style="margin-top:8px">Case (c): η=0.5</button>
+                  <button id="btnD" style="margin-top:8px">Case (d): APD G=100, F=1</button>
+                  <button id="btnE" style="margin-top:8px">Case (e): APD G=100, F=2</button>
+                </div>
+              </div>
+
+              <div class="kpi" style="margin-top:12px">
+                <div class="box">
+                  <div class="label">Baseline μ₀ (from 10⁻¹⁰)</div>
+                  <div class="value" id="mu0Out">161.87</div>
+                </div>
+                <div class="box">
+                  <div class="label">Current μ = s·μ₀</div>
+                  <div class="value" id="muOut">161.87</div>
+                </div>
+                <div class="box">
+                  <div class="label">Current pₘᵢₛₛ</div>
+                  <div class="value" id="pOut">1.00e-10</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:14px">
+            <figure>
+              <canvas id="plotMain" width="900" height="520" aria-label="Main plot"></canvas>
+              <figcaption>Main plot: p<sub>miss</sub>(μ,F) = Q( √μ/(2√F) ) with baseline marker at (μ₀, 10⁻¹⁰) and current marker at (s·μ₀, p).</figcaption>
+            </figure>
+            <figure>
+              <canvas id="plotSweep" width="900" height="520" aria-label="Sweep plot"></canvas>
+              <figcaption>Secondary plot: sweep of scale factor s showing p<sub>miss</sub> vs s for the selected F, including labeled points for cases (a–e).</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer>
+    <div class="note">
+      <strong>Model note:</strong> This article uses a standard large-count Gaussian approximation and a mid-level threshold to connect the given ultra-low probability to an inferred mean photon count μ₀.
+      If a different decision rule (e.g., “decide 1 if at least one photon”) were specified, the baseline μ₀ and numerical results would change, but the scaling with (η, P, λ) would remain straightforward via μ ∝ ηPλ.
+    </div>
+  </footer>
+
+  <script>
+    // ---------- Utilities ----------
+    function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
+
+    // Error function complement via numerical approximation (for Q-function)
+    // We use erfc(x) relation and a stable approximation for erf.
+    // Abramowitz & Stegun-like polynomial approximation for erf.
+    function erf(x){
+      const sign = x >= 0 ? 1 : -1;
+      x = Math.abs(x);
+
+      // constants
+      const a1=0.254829592, a2=-0.284496736, a3=1.421413741, a4=-1.453152027, a5=1.061405429;
+      const p=0.3275911;
+
+      const t = 1.0/(1.0+p*x);
+      const y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
+      return sign*y;
+    }
+    function erfc(x){ return 1 - erf(x); }
+
+    // Q(x) = 0.5 * erfc(x / sqrt(2))
+    function Q(x){
+      return 0.5 * erfc(x / Math.SQRT2);
+    }
+
+    // Our miss probability model
+    function pMiss(mu, F){
+      const arg = Math.sqrt(mu) / (2*Math.sqrt(F));
+      return Q(arg);
+    }
+
+    // Scientific formatting
+    function sci(x, sig=3){
+      if (x === 0) return "0";
+      const exp = Math.floor(Math.log10(Math.abs(x)));
+      const mant = x / Math.pow(10, exp);
+      const m = mant.toFixed(sig-1);
+      return `${m}e${exp>=0?"+":""}${exp}`;
+    }
+
+    // ---------- Baseline calibration (given) ----------
+    // Given: p0 = 1e-10 = Q(sqrt(mu0)/2) for F=1.
+    // Numerically, Q^{-1}(1e-10) ≈ 6.3613409024 => mu0 = (2*6.36134)^2 ≈ 161.8666
+    // Hardcode (derived once) to keep this HTML self-contained and fast.
+    const p0 = 1e-10;
+    const Qinv_p0 = 6.361340902404056; // precomputed
+    const mu0 = Math.pow(2*Qinv_p0, 2); // ≈ 161.8666
+
+    // ---------- Canvas drawing helpers ----------
+    function setupCanvas(canvas){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const cssW = rect.width;
+      const cssH = rect.height;
+      const w = Math.max(2, Math.floor(cssW * dpr));
+      const h = Math.max(2, Math.floor(cssH * dpr));
+      if (canvas.width !== w || canvas.height !== h){
+        canvas.width = w; canvas.height = h;
+      }
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+      return {ctx, w:cssW, h:cssH, dpr};
+    }
+
+    function roundRect(ctx, x,y,w,h,r){
+      r = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+r, y);
+      ctx.arcTo(x+w, y, x+w, y+h, r);
+      ctx.arcTo(x+w, y+h, x, y+h, r);
+      ctx.arcTo(x, y+h, x, y, r);
+      ctx.arcTo(x, y, x+w, y, r);
+      ctx.closePath();
+    }
+
+    function drawGridAxes(ctx, box, xMin, xMax, yMin, yMax, opts){
+      // opts: {xLabel,yLabel,title,yLog}
+      const {x, y, w, h} = box;
+      const padL=58, padR=16, padT=42, padB=46;
+      const px = {x: x+padL, y: y+padT, w: w-padL-padR, h: h-padT-padB};
+
+      // background panel
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.18)";
+      ctx.strokeStyle = "rgba(233,238,255,0.12)";
+      roundRect(ctx, x+8, y+8, w-16, h-16, 14);
+      ctx.fill(); ctx.stroke();
+      ctx.restore();
+
+      // title
+      ctx.save();
+      ctx.fillStyle = "rgba(233,238,255,0.95)";
+      ctx.font = "600 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText(opts.title || "", x+18, y+26);
+      ctx.restore();
+
+      // gridlines and ticks
+      const nx=6, ny=6;
+      ctx.save();
+      ctx.strokeStyle = "rgba(233,238,255,0.10)";
+      ctx.lineWidth = 1;
+
+      for(let i=0;i<=nx;i++){
+        const tx = px.x + (i/nx)*px.w;
+        ctx.beginPath(); ctx.moveTo(tx, px.y); ctx.lineTo(tx, px.y+px.h); ctx.stroke();
+      }
+      for(let j=0;j<=ny;j++){
+        const ty = px.y + (j/ny)*px.h;
+        ctx.beginPath(); ctx.moveTo(px.x, ty); ctx.lineTo(px.x+px.w, ty); ctx.stroke();
+      }
+      ctx.restore();
+
+      // axes border
+      ctx.save();
+      ctx.strokeStyle = "rgba(233,238,255,0.22)";
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(px.x, px.y, px.w, px.h);
+      ctx.restore();
+
+      // tick labels
+      ctx.save();
+      ctx.fillStyle = "rgba(185,195,255,0.9)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+
+      for(let i=0;i<=nx;i++){
+        const val = xMin + (i/nx)*(xMax-xMin);
+        const tx = px.x + (i/nx)*px.w;
+        const label = (Math.abs(val) >= 1000 || Math.abs(val) < 0.01) ? val.toExponential(1) : val.toFixed(0);
+        ctx.fillText(label, tx-14, px.y+px.h+18);
+      }
+
+      for(let j=0;j<=ny;j++){
+        let val;
+        if(opts.yLog){
+          // yMin,yMax are in log10 space (already)
+          val = yMax - (j/ny)*(yMax-yMin);
+          const label = `1e${val>=0?"+":""}${val.toFixed(0)}`;
+          const ty = px.y + (j/ny)*px.h;
+          ctx.fillText(label, px.x-52, ty+4);
+        }else{
+          val = yMax - (j/ny)*(yMax-yMin);
+          const ty = px.y + (j/ny)*px.h;
+          const label = (Math.abs(val) >= 1000 || Math.abs(val) < 0.01) ? val.toExponential(1) : val.toFixed(2);
+          ctx.fillText(label, px.x-52, ty+4);
+        }
+      }
+      ctx.restore();
+
+      // axis labels
+      ctx.save();
+      ctx.fillStyle = "rgba(185,195,255,0.95)";
+      ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText(opts.xLabel || "", px.x + px.w/2 - 60, y + h - 14);
+      ctx.translate(x+16, px.y + px.h/2 + 40);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(opts.yLabel || "", 0, 0);
+      ctx.restore();
+
+      // mapping functions
+      function xMap(v){
+        return px.x + (v - xMin)/(xMax-xMin)*px.w;
+      }
+      function yMap(v){
+        if(opts.yLog){
+          // v is probability; map log10(v) between yMin..yMax
+          const lv = Math.log10(v);
+          return px.y + (yMax - lv)/(yMax-yMin)*px.h;
+        }else{
+          return px.y + (yMax - v)/(yMax-yMin)*px.h;
+        }
+      }
+      return {plotRect:px, xMap, yMap};
+    }
+
+    function drawLegend(ctx, x, y, items){
+      ctx.save();
+      ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      const pad=8, lineH=18;
+      const w = 210;
+      const h = pad*2 + items.length*lineH;
+      ctx.fillStyle = "rgba(0,0,0,0.28)";
+      ctx.strokeStyle = "rgba(233,238,255,0.14)";
+      roundRect(ctx, x, y, w, h, 12);
+      ctx.fill(); ctx.stroke();
+
+      items.forEach((it, i)=>{
+        const yy = y + pad + i*lineH + 12;
+        ctx.strokeStyle = it.stroke;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(x+12, yy-4);
+        ctx.lineTo(x+34, yy-4);
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(233,238,255,0.92)";
+        ctx.fillText(it.text, x+42, yy);
+      });
+      ctx.restore();
+    }
+
+    // ---------- Diagram ----------
+    function drawDiagram(){
+      const canvas = document.getElementById("diagram");
+      const {ctx,w,h} = setupCanvas(canvas);
+
+      ctx.clearRect(0,0,w,h);
+
+      // panel background
+      ctx.save();
+      ctx.fillStyle="rgba(0,0,0,0.18)";
+      ctx.strokeStyle="rgba(233,238,255,0.12)";
+      roundRect(ctx, 10, 10, w-20, h-20, 16);
+      ctx.fill(); ctx.stroke();
+      ctx.restore();
+
+      // Title
+      ctx.save();
+      ctx.fillStyle="rgba(233,238,255,0.95)";
+      ctx.font="600 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText("Physical setup: OOK optical receiver (integrate & threshold)", 22, 34);
+      ctx.restore();
+
+      // Draw blocks
+      const y0 = 70;
+      const blockH=70;
+      const gap=22;
+      const xStart=24;
+      const blocks = [
+        {label:"Laser / Tx\n(“1” has P,\n“0” has 0)", w:160},
+        {label:"Channel\n(ideal)", w:120},
+        {label:"Photodiode\nor APD\n(η, G, F)", w:160},
+        {label:"Integrator\nover Tb", w:130},
+        {label:"Decision\ncompare to\nthreshold", w:150}
+      ];
+
+      let x = xStart;
+      blocks.forEach((b, i)=>{
+        ctx.save();
+        ctx.fillStyle = "rgba(233,238,255,0.06)";
+        ctx.strokeStyle = "rgba(233,238,255,0.16)";
+        roundRect(ctx, x, y0, b.w, blockH, 14);
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle="rgba(233,238,255,0.92)";
+        ctx.font="600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        const lines = b.label.split("\n");
+        lines.forEach((ln, k)=>{
+          ctx.fillText(ln, x+12, y0+22+k*14);
+        });
+
+        ctx.restore();
+
+        // arrows
+        if(i < blocks.length-1){
+          const x1 = x + b.w;
+          const x2 = x1 + gap;
+          const y = y0 + blockH/2;
+          ctx.save();
+          ctx.strokeStyle="rgba(125,211,252,0.75)";
+          ctx.lineWidth=2;
+          ctx.beginPath();
+          ctx.moveTo(x1+4, y);
+          ctx.lineTo(x2-10, y);
+          ctx.stroke();
+          // arrow head
+          ctx.beginPath();
+          ctx.moveTo(x2-10, y);
+          ctx.lineTo(x2-18, y-6);
+          ctx.lineTo(x2-18, y+6);
+          ctx.closePath();
+          ctx.fillStyle="rgba(125,211,252,0.75)";
+          ctx.fill();
+          ctx.restore();
+        }
+        x += b.w + gap;
+      });
+
+      // Lower text for key equations
+      ctx.save();
+      ctx.fillStyle="rgba(185,195,255,0.92)";
+      ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.fillText("Mean detected count: μ = η (P Tb λ)/(h c)", 22, y0+blockH+58);
+      ctx.fillText("Miss probability (model): p_miss ≈ Q( √μ / (2√F) )", 22, y0+blockH+80);
+      ctx.restore();
+    }
+
+    // ---------- Plots ----------
+    function drawMainPlot(state){
+      const canvas = document.getElementById("plotMain");
+      const {ctx,w,h} = setupCanvas(canvas);
+      ctx.clearRect(0,0,w,h);
+
+      // axes: mu from 0 to 400 (practical), y log from 1e-20 to 1e-1
+      const xMin=0, xMax=400;
+      const yLogMin=-20, yLogMax=-1;
+
+      const frame = drawGridAxes(ctx, {x:0,y:0,w,h}, xMin, xMax, yLogMin, yLogMax, {
+        title:"Main plot: p_miss vs mean detected photoelectrons μ",
+        xLabel:"μ (photoelectrons / bit)",
+        yLabel:"p_miss (log scale)",
+        yLog:true
+      });
+
+      // Curves for F=1 and F=2 (and F=4 faint)
+      const Fs = [1,2,4];
+      const strokes = {
+        1:"rgba(125,211,252,0.95)",
+        2:"rgba(167,139,250,0.95)",
+        4:"rgba(134,239,172,0.70)"
+      };
+
+      function drawCurve(F){
+        ctx.save();
+        ctx.strokeStyle=strokes[F];
+        ctx.lineWidth=2.2;
+        ctx.beginPath();
+        let started=false;
+        const N=260;
+        for(let i=0;i<=N;i++){
+          const mu = xMin + (i/N)*(xMax-xMin);
+          const p = Math.max(1e-22, pMiss(Math.max(mu,1e-9), F));
+          const X = frame.xMap(mu);
+          const Y = frame.yMap(p);
+          if(!started){ ctx.moveTo(X,Y); started=true; }
+          else ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+      Fs.forEach(drawCurve);
+
+      // Legend
+      drawLegend(ctx, w-240, 52, [
+        {text:"F = 1 (PIN / noiseless APD)", stroke:strokes[1]},
+        {text:"F = 2 (excess noise)", stroke:strokes[2]},
+        {text:"F = 4 (example)", stroke:strokes[4]},
+      ]);
+
+      // Baseline point at (mu0, p0) on F=1
+      function drawPoint(mu, p, color, label){
+        const X = frame.xMap(mu);
+        const Y = frame.yMap(Math.max(1e-22,p));
+        ctx.save();
+        ctx.fillStyle=color;
+        ctx.strokeStyle="rgba(0,0,0,0.35)";
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.arc(X,Y,6,0,Math.PI*2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle="rgba(233,238,255,0.95)";
+        ctx.font="12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        ctx.fillText(label, X+10, Y-10);
+        ctx.restore();
+      }
+      drawPoint(mu0, p0, "rgba(125,211,252,0.95)", "baseline (μ0, 1e-10)");
+
+      // Current point for selected F
+      const muCur = state.mu;
+      const pCur  = state.p;
+      drawPoint(muCur, pCur, "rgba(253,230,138,0.95)", "current");
+
+      // Vertical guide line at current mu
+      ctx.save();
+      ctx.strokeStyle="rgba(253,230,138,0.22)";
+      ctx.lineWidth=1.5;
+      const Xg = frame.xMap(muCur);
+      ctx.beginPath();
+      ctx.moveTo(Xg, frame.plotRect.y);
+      ctx.lineTo(Xg, frame.plotRect.y + frame.plotRect.h);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawSweepPlot(state){
+      const canvas = document.getElementById("plotSweep");
+      const {ctx,w,h} = setupCanvas(canvas);
+      ctx.clearRect(0,0,w,h);
+
+      // x axis: s from 0.05 to 3.0
+      const xMin=0.05, xMax=3.0;
+      const yLogMin=-20, yLogMax=-1;
+
+      const frame = drawGridAxes(ctx, {x:0,y:0,w,h}, xMin, xMax, yLogMin, yLogMax, {
+        title:"Secondary plot: sweep of scale s (μ = s·μ0) → p_miss(s)",
+        xLabel:"s (dimensionless scale of μ)",
+        yLabel:"p_miss (log scale)",
+        yLog:true
+      });
+
+      // Sweep curve for selected F
+      ctx.save();
+      ctx.strokeStyle="rgba(125,211,252,0.95)";
+      ctx.lineWidth=2.2;
+      ctx.beginPath();
+      let started=false;
+      const N=280;
+      for(let i=0;i<=N;i++){
+        const s = xMin + (i/N)*(xMax-xMin);
+        const mu = s*mu0;
+        const p = Math.max(1e-22, pMiss(mu, state.F));
+        const X = frame.xMap(s);
+        const Y = frame.yMap(p);
+        if(!started){ ctx.moveTo(X,Y); started=true; }
+        else ctx.lineTo(X,Y);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // Markers for cases (a)-(e) and baseline, all computed from scaling
+      const cases = [
+        {key:"base", s:1.0, F:1, label:"baseline"},
+        {key:"a", s:(1300/870), F:1, label:"(a) λ=1300nm"},
+        {key:"b", s:2.0, F:1, label:"(b) P×2"},
+        {key:"c", s:0.5, F:1, label:"(c) η=0.5"},
+        {key:"d", s:1.0, F:1, label:"(d) APD F=1"},
+        {key:"e", s:1.0, F:2, label:"(e) APD F=2"},
+      ];
+
+      function marker(s, F, label, color){
+        const mu = s*mu0;
+        const p = Math.max(1e-22, pMiss(mu, F));
+        const X = frame.xMap(s);
+        const Y = frame.yMap(p);
+
+        ctx.save();
+        ctx.fillStyle=color;
+        ctx.strokeStyle="rgba(0,0,0,0.35)";
+        ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(X,Y,5.6,0,Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle="rgba(233,238,255,0.92)";
+        ctx.font="11px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        ctx.fillText(label, X+10, Y+4);
+        ctx.restore();
+      }
+
+      marker(1.0, 1, "baseline", "rgba(125,211,252,0.95)");
+      marker(1300/870, 1, "(a)", "rgba(134,239,172,0.95)");
+      marker(2.0, 1, "(b)", "rgba(134,239,172,0.95)");
+      marker(0.5, 1, "(c)", "rgba(134,239,172,0.95)");
+      marker(1.0, 2, "(e)", "rgba(167,139,250,0.95)");
+
+      // current marker on selected F (uses current s and current F)
+      marker(state.s, state.F, "current", "rgba(253,230,138,0.95)");
+
+      // Legend
+      drawLegend(ctx, w-240, 52, [
+        {text:`Sweep curve at selected F = ${state.F}`, stroke:"rgba(125,211,252,0.95)"},
+        {text:"Case markers (a,b,c,e)", stroke:"rgba(134,239,172,0.95)"},
+        {text:"Current marker", stroke:"rgba(253,230,138,0.95)"},
+      ]);
+    }
+
+    // ---------- State and UI ----------
+    const state = {
+      s: 1.0,
+      F: 1,
+      mu: mu0,
+      p: p0
+    };
+
+    function updateStateFromUI(presetLabel="custom"){
+      const s = parseFloat(document.getElementById("sSlider").value);
+      const F = parseFloat(document.getElementById("fSelect").value);
+
+      state.s = s;
+      state.F = F;
+      state.mu = s*mu0;
+      state.p = pMiss(state.mu, state.F);
+
+      document.getElementById("sVal").textContent = s.toFixed(3);
+      document.getElementById("fVal").textContent = String(F);
+      document.getElementById("mu0Out").textContent = mu0.toFixed(2);
+      document.getElementById("muOut").textContent = state.mu.toFixed(2);
+      document.getElementById("pOut").textContent = sci(state.p, 3);
+      document.getElementById("presetLabel").textContent = presetLabel;
+
+      drawDiagram();
+      drawMainPlot(state);
+      drawSweepPlot(state);
+    }
+
+    function setPreset(s, F, label){
+      document.getElementById("sSlider").value = String(s);
+      document.getElementById("fSelect").value = String(F);
+      updateStateFromUI(label);
+    }
+
+    // Hook up controls
+    document.getElementById("sSlider").addEventListener("input", ()=>updateStateFromUI("custom"));
+    document.getElementById("fSelect").addEventListener("change", ()=>updateStateFromUI("custom"));
+
+    document.getElementById("btnA").addEventListener("click", ()=>setPreset(1300/870, 1, "case (a)"));
+    document.getElementById("btnB").addEventListener("click", ()=>setPreset(2.0, 1, "case (b)"));
+    document.getElementById("btnC").addEventListener("click", ()=>setPreset(0.5, 1, "case (c)"));
+    document.getElementById("btnD").addEventListener("click", ()=>setPreset(1.0, 1, "case (d)"));
+    document.getElementById("btnE").addEventListener("click", ()=>setPreset(1.0, 2, "case (e)"));
+
+    // Copy buttons
+    function copyText(text){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).catch(()=>{});
+      }else{
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try{ document.execCommand("copy"); }catch(e){}
+        document.body.removeChild(ta);
+      }
+    }
+    document.querySelectorAll("[data-copy-btn]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-copy-btn");
+        const pre = document.getElementById(id);
+        if(pre) copyText(pre.textContent.trim());
+        btn.textContent = "Copied!";
+        setTimeout(()=>btn.textContent="Copy", 900);
+      });
+    });
+
+    // Resize handling
+    let resizeTimer=null;
+    window.addEventListener("resize", ()=>{
+      clearTimeout(resizeTimer);
+      resizeTimer=setTimeout(()=>updateStateFromUI(state.s===1 && state.F===1 ? "baseline":"custom"), 80);
+    });
+
+    // Initial render
+    setPreset(1.0, 1, "baseline");
+  </script>
+</body>
+</html>

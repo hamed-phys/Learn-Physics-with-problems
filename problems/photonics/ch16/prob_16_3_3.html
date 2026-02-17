@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Spontaneous Lifetime Scaling: Visible vs EUV Transition</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#111a33;
+      --panel2:#0f1730;
+      --text:#e9eefc;
+      --muted:#b9c3e6;
+      --faint:#7f8ab4;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --border:rgba(255,255,255,0.10);
+      --shadow: 0 12px 30px rgba(0,0,0,0.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 20% 10%, rgba(125,211,252,0.18), transparent 55%),
+                  radial-gradient(1000px 650px at 80% 20%, rgba(167,139,250,0.16), transparent 55%),
+                  linear-gradient(180deg, #070a14, var(--bg) 30%, #060915);
+      color:var(--text);
+      line-height:1.55;
+    }
+    header{
+      padding: 34px 18px 18px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .title{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+    }
+    .badge{
+      font-family:var(--mono);
+      font-size:12px;
+      letter-spacing:0.06em;
+      color:rgba(255,255,255,0.85);
+      background: rgba(125,211,252,0.12);
+      border:1px solid rgba(125,211,252,0.25);
+      padding:6px 10px;
+      border-radius:999px;
+      transform: translateY(6px);
+    }
+    h1{
+      margin:0;
+      font-size: clamp(26px, 3.3vw, 40px);
+      letter-spacing:-0.02em;
+    }
+    .subtitle{
+      margin-top:10px;
+      color:var(--muted);
+      max-width: 72ch;
+      font-size: 15px;
+    }
+
+    main{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 18px 56px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      align-items:start;
+    }
+
+    nav#toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: linear-gradient(180deg, rgba(17,26,51,0.9), rgba(17,26,51,0.75));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+    .toc-head{
+      padding: 14px 14px 10px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .toc-head b{font-size:13px; letter-spacing:0.06em; text-transform:uppercase; color:rgba(255,255,255,0.85)}
+    .toc-mini{
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--faint);
+      opacity:0.9;
+      white-space:nowrap;
+    }
+    .toc-links{
+      padding: 10px 10px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .toc-links a{
+      text-decoration:none;
+      color:var(--muted);
+      padding: 8px 10px;
+      border-radius: 12px;
+      border:1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size: 14px;
+    }
+    .toc-links a:hover{
+      background: rgba(125,211,252,0.10);
+      border-color: rgba(125,211,252,0.25);
+      transform: translateX(2px);
+      color: var(--text);
+    }
+
+    article{
+      background: linear-gradient(180deg, rgba(17,26,51,0.78), rgba(15,23,48,0.76));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+    .content{
+      padding: 18px 18px 22px;
+    }
+    section{
+      padding: 18px;
+      border-top:1px solid var(--border);
+    }
+    section:first-child{border-top:none}
+    h2{
+      margin:0 0 10px 0;
+      font-size: 20px;
+      letter-spacing:-0.01em;
+    }
+    h3{
+      margin: 16px 0 8px;
+      font-size: 16px;
+      color: rgba(255,255,255,0.92);
+    }
+    p{margin: 8px 0 10px}
+    ul{margin: 8px 0 12px 20px}
+    li{margin: 6px 0}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr}
+      nav#toc{position:relative; top:auto}
+      .grid2,.grid3{grid-template-columns: 1fr}
+    }
+
+    .callout{
+      background: rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 12px 12px;
+      margin: 12px 0;
+    }
+    .callout strong{color: rgba(255,255,255,0.92)}
+    .callout.assump{border-color: rgba(251,191,36,0.35); background: rgba(251,191,36,0.08)}
+    .callout.keyeq{border-color: rgba(125,211,252,0.35); background: rgba(125,211,252,0.08)}
+    .callout.mist{border-color: rgba(251,113,133,0.35); background: rgba(251,113,133,0.08)}
+    .callout.final{border-color: rgba(52,211,153,0.35); background: rgba(52,211,153,0.08)}
+    .callout .small{color: var(--muted); font-size: 13px}
+
+    .eqrow{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+      margin: 10px 0;
+    }
+    .eq{
+      font-family: var(--mono);
+      background: rgba(0,0,0,0.28);
+      border:1px solid rgba(255,255,255,0.12);
+      padding: 10px 12px;
+      border-radius: 14px;
+      overflow:auto;
+      max-width:100%;
+      white-space: pre-wrap;
+      word-break: break-word;
+      flex: 1 1 420px;
+    }
+    .btn{
+      cursor:pointer;
+      border:1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+      flex: 0 0 auto;
+    }
+    .btn:hover{
+      background: rgba(125,211,252,0.10);
+      border-color: rgba(125,211,252,0.28);
+      transform: translateY(-1px);
+    }
+    .btn:active{transform: translateY(0px) scale(0.99)}
+    .btn.good:hover{
+      background: rgba(52,211,153,0.12);
+      border-color: rgba(52,211,153,0.35);
+    }
+
+    figure{
+      margin: 12px 0 0;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.18);
+      border:1px solid rgba(255,255,255,0.10);
+    }
+    figure figcaption{
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    canvas{
+      width:100%;
+      height: 320px;
+      display:block;
+      border-radius: 14px;
+      background: rgba(8,12,25,0.75);
+      border:1px solid rgba(255,255,255,0.10);
+    }
+    .canvas-row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      canvas{height: 300px;}
+      .canvas-row{grid-template-columns: 1fr}
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 12px;
+      margin: 10px 0 6px;
+    }
+    @media (max-width: 980px){
+      .controls{grid-template-columns: 1fr}
+    }
+    .ctl{
+      background: rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .ctl label{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      color: rgba(255,255,255,0.88);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .ctl .val{
+      font-family: var(--mono);
+      color: var(--accent);
+      font-size: 12px;
+      white-space:nowrap;
+    }
+    input[type="range"]{width:100%}
+    select, input[type="number"]{
+      width:100%;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.22);
+      color: var(--text);
+      font-family: var(--mono);
+      outline:none;
+    }
+    .note{
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin: 10px 0 0;
+    }
+    @media (max-width: 980px){
+      .kpi{grid-template-columns: 1fr}
+    }
+    .kpi .card{
+      background: rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 12px;
+      min-height: 84px;
+    }
+    .kpi .top{
+      color: var(--muted);
+      font-size: 12px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:baseline;
+    }
+    .kpi .big{
+      font-family: var(--mono);
+      font-size: 18px;
+      margin-top: 8px;
+      letter-spacing:-0.01em;
+    }
+    .kpi .small{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--faint);
+      margin-top: 6px;
+    }
+
+    footer{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 18px 40px;
+      color: var(--faint);
+      font-size: 13px;
+    }
+    .print-note{
+      display:none;
+    }
+    @media print{
+      body{background:#fff; color:#000}
+      nav#toc{display:none}
+      article, header{box-shadow:none; border:1px solid #ddd; background:#fff}
+      canvas{border:1px solid #ddd; background:#fff}
+      .btn{display:none}
+      .print-note{display:block; color:#000}
+    }
+
+    /* subtle animated divider */
+    .divider{
+      height:1px;
+      background: linear-gradient(90deg, transparent, rgba(125,211,252,0.5), rgba(167,139,250,0.5), transparent);
+      margin: 12px 0;
+      opacity:0.8;
+      filter: blur(0.0px);
+      animation: shimmer 5.5s ease-in-out infinite;
+    }
+    @keyframes shimmer{
+      0%,100%{opacity:0.55}
+      50%{opacity:0.95}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="title">
+    <div class="badge">Atomic/Optical Physics • Spontaneous Emission</div>
+    <div>
+      <h1>Spontaneous Lifetime Scaling: Visible (500&nbsp;nm) vs EUV (18.2&nbsp;nm)</h1>
+      <div class="subtitle">
+        We estimate how fast an excited state decays by <em>spontaneous emission</em> when the transition wavelength moves from visible to extreme ultraviolet (EUV),
+        assuming the <span style="white-space:nowrap">transition strength</span> is unchanged.
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <nav id="toc" aria-label="Table of contents">
+    <div class="toc-head">
+      <b>Table of Contents</b>
+      <span class="toc-mini">sticky • click to jump</span>
+    </div>
+    <div class="toc-links">
+      <a href="#quick">Quick Summary</a>
+      <a href="#part0">PART 0 — Concept Primer</a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a href="#part2">PART 2 — Strategy & Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a href="#part4">PART 4 — Deeper Understanding</a>
+      <a href="#part5">PART 5 — Visualization Guide</a>
+      <a href="#viz">Interactive Visualizations</a>
+    </div>
+  </nav>
+
+  <article>
+    <div class="content print-note">
+      <b>Print note:</b> interactive controls and copy buttons are hidden in print view; equations and results remain.
+    </div>
+
+    <section id="quick">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><b>What this is about:</b> estimating the spontaneous radiative lifetime of an EUV transition given a known visible lifetime.</li>
+        <li><b>Key physics idea:</b> the Einstein <span style="white-space:nowrap">A-coefficient</span> for electric-dipole emission scales as <span style="white-space:nowrap">A ∝ ω³</span> when the dipole/line strength is fixed.</li>
+        <li><b>Governing relationship:</b> for the same transition strength, <span style="white-space:nowrap">A ∝ 1/λ³</span> and therefore <span style="white-space:nowrap">τ = 1/A ∝ λ³</span>.</li>
+        <li><b>Given:</b> a visible transition at <span class="eq">λ₀ = 500 nm</span> has lifetime <span class="eq">τ₀ = 10 ns</span>.</li>
+        <li><b>Target:</b> EUV transition at <span class="eq">λ = 18.2 nm</span> (same strength) → estimate <span class="eq">τ</span>.</li>
+        <li><b>Numeric result:</b> <span style="white-space:nowrap">τ ≈ 4.82×10⁻¹³ s</span> ≈ <span style="white-space:nowrap">0.482 ps</span>.</li>
+        <li><b>Result type:</b> symbolic scaling + a single plug-in numerical estimate.</li>
+      </ul>
+      <div class="divider"></div>
+      <div class="callout keyeq">
+        <strong>Key equation (copyable):</strong>
+        <div class="eqrow">
+          <div class="eq" id="eqKey">τ(λ) = τ₀ (λ/λ₀)³  &nbsp;&nbsp; (same transition strength)</div>
+          <div class="btn" data-copy="#eqKey">Copy</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="part0">
+      <h2>PART 0 — Concept Primer (THEORY BEFORE SOLVING)</h2>
+
+      <h3>Core definitions (symbols &amp; units)</h3>
+      <ul>
+        <li><b>Spontaneous emission rate</b> (Einstein coefficient) <span class="eq">A</span> [s<sup>−1</sup>]: probability per unit time that an excited state decays by emitting a photon.</li>
+        <li><b>Radiative lifetime</b> <span class="eq">τ</span> [s]: mean time the system stays excited before emitting spontaneously.
+          For a single dominant channel, <span class="eq">τ = 1/A</span>.</li>
+        <li><b>Angular frequency</b> <span class="eq">ω</span> [rad/s] and <b>wavelength</b> <span class="eq">λ</span> [m]:
+          related by <span class="eq">ω = 2πc/λ</span>.</li>
+        <li><b>Transition strength</b> (electric-dipole line strength) <span class="eq">S</span>:
+          proportional to the squared dipole matrix element <span class="eq">|d|²</span> (units depend on convention).
+          In this problem, “same transition strength” means “same dipole strength/oscillator strength up to constants.”</li>
+      </ul>
+
+      <h3>Physical meaning</h3>
+      <ul>
+        <li><span class="eq">A</span> tells you how quickly a transition emits spontaneously: bigger <span class="eq">A</span> → faster emission → smaller <span class="eq">τ</span>.</li>
+        <li>Shorter wavelengths (higher photon energy) typically radiate faster because there are more electromagnetic modes available and the coupling grows with frequency.</li>
+      </ul>
+
+      <h3>Key law/principle (and validity)</h3>
+      <div class="callout keyeq">
+        <strong>Electric-dipole spontaneous emission scaling</strong>
+        <p class="small">
+          For an electric-dipole (E1) transition, the spontaneous emission rate scales like
+          <span class="eq">A ∝ ω³ |d|²</span>. If the transition strength (dipole/line strength) is the same in two cases, then <span class="eq">|d|²</span> is effectively constant and
+          <span class="eq">A ∝ ω³ ∝ 1/λ³</span>, so <span class="eq">τ ∝ λ³</span>.
+        </p>
+      </div>
+      <div class="callout assump">
+        <strong>When is this valid?</strong>
+        <ul class="small">
+          <li>Dominant decay is radiative and electric-dipole allowed (E1).</li>
+          <li>Same medium (vacuum/air) and similar refractive index effects neglected (EUV typically in vacuum).</li>
+          <li>“Same transition strength” means the relevant dipole/oscillator strength does not change between comparisons.</li>
+        </ul>
+      </div>
+
+      <h3>Common models/approximations (why we use them)</h3>
+      <ul>
+        <li><b>Single-channel lifetime:</b> take <span class="eq">τ ≈ 1/A</span> (ignore competing non-radiative processes).</li>
+        <li><b>Scaling method:</b> avoid needing the absolute dipole matrix element by comparing two transitions with the same strength.</li>
+      </ul>
+
+      <h3>Mini intuition examples</h3>
+      <ul>
+        <li>If you halve the wavelength (double the frequency), <span class="eq">A</span> increases by <span class="eq">2³ = 8</span>, so the lifetime becomes 8 times shorter.</li>
+        <li>Going from visible (~500 nm) to EUV (~20 nm) is a factor ~25 in wavelength → lifetimes can shrink by ~25³ ≈ 15,000.</li>
+      </ul>
+
+      <h3>What to watch for (pitfalls)</h3>
+      <div class="callout mist">
+        <ul class="small">
+          <li><b>Cubic scaling:</b> don’t forget it’s <span class="eq">λ³</span>, not linear in <span class="eq">λ</span>.</li>
+          <li><b>Units:</b> keep wavelengths in the same units when taking ratios.</li>
+          <li><b>Assumption scope:</b> “same strength” is an idealization; real EUV lines may have different oscillator strengths or additional decay channels.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="part1">
+      <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <h3>Problem restatement</h3>
+      <p>
+        A visible laser transition at wavelength <span class="eq">λ₀ = 500 nm</span> has a spontaneous radiative lifetime
+        <span class="eq">τ₀ = 10 ns</span>. Estimate the spontaneous lifetime for an EUV transition at
+        <span class="eq">λ = 18.2 nm</span>, assuming the transition strength is the same in both cases. Then compare the estimate to a tabulated value (Table 15.3-1).
+      </p>
+
+      <div class="grid2">
+        <div class="callout">
+          <strong>Given</strong>
+          <ul class="small">
+            <li><span class="eq">λ₀ = 500 nm</span></li>
+            <li><span class="eq">τ₀ = 10 ns</span></li>
+            <li><span class="eq">λ = 18.2 nm</span></li>
+            <li>Same transition strength <span class="eq">(S same)</span></li>
+          </ul>
+        </div>
+        <div class="callout">
+          <strong>Unknown</strong>
+          <ul class="small">
+            <li>Spontaneous lifetime <span class="eq">τ</span> at <span class="eq">λ = 18.2 nm</span></li>
+            <li>Optional: emission rate <span class="eq">A = 1/τ</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Relevant principles (and why)</h3>
+      <ul>
+        <li><b>Einstein A-coefficient (E1):</b> governs spontaneous emission; lifetime follows as <span class="eq">τ = 1/A</span> for a single dominant transition.</li>
+        <li><b>Frequency/wavelength scaling:</b> with fixed line strength, <span class="eq">A ∝ ω³</span> → lets us scale from visible to EUV without knowing the dipole moment explicitly.</li>
+      </ul>
+      <p>
+        Other effects (collisional quenching, cavity Purcell enhancement, refractive index dispersion) are not invoked because the problem requests an estimate based purely on intrinsic spontaneous emission scaling.
+      </p>
+
+      <div class="callout assump">
+        <strong>Assumptions (explicit)</strong>
+        <ul class="small">
+          <li>Both transitions are electric-dipole allowed and have the same effective dipole/oscillator strength.</li>
+          <li>Radiative decay dominates (or we interpret “spontaneous lifetime” as the radiative lifetime).</li>
+          <li>Vacuum scaling: no strong environmental modification of the photonic density of states.</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (compare briefly)</h3>
+      <ol>
+        <li><b>Scaling method (best here):</b> use <span class="eq">τ(λ) = τ₀ (λ/λ₀)³</span>. <br/>
+          <span class="small" style="color:var(--muted)">Pros: fast, minimal data. Cons: depends on “same strength.”</span>
+        </li>
+        <li><b>Absolute A-coefficient formula:</b> compute <span class="eq">A</span> from a dipole matrix element. <br/>
+          <span class="small" style="color:var(--muted)">Pros: more fundamental. Cons: requires matrix element not given.</span>
+        </li>
+        <li><b>Oscillator strength route:</b> relate <span class="eq">A</span> to oscillator strength <span class="eq">f</span> and energy. <br/>
+          <span class="small" style="color:var(--muted)">Pros: tabulated f-values sometimes available. Cons: still needs f not provided.</span>
+        </li>
+      </ol>
+
+      <p><b>Chosen approach:</b> the wavelength-cubic scaling method is the most direct and matches the “same transition strength” premise.</p>
+    </section>
+
+    <section id="part2">
+      <h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+
+      <ol>
+        <li>
+          <b>Goal:</b> connect lifetime to spontaneous emission rate. <br/>
+          <b>Tool:</b> <span class="eq">τ = 1/A</span>. <br/>
+          <b>Meaning:</b> larger rate → shorter average time before emission.
+        </li>
+        <li>
+          <b>Goal:</b> express how <span class="eq">A</span> scales with wavelength when strength is fixed. <br/>
+          <b>Tool:</b> E1 scaling <span class="eq">A ∝ ω³ |d|²</span> and <span class="eq">ω ∝ 1/λ</span>. <br/>
+          <b>Meaning:</b> higher frequency means faster radiation.
+        </li>
+        <li>
+          <b>Goal:</b> form a ratio to eliminate unknown constants. <br/>
+          <b>Tool:</b> <span class="eq">A/A₀ = (ω/ω₀)³ = (λ₀/λ)³</span>. <br/>
+          <b>Meaning:</b> we only need the two wavelengths.
+        </li>
+        <li>
+          <b>Goal:</b> convert to lifetime ratio. <br/>
+          <b>Tool:</b> <span class="eq">τ/τ₀ = A₀/A = (λ/λ₀)³</span>. <br/>
+          <b>Meaning:</b> shorter wavelength → much shorter lifetime.
+        </li>
+        <li>
+          <b>Goal:</b> plug in <span class="eq">λ</span>, <span class="eq">λ₀</span>, <span class="eq">τ₀</span>, compute <span class="eq">τ</span>. <br/>
+          <b>Tool:</b> careful unit-consistent ratio. <br/>
+          <b>Meaning:</b> obtain an order-of-magnitude estimate.
+        </li>
+      </ol>
+
+      <div class="callout mist">
+        <strong>Common mistakes &amp; quick tips</strong>
+        <ul class="small">
+          <li>Use the ratio <span class="eq">(λ/λ₀)³</span>; you don’t need to convert nm to m if both are in nm.</li>
+          <li>Don’t confuse <span class="eq">τ ∝ 1/λ³</span> (wrong) with <span class="eq">A ∝ 1/λ³</span> (right).</li>
+          <li>Report results in seconds and a human-scale unit (ps or fs) for EUV.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="part3">
+      <h2>PART 3 — Full Solution (DETAILED + TEACHING)</h2>
+
+      <h3>Physical intuition (before calculating)</h3>
+      <p>
+        EUV photons have much higher frequency than visible photons. For electric-dipole spontaneous emission, the radiative rate grows strongly
+        with frequency (as <span class="eq">ω³</span>). So we expect the EUV transition to have a dramatically <em>shorter</em> lifetime—
+        typically in the picosecond or sub-picosecond range for similar strengths.
+      </p>
+
+      <h3>Step 1: Lifetime and spontaneous emission rate</h3>
+      <p>
+        Let <span class="eq">A</span> be the spontaneous emission rate (Einstein A coefficient). For a single dominant radiative decay channel,
+      </p>
+      <div class="eqrow">
+        <div class="eq" id="eq1">τ = 1/A</div>
+        <div class="btn" data-copy="#eq1">Copy</div>
+      </div>
+      <p class="note">
+        This means if we can find how <span class="eq">A</span> changes with wavelength, we immediately know how <span class="eq">τ</span> changes.
+      </p>
+
+      <h3>Step 2: E1 scaling with frequency (same strength)</h3>
+      <p>
+        For an electric-dipole (E1) transition, the rate scales as
+      </p>
+      <div class="eqrow">
+        <div class="eq" id="eq2">A ∝ ω³ |d|²</div>
+        <div class="btn" data-copy="#eq2">Copy</div>
+      </div>
+      <p>
+        The problem states the transition strength is the same in both cases, meaning the effective dipole/line strength factor
+        <span class="eq">|d|²</span> is treated as constant between the two transitions. Therefore,
+      </p>
+      <div class="eqrow">
+        <div class="eq" id="eq3">A/A₀ = (ω/ω₀)³</div>
+        <div class="btn" data-copy="#eq3">Copy</div>
+      </div>
+
+      <h3>Step 3: Convert frequency ratio to wavelength ratio</h3>
+      <p>
+        Using <span class="eq">ω = 2πc/λ</span>, we have <span class="eq">ω/ω₀ = λ₀/λ</span>. So
+      </p>
+      <div class="eqrow">
+        <div class="eq" id="eq4">A/A₀ = (λ₀/λ)³</div>
+        <div class="btn" data-copy="#eq4">Copy</div>
+      </div>
+      <p class="note">We used only the inverse relationship between frequency and wavelength; constants cancel in the ratio.</p>
+
+      <h3>Step 4: Convert rate ratio to lifetime ratio</h3>
+      <p>
+        Since <span class="eq">τ = 1/A</span>, the ratio flips:
+      </p>
+      <div class="eqrow">
+        <div class="eq" id="eq5">τ/τ₀ = A₀/A = (λ/λ₀)³</div>
+        <div class="btn" data-copy="#eq5">Copy</div>
+      </div>
+
+      <h3>Step 5: Insert numbers</h3>
+      <p>
+        Given <span class="eq">τ₀ = 10 ns</span>, <span class="eq">λ₀ = 500 nm</span>, and <span class="eq">λ = 18.2 nm</span>:
+      </p>
+      <div class="eqrow">
+        <div class="eq" id="eq6">τ = τ₀ (λ/λ₀)³ = (10 ns) (18.2/500)³</div>
+        <div class="btn" data-copy="#eq6">Copy</div>
+      </div>
+      <p>
+        Compute the ratio:
+        <span class="eq">(18.2/500) ≈ 0.0364</span>, and then cube it:
+        <span class="eq">(0.0364)³ ≈ 4.8229×10⁻⁵</span>.
+      </p>
+      <p>
+        Therefore,
+      </p>
+      <div class="callout final">
+        <strong>Final numeric estimate</strong>
+        <div class="eqrow">
+          <div class="eq" id="finalAns">τ ≈ (10 ns)(4.8229×10⁻⁵) = 4.82×10⁻¹³ s ≈ 0.482 ps</div>
+          <div class="btn good" data-copy="#finalAns">Copy</div>
+        </div>
+        <div class="small">
+          Equivalent: the spontaneous emission rate is <span class="eq">A ≈ 1/τ ≈ 2.07×10¹² s⁻¹</span>.
+        </div>
+      </div>
+
+      <h3>Sanity checks</h3>
+      <div class="grid2">
+        <div class="callout">
+          <strong>Units/dimensions</strong>
+          <p class="small">
+            <span class="eq">(λ/λ₀)³</span> is dimensionless, so <span class="eq">τ</span> has the same units as <span class="eq">τ₀</span> (seconds). Good.
+          </p>
+        </div>
+        <div class="callout">
+          <strong>Order of magnitude</strong>
+          <p class="small">
+            Going from 500 nm to 18.2 nm is a factor of ~27.5 in wavelength, so lifetime should shrink by ~27.5³ ≈ 2.08×10⁴.
+            <span class="eq">10 ns / 2.08×10⁴ ≈ 0.48 ps</span>. Consistent.
+          </p>
+        </div>
+      </div>
+
+      <h3>Comparison to Table 15.3-1</h3>
+      <p>
+        Without the table shown here, we can still interpret the comparison: EUV E1-allowed transitions commonly have radiative lifetimes in the
+        sub-picosecond to few-picosecond range, depending on oscillator strength and competing channels. Your estimate
+        (<span class="eq">≈ 0.48 ps</span>) should be close if Table 15.3-1 is listing a typical E1 spontaneous lifetime for an EUV transition with similar strength.
+      </p>
+
+      <p class="note">
+        If your tabulated value differs noticeably, the usual reason is that the “same strength” assumption is not exact:
+        real EUV transitions can have different oscillator strengths, multiplet structure, or additional decay pathways.
+      </p>
+    </section>
+
+    <section id="part4">
+      <h2>PART 4 — Deeper Understanding (THEORY AROUND THE RESULT)</h2>
+
+      <h3>Re-interpreting the final formula</h3>
+      <p>
+        The compact result
+        <span class="eq">τ(λ) = τ₀ (λ/λ₀)³</span>
+        says the lifetime is controlled primarily by wavelength when strength is fixed:
+      </p>
+      <ul>
+        <li><b>Cubic sensitivity:</b> a modest change in <span class="eq">λ</span> causes a large change in <span class="eq">τ</span>.</li>
+        <li><b>Shorter wavelength → faster emission:</b> because the radiative coupling and photonic mode density increase with frequency.</li>
+      </ul>
+
+      <h3>How changing parameters affects the outcome</h3>
+      <ul>
+        <li>Decreasing the target wavelength slider in the plots will drive <span class="eq">τ</span> down rapidly (curve drops as <span class="eq">λ³</span>).</li>
+        <li>Increasing the reference lifetime <span class="eq">τ₀</span> scales the entire lifetime curve up linearly (same shape, higher values).</li>
+        <li>The emission rate <span class="eq">A = 1/τ</span> shows the opposite trend: it skyrockets as <span class="eq">1/λ³</span>.</li>
+      </ul>
+
+      <h3>Alternative derivation idea (brief)</h3>
+      <p>
+        You can start from the oscillator strength relation linking <span class="eq">A</span> to <span class="eq">f</span> and the transition energy.
+        If <span class="eq">f</span> is the same for both transitions, the same cubic dependence on frequency (or inverse cubic in wavelength) emerges after simplifying constants.
+      </p>
+
+      <h3>Concept checks (with answers)</h3>
+      <ul>
+        <li><b>Q:</b> If the wavelength decreases by a factor of 10, how does the lifetime change (same strength)?<br/>
+          <b>A:</b> It decreases by <span class="eq">10³ = 1000</span>.</li>
+        <li><b>Q:</b> Why does the ratio method avoid needing the dipole matrix element?<br/>
+          <b>A:</b> Because the unknown strength factor cancels in <span class="eq">A/A₀</span> when assumed equal.</li>
+        <li><b>Q:</b> Would a forbidden (non-E1) transition follow the same scaling?<br/>
+          <b>A:</b> Not necessarily; different multipole orders have different frequency dependencies.</li>
+        <li><b>Q:</b> If non-radiative decay exists, what happens to the observed lifetime?<br/>
+          <b>A:</b> The observed lifetime becomes shorter: <span class="eq">1/τ_total = 1/τ_rad + 1/τ_nonrad</span>.</li>
+      </ul>
+    </section>
+
+    <section id="part5">
+      <h2>PART 5 — Visualization Guide (HOW TO READ THE PLOTS)</h2>
+
+      <h3>What each canvas shows</h3>
+      <ul>
+        <li><b>Diagram:</b> a two-level atom/ion with an excited state decaying to a lower state by emitting a photon of wavelength <span class="eq">λ</span>. Labels connect <span class="eq">A</span>, <span class="eq">τ</span>, and <span class="eq">λ</span>.</li>
+        <li><b>Main plot:</b> lifetime <span class="eq">τ(λ)</span> vs wavelength (nm) using the scaling <span class="eq">τ = τ₀ (λ/λ₀)³</span>, with markers at the reference (500 nm) and the chosen target wavelength.</li>
+        <li><b>Secondary plot:</b> emission rate <span class="eq">A(λ)=1/τ(λ)</span> vs wavelength, highlighting the inverse-cubic growth toward short wavelengths.</li>
+      </ul>
+
+      <h3>Interactive controls</h3>
+      <ul>
+        <li><b>Target wavelength slider:</b> changes <span class="eq">λ</span> (nm). You should see the marker move on both plots, and the computed <span class="eq">τ</span> and <span class="eq">A</span> update.</li>
+        <li><b>Reference lifetime input:</b> changes <span class="eq">τ₀</span> (ns). The curves scale up/down linearly while keeping the same cubic dependence on <span class="eq">λ</span>.</li>
+        <li><b>Reference wavelength selector:</b> sets <span class="eq">λ₀</span>. This changes the normalization point and reshapes the numeric scaling accordingly.</li>
+      </ul>
+
+      <div class="callout keyeq">
+        <strong>Copy-ready final result</strong>
+        <div class="eqrow">
+          <div class="eq" id="copyFinalPlain">Given τ₀ = 10 ns at λ₀ = 500 nm, then for λ = 18.2 nm (same strength): τ = τ₀ (λ/λ₀)³ ≈ 4.82×10⁻13 s ≈ 0.482 ps.</div>
+          <div class="btn good" data-copy="#copyFinalPlain">Copy</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="viz">
+      <h2>Interactive Visualizations</h2>
+
+      <div class="controls" aria-label="Interactive controls">
+        <div class="ctl">
+          <label for="lambdaTarget">
+            Target wavelength λ (nm)
+            <span class="val" id="lambdaTargetVal">18.2 nm</span>
+          </label>
+          <input id="lambdaTarget" type="range" min="5" max="200" step="0.1" value="18.2" />
+          <div class="note">Move between EUV and UV/visible to see the cubic scaling in action.</div>
+        </div>
+
+        <div class="ctl">
+          <label for="tau0">
+            Reference lifetime τ₀ (ns)
+            <span class="val" id="tau0Val">10.0 ns</span>
+          </label>
+          <input id="tau0" type="range" min="0.1" max="50" step="0.1" value="10" />
+          <div class="note">This linearly scales τ(λ) everywhere.</div>
+        </div>
+
+        <div class="ctl">
+          <label for="lambda0">Reference wavelength λ₀</label>
+          <select id="lambda0">
+            <option value="500" selected>500 nm (given)</option>
+            <option value="632.8">632.8 nm (He-Ne example)</option>
+            <option value="1064">1064 nm (Nd:YAG example)</option>
+            <option value="400">400 nm (near-UV example)</option>
+          </select>
+          <div class="note">Keeps the same model, changes the normalization point.</div>
+        </div>
+      </div>
+
+      <div class="kpi" aria-label="Computed values">
+        <div class="card">
+          <div class="top">
+            <span>Computed lifetime</span>
+            <span style="color:var(--good); font-family:var(--mono); font-size:11px;">τ = τ₀(λ/λ₀)³</span>
+          </div>
+          <div class="big" id="kpiTau">0.482 ps</div>
+          <div class="small" id="kpiTau2">4.82×10⁻13 s</div>
+        </div>
+        <div class="card">
+          <div class="top">
+            <span>Emission rate</span>
+            <span style="color:var(--accent); font-family:var(--mono); font-size:11px;">A = 1/τ</span>
+          </div>
+          <div class="big" id="kpiA">2.07×10¹² s⁻¹</div>
+          <div class="small" id="kpiA2">≈ 2.07 THz (as a rate)</div>
+        </div>
+        <div class="card">
+          <div class="top">
+            <span>Relative to reference</span>
+            <span style="color:var(--accent2); font-family:var(--mono); font-size:11px;">τ/τ₀</span>
+          </div>
+          <div class="big" id="kpiRatio">4.82×10⁻5</div>
+          <div class="small" id="kpiRatio2">Lifetime shrinks by ~2.07×10⁴</div>
+        </div>
+      </div>
+
+      <figure>
+        <canvas id="cDiagram" aria-label="Labeled diagram of spontaneous emission"></canvas>
+        <figcaption>Diagram: two-level system emitting a photon; the model uses electric-dipole spontaneous emission scaling.</figcaption>
+      </figure>
+
+      <div class="canvas-row">
+        <figure>
+          <canvas id="cMain" aria-label="Main plot of lifetime versus wavelength"></canvas>
+          <figcaption>Main plot: radiative lifetime τ(λ) vs wavelength (nm), with markers at λ₀ and the chosen λ.</figcaption>
+        </figure>
+        <figure>
+          <canvas id="cSecond" aria-label="Secondary plot of emission rate versus wavelength"></canvas>
+          <figcaption>Secondary plot: spontaneous emission rate A(λ)=1/τ(λ) vs wavelength (nm).</figcaption>
+        </figure>
+      </div>
+
+    </section>
+  </article>
+</main>
+
+<footer>
+  <div>
+    Built as a self-contained learning article (no external libraries). Model: electric-dipole spontaneous emission with fixed transition strength.
+  </div>
+</footer>
+
+<script>
+(function(){
+  // ---------- Helpers ----------
+  const $ = (sel) => document.querySelector(sel);
+
+  function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+
+  function fmtSci(x, sig=3){
+    if(!isFinite(x) || x===0) return "0";
+    const sign = x<0 ? "-" : "";
+    x = Math.abs(x);
+    const exp = Math.floor(Math.log10(x));
+    const m = x / Math.pow(10, exp);
+    const mant = m.toFixed(sig-1).replace(/\.?0+$/,"");
+    return `${sign}${mant}×10^${exp}`;
+  }
+
+  function supPow10(str){
+    // Convert "×10^n" to "×10ⁿ"
+    return str.replace(/×10\^(-?\d+)/g, (m, e)=>{
+      const map = {'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+      return "×10" + String(e).split("").map(ch=>map[ch]||ch).join("");
+    });
+  }
+
+  function fmtTimeSeconds(t){
+    // Return {primaryText, secondaryText} in sensible units
+    const abs = Math.abs(t);
+    let unit="s", scale=1;
+    if(abs >= 1) { unit="s"; scale=1; }
+    else if(abs >= 1e-3){ unit="ms"; scale=1e-3; }
+    else if(abs >= 1e-6){ unit="µs"; scale=1e-6; }
+    else if(abs >= 1e-9){ unit="ns"; scale=1e-9; }
+    else if(abs >= 1e-12){ unit="ps"; scale=1e-12; }
+    else if(abs >= 1e-15){ unit="fs"; scale=1e-15; }
+    else { unit="as"; scale=1e-18; }
+    const val = t/scale;
+    const primary = `${val.toFixed(3).replace(/\.?0+$/,"")} ${unit}`;
+    const secondary = supPow10(fmtSci(t,3)) + " s";
+    return {primary, secondary};
+  }
+
+  function fmtRate(A){
+    // A in s^-1
+    const secondary = supPow10(fmtSci(A,3)) + " s⁻¹";
+    let primary = secondary;
+    const abs = Math.abs(A);
+    if(abs >= 1e12){
+      primary = `${(A/1e12).toFixed(3).replace(/\.?0+$/,"")}×10¹² s⁻¹`;
+      primary = primary.replace(/^([0-9.]+)×10¹²/, (m,g1)=> `${g1}×10¹²`);
+    } else if(abs >= 1e9){
+      primary = `${(A/1e9).toFixed(3).replace(/\.?0+$/,"")}×10⁹ s⁻¹`;
+      primary = primary.replace(/^([0-9.]+)×10⁹/, (m,g1)=> `${g1}×10⁹`);
+    }
+    return {primary, secondary};
+  }
+
+  // Copy buttons
+  function wireCopy(){
+    document.querySelectorAll('[data-copy]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const targetSel = btn.getAttribute('data-copy');
+        const el = document.querySelector(targetSel);
+        if(!el) return;
+        const text = el.textContent.replace(/\s+\n/g,"\n").trim();
+        try{
+          await navigator.clipboard.writeText(text);
+          const old = btn.textContent;
+          btn.textContent = "Copied ✓";
+          btn.style.borderColor = "rgba(52,211,153,0.45)";
+          btn.style.background = "rgba(52,211,153,0.12)";
+          setTimeout(()=>{
+            btn.textContent = old;
+            btn.removeAttribute('style');
+          }, 900);
+        } catch(e){
+          // fallback
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          try{ document.execCommand('copy'); } catch(_){}
+          document.body.removeChild(ta);
+          const old = btn.textContent;
+          btn.textContent = "Copied ✓";
+          setTimeout(()=>btn.textContent=old, 900);
+        }
+      });
+    });
+  }
+
+  // ---------- Model ----------
+  function tauFromScaling(lambda_nm, lambda0_nm, tau0_ns){
+    // tau = tau0 * (lambda/lambda0)^3
+    const ratio = (lambda_nm / lambda0_nm);
+    const tau0_s = tau0_ns * 1e-9;
+    return tau0_s * ratio*ratio*ratio;
+  }
+
+  // ---------- Canvas plotting ----------
+  function makeHiDPICtx(canvas){
+    const ctx = canvas.getContext('2d');
+    return ctx;
+  }
+
+  function resizeCanvasToDisplaySize(canvas){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(2, Math.round(rect.width * dpr));
+    const h = Math.max(2, Math.round(rect.height * dpr));
+    if(canvas.width !== w || canvas.height !== h){
+      canvas.width = w; canvas.height = h;
+    }
+    return {w,h,dpr};
+  }
+
+  function drawAxes(ctx, W, H, pad, xMin, xMax, yMin, yMax, xLabel, yLabel, title, options={}){
+    const gridAlpha = options.gridAlpha ?? 0.12;
+    const axisAlpha = options.axisAlpha ?? 0.6;
+    const textAlpha = options.textAlpha ?? 0.9;
+    const ticks = options.ticks ?? 6;
+
+    // Background
+    ctx.save();
+    ctx.clearRect(0,0,W,H);
+
+    // Soft vignette
+    const g = ctx.createRadialGradient(W*0.2,H*0.2, 10, W*0.2,H*0.2, Math.max(W,H));
+    g.addColorStop(0, "rgba(125,211,252,0.06)");
+    g.addColorStop(0.6, "rgba(0,0,0,0)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    // Plot area
+    const x0 = pad.l, x1 = W - pad.r;
+    const y0 = H - pad.b, y1 = pad.t;
+
+    // Gridlines
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = `rgba(255,255,255,${gridAlpha})`;
+    for(let i=0;i<=ticks;i++){
+      const tx = x0 + (x1-x0)*i/ticks;
+      ctx.beginPath();
+      ctx.moveTo(tx,y0);
+      ctx.lineTo(tx,y1);
+      ctx.stroke();
+      const ty = y0 - (y0-y1)*i/ticks;
+      ctx.beginPath();
+      ctx.moveTo(x0,ty);
+      ctx.lineTo(x1,ty);
+      ctx.stroke();
+    }
+
+    // Axes border
+    ctx.strokeStyle = `rgba(255,255,255,${axisAlpha})`;
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(x0,y1,(x1-x0),(y0-y1));
+
+    // Title
+    ctx.fillStyle = `rgba(255,255,255,${textAlpha})`;
+    ctx.font = `${Math.max(12, Math.round(H*0.05))}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(title, x0, Math.max(6, pad.t*0.25));
+
+    // Labels
+    ctx.fillStyle = `rgba(233,238,252,${textAlpha})`;
+    ctx.font = `${Math.max(11, Math.round(H*0.045))}px ${getComputedStyle(document.body).fontFamily}`;
+
+    // X label
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillText(xLabel, (x0+x1)/2, H-4);
+
+    // Y label (rotated)
+    ctx.save();
+    ctx.translate(10, (y0+y1)/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    // Ticks with numeric labels (simple linear for x; y may be linear or log if flagged)
+    ctx.fillStyle = `rgba(185,195,230,${0.9})`;
+    ctx.font = `${Math.max(10, Math.round(H*0.04))}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+
+    const yIsLog = !!options.yIsLog;
+    const xIsLog = !!options.xIsLog;
+
+    function linTick(min,max,i){ return min + (max-min)*i/ticks; }
+    function logTick(min,max,i){
+      const lmin = Math.log10(min), lmax = Math.log10(max);
+      const v = lmin + (lmax-lmin)*i/ticks;
+      return Math.pow(10,v);
+    }
+
+    for(let i=0;i<=ticks;i++){
+      const xv = xIsLog ? logTick(xMin,xMax,i) : linTick(xMin,xMax,i);
+      const tx = x0 + (x1-x0)*i/ticks;
+      ctx.fillText((xv>=100? xv.toFixed(0): xv>=10? xv.toFixed(1): xv.toFixed(2)).replace(/\.?0+$/,""), tx, y0+6);
+    }
+
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    for(let i=0;i<=ticks;i++){
+      const yv = yIsLog ? logTick(yMin,yMax,i) : linTick(yMin,yMax,i);
+      const ty = y0 - (y0-y1)*i/ticks;
+      let label;
+      if(yIsLog){
+        label = supPow10(fmtSci(yv,2)).replace("×","×");
+      }else{
+        label = (Math.abs(yv)>=1000? yv.toFixed(0): Math.abs(yv)>=10? yv.toFixed(1): yv.toFixed(2)).replace(/\.?0+$/,"");
+      }
+      ctx.fillText(label, x0-6, ty);
+    }
+
+    ctx.restore();
+
+    // Transform functions
+    function xPix(x){
+      const u = xIsLog ? (Math.log10(x)-Math.log10(xMin))/(Math.log10(xMax)-Math.log10(xMin)) : (x-xMin)/(xMax-xMin);
+      return x0 + u*(x1-x0);
+    }
+    function yPix(y){
+      const u = yIsLog ? (Math.log10(y)-Math.log10(yMin))/(Math.log10(yMax)-Math.log10(yMin)) : (y-yMin)/(yMax-yMin);
+      return y0 - u*(y0-y1);
+    }
+
+    return {x0,x1,y0,y1,xPix,yPix};
+  }
+
+  function drawCurve(ctx, xPix, yPix, data, strokeStyle, lineWidth=2.2){
+    ctx.save();
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = lineWidth;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    let started = false;
+    for(const pt of data){
+      const X = xPix(pt.x);
+      const Y = yPix(pt.y);
+      if(!isFinite(X) || !isFinite(Y)) continue;
+      if(!started){
+        ctx.moveTo(X,Y);
+        started = true;
+      }else{
+        ctx.lineTo(X,Y);
+      }
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawMarker(ctx, x, y, label, color){
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.strokeStyle = "rgba(0,0,0,0.35)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x,y,6,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+
+    // label bubble
+    ctx.font = `12px ${getComputedStyle(document.body).fontFamily}`;
+    const padX=8, padY=6;
+    const w = ctx.measureText(label).width + padX*2;
+    const h = 22;
+    const bx = x + 10;
+    const by = y - h - 6;
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    roundRect(ctx, bx, by, w, h, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "rgba(233,238,252,0.95)";
+    ctx.textAlign="left";
+    ctx.textBaseline="middle";
+    ctx.fillText(label, bx+padX, by+h/2);
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    ctx.closePath();
+  }
+
+  function drawLegend(ctx, W, H, items){
+    ctx.save();
+    const x = 14, y = 14;
+    ctx.font = `12px ${getComputedStyle(document.body).fontFamily}`;
+    const pad = 10;
+    let w=0;
+    items.forEach(it => { w = Math.max(w, ctx.measureText(it.text).width); });
+    const boxW = w + pad*2 + 18;
+    const boxH = items.length*18 + pad*2;
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    roundRect(ctx, x, y, boxW, boxH, 12);
+    ctx.fill();
+    ctx.stroke();
+    items.forEach((it,i)=>{
+      const yy = y + pad + 9 + i*18;
+      ctx.fillStyle = it.color;
+      ctx.beginPath();
+      ctx.arc(x+10, yy, 4, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(233,238,252,0.95)";
+      ctx.textAlign="left";
+      ctx.textBaseline="middle";
+      ctx.fillText(it.text, x+18, yy);
+    });
+    ctx.restore();
+  }
+
+  // ---------- Diagram ----------
+  function drawDiagram(canvas, params){
+    const ctx = makeHiDPICtx(canvas);
+    const {w:W,h:H,dpr} = resizeCanvasToDisplaySize(canvas);
+    ctx.setTransform(1,0,0,1,0,0);
+
+    // background
+    ctx.clearRect(0,0,W,H);
+    const bg = ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0, "rgba(8,12,25,0.9)");
+    bg.addColorStop(1, "rgba(5,8,18,0.9)");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,W,H);
+
+    // Title
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.font = `${Math.max(14, Math.round(H*0.055))}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign="left";
+    ctx.textBaseline="top";
+    ctx.fillText("Diagram: spontaneous emission (two-level transition)", 16, 12);
+
+    // Levels
+    const xL = W*0.22, xR = W*0.78;
+    const yTop = H*0.32, yBot = H*0.72;
+
+    ctx.strokeStyle = "rgba(233,238,252,0.8)";
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(xL, yTop); ctx.lineTo(xR, yTop);
+    ctx.moveTo(xL, yBot); ctx.lineTo(xR, yBot);
+    ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = "rgba(185,195,230,0.95)";
+    ctx.font = `${Math.max(12, Math.round(H*0.048))}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign="left";
+    ctx.textBaseline="middle";
+    ctx.fillText("Excited state |e⟩", xL, yTop-18);
+    ctx.fillText("Lower state  |g⟩", xL, yBot+18);
+
+    // Transition arrow
+    const xA = W*0.5;
+    ctx.strokeStyle = "rgba(125,211,252,0.95)";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(xA, yTop+6);
+    ctx.lineTo(xA, yBot-6);
+    ctx.stroke();
+    // Arrowhead
+    ctx.fillStyle = "rgba(125,211,252,0.95)";
+    ctx.beginPath();
+    ctx.moveTo(xA, yBot+8);
+    ctx.lineTo(xA-10, yBot-6);
+    ctx.lineTo(xA+10, yBot-6);
+    ctx.closePath();
+    ctx.fill();
+
+    // Photon wave to the right
+    const xW0 = W*0.52, xW1 = W*0.92;
+    const yW = (yTop+yBot)/2;
+    ctx.strokeStyle = "rgba(167,139,250,0.9)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    const n=80;
+    for(let i=0;i<=n;i++){
+      const t = i/n;
+      const x = xW0 + (xW1-xW0)*t;
+      const y = yW + Math.sin(t*10*Math.PI)*H*0.03;
+      if(i===0) ctx.moveTo(x,y);
+      else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    // Arrow at end
+    ctx.fillStyle = "rgba(167,139,250,0.9)";
+    ctx.beginPath();
+    ctx.moveTo(xW1, yW);
+    ctx.lineTo(xW1-14, yW-8);
+    ctx.lineTo(xW1-14, yW+8);
+    ctx.closePath();
+    ctx.fill();
+
+    // Text annotations
+    const {lambda_nm, tau_s, A} = params;
+    const tFmt = fmtTimeSeconds(tau_s);
+    ctx.fillStyle = "rgba(233,238,252,0.92)";
+    ctx.font = `${Math.max(12, Math.round(H*0.045))}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign="left";
+    ctx.textBaseline="top";
+    const bx = W*0.06, by = H*0.80;
+    const lines = [
+      `Photon wavelength: λ = ${lambda_nm.toFixed(1)} nm`,
+      `Lifetime: τ ≈ ${tFmt.primary}  (${tFmt.secondary})`,
+      `Rate: A = 1/τ ≈ ${supPow10(fmtSci(A,3))} s⁻¹`,
+      `Scaling (E1, same strength): τ ∝ λ³`
+    ];
+    // Box
+    const pad=12;
+    ctx.font = `${Math.max(12, Math.round(H*0.042))}px ${getComputedStyle(document.body).fontFamily}`;
+    let maxW=0;
+    lines.forEach(L=> maxW = Math.max(maxW, ctx.measureText(L).width));
+    const boxW = maxW + pad*2;
+    const boxH = lines.length*18 + pad*2;
+    ctx.fillStyle = "rgba(0,0,0,0.50)";
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    roundRect(ctx, bx, by, boxW, boxH, 14);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(233,238,252,0.92)";
+    ctx.textAlign="left";
+    ctx.textBaseline="top";
+    lines.forEach((L,i)=>{
+      ctx.fillText(L, bx+pad, by+pad + i*18);
+    });
+  }
+
+  // ---------- Plots ----------
+  function drawLifetimePlot(canvas, state){
+    const ctx = makeHiDPICtx(canvas);
+    const {w:W,h:H} = resizeCanvasToDisplaySize(canvas);
+    ctx.setTransform(1,0,0,1,0,0);
+
+    // Data
+    const xMin = 5, xMax = 800; // nm
+    const n = 300;
+    const data = [];
+    let yMin=Infinity, yMax=0;
+    for(let i=0;i<=n;i++){
+      const x = xMin + (xMax-xMin)*i/n;
+      const tau = tauFromScaling(x, state.lambda0_nm, state.tau0_ns);
+      data.push({x, y: tau});
+      if(tau>0){
+        yMin = Math.min(yMin, tau);
+        yMax = Math.max(yMax, tau);
+      }
+    }
+    // Use log y to show wide range
+    yMin = Math.max(yMin, 1e-16);
+    yMax = Math.max(yMax, yMin*10);
+
+    const pad = {l:60, r:18, t:34, b:44};
+    const ax = drawAxes(ctx, W, H, pad, xMin, xMax, yMin, yMax,
+      "Wavelength λ (nm)",
+      "Lifetime τ (s) [log scale]",
+      "Main: τ(λ) = τ₀(λ/λ₀)³",
+      {ticks:6, yIsLog:true, xIsLog:false, gridAlpha:0.12}
+    );
+
+    // Curve
+    drawCurve(ctx, ax.xPix, ax.yPix, data, "rgba(125,211,252,0.95)", 2.6);
+
+    // Markers
+    const tauT = tauFromScaling(state.lambda_nm, state.lambda0_nm, state.tau0_ns);
+    const tau0 = tauFromScaling(state.lambda0_nm, state.lambda0_nm, state.tau0_ns);
+    drawMarker(ctx, ax.xPix(state.lambda0_nm), ax.yPix(tau0), `ref: ${state.lambda0_nm.toFixed(1)} nm`, "rgba(52,211,153,0.95)");
+    drawMarker(ctx, ax.xPix(state.lambda_nm), ax.yPix(tauT), `target: ${state.lambda_nm.toFixed(1)} nm`, "rgba(167,139,250,0.95)");
+
+    // Legend
+    drawLegend(ctx, W, H, [
+      {text:"τ(λ) curve", color:"rgba(125,211,252,0.95)"},
+      {text:"reference (λ₀)", color:"rgba(52,211,153,0.95)"},
+      {text:"target (λ)", color:"rgba(167,139,250,0.95)"}
+    ]);
+  }
+
+  function drawRatePlot(canvas, state){
+    const ctx = makeHiDPICtx(canvas);
+    const {w:W,h:H} = resizeCanvasToDisplaySize(canvas);
+    ctx.setTransform(1,0,0,1,0,0);
+
+    const xMin = 5, xMax = 800;
+    const n = 300;
+    const data = [];
+    let yMin=Infinity, yMax=0;
+    for(let i=0;i<=n;i++){
+      const x = xMin + (xMax-xMin)*i/n;
+      const tau = tauFromScaling(x, state.lambda0_nm, state.tau0_ns);
+      const A = 1/tau;
+      data.push({x, y: A});
+      if(A>0){
+        yMin = Math.min(yMin, A);
+        yMax = Math.max(yMax, A);
+      }
+    }
+    yMin = Math.max(yMin, 1e2);
+    yMax = Math.max(yMax, yMin*10);
+
+    const pad = {l:60, r:18, t:34, b:44};
+    const ax = drawAxes(ctx, W, H, pad, xMin, xMax, yMin, yMax,
+      "Wavelength λ (nm)",
+      "Rate A (s⁻¹) [log scale]",
+      "Secondary: A(λ) = 1/τ(λ) ∝ 1/λ³",
+      {ticks:6, yIsLog:true, xIsLog:false, gridAlpha:0.12}
+    );
+
+    drawCurve(ctx, ax.xPix, ax.yPix, data, "rgba(167,139,250,0.95)", 2.6);
+
+    const tauT = tauFromScaling(state.lambda_nm, state.lambda0_nm, state.tau0_ns);
+    const AT = 1/tauT;
+    const tau0 = tauFromScaling(state.lambda0_nm, state.lambda0_nm, state.tau0_ns);
+    const A0 = 1/tau0;
+    drawMarker(ctx, ax.xPix(state.lambda0_nm), ax.yPix(A0), `ref: ${state.lambda0_nm.toFixed(1)} nm`, "rgba(52,211,153,0.95)");
+    drawMarker(ctx, ax.xPix(state.lambda_nm), ax.yPix(AT), `target: ${state.lambda_nm.toFixed(1)} nm`, "rgba(125,211,252,0.95)");
+
+    drawLegend(ctx, W, H, [
+      {text:"A(λ) curve", color:"rgba(167,139,250,0.95)"},
+      {text:"reference (λ₀)", color:"rgba(52,211,153,0.95)"},
+      {text:"target (λ)", color:"rgba(125,211,252,0.95)"}
+    ]);
+  }
+
+  // ---------- State + UI ----------
+  const state = {
+    lambda_nm: 18.2,
+    tau0_ns: 10.0,
+    lambda0_nm: 500.0
+  };
+
+  const cDiagram = $("#cDiagram");
+  const cMain = $("#cMain");
+  const cSecond = $("#cSecond");
+
+  function updateKPIs(){
+    const tau = tauFromScaling(state.lambda_nm, state.lambda0_nm, state.tau0_ns);
+    const A = 1/tau;
+    const ratio = Math.pow(state.lambda_nm/state.lambda0_nm, 3);
+
+    const tFmt = fmtTimeSeconds(tau);
+    $("#kpiTau").textContent = tFmt.primary;
+    $("#kpiTau2").textContent = tFmt.secondary;
+
+    const rFmt = fmtRate(A);
+    $("#kpiA").textContent = rFmt.secondary; // show full sci first
+    $("#kpiA2").textContent = (A>=1e12)
+      ? `≈ ${(A/1e12).toFixed(2).replace(/\.?0+$/,"")}×10¹² s⁻¹`
+      : `≈ ${rFmt.secondary}`;
+
+    $("#kpiRatio").textContent = supPow10(fmtSci(ratio,3));
+    $("#kpiRatio2").textContent = `Lifetime shrinks by ~${supPow10(fmtSci(1/ratio,3))}`;
+
+    // Also mirror to diagram text via params
+    return {tau, A, ratio};
+  }
+
+  function renderAll(){
+    const {tau, A} = updateKPIs();
+    drawDiagram(cDiagram, {lambda_nm: state.lambda_nm, tau_s: tau, A});
+    drawLifetimePlot(cMain, state);
+    drawRatePlot(cSecond, state);
+  }
+
+  function wireControls(){
+    const lambdaTarget = $("#lambdaTarget");
+    const tau0 = $("#tau0");
+    const lambda0 = $("#lambda0");
+
+    function sync(){
+      $("#lambdaTargetVal").textContent = `${Number(state.lambda_nm).toFixed(1)} nm`;
+      $("#tau0Val").textContent = `${Number(state.tau0_ns).toFixed(1)} ns`;
+    }
+
+    lambdaTarget.addEventListener('input', ()=>{
+      state.lambda_nm = Number(lambdaTarget.value);
+      sync();
+      renderAll();
+    });
+    tau0.addEventListener('input', ()=>{
+      state.tau0_ns = Number(tau0.value);
+      sync();
+      renderAll();
+    });
+    lambda0.addEventListener('change', ()=>{
+      state.lambda0_nm = Number(lambda0.value);
+      sync();
+      renderAll();
+    });
+
+    sync();
+  }
+
+  // Redraw on resize for crispness
+  let resizeTimer = null;
+  window.addEventListener('resize', ()=>{
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderAll, 80);
+  });
+
+  // Init
+  wireCopy();
+  wireControls();
+  renderAll();
+})();
+</script>
+</body>
+</html>

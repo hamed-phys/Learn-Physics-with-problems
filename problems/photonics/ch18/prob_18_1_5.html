@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>LED Spectral Widths (FWHM): nm, Hz, and eV — Graphical Estimates vs. Theory</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --panel:#101827;
+      --panel2:#0f1a2d;
+      --text:#e9eef7;
+      --muted:#a9b4c7;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    html,body{height:100%;}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 800px at 20% 10%, rgba(125,211,252,.10), transparent 55%),
+                  radial-gradient(1200px 800px at 90% 10%, rgba(167,139,250,.10), transparent 60%),
+                  radial-gradient(900px 700px at 60% 100%, rgba(52,211,153,.08), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+
+    header{
+      padding: clamp(18px, 3vw, 34px) 18px 10px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .titleRow{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    h1{
+      font-size: clamp(1.25rem, 2.6vw, 2.05rem);
+      margin: 0;
+      letter-spacing:.2px;
+    }
+
+    .subtitle{
+      margin: 8px 0 0;
+      color: var(--muted);
+      max-width: 80ch;
+      font-size: 1.02rem;
+    }
+
+    .layout{
+      max-width:1200px;
+      margin: 0 auto;
+      padding: 0 18px 46px;
+      display:grid;
+      grid-template-columns: 310px 1fr;
+      gap: 18px;
+    }
+
+    nav{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      backdrop-filter: blur(8px);
+    }
+
+    nav h2{
+      font-size: .98rem;
+      margin: 0 0 10px;
+      color: var(--text);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .toc a{
+      display:block;
+      padding: 9px 10px;
+      border-radius: 12px;
+      color: var(--muted);
+      text-decoration:none;
+      border: 1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size: .95rem;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,.08);
+      border-color: rgba(125,211,252,.25);
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+
+    main{
+      min-width: 0;
+    }
+
+    section{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: clamp(14px, 2.2vw, 22px);
+      margin: 0 0 18px;
+      backdrop-filter: blur(8px);
+    }
+
+    section h2{
+      margin: 0 0 10px;
+      font-size: 1.25rem;
+      letter-spacing:.2px;
+    }
+
+    section h3{
+      margin: 14px 0 8px;
+      font-size: 1.08rem;
+      color: var(--text);
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 14px;
+      align-items:start;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      align-items:start;
+    }
+
+    .card{
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 12px 12px;
+    }
+
+    .callout{
+      border-left: 4px solid var(--accent);
+      padding: 12px 12px 12px 12px;
+      background: rgba(125,211,252,.07);
+      border-radius: 14px;
+      border: 1px solid rgba(125,211,252,.20);
+    }
+    .callout.warn{
+      border-left-color: var(--warn);
+      background: rgba(251,191,36,.07);
+      border-color: rgba(251,191,36,.20);
+    }
+    .callout.good{
+      border-left-color: var(--good);
+      background: rgba(52,211,153,.07);
+      border-color: rgba(52,211,153,.20);
+    }
+
+    .kEq{
+      font-family: var(--mono);
+      font-size: .95rem;
+      padding: 10px 10px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.12);
+      overflow:auto;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      cursor:pointer;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 14px;
+      font-size: .92rem;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.30);
+    }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .control{
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 10px 12px;
+    }
+    .control label{
+      display:block;
+      font-size:.9rem;
+      color: var(--muted);
+      margin-bottom:6px;
+    }
+    .control input[type="range"], .control select{
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    .control .val{
+      font-family: var(--mono);
+      font-size:.95rem;
+      color: var(--text);
+      margin-top:6px;
+    }
+    .control .inline{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .control input[type="checkbox"]{ transform: scale(1.05); }
+
+    figure{
+      margin: 10px 0 0;
+    }
+    canvas{
+      width: 100%;
+      height: 340px;
+      display:block;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.25);
+    }
+    .smallCanvas{ height: 300px; }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+    }
+    th, td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      font-size: .95rem;
+      text-align:right;
+      white-space:nowrap;
+    }
+    th{
+      text-align:right;
+      color: var(--muted);
+      font-weight: 600;
+      background: rgba(255,255,255,.04);
+    }
+    td:first-child, th:first-child{ text-align:left; }
+    tr:last-child td{ border-bottom:none; }
+
+    .note{
+      color: var(--muted);
+      font-size: .92rem;
+      margin-top: 8px;
+    }
+
+    .pill{
+      font-family: var(--mono);
+      font-size: .85rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(167,139,250,.12);
+      border: 1px solid rgba(167,139,250,.22);
+      color: var(--text);
+    }
+
+    footer{
+      max-width:1200px;
+      margin: 0 auto;
+      padding: 0 18px 34px;
+      color: var(--muted);
+      font-size:.92rem;
+    }
+
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+      nav{ position: relative; top:auto; }
+      canvas{ height: 320px; }
+      .grid2{ grid-template-columns: 1fr; }
+      .controls{ grid-template-columns: 1fr; }
+    }
+
+    @media print{
+      body{ background:#fff; color:#000; }
+      nav{ display:none; }
+      section{ box-shadow:none; border:1px solid #ddd; background:#fff; }
+      canvas{ border:1px solid #ccc; }
+      .btn{ display:none; }
+    }
+
+    /* subtle animation */
+    .fadeIn{ animation: fade .35s ease both; }
+    @keyframes fade{ from{opacity:0; transform: translateY(4px);} to{opacity:1; transform: translateY(0);} }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="titleRow">
+    <div>
+      <h1>LED Spectral Widths (FWHM): Graphical Estimates vs. Thermal Theory</h1>
+      <p class="subtitle">
+        We estimate the full-width at half-maximum (FWHM) for seven LED spectra centered at
+        <span class="pill">λ<sub>0</sub> = 0.37, 0.53, 0.64, 0.91, 1.30, 1.93, 2.25 μm</span>,
+        then convert widths to frequency (Hz) and photon energy (eV). We also estimate the <em>alloy broadening</em>
+        of the green LED at 0.53 μm by comparing the graph-based width to the simple thermal model.
+      </p>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="fadeIn">
+    <h2>📌 Table of Contents</h2>
+    <div class="toc">
+      <a href="#quick" data-scroll>Quick Summary</a>
+      <a href="#p0" data-scroll>PART 0 — Concept Primer</a>
+      <a href="#p1" data-scroll>PART 1 — Problem Analysis</a>
+      <a href="#p2" data-scroll>PART 2 — Strategy & Tips</a>
+      <a href="#p3" data-scroll>PART 3 — Full Solution</a>
+      <a href="#p4" data-scroll>PART 4 — Deeper Understanding</a>
+      <a href="#p5" data-scroll>PART 5 — Visualization Guide</a>
+    </div>
+  </nav>
+
+  <main>
+    <section id="quick" class="fadeIn">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><strong>What this is about:</strong> estimating LED emission <strong>spectral widths</strong> (FWHM) at seven center wavelengths and converting those widths to <strong>Δλ (nm)</strong>, <strong>Δν (Hz)</strong>, and <strong>ΔE (eV)</strong>.</li>
+        <li><strong>Key physics idea:</strong> spontaneous emission in LEDs has a <strong>thermal energy spread</strong> of carriers; that energy spread maps into wavelength spread.</li>
+        <li><strong>Governing model (Exercise 18.1-3 / Eq. 18.1-30):</strong> <span class="pill">Δλ ≈ 1.45 λ<sub>0</sub><sup>2</sup> kT</span> (with λ in μm, Δλ in μm, kT in eV).</li>
+        <li><strong>Conversions:</strong> for small widths, <span class="pill">Δν ≈ (c/λ<sub>0</sub><sup>2</sup>)Δλ</span> and <span class="pill">ΔE ≈ (hc/λ<sub>0</sub><sup>2</sup>)Δλ</span>.</li>
+        <li><strong>Main numerical outcome:</strong> a table of <em>graphical</em> FWHM estimates and <em>theoretical</em> widths; theory predicts Δλ ∝ λ<sub>0</sub><sup>2</sup>.</li>
+        <li><strong>Alloy broadening (green LED, 0.53 μm):</strong> estimated as <span class="pill">Δλ<sub>alloy</sub> ≈ Δλ<sub>graph</sub> − Δλ<sub>theory</sub></span> and similarly in Hz and eV.</li>
+      </ul>
+    </section>
+
+    <section id="p0" class="fadeIn">
+      <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Core definitions (symbols & units)</h3>
+          <ul>
+            <li><strong>Center wavelength</strong> λ<sub>0</sub> (m, often μm or nm): location of the spectrum peak.</li>
+            <li><strong>FWHM spectral width</strong> Δλ (m): the wavelength span between the two points where intensity is half the peak.</li>
+            <li><strong>Optical frequency</strong> ν = c/λ (Hz) and <strong>frequency width</strong> Δν (Hz).</li>
+            <li><strong>Photon energy</strong> E = hc/λ (J) or in eV; <strong>energy width</strong> ΔE (eV).</li>
+            <li><strong>Thermal energy</strong> kT (eV): sets the typical spread of carrier energies in a semiconductor LED.</li>
+          </ul>
+        </div>
+
+        <div class="callout">
+          <h3>Physical meaning (what these represent)</h3>
+          <p>
+            An LED emits photons from many electron–hole recombination events. Carriers occupy a range of energies
+            (roughly “thermal”), so emitted photons are not all identical in energy. That energy spread produces
+            a <strong>spectral width</strong> around the peak.
+          </p>
+          <p class="note">
+            Real devices can be broader than the thermal model due to material disorder (alloy fluctuations),
+            band tail states, strain, inhomogeneity, and temperature gradients.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div class="card">
+          <h3>Key laws & when they’re valid</h3>
+          <ul>
+            <li>Relations: ν = c/λ and E = hc/λ (valid for photons in free space; good approximation in air).</li>
+            <li><strong>Small-width approximation:</strong> if Δλ ≪ λ<sub>0</sub>, then differential conversions work:
+              Δν ≈ |dν/dλ|Δλ and ΔE ≈ |dE/dλ|Δλ.</li>
+            <li><strong>Thermal LED width model:</strong> assumes the spectral shape is mainly set by a thermal-like
+              carrier energy distribution near the band edge, giving Δλ ∝ λ<sub>0</sub><sup>2</sup>.</li>
+          </ul>
+        </div>
+
+        <div class="callout warn">
+          <h3>Common models/approximations & why we use them</h3>
+          <ul>
+            <li><strong>Thermal broadening model</strong> (Eq. 18.1-30) gives a quick, scalable estimate across wavelengths.</li>
+            <li><strong>Graphical FWHM read-off</strong> is practical when you have spectra plots (as in the figures).</li>
+            <li>We treat widths as “FWHM” and use small-width conversion; that’s excellent for these LEDs where Δλ is a fraction of λ<sub>0</sub>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <h3>Mini intuition examples</h3>
+        <ul>
+          <li><strong>Why Δλ grows with λ<sub>0</sub><sup>2</sup>:</strong> for a fixed energy spread ΔE, wavelength sensitivity increases at longer wavelengths because E = hc/λ is nonlinear; a small ΔE corresponds to a larger Δλ at larger λ.</li>
+          <li><strong>Why green can be “extra broad”:</strong> many green LEDs use InGaN alloys where composition fluctuations create spatial variations in bandgap, adding <em>inhomogeneous (alloy) broadening</em>.</li>
+        </ul>
+        <div class="callout warn" style="margin-top:10px;">
+          <h3>What to watch for (pitfalls)</h3>
+          <ul>
+            <li>Mixing units: Eq. (18.1-30) expects λ in <strong>μm</strong> and gives Δλ in <strong>μm</strong> when kT is in <strong>eV</strong>.</li>
+            <li>Using large-width formulas: here Δλ ≪ λ<sub>0</sub>, so differential conversions are appropriate.</li>
+            <li>Reading FWHM from plots: always find the <strong>half-maximum level</strong> and measure between the two crossings.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="p1" class="fadeIn">
+      <h2>PART 1 — Problem Analysis (No solving yet)</h2>
+
+      <div class="card">
+        <h3>Problem restatement (in plain words)</h3>
+        <p>
+          From the provided LED spectra plots (visible/UV and near-IR), estimate the FWHM spectral width for LEDs with
+          peak wavelengths λ<sub>0</sub> = 0.37, 0.53, 0.64, 0.91, 1.30, 1.93, and 2.25 μm. Report widths in nm,
+          convert them to frequency widths (Hz) and photon-energy widths (eV), and compare to the theoretical widths from
+          Eq. (18.1-30). Finally, for the LED centered at 0.53 μm, estimate the additional <em>alloy broadening</em> beyond the thermal prediction.
+        </p>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div class="card">
+          <h3>Given</h3>
+          <ul>
+            <li>Seven center wavelengths λ<sub>0</sub> (μm): 0.37, 0.53, 0.64, 0.91, 1.30, 1.93, 2.25.</li>
+            <li>Graphical spectra (normalized peak intensities) to read FWHM.</li>
+            <li>Thermal-width formula (Eq. 18.1-30): Δλ ≈ 1.45 λ<sub>0</sub><sup>2</sup> kT.</li>
+            <li>Room-temperature scale for comparison: typically <span class="pill">T ≈ 300 K → kT ≈ 0.026 eV</span> (used here as the default).</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Unknowns / what to find</h3>
+          <ul>
+            <li>Graphical FWHM widths Δλ<sub>graph</sub> (nm) for each λ<sub>0</sub>.</li>
+            <li>Converted widths: Δν (Hz) and ΔE (eV) for each LED.</li>
+            <li>Theoretical widths Δλ<sub>th</sub> from Eq. (18.1-30) and the comparison.</li>
+            <li>Alloy broadening for λ<sub>0</sub> = 0.53 μm:
+              Δλ<sub>alloy</sub> ≈ Δλ<sub>graph</sub> − Δλ<sub>th</sub> (and similarly in Hz, eV).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3>Relevant principles (and why they apply)</h3>
+        <ul>
+          <li><strong>FWHM definition</strong> applies because we’re asked for “spectral widths (FWHM).”</li>
+          <li><strong>Photon relations</strong> (ν = c/λ and E = hc/λ) apply to convert wavelength width into frequency and energy width.</li>
+          <li><strong>Thermal LED model</strong> applies as a baseline prediction (it captures the broadening from carrier energy spread).</li>
+          <li>We do <strong>not</strong> need interference, cavity modes, or linewidth-narrowing laser physics: LEDs are incoherent and broadband compared with lasers.</li>
+        </ul>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div class="callout warn">
+          <h3>Assumptions (explicit)</h3>
+          <ul>
+            <li>Each plotted spectrum is treated as approximately single-peaked; we measure FWHM around the main peak.</li>
+            <li>Small-width conversion: Δλ ≪ λ<sub>0</sub>, so linearization is valid.</li>
+            <li>For theory comparison, we use a default example temperature <strong>T = 300 K</strong> unless otherwise specified.</li>
+            <li>Alloy broadening is estimated as the <em>excess width</em> beyond the thermal model (a practical engineering definition).</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Possible approaches (pros/cons)</h3>
+          <ol>
+            <li><strong>Graphical read-off</strong> directly from plots (matches “graphically estimate”): fast, but introduces reading uncertainty.</li>
+            <li><strong>Thermal formula</strong> only: quick and clean scaling, but misses inhomogeneous broadening (e.g., alloys).</li>
+            <li><strong>Hybrid (best here):</strong> read Δλ<sub>graph</sub>, compute conversions, then compare to Δλ<sub>th</sub> and attribute excess to alloy broadening (where relevant).</li>
+          </ol>
+          <p class="note"><strong>Chosen:</strong> the hybrid method, because the question explicitly asks for graphical estimates <em>and</em> theoretical comparison plus alloy broadening.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="p2" class="fadeIn">
+      <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+      <div class="card">
+        <ol>
+          <li><strong>Goal:</strong> get Δλ<sub>graph</sub> (nm). <br><em>Tool:</em> FWHM definition (half-maximum crossings). <br><em>Meaning:</em> how broad the LED spectrum is in wavelength.</li>
+          <li><strong>Goal:</strong> compute Δλ<sub>th</sub> from Eq. (18.1-30). <br><em>Tool:</em> Δλ ≈ 1.45 λ<sub>0</sub><sup>2</sup> kT (λ in μm). <br><em>Meaning:</em> baseline thermal broadening prediction.</li>
+          <li><strong>Goal:</strong> convert Δλ → Δν. <br><em>Tool:</em> Δν ≈ (c/λ<sub>0</sub><sup>2</sup>)Δλ. <br><em>Meaning:</em> spectral width in frequency units (important for bandwidth and dispersion thinking).</li>
+          <li><strong>Goal:</strong> convert Δλ → ΔE. <br><em>Tool:</em> ΔE ≈ (hc/λ<sub>0</sub><sup>2</sup>)Δλ. <br><em>Meaning:</em> energy spread of emitted photons.</li>
+          <li><strong>Goal:</strong> compute alloy broadening at 0.53 μm. <br><em>Tool:</em> subtraction: Δλ<sub>alloy</sub> ≈ Δλ<sub>graph</sub> − Δλ<sub>th</sub>. <br><em>Meaning:</em> extra inhomogeneous/disorder contribution beyond the thermal model.</li>
+          <li><strong>Goal:</strong> sanity-check. <br><em>Tool:</em> units, scaling (Δλ ∝ λ<sup>2</sup>), and reasonableness (green often broader).</li>
+        </ol>
+
+        <div class="callout warn" style="margin-top:10px;">
+          <strong>Common mistakes & quick tips</strong>
+          <ul>
+            <li>Don’t forget: Eq. (18.1-30) uses <strong>μm</strong> for λ and produces Δλ in <strong>μm</strong>.</li>
+            <li>Convert nm ↔ m carefully: 1 nm = 10<sup>−9</sup> m; 1 μm = 10<sup>−6</sup> m.</li>
+            <li>Use λ<sub>0</sub> (center) in the conversion formulas, not the half-max wavelengths.</li>
+            <li>When estimating from a plot, always measure at exactly “half of the peak,” not half of the baseline.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="p3" class="fadeIn">
+      <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+      <div class="card">
+        <h3>Physical intuition (before calculating)</h3>
+        <p>
+          The thermal model predicts that all LEDs have roughly the same <em>energy</em> width scale (set by kT),
+          but because wavelength depends nonlinearly on energy, the <em>wavelength</em> width should grow roughly like
+          λ<sub>0</sub><sup>2</sup>. So we expect near-IR LEDs to look much broader in nm than visible LEDs.
+          We also expect the green LED (0.53 μm) to be broader than the simple model if it suffers strong alloy/disorder broadening.
+        </p>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div class="card">
+          <h3>Key equations (with copy buttons)</h3>
+
+          <div class="row" style="margin:8px 0;">
+            <div style="flex:1; min-width:260px;">
+              <div class="kEq" id="eq1">Thermal LED spectral width (Eq. 18.1-30):
+Δλ_th(μm) ≈ 1.45 · [λ0(μm)]^2 · kT(eV)</div>
+            </div>
+            <button class="btn" data-copy="#eq1">Copy</button>
+          </div>
+
+          <div class="row" style="margin:8px 0;">
+            <div style="flex:1; min-width:260px;">
+              <div class="kEq" id="eq2">Conversions (small-width approximation):
+ν = c/λ
+E = hc/λ
+Δν ≈ (c/λ0^2) · Δλ
+ΔE ≈ (hc/λ0^2) · Δλ</div>
+            </div>
+            <button class="btn" data-copy="#eq2">Copy</button>
+          </div>
+
+          <div class="row" style="margin:8px 0;">
+            <div style="flex:1; min-width:260px;">
+              <div class="kEq" id="eq3">Alloy broadening estimate (green LED):
+Δλ_alloy ≈ Δλ_graph − Δλ_th
+(and likewise for Δν and ΔE using the same λ0)</div>
+            </div>
+            <button class="btn" data-copy="#eq3">Copy</button>
+          </div>
+
+          <p class="note">
+            Here we use the standard room-temperature default for comparison:
+            <span class="pill">T = 300 K → kT ≈ 0.026 eV</span>.
+            (The interactive slider below lets you change T.)
+          </p>
+        </div>
+
+        <div class="callout good">
+          <h3>Graphical FWHM estimates used</h3>
+          <p>
+            From the provided plots, we take approximate FWHM values (read at half-maximum).
+            Because the figures are qualitative and small, these should be interpreted as “engineering estimates.”
+          </p>
+          <ul style="margin:8px 0 0;">
+            <li>0.37 μm: ~8 nm</li>
+            <li>0.53 μm (green): ~35 nm (noticeably broader)</li>
+            <li>0.64 μm: ~20 nm</li>
+            <li>0.91 μm: ~35 nm</li>
+            <li>1.30 μm: ~80 nm</li>
+            <li>1.93 μm: ~160 nm</li>
+            <li>2.25 μm: ~210 nm</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <h3>Step-by-step calculations</h3>
+
+        <h3>1) Theoretical widths from Eq. (18.1-30)</h3>
+        <p>
+          Define:
+          λ<sub>0</sub> = center wavelength (μm),
+          kT = thermal energy (eV),
+          Δλ<sub>th</sub> = theoretical FWHM width (μm).
+        </p>
+        <div class="kEq">Δλ_th(μm) = 1.45 · λ0^2 · kT</div>
+        <p>
+          Using kT = 0.026 eV (≈300 K) gives theoretical widths that scale as λ<sub>0</sub><sup>2</sup>.
+          Converting μm → nm uses: 1 μm = 1000 nm.
+        </p>
+
+        <h3>2) Convert wavelength width to frequency width</h3>
+        <p>
+          Since ν = c/λ, differentiate: dν/dλ = −c/λ<sup>2</sup>. For small widths,
+        </p>
+        <div class="kEq">Δν ≈ |dν/dλ|_{λ0} · Δλ = (c/λ0^2) · Δλ</div>
+        <p>
+          Here λ<sub>0</sub> and Δλ must be in meters to produce Δν in Hz.
+        </p>
+
+        <h3>3) Convert wavelength width to energy width</h3>
+        <p>
+          Since E = hc/λ, differentiate: dE/dλ = −hc/λ<sup>2</sup>. For small widths,
+        </p>
+        <div class="kEq">ΔE ≈ (hc/λ0^2) · Δλ</div>
+        <p>
+          We report ΔE in eV. (The computation uses hc = 1.23984×10<sup>−6</sup> eV·m.)
+        </p>
+
+        <h3>4) Alloy broadening for the green LED (0.53 μm)</h3>
+        <p>
+          We define the “alloy broadening contribution” as the excess width relative to the thermal model:
+        </p>
+        <div class="kEq">Δλ_alloy ≈ Δλ_graph − Δλ_th</div>
+        <p>
+          This is not a fundamental separation (real mechanisms mix), but it is a standard practical estimate:
+          “How much broader is the measured spectrum than a simple thermal prediction?”
+        </p>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <h3>Numerical results (default T = 300 K)</h3>
+
+        <div class="controls" style="margin:10px 0 12px;">
+          <div class="control">
+            <label for="temp">Temperature T (K) → sets kT</label>
+            <input id="temp" type="range" min="200" max="450" step="1" value="300"/>
+            <div class="val" id="tempVal">T = 300 K, kT = 0.02585 eV</div>
+          </div>
+
+          <div class="control">
+            <label for="selLambda">Select λ0 for the spectrum demo (secondary plot)</label>
+            <select id="selLambda">
+              <option value="0.37">0.37 μm</option>
+              <option value="0.53" selected>0.53 μm</option>
+              <option value="0.64">0.64 μm</option>
+              <option value="0.91">0.91 μm</option>
+              <option value="1.30">1.30 μm</option>
+              <option value="1.93">1.93 μm</option>
+              <option value="2.25">2.25 μm</option>
+            </select>
+            <div class="inline" style="margin-top:10px;">
+              <input id="showAlloy" type="checkbox" checked/>
+              <label for="showAlloy" style="margin:0; color:var(--muted);">Show green alloy broadening band (0.53 μm)</label>
+            </div>
+            <div class="val" id="selVal">Selected λ0 = 0.53 μm</div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-bottom:10px;">
+          <button class="btn" id="copyFinal">Copy final numeric answers (table text)</button>
+          <span class="note">Tip: change T to see how the theoretical widths scale; the “graphical” estimates remain fixed.</span>
+        </div>
+
+        <div style="overflow:auto;">
+          <table id="resultsTbl" aria-label="LED spectral width results">
+            <thead>
+              <tr>
+                <th>λ0 (μm)</th>
+                <th>Δλ_graph (nm)</th>
+                <th>Δλ_th (nm)</th>
+                <th>Δν_graph (THz)</th>
+                <th>Δν_th (THz)</th>
+                <th>ΔE_graph (meV)</th>
+                <th>ΔE_th (meV)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="callout good" style="margin-top:12px;">
+          <h3>Alloy broadening estimate for λ0 = 0.53 μm (at T = 300 K default)</h3>
+          <div class="kEq" id="finalAnswer">Using Δλ_graph ≈ 35 nm and Δλ_th ≈ 10.59 nm:
+Δλ_alloy ≈ 24.41 nm
+Δν_alloy ≈ 26.05 THz
+ΔE_alloy ≈ 107.74 meV</div>
+          <div class="row" style="margin-top:10px;">
+            <button class="btn" data-copy="#finalAnswer">Copy</button>
+          </div>
+          <p class="note">
+            Interpretation: the green LED is substantially broader than the thermal model, consistent with strong
+            inhomogeneous (alloy/disorder) broadening.
+          </p>
+        </div>
+
+        <div class="callout warn" style="margin-top:12px;">
+          <h3>Sanity checks</h3>
+          <ul>
+            <li><strong>Units:</strong> Δν uses meters in (c/λ<sup>2</sup>)Δλ → Hz; ΔE uses (hc/λ<sup>2</sup>)Δλ → eV.</li>
+            <li><strong>Scaling:</strong> theory gives Δλ ∝ λ<sub>0</sub><sup>2</sup>, so longer λ looks broader in nm.</li>
+            <li><strong>Limiting logic:</strong> at fixed kT, the predicted Δν and ΔE are roughly wavelength-independent (a hallmark of this model).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div class="card">
+          <h3>Connection to the diagrams/plots</h3>
+          <p>
+            The diagram canvas below shows a generic LED spectrum with the FWHM marked at half-maximum.
+            The main plot compares <strong>Δλ vs λ<sub>0</sub></strong> (graphical points vs thermal prediction), illustrating
+            the λ<sup>2</sup> trend. The secondary plot shows a <strong>normalized spectrum</strong> for a selected λ<sub>0</sub> and temperature:
+            as T increases, the theoretical FWHM widens.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Why the green LED stands out</h3>
+          <p>
+            In many green emitters, composition fluctuations in an alloy create spatial variations in bandgap energy.
+            The LED then emits from regions with slightly different effective bandgaps, broadening the spectrum beyond
+            what pure thermal carrier spread would predict.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="p4" class="fadeIn">
+      <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Re-interpreting the final formulas</h3>
+          <ul>
+            <li><strong>Δλ ∝ λ<sub>0</sub><sup>2</sup>:</strong> wavelength broadening is a nonlinear mapping of a roughly thermal energy spread into λ-space.</li>
+            <li><strong>Temperature control:</strong> higher T increases kT, which increases Δλ linearly in the model.</li>
+            <li><strong>Frequency width:</strong> Δν ≈ (c/λ<sup>2</sup>)Δλ, so if Δλ ∝ λ<sup>2</sup>, then Δν becomes roughly constant with λ (model prediction).</li>
+            <li><strong>Energy width:</strong> ΔE ≈ (hc/λ<sup>2</sup>)Δλ; same logic suggests a nearly constant ΔE scale set by kT.</li>
+          </ul>
+        </div>
+
+        <div class="callout warn">
+          <h3>How changing parameters affects outcomes (connect to plots)</h3>
+          <ul>
+            <li>Increase <strong>T</strong> → theoretical curve (Δλ<sub>th</sub>) rises uniformly and the selected-spectrum plot broadens.</li>
+            <li>Increase <strong>λ<sub>0</sub></strong> → theoretical Δλ grows as λ<sub>0</sub><sup>2</sup> (main plot steepens upward).</li>
+            <li>Toggle “alloy broadening” → highlights why the green point sits above the theory curve.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <h3>An alternative derivation idea (brief)</h3>
+        <p>
+          You can start from an assumed spectral distribution in photon energy (e.g., a near-exponential tail set by kT),
+          estimate an energy FWHM scale ΔE ∼ few × kT, and then map energy to wavelength using E = hc/λ with a
+          first-order Taylor expansion around λ<sub>0</sub>. That mapping produces the λ<sub>0</sub><sup>2</sup> dependence for Δλ.
+        </p>
+
+        <h3>Concept checks (quick self-test)</h3>
+        <ul>
+          <li><strong>Q:</strong> If λ<sub>0</sub> doubles, what happens to Δλ<sub>th</sub> in this model? <strong>A:</strong> It increases by a factor of 4 (quadratic in λ<sub>0</sub>).</li>
+          <li><strong>Q:</strong> Why is Δν predicted to be nearly constant across λ? <strong>A:</strong> Because Δν ∝ Δλ/λ<sub>0</sub><sup>2</sup> and Δλ ∝ λ<sub>0</sub><sup>2</sup>.</li>
+          <li><strong>Q:</strong> What does “alloy broadening” mean in this context? <strong>A:</strong> Extra width due to inhomogeneous composition/bandgap variations, estimated by subtracting the thermal model width.</li>
+          <li><strong>Q:</strong> When would the small-width conversion break? <strong>A:</strong> If Δλ becomes comparable to λ<sub>0</sub>, the linear approximation is no longer accurate.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="p5" class="fadeIn">
+      <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Canvas 1 — Diagram: what “FWHM” means</h3>
+          <p>
+            The diagram shows a generic LED spectrum versus wavelength. The horizontal line at 50% of peak intensity
+            intersects the spectrum at two wavelengths. The distance between those two wavelengths is the FWHM, Δλ.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Canvas 2 — Main plot: Δλ vs λ0 (graphical vs theory)</h3>
+          <p>
+            Points show the fixed “graphical estimates.” The curve shows the thermal-model prediction
+            Δλ<sub>th</sub>(T) ∝ λ<sub>0</sub><sup>2</sup>. Use the temperature slider to see how the curve rises with T.
+            If enabled, a highlighted band emphasizes the green LED’s excess width above the theory curve.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div class="card">
+          <h3>Canvas 3 — Secondary plot: selectable spectrum + temperature dependence</h3>
+          <p>
+            Choose a center wavelength λ<sub>0</sub> with the dropdown. The plotted spectrum is a normalized Gaussian-like
+            shape with the theoretical FWHM for the selected T (for visualization). As you increase T, the spectrum broadens.
+          </p>
+        </div>
+        <div class="callout">
+          <h3>Interactive controls (what changes and why)</h3>
+          <ul>
+            <li><strong>T slider:</strong> changes kT and thus Δλ<sub>th</sub>; updates the theory curve, table theory columns, and the secondary spectrum.</li>
+            <li><strong>λ0 dropdown:</strong> selects which LED’s spectrum is displayed in the secondary plot.</li>
+            <li><strong>Alloy toggle:</strong> visually highlights the green LED’s “excess width” region on the main plot.</li>
+          </ul>
+        </div>
+      </div>
+
+      <figure style="margin-top:12px;">
+        <canvas id="cDiagram" aria-label="FWHM diagram"></canvas>
+      </figure>
+
+      <figure style="margin-top:12px;">
+        <canvas id="cMain" aria-label="Main plot: widths vs wavelength"></canvas>
+      </figure>
+
+      <figure style="margin-top:12px;">
+        <canvas id="cSecondary" class="smallCanvas" aria-label="Secondary plot: selected spectrum"></canvas>
+      </figure>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <p>
+    Notes: Graphical FWHM values are approximate read-offs from the provided spectra figures, intended for comparison to the
+    thermal-width scaling law. The interactive plots treat the theoretical spectrum as a smooth single-peak shape to illustrate
+    how FWHM changes with temperature; real LED lineshapes can deviate from a Gaussian.
+  </p>
+</footer>
+
+<script>
+/* ---------------------------
+   Constants and data
+---------------------------- */
+const c = 299792458;                       // m/s
+const hc_eVm = 1.239841984e-6;             // eV·m
+const k_B_eV_per_K = 8.617333262145e-5;    // eV/K
+
+const lambdas_um = [0.37, 0.53, 0.64, 0.91, 1.30, 1.93, 2.25];
+
+// Graphical FWHM estimates (nm) used in this solution (read from figures, approximate)
+const dlam_graph_nm = [8, 35, 20, 35, 80, 160, 210];
+
+function kT_eV(T){ return k_B_eV_per_K * T; }
+
+// Eq. (18.1-30): Δλ(μm) ≈ 1.45 λ0^2 kT (kT in eV)
+function dlam_th_nm(lambda_um, T){
+  const dlam_um = 1.45 * (lambda_um*lambda_um) * kT_eV(T);
+  return dlam_um * 1000; // μm -> nm
+}
+
+function dnu_THz(lambda_um, dlam_nm){
+  const lam = lambda_um * 1e-6;
+  const dlam = dlam_nm * 1e-9;
+  const dnu = (c/(lam*lam))*dlam; // Hz
+  return dnu / 1e12;
+}
+
+function dE_meV(lambda_um, dlam_nm){
+  const lam = lambda_um * 1e-6;
+  const dlam = dlam_nm * 1e-9;
+  const dE = (hc_eVm/(lam*lam))*dlam; // eV
+  return dE * 1e3; // meV
+}
+
+function round(x, n=2){
+  const p = Math.pow(10,n);
+  return Math.round(x*p)/p;
+}
+
+/* ---------------------------
+   UI wiring
+---------------------------- */
+const elTemp = document.getElementById('temp');
+const elTempVal = document.getElementById('tempVal');
+const elSel = document.getElementById('selLambda');
+const elSelVal = document.getElementById('selVal');
+const elShowAlloy = document.getElementById('showAlloy');
+const tbody = document.querySelector('#resultsTbl tbody');
+
+function updateTempLabel(){
+  const T = Number(elTemp.value);
+  elTempVal.textContent = `T = ${T} K, kT = ${kT_eV(T).toFixed(5)} eV`;
+}
+
+function updateSelLabel(){
+  elSelVal.textContent = `Selected λ0 = ${Number(elSel.value).toFixed(2)} μm`;
+}
+
+function buildTable(){
+  const T = Number(elTemp.value);
+  tbody.innerHTML = '';
+
+  for(let i=0;i<lambdas_um.length;i++){
+    const lam = lambdas_um[i];
+    const dg = dlam_graph_nm[i];
+    const dt = dlam_th_nm(lam, T);
+
+    const row = document.createElement('tr');
+
+    const cells = [
+      lam.toFixed(2),
+      dg.toFixed(2),
+      dt.toFixed(2),
+      dnu_THz(lam, dg).toFixed(2),
+      dnu_THz(lam, dt).toFixed(2),
+      dE_meV(lam, dg).toFixed(2),
+      dE_meV(lam, dt).toFixed(2)
+    ];
+
+    cells.forEach((txt, j)=>{
+      const td = document.createElement('td');
+      td.textContent = txt;
+      row.appendChild(td);
+    });
+
+    tbody.appendChild(row);
+  }
+
+  // Update finalAnswer block with current T for green LED alloy estimate (still defined as excess over thermal)
+  const lamG = 0.53;
+  const dgG = dlam_graph_nm[lambdas_um.indexOf(0.53)];
+  const dtG = dlam_th_nm(lamG, T);
+  const alloy_nm = dgG - dtG;
+
+  const alloy_THz = dnu_THz(lamG, alloy_nm);
+  const alloy_meV = dE_meV(lamG, alloy_nm);
+
+  const final = document.getElementById('finalAnswer');
+  final.textContent =
+`At T = ${T} K (kT = ${kT_eV(T).toFixed(5)} eV):
+Using Δλ_graph ≈ ${dgG.toFixed(2)} nm and Δλ_th ≈ ${dtG.toFixed(2)} nm:
+Δλ_alloy ≈ ${alloy_nm.toFixed(2)} nm
+Δν_alloy ≈ ${alloy_THz.toFixed(2)} THz
+ΔE_alloy ≈ ${alloy_meV.toFixed(2)} meV`;
+}
+
+/* ---------------------------
+   Copy buttons
+---------------------------- */
+function copyText(text){
+  navigator.clipboard.writeText(text).catch(()=>{});
+}
+
+document.querySelectorAll('[data-copy]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const sel = btn.getAttribute('data-copy');
+    const el = document.querySelector(sel);
+    if(el) copyText(el.textContent);
+  });
+});
+
+document.getElementById('copyFinal').addEventListener('click', ()=>{
+  const T = Number(elTemp.value);
+  let out = `LED Spectral Widths (FWHM). Temperature T=${T} K (kT=${kT_eV(T).toFixed(5)} eV)\n`;
+  out += `Columns: λ0(μm), Δλ_graph(nm), Δλ_th(nm), Δν_graph(THz), Δν_th(THz), ΔE_graph(meV), ΔE_th(meV)\n`;
+  for(let i=0;i<lambdas_um.length;i++){
+    const lam = lambdas_um[i];
+    const dg = dlam_graph_nm[i];
+    const dt = dlam_th_nm(lam, T);
+    out += `${lam.toFixed(2)}, ${dg.toFixed(2)}, ${dt.toFixed(2)}, ${dnu_THz(lam,dg).toFixed(2)}, ${dnu_THz(lam,dt).toFixed(2)}, ${dE_meV(lam,dg).toFixed(2)}, ${dE_meV(lam,dt).toFixed(2)}\n`;
+  }
+  // Green alloy excess at this T
+  const lamG = 0.53;
+  const dgG = dlam_graph_nm[lambdas_um.indexOf(0.53)];
+  const dtG = dlam_th_nm(lamG, T);
+  const alloy_nm = dgG - dtG;
+  out += `\nAlloy broadening estimate for λ0=0.53 μm:\n`;
+  out += `Δλ_alloy ≈ ${alloy_nm.toFixed(2)} nm, Δν_alloy ≈ ${dnu_THz(lamG,alloy_nm).toFixed(2)} THz, ΔE_alloy ≈ ${dE_meV(lamG,alloy_nm).toFixed(2)} meV\n`;
+  copyText(out);
+});
+
+/* ---------------------------
+   Smooth scroll for TOC
+---------------------------- */
+document.querySelectorAll('[data-scroll]').forEach(a=>{
+  a.addEventListener('click', (e)=>{
+    e.preventDefault();
+    const id = a.getAttribute('href');
+    const target = document.querySelector(id);
+    if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+});
+
+/* ---------------------------
+   Canvas helpers (HiDPI)
+---------------------------- */
+function setupCanvas(canvas){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(2, Math.floor(rect.width * dpr));
+  const h = Math.max(2, Math.floor(rect.height * dpr));
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w;
+    canvas.height = h;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  return ctx;
+}
+
+function clear(ctx, canvas){
+  const rect = canvas.getBoundingClientRect();
+  ctx.clearRect(0,0,rect.width, rect.height);
+}
+
+function drawAxes(ctx, x0,y0,w,h, xLabel,yLabel, title){
+  // frame
+  ctx.save();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = '12px ui-sans-serif, system-ui';
+  ctx.strokeRect(x0,y0,w,h);
+
+  // title
+  ctx.fillStyle = 'rgba(233,238,247,0.92)';
+  ctx.font = '600 13px ui-sans-serif, system-ui';
+  ctx.fillText(title, x0+8, y0-8);
+
+  // labels
+  ctx.fillStyle = 'rgba(233,238,247,0.85)';
+  ctx.font = '12px ui-sans-serif, system-ui';
+  ctx.fillText(xLabel, x0 + w/2 - ctx.measureText(xLabel).width/2, y0 + h + 28);
+
+  ctx.save();
+  ctx.translate(x0 - 34, y0 + h/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, -ctx.measureText(yLabel).width/2, 0);
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawGrid(ctx, x0,y0,w,h, nx, ny){
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx.lineWidth = 1;
+  for(let i=1;i<nx;i++){
+    const x = x0 + w*i/nx;
+    ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x,y0+h); ctx.stroke();
+  }
+  for(let j=1;j<ny;j++){
+    const y = y0 + h*j/ny;
+    ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x0+w,y); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function mapX(x, xmin,xmax, x0,w){
+  return x0 + (x-xmin)/(xmax-xmin)*w;
+}
+function mapY(y, ymin,ymax, y0,h){
+  return y0 + h - (y-ymin)/(ymax-ymin)*h;
+}
+
+function tickText(ctx, txt, x,y, align='center'){
+  ctx.save();
+  ctx.fillStyle = 'rgba(233,238,247,0.75)';
+  ctx.font = '11px ui-sans-serif, system-ui';
+  ctx.textAlign = align;
+  ctx.textBaseline = 'top';
+  ctx.fillText(txt,x,y);
+  ctx.restore();
+}
+
+/* ---------------------------
+   Canvas 1: Diagram (FWHM)
+---------------------------- */
+const cDiagram = document.getElementById('cDiagram');
+function drawDiagram(){
+  const ctx = setupCanvas(cDiagram);
+  const rect = cDiagram.getBoundingClientRect();
+  clear(ctx, cDiagram);
+
+  const pad = 52;
+  const x0 = pad, y0 = 40, w = rect.width - pad - 18, h = rect.height - 70;
+
+  drawAxes(ctx, x0,y0,w,h, 'Wavelength λ (nm)', 'Normalized intensity I/Imax', 'Diagram: LED spectrum and FWHM');
+
+  drawGrid(ctx, x0,y0,w,h, 8, 6);
+
+  // Define a synthetic spectrum
+  const lam0 = 530;     // nm
+  const fwhm = 35;      // nm
+  const sigma = fwhm / (2*Math.sqrt(2*Math.log(2)));
+
+  const xmin = 470, xmax = 600;
+  const ymin = 0, ymax = 1.05;
+
+  // Ticks
+  ctx.save();
+  ctx.strokeStyle = 'rgba(233,238,247,0.35)';
+  for(let L=480; L<=600; L+=20){
+    const x = mapX(L,xmin,xmax,x0,w);
+    ctx.beginPath(); ctx.moveTo(x,y0+h); ctx.lineTo(x,y0+h+6); ctx.stroke();
+    tickText(ctx, String(L), x, y0+h+8);
+  }
+  for(let I=0; I<=1.0; I+=0.2){
+    const y = mapY(I,ymin,ymax,y0,h);
+    ctx.beginPath(); ctx.moveTo(x0-6,y); ctx.lineTo(x0,y); ctx.stroke();
+    ctx.save();
+    ctx.fillStyle = 'rgba(233,238,247,0.75)';
+    ctx.font = '11px ui-sans-serif, system-ui';
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText(I.toFixed(1), x0-10, y);
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // Plot spectrum
+  ctx.save();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(125,211,252,0.95)';
+  ctx.beginPath();
+  let started=false;
+  for(let L=xmin; L<=xmax; L+=0.4){
+    const I = Math.exp(-0.5*Math.pow((L-lam0)/sigma,2));
+    const x = mapX(L,xmin,xmax,x0,w);
+    const y = mapY(I,ymin,ymax,y0,h);
+    if(!started){ ctx.moveTo(x,y); started=true; }
+    else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // Half max line and FWHM markers
+  const Ihalf = 0.5;
+  const yHalf = mapY(Ihalf,ymin,ymax,y0,h);
+  const L1 = lam0 - fwhm/2;
+  const L2 = lam0 + fwhm/2;
+  const x1 = mapX(L1,xmin,xmax,x0,w);
+  const x2 = mapX(L2,xmin,xmax,x0,w);
+
+  ctx.save();
+  ctx.setLineDash([6,6]);
+  ctx.strokeStyle = 'rgba(251,191,36,0.85)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x0,yHalf); ctx.lineTo(x0+w,yHalf); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(251,191,36,0.95)';
+  ctx.font = '600 12px ui-sans-serif, system-ui';
+  ctx.fillText('Half maximum (I/Imax = 0.5)', x0+8, yHalf-18);
+  ctx.restore();
+
+  // vertical markers
+  ctx.save();
+  ctx.strokeStyle = 'rgba(251,191,36,0.85)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x1,y0+h); ctx.lineTo(x1,yHalf); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2,y0+h); ctx.lineTo(x2,yHalf); ctx.stroke();
+
+  // FWHM bracket
+  ctx.strokeStyle = 'rgba(52,211,153,0.95)';
+  ctx.lineWidth = 2;
+  const yB = y0 + h + 18;
+  ctx.beginPath(); ctx.moveTo(x1,yB); ctx.lineTo(x2,yB); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x1,yB-6); ctx.lineTo(x1,yB+6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2,yB-6); ctx.lineTo(x2,yB+6); ctx.stroke();
+  ctx.fillStyle = 'rgba(52,211,153,0.95)';
+  ctx.font = '600 12px ui-sans-serif, system-ui';
+  const label = `FWHM = Δλ = ${fwhm} nm`;
+  ctx.fillText(label, (x1+x2)/2 - ctx.measureText(label).width/2, yB+8);
+  ctx.restore();
+
+  // annotate peak
+  const xPeak = mapX(lam0,xmin,xmax,x0,w);
+  const yPeak = mapY(1,ymin,ymax,y0,h);
+  ctx.save();
+  ctx.fillStyle = 'rgba(167,139,250,0.95)';
+  ctx.beginPath(); ctx.arc(xPeak,yPeak,4,0,Math.PI*2); ctx.fill();
+  ctx.font = '600 12px ui-sans-serif, system-ui';
+  const ptxt = `Peak at λ0 = ${lam0} nm`;
+  ctx.fillText(ptxt, xPeak+10, yPeak-14);
+  ctx.restore();
+}
+
+/* ---------------------------
+   Canvas 2: Main plot (Δλ vs λ0)
+---------------------------- */
+const cMain = document.getElementById('cMain');
+function drawMainPlot(){
+  const ctx = setupCanvas(cMain);
+  const rect = cMain.getBoundingClientRect();
+  clear(ctx, cMain);
+
+  const padL = 64, padR = 18, padT = 44, padB = 58;
+  const x0 = padL, y0 = padT, w = rect.width - padL - padR, h = rect.height - padT - padB;
+
+  const T = Number(elTemp.value);
+  const showAlloy = elShowAlloy.checked;
+
+  // Compute ranges
+  const xmin = 0.30, xmax = 2.35;
+  // y range: include both graph and theory at current T
+  let yMax = 0;
+  for(let i=0;i<lambdas_um.length;i++){
+    yMax = Math.max(yMax, dlam_graph_nm[i], dlam_th_nm(lambdas_um[i], T));
+  }
+  yMax *= 1.12;
+  const ymin = 0;
+
+  drawAxes(ctx, x0,y0,w,h, 'Center wavelength λ0 (μm)', 'FWHM Δλ (nm)', 'Main: Spectral width vs center wavelength');
+  drawGrid(ctx, x0,y0,w,h, 8, 6);
+
+  // ticks
+  ctx.save();
+  ctx.strokeStyle = 'rgba(233,238,247,0.35)';
+  ctx.fillStyle = 'rgba(233,238,247,0.75)';
+  ctx.font = '11px ui-sans-serif, system-ui';
+
+  for(let L=0.4; L<=2.3; L+=0.3){
+    const x = mapX(L,xmin,xmax,x0,w);
+    ctx.beginPath(); ctx.moveTo(x,y0+h); ctx.lineTo(x,y0+h+6); ctx.stroke();
+    tickText(ctx, L.toFixed(1), x, y0+h+8);
+  }
+  // y ticks
+  const yTick = yMax/5;
+  for(let j=0;j<=5;j++){
+    const Y = j*yTick;
+    const y = mapY(Y,ymin,yMax,y0,h);
+    ctx.beginPath(); ctx.moveTo(x0-6,y); ctx.lineTo(x0,y); ctx.stroke();
+    ctx.save();
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText(Math.round(Y).toString(), x0-10, y);
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // Draw theoretical curve (smooth)
+  ctx.save();
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = 'rgba(125,211,252,0.95)';
+  ctx.beginPath();
+  let started=false;
+  for(let L=xmin; L<=xmax; L+=0.01){
+    const Y = dlam_th_nm(L, T);
+    const x = mapX(L,xmin,xmax,x0,w);
+    const y = mapY(Y,ymin,yMax,y0,h);
+    if(!started){ ctx.moveTo(x,y); started=true; }
+    else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // Plot graphical points
+  ctx.save();
+  ctx.fillStyle = 'rgba(167,139,250,0.95)';
+  ctx.strokeStyle = 'rgba(167,139,250,0.95)';
+  ctx.lineWidth = 2;
+  for(let i=0;i<lambdas_um.length;i++){
+    const x = mapX(lambdas_um[i], xmin,xmax,x0,w);
+    const y = mapY(dlam_graph_nm[i], ymin,yMax,y0,h);
+    ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+
+  // Alloy highlight for green (0.53 μm): band between theory and graph at that x
+  if(showAlloy){
+    const lamG = 0.53;
+    const dgG = dlam_graph_nm[lambdas_um.indexOf(0.53)];
+    const dtG = dlam_th_nm(lamG, T);
+    const x = mapX(lamG, xmin,xmax,x0,w);
+    const y1 = mapY(Math.min(dgG, dtG), ymin,yMax,y0,h);
+    const y2 = mapY(Math.max(dgG, dtG), ymin,yMax,y0,h);
+    ctx.save();
+    ctx.fillStyle = 'rgba(251,191,36,0.22)';
+    ctx.strokeStyle = 'rgba(251,191,36,0.85)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.rect(x-10, y2, 20, y1-y2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.font = '600 12px ui-sans-serif, system-ui';
+    ctx.fillStyle = 'rgba(251,191,36,0.95)';
+    const label = 'alloy excess';
+    ctx.fillText(label, x+14, y2+6);
+    ctx.restore();
+  }
+
+  // Legend
+  ctx.save();
+  const lx = x0 + 10, ly = y0 + 10;
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(lx, ly, 240, 54, 12);
+  ctx.fill(); ctx.stroke();
+
+  // theory line sample
+  ctx.strokeStyle = 'rgba(125,211,252,0.95)';
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(lx+12, ly+18); ctx.lineTo(lx+42, ly+18); ctx.stroke();
+  ctx.fillStyle = 'rgba(233,238,247,0.85)';
+  ctx.font = '12px ui-sans-serif, system-ui';
+  ctx.fillText('Thermal model Δλ_th(T)', lx+52, ly+12);
+
+  // points sample
+  ctx.fillStyle = 'rgba(167,139,250,0.95)';
+  ctx.beginPath(); ctx.arc(lx+27, ly+38, 5, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(233,238,247,0.85)';
+  ctx.fillText('Graphical FWHM estimates', lx+52, ly+32);
+
+  ctx.restore();
+}
+
+/* ---------------------------
+   Canvas 3: Secondary plot (selected spectrum)
+---------------------------- */
+const cSecondary = document.getElementById('cSecondary');
+function drawSecondary(){
+  const ctx = setupCanvas(cSecondary);
+  const rect = cSecondary.getBoundingClientRect();
+  clear(ctx, cSecondary);
+
+  const padL = 64, padR = 18, padT = 44, padB = 56;
+  const x0 = padL, y0 = padT, w = rect.width - padL - padR, h = rect.height - padT - padB;
+
+  const T = Number(elTemp.value);
+  const lambda_um = Number(elSel.value);
+
+  const fwhm_nm = dlam_th_nm(lambda_um, T);
+  const lam0_nm = lambda_um * 1000;
+  const sigma = fwhm_nm / (2*Math.sqrt(2*Math.log(2)));
+
+  // x range around peak
+  const span = Math.max(5*fwhm_nm, 60);
+  const xmin = lam0_nm - span/2;
+  const xmax = lam0_nm + span/2;
+  const ymin = 0, ymax = 1.05;
+
+  drawAxes(ctx, x0,y0,w,h, 'Wavelength λ (nm)', 'Normalized intensity', `Secondary: Theoretical spectrum demo (λ0=${lambda_um.toFixed(2)} μm, T=${T} K)`);
+  drawGrid(ctx, x0,y0,w,h, 8, 6);
+
+  // ticks
+  ctx.save();
+  ctx.strokeStyle = 'rgba(233,238,247,0.35)';
+  ctx.fillStyle = 'rgba(233,238,247,0.75)';
+  ctx.font = '11px ui-sans-serif, system-ui';
+
+  const xStep = (xmax-xmin)/6;
+  for(let i=0;i<=6;i++){
+    const L = xmin + i*xStep;
+    const x = mapX(L,xmin,xmax,x0,w);
+    ctx.beginPath(); ctx.moveTo(x,y0+h); ctx.lineTo(x,y0+h+6); ctx.stroke();
+    tickText(ctx, Math.round(L).toString(), x, y0+h+8);
+  }
+  for(let I=0; I<=1.0; I+=0.2){
+    const y = mapY(I,ymin,ymax,y0,h);
+    ctx.beginPath(); ctx.moveTo(x0-6,y); ctx.lineTo(x0,y); ctx.stroke();
+    ctx.save();
+    ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText(I.toFixed(1), x0-10, y);
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // plot Gaussian-like spectrum
+  ctx.save();
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = 'rgba(125,211,252,0.95)';
+  ctx.beginPath();
+  let started=false;
+  for(let L=xmin; L<=xmax; L+= (xmax-xmin)/450){
+    const I = Math.exp(-0.5*Math.pow((L-lam0_nm)/sigma,2));
+    const x = mapX(L,xmin,xmax,x0,w);
+    const y = mapY(I,ymin,ymax,y0,h);
+    if(!started){ ctx.moveTo(x,y); started=true; }
+    else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // FWHM markers
+  const L1 = lam0_nm - fwhm_nm/2;
+  const L2 = lam0_nm + fwhm_nm/2;
+  const yHalf = mapY(0.5,ymin,ymax,y0,h);
+  const x1 = mapX(L1,xmin,xmax,x0,w);
+  const x2 = mapX(L2,xmin,xmax,x0,w);
+
+  ctx.save();
+  ctx.setLineDash([6,6]);
+  ctx.strokeStyle = 'rgba(251,191,36,0.85)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x0, yHalf); ctx.lineTo(x0+w, yHalf); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.strokeStyle = 'rgba(52,211,153,0.9)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x1,y0+h); ctx.lineTo(x1,yHalf); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2,y0+h); ctx.lineTo(x2,yHalf); ctx.stroke();
+  ctx.fillStyle = 'rgba(52,211,153,0.95)';
+  ctx.font = '600 12px ui-sans-serif, system-ui';
+  const txt = `FWHM(th) ≈ ${fwhm_nm.toFixed(1)} nm`;
+  ctx.fillText(txt, Math.min(x2+10, x0+w-ctx.measureText(txt).width-6), y0+10);
+  ctx.restore();
+
+  // Extra: show Δν and ΔE for this selection and theory width
+  const dnu = dnu_THz(lambda_um, fwhm_nm);
+  const dE  = dE_meV(lambda_um, fwhm_nm);
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(x0+w-220, y0+h-56, 210, 46, 12);
+  ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = 'rgba(233,238,247,0.88)';
+  ctx.font = '12px ui-sans-serif, system-ui';
+  ctx.fillText(`Δν(th) ≈ ${dnu.toFixed(2)} THz`, x0+w-210, y0+h-48);
+  ctx.fillText(`ΔE(th) ≈ ${dE.toFixed(2)} meV`, x0+w-210, y0+h-28);
+  ctx.restore();
+}
+
+/* polyfill for roundRect in older browsers */
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+    const rr = Math.min(r, w/2, h/2);
+    this.beginPath();
+    this.moveTo(x+rr,y);
+    this.arcTo(x+w,y, x+w,y+h, rr);
+    this.arcTo(x+w,y+h, x,y+h, rr);
+    this.arcTo(x,y+h, x,y, rr);
+    this.arcTo(x,y, x+w,y, rr);
+    this.closePath();
+    return this;
+  };
+}
+
+/* ---------------------------
+   Render loop (on demand)
+---------------------------- */
+function renderAll(){
+  updateTempLabel();
+  updateSelLabel();
+  buildTable();
+  drawDiagram();
+  drawMainPlot();
+  drawSecondary();
+}
+
+elTemp.addEventListener('input', renderAll);
+elSel.addEventListener('change', renderAll);
+elShowAlloy.addEventListener('change', renderAll);
+window.addEventListener('resize', renderAll);
+
+/* initial */
+renderAll();
+</script>
+</body>
+</html>
