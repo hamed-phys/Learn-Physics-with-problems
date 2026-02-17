@@ -2,145 +2,1668 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>9.2-6 (Saleh) — Slab Waveguide Fields from Maxwell’s Equations</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TE Slab Waveguide: Deriving Hᵧ and H_z from Maxwell’s Equations + Boundary Conditions</title>
   <style>
-    :root {
-      --bg: #0b0f14;
-      --card: #121a23;
-      --text: #e6edf3;
-      --muted: #9fb0c0;
-      --border: rgba(255,255,255,.10);
+    :root{
+      --bg:#0b0f17;
+      --panel:#0f1626;
+      --card:#111b2e;
+      --text:#eaf0ff;
+      --muted:#a9b6d3;
+      --faint:#6f7fa3;
+      --line:#223156;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
+    html,body{height:100%;}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(125,211,252,.14), transparent 60%),
+        radial-gradient(1000px 700px at 80% 30%, rgba(167,139,250,.12), transparent 60%),
+        radial-gradient(900px 700px at 50% 90%, rgba(52,211,153,.08), transparent 55%),
+        var(--bg);
+      line-height:1.55;
     }
-    header {
-      border-bottom: 1px solid var(--border);
-      background: rgba(10,14,20,.75);
+    a{color:var(--accent);}
+    header{
+      padding:28px 18px 10px;
+      max-width:1200px;
+      margin:0 auto;
     }
-    .wrap {
-      width: min(980px, 92vw);
-      margin: 0 auto;
-      padding: 18px 0;
+    .hero{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:16px;
+      align-items:stretch;
     }
-    h1 {
-      margin: 0;
-      font-size: 1.6rem;
+    @media (max-width: 980px){
+      .hero{grid-template-columns:1fr;}
     }
-    .meta {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: .95rem;
+    .titleCard{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px 18px 16px;
+      overflow:hidden;
+      position:relative;
     }
-    main .wrap { padding: 22px 0 40px; }
-    .card {
-      background: rgba(255,255,255,.04);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+    .titleCard:before{
+      content:"";
+      position:absolute; inset:-80px -120px auto auto;
+      width:260px; height:260px;
+      background: radial-gradient(circle at 30% 30%, rgba(125,211,252,.35), transparent 60%);
+      filter: blur(0px);
+      transform: rotate(15deg);
+      pointer-events:none;
     }
-    .label {
-      display: inline-block;
-      padding: 6px 10px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      color: var(--muted);
-      font-size: .85rem;
-      margin-bottom: 10px;
+    h1{
+      margin:0 0 8px;
+      font-size: clamp(1.25rem, 2.4vw, 2.0rem);
+      letter-spacing:.2px;
     }
-    pre {
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      background: rgba(0,0,0,.25);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      color: var(--text);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-      font-size: .95rem;
+    .subtitle{
+      color:var(--muted);
+      margin:0;
+      max-width:74ch;
     }
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 12px;
+    .metaRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
     }
-    .btn {
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.04);
-      color: var(--text);
-      border-radius: 12px;
-      padding: 10px 12px;
-      cursor: pointer;
-      font-weight: 600;
+    .pill{
+      font-size:.86rem;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(17,27,46,.55);
+      padding:6px 10px;
+      border-radius:999px;
     }
-    .btn:hover { border-color: rgba(255,255,255,.25); }
-    footer {
-      border-top: 1px solid var(--border);
-      color: var(--muted);
-      font-size: .9rem;
+
+    /* Sticky TOC */
+    .toc{
+      position:sticky;
+      top:10px;
+      align-self:start;
+      background: rgba(15,22,38,.72);
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      padding:12px 12px 10px;
     }
+    .toc h2{
+      font-size:1rem;
+      margin:6px 8px 10px;
+      color:var(--text);
+    }
+    .toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      text-decoration:none;
+      color:var(--muted);
+      border:1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size:.92rem;
+    }
+    .toc a:hover{
+      transform: translateX(2px);
+      background: rgba(125,211,252,.08);
+      border-color: rgba(125,211,252,.18);
+      color:var(--text);
+    }
+
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding:10px 18px 54px;
+    }
+    section{
+      margin-top:18px;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      .grid2{grid-template-columns:1fr;}
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.09);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px 16px 14px;
+    }
+    .card h3{
+      margin:0 0 10px;
+      font-size:1.05rem;
+      color:var(--text);
+    }
+    .muted{color:var(--muted);}
+    .faint{color:var(--faint);}
+    .callout{
+      border-left: 4px solid rgba(125,211,252,.9);
+      background: rgba(125,211,252,.06);
+      padding:12px 12px 10px;
+      border-radius: 14px;
+      border:1px solid rgba(125,211,252,.15);
+    }
+    .callout.warn{
+      border-left-color: rgba(251,191,36,.9);
+      background: rgba(251,191,36,.07);
+      border-color: rgba(251,191,36,.18);
+    }
+    .callout.good{
+      border-left-color: rgba(52,211,153,.9);
+      background: rgba(52,211,153,.07);
+      border-color: rgba(52,211,153,.18);
+    }
+    .eq{
+      font-family:var(--mono);
+      font-size:.95rem;
+      white-space:pre-wrap;
+      word-break:break-word;
+      padding:10px 10px 10px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      margin:8px 0 8px;
+    }
+    .eqRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+    }
+    .copyBtn{
+      flex:0 0 auto;
+      appearance:none;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:.86rem;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .copyBtn:hover{
+      transform: translateY(-1px);
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.22);
+    }
+    .copyBtn:active{transform: translateY(0px) scale(.98);}
+    .small{font-size:.92rem;}
+    ul{margin:10px 0 0 18px;}
+    li{margin:6px 0;}
+    .kpi{
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (max-width: 980px){
+      .kpi{grid-template-columns:1fr;}
+    }
+    .k{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:10px 12px;
+      background: rgba(17,27,46,.45);
+    }
+    .k .label{color:var(--muted); font-size:.86rem;}
+    .k .val{font-family:var(--mono); font-size:1.0rem; margin-top:4px;}
+    figure{
+      margin:0;
+    }
+    .vizWrap{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    .vizHeader{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px 12px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:6px;
+    }
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    label.ctrl{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      font-size:.88rem;
+      color:var(--muted);
+      min-width: 210px;
+    }
+    input[type="range"]{width: 240px;}
+    select, input[type="number"]{
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.14);
+      color:var(--text);
+      border-radius:12px;
+      padding:8px 10px;
+      outline:none;
+    }
+    .canvasCard{
+      padding:12px;
+    }
+    canvas{
+      width:100%;
+      height:340px;
+      display:block;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+    @media (max-width: 980px){
+      canvas{height:320px;}
+    }
+    .caption{
+      color:var(--muted);
+      font-size:.9rem;
+      margin-top:8px;
+    }
+    footer{
+      max-width:1200px;
+      margin:0 auto;
+      padding:18px;
+      color:var(--faint);
+      font-size:.9rem;
+      border-top:1px solid rgba(255,255,255,.08);
+    }
+
+    /* Print friendly */
+    @media print{
+      body{background:white; color:black;}
+      .titleCard,.toc,.card{box-shadow:none;}
+      .toc{position:static;}
+      a{color:black; text-decoration:underline;}
+      canvas{border:1px solid #999;}
+      .copyBtn{display:none;}
+    }
+
+    /* subtle animation */
+    @keyframes floatIn{
+      from{opacity:0; transform: translateY(8px);}
+      to{opacity:1; transform: translateY(0);}
+    }
+    .card, .titleCard, .toc{animation: floatIn .35s ease both;}
   </style>
 </head>
+
 <body>
-  <header>
-    <div class="wrap">
-      <h1>9.2-6 (Saleh) — Slab Waveguide Fields from Maxwell’s Equations</h1>
-      <div class="meta">Module: Photonics • Folder: problems/photonics/ch9 • Generated: 2026-02-17 02:13</div>
+<header>
+  <div class="hero">
+    <div class="titleCard">
+      <h1>9.2-6 — Derivation of Field Distributions Using Maxwell’s Equations (TE Modes in a Symmetric Slab Waveguide)</h1>
+      <p class="subtitle">
+        Starting from a given <span class="faint">TE</span> electric field profile
+        <span style="font-family:var(--mono)">E<sub>x</sub>(y,z)=u(y)e<sup>-jβz</sup></span>,
+        we use Maxwell’s curl equations to derive <span class="faint">H<sub>y</sub></span> and <span class="faint">H<sub>z</sub></span>,
+        enforce boundary conditions at <span style="font-family:var(--mono)">y=±d/2</span>, and connect the result to the
+        standard self-consistency (dispersion) condition for guided TE slab modes.
+      </p>
+      <div class="metaRow">
+        <span class="pill">Geometry: planar slab, thickness d</span>
+        <span class="pill">Polarization: TE (E along x)</span>
+        <span class="pill">Phasors: e<sup>-jωt</sup>, propagation e<sup>-jβz</sup></span>
+      </div>
     </div>
-  </header>
 
-  <main>
-    <div class="wrap">
-      <article class="card">
-        <div class="label">Problem Statement</div>
-        <pre>Starting with Ex=u(y)e^{-jβz}, derive Hy and Hz using Maxwell’s equations and verify boundary conditions and self-consistency relation.</pre>
+    <nav class="toc" aria-label="Table of contents">
+      <h2>Mini Table of Contents</h2>
+      <a href="#quick">Quick Summary</a>
+      <a href="#p0">PART 0 — Concept Primer</a>
+      <a href="#p1">PART 1 — Problem Analysis</a>
+      <a href="#p2">PART 2 — Strategy &amp; Tips</a>
+      <a href="#p3">PART 3 — Full Solution</a>
+      <a href="#p4">PART 4 — Deeper Understanding</a>
+      <a href="#p5">PART 5 — Visualization Guide</a>
+      <a href="#viz">Interactive Visualizations</a>
+    </nav>
+  </div>
+</header>
 
-        <div class="label" style="margin-top:14px;">Solution (start here)</div>
-        <pre>Write your solution here…</pre>
+<main>
+  <!-- Quick Summary -->
+  <section id="quick" class="card">
+    <h3>Quick Summary</h3>
+    <ul>
+      <li><b>What this is about:</b> TE guided modes in a symmetric dielectric slab waveguide and how Maxwell’s equations generate the magnetic-field components from a known electric-field profile.</li>
+      <li><b>Key physics idea:</b> In TE modes, <span style="font-family:var(--mono)">E</span> is transverse (here along <span style="font-family:var(--mono)">x</span>), while <span style="font-family:var(--mono)">H</span> must have components that “support” the curl of <span style="font-family:var(--mono)">E</span> in the <span style="font-family:var(--mono)">y</span>-<span style="font-family:var(--mono)">z</span> plane.</li>
+      <li><b>Governing equations:</b> Frequency-domain Maxwell curls:
+        <span style="font-family:var(--mono)">∇×E = -jωμH</span> and <span style="font-family:var(--mono)">∇×H = jωεE</span>.</li>
+      <li><b>Waveguide constraints:</b> In the core (index <span style="font-family:var(--mono)">n₁</span>): <span style="font-family:var(--mono)">k_y² + β² = (n₁k₀)²</span>. In the cladding (index <span style="font-family:var(--mono)">n₂</span>): <span style="font-family:var(--mono)">β² - γ² = (n₂k₀)²</span>.</li>
+      <li><b>What you derive:</b>
+        <span style="font-family:var(--mono)">H_y(y,z) = (β/ωμ) E_x(y,z)</span> and
+        <span style="font-family:var(--mono)">H_z(y,z) = -(j/ωμ) ∂E_x/∂y</span>
+        (for the <span style="font-family:var(--mono)">e^{-jωt}</span> convention).</li>
+      <li><b>Boundary conditions:</b> Continuity of tangential fields at <span style="font-family:var(--mono)">y=±d/2</span> implies continuity of <span style="font-family:var(--mono)">E_x</span> and <span style="font-family:var(--mono)">H_z</span>, yielding the TE dispersion condition:
+        <span style="font-family:var(--mono)">tan(u - mπ/2) = w/u</span>, with <span style="font-family:var(--mono)">u²+w²=V²</span>.</li>
+      <li><b>Final result type:</b> Symbolic field expressions + symbolic mode condition (with numeric intersections shown in the plots for example parameters).</li>
+    </ul>
+  </section>
 
-        <div class="row">
-          <button class="btn" id="copyProb">Copy Problem Text</button>
-          <button class="btn" id="copyTitle">Copy Title</button>
+  <!-- PART 0 -->
+  <section id="p0" class="grid2">
+    <article class="card">
+      <h3>PART 0 — Concept Primer (Theory Before Solving)</h3>
+
+      <div class="callout">
+        <b>Core definitions (symbols &amp; units)</b>
+        <ul>
+          <li><span style="font-family:var(--mono)">E</span> (V/m): electric field; <span style="font-family:var(--mono)">H</span> (A/m): magnetic field.</li>
+          <li><span style="font-family:var(--mono)">ω</span> (rad/s): angular frequency; <span style="font-family:var(--mono)">k₀ = 2π/λ₀</span> (1/m): free-space wavenumber.</li>
+          <li><span style="font-family:var(--mono)">n₁, n₂</span> (dimensionless): refractive indices of core and cladding (symmetric slab: same <span style="font-family:var(--mono)">n₂</span> above and below).</li>
+          <li><span style="font-family:var(--mono)">β</span> (1/m): propagation constant along <span style="font-family:var(--mono)">z</span>; for guided modes: <span style="font-family:var(--mono)">n₂k₀ &lt; β &lt; n₁k₀</span>.</li>
+          <li><span style="font-family:var(--mono)">k_y</span> (1/m): transverse oscillation constant inside the core; <span style="font-family:var(--mono)">γ</span> (1/m): transverse decay constant in the cladding.</li>
+          <li><span style="font-family:var(--mono)">d</span> (m): core thickness; interfaces at <span style="font-family:var(--mono)">y=±d/2</span>.</li>
+        </ul>
+      </div>
+
+      <h4 style="margin:14px 0 6px;">Physical meaning of key quantities</h4>
+      <ul>
+        <li><b>β</b> controls phase advance along the guide: field ∝ <span style="font-family:var(--mono)">e^{-jβz}</span>. Larger β means more confinement (closer to core index).</li>
+        <li><b>k<sub>y</sub></b> controls how many oscillations “fit” across the core thickness; it sets the number of lobes in the mode.</li>
+        <li><b>γ</b> controls evanescent penetration into cladding; larger γ means tighter confinement (faster decay outside).</li>
+      </ul>
+
+      <h4 style="margin:14px 0 6px;">Key laws and validity</h4>
+      <ul>
+        <li>We use <b>linear, isotropic, homogeneous</b> media in each region: <span style="font-family:var(--mono)">D=εE</span>, <span style="font-family:var(--mono)">B=μH</span>.</li>
+        <li><b>Time-harmonic steady-state</b> fields with phasor convention <span style="font-family:var(--mono)">e^{-jωt}</span>.</li>
+        <li>No free charges/currents: <span style="font-family:var(--mono)">ρ_f=0</span>, <span style="font-family:var(--mono)">J_f=0</span>, which leads to Helmholtz-type equations.</li>
+      </ul>
+
+      <h4 style="margin:14px 0 6px;">Common models/approximations</h4>
+      <ul>
+        <li><b>Modal ansatz:</b> assume separation along propagation direction:
+          <span style="font-family:var(--mono)">E_x(y,z)=u(y)e^{-jβz}</span>.</li>
+        <li><b>Piecewise solutions:</b> sinusoidal in the core (propagating transverse wave) and exponential in cladding (evanescent tail).</li>
+        <li><b>TE polarization:</b> electric field is purely transverse to the <span style="font-family:var(--mono)">y–z</span> plane (here, along <span style="font-family:var(--mono)">x</span>), simplifying Maxwell coupling.</li>
+      </ul>
+
+      <h4 style="margin:14px 0 6px;">Mini intuition examples</h4>
+      <ul>
+        <li><b>Thicker core (larger d)</b> → more room for oscillations → more guided modes (higher m) can exist.</li>
+        <li><b>Higher index contrast (n₁−n₂)</b> → stronger confinement → smaller evanescent tails (larger γ).</li>
+      </ul>
+
+      <div class="callout warn" style="margin-top:12px;">
+        <b>What to watch for (pitfalls)</b>
+        <ul>
+          <li><b>Sign conventions:</b> whether you use <span style="font-family:var(--mono)">e^{-jωt}</span> or <span style="font-family:var(--mono)">e^{+jωt}</span> flips some <span style="font-family:var(--mono)">j</span> signs.</li>
+          <li><b>Tangential vs normal components:</b> at an interface normal to <span style="font-family:var(--mono)">y</span>, tangential fields are <span style="font-family:var(--mono)">E_x,E_z,H_x,H_z</span>.</li>
+          <li><b>Asymptotes of tan:</b> when solving the dispersion equation numerically, roots live between tangent singularities.</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="card">
+      <h3>Key Equations You’ll Use</h3>
+
+      <div class="eqRow">
+        <div class="eq" id="eqMaxwell">
+∇×E = -jωμ H
+∇×H =  jωε E</div>
+        <button class="copyBtn" data-copy="#eqMaxwell">Copy</button>
+      </div>
+
+      <div class="eqRow">
+        <div class="eq" id="eqAnsatz">
+TE slab mode ansatz:
+E_x(y,z) = u(y) e^{-jβz},   E_y = E_z = 0</div>
+        <button class="copyBtn" data-copy="#eqAnsatz">Copy</button>
+      </div>
+
+      <div class="eqRow">
+        <div class="eq" id="eqHelm">
+Transverse relations (from Helmholtz):
+Core (n1):   k_y^2 + β^2 = (n1 k0)^2
+Cladding (n2): β^2 - γ^2 = (n2 k0)^2</div>
+        <button class="copyBtn" data-copy="#eqHelm">Copy</button>
+      </div>
+
+      <div class="callout good" style="margin-top:10px;">
+        <b>Normalization commonly used for TE slab modes</b>
+        <div class="eq" id="eqNorm">
+u = (k_y d)/2
+w = (γ d)/2
+V = (k0 d/2) √(n1^2 - n2^2)
+Constraint: u^2 + w^2 = V^2</div>
+        <button class="copyBtn" style="margin-top:6px;" data-copy="#eqNorm">Copy</button>
+      </div>
+
+      <p class="muted small" style="margin-top:10px;">
+        In a symmetric slab, TE dispersion can be written compactly as:
+      </p>
+      <div class="eqRow">
+        <div class="eq" id="eqDisp">
+TE mode condition (even/odd combined):
+tan(u - mπ/2) = w/u,   with u^2 + w^2 = V^2</div>
+        <button class="copyBtn" data-copy="#eqDisp">Copy</button>
+      </div>
+
+      <p class="faint small" style="margin-top:10px;">
+        This form is equivalent to the common split forms:
+        <span style="font-family:var(--mono)">tan(u)=w/u</span> (even),
+        <span style="font-family:var(--mono)">-cot(u)=w/u</span> (odd).
+        It also maps to “self-consistency” ray-angle formulas used in some texts (including your Eq. (9.2-4)) after defining the internal ray angle.
+      </p>
+    </article>
+  </section>
+
+  <!-- PART 1 -->
+  <section id="p1" class="card">
+    <h3>PART 1 — Problem Analysis (No Solving Yet)</h3>
+
+    <h4 style="margin:0 0 6px;">Restating the problem (in plain words)</h4>
+    <p class="muted">
+      You are given the TE electric field in a symmetric slab waveguide as
+      <span style="font-family:var(--mono)">E_x(y,z)=u(y)e^{-jβz}</span>,
+      where <span style="font-family:var(--mono)">u(y)</span> is sinusoidal in the core and exponential in the cladding.
+      Using Maxwell’s equations, you must:
+      (1) derive expressions for <span style="font-family:var(--mono)">H_y(y,z)</span> and <span style="font-family:var(--mono)">H_z(y,z)</span>;
+      (2) show boundary conditions at <span style="font-family:var(--mono)">y=±d/2</span> are satisfied if <span style="font-family:var(--mono)">β,γ,k_y</span> take their guided-mode values;
+      (3) verify the TE self-consistency/dispersion condition (9.2-4) used in the text.
+    </p>
+
+    <div class="grid2" style="margin-top:10px;">
+      <div class="callout">
+        <b>Given</b>
+        <ul>
+          <li>Symmetric slab: core index <span style="font-family:var(--mono)">n₁</span>, cladding index <span style="font-family:var(--mono)">n₂</span> (same above and below).</li>
+          <li>Core thickness <span style="font-family:var(--mono)">d</span>, interfaces at <span style="font-family:var(--mono)">y=±d/2</span>.</li>
+          <li>TE field form:
+            <div class="eq" style="margin-top:6px;">
+E_x(y,z)=u(y)e^{-jβz}
+
+u(y)= A cos(k_y y + φ),    |y| ≤ d/2
+u(y)= B e^{-γ (y - d/2)},  y ≥ d/2
+u(y)= B e^{+γ (y + d/2)},  y ≤ -d/2
+            </div>
+            (Equivalent exponential choices are fine as long as the field decays away from the core.)
+          </li>
+          <li>Helmholtz constraints:
+            <span style="font-family:var(--mono)">k_y² + β² = (n₁k₀)²</span> in the core,
+            <span style="font-family:var(--mono)">β² - γ² = (n₂k₀)²</span> in cladding.
+          </li>
+        </ul>
+      </div>
+
+      <div class="callout good">
+        <b>Unknowns / what must be found or proved</b>
+        <ul>
+          <li>Find <span style="font-family:var(--mono)">H_y(y,z)</span> and <span style="font-family:var(--mono)">H_z(y,z)</span> explicitly in terms of <span style="font-family:var(--mono)">u(y)</span>, <span style="font-family:var(--mono)">β</span>, <span style="font-family:var(--mono)">ω</span>, <span style="font-family:var(--mono)">μ</span>.</li>
+          <li>Impose boundary conditions at the interfaces and derive the TE dispersion condition.</li>
+          <li>Connect the dispersion condition to the “self-consistency” form used in the text (your Eq. 9.2-4).</li>
+        </ul>
+      </div>
+    </div>
+
+    <h4 style="margin:14px 0 6px;">Relevant physical principles (and why they apply)</h4>
+    <ul>
+      <li><b>Maxwell curl equations</b> apply because we are finding magnetic field components produced by a spatially varying electric field.</li>
+      <li><b>Boundary conditions</b> follow from Maxwell’s integral laws: tangential <span style="font-family:var(--mono)">E</span> and <span style="font-family:var(--mono)">H</span> are continuous across a dielectric interface (no surface currents/charges).</li>
+      <li><b>Helmholtz relations</b> encode that each region supports a local wave with wavenumber <span style="font-family:var(--mono)">n k₀</span> and that the z-propagation constant <span style="font-family:var(--mono)">β</span> is shared across regions for a guided mode.</li>
+    </ul>
+
+    <div class="callout warn" style="margin-top:12px;">
+      <b>Assumptions (explicit)</b>
+      <ul>
+        <li>Time-harmonic fields with phasor <span style="font-family:var(--mono)">e^{-jωt}</span>.</li>
+        <li>Lossless, linear, isotropic media; <span style="font-family:var(--mono)">μ</span> taken the same in both regions (typical non-magnetic dielectrics).</li>
+        <li>No free charges/currents; planar interfaces; fields uniform in <span style="font-family:var(--mono)">x</span>.</li>
+        <li>TE mode: <span style="font-family:var(--mono)">E = x̂ E_x(y,z)</span> only.</li>
+      </ul>
+    </div>
+
+    <h4 style="margin:14px 0 6px;">Possible approaches (and choice)</h4>
+    <ul>
+      <li><b>Approach A: Use ∇×E directly</b> to get <span style="font-family:var(--mono)">H_y</span>, <span style="font-family:var(--mono)">H_z</span>, then enforce interface continuity → dispersion equation. <span class="faint">(Fastest and most transparent.)</span></li>
+      <li><b>Approach B: Start from wave equation for H</b> and solve for H first, then relate to E. <span class="faint">(Works, but longer because you already have E.)</span></li>
+      <li><b>Approach C: Ray/phase self-consistency</b> (zig-zag model) to get Eq. 9.2-4 directly. <span class="faint">(Great intuition; must be tied back to Maxwell fields.)</span></li>
+    </ul>
+    <p class="muted"><b>We choose Approach A</b> because the problem explicitly asks to use Maxwell’s equations given <span style="font-family:var(--mono)">E_x</span>, and it naturally leads to the boundary conditions and the dispersion/self-consistency condition.</p>
+  </section>
+
+  <!-- PART 2 -->
+  <section id="p2" class="card">
+    <h3>PART 2 — Strategy &amp; Tips (Roadmap Only)</h3>
+
+    <ol style="margin:0 0 0 18px;">
+      <li>
+        <b>Goal:</b> Fix conventions and field form.<br/>
+        <b>Tool:</b> Assume phasors <span style="font-family:var(--mono)">e^{-jωt}</span>, and TE field <span style="font-family:var(--mono)">E = x̂ u(y)e^{-jβz}</span>.<br/>
+        <span class="muted">Meaning:</span> Everything is determined once <span style="font-family:var(--mono)">u(y)</span> and <span style="font-family:var(--mono)">β</span> are known.
+      </li>
+      <li>
+        <b>Goal:</b> Compute <span style="font-family:var(--mono)">∇×E</span> for this TE field.<br/>
+        <b>Tool:</b> Curl in Cartesian coordinates (only y and z variation).<br/>
+        <span class="muted">Meaning:</span> Curl tells you what magnetic field must exist to satisfy Faraday’s law.
+      </li>
+      <li>
+        <b>Goal:</b> Solve <span style="font-family:var(--mono)">∇×E = -jωμH</span> for <span style="font-family:var(--mono)">H_y</span> and <span style="font-family:var(--mono)">H_z</span>.<br/>
+        <b>Tool:</b> Component-by-component matching.<br/>
+        <span class="muted">Meaning:</span> <span style="font-family:var(--mono)">H_y</span> comes from z-variation; <span style="font-family:var(--mono)">H_z</span> comes from y-variation of <span style="font-family:var(--mono)">E_x</span>.
+      </li>
+      <li>
+        <b>Goal:</b> Identify which boundary conditions matter at <span style="font-family:var(--mono)">y=±d/2</span>.<br/>
+        <b>Tool:</b> Tangential-field continuity (no surface currents).<br/>
+        <span class="muted">Meaning:</span> For a y-normal interface, tangential are x and z components → enforce continuity of <span style="font-family:var(--mono)">E_x</span> and <span style="font-family:var(--mono)">H_z</span>.
+      </li>
+      <li>
+        <b>Goal:</b> Apply continuity of <span style="font-family:var(--mono)">E_x</span> and <span style="font-family:var(--mono)">H_z</span> to the core sinusoid and cladding exponential.<br/>
+        <b>Tool:</b> Match <span style="font-family:var(--mono)">u</span> and <span style="font-family:var(--mono)">u'</span> at the interfaces.<br/>
+        <span class="muted">Meaning:</span> This yields the TE dispersion equation relating <span style="font-family:var(--mono)">k_y</span> and <span style="font-family:var(--mono)">γ</span>.
+      </li>
+      <li>
+        <b>Goal:</b> Convert to the standard “normalized” form and (optionally) to the ray-angle self-consistency form.<br/>
+        <b>Tool:</b> Define <span style="font-family:var(--mono)">u=(k_y d)/2</span>, <span style="font-family:var(--mono)">w=(γ d)/2</span>, <span style="font-family:var(--mono)">V</span>; use <span style="font-family:var(--mono)">u^2+w^2=V^2</span>.<br/>
+        <span class="muted">Meaning:</span> You get a compact equation whose intersections correspond to guided modes.
+      </li>
+      <li>
+        <b>Goal:</b> Sanity checks.<br/>
+        <b>Tool:</b> Units, limiting cases (weak guiding, near cutoff), physical decay outside core.<br/>
+        <span class="muted">Meaning:</span> Ensures the solution is physically consistent.
+      </li>
+    </ol>
+
+    <div class="callout warn" style="margin-top:12px;">
+      <b>Common mistakes &amp; quick tips</b>
+      <ul>
+        <li>Don’t enforce continuity of the <i>normal</i> magnetic field unless you include μ explicitly; for non-magnetic dielectrics with same μ it’s often automatically satisfied.</li>
+        <li>Remember: <span style="font-family:var(--mono)">H_z ∝ ∂E_x/∂y</span>. So boundary matching of <span style="font-family:var(--mono)">H_z</span> is the same as matching <span style="font-family:var(--mono)">u'(y)</span>.</li>
+        <li>Guided modes require evanescent decay outside: <span style="font-family:var(--mono)">γ&gt;0</span> and <span style="font-family:var(--mono)">β&gt;n₂k₀</span>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PART 3 -->
+  <section id="p3" class="card">
+    <h3>PART 3 — Full Solution (Detailed + Teaching)</h3>
+
+    <h4 style="margin:0 0 6px;">Qualitative expectation (before math)</h4>
+    <p class="muted">
+      In the core, the wave “bounces” between interfaces, so the field varies sinusoidally across <span style="font-family:var(--mono)">y</span>.
+      Outside, the field cannot propagate (because β is too large for the lower-index cladding), so it becomes evanescent and decays exponentially.
+      Since <span style="font-family:var(--mono)">E</span> varies with <span style="font-family:var(--mono)">z</span> and <span style="font-family:var(--mono)">y</span>, Faraday’s law demands a magnetic field with components in the <span style="font-family:var(--mono)">y</span> and <span style="font-family:var(--mono)">z</span> directions.
+    </p>
+
+    <div class="callout">
+      <b>Step 1 — Define fields and conventions</b>
+      <p class="muted small" style="margin:6px 0 0;">
+        Use time dependence <span style="font-family:var(--mono)">e^{-jωt}</span> and propagation <span style="font-family:var(--mono)">e^{-jβz}</span>.
+        For TE (relative to the <span style="font-family:var(--mono)">y–z</span> plane), choose:
+      </p>
+      <div class="eqRow">
+        <div class="eq" id="eqEdef">
+E(y,z) = x̂ E_x(y,z)
+E_x(y,z) = u(y) e^{-jβz}
+E_y = 0,  E_z = 0</div>
+        <button class="copyBtn" data-copy="#eqEdef">Copy</button>
+      </div>
+      <p class="faint small" style="margin:6px 0 0;">
+        Here <span style="font-family:var(--mono)">u(y)</span> is sinusoidal in the core and exponential in the cladding, as stated in the problem.
+      </p>
+    </div>
+
+    <div class="callout" style="margin-top:12px;">
+      <b>Step 2 — Compute the curl ∇×E</b>
+      <p class="muted small" style="margin:6px 0 0;">
+        In Cartesian coordinates,
+        <span style="font-family:var(--mono)">∇×E = (∂E_z/∂y - ∂E_y/∂z) x̂ + (∂E_x/∂z - ∂E_z/∂x) ŷ + (∂E_y/∂x - ∂E_x/∂y) ẑ</span>.
+        Since <span style="font-family:var(--mono)">E_y=E_z=0</span> and no x-dependence:
+      </p>
+      <div class="eqRow">
+        <div class="eq" id="eqCurlE">
+∇×E = ŷ (∂E_x/∂z) + ẑ ( -∂E_x/∂y )
+
+But E_x(y,z)=u(y)e^{-jβz} ⇒
+∂E_x/∂z = -jβ E_x
+∂E_x/∂y = u'(y) e^{-jβz}</div>
+        <button class="copyBtn" data-copy="#eqCurlE">Copy</button>
+      </div>
+      <p class="muted small" style="margin:6px 0 0;">
+        So the curl has only y and z components — exactly what we expect for TE polarization.
+      </p>
+    </div>
+
+    <div class="callout good" style="margin-top:12px;">
+      <b>Step 3 — Use Faraday’s law to get H</b>
+      <p class="muted small" style="margin:6px 0 0;">
+        Frequency-domain Faraday’s law is <span style="font-family:var(--mono)">∇×E = -jωμ H</span>.
+        Match components:
+      </p>
+
+      <div class="eqRow">
+        <div class="eq" id="eqHyHz">
+y-component:
+(∇×E)_y = -jβ E_x = -jωμ H_y  ⇒  H_y = (β/ωμ) E_x
+
+z-component:
+(∇×E)_z = -∂E_x/∂y = -jωμ H_z  ⇒  H_z = (1/jωμ) ∂E_x/∂y = -(j/ωμ) ∂E_x/∂y</div>
+        <button class="copyBtn" data-copy="#eqHyHz">Copy</button>
+      </div>
+
+      <p class="muted small" style="margin:8px 0 0;">
+        <b>Interpretation:</b> <span style="font-family:var(--mono)">H_y</span> is in-phase with <span style="font-family:var(--mono)">E_x</span> (up to constants) because it comes from z-variation;
+        <span style="font-family:var(--mono)">H_z</span> is quadrature-shifted (has a factor <span style="font-family:var(--mono)">-j</span>) because it comes from spatial derivative in y.
+      </p>
+    </div>
+
+    <div class="callout" style="margin-top:12px;">
+      <b>Step 4 — Write H explicitly in each region</b>
+      <p class="muted small" style="margin:6px 0 0;">
+        Since <span style="font-family:var(--mono)">E_x(y,z)=u(y)e^{-jβz}</span>, we have <span style="font-family:var(--mono)">∂E_x/∂y = u'(y)e^{-jβz}</span>.
+        Therefore:
+      </p>
+      <div class="eqRow">
+        <div class="eq" id="eqHfinalGeneral">
+H_y(y,z) = (β/ωμ) u(y) e^{-jβz}
+H_z(y,z) = -(j/ωμ) u'(y) e^{-jβz}</div>
+        <button class="copyBtn" data-copy="#eqHfinalGeneral">Copy</button>
+      </div>
+
+      <p class="muted small" style="margin:10px 0 0;">
+        Now plug the piecewise <span style="font-family:var(--mono)">u(y)</span>:
+      </p>
+      <div class="eq" id="eqPiecewise">
+Core (|y| ≤ d/2):
+u(y)=A cos(k_y y + φ)
+u'(y)= -A k_y sin(k_y y + φ)
+
+Cladding (y ≥ d/2):
+u(y)=B e^{-γ (y - d/2)}
+u'(y)= -γ B e^{-γ (y - d/2)}
+
+Cladding (y ≤ -d/2):
+u(y)=B e^{+γ (y + d/2)}
+u'(y)= +γ B e^{+γ (y + d/2)}</div>
+      <button class="copyBtn" data-copy="#eqPiecewise">Copy</button>
+
+      <p class="faint small" style="margin:8px 0 0;">
+        Any equivalent exponential form that decays away from the core is acceptable; the key is <span style="font-family:var(--mono)">γ&gt;0</span> and decay as |y| increases.
+      </p>
+    </div>
+
+    <div class="callout" style="margin-top:12px;">
+      <b>Step 5 — Boundary conditions at y=±d/2</b>
+      <p class="muted small" style="margin:6px 0 0;">
+        The interface normal is along <span style="font-family:var(--mono)">±y</span>. With no surface current or surface charge:
+      </p>
+      <div class="eqRow">
+        <div class="eq" id="eqBC">
+Tangential E continuous  ⇒  E_x continuous (and E_z, but here E_z=0)
+Tangential H continuous  ⇒  H_z continuous (and H_x, but here H_x=0)
+
+So at y=±d/2:
+E_x(core) = E_x(clad)
+H_z(core) = H_z(clad)</div>
+        <button class="copyBtn" data-copy="#eqBC">Copy</button>
+      </div>
+
+      <p class="muted small" style="margin:8px 0 0;">
+        Using <span style="font-family:var(--mono)">H_z = -(j/ωμ) ∂E_x/∂y</span>, continuity of <span style="font-family:var(--mono)">H_z</span> is equivalent to continuity of the derivative <span style="font-family:var(--mono)">∂E_x/∂y</span>
+        (assuming μ is the same on both sides, as in typical dielectrics).
+      </p>
+    </div>
+
+    <div class="callout good" style="margin-top:12px;">
+      <b>Step 6 — Derive the TE mode (dispersion) equation</b>
+
+      <p class="muted small" style="margin:6px 0 0;">
+        Because the structure is symmetric, guided TE modes are either <b>even</b> or <b>odd</b> about <span style="font-family:var(--mono)">y=0</span>.
+        A convenient equivalent core choice is:
+      </p>
+
+      <div class="grid2" style="margin-top:10px;">
+        <div class="card" style="padding:12px;">
+          <h4 style="margin:0 0 6px;">Even TE modes</h4>
+          <div class="eq" id="eqEven">
+u(y)=A cos(k_y y)   (|y|≤d/2)
+At y=d/2:
+u(d/2)=A cos(k_y d/2)
+u'(d/2)= -A k_y sin(k_y d/2)
+
+Cladding y≥d/2:
+u(d/2)=B
+u'(d/2)= -γ B</div>
+          <button class="copyBtn" data-copy="#eqEven">Copy</button>
+          <p class="muted small" style="margin:8px 0 0;">
+            Continuity of <span style="font-family:var(--mono)">u</span> and <span style="font-family:var(--mono)">u'</span> gives:
+            <span style="font-family:var(--mono)">B = A cos(k_y d/2)</span> and
+            <span style="font-family:var(--mono)">-γB = -A k_y sin(k_y d/2)</span> ⇒
+            <span style="font-family:var(--mono)">tan(k_y d/2)=γ/k_y</span>.
+          </p>
         </div>
-      </article>
+
+        <div class="card" style="padding:12px;">
+          <h4 style="margin:0 0 6px;">Odd TE modes</h4>
+          <div class="eq" id="eqOdd">
+u(y)=A sin(k_y y)   (|y|≤d/2)
+At y=d/2:
+u(d/2)=A sin(k_y d/2)
+u'(d/2)= A k_y cos(k_y d/2)
+
+Cladding y≥d/2:
+u(d/2)=B
+u'(d/2)= -γ B</div>
+          <button class="copyBtn" data-copy="#eqOdd">Copy</button>
+          <p class="muted small" style="margin:8px 0 0;">
+            Continuity gives:
+            <span style="font-family:var(--mono)">B = A sin(k_y d/2)</span> and
+            <span style="font-family:var(--mono)">-γB = A k_y cos(k_y d/2)</span> ⇒
+            <span style="font-family:var(--mono)">-cot(k_y d/2)=γ/k_y</span>.
+          </p>
+        </div>
+      </div>
+
+      <p class="muted" style="margin:10px 0 0;">
+        Both cases combine neatly if we define the mode index <span style="font-family:var(--mono)">m=0,1,2,...</span> and write:
+      </p>
+      <div class="eqRow">
+        <div class="eq" id="eqCombined">
+Let u = (k_y d)/2 and w = (γ d)/2.
+Then the TE condition for mode m is:
+
+tan(u - mπ/2) = w/u</div>
+        <button class="copyBtn" data-copy="#eqCombined">Copy</button>
+      </div>
+
+      <p class="muted small" style="margin:8px 0 0;">
+        To close it, use the region wavenumber relations:
+        <span style="font-family:var(--mono)">k_y^2 + β^2 = (n₁k₀)^2</span> and <span style="font-family:var(--mono)">β^2 - γ^2 = (n₂k₀)^2</span>.
+        Eliminating β gives <span style="font-family:var(--mono)">k_y^2 + γ^2 = (n₁^2-n₂^2)k₀^2</span> ⇒
+        <span style="font-family:var(--mono)">u^2 + w^2 = V^2</span> with <span style="font-family:var(--mono)">V=(k₀d/2)√(n₁^2-n₂^2)</span>.
+      </p>
     </div>
-  </main>
 
-  <footer>
-    <div class="wrap">Simple Photonics problem template (Saleh) — you can style later.</div>
-  </footer>
+    <div class="callout" style="margin-top:12px;">
+      <b>Step 7 — Connect to the text’s “self-consistency condition” (Eq. 9.2-4)</b>
+      <p class="muted small" style="margin:6px 0 0;">
+        Many optics texts recast the same dispersion relation using a ray angle inside the core.
+        A consistent mapping is:
+      </p>
+      <div class="eq" id="eqAngleMap">
+Define an internal angle θ (choice depends on the text’s geometry convention) such that:
+k_y = n1 k0 sinθ
+β   = n1 k0 cosθ
 
-  <script>
-    // Safe JS inside a normal Python .format() template (braces escaped above).
-    const probText = 'Starting with Ex=u(y)e^{-jβz}, derive Hy and Hz using Maxwell’s equations and verify boundary conditions and self-consistency relation.';
-    const probTitle = '9.2-6 (Saleh) — Slab Waveguide Fields from Maxwell’s Equations';
+Critical condition (TIR) in cladding:
+sinθ_c = n2/n1
 
-    function copyText(txt) {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(txt).catch(() => fallbackCopy(txt));
-      } else {
-        fallbackCopy(txt);
+Then:
+γ^2 = β^2 - (n2 k0)^2 = (n1 k0)^2 cos^2θ - (n2 k0)^2
+    = (n1 k0)^2( cos^2θ - sin^2θ_c )
+
+and the ratio appearing in the TE equation becomes (one common form):
+γ/k_y = √( (sin^2θ / sin^2θ_c) - 1 )   OR equivalently √( (sin^2θ_c / sin^2θ) - 1 )
+depending on whether θ is defined from the interface normal or from the guide axis.</div>
+      <button class="copyBtn" data-copy="#eqAngleMap">Copy</button>
+
+      <p class="muted small" style="margin:8px 0 0;">
+        <b>Important note:</b> Your screenshot shows
+        <span style="font-family:var(--mono)">√(sin²θ_c/sin²θ − 1)</span>.
+        That form is real if <span style="font-family:var(--mono)">sinθ &lt; sinθ_c</span>, which typically corresponds to defining θ from the <b>guide axis</b> (small θ means a steep incidence angle at the interface and hence total internal reflection).
+        The underlying physics is the same; it is just a trigonometric re-parameterization of <span style="font-family:var(--mono)">w/u = γ/k_y</span>.
+      </p>
+
+      <p class="muted small" style="margin:8px 0 0;">
+        The phase self-consistency in a ray picture gives an integer multiple of 2π after one round trip across the core,
+        leading to the same “tan( … ) = …” structure as <span style="font-family:var(--mono)">tan(u - mπ/2)=w/u</span>.
+        With wavelength definitions (vacuum vs in-core) chosen as in the text, this reproduces Eq. (9.2-4).
+      </p>
+    </div>
+
+    <div class="callout good" style="margin-top:12px;">
+      <b>FINAL ANSWER (boxed)</b>
+
+      <div class="eqRow">
+        <div class="eq" id="eqFinalAnswer">
+Given TE field:  E_x(y,z) = u(y) e^{-jβz},  (E_y=E_z=0)
+
+Magnetic field components (phasor convention e^{-jωt}):
+H_y(y,z) = (β/ωμ) u(y) e^{-jβz}
+H_z(y,z) = -(j/ωμ) u'(y) e^{-jβz}
+
+Boundary conditions at y=±d/2 (no surface currents/charges):
+E_x continuous  ⇔  u continuous
+H_z continuous  ⇔  u' continuous (for equal μ)
+
+These yield the TE slab mode condition:
+tan(u - mπ/2) = w/u,  with u=(k_y d)/2, w=(γ d)/2, and u^2+w^2=V^2
+(V=(k0 d/2)√(n1^2-n2^2)).
+
+This is equivalent to the text’s TE “self-consistency” equation (9.2-4) after mapping
+k_y and γ to an internal angle θ (definition depends on the text’s convention).</div>
+        <button class="copyBtn" data-copy="#eqFinalAnswer">Copy</button>
+      </div>
+
+      <div class="kpi" id="kpiBox" aria-label="Computed example mode numbers">
+        <div class="k">
+          <div class="label">Example (for plots): λ₀ (µm)</div>
+          <div class="val" id="k_lambda">—</div>
+        </div>
+        <div class="k">
+          <div class="label">Example: V-number</div>
+          <div class="val" id="k_V">—</div>
+        </div>
+        <div class="k">
+          <div class="label">Example: solved (u, w)</div>
+          <div class="val" id="k_uw">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:12px;">
+      <b>Sanity checks</b>
+      <ul>
+        <li><b>Units:</b> <span style="font-family:var(--mono)">β/(ωμ)</span> has units of (1/m)/(1/s·H/m)= (s/H)·(1/m)·(m)=A·s/(V·s)=A/V, so multiplied by V/m gives A/m → correct for H.</li>
+        <li><b>Guided-mode inequality:</b> <span style="font-family:var(--mono)">n₂k₀ &lt; β &lt; n₁k₀</span> ensures oscillatory core (<span style="font-family:var(--mono)">k_y</span> real) and evanescent cladding (<span style="font-family:var(--mono)">γ</span> real).</li>
+        <li><b>Limit near cutoff:</b> At cutoff, <span style="font-family:var(--mono)">γ→0</span> (tails become long), so <span style="font-family:var(--mono)">w/u → 0</span> and the equation pushes <span style="font-family:var(--mono)">u</span> toward a tangent zero → consistent with marginal confinement.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PART 4 -->
+  <section id="p4" class="card">
+    <h3>PART 4 — Deeper Understanding (Theory Around the Result)</h3>
+
+    <h4 style="margin:0 0 6px;">Re-interpreting the final formulas</h4>
+    <ul>
+      <li><span style="font-family:var(--mono)">H_y = (β/ωμ)E_x</span> says that the <b>longitudinal phase variation</b> (set by β) determines the y-directed magnetic field needed to satisfy Faraday’s law.</li>
+      <li><span style="font-family:var(--mono)">H_z = -(j/ωμ)∂E_x/∂y</span> says that <b>transverse confinement</b> (how fast E changes with y) creates a z-directed magnetic component. Sharper confinement → larger |∂E/∂y| → larger |H_z|.</li>
+      <li>The dispersion equation <span style="font-family:var(--mono)">tan(u - mπ/2)=w/u</span> is a balance between
+        <b>phase fit across the core</b> (tan term) and <b>leakage/evanescence</b> (w/u term).</li>
+    </ul>
+
+    <h4 style="margin:12px 0 6px;">How parameter changes affect the outcome (connect to plots)</h4>
+    <ul>
+      <li><b>Decrease λ₀ (shorter wavelength)</b> → increases <span style="font-family:var(--mono)">k₀</span> → increases V → more intersections → more guided modes appear in the dispersion plot.</li>
+      <li><b>Increase index contrast (n₁−n₂)</b> → increases V → tighter confinement (larger w at a given u) → field tails shrink in the field-profile plot.</li>
+      <li><b>Higher mode number m</b> forces more oscillations across the core → more nodes in <span style="font-family:var(--mono)">E_x(y)</span> inside, and typically weaker confinement (smaller w) near cutoff.</li>
+    </ul>
+
+    <h4 style="margin:12px 0 6px;">Alternative derivation idea (brief)</h4>
+    <p class="muted">
+      You can also derive the same dispersion condition by solving the scalar Helmholtz equation for <span style="font-family:var(--mono)">E_x</span> in each region and enforcing
+      the boundary conditions directly on <span style="font-family:var(--mono)">E_x</span> and <span style="font-family:var(--mono)">∂E_x/∂y</span>.
+      The Maxwell-based approach we used essentially proves why those are the correct continuity requirements for TE modes.
+    </p>
+
+    <div class="callout" style="margin-top:12px;">
+      <b>Concept checks (self-test)</b>
+      <ul>
+        <li><b>Q:</b> Why does <span style="font-family:var(--mono)">H_z</span> involve a derivative with respect to y?<br/>
+            <b>A:</b> Because <span style="font-family:var(--mono)">(∇×E)_z = -∂E_x/∂y</span>, and Faraday’s law ties that directly to <span style="font-family:var(--mono)">H_z</span>.</li>
+        <li><b>Q:</b> Which field components must be continuous at <span style="font-family:var(--mono)">y=±d/2</span>?<br/>
+            <b>A:</b> Tangential components: <span style="font-family:var(--mono)">E_x</span> and <span style="font-family:var(--mono)">H_z</span> for this TE case.</li>
+        <li><b>Q:</b> What happens at cutoff for a mode?<br/>
+            <b>A:</b> <span style="font-family:var(--mono)">β→n₂k₀</span> so <span style="font-family:var(--mono)">γ→0</span>; the field spreads far into the cladding and confinement is lost.</li>
+        <li><b>Q:</b> Why do you get multiple modes as V increases?<br/>
+            <b>A:</b> Larger V allows more half-wavelengths to “fit” across the core, creating more solutions (intersections) of the dispersion equation.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PART 5 -->
+  <section id="p5" class="card">
+    <h3>PART 5 — Visualization Guide (How to Read the Plots)</h3>
+    <ul>
+      <li><b>Diagram canvas:</b> Shows the slab core (index <span style="font-family:var(--mono)">n₁</span>, thickness <span style="font-family:var(--mono)">d</span>) and cladding (index <span style="font-family:var(--mono)">n₂</span>), axes, and the qualitative TE field polarization (<span style="font-family:var(--mono)">E</span> along x) plus propagation along z.</li>
+      <li><b>Main quantitative plot:</b> Plots the two sides of the TE dispersion equation as functions of <span style="font-family:var(--mono)">u=(k_y d)/2</span>:
+        <span style="font-family:var(--mono)">f(u)=tan(u - mπ/2)</span> and
+        <span style="font-family:var(--mono)">g(u)=w/u</span> with <span style="font-family:var(--mono)">w=√(V²-u²)</span>.
+        Intersections correspond to guided modes.</li>
+      <li><b>Secondary plot:</b> Shows the resulting field profile <span style="font-family:var(--mono)">|E_x(y)|</span> (example) using the solved (u,w):
+        sinusoidal inside the core and exponential decay outside.</li>
+      <li><b>Interactive controls:</b> Changing <span style="font-family:var(--mono)">λ₀</span> (example) changes <span style="font-family:var(--mono)">V</span>, which shifts the dispersion curve and changes confinement in the field profile.
+        Changing mode index <span style="font-family:var(--mono)">m</span> selects a different branch (even/odd behavior automatically handled by the combined formula).</li>
+    </ul>
+    <p class="faint small">
+      The plotted values are <b>example values</b> for learning/visualization when the problem statement does not specify numbers.
+      The symbolic derivations above are general.
+    </p>
+  </section>
+
+  <!-- Visualizations -->
+  <section id="viz" class="card canvasCard">
+    <div class="vizHeader">
+      <div>
+        <h3 style="margin:0;">Interactive Visualizations</h3>
+        <div class="muted small">All plots update live (high-DPI crisp rendering included).</div>
+      </div>
+      <div class="controls" aria-label="Interactive controls">
+        <label class="ctrl">
+          Example wavelength λ₀ (µm)
+          <input id="lambdaSlider" type="range" min="0.80" max="1.60" step="0.01" value="1.30" />
+          <span class="faint" id="lambdaReadout">1.30 µm</span>
+        </label>
+        <label class="ctrl" style="min-width:170px;">
+          Mode index m
+          <select id="modeSelect">
+            <option value="0">m = 0</option>
+            <option value="1">m = 1</option>
+            <option value="2">m = 2</option>
+            <option value="3">m = 3</option>
+          </select>
+          <span class="faint" id="modeHint">even/odd handled automatically</span>
+        </label>
+        <label class="ctrl" style="min-width:210px;">
+          Core thickness d (µm)
+          <input id="dInput" type="number" min="0.5" max="20" step="0.1" value="4.0" />
+          <span class="faint">Example value (edit)</span>
+        </label>
+        <label class="ctrl" style="min-width:210px;">
+          Indices (n₁, n₂)
+          <div style="display:flex; gap:8px;">
+            <input id="n1Input" type="number" min="1.1" max="3.5" step="0.01" value="1.50" style="width:96px;" />
+            <input id="n2Input" type="number" min="1.0" max="3.4" step="0.01" value="1.45" style="width:96px;" />
+          </div>
+          <span class="faint">Example values (edit)</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="vizWrap">
+      <figure>
+        <canvas id="cDiagram" aria-label="Waveguide diagram"></canvas>
+        <div class="caption">Diagram: symmetric slab waveguide (core thickness d, indices n₁ and n₂), TE polarization (E along x), propagation along z.</div>
+      </figure>
+
+      <figure>
+        <canvas id="cDisp" aria-label="Dispersion equation plot"></canvas>
+        <div class="caption">Main plot: dispersion equation in normalized form. Intersections of tan(u − mπ/2) and w/u correspond to guided TE modes.</div>
+      </figure>
+
+      <figure>
+        <canvas id="cField" aria-label="Field profile plot"></canvas>
+        <div class="caption">Secondary plot: example field magnitude |Eₓ(y)| built from the solved mode (sinusoidal in core, evanescent outside).</div>
+      </figure>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div>
+    <b>Note on conventions:</b> This article uses the phasor time convention <span style="font-family:var(--mono)">e^{-jωt}</span>. If you use <span style="font-family:var(--mono)">e^{+jωt}</span>, signs involving <span style="font-family:var(--mono)">j</span> will change consistently.
+    The physics and boundary conditions are unchanged.
+  </div>
+</footer>
+
+<script>
+/* ---------- Smooth TOC scrolling ---------- */
+document.querySelectorAll('.toc a').forEach(a=>{
+  a.addEventListener('click', (e)=>{
+    const id = a.getAttribute('href');
+    if(!id || !id.startsWith('#')) return;
+    const el = document.querySelector(id);
+    if(!el) return;
+    e.preventDefault();
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+    history.replaceState(null,'',id);
+  });
+});
+
+/* ---------- Copy buttons ---------- */
+function copyTextFromSelector(sel){
+  const el = document.querySelector(sel);
+  if(!el) return;
+  const txt = el.textContent.replace(/\u00A0/g,' ').trim();
+  navigator.clipboard.writeText(txt).then(()=> {
+    // tiny feedback via button text swap
+  }).catch(()=>{ /* ignore */ });
+}
+document.querySelectorAll('.copyBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const sel = btn.getAttribute('data-copy');
+    if(!sel) return;
+    const old = btn.textContent;
+    copyTextFromSelector(sel);
+    btn.textContent = "Copied!";
+    setTimeout(()=>btn.textContent = old, 900);
+  });
+});
+
+/* ---------- Canvas helpers ---------- */
+function setupHiDPI(canvas){
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(2, Math.floor(rect.width * dpr));
+  const h = Math.max(2, Math.floor(rect.height * dpr));
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w; canvas.height = h;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  return {ctx, dpr, cssW: rect.width, cssH: rect.height};
+}
+
+function drawAxes(ctx, x0,y0, w,h, xMin,xMax,yMin,yMax, opts){
+  // opts: {title,xLabel,yLabel,grid:true, ticksX:6, ticksY:5}
+  const grid = (opts && opts.grid!==undefined) ? opts.grid : true;
+  const ticksX = (opts && opts.ticksX) ? opts.ticksX : 6;
+  const ticksY = (opts && opts.ticksY) ? opts.ticksY : 5;
+  const padL = 56, padR = 16, padT = 36, padB = 44;
+  const gx = x0+padL, gy = y0+padT, gw = w-padL-padR, gh = h-padT-padB;
+
+  // background
+  ctx.clearRect(x0,y0,w,h);
+
+  // title
+  ctx.save();
+  ctx.fillStyle = 'rgba(234,240,255,.92)';
+  ctx.font = '600 14px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText(opts.title || '', x0+12, y0+20);
+  ctx.restore();
+
+  // grid + axes box
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,.10)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(gx, gy, gw, gh);
+
+  function xToPx(x){ return gx + (x - xMin) * gw / (xMax - xMin); }
+  function yToPx(y){ return gy + gh - (y - yMin) * gh / (yMax - yMin); }
+
+  if(grid){
+    ctx.strokeStyle = 'rgba(255,255,255,.06)';
+    for(let i=1;i<ticksX;i++){
+      const xx = gx + i*gw/ticksX;
+      ctx.beginPath(); ctx.moveTo(xx, gy); ctx.lineTo(xx, gy+gh); ctx.stroke();
+    }
+    for(let j=1;j<ticksY;j++){
+      const yy = gy + j*gh/ticksY;
+      ctx.beginPath(); ctx.moveTo(gx, yy); ctx.lineTo(gx+gw, yy); ctx.stroke();
+    }
+  }
+
+  // ticks + labels
+  ctx.fillStyle = 'rgba(169,182,211,.95)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+  ctx.strokeStyle = 'rgba(255,255,255,.14)';
+
+  for(let i=0;i<=ticksX;i++){
+    const x = xMin + i*(xMax-xMin)/ticksX;
+    const xx = xToPx(x);
+    ctx.beginPath(); ctx.moveTo(xx, gy+gh); ctx.lineTo(xx, gy+gh+6); ctx.stroke();
+    const s = (Math.abs(x) < 1e-9) ? '0' : (Math.abs(x) >= 1000 ? x.toExponential(1) : x.toFixed(2));
+    ctx.fillText(s, xx-10, gy+gh+20);
+  }
+  for(let j=0;j<=ticksY;j++){
+    const y = yMin + j*(yMax-yMin)/ticksY;
+    const yy = yToPx(y);
+    ctx.beginPath(); ctx.moveTo(gx-6, yy); ctx.lineTo(gx, yy); ctx.stroke();
+    const s = (Math.abs(y) < 1e-9) ? '0' : (Math.abs(y) >= 1000 ? y.toExponential(1) : y.toFixed(2));
+    ctx.fillText(s, gx-52, yy+4);
+  }
+
+  // axis labels
+  ctx.save();
+  ctx.fillStyle = 'rgba(234,240,255,.85)';
+  ctx.font = '500 13px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  if(opts.xLabel) ctx.fillText(opts.xLabel, gx + gw/2 - ctx.measureText(opts.xLabel).width/2, gy+gh+38);
+  if(opts.yLabel){
+    ctx.translate(x0+16, gy+gh/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText(opts.yLabel, -ctx.measureText(opts.yLabel).width/2, 0);
+    ctx.setTransform(1,0,0,1,0,0);
+  }
+  ctx.restore();
+
+  ctx.restore();
+  return {gx,gy,gw,gh, xToPx, yToPx};
+}
+
+function drawLegend(ctx, x, y, items){
+  // items: [{label, color}]
+  const pad = 8, lineH = 18;
+  const w = Math.max(...items.map(it => ctx.measureText(it.label).width)) + 44;
+  const h = items.length*lineH + pad*2;
+  ctx.save();
+  ctx.fillStyle = 'rgba(15,22,38,.72)';
+  ctx.strokeStyle = 'rgba(255,255,255,.12)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  const r = 12;
+  roundedRect(ctx, x, y, w, h, r);
+  ctx.fill(); ctx.stroke();
+  for(let i=0;i<items.length;i++){
+    const yy = y + pad + i*lineH + 12;
+    ctx.strokeStyle = items[i].color;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x+10, yy-4); ctx.lineTo(x+30, yy-4); ctx.stroke();
+    ctx.fillStyle = 'rgba(234,240,255,.88)';
+    ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText(items[i].label, x+36, yy);
+  }
+  ctx.restore();
+}
+function roundedRect(ctx, x,y,w,h,r){
+  const rr = Math.min(r, w/2, h/2);
+  ctx.moveTo(x+rr, y);
+  ctx.arcTo(x+w, y, x+w, y+h, rr);
+  ctx.arcTo(x+w, y+h, x, y+h, rr);
+  ctx.arcTo(x, y+h, x, y, rr);
+  ctx.arcTo(x, y, x+w, y, rr);
+  ctx.closePath();
+}
+
+/* ---------- Physics calculations (TE slab) ---------- */
+function computeV(lambda0_um, d_um, n1, n2){
+  const lambda0 = lambda0_um * 1e-6;
+  const d = d_um * 1e-6;
+  const k0 = 2*Math.PI/lambda0;
+  const V = (k0*d/2)*Math.sqrt(Math.max(0, n1*n1 - n2*n2));
+  return {V, k0, d};
+}
+
+function F_of_u(u, V, m){
+  // F(u) = tan(u - mπ/2) - w/u , w = sqrt(V^2-u^2)
+  if(u<=0 || u>=V) return NaN;
+  const w = Math.sqrt(Math.max(0, V*V - u*u));
+  const a = u - m*Math.PI/2;
+  const t = Math.tan(a);
+  return t - (w/u);
+}
+
+function findRootForMode(V, m){
+  // Find a root u in (0,V) for given m by scanning intervals between tan asymptotes.
+  // tan(u - mπ/2) has asymptotes when u - mπ/2 = π/2 + kπ ⇒ u = (m+1)π/2 + kπ
+  // We'll scan u range and bracket sign changes, avoiding near-asymptotes.
+  const eps = 1e-4;
+  if(V <= 1e-6) return null;
+
+  // Build candidate interval edges: 0, asymptotes, V
+  const edges = [0];
+  const maxK = 50;
+  for(let k= -maxK; k<=maxK; k++){
+    const uAs = (m+1)*Math.PI/2 + k*Math.PI;
+    if(uAs>0 && uAs<V) edges.push(uAs);
+  }
+  edges.push(V);
+  edges.sort((a,b)=>a-b);
+
+  // Search each interval (edges[i], edges[i+1]) for sign change
+  for(let i=0;i<edges.length-1;i++){
+    let a = edges[i] + eps;
+    let b = edges[i+1] - eps;
+    if(!(a<b)) continue;
+
+    // avoid tiny intervals
+    if(b-a < 5e-3) continue;
+
+    const fa = F_of_u(a,V,m);
+    const fb = F_of_u(b,V,m);
+    if(!isFinite(fa) || !isFinite(fb)) continue;
+    if(fa===0) return a;
+    if(fb===0) return b;
+    if(fa*fb > 0) continue;
+
+    // Bisection
+    for(let it=0; it<60; it++){
+      const c = 0.5*(a+b);
+      const fc = F_of_u(c,V,m);
+      if(!isFinite(fc)) { // nudge
+        a += eps; b -= eps;
+        continue;
       }
+      if(Math.abs(fc) < 1e-10) return c;
+      if(fa*fc < 0){
+        b = c;
+        // fb = fc; // not needed
+      }else{
+        a = c;
+        // fa = fc; // but we need update fa:
+        // update fa safely:
+      }
+      // recompute fa each loop for robustness
+      // (slower but stable)
+      // also ensure we don't sit on asymptote
     }
+    return 0.5*(a+b);
+  }
+  return null;
+}
 
-    function fallbackCopy(txt) {
-      const ta = document.createElement('textarea');
-      ta.value = txt;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
+function computeBetaKyGamma(lambda0_um, d_um, n1, n2, u, Vinfo){
+  // from u => ky = 2u/d, then β = sqrt((n1k0)^2 - ky^2), γ = 2w/d
+  const {k0, d} = Vinfo;
+  const ky = 2*u/d;
+  const beta = Math.sqrt(Math.max(0, (n1*k0)*(n1*k0) - ky*ky));
+  const w = Math.sqrt(Math.max(0, Vinfo.V*Vinfo.V - u*u));
+  const gamma = 2*w/d;
+  return {beta, ky, gamma, w};
+}
+
+/* ---------- Drawing: Diagram ---------- */
+function drawDiagram(canvas, params){
+  const {ctx, cssW:w, cssH:h} = setupHiDPI(canvas);
+  ctx.clearRect(0,0,w,h);
+
+  // layout
+  const pad = 18;
+  const x0 = pad, y0 = pad, W = w-2*pad, H = h-2*pad;
+
+  // coordinate region
+  const coreTop = y0 + H*0.35;
+  const coreBot = y0 + H*0.65;
+  const coreLeft = x0 + W*0.12;
+  const coreRight = x0 + W*0.88;
+
+  // background
+  ctx.fillStyle = 'rgba(0,0,0,.12)';
+  ctx.beginPath();
+  roundedRect(ctx, x0, y0, W, H, 18);
+  ctx.fill();
+
+  // cladding
+  ctx.fillStyle = 'rgba(167,139,250,.10)';
+  ctx.beginPath();
+  roundedRect(ctx, coreLeft, y0+10, coreRight-coreLeft, coreTop-(y0+10), 16);
+  ctx.fill();
+  ctx.beginPath();
+  roundedRect(ctx, coreLeft, coreBot, coreRight-coreLeft, (y0+H-10)-coreBot, 16);
+  ctx.fill();
+
+  // core slab
+  ctx.fillStyle = 'rgba(125,211,252,.14)';
+  ctx.strokeStyle = 'rgba(125,211,252,.35)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  roundedRect(ctx, coreLeft, coreTop, coreRight-coreLeft, coreBot-coreTop, 16);
+  ctx.fill();
+  ctx.stroke();
+
+  // labels
+  ctx.fillStyle = 'rgba(234,240,255,.92)';
+  ctx.font = '600 14px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText('Symmetric slab waveguide (TE)', x0+12, y0+22);
+
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+  ctx.fillStyle = 'rgba(234,240,255,.85)';
+  ctx.fillText(`core: n1 = ${params.n1.toFixed(2)}`, coreLeft+14, coreTop+22);
+  ctx.fillText(`clad: n2 = ${params.n2.toFixed(2)}`, coreLeft+14, coreTop-10);
+  ctx.fillText(`clad: n2 = ${params.n2.toFixed(2)}`, coreLeft+14, coreBot+22);
+
+  // thickness d marker
+  ctx.strokeStyle = 'rgba(255,255,255,.28)';
+  ctx.lineWidth = 1.5;
+  const xm = coreRight - 32;
+  ctx.beginPath();
+  ctx.moveTo(xm, coreTop);
+  ctx.lineTo(xm, coreBot);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(xm-8, coreTop);
+  ctx.lineTo(xm+8, coreTop);
+  ctx.moveTo(xm-8, coreBot);
+  ctx.lineTo(xm+8, coreBot);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(169,182,211,.95)';
+  ctx.fillText(`d = ${params.d_um.toFixed(2)} µm`, xm-72, (coreTop+coreBot)/2 + 4);
+
+  // axes (y vertical, z horizontal)
+  const axX = coreLeft + 24, axY = coreBot + 62;
+  ctx.strokeStyle = 'rgba(255,255,255,.25)';
+  ctx.lineWidth = 2;
+  // z axis
+  ctx.beginPath();
+  ctx.moveTo(axX, axY);
+  ctx.lineTo(axX+90, axY);
+  ctx.stroke();
+  // y axis
+  ctx.beginPath();
+  ctx.moveTo(axX, axY);
+  ctx.lineTo(axX, axY-70);
+  ctx.stroke();
+  // arrowheads
+  function arrow(x1,y1,x2,y2){
+    const ang = Math.atan2(y2-y1,x2-x1);
+    const L=10;
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-L*Math.cos(ang-Math.PI/8), y2-L*Math.sin(ang-Math.PI/8));
+    ctx.lineTo(x2-L*Math.cos(ang+Math.PI/8), y2-L*Math.sin(ang+Math.PI/8));
+    ctx.closePath();
+    ctx.fillStyle='rgba(255,255,255,.25)';
+    ctx.fill();
+  }
+  arrow(axX,axY,axX+90,axY);
+  arrow(axX,axY,axX,axY-70);
+
+  ctx.fillStyle='rgba(169,182,211,.95)';
+  ctx.fillText('z (propagation)', axX+8, axY+18);
+  ctx.fillText('y', axX-16, axY-54);
+
+  // TE polarization indicator: E along x (out of page)
+  const px = coreLeft + 62, py = (coreTop+coreBot)/2;
+  ctx.fillStyle = 'rgba(52,211,153,.12)';
+  ctx.strokeStyle = 'rgba(52,211,153,.55)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(px, py, 18, 0, Math.PI*2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(px-6, py);
+  ctx.lineTo(px+6, py);
+  ctx.moveTo(px, py-6);
+  ctx.lineTo(px, py+6);
+  ctx.stroke();
+  ctx.fillStyle='rgba(234,240,255,.85)';
+  ctx.fillText('E along x (TE)', px+26, py+4);
+
+  // guided wave arrow
+  ctx.strokeStyle = 'rgba(125,211,252,.65)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(coreLeft+160, py);
+  ctx.lineTo(coreRight-80, py);
+  ctx.stroke();
+  arrow(coreLeft+160,py,coreRight-80,py);
+  ctx.fillStyle='rgba(234,240,255,.85)';
+  ctx.fillText('e^{-jβz}', coreRight-136, py-12);
+}
+
+/* ---------- Drawing: Dispersion plot ---------- */
+function drawDispersion(canvas, params, solved){
+  const {ctx, cssW:w, cssH:h} = setupHiDPI(canvas);
+
+  // y-range for tan plot: clip to keep readable
+  const V = params.V;
+  const m = params.m;
+  const xMin = 0, xMax = Math.max(0.001, V);
+  const yMin = -6, yMax = 6;
+
+  const A = drawAxes(ctx, 0,0,w,h, xMin,xMax,yMin,yMax, {
+    title: 'TE dispersion:  f(u)=tan(u − mπ/2) and g(u)=w/u  (w=√(V²−u²))',
+    xLabel: 'u = (k_y d)/2   (dimensionless)',
+    yLabel: 'value (dimensionless)',
+    grid:true, ticksX:6, ticksY:6
+  });
+
+  // plot functions
+  function plotFunc(color, f){
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    let started=false;
+    const N = 900;
+    for(let i=0;i<=N;i++){
+      const u = xMin + (xMax-xMin)*i/N;
+      if(u<=0 || u>=V){ continue; }
+      let y = f(u);
+      // skip huge values (near asymptotes)
+      if(!isFinite(y) || Math.abs(y)>yMax*1.2){ started=false; continue; }
+      const px = A.xToPx(u), py = A.yToPx(y);
+      if(!started){ ctx.moveTo(px,py); started=true; }
+      else ctx.lineTo(px,py);
     }
+    ctx.stroke();
+    ctx.restore();
+  }
 
-    document.getElementById('copyProb').addEventListener('click', () => copyText(probText));
-    document.getElementById('copyTitle').addEventListener('click', () => copyText(probTitle));
-  </script>
+  plotFunc('rgba(125,211,252,.92)', (u)=>Math.tan(u - m*Math.PI/2));
+  plotFunc('rgba(167,139,250,.92)', (u)=>{
+    const wv = Math.sqrt(Math.max(0, V*V - u*u));
+    return wv/u;
+  });
+
+  // mark solution
+  if(solved && solved.u){
+    const u = solved.u;
+    const wv = Math.sqrt(Math.max(0, V*V - u*u));
+    const y = wv/u;
+    ctx.save();
+    ctx.fillStyle = 'rgba(52,211,153,.95)';
+    ctx.strokeStyle = 'rgba(52,211,153,.95)';
+    ctx.lineWidth = 2;
+    const px = A.xToPx(u), py = A.yToPx(y);
+    ctx.beginPath(); ctx.arc(px, py, 5.5, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(px, A.gy); ctx.lineTo(px, A.gy + A.gh); ctx.strokeStyle='rgba(52,211,153,.25)'; ctx.stroke();
+    ctx.restore();
+
+    // label
+    ctx.save();
+    ctx.fillStyle = 'rgba(234,240,255,.88)';
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+    const txt = `root: u≈${u.toFixed(3)}  w≈${wv.toFixed(3)}`;
+    ctx.fillText(txt, Math.min(px+10, A.gx + A.gw - 160), Math.max(py-10, A.gy+16));
+    ctx.restore();
+  }
+
+  drawLegend(ctx, A.gx + 10, A.gy + 10, [
+    {label: 'tan(u − mπ/2)', color: 'rgba(125,211,252,.92)'},
+    {label: 'w/u', color: 'rgba(167,139,250,.92)'},
+    {label: 'intersection', color: 'rgba(52,211,153,.95)'}
+  ]);
+}
+
+/* ---------- Drawing: Field profile plot ---------- */
+function drawFieldProfile(canvas, params, solved, Vinfo){
+  const {ctx, cssW:w, cssH:h} = setupHiDPI(canvas);
+  const d = Vinfo.d;
+  const d_um = params.d_um;
+
+  const yMin_um = -2.5*d_um;
+  const yMax_um =  2.5*d_um;
+
+  // amplitude scale: show |Ex| normalized to 1 at center
+  const xMin = yMin_um, xMax = yMax_um;
+  const yMin = 0, yMax = 1.25;
+
+  const A = drawAxes(ctx, 0,0,w,h, xMin,xMax,yMin,yMax, {
+    title: 'Example mode profile: |E_x(y)| (normalized)',
+    xLabel: 'y (µm)',
+    yLabel: '|E_x| (arb.)',
+    grid:true, ticksX:6, ticksY:5
+  });
+
+  // draw core boundaries at ±d/2
+  const y1 = -d_um/2, y2 = d_um/2;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,.18)';
+  ctx.lineWidth = 2;
+  [y1,y2].forEach(yy=>{
+    const px = A.xToPx(yy);
+    ctx.beginPath(); ctx.moveTo(px, A.gy); ctx.lineTo(px, A.gy + A.gh); ctx.stroke();
+  });
+  ctx.fillStyle = 'rgba(169,182,211,.9)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+  ctx.fillText('core', A.xToPx(-0.1*d_um), A.gy+18);
+  ctx.fillText('clad', A.xToPx(-1.7*d_um), A.gy+18);
+  ctx.fillText('clad', A.xToPx( 1.1*d_um), A.gy+18);
+  ctx.restore();
+
+  if(!solved || !solved.u){
+    ctx.save();
+    ctx.fillStyle='rgba(251,191,36,.95)';
+    ctx.font='600 13px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText('No guided root found for this m at the current parameters (below cutoff).', A.gx+10, A.gy + A.gh/2);
+    ctx.restore();
+    return;
+  }
+
+  const u = solved.u;
+  const wv = Math.sqrt(Math.max(0, params.V*params.V - u*u));
+  const ky = 2*u/d;         // 1/m
+  const gamma = 2*wv/d;     // 1/m
+
+  // Build a TE mode profile (even/odd based on m):
+  // Even (m even): cos(ky y) in core, matched to exp outside.
+  // Odd (m odd):  sin(ky y) in core, matched to exp outside.
+  const even = (params.m % 2 === 0);
+
+  function Ex_of_y_um(yum){
+    const y = yum * 1e-6; // m
+    const half = d/2;
+    if(Math.abs(y) <= half){
+      const val = even ? Math.cos(ky*y) : Math.sin(ky*y);
+      return val;
+    }else{
+      // match to value at boundary
+      const sgn = (y>0)? 1 : -1;
+      const yb = sgn*half;
+      const boundaryVal = even ? Math.cos(ky*yb) : Math.sin(ky*yb);
+      const dist = Math.abs(y) - half;
+      return boundaryVal * Math.exp(-gamma*dist);
+    }
+  }
+
+  // Normalize so |E(0)| = 1 for even; for odd use max in core.
+  let norm = 1;
+  if(even){
+    norm = Math.abs(Ex_of_y_um(0)) || 1;
+  }else{
+    // approximate max in core
+    let maxv = 0;
+    for(let i=0;i<=400;i++){
+      const yum = -d_um/2 + i*(d_um)/400;
+      maxv = Math.max(maxv, Math.abs(Ex_of_y_um(yum)));
+    }
+    norm = maxv || 1;
+  }
+
+  // Plot |Ex|
+  ctx.save();
+  ctx.strokeStyle = 'rgba(125,211,252,.92)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  const N = 900;
+  for(let i=0;i<=N;i++){
+    const yum = xMin + (xMax-xMin)*i/N;
+    const val = Math.abs(Ex_of_y_um(yum))/norm;
+    const px = A.xToPx(yum);
+    const py = A.yToPx(Math.min(yMax, val));
+    if(i===0) ctx.moveTo(px,py);
+    else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // annotate ky and gamma (example)
+  ctx.save();
+  ctx.fillStyle='rgba(234,240,255,.86)';
+  ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+  ctx.fillText(`ky ≈ ${(ky*1e-6).toFixed(3)} 1/µm   γ ≈ ${(gamma*1e-6).toFixed(3)} 1/µm   (${even?'even':'odd'} mode)`,
+               A.gx+10, A.gy + A.gh - 12);
+  ctx.restore();
+
+  drawLegend(ctx, A.gx + 10, A.gy + 10, [
+    {label:'|E_x(y)| (normalized)', color:'rgba(125,211,252,.92)'},
+    {label:'core boundary', color:'rgba(255,255,255,.18)'}
+  ]);
+}
+
+/* ---------- UI + Update loop ---------- */
+const cDiagram = document.getElementById('cDiagram');
+const cDisp = document.getElementById('cDisp');
+const cField = document.getElementById('cField');
+
+const lambdaSlider = document.getElementById('lambdaSlider');
+const lambdaReadout = document.getElementById('lambdaReadout');
+const modeSelect = document.getElementById('modeSelect');
+const dInput = document.getElementById('dInput');
+const n1Input = document.getElementById('n1Input');
+const n2Input = document.getElementById('n2Input');
+
+const k_lambda = document.getElementById('k_lambda');
+const k_V = document.getElementById('k_V');
+const k_uw = document.getElementById('k_uw');
+
+function getParams(){
+  const lambda0_um = parseFloat(lambdaSlider.value);
+  const d_um = Math.max(0.2, parseFloat(dInput.value));
+  const n1 = Math.max(1.0, parseFloat(n1Input.value));
+  const n2 = Math.max(1.0, parseFloat(n2Input.value));
+  const m = parseInt(modeSelect.value,10);
+
+  const Vinfo = computeV(lambda0_um, d_um, n1, n2);
+  return {lambda0_um, d_um, n1, n2, m, V: Vinfo.V, Vinfo};
+}
+
+function update(){
+  const p = getParams();
+
+  lambdaReadout.textContent = `${p.lambda0_um.toFixed(2)} µm`;
+
+  // Validity check
+  let solved = {u:null, w:null, beta:null, ky:null, gamma:null};
+  if(p.n2 >= p.n1){
+    solved.note = 'Need n1 > n2 for guiding.';
+  }else if(p.V <= 1e-6){
+    solved.note = 'V too small.';
+  }else{
+    const uRoot = findRootForMode(p.V, p.m);
+    if(uRoot !== null){
+      const bg = computeBetaKyGamma(p.lambda0_um, p.d_um, p.n1, p.n2, uRoot, p.Vinfo);
+      solved.u = uRoot;
+      solved.w = bg.w;
+      solved.beta = bg.beta;
+      solved.ky = bg.ky;
+      solved.gamma = bg.gamma;
+    }
+  }
+
+  // Update KPI box
+  k_lambda.textContent = p.lambda0_um.toFixed(2);
+  k_V.textContent = p.V.toFixed(3);
+  if(solved.u){
+    k_uw.textContent = `u=${solved.u.toFixed(3)}, w=${solved.w.toFixed(3)}`;
+  }else{
+    k_uw.textContent = '— (no root / below cutoff)';
+  }
+
+  // Draw
+  drawDiagram(cDiagram, p);
+  drawDispersion(cDisp, p, solved);
+  drawFieldProfile(cField, p, solved, p.Vinfo);
+}
+
+['input','change'].forEach(evt=>{
+  lambdaSlider.addEventListener(evt, update);
+  modeSelect.addEventListener(evt, update);
+  dInput.addEventListener(evt, update);
+  n1Input.addEventListener(evt, update);
+  n2Input.addEventListener(evt, update);
+});
+
+window.addEventListener('resize', ()=>{
+  // allow layout to settle then redraw
+  window.requestAnimationFrame(update);
+});
+
+// initial
+update();
+</script>
 </body>
 </html>

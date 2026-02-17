@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Gaussian Mutual Intensity: Helmholtz Equation and Growing Coherence Area</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.085);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.70);
+      --faint: rgba(255,255,255,0.55);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 18px 55px rgba(0,0,0,0.45);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 15% 10%, rgba(125,211,252,0.16), transparent 55%),
+        radial-gradient(1000px 700px at 85% 25%, rgba(167,139,250,0.16), transparent 55%),
+        radial-gradient(900px 700px at 55% 90%, rgba(52,211,153,0.10), transparent 55%),
+        linear-gradient(180deg, #070a14, #0b1020 30%, #070a14);
+      overflow-x:hidden;
+    }
+    a{color:var(--accent)}
+    header{
+      padding: 34px 18px 16px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    .hero{
+      display:grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    .titleCard{
+      background: linear-gradient(135deg, rgba(125,211,252,0.10), rgba(167,139,250,0.08));
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: var(--radius);
+      padding: 22px 22px 18px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .titleCard:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(500px 200px at 15% 10%, rgba(125,211,252,0.18), transparent 55%),
+                  radial-gradient(480px 220px at 85% 25%, rgba(167,139,250,0.18), transparent 60%);
+      filter: blur(0.3px);
+      opacity:0.9;
+      pointer-events:none;
+    }
+    .titleCard > *{position:relative; z-index:1}
+    h1{
+      margin:0 0 10px;
+      font-size: clamp(1.4rem, 1.5vw + 1rem, 2.35rem);
+      letter-spacing: 0.2px;
+      line-height: 1.15;
+    }
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      line-height:1.45;
+      font-size: 1.02rem;
+      max-width: 70ch;
+    }
+    .meta{
+      margin-top: 14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      color: var(--faint);
+      font-size: 0.92rem;
+    }
+    .chip{
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(6px);
+    }
+
+    .tocCard{
+      background: rgba(255,255,255,0.055);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: var(--radius);
+      padding: 16px 14px;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 12px;
+      align-self:start;
+      height: fit-content;
+    }
+    .tocTitle{
+      margin: 0 0 10px;
+      font-size: 0.98rem;
+      color: rgba(255,255,255,0.86);
+      letter-spacing:0.2px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .tocTitle .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, var(--accent), rgba(125,211,252,0.25));
+      box-shadow: 0 0 0 4px rgba(125,211,252,0.10);
+    }
+    nav ul{list-style:none; padding:0; margin:0; display:grid; gap:7px;}
+    nav a{
+      display:block;
+      text-decoration:none;
+      color: rgba(255,255,255,0.78);
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.12);
+      transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+      font-size: 0.93rem;
+    }
+    nav a:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(125,211,252,0.25);
+      color: rgba(255,255,255,0.90);
+    }
+
+    main{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 10px 18px 70px;
+      display:grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .hero{grid-template-columns:1fr}
+      main{grid-template-columns:1fr}
+      .tocCard{position:relative; top:0}
+    }
+
+    section{
+      background: rgba(255,255,255,0.055);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: var(--radius);
+      padding: 18px 18px 16px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    section h2{
+      margin: 0 0 10px;
+      font-size: 1.25rem;
+      letter-spacing:0.2px;
+    }
+    section h3{
+      margin: 16px 0 8px;
+      font-size: 1.08rem;
+      color: rgba(255,255,255,0.88);
+    }
+    p{margin: 10px 0; color: rgba(255,255,255,0.83); line-height: 1.62;}
+    ul{margin: 10px 0 10px 20px; color: rgba(255,255,255,0.83); line-height:1.6;}
+    li{margin:6px 0}
+    .grid2{
+      display:grid; grid-template-columns:1fr 1fr; gap:14px;
+    }
+    @media (max-width: 700px){
+      .grid2{grid-template-columns:1fr}
+    }
+
+    .callout{
+      border-radius: 16px;
+      padding: 12px 12px 12px 12px;
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .callout strong{color: rgba(255,255,255,0.92)}
+    .callout.good{border-color: rgba(52,211,153,0.25)}
+    .callout.warn{border-color: rgba(251,191,36,0.25)}
+    .callout.bad{border-color: rgba(251,113,133,0.25)}
+    .callout .label{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:0.92rem;
+      padding: 6px 10px;
+      border-radius:999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      margin-bottom: 8px;
+      color: rgba(255,255,255,0.86);
+    }
+    .callout .label .pill{
+      width:10px;height:10px;border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(125,211,252,0.10);
+    }
+    .callout.good .label .pill{background: var(--good); box-shadow:0 0 0 4px rgba(52,211,153,0.12)}
+    .callout.warn .label .pill{background: var(--warn); box-shadow:0 0 0 4px rgba(251,191,36,0.12)}
+    .callout.bad  .label .pill{background: var(--bad);  box-shadow:0 0 0 4px rgba(251,113,133,0.12)}
+
+    .eqBox{
+      padding: 12px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(125,211,252,0.22);
+      background: linear-gradient(135deg, rgba(125,211,252,0.09), rgba(0,0,0,0.16));
+      margin: 10px 0;
+      position:relative;
+      overflow:hidden;
+    }
+    .eq{
+      font-family: var(--mono);
+      color: rgba(255,255,255,0.92);
+      font-size: 0.96rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .copyRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:8px;
+      align-items:center;
+    }
+    button.copy{
+      cursor:pointer;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.86);
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    }
+    button.copy:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(125,211,252,0.28);
+    }
+    .small{font-size:0.92rem; color: rgba(255,255,255,0.72)}
+    .mathNote{color: rgba(255,255,255,0.72); font-size:0.94rem}
+
+    figure{
+      margin:0;
+      padding:0;
+    }
+    .vizPanel{
+      display:grid;
+      gap:14px;
+    }
+    .canvasCard{
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: var(--radius);
+      padding: 12px;
+      overflow:hidden;
+    }
+    .canvasHeader{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:12px;
+      margin-bottom: 8px;
+    }
+    .canvasHeader h3{
+      margin:0;
+      font-size: 1.02rem;
+    }
+    .canvasHeader .hint{
+      color: rgba(255,255,255,0.62);
+      font-size: 0.88rem;
+    }
+    canvas{
+      width: 100%;
+      height: 280px;
+      display:block;
+      border-radius: 14px;
+      background: rgba(5,8,18,0.75);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .controls{
+      display:grid;
+      gap:12px;
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+    }
+    .control{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+    }
+    .control label{
+      color: rgba(255,255,255,0.82);
+      font-size:0.95rem;
+    }
+    .control .val{
+      font-family: var(--mono);
+      color: rgba(255,255,255,0.86);
+      font-size:0.9rem;
+      padding: 6px 8px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+    .controlRow{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:6px;
+    }
+    .twoCols{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 720px){
+      .twoCols{grid-template-columns:1fr}
+      canvas{height:260px}
+    }
+
+    footer{
+      max-width:1180px;
+      margin: 0 auto;
+      padding: 22px 18px 40px;
+      color: rgba(255,255,255,0.60);
+      font-size:0.92rem;
+    }
+
+    /* subtle entrance */
+    .fadeIn{
+      animation: pop 420ms ease both;
+    }
+    @keyframes pop{
+      from{opacity:0; transform: translateY(6px)}
+      to{opacity:1; transform: translateY(0)}
+    }
+
+    /* print */
+    @media print{
+      body{background:white; color:#111}
+      header, main, footer{max-width: 100%; padding: 0}
+      .tocCard{display:none}
+      section, .titleCard, .canvasCard{box-shadow:none; border-color:#ddd; background:white}
+      canvas{border-color:#ddd; background:white}
+      button.copy, .controls{display:none}
+      a{color:#111; text-decoration:none}
+    }
+  </style>
+</head>
+
+<body>
+<header class="fadeIn">
+  <div class="hero">
+    <div class="titleCard">
+      <h1>Gaussian Mutual Intensity in Free Space: Why It Obeys Helmholtz &amp; Why Coherence Grows with Propagation</h1>
+      <p class="subtitle">
+        We start from a quasi-monochromatic, statistically stationary optical wave whose mutual coherence function is
+        <span class="eq" style="display:inline; font-family:var(--mono)">G(r1, r2, τ) = J(r1 − r2) · exp(j 2π ν0 τ)</span>.
+        You will prove that the spatial part <span class="eq" style="display:inline; font-family:var(--mono)">J</span> must satisfy a Helmholtz equation,
+        then use a Gaussian-beam-form solution to compute a <em>coherence area</em> near the optical axis and show it increases with <span class="eq" style="display:inline; font-family:var(--mono)">|z|</span>.
+      </p>
+      <div class="meta">
+        <span class="chip">Topic: Statistical Optics</span>
+        <span class="chip">Key idea: Mutual coherence propagates like a field</span>
+        <span class="chip">Model: Quasi-monochromatic scalar wave</span>
+      </div>
+    </div>
+
+    <aside class="tocCard">
+      <div class="tocTitle"><span class="dot"></span><strong>Table of Contents</strong></div>
+      <nav>
+        <ul>
+          <li><a href="#quick">Quick Summary</a></li>
+          <li><a href="#part0">PART 0 — Concept Primer</a></li>
+          <li><a href="#part1">PART 1 — Problem Analysis</a></li>
+          <li><a href="#part2">PART 2 — Strategy &amp; Tips</a></li>
+          <li><a href="#part3">PART 3 — Full Solution</a></li>
+          <li><a href="#part4">PART 4 — Deeper Understanding</a></li>
+          <li><a href="#part5">PART 5 — Visualization Guide</a></li>
+        </ul>
+      </nav>
+    </aside>
+  </div>
+</header>
+
+<main>
+  <article class="vizPanel fadeIn" aria-label="Visualizations">
+    <div class="controls" aria-label="Interactive controls">
+      <div class="callout good">
+        <div class="label"><span class="pill"></span><strong>Interactive controls</strong></div>
+        <p class="small" style="margin:0">
+          Adjust the <span class="eq" style="display:inline; font-family:var(--mono)">Rayleigh-like</span> parameter <span class="eq" style="display:inline; font-family:var(--mono)">z0</span>,
+          wavelength <span class="eq" style="display:inline; font-family:var(--mono)">λ</span>, and choose a plane <span class="eq" style="display:inline; font-family:var(--mono)">z</span>.
+          All plots update live.
+        </p>
+      </div>
+
+      <div class="twoCols">
+        <div class="controlRow">
+          <div class="control">
+            <label for="z0Slider">Parameter <span class="eq" style="display:inline; font-family:var(--mono)">z0</span> (example, meters)</label>
+            <div class="val" id="z0Val"></div>
+          </div>
+          <input id="z0Slider" type="range" min="0.02" max="1.00" step="0.01" value="0.20"/>
+          <div class="small">Controls how fast the transverse decay broadens with propagation.</div>
+        </div>
+
+        <div class="controlRow">
+          <div class="control">
+            <label for="lamSlider">Wavelength <span class="eq" style="display:inline; font-family:var(--mono)">λ</span> (example, nm)</label>
+            <div class="val" id="lamVal"></div>
+          </div>
+          <input id="lamSlider" type="range" min="400" max="1600" step="10" value="633"/>
+          <div class="small">Enters via <span class="eq" style="display:inline; font-family:var(--mono)">k0 = 2π/λ</span>.</div>
+        </div>
+      </div>
+
+      <div class="controlRow">
+        <div class="control">
+          <label for="zSlider">Observation plane <span class="eq" style="display:inline; font-family:var(--mono)">z</span> (meters)</label>
+          <div class="val" id="zVal"></div>
+        </div>
+        <input id="zSlider" type="range" min="-2.0" max="2.0" step="0.01" value="0.70"/>
+        <div class="small">Used in the secondary plot <span class="eq" style="display:inline; font-family:var(--mono)">|J(ρ,z)|</span> and the marker on the main plot.</div>
+      </div>
+    </div>
+
+    <figure class="canvasCard">
+      <div class="canvasHeader">
+        <h3>Diagram: Two points &amp; coherence “patch” near the z-axis</h3>
+        <div class="hint">Geometry &amp; symbols used in the derivation</div>
+      </div>
+      <canvas id="diagramCanvas" aria-label="Diagram canvas"></canvas>
+    </figure>
+
+    <figure class="canvasCard">
+      <div class="canvasHeader">
+        <h3>Main plot: Coherence area <span class="eq" style="display:inline; font-family:var(--mono)">A_c(z)</span> vs. propagation <span class="eq" style="display:inline; font-family:var(--mono)">z</span></h3>
+        <div class="hint">Shows <span class="eq" style="display:inline; font-family:var(--mono)">A_c ∝ (z^2 + z0^2)</span></div>
+      </div>
+      <canvas id="mainPlotCanvas" aria-label="Main plot canvas"></canvas>
+    </figure>
+
+    <figure class="canvasCard">
+      <div class="canvasHeader">
+        <h3>Secondary plot: Normalized coherence magnitude <span class="eq" style="display:inline; font-family:var(--mono)">|J(ρ,z)|/|J(0,z)|</span></h3>
+        <div class="hint">Gaussian decay in transverse separation <span class="eq" style="display:inline; font-family:var(--mono)">ρ</span></div>
+      </div>
+      <canvas id="secondaryPlotCanvas" aria-label="Secondary plot canvas"></canvas>
+    </figure>
+  </article>
+
+  <article class="fadeIn" aria-label="Text content">
+    <section id="quick">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li>We study a statistically stationary, quasi-monochromatic optical wave with mutual coherence <span class="eq" style="display:inline; font-family:var(--mono)">G(r1,r2,τ)=J(r1−r2)e^{j2πν0τ}</span>.</li>
+        <li>Key physics idea: because the field satisfies the free-space wave equation, the mutual coherence satisfies the <em>same</em> spatial operator in each point coordinate.</li>
+        <li>Result (a): <span class="eq" style="display:inline; font-family:var(--mono)">J(r)</span> must satisfy the Helmholtz equation <span class="eq" style="display:inline; font-family:var(--mono)">∇²J + k0² J = 0</span>, with <span class="eq" style="display:inline; font-family:var(--mono)">k0 = 2πν0/c</span>.</li>
+        <li>Given model (b): a Gaussian-beam-form solution <span class="eq" style="display:inline; font-family:var(--mono)">J(r)= (1/q(z)) exp[-j k0 (x²+y²)/(2q(z))] exp(-j k0 z)</span>, with <span class="eq" style="display:inline; font-family:var(--mono)">q(z)=z+jz0</span>.</li>
+        <li>Near the z-axis, the <em>magnitude</em> becomes a transverse Gaussian: <span class="eq" style="display:inline; font-family:var(--mono)">|J(ρ,z)| ∝ exp[- ρ² / ρc(z)²]</span>.</li>
+        <li>A natural coherence area (based on the “effective area” of <span class="eq" style="display:inline; font-family:var(--mono)">|J|²</span>) is
+          <span class="eq" style="display:inline; font-family:var(--mono)">A_c(z) = 2π (z²+z0²)/(k0 z0)</span> (symbolic).</li>
+        <li>Since <span class="eq" style="display:inline; font-family:var(--mono)">A_c(z)</span> grows with <span class="eq" style="display:inline; font-family:var(--mono)">|z|</span> (quadratically), the wave “gains coherence” as it propagates away from the origin in this model.</li>
+      </ul>
+    </section>
+
+    <section id="part0">
+      <h2>PART 0 — Concept Primer (THEORY BEFORE SOLVING)</h2>
+
+      <h3>Core definitions (symbols &amp; units)</h3>
+      <div class="callout">
+        <div class="label"><span class="pill"></span><strong>Mutual coherence / mutual coherence function</strong></div>
+        <p style="margin:0">
+          For a (scalar) complex analytic optical field <span class="eq" style="display:inline; font-family:var(--mono)">U(r,t)</span> (units: field amplitude),
+          the mutual coherence function is
+        </p>
+        <div class="eqBox">
+          <div class="eq" id="eqGdef">G(r1,r2,τ) = ⟨ U(r1,t) · U*(r2, t+τ) ⟩</div>
+          <div class="copyRow">
+            <button class="copy" data-copy="eqGdef">Copy equation</button>
+            <span class="small">⟨·⟩ = ensemble/time average (stationary process)</span>
+          </div>
+        </div>
+        <p class="mathNote" style="margin:0">
+          In stationary (time-invariant statistics) situations, <span class="eq" style="display:inline; font-family:var(--mono)">G</span> depends on delay <span class="eq" style="display:inline; font-family:var(--mono)">τ</span> but not on absolute time <span class="eq" style="display:inline; font-family:var(--mono)">t</span>.
+        </p>
+      </div>
+
+      <h3>Physical meaning of key quantities</h3>
+      <ul>
+        <li><span class="eq" style="display:inline; font-family:var(--mono)">G(r1,r2,τ)</span> measures how well the field at point <span class="eq" style="display:inline; font-family:var(--mono)">r1</span> correlates with the field at <span class="eq" style="display:inline; font-family:var(--mono)">r2</span> after a delay <span class="eq" style="display:inline; font-family:var(--mono)">τ</span>.</li>
+        <li><span class="eq" style="display:inline; font-family:var(--mono)">J(r1−r2)</span> here is the <em>spatial</em> part of coherence (mutual intensity at equal times up to a carrier), encoding how coherence changes with spatial separation.</li>
+        <li><span class="eq" style="display:inline; font-family:var(--mono)">ν0</span> (Hz) is the carrier (optical) frequency; <span class="eq" style="display:inline; font-family:var(--mono)">k0=2πν0/c</span> (rad/m) is the free-space wavenumber.</li>
+      </ul>
+
+      <h3>Key laws/principles and validity</h3>
+      <div class="grid2">
+        <div class="callout good">
+          <div class="label"><span class="pill"></span><strong>Wave equation in free space</strong></div>
+          <p style="margin:0">
+            In homogeneous free space (no sources), a scalar component can be modeled by
+            <span class="eq" style="display:inline; font-family:var(--mono)">(∇² − (1/c²)∂²/∂t²)U = 0</span>.
+            This is valid when polarization and vector effects can be neglected (paraxial / single polarization component).
+          </p>
+        </div>
+        <div class="callout warn">
+          <div class="label"><span class="pill"></span><strong>Quasi-monochromatic stationarity</strong></div>
+          <p style="margin:0">
+            If the field has a narrowband spectrum centered at <span class="eq" style="display:inline; font-family:var(--mono)">ν0</span>, then the
+            delay dependence often factors like <span class="eq" style="display:inline; font-family:var(--mono)">exp(j2πν0τ)</span> times a slowly varying envelope.
+            Here, that factorization is given exactly.
+          </p>
+        </div>
+      </div>
+
+      <h3>Common models/approximations &amp; why we use them</h3>
+      <ul>
+        <li><strong>Helmholtz reduction:</strong> For time-harmonic dependence <span class="eq" style="display:inline; font-family:var(--mono)">e^{jω0 t}</span>, the wave equation becomes <span class="eq" style="display:inline; font-family:var(--mono)">∇²u + k0² u = 0</span>.</li>
+        <li><strong>Gaussian-beam (paraxial) solutions:</strong> Exact Helmholtz solutions are hard; Gaussian beams are accurate when the field is concentrated near the axis with small propagation angles (paraxial regime).</li>
+        <li><strong>Coherence area:</strong> A single number that summarizes the “size” of the region over which coherence remains significant. Multiple definitions exist; we will use a standard effective-area definition built from <span class="eq" style="display:inline; font-family:var(--mono)">|J|²</span> (always positive).</li>
+      </ul>
+
+      <h3>Mini intuition examples (quick)</h3>
+      <ul>
+        <li><strong>Perfect plane wave:</strong> coherence is infinite across any transverse separation—its mutual intensity does not decay with <span class="eq" style="display:inline; font-family:var(--mono)">ρ</span>.</li>
+        <li><strong>Gaussian coherence patch:</strong> if <span class="eq" style="display:inline; font-family:var(--mono)">|J(ρ)|</span> is Gaussian in <span class="eq" style="display:inline; font-family:var(--mono)">ρ</span>, the coherence area scales like the Gaussian width squared (area ∝ width²).</li>
+      </ul>
+
+      <div class="callout bad">
+        <div class="label"><span class="pill"></span><strong>What to watch for (pitfalls)</strong></div>
+        <ul style="margin: 8px 0 0 20px">
+          <li><strong>Which derivative?</strong> The wave operator acts on the <em>field</em> time variable; for a stationary coherence function it translates into derivatives with respect to the delay <span class="eq" style="display:inline; font-family:var(--mono)">τ</span> (not the absolute time).</li>
+          <li><strong>Coherence area is not unique:</strong> You must specify a definition. We choose an effective area based on <span class="eq" style="display:inline; font-family:var(--mono)">|J|²</span> so it is real and positive.</li>
+          <li><strong>Complex Gaussian exponent:</strong> Separate phase (imaginary part) from magnitude (real part) carefully.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="part1">
+      <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <h3>Restate the problem in plain language</h3>
+      <p>
+        We are given that an optical wave in free space has mutual coherence
+        <span class="eq" style="display:inline; font-family:var(--mono)">G(r1,r2,τ)=J(r1−r2) e^{j2πν0τ}</span>.
+        (a) Prove that the spatial function <span class="eq" style="display:inline; font-family:var(--mono)">J(r)</span> satisfies the Helmholtz equation
+        <span class="eq" style="display:inline; font-family:var(--mono)">∇²J + k0²J = 0</span>, where <span class="eq" style="display:inline; font-family:var(--mono)">k0 = 2πν0/c</span>.
+        (b) Using a Gaussian-beam-form approximate solution for <span class="eq" style="display:inline; font-family:var(--mono)">J</span>, find an expression for the coherence area near the z-axis and show it increases with <span class="eq" style="display:inline; font-family:var(--mono)">|z|</span>.
+      </p>
+
+      <h3>Given quantities</h3>
+      <ul>
+        <li>Mutual coherence factorization: <span class="eq" style="display:inline; font-family:var(--mono)">G(r1,r2,τ)=J(r1−r2)e^{j2πν0τ}</span>.</li>
+        <li>Free-space propagation; speed of light <span class="eq" style="display:inline; font-family:var(--mono)">c</span>.</li>
+        <li>Gaussian-beam-form candidate:
+          <span class="eq" style="display:inline; font-family:var(--mono)">J(r)= (1/q(z)) exp[-j k0 (x²+y²)/(2q(z))] exp(-j k0 z)</span>,
+          with <span class="eq" style="display:inline; font-family:var(--mono)">q(z)=z+jz0</span>, <span class="eq" style="display:inline; font-family:var(--mono)">z0</span> constant.</li>
+      </ul>
+
+      <h3>Unknowns / what to find</h3>
+      <ul>
+        <li>(a) Prove the PDE constraint on <span class="eq" style="display:inline; font-family:var(--mono)">J</span>.</li>
+        <li>(b) Define and compute a coherence area near the axis, and prove it increases with <span class="eq" style="display:inline; font-family:var(--mono)">|z|</span>.</li>
+      </ul>
+
+      <h3>Relevant principles and why they apply</h3>
+      <ul>
+        <li><strong>Free-space wave equation:</strong> the underlying field satisfies it, so any second-order correlation built from the field inherits the same linear differential operator (after averaging).</li>
+        <li><strong>Stationarity &amp; quasi-monochromaticity:</strong> lets the delay dependence be harmonic at <span class="eq" style="display:inline; font-family:var(--mono)">ν0</span>, converting time derivatives into multiplication by <span class="eq" style="display:inline; font-family:var(--mono)">-(2πν0)²</span>.</li>
+        <li><strong>Gaussian-beam approximation:</strong> used to extract an analytic transverse coherence width as a function of <span class="eq" style="display:inline; font-family:var(--mono)">z</span>.</li>
+      </ul>
+
+      <div class="callout warn">
+        <div class="label"><span class="pill"></span><strong>Assumptions (explicit)</strong></div>
+        <ul style="margin: 8px 0 0 20px">
+          <li>Scalar, source-free propagation in homogeneous free space.</li>
+          <li>Statistically stationary field so <span class="eq" style="display:inline; font-family:var(--mono)">G</span> depends on delay <span class="eq" style="display:inline; font-family:var(--mono)">τ</span>, not absolute time.</li>
+          <li>Quasi-monochromatic (narrowband) such that the given factor <span class="eq" style="display:inline; font-family:var(--mono)">e^{j2πν0τ}</span> captures the carrier.</li>
+          <li>For coherence area “near the z-axis”: we focus on transverse separations <span class="eq" style="display:inline; font-family:var(--mono)">ρ=√(x²+y²)</span> with modest values where the Gaussian form is meaningful.</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (compare)</h3>
+      <ul>
+        <li><strong>Approach A (operator inheritance):</strong> Apply the wave operator to the correlation definition, move derivatives inside the average, and use the given time-harmonic delay factor. <em>Pros:</em> direct and conceptually clean. <em>Cons:</em> requires careful handling of which time variable is differentiated.</li>
+        <li><strong>Approach B (frequency-domain coherence):</strong> Use cross-spectral density and the Helmholtz equation for each frequency component; then pick the carrier frequency. <em>Pros:</em> standard in statistical optics. <em>Cons:</em> more machinery than needed here.</li>
+        <li><strong>Approach C (plug-in check):</strong> Assume Helmholtz for <span class="eq" style="display:inline; font-family:var(--mono)">J</span> and show it’s consistent. <em>Pros:</em> quick. <em>Cons:</em> not a proof from fundamentals.</li>
+      </ul>
+      <p>
+        We choose <strong>Approach A</strong> because the problem gives <span class="eq" style="display:inline; font-family:var(--mono)">G</span> explicitly and asks to “show” the PDE constraint on <span class="eq" style="display:inline; font-family:var(--mono)">J</span>.
+      </p>
+    </section>
+
+    <section id="part2">
+      <h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+      <ol style="margin: 10px 0 10px 22px; color: rgba(255,255,255,0.83); line-height:1.6;">
+        <li>
+          <strong>Goal:</strong> connect field propagation to coherence propagation. <br/>
+          <span class="small"><strong>Tool:</strong> free-space wave equation on <span class="eq" style="display:inline; font-family:var(--mono)">U(r,t)</span>. <strong>Meaning:</strong> correlations propagate under the same linear operator.</span>
+        </li>
+        <li>
+          <strong>Goal:</strong> derive a PDE for <span class="eq" style="display:inline; font-family:var(--mono)">G(r1,r2,τ)</span>. <br/>
+          <span class="small"><strong>Tool:</strong> apply <span class="eq" style="display:inline; font-family:var(--mono)">∇1² − (1/c²)∂t²</span> to the first field inside the average. <strong>Meaning:</strong> coherence must satisfy a wave equation in <span class="eq" style="display:inline; font-family:var(--mono)">r1</span>.</span>
+        </li>
+        <li>
+          <strong>Goal:</strong> use stationarity to convert time derivatives to delay derivatives. <br/>
+          <span class="small"><strong>Tool:</strong> for stationary processes, derivatives in <span class="eq" style="display:inline; font-family:var(--mono)">t</span> become derivatives in <span class="eq" style="display:inline; font-family:var(--mono)">τ</span> when acting on <span class="eq" style="display:inline; font-family:var(--mono)">G</span>. <strong>Meaning:</strong> harmonic delay implies Helmholtz in space.</span>
+        </li>
+        <li>
+          <strong>Goal:</strong> substitute the given form <span class="eq" style="display:inline; font-family:var(--mono)">G=J e^{j2πν0τ}</span>. <br/>
+          <span class="small"><strong>Tool:</strong> compute <span class="eq" style="display:inline; font-family:var(--mono)">∂²/∂τ²</span> of the exponential. <strong>Meaning:</strong> time-harmonic behavior sets the spatial wavenumber.</span>
+        </li>
+        <li>
+          <strong>Goal:</strong> isolate the equation obeyed by <span class="eq" style="display:inline; font-family:var(--mono)">J</span>. <br/>
+          <span class="small"><strong>Tool:</strong> cancel the common exponential factor. <strong>Meaning:</strong> <span class="eq" style="display:inline; font-family:var(--mono)">J</span> is a Helmholtz solution.</span>
+        </li>
+        <li>
+          <strong>Goal:</strong> for the Gaussian form, separate magnitude from phase. <br/>
+          <span class="small"><strong>Tool:</strong> write <span class="eq" style="display:inline; font-family:var(--mono)">1/q</span> and <span class="eq" style="display:inline; font-family:var(--mono)">1/q</span> in terms of <span class="eq" style="display:inline; font-family:var(--mono)">z</span>, <span class="eq" style="display:inline; font-family:var(--mono)">z0</span>. <strong>Meaning:</strong> real part of exponent gives transverse decay.</span>
+        </li>
+        <li>
+          <strong>Goal:</strong> define a coherence area and compute it analytically. <br/>
+          <span class="small"><strong>Tool:</strong> effective area <span class="eq" style="display:inline; font-family:var(--mono)">A_c = (∫|J|² d²ρ)/|J(0)|²</span>. <strong>Meaning:</strong> area of the coherence “patch” in the transverse plane.</span>
+        </li>
+        <li>
+          <strong>Goal:</strong> show monotonic growth with <span class="eq" style="display:inline; font-family:var(--mono)">|z|</span>. <br/>
+          <span class="small"><strong>Tool:</strong> analyze <span class="eq" style="display:inline; font-family:var(--mono)">z²+z0²</span>. <strong>Meaning:</strong> coherence spreads as the beam-like solution propagates.</span>
+        </li>
+      </ol>
+
+      <div class="callout bad">
+        <div class="label"><span class="pill"></span><strong>Common mistakes (quick tips)</strong></div>
+        <ul style="margin: 8px 0 0 20px">
+          <li>Mixing up the transverse radius <span class="eq" style="display:inline; font-family:var(--mono)">ρ</span> with the full 3D separation <span class="eq" style="display:inline; font-family:var(--mono)">r</span>.</li>
+          <li>Forgetting that only the <em>real</em> part of the exponent affects the magnitude.</li>
+          <li>Defining coherence area from <span class="eq" style="display:inline; font-family:var(--mono)">J</span> (complex) instead of <span class="eq" style="display:inline; font-family:var(--mono)">|J|²</span> (positive), which can yield non-physical cancellations.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="part3">
+      <h2>PART 3 — Full Solution (DETAILED + TEACHING)</h2>
+
+      <h3>Qualitative expectation (before calculating)</h3>
+      <p>
+        If a field satisfies a linear PDE (the wave equation), then any linear combination of the field does too.
+        The mutual coherence is not a field itself, but it is built by multiplying one field value by a conjugated field value and then averaging.
+        Because differentiation is linear and averaging is linear, we expect the mutual coherence to satisfy the <em>same spatial operator</em> as the field, acting on each point coordinate.
+        If the delay dependence is purely harmonic at the carrier frequency, the time derivatives reduce to multiplication by <span class="eq" style="display:inline; font-family:var(--mono)">-(2πν0)²</span>, producing a Helmholtz equation in space.
+      </p>
+
+      <h3>(a) Show that <span class="eq" style="display:inline; font-family:var(--mono)">J(r)</span> satisfies Helmholtz</h3>
+
+      <p>
+        <strong>Step 1: Start from the free-space scalar wave equation.</strong><br/>
+        Let <span class="eq" style="display:inline; font-family:var(--mono)">U(r,t)</span> be the complex analytic signal of a scalar optical field component in free space. Then
+      </p>
+      <div class="eqBox">
+        <div class="eq" id="eqWave">(∇² − (1/c²) ∂²/∂t²) U(r,t) = 0.</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqWave">Copy equation</button>
+          <span class="small">Scalar, source-free, homogeneous medium.</span>
+        </div>
+      </div>
+
+      <p>
+        <strong>Step 2: Apply the same operator to the mutual coherence with respect to <span class="eq" style="display:inline; font-family:var(--mono)">r1</span>.</strong><br/>
+        Using the definition
+        <span class="eq" style="display:inline; font-family:var(--mono)">G(r1,r2,τ)=⟨U(r1,t)U*(r2,t+τ)⟩</span>,
+        operate on the <em>first</em> spatial coordinate:
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqOpG">
+(∇1² − (1/c²) ∂²/∂t²) G(r1,r2,τ)
+= ⟨ (∇1² − (1/c²) ∂²/∂t²) U(r1,t) · U*(r2,t+τ) ⟩.</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqOpG">Copy equation</button>
+          <span class="small">Move derivatives inside ⟨·⟩ (linearity + smoothness assumptions).</span>
+        </div>
+      </div>
+
+      <p class="mathNote">
+        What did we do and why? We used that differentiation with respect to <span class="eq" style="display:inline; font-family:var(--mono)">r1</span> and <span class="eq" style="display:inline; font-family:var(--mono)">t</span>
+        acts only on <span class="eq" style="display:inline; font-family:var(--mono)">U(r1,t)</span>, and the average is linear so we can pull the operator inside.
+      </p>
+
+      <p>
+        <strong>Step 3: Use the wave equation.</strong><br/>
+        Since <span class="eq" style="display:inline; font-family:var(--mono)">U</span> satisfies the wave equation, the factor in the average is zero:
+        <span class="eq" style="display:inline; font-family:var(--mono)">(∇1² − (1/c²)∂t²)U(r1,t)=0</span>.
+        Therefore,
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqWaveForG">(∇1² − (1/c²) ∂²/∂t²) G(r1,r2,τ) = 0.</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqWaveForG">Copy equation</button>
+          <span class="small">A wave equation for coherence (in coordinate r1).</span>
+        </div>
+      </div>
+
+      <p>
+        <strong>Step 4: Replace the absolute-time derivatives by delay derivatives (stationarity).</strong><br/>
+        For a statistically stationary field, <span class="eq" style="display:inline; font-family:var(--mono)">G</span> depends on <span class="eq" style="display:inline; font-family:var(--mono)">τ</span> but not on the absolute time origin.
+        When differentiating <span class="eq" style="display:inline; font-family:var(--mono)">G</span> with respect to the first time argument <span class="eq" style="display:inline; font-family:var(--mono)">t</span>,
+        the dependence enters through the delay <span class="eq" style="display:inline; font-family:var(--mono)">τ</span>, so (effectively) the second derivative becomes a second derivative with respect to <span class="eq" style="display:inline; font-family:var(--mono)">τ</span>.
+        Thus we can write the coherence wave equation as
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqWaveDelay">∇1² G(r1,r2,τ) − (1/c²) ∂²G(r1,r2,τ)/∂τ² = 0.</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqWaveDelay">Copy equation</button>
+          <span class="small">Key step: stationarity ⇒ delay-only time dependence.</span>
+        </div>
+      </div>
+
+      <p>
+        <strong>Step 5: Insert the given form</strong> <span class="eq" style="display:inline; font-family:var(--mono)">G = J(r1−r2) e^{j2πν0τ}</span>.
+        First compute the delay derivative:
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqTauDeriv">∂²/∂τ² [ e^{j2πν0τ} ] = − (2πν0)² e^{j2πν0τ}.</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqTauDeriv">Copy equation</button>
+          <span class="small">This is where the carrier frequency fixes the wavenumber.</span>
+        </div>
+      </div>
+
+      <p>
+        Now apply <span class="eq" style="display:inline; font-family:var(--mono)">∇1²</span>. Because <span class="eq" style="display:inline; font-family:var(--mono)">e^{j2πν0τ}</span> does not depend on space,
+        <span class="eq" style="display:inline; font-family:var(--mono)">∇1² G = (∇1² J(r1−r2)) e^{j2πν0τ}</span>.
+        Substitute into the coherence wave equation:
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqSubA">
+(∇1² J(r1−r2)) e^{j2πν0τ} − (1/c²) [ −(2πν0)² J(r1−r2) e^{j2πν0τ} ] = 0.</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqSubA">Copy equation</button>
+        </div>
+      </div>
+
+      <p>
+        Factor out the nonzero exponential, and define <span class="eq" style="display:inline; font-family:var(--mono)">k0 = 2πν0/c</span>:
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqHelm1">∇1² J(r1−r2) + k0² J(r1−r2) = 0,   where k0 = 2πν0/c.</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqHelm1">Copy equation</button>
+        </div>
+      </div>
+
+      <p class="mathNote">
+        What did we do and why? The time-harmonic delay dependence turns the second time derivative into
+        multiplication by <span class="eq" style="display:inline; font-family:var(--mono)">−(2πν0)²</span>. This is exactly how the wave equation becomes Helmholtz for monochromatic waves.
+      </p>
+
+      <p>
+        Finally, since <span class="eq" style="display:inline; font-family:var(--mono)">J</span> depends only on the difference <span class="eq" style="display:inline; font-family:var(--mono)">r = r1−r2</span>,
+        the Laplacian with respect to <span class="eq" style="display:inline; font-family:var(--mono)">r1</span> is the same as the Laplacian with respect to <span class="eq" style="display:inline; font-family:var(--mono)">r</span> (because <span class="eq" style="display:inline; font-family:var(--mono)">∇1</span> acts like <span class="eq" style="display:inline; font-family:var(--mono)">∇</span> on the difference coordinate):
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqFinalA">∇² J(r) + k0² J(r) = 0,   with k0 = 2πν0/c.</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqFinalA">Copy final result (a)</button>
+        </div>
+      </div>
+
+      <div class="callout good">
+        <div class="label"><span class="pill"></span><strong>Sanity checks for (a)</strong></div>
+        <ul style="margin: 8px 0 0 20px">
+          <li><strong>Units:</strong> <span class="eq" style="display:inline; font-family:var(--mono)">∇²</span> contributes 1/m²; <span class="eq" style="display:inline; font-family:var(--mono)">k0²</span> is also 1/m², so terms match.</li>
+          <li><strong>Physics:</strong> “Mutual coherence propagates like a monochromatic wave” at the carrier frequency.</li>
+        </ul>
+      </div>
+
+      <h3>(b) Coherence area near the z-axis for the Gaussian-beam-form <span class="eq" style="display:inline; font-family:var(--mono)">J</span></h3>
+
+      <p>
+        We are given the (approximate) Gaussian-beam-form solution of Helmholtz:
+      </p>
+      <div class="eqBox">
+        <div class="eq" id="eqJgiven">J(r) = (1/q(z)) · exp[ − j k0 (x² + y²) / (2 q(z)) ] · exp( − j k0 z ),
+q(z) = z + j z0.</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqJgiven">Copy given model</button>
+          <span class="small">Here r = (x,y,z) and ρ = √(x²+y²).</span>
+        </div>
+      </div>
+
+      <p>
+        <strong>Step 1: Express the complex factor <span class="eq" style="display:inline; font-family:var(--mono)">1/q</span> and separate magnitude vs phase.</strong><br/>
+        Write
+        <span class="eq" style="display:inline; font-family:var(--mono)">q(z)=z+jz0</span>, so
+        <span class="eq" style="display:inline; font-family:var(--mono)">|q|² = z²+z0²</span> and
+        <span class="eq" style="display:inline; font-family:var(--mono)">1/q = (z − j z0)/(z²+z0²)</span>.
+      </p>
+
+      <p>
+        The transverse exponent is
+        <span class="eq" style="display:inline; font-family:var(--mono)">−j k0 ρ²/(2q)</span>.
+        Substitute <span class="eq" style="display:inline; font-family:var(--mono)">1/q=(z−jz0)/(z²+z0²)</span>:
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqSplitExp">
+− j k0 ρ²/(2q) = − j k0 ρ²/2 · (z − j z0)/(z²+z0²)
+             = − j k0 ρ² z /(2(z²+z0²))  −  k0 ρ² z0 /(2(z²+z0²)).</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqSplitExp">Copy separation step</button>
+        </div>
+      </div>
+
+      <p class="mathNote">
+        What did we do and why? We rewrote the complex denominator so we can see the real part (controls decay of magnitude) and the imaginary part (controls phase curvature).
+      </p>
+
+      <p>
+        Therefore the magnitude of <span class="eq" style="display:inline; font-family:var(--mono)">J</span> is (the <span class="eq" style="display:inline; font-family:var(--mono)">e^{−jk0 z}</span> factor is pure phase, so it does not affect magnitude):
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqMagJ">
+|J(ρ,z)| = 1/|q(z)| · exp[ − k0 z0 ρ² /(2(z²+z0²)) ]
+        where |q(z)| = √(z²+z0²).</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqMagJ">Copy |J| expression</button>
+        </div>
+      </div>
+
+      <p>
+        <strong>Step 2: Identify a transverse coherence radius near the axis.</strong><br/>
+        The exponential suggests a Gaussian decay in <span class="eq" style="display:inline; font-family:var(--mono)">ρ</span>. Define the 1/e radius <span class="eq" style="display:inline; font-family:var(--mono)">ρc(z)</span> by
+        <span class="eq" style="display:inline; font-family:var(--mono)">k0 z0 ρc² /(2(z²+z0²)) = 1</span>, giving
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqRhoc">ρc(z) = √( 2(z²+z0²) / (k0 z0) ).</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqRhoc">Copy coherence radius</button>
+        </div>
+      </div>
+
+      <p>
+        <strong>Step 3: Choose a coherence area definition and compute it.</strong><br/>
+        A common and robust definition (always real/positive) is the effective transverse area of <span class="eq" style="display:inline; font-family:var(--mono)">|J|²</span>:
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqAcDef">A_c(z) = ( ∬ |J(ρ,z)|² d²ρ ) / |J(0,z)|².</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqAcDef">Copy definition</button>
+          <span class="small">Integration is over the transverse plane (x,y), i.e., d²ρ = dx dy = 2πρ dρ.</span>
+        </div>
+      </div>
+
+      <p>
+        Compute <span class="eq" style="display:inline; font-family:var(--mono)">|J|²</span> using the magnitude found above:
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqJ2">
+|J(ρ,z)|² = 1/(z²+z0²) · exp[ − k0 z0 ρ² /(z²+z0²) ].
+Also, |J(0,z)|² = 1/(z²+z0²).</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqJ2">Copy |J|²</button>
+        </div>
+      </div>
+
+      <p>
+        Substitute into the effective area:
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqAcInt">
+A_c(z) = ∬ exp[ − a ρ² ] d²ρ   with   a = k0 z0 /(z²+z0²).</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqAcInt">Copy setup</button>
+        </div>
+      </div>
+
+      <p>
+        Evaluate in polar coordinates: <span class="eq" style="display:inline; font-family:var(--mono)">d²ρ = 2π ρ dρ</span>.
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqAcEval">
+A_c(z) = 2π ∫₀^∞ ρ e^{−aρ²} dρ.
+Let u = aρ² ⇒ du = 2aρ dρ ⇒ ρ dρ = du/(2a).
+So A_c(z) = 2π ∫₀^∞ e^{−u} [du/(2a)] = (π/a).</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqAcEval">Copy integration</button>
+        </div>
+      </div>
+
+      <p>
+        Now substitute <span class="eq" style="display:inline; font-family:var(--mono)">a = k0 z0/(z²+z0²)</span>:
+      </p>
+
+      <div class="eqBox">
+        <div class="eq" id="eqAcFinal">A_c(z) = π (z² + z0²)/(k0 z0) = (2π (z²+z0²))/( (2k0) z0 ).
+Equivalently (common compact form):
+A_c(z) = 2π (z²+z0²)/(k0 z0) · (1/2)  ⇒  A_c(z) = π (z²+z0²)/(k0 z0).</div>
+        <div class="copyRow">
+          <button class="copy" data-copy="eqAcFinal">Copy coherence area</button>
+          <span class="small">This is the effective area of |J|². Different conventions may differ by constant factors.</span>
+        </div>
+      </div>
+
+      <div class="callout good">
+        <div class="label"><span class="pill"></span><strong>Final answer (boxed)</strong></div>
+        <div class="eqBox" style="margin:10px 0 0">
+          <div class="eq" id="eqFinalAll">
+(a) ∇²J(r) + k0² J(r) = 0,  k0 = 2πν0/c.
+
+(b) |J(ρ,z)| = 1/√(z²+z0²) · exp[ − k0 z0 ρ² /(2(z²+z0²)) ].
+A natural coherence area (effective area of |J|²) is:
+A_c(z) = π (z²+z0²)/(k0 z0),
+which increases with |z| (since z²+z0² grows with |z|).</div>
+          <div class="copyRow">
+            <button class="copy" data-copy="eqFinalAll">Copy final answers</button>
+            <span class="small">Matches the plots (example values only for visualization).</span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Show it increases with <span class="eq" style="display:inline; font-family:var(--mono)">|z|</span></h3>
+      <p>
+        From the derived expression,
+        <span class="eq" style="display:inline; font-family:var(--mono)">A_c(z)=π(z²+z0²)/(k0 z0)</span>.
+        Because <span class="eq" style="display:inline; font-family:var(--mono)">k0&gt;0</span> and <span class="eq" style="display:inline; font-family:var(--mono)">z0&gt;0</span>, the only z-dependence is <span class="eq" style="display:inline; font-family:var(--mono)">z²+z0²</span>,
+        which is strictly increasing as <span class="eq" style="display:inline; font-family:var(--mono)">|z|</span> increases away from 0. So the coherence patch broadens with propagation.
+      </p>
+
+      <div class="callout warn">
+        <div class="label"><span class="pill"></span><strong>Sanity checks for (b)</strong></div>
+        <ul style="margin: 8px 0 0 20px">
+          <li><strong>Units:</strong> <span class="eq" style="display:inline; font-family:var(--mono)">A_c</span> has units of m²: numerator is m², denominator <span class="eq" style="display:inline; font-family:var(--mono)">k0 z0</span> is dimensionless (1/m × m).</li>
+          <li><strong>At z = 0:</strong> <span class="eq" style="display:inline; font-family:var(--mono)">A_c(0)=π z0/k0</span> is finite.</li>
+          <li><strong>Far away:</strong> for <span class="eq" style="display:inline; font-family:var(--mono)">|z|≫z0</span>, <span class="eq" style="display:inline; font-family:var(--mono)">A_c(z)≈π z²/(k0 z0)</span> grows ∝ z².</li>
+          <li><strong>Interpretation:</strong> the transverse coherence width grows like <span class="eq" style="display:inline; font-family:var(--mono)">ρc(z)∝√(z²+z0²)</span>, so area grows like its square.</li>
+        </ul>
+      </div>
+
+      <p>
+        <strong>Connection to the diagram and plots:</strong>
+        The diagram shows two observation points in the same transverse plane and their separation <span class="eq" style="display:inline; font-family:var(--mono)">ρ</span>.
+        The secondary plot shows the Gaussian decay of <span class="eq" style="display:inline; font-family:var(--mono)">|J(ρ,z)|</span> with <span class="eq" style="display:inline; font-family:var(--mono)">ρ</span>.
+        As <span class="eq" style="display:inline; font-family:var(--mono)">|z|</span> increases, the decay becomes slower (wider curve), implying a larger coherence patch, quantified by the main plot <span class="eq" style="display:inline; font-family:var(--mono)">A_c(z)</span>.
+      </p>
+    </section>
+
+    <section id="part4">
+      <h2>PART 4 — Deeper Understanding (THEORY AROUND THE RESULT)</h2>
+
+      <h3>Re-interpreting the final formula</h3>
+      <p>
+        The key result
+        <span class="eq" style="display:inline; font-family:var(--mono)">A_c(z)=π(z²+z0²)/(k0 z0)</span>
+        can be read term-by-term:
+      </p>
+      <ul>
+        <li><span class="eq" style="display:inline; font-family:var(--mono)">z²+z0²</span>: sets the transverse “spread” scale; it grows away from the waist-like location <span class="eq" style="display:inline; font-family:var(--mono)">z=0</span>.</li>
+        <li><span class="eq" style="display:inline; font-family:var(--mono)">z0</span>: acts like a Rayleigh range parameter (bigger <span class="eq" style="display:inline; font-family:var(--mono)">z0</span> means slower change with <span class="eq" style="display:inline; font-family:var(--mono)">z</span>).</li>
+        <li><span class="eq" style="display:inline; font-family:var(--mono)">k0</span>: larger wavenumber (shorter wavelength) makes the coherence patch smaller for fixed <span class="eq" style="display:inline; font-family:var(--mono)">z,z0</span>.</li>
+      </ul>
+
+      <h3>How changing parameters affects the outcome (connect to plots)</h3>
+      <ul>
+        <li>Increase <span class="eq" style="display:inline; font-family:var(--mono)">z0</span>: near <span class="eq" style="display:inline; font-family:var(--mono)">z=0</span>, <span class="eq" style="display:inline; font-family:var(--mono)">A_c(0)=π z0/k0</span> increases, but far away <span class="eq" style="display:inline; font-family:var(--mono)">A_c≈π z²/(k0 z0)</span> decreases for fixed large <span class="eq" style="display:inline; font-family:var(--mono)">z</span>. So <span class="eq" style="display:inline; font-family:var(--mono)">z0</span> shifts the balance between waist coherence and far-field growth.</li>
+        <li>Increase wavelength <span class="eq" style="display:inline; font-family:var(--mono)">λ</span> (so <span class="eq" style="display:inline; font-family:var(--mono)">k0</span> decreases): coherence area increases everywhere (watch the main plot scale rise).</li>
+        <li>Move to larger <span class="eq" style="display:inline; font-family:var(--mono)">|z|</span>: secondary plot widens (slower decay in <span class="eq" style="display:inline; font-family:var(--mono)">ρ</span>), and the main plot shows the corresponding larger <span class="eq" style="display:inline; font-family:var(--mono)">A_c</span>.</li>
+      </ul>
+
+      <h3>Alternative derivation idea (brief)</h3>
+      <p>
+        Instead of working in the time domain, you can use the <strong>cross-spectral density</strong>
+        <span class="eq" style="display:inline; font-family:var(--mono)">W(r1,r2,ν)</span>, which (in free space) satisfies Helmholtz in each coordinate at each frequency:
+        <span class="eq" style="display:inline; font-family:var(--mono)">(∇1² + k(ν)²)W = 0</span>.
+        Selecting the narrowband carrier <span class="eq" style="display:inline; font-family:var(--mono)">ν0</span> reproduces part (a).
+      </p>
+
+      <h3>Concept check (self-test)</h3>
+      <ul>
+        <li><strong>Q:</strong> Why do we use <span class="eq" style="display:inline; font-family:var(--mono)">|J|²</span> to define a coherence area? <strong>A:</strong> It is nonnegative and avoids cancellations from phase, giving a meaningful “effective patch size.”</li>
+        <li><strong>Q:</strong> What part of the Gaussian model controls magnitude decay with <span class="eq" style="display:inline; font-family:var(--mono)">ρ</span>? <strong>A:</strong> The real part of <span class="eq" style="display:inline; font-family:var(--mono)">−j k0 ρ²/(2q)</span>, i.e. <span class="eq" style="display:inline; font-family:var(--mono)">−k0 z0 ρ²/(2(z²+z0²))</span>.</li>
+        <li><strong>Q:</strong> If <span class="eq" style="display:inline; font-family:var(--mono)">λ</span> increases, what happens to coherence area? <strong>A:</strong> It increases because <span class="eq" style="display:inline; font-family:var(--mono)">k0=2π/λ</span> decreases.</li>
+        <li><strong>Q:</strong> What does part (a) mean physically? <strong>A:</strong> Coherence propagates as if it were a monochromatic wave at the carrier frequency.</li>
+      </ul>
+    </section>
+
+    <section id="part5">
+      <h2>PART 5 — Visualization Guide (HOW TO READ THE PLOTS)</h2>
+
+      <h3>What each canvas shows</h3>
+      <ul>
+        <li><strong>Diagram:</strong> a z-axis, a transverse plane at the chosen <span class="eq" style="display:inline; font-family:var(--mono)">z</span>, two points separated by <span class="eq" style="display:inline; font-family:var(--mono)">ρ</span>, and a shaded “coherence patch” whose size relates to <span class="eq" style="display:inline; font-family:var(--mono)">A_c(z)</span>.</li>
+        <li><strong>Main plot:</strong> <span class="eq" style="display:inline; font-family:var(--mono)">A_c(z)=π(z²+z0²)/(k0 z0)</span> vs <span class="eq" style="display:inline; font-family:var(--mono)">z</span>. A marker shows the currently selected <span class="eq" style="display:inline; font-family:var(--mono)">z</span>.</li>
+        <li><strong>Secondary plot:</strong> normalized magnitude <span class="eq" style="display:inline; font-family:var(--mono)">|J(ρ,z)|/|J(0,z)| = exp[-k0 z0 ρ²/(2(z²+z0²))]</span> vs <span class="eq" style="display:inline; font-family:var(--mono)">ρ</span>. Wider curves mean larger coherence width.</li>
+      </ul>
+
+      <h3>How the interactive controls change the physics</h3>
+      <ul>
+        <li><span class="eq" style="display:inline; font-family:var(--mono)">z0</span> slider: changes the complex beam parameter <span class="eq" style="display:inline; font-family:var(--mono)">q=z+jz0</span>, affecting both the width in the secondary plot and the scale of <span class="eq" style="display:inline; font-family:var(--mono)">A_c(z)</span> in the main plot.</li>
+        <li><span class="eq" style="display:inline; font-family:var(--mono)">λ</span> slider: changes <span class="eq" style="display:inline; font-family:var(--mono)">k0=2π/λ</span>; larger <span class="eq" style="display:inline; font-family:var(--mono)">λ</span> increases coherence area (main plot rises) and slows transverse decay (secondary plot widens).</li>
+        <li><span class="eq" style="display:inline; font-family:var(--mono)">z</span> slider: moves the observation plane. As <span class="eq" style="display:inline; font-family:var(--mono)">|z|</span> grows, the coherence patch grows: you’ll see <span class="eq" style="display:inline; font-family:var(--mono)">A_c</span> increase and the normalized curve widen.</li>
+      </ul>
+
+      <div class="callout warn">
+        <div class="label"><span class="pill"></span><strong>Note about numbers</strong></div>
+        <p style="margin:0">
+          The plotted values use <strong>example parameters</strong> (chosen for clear visualization). The final answers remain symbolic and apply generally.
+        </p>
+      </div>
+    </section>
+  </article>
+</main>
+
+<footer class="fadeIn">
+  <p style="margin:0">
+    Built as a self-contained learning article (vanilla HTML/CSS/JS). You can paste this directly into a website.
+  </p>
+</footer>
+
+<script>
+(function(){
+  // ---------- Utilities ----------
+  function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+  function fmt(x, digits=3){
+    if (!isFinite(x)) return "—";
+    const ax = Math.abs(x);
+    if (ax >= 1e4 || (ax > 0 && ax < 1e-3)) return x.toExponential(digits);
+    return x.toFixed(digits);
+  }
+  function fmtSI(x, unit){
+    return `${fmt(x,3)} ${unit}`;
+  }
+  async function copyText(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(e){
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand('copy'); document.body.removeChild(ta); return true; }
+      catch(err){ document.body.removeChild(ta); return false; }
+    }
+  }
+
+  // Copy buttons
+  document.querySelectorAll('button.copy').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = btn.getAttribute('data-copy');
+      const el = document.getElementById(id);
+      if(!el) return;
+      const ok = await copyText(el.textContent.trim());
+      const old = btn.textContent;
+      btn.textContent = ok ? "Copied!" : "Copy failed";
+      setTimeout(()=>btn.textContent = old, 900);
+    });
+  });
+
+  // Smooth TOC scrolling
+  document.querySelectorAll('nav a').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      const href = a.getAttribute('href') || "";
+      if(href.startsWith('#')){
+        e.preventDefault();
+        const target = document.querySelector(href);
+        if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+      }
+    });
+  });
+
+  // ---------- Model functions ----------
+  function k0_from_lambda(lam_m){ return 2*Math.PI/lam_m; }
+
+  // Magnitude (normalized): |J(ρ,z)|/|J(0,z)| = exp[ - k0 z0 ρ^2 / (2(z^2+z0^2)) ]
+  function Jnorm(rho, z, z0, k0){
+    const denom = (z*z + z0*z0);
+    const a = k0*z0/(2*denom);
+    return Math.exp(-a*rho*rho);
+  }
+
+  // Effective coherence area (using |J|^2 definition): A_c = π(z^2+z0^2)/(k0 z0)
+  function Ac(z, z0, k0){
+    return Math.PI*(z*z + z0*z0)/(k0*z0);
+  }
+
+  // ---------- HiDPI canvas setup ----------
+  function setupCanvas(canvas){
+    const ctx = canvas.getContext('2d');
+    function resize(){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(2, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(2, Math.floor(rect.height * dpr));
+      ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+      return {w: rect.width, h: rect.height, dpr};
+    }
+    return {ctx, resize};
+  }
+
+  // ---------- Plot helpers ----------
+  function drawAxes(ctx, box, xMin, xMax, yMin, yMax, xLabel, yLabel, title, opts={}){
+    const {x=0,y=0,w=box.w,h=box.h} = box;
+    const padL = 56, padR = 16, padT = 34, padB = 44;
+    const gx0 = x+padL, gx1 = x+w-padR;
+    const gy0 = y+padT, gy1 = y+h-padB;
+
+    // background
+    ctx.save();
+    ctx.clearRect(x,y,w,h);
+
+    // subtle background gradient
+    const grad = ctx.createLinearGradient(x,y,x+w,y+h);
+    grad.addColorStop(0, 'rgba(125,211,252,0.06)');
+    grad.addColorStop(1, 'rgba(167,139,250,0.05)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x,y,w,h);
+
+    // grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+
+    const nGrid = 6;
+    for(let i=0;i<=nGrid;i++){
+      const tx = gx0 + (gx1-gx0)*i/nGrid;
+      ctx.beginPath(); ctx.moveTo(tx,gy0); ctx.lineTo(tx,gy1); ctx.stroke();
+      const ty = gy0 + (gy1-gy0)*i/nGrid;
+      ctx.beginPath(); ctx.moveTo(gx0,ty); ctx.lineTo(gx1,ty); ctx.stroke();
+    }
+
+    // axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.30)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(gx0, gy1); ctx.lineTo(gx1, gy1);
+    ctx.moveTo(gx0, gy1); ctx.lineTo(gx0, gy0);
+    ctx.stroke();
+
+    // ticks and labels
+    ctx.fillStyle = 'rgba(255,255,255,0.70)';
+    ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    for(let i=0;i<=nGrid;i++){
+      const xv = xMin + (xMax-xMin)*i/nGrid;
+      const tx = gx0 + (gx1-gx0)*i/nGrid;
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.beginPath(); ctx.moveTo(tx, gy1); ctx.lineTo(tx, gy1+5); ctx.stroke();
+      ctx.fillText(prettyTick(xv), tx, gy1+8);
+    }
+
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for(let i=0;i<=nGrid;i++){
+      const yv = yMin + (yMax-yMin)*(1 - i/nGrid);
+      const ty = gy0 + (gy1-gy0)*i/nGrid;
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.beginPath(); ctx.moveTo(gx0-5, ty); ctx.lineTo(gx0, ty); ctx.stroke();
+      ctx.fillText(prettyTick(yv), gx0-8, ty);
+    }
+
+    // title
+    ctx.fillStyle = 'rgba(255,255,255,0.88)';
+    ctx.font = '14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(title, x+12, y+10);
+
+    // axis labels
+    ctx.fillStyle = 'rgba(255,255,255,0.78)';
+    ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(xLabel, (gx0+gx1)/2, y+h-10);
+
+    ctx.save();
+    ctx.translate(x+16, (gy0+gy1)/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    // legend (optional)
+    if(opts.legend){
+      const items = opts.legend;
+      let lx = gx1 - 10;
+      let ly = gy0 + 6;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'top';
+      ctx.font = '12px ui-sans-serif, system-ui';
+      items.forEach((it,idx)=>{
+        const yy = ly + idx*16;
+        // line sample
+        ctx.strokeStyle = it.color;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(lx-80, yy+7);
+        ctx.lineTo(lx-50, yy+7);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.78)';
+        ctx.fillText(it.label, lx-10, yy);
+      });
+    }
+
+    ctx.restore();
+
+    function xToPx(xv){ return gx0 + (gx1-gx0)*(xv-xMin)/(xMax-xMin); }
+    function yToPx(yv){ return gy1 - (gy1-gy0)*(yv-yMin)/(yMax-yMin); }
+    return {gx0,gx1,gy0,gy1,xToPx,yToPx};
+  }
+
+  function prettyTick(v){
+    const av = Math.abs(v);
+    if (av >= 1000 || (av > 0 && av < 0.01)) return v.toExponential(1);
+    const s = v.toFixed(2);
+    // trim trailing zeros
+    return s.replace(/\.00$/,'').replace(/(\.\d)0$/,'$1');
+  }
+
+  function drawLine(ctx, map, pts, strokeStyle){
+    ctx.save();
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = 2.3;
+    ctx.beginPath();
+    for(let i=0;i<pts.length;i++){
+      const p = pts[i];
+      const x = map.xToPx(p.x);
+      const y = map.yToPx(p.y);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawMarker(ctx, map, x, y, style){
+    ctx.save();
+    ctx.fillStyle = style || 'rgba(125,211,252,0.95)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+    ctx.lineWidth = 1.2;
+    const px = map.xToPx(x);
+    const py = map.yToPx(y);
+    ctx.beginPath();
+    ctx.arc(px,py,5,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawVLine(ctx, map, x, style){
+    ctx.save();
+    ctx.strokeStyle = style || 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([6,6]);
+    const px = map.xToPx(x);
+    ctx.beginPath();
+    ctx.moveTo(px, map.gy0);
+    ctx.lineTo(px, map.gy1);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ---------- Canvases ----------
+  const diagram = setupCanvas(document.getElementById('diagramCanvas'));
+  const mainPlot = setupCanvas(document.getElementById('mainPlotCanvas'));
+  const secondaryPlot = setupCanvas(document.getElementById('secondaryPlotCanvas'));
+
+  // ---------- Controls ----------
+  const z0Slider = document.getElementById('z0Slider');
+  const lamSlider = document.getElementById('lamSlider');
+  const zSlider = document.getElementById('zSlider');
+  const z0Val = document.getElementById('z0Val');
+  const lamVal = document.getElementById('lamVal');
+  const zVal = document.getElementById('zVal');
+
+  function getParams(){
+    const z0 = parseFloat(z0Slider.value); // meters
+    const lam_nm = parseFloat(lamSlider.value);
+    const lam = lam_nm * 1e-9; // meters
+    const z = parseFloat(zSlider.value); // meters
+    const k0 = k0_from_lambda(lam);
+    return {z0, lam_nm, lam, z, k0};
+  }
+
+  function updateLabels(p){
+    z0Val.textContent = fmtSI(p.z0, "m");
+    lamVal.textContent = fmt(p.lam_nm,0) + " nm";
+    zVal.textContent = fmtSI(p.z, "m");
+  }
+
+  // ---------- Drawing: Diagram ----------
+  function drawDiagram(p){
+    const {ctx, resize} = diagram;
+    const box = resize();
+    const w = box.w, h = box.h;
+
+    ctx.clearRect(0,0,w,h);
+
+    // Background subtle
+    const bg = ctx.createLinearGradient(0,0,w,h);
+    bg.addColorStop(0,'rgba(125,211,252,0.05)');
+    bg.addColorStop(1,'rgba(167,139,250,0.05)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,w,h);
+
+    // coordinate system
+    const margin = 18;
+    const x0 = margin, y0 = h - margin;
+    const x1 = w - margin, y1 = margin;
+
+    // z-axis (horizontal)
+    const zx0 = margin+30, zy = h*0.64;
+    const zx1 = w - margin - 10;
+    ctx.strokeStyle = 'rgba(255,255,255,0.32)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(zx0, zy);
+    ctx.lineTo(zx1, zy);
+    ctx.stroke();
+
+    // arrow
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.moveTo(zx1, zy);
+    ctx.lineTo(zx1-10, zy-6);
+    ctx.lineTo(zx1-10, zy+6);
+    ctx.closePath();
+    ctx.fill();
+
+    // label z
+    ctx.font = '13px ui-sans-serif, system-ui';
+    ctx.fillStyle = 'rgba(255,255,255,0.78)';
+    ctx.fillText('z (propagation)', zx1-120, zy-14);
+
+    // A transverse plane at selected z: map z in [-2,2] to axis
+    const Zmax = 2.0;
+    const zNorm = (p.z + Zmax) / (2*Zmax);
+    const planeX = zx0 + (zx1-zx0)*clamp(zNorm,0,1);
+
+    // plane line
+    ctx.strokeStyle = 'rgba(125,211,252,0.45)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(planeX, zy-90);
+    ctx.lineTo(planeX, zy+90);
+    ctx.stroke();
+
+    // plane label
+    ctx.fillStyle = 'rgba(125,211,252,0.88)';
+    ctx.fillText(`z = ${fmt(p.z,2)} m`, planeX-32, zy-100);
+
+    // coherence patch (circle) in that plane, radius proportional to rho_c
+    const rhoC = Math.sqrt(2*(p.z*p.z + p.z0*p.z0)/(p.k0*p.z0)); // meters
+    // scale meters to pixels
+    const rhoMaxShow = 0.02; // 2 cm shown
+    const scale = 70 / rhoMaxShow; // px per m in transverse direction
+    const Rpx = clamp(rhoC*scale, 10, 75);
+
+    ctx.fillStyle = 'rgba(52,211,153,0.12)';
+    ctx.strokeStyle = 'rgba(52,211,153,0.35)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(planeX, zy, Rpx, Rpx*0.85, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Two points in that plane separated by rho
+    const rhoPick = rhoC*0.6; // show a representative separation
+    const dpx = clamp(rhoPick*scale, 8, Rpx*0.9);
+    const p1 = {x: planeX, y: zy - dpx*0.55};
+    const p2 = {x: planeX, y: zy + dpx*0.55};
+
+    // points
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+    ctx.lineWidth = 1.5;
+    [p1,p2].forEach(pt=>{
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    // separation arrow (rho)
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(p1.x+14, p1.y);
+    ctx.lineTo(p2.x+14, p2.y);
+    ctx.stroke();
+    // arrowheads
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.moveTo(p1.x+14, p1.y);
+    ctx.lineTo(p1.x+10, p1.y+8);
+    ctx.lineTo(p1.x+18, p1.y+8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(p2.x+14, p2.y);
+    ctx.lineTo(p2.x+10, p2.y-8);
+    ctx.lineTo(p2.x+18, p2.y-8);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.80)';
+    ctx.font = '13px ui-sans-serif, system-ui';
+    ctx.fillText('ρ (transverse separation)', p2.x+22, (p1.y+p2.y)/2 - 6);
+
+    // Explain J decay
+    const textY = 20;
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.font = '14px ui-sans-serif, system-ui';
+    ctx.fillText('Near-axis coherence:  |J(ρ,z)| ∝ exp[−(k0 z0 ρ²)/(2(z²+z0²))]', margin+8, textY);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.62)';
+    ctx.font = '12px ui-sans-serif, system-ui';
+    ctx.fillText('Shaded patch ≈ coherence region in transverse plane (size grows with |z|)', margin+8, textY+20);
+
+    // crisp border
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5,0.5,w-1,h-1);
+  }
+
+  // ---------- Drawing: Main plot Ac(z) ----------
+  function drawMainPlot(p){
+    const {ctx, resize} = mainPlot;
+    const box = resize();
+    const w = box.w, h = box.h;
+
+    const Zmax = 2.0;
+    const xMin = -Zmax, xMax = Zmax;
+
+    // y range based on params
+    const k0 = p.k0;
+    const yMin = 0;
+    const yMax = Ac(Zmax, p.z0, k0) * 1.10;
+
+    const map = drawAxes(ctx, {w,h}, xMin, xMax, yMin, yMax,
+      "z (m)", "A_c (m²)",
+      "Coherence area A_c(z) = π(z²+z0²)/(k0 z0)",
+      {legend: [{label:"A_c(z)", color:"rgba(125,211,252,0.92)"}]}
+    );
+
+    // curve
+    const pts = [];
+    const N = 240;
+    for(let i=0;i<=N;i++){
+      const z = xMin + (xMax-xMin)*i/N;
+      pts.push({x:z, y:Ac(z, p.z0, k0)});
+    }
+    drawLine(ctx, map, pts, 'rgba(125,211,252,0.92)');
+
+    // marker at selected z
+    const ySel = Ac(p.z, p.z0, k0);
+    drawVLine(ctx, map, p.z, 'rgba(52,211,153,0.35)');
+    drawMarker(ctx, map, p.z, ySel, 'rgba(52,211,153,0.95)');
+
+    // annotation box
+    ctx.save();
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    const txt = `z=${fmt(p.z,2)} m  A_c=${fmt(ySel,3)} m²`;
+    const tw = ctx.measureText(txt).width;
+    const bx = map.gx0 + 10;
+    const by = map.gy0 + 42;
+    ctx.fillStyle = 'rgba(0,0,0,0.30)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 1;
+    roundRect(ctx, bx, by, tw+16, 24, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.80)';
+    ctx.fillText(txt, bx+8, by+16);
+    ctx.restore();
+  }
+
+  // ---------- Drawing: Secondary plot Jnorm(ρ) ----------
+  function drawSecondaryPlot(p){
+    const {ctx, resize} = secondaryPlot;
+    const box = resize();
+    const w = box.w, h = box.h;
+
+    const rhoMax = 0.03; // 3 cm
+    const xMin = 0, xMax = rhoMax;
+    const yMin = 0, yMax = 1.05;
+
+    const map = drawAxes(ctx, {w,h}, xMin, xMax, yMin, yMax,
+      "ρ (m)", "|J(ρ,z)| / |J(0,z)| (unitless)",
+      "Normalized coherence magnitude vs transverse separation",
+      {legend: [{label:"exp[−k0 z0 ρ²/(2(z²+z0²))]", color:"rgba(167,139,250,0.92)"}]}
+    );
+
+    // curve
+    const pts = [];
+    const N = 240;
+    for(let i=0;i<=N;i++){
+      const rho = xMin + (xMax-xMin)*i/N;
+      pts.push({x:rho, y:Jnorm(rho, p.z, p.z0, p.k0)});
+    }
+    drawLine(ctx, map, pts, 'rgba(167,139,250,0.92)');
+
+    // rho_c (1/e point)
+    const rhoC = Math.sqrt(2*(p.z*p.z + p.z0*p.z0)/(p.k0*p.z0));
+    const rhoCcl = clamp(rhoC, xMin, xMax);
+    const yC = Jnorm(rhoCcl, p.z, p.z0, p.k0);
+
+    // vertical line at rho_c (if visible)
+    ctx.save();
+    ctx.strokeStyle = 'rgba(52,211,153,0.35)';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([6,6]);
+    const px = map.xToPx(rhoCcl);
+    ctx.beginPath();
+    ctx.moveTo(px, map.gy0);
+    ctx.lineTo(px, map.gy1);
+    ctx.stroke();
+    ctx.restore();
+
+    drawMarker(ctx, map, rhoCcl, yC, 'rgba(52,211,153,0.95)');
+
+    // label
+    ctx.save();
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    const label = `ρc=${fmt(rhoC,4)} m  (1/e)`;
+    const tw = ctx.measureText(label).width;
+    const bx = map.gx0 + 10;
+    const by = map.gy0 + 42;
+    ctx.fillStyle = 'rgba(0,0,0,0.30)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 1;
+    roundRect(ctx, bx, by, tw+16, 24, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.80)';
+    ctx.fillText(label, bx+8, by+16);
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+  // ---------- Main update loop ----------
+  function render(){
+    const p = getParams();
+    updateLabels(p);
+    drawDiagram(p);
+    drawMainPlot(p);
+    drawSecondaryPlot(p);
+  }
+
+  [z0Slider, lamSlider, zSlider].forEach(el => el.addEventListener('input', render));
+  window.addEventListener('resize', render);
+
+  render();
+})();
+</script>
+</body>
+</html>

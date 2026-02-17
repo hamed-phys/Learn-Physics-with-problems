@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Poisson Distribution: Normalization, Mean, and Variance (Photon Counting)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#101a33;
+      --panel2:#0f1730;
+      --text:#e9eefc;
+      --muted:#b7c3e6;
+      --faint:#7f90c7;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#86efac;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(125,211,252,.14), transparent 60%),
+        radial-gradient(900px 700px at 85% 15%, rgba(167,139,250,.14), transparent 60%),
+        radial-gradient(1200px 900px at 40% 95%, rgba(134,239,172,.08), transparent 60%),
+        var(--bg);
+      line-height:1.55;
+    }
+
+    header{
+      position:relative;
+      padding:36px 18px 22px;
+      border-bottom:1px solid var(--line);
+      overflow:hidden;
+    }
+    header .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap:18px;
+      align-items:end;
+    }
+    @media (max-width: 900px){
+      header .wrap{grid-template-columns:1fr}
+    }
+    h1{
+      margin:0 0 10px;
+      font-size: clamp(1.8rem, 2.8vw, 2.6rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:0;
+      max-width:65ch;
+    }
+    .badgeRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      justify-content:flex-end;
+      align-items:center;
+    }
+    @media (max-width: 900px){
+      .badgeRow{justify-content:flex-start}
+    }
+    .badge{
+      padding:8px 12px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border-radius: 999px;
+      color:var(--muted);
+      font-size:.92rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+      backdrop-filter: blur(8px);
+      user-select:none;
+      white-space:nowrap;
+    }
+    .badge strong{color:var(--text)}
+    main{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px 18px 80px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:18px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns:1fr}
+    }
+
+    /* Sticky TOC */
+    nav#toc{
+      position:sticky;
+      top:12px;
+      align-self:start;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    nav#toc .tocHead{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    nav#toc .tocHead h2{
+      margin:0;
+      font-size:1.05rem;
+      letter-spacing:.2px;
+    }
+    .miniBtn{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.15);
+      color:var(--muted);
+      border-radius:10px;
+      padding:6px 10px;
+      cursor:pointer;
+      font-size:.9rem;
+      transition: transform .12s ease, background .12s ease;
+    }
+    .miniBtn:hover{transform: translateY(-1px); background: rgba(255,255,255,.06)}
+    .tocBody{
+      padding:10px 10px 12px;
+    }
+    .tocBody a{
+      display:block;
+      text-decoration:none;
+      color:var(--muted);
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid transparent;
+      transition: background .12s ease, border .12s ease, transform .12s ease;
+      font-size:.95rem;
+    }
+    .tocBody a:hover{
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.10);
+      transform: translateX(2px);
+      color:var(--text);
+    }
+
+    article{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .section{
+      padding:18px 18px 8px;
+      border-bottom:1px solid var(--line);
+    }
+    .section:last-child{border-bottom:none; padding-bottom:20px}
+    .section h2{
+      margin:0 0 10px;
+      font-size:1.35rem;
+      letter-spacing:.2px;
+    }
+    .section h3{
+      margin:16px 0 8px;
+      font-size:1.12rem;
+      color:var(--text);
+    }
+    p{margin:10px 0; color:var(--text)}
+    ul{margin:10px 0 10px 18px; color:var(--text)}
+    li{margin:6px 0}
+    .muted{color:var(--muted)}
+    .faint{color:var(--faint)}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 820px){
+      .grid2{grid-template-columns:1fr}
+    }
+
+    .callout{
+      border:1px solid rgba(255,255,255,.12);
+      border-left:4px solid var(--accent);
+      background: rgba(0,0,0,.18);
+      border-radius: 14px;
+      padding:12px 12px 10px;
+      margin:12px 0;
+    }
+    .callout .tag{
+      display:inline-block;
+      font-size:.85rem;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+    .callout.good{border-left-color:var(--good)}
+    .callout.warn{border-left-color:var(--warn)}
+    .callout.bad{border-left-color:var(--bad)}
+    .callout code{font-family:var(--mono); font-size:.95rem}
+
+    .eqBlock{
+      position:relative;
+      border:1px dashed rgba(255,255,255,.20);
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      padding:12px 12px 12px 12px;
+      margin:10px 0;
+      overflow:hidden;
+    }
+    .eqBlock pre{
+      margin:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-family:var(--mono);
+      font-size: 0.98rem;
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .copyBtn{
+      position:absolute;
+      top:10px;
+      right:10px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:6px 10px;
+      border-radius: 10px;
+      cursor:pointer;
+      font-size:.88rem;
+      transition: transform .12s ease, background .12s ease;
+      user-select:none;
+    }
+    .copyBtn:hover{transform: translateY(-1px); background: rgba(255,255,255,.10)}
+    .copyNote{
+      font-size:.88rem;
+      color:var(--muted);
+      margin-top:6px;
+    }
+
+    .vizCard{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      border-radius: 16px;
+      padding:12px;
+      margin:12px 0;
+    }
+    figure{margin:0}
+    figcaption{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(10,16,32,.55);
+    }
+    .controls{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr .8fr;
+      gap:10px;
+      margin:10px 0 0;
+      align-items:end;
+    }
+    @media (max-width: 860px){
+      .controls{grid-template-columns:1fr}
+    }
+    .control{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      padding:10px 10px 8px;
+    }
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:10px;
+      font-size:.92rem;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .control label span.val{
+      font-family: var(--mono);
+      color: var(--text);
+      font-size:.95rem;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+    select{
+      width:100%;
+      padding:8px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      outline:none;
+    }
+
+    .hr{
+      height:1px;
+      background: var(--line);
+      margin:14px 0;
+    }
+
+    footer{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px 18px 30px;
+      color:var(--muted);
+      text-align:center;
+    }
+
+    /* Subtle entrance */
+    .fadeIn{
+      animation: fadeUp .5s ease both;
+    }
+    @keyframes fadeUp{
+      from{opacity:0; transform: translateY(6px)}
+      to{opacity:1; transform: translateY(0)}
+    }
+
+    /* Print */
+    @media print{
+      body{background:#fff; color:#000}
+      header, nav#toc, .vizCard, .copyBtn, .miniBtn {display:none !important}
+      article{box-shadow:none; border:1px solid #ddd}
+      .section{border-bottom:1px solid #ddd}
+      .callout, .eqBlock{background:#fafafa; border-color:#ddd}
+      .muted, .faint{color:#333}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div>
+      <h1>Verifying the Poisson Distribution: Normalization, Mean, and Variance</h1>
+      <p class="subtitle">
+        In photon counting (and many “rare event” problems), the number of detected events in a fixed time window follows a Poisson distribution.
+        Here we prove it sums to 1 and has mean and variance equal to the parameter <span style="font-family:var(--mono)">n̄</span>.
+      </p>
+    </div>
+    <div class="badgeRow">
+      <div class="badge"><strong>Topic:</strong> Probability in physics</div>
+      <div class="badge"><strong>Model:</strong> Poisson, parameter <span style="font-family:var(--mono)">n̄</span></div>
+      <div class="badge"><strong>Result:</strong> ⟨n⟩ = Var(n) = <span style="font-family:var(--mono)">n̄</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <nav id="toc" class="fadeIn" aria-label="Table of Contents">
+    <div class="tocHead">
+      <h2>Table of Contents</h2>
+      <button class="miniBtn" id="collapseToc" type="button">Collapse</button>
+    </div>
+    <div class="tocBody" id="tocBody">
+      <a href="#quick-summary">Quick Summary</a>
+      <a href="#part0">PART 0 — Concept Primer</a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a href="#part2">PART 2 — Strategy & Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a href="#part4">PART 4 — Deeper Understanding</a>
+      <a href="#part5">PART 5 — Visualization Guide</a>
+    </div>
+  </nav>
+
+  <article class="fadeIn">
+    <!-- Quick Summary -->
+    <section class="section" id="quick-summary">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><strong>What this problem is:</strong> Prove the Poisson probability mass function is normalized and compute its <strong>mean</strong> and <strong>variance</strong>.</li>
+        <li><strong>Key physics idea:</strong> For independent rare events in a fixed interval (e.g., photon detections), the count <span style="font-family:var(--mono)">n</span> is Poisson with parameter <span style="font-family:var(--mono)">n̄</span> (the expected count).</li>
+        <li><strong>Governing distribution:</strong> <span style="font-family:var(--mono)">p(n) = (n̄^n e^{-n̄}) / n!</span>, for <span style="font-family:var(--mono)">n = 0,1,2,...</span></li>
+        <li><strong>Normalization tool:</strong> The exponential series <span style="font-family:var(--mono)">e^{n̄} = Σ_{n=0}^∞ n̄^n / n!</span></li>
+        <li><strong>Moment tool:</strong> Index-shifting and the identity <span style="font-family:var(--mono)">n p(n) = n̄ p(n-1)</span> (for <span style="font-family:var(--mono)">n≥1</span>).</li>
+        <li><strong>Final result (symbolic):</strong> <span style="font-family:var(--mono)">⟨n⟩ = n̄</span> and <span style="font-family:var(--mono)">Var(n) = n̄</span>.</li>
+        <li><strong>Visualization:</strong> Interactive plots show how the PMF shape changes with <span style="font-family:var(--mono)">n̄</span> and how the Gaussian approximation improves as <span style="font-family:var(--mono)">n̄</span> increases.</li>
+      </ul>
+    </section>
+
+    <!-- PART 0 -->
+    <section class="section" id="part0">
+      <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+      <h3>Core definitions (symbols and units)</h3>
+      <ul>
+        <li><span style="font-family:var(--mono)">n</span>: a <strong>count</strong> (dimensionless integer), e.g., number of detected photons in a time gate.</li>
+        <li><span style="font-family:var(--mono)">p(n)</span>: probability of observing exactly <span style="font-family:var(--mono)">n</span> counts (dimensionless).</li>
+        <li><span style="font-family:var(--mono)">n̄</span> (often written <span style="font-family:var(--mono)">λ</span>): the <strong>mean/expected count</strong> in the interval (dimensionless).</li>
+        <li><span style="font-family:var(--mono)">⟨n⟩</span>: expectation value (mean) of <span style="font-family:var(--mono)">n</span>.</li>
+        <li><span style="font-family:var(--mono)">Var(n) = σ_n^2 = ⟨(n-⟨n⟩)^2⟩</span>: variance (dimensionless).</li>
+      </ul>
+
+      <h3>Physical meaning of the Poisson parameter</h3>
+      <p>
+        In photon counting, you pick a fixed measurement window (say, <span style="font-family:var(--mono)">T</span> seconds)
+        and record how many detection “clicks” occur. If clicks are independent and the average click rate is constant,
+        then the expected number of clicks in the window is <span style="font-family:var(--mono)">n̄</span>.
+        The Poisson distribution says <em>all</em> the statistics of the count are set by this single number.
+      </p>
+
+      <div class="callout good">
+        <div class="tag">Key physical takeaway</div>
+        <p>
+          For a Poisson process, <strong>shot noise</strong> obeys: <span style="font-family:var(--mono)">σ_n = √n̄</span>.
+          So relative fluctuations scale like <span style="font-family:var(--mono)">σ_n/⟨n⟩ = 1/√n̄</span>:
+          higher count rates look “smoother.”
+        </p>
+      </div>
+
+      <h3>When Poisson is valid (assumptions/conditions)</h3>
+      <ul>
+        <li><strong>Independence:</strong> events do not affect each other (no “bunching”/“dead-time” effects in the ideal model).</li>
+        <li><strong>Stationarity:</strong> constant average rate over the counting window (or piecewise constant with small windows).</li>
+        <li><strong>Rare per small slice:</strong> in a sufficiently small time slice <span style="font-family:var(--mono)">Δt</span>, probability of ≥2 events is negligible.</li>
+      </ul>
+
+      <h3>Common models/approximations</h3>
+      <ul>
+        <li><strong>Poisson PMF:</strong> exact for an ideal Poisson process.</li>
+        <li><strong>Gaussian approximation:</strong> for large <span style="font-family:var(--mono)">n̄</span>, the Poisson distribution is well-approximated by a normal distribution with mean and variance <span style="font-family:var(--mono)">n̄</span>.</li>
+      </ul>
+
+      <h3>Mini intuition examples</h3>
+      <ul>
+        <li>If <span style="font-family:var(--mono)">n̄ = 0.2</span>, most trials give <span style="font-family:var(--mono)">n=0</span>, sometimes <span style="font-family:var(--mono)">n=1</span>, and rarely <span style="font-family:var(--mono)">n≥2</span>.</li>
+        <li>If <span style="font-family:var(--mono)">n̄ = 25</span>, the distribution is centered near 25 and looks roughly bell-shaped with width about <span style="font-family:var(--mono)">√25 = 5</span>.</li>
+      </ul>
+
+      <div class="callout warn">
+        <div class="tag">What to watch for</div>
+        <ul>
+          <li>Forgetting that Poisson is a <strong>discrete</strong> distribution (sums, not integrals).</li>
+          <li>Mixing up <span style="font-family:var(--mono)">n̄</span> (the parameter) with the random variable <span style="font-family:var(--mono)">n</span>.</li>
+          <li>Dropping the <span style="font-family:var(--mono)">e^{-n̄}</span> factor (it enforces normalization).</li>
+          <li>Using Gaussian formulas without checking that <span style="font-family:var(--mono)">n̄</span> is “large enough.”</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- PART 1 -->
+    <section class="section" id="part1">
+      <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+      <h3>Restate the problem (in plain words)</h3>
+      <p>
+        You are given the Poisson probability mass function
+        <span style="font-family:var(--mono)">p(n) = (n̄^n e^{-n̄}) / n!</span>.
+        You must prove:
+        (1) it is properly normalized (<span style="font-family:var(--mono)">Σ p(n) = 1</span>),
+        (2) its mean is <span style="font-family:var(--mono)">⟨n⟩ = n̄</span>,
+        and (3) its variance is <span style="font-family:var(--mono)">σ_n^2 = Var(n) = n̄</span>.
+      </p>
+
+      <div class="grid2">
+        <div class="callout">
+          <div class="tag">Given</div>
+          <ul>
+            <li>PMF: <span style="font-family:var(--mono)">p(n)=n̄^n e^{-n̄}/n!</span> for <span style="font-family:var(--mono)">n=0,1,2,...</span></li>
+            <li>Parameter: <span style="font-family:var(--mono)">n̄ ≥ 0</span> (dimensionless)</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <div class="tag">Must show</div>
+          <ul>
+            <li><span style="font-family:var(--mono)">Σ_{n=0}^∞ p(n) = 1</span></li>
+            <li><span style="font-family:var(--mono)">⟨n⟩ = Σ n p(n) = n̄</span></li>
+            <li><span style="font-family:var(--mono)">Var(n) = ⟨n^2⟩ - ⟨n⟩^2 = n̄</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Relevant principles and why they apply</h3>
+      <ul>
+        <li><strong>Exponential series:</strong> directly evaluates the normalization sum because the PMF contains <span style="font-family:var(--mono)">n̄^n/n!</span>.</li>
+        <li><strong>Discrete expectation definitions:</strong> mean/variance are computed by sums over <span style="font-family:var(--mono)">n</span>.</li>
+        <li><strong>Index shifting:</strong> simplifies sums involving factors of <span style="font-family:var(--mono)">n</span> and <span style="font-family:var(--mono)">n(n-1)</span>.</li>
+      </ul>
+      <p class="muted">
+        We do <em>not</em> need Maxwell’s equations, wave optics, or detector physics here—only the probability model.
+        (Photon counting is the physical context, but the proof is purely mathematical.)
+      </p>
+
+      <div class="callout warn">
+        <div class="tag">Assumptions</div>
+        <ul>
+          <li><span style="font-family:var(--mono)">n̄</span> is a fixed constant (not itself random) during the counting window.</li>
+          <li>We can interchange sums and algebraic manipulations (valid here because the exponential series converges absolutely for all real <span style="font-family:var(--mono)">n̄</span>).</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (and which we choose)</h3>
+      <ul>
+        <li><strong>Approach A: Exponential series + index shifting</strong> (fast, transparent; best for a textbook-style proof).</li>
+        <li><strong>Approach B: Generating function</strong> (compact; powerful for higher moments; slightly more abstract).</li>
+        <li><strong>Approach C: Moment generating function / characteristic function</strong> (very systematic; more machinery than needed).</li>
+      </ul>
+      <p>
+        We choose <strong>Approach A</strong> because it uses the fewest new ideas and shows clearly where each result comes from.
+        We’ll briefly mention a generating-function viewpoint later as an alternative.
+      </p>
+    </section>
+
+    <!-- PART 2 -->
+    <section class="section" id="part2">
+      <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+      <ol>
+        <li>
+          <strong>Goal:</strong> show <span style="font-family:var(--mono)">Σ p(n)=1</span><br/>
+          <span class="muted"><strong>Tool:</strong> exponential series</span><br/>
+          <span class="muted"><strong>Meaning:</strong> probabilities add to certainty.</span>
+        </li>
+        <li>
+          <strong>Goal:</strong> compute <span style="font-family:var(--mono)">⟨n⟩=Σ n p(n)</span><br/>
+          <span class="muted"><strong>Tool:</strong> rewrite <span style="font-family:var(--mono)">n/n! = 1/(n-1)!</span> and shift index</span><br/>
+          <span class="muted"><strong>Meaning:</strong> the parameter <span style="font-family:var(--mono)">n̄</span> is literally the expected count.</span>
+        </li>
+        <li>
+          <strong>Goal:</strong> compute variance via <span style="font-family:var(--mono)">Var(n)=⟨n^2⟩-⟨n⟩^2</span><br/>
+          <span class="muted"><strong>Tool:</strong> compute <span style="font-family:var(--mono)">⟨n(n-1)⟩</span> first (simplifies factorials), then recover <span style="font-family:var(--mono)">⟨n^2⟩</span></span><br/>
+          <span class="muted"><strong>Meaning:</strong> shot-noise level: fluctuations grow like the square root of the mean.</span>
+        </li>
+        <li>
+          <strong>Goal:</strong> sanity checks<br/>
+          <span class="muted"><strong>Tool:</strong> limits (small/large <span style="font-family:var(--mono)">n̄</span>), nonnegativity, units</span><br/>
+          <span class="muted"><strong>Meaning:</strong> the result must be physically sensible for counting.</span>
+        </li>
+      </ol>
+
+      <div class="callout bad">
+        <div class="tag">Common mistakes (quick tips)</div>
+        <ul>
+          <li>When shifting indices, update the sum limits carefully (e.g., <span style="font-family:var(--mono)">n=1→m=0</span>).</li>
+          <li>Use <span style="font-family:var(--mono)">n(n-1)</span> to avoid messy <span style="font-family:var(--mono)">n^2/n!</span> terms.</li>
+          <li>Keep <span style="font-family:var(--mono)">e^{-n̄}</span> outside sums when possible; it cancels neatly.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Visualization block (placed before full solution so readers can play while reading) -->
+    <section class="section" id="viz">
+      <h2>Interactive Visualizations</h2>
+
+      <div class="vizCard">
+        <div class="controls" aria-label="Interactive controls">
+          <div class="control">
+            <label for="lambda">
+              Mean count <span style="font-family:var(--mono)">n̄</span> (dimensionless)
+              <span class="val" id="lambdaVal">4.00</span>
+            </label>
+            <input id="lambda" type="range" min="0.2" max="25" step="0.1" value="4.0" />
+          </div>
+          <div class="control">
+            <label for="nmax">
+              Plot range max <span style="font-family:var(--mono)">n</span>
+              <span class="val" id="nmaxVal">25</span>
+            </label>
+            <input id="nmax" type="range" min="10" max="80" step="1" value="25" />
+          </div>
+          <div class="control">
+            <label for="modeSel">
+              Secondary plot metric
+              <span class="val" id="modeVal">Gaussian error</span>
+            </label>
+            <select id="modeSel">
+              <option value="gauss">Gaussian approximation error</option>
+              <option value="fano">Fano factor &amp; relative noise</option>
+              <option value="cdf">CDF (cumulative probability)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:12px;">
+          <figure>
+            <canvas id="diagramCanvas" aria-label="Photon counting diagram"></canvas>
+            <figcaption>
+              <strong>Diagram:</strong> Photon counting in a fixed time gate <span style="font-family:var(--mono)">T</span>.
+              The Poisson parameter <span style="font-family:var(--mono)">n̄</span> is the expected number of detection clicks.
+            </figcaption>
+          </figure>
+          <figure>
+            <canvas id="pmfCanvas" aria-label="Poisson PMF plot"></canvas>
+            <figcaption>
+              <strong>Main plot:</strong> Poisson PMF <span style="font-family:var(--mono)">p(n)</span> versus count <span style="font-family:var(--mono)">n</span>.
+              Watch how the peak and width change with <span style="font-family:var(--mono)">n̄</span>.
+            </figcaption>
+          </figure>
+        </div>
+
+        <figure style="margin-top:12px;">
+          <canvas id="secondaryCanvas" aria-label="Secondary plot"></canvas>
+          <figcaption>
+            <strong>Secondary plot:</strong> A parameter-sweep or complementary view (depends on the dropdown selection).
+            It updates live with <span style="font-family:var(--mono)">n̄</span>.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- PART 3 -->
+    <section class="section" id="part3">
+      <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+      <h3>Physical intuition (before math)</h3>
+      <p>
+        If the expected number of events in a time window is <span style="font-family:var(--mono)">n̄</span>, then the most likely count should be around <span style="font-family:var(--mono)">n≈n̄</span>.
+        Also, because events are random and independent, we expect fluctuations. In a Poisson process those fluctuations are “shot-noise limited”:
+        the spread (standard deviation) grows like <span style="font-family:var(--mono)">√n̄</span>, so the variance should scale like <span style="font-family:var(--mono)">n̄</span>.
+      </p>
+
+      <div class="callout">
+        <div class="tag">Given Poisson PMF</div>
+        <div class="eqBlock">
+          <button class="copyBtn" data-copy="eq1" type="button">Copy</button>
+          <pre id="eq1">p(n) = (n̄^n e^{-n̄}) / n! ,   n = 0,1,2, ...</pre>
+          <div class="copyNote">Copied text is plain (no formatting), suitable for notes.</div>
+        </div>
+      </div>
+
+      <h3>Step 1: Normalization (prove Σ p(n) = 1)</h3>
+      <p>
+        By definition, a probability distribution must satisfy:
+        <span style="font-family:var(--mono)">Σ_{n=0}^∞ p(n) = 1</span>.
+        Let’s compute the sum explicitly.
+      </p>
+
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="eqNorm" type="button">Copy</button>
+        <pre id="eqNorm">Σ_{n=0}^∞ p(n)
+= Σ_{n=0}^∞ (n̄^n e^{-n̄})/n!
+= e^{-n̄} Σ_{n=0}^∞ n̄^n / n!</pre>
+      </div>
+
+      <p>
+        Now use the exponential Taylor series:
+        <span style="font-family:var(--mono)">e^{x} = Σ_{n=0}^∞ x^n/n!</span>.
+        With <span style="font-family:var(--mono)">x = n̄</span> we get <span style="font-family:var(--mono)">Σ n̄^n/n! = e^{n̄}</span>.
+      </p>
+
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="eqNorm2" type="button">Copy</button>
+        <pre id="eqNorm2">Σ_{n=0}^∞ p(n)
+= e^{-n̄} · e^{n̄}
+= 1.</pre>
+      </div>
+
+      <div class="callout good">
+        <div class="tag">What we did & why</div>
+        <p>
+          We factored out <span style="font-family:var(--mono)">e^{-n̄}</span> and recognized the remaining sum as the exponential series.
+          That’s exactly why the Poisson PMF contains the factor <span style="font-family:var(--mono)">e^{-n̄}</span>: it normalizes the distribution.
+        </p>
+      </div>
+
+      <h3>Step 2: Mean (prove ⟨n⟩ = n̄)</h3>
+      <p>
+        The mean (expectation value) of a discrete random variable is:
+        <span style="font-family:var(--mono)">⟨n⟩ = Σ_{n=0}^∞ n p(n)</span>.
+        Substitute the Poisson PMF and simplify the factorial structure.
+      </p>
+
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="eqMean" type="button">Copy</button>
+        <pre id="eqMean">⟨n⟩ = Σ_{n=0}^∞ n · (n̄^n e^{-n̄})/n!
+    = e^{-n̄} Σ_{n=0}^∞ n · n̄^n / n!</pre>
+      </div>
+
+      <p>
+        The <span style="font-family:var(--mono)">n=0</span> term is zero, so we can start at <span style="font-family:var(--mono)">n=1</span>.
+        Use the identity <span style="font-family:var(--mono)">n / n! = 1 / (n-1)!</span>.
+      </p>
+
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="eqMean2" type="button">Copy</button>
+        <pre id="eqMean2">⟨n⟩
+= e^{-n̄} Σ_{n=1}^∞ n̄^n /(n-1)!
+= e^{-n̄} Σ_{n=1}^∞ n̄ · n̄^{n-1} /(n-1)!</pre>
+      </div>
+
+      <p>
+        Now pull out the constant <span style="font-family:var(--mono)">n̄</span> and shift index:
+        let <span style="font-family:var(--mono)">m = n-1</span>, so when <span style="font-family:var(--mono)">n=1</span>, <span style="font-family:var(--mono)">m=0</span>, and as <span style="font-family:var(--mono)">n→∞</span>, <span style="font-family:var(--mono)">m→∞</span>.
+      </p>
+
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="eqMean3" type="button">Copy</button>
+        <pre id="eqMean3">⟨n⟩
+= e^{-n̄} · n̄ Σ_{m=0}^∞ n̄^m / m!
+= e^{-n̄} · n̄ · e^{n̄}
+= n̄.</pre>
+      </div>
+
+      <div class="callout good">
+        <div class="tag">What this means physically</div>
+        <p>
+          The parameter <span style="font-family:var(--mono)">n̄</span> is not just a label—it is exactly the average number of counts you expect per interval.
+        </p>
+      </div>
+
+      <h3>Step 3: Variance (prove Var(n) = n̄)</h3>
+      <p>
+        A standard trick for Poisson is to compute <span style="font-family:var(--mono)">⟨n(n-1)⟩</span> first, because it cancels the factorial cleanly:
+        <span style="font-family:var(--mono)">n(n-1)/n! = 1/(n-2)!</span> for <span style="font-family:var(--mono)">n≥2</span>.
+      </p>
+
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="eqNn1" type="button">Copy</button>
+        <pre id="eqNn1">⟨n(n-1)⟩
+= Σ_{n=0}^∞ n(n-1) p(n)
+= e^{-n̄} Σ_{n=2}^∞ n(n-1) n̄^n / n!</pre>
+      </div>
+
+      <p>
+        Use <span style="font-family:var(--mono)">n(n-1)/n! = 1/(n-2)!</span>:
+      </p>
+
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="eqNn2" type="button">Copy</button>
+        <pre id="eqNn2">⟨n(n-1)⟩
+= e^{-n̄} Σ_{n=2}^∞ n̄^n /(n-2)!
+= e^{-n̄} Σ_{n=2}^∞ n̄^2 · n̄^{n-2}/(n-2)!</pre>
+      </div>
+
+      <p>
+        Shift index with <span style="font-family:var(--mono)">m=n-2</span> (so <span style="font-family:var(--mono)">m=0,1,2,...</span>):
+      </p>
+
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="eqNn3" type="button">Copy</button>
+        <pre id="eqNn3">⟨n(n-1)⟩
+= e^{-n̄} · n̄^2 Σ_{m=0}^∞ n̄^m / m!
+= e^{-n̄} · n̄^2 · e^{n̄}
+= n̄^2.</pre>
+      </div>
+
+      <p>
+        Now relate <span style="font-family:var(--mono)">⟨n(n-1)⟩</span> to <span style="font-family:var(--mono)">⟨n^2⟩</span>:
+        <span style="font-family:var(--mono)">n^2 = n(n-1) + n</span>, so taking expectations gives
+        <span style="font-family:var(--mono)">⟨n^2⟩ = ⟨n(n-1)⟩ + ⟨n⟩</span>.
+      </p>
+
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="eqVar" type="button">Copy</button>
+        <pre id="eqVar">⟨n^2⟩ = ⟨n(n-1)⟩ + ⟨n⟩ = n̄^2 + n̄.
+Var(n) = ⟨n^2⟩ - ⟨n⟩^2
+       = (n̄^2 + n̄) - (n̄)^2
+       = n̄.</pre>
+      </div>
+
+      <div class="callout good">
+        <div class="tag">Final Answer</div>
+        <div class="eqBlock" style="margin-top:10px;">
+          <button class="copyBtn" data-copy="finalAns" type="button">Copy</button>
+          <pre id="finalAns">For p(n) = (n̄^n e^{-n̄})/n! (n = 0,1,2,...):
+1) Σ_{n=0}^∞ p(n) = 1
+2) ⟨n⟩ = n̄
+3) Var(n) = σ_n^2 = n̄  (so σ_n = √n̄)</pre>
+        </div>
+      </div>
+
+      <h3>Sanity checks</h3>
+      <ul>
+        <li><strong>Units:</strong> counts are dimensionless, so mean and variance are dimensionless—consistent with <span style="font-family:var(--mono)">n̄</span>.</li>
+        <li><strong>Limiting case <span style="font-family:var(--mono)">n̄→0</span>:</strong> then <span style="font-family:var(--mono)">p(0)→1</span>, others → 0, so mean and variance → 0.</li>
+        <li><strong>Large <span style="font-family:var(--mono)">n̄</span>:</strong> width <span style="font-family:var(--mono)">σ_n = √n̄</span> grows more slowly than the mean, so relative noise <span style="font-family:var(--mono)">1/√n̄</span> decreases.</li>
+        <li><strong>Physical interpretation:</strong> Poisson noise is “shot noise”: fluctuations are intrinsic to counting independent quanta.</li>
+      </ul>
+
+      <p class="muted">
+        Connection to the diagram/plots: the slider controls <span style="font-family:var(--mono)">n̄</span> (expected clicks).
+        The PMF plot shows the probability of each observed count <span style="font-family:var(--mono)">n</span>.
+        The secondary plot illustrates how other descriptors (Gaussian error / relative noise / CDF) change with <span style="font-family:var(--mono)">n̄</span>.
+      </p>
+    </section>
+
+    <!-- PART 4 -->
+    <section class="section" id="part4">
+      <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+      <h3>Re-interpreting the final formula</h3>
+      <ul>
+        <li><span style="font-family:var(--mono)">⟨n⟩ = n̄</span>: the parameter sets the <strong>center</strong> of the distribution.</li>
+        <li><span style="font-family:var(--mono)">Var(n) = n̄</span>: the same parameter sets the <strong>spread</strong>. Thus <span style="font-family:var(--mono)">σ_n = √n̄</span>.</li>
+        <li><strong>Relative noise:</strong> <span style="font-family:var(--mono)">σ_n/⟨n⟩ = 1/√n̄</span> decreases with higher intensity (more photons).</li>
+      </ul>
+
+      <h3>How changing parameters affects the outcome (tie to plots)</h3>
+      <ul>
+        <li>Increasing <span style="font-family:var(--mono)">n̄</span> shifts the PMF peak to larger <span style="font-family:var(--mono)">n</span> and broadens it roughly like <span style="font-family:var(--mono)">√n̄</span>.</li>
+        <li>The distribution becomes more symmetric and increasingly “Gaussian-like” for large <span style="font-family:var(--mono)">n̄</span>.</li>
+        <li>In the <em>Gaussian approximation error</em> mode, you’ll see the error trend decrease as <span style="font-family:var(--mono)">n̄</span> grows.</li>
+      </ul>
+
+      <h3>An alternative derivation idea (brief)</h3>
+      <p>
+        Using the probability generating function
+        <span style="font-family:var(--mono)">G(z)=⟨z^n⟩ = Σ p(n) z^n</span>,
+        for Poisson one finds <span style="font-family:var(--mono)">G(z)=exp(n̄(z-1))</span>.
+        Then <span style="font-family:var(--mono)">⟨n⟩=G'(1)</span> and <span style="font-family:var(--mono)">Var(n)=G''(1)+G'(1)-[G'(1)]^2</span>,
+        yielding the same results with minimal algebra.
+      </p>
+
+      <div class="callout">
+        <div class="tag">Concept checks (with answers)</div>
+        <ul>
+          <li><strong>Q:</strong> If <span style="font-family:var(--mono)">n̄</span> quadruples, how does the standard deviation change? <br/>
+              <strong>A:</strong> <span style="font-family:var(--mono)">σ_n = √n̄</span>, so it doubles.</li>
+          <li><strong>Q:</strong> What happens to relative fluctuations <span style="font-family:var(--mono)">σ_n/⟨n⟩</span> as <span style="font-family:var(--mono)">n̄</span> increases? <br/>
+              <strong>A:</strong> It decreases like <span style="font-family:var(--mono)">1/√n̄</span>.</li>
+          <li><strong>Q:</strong> Why is <span style="font-family:var(--mono)">e^{-n̄}</span> necessary in <span style="font-family:var(--mono)">p(n)</span>? <br/>
+              <strong>A:</strong> It ensures <span style="font-family:var(--mono)">Σ p(n)=1</span> by canceling the <span style="font-family:var(--mono)">e^{n̄}</span> from the series.</li>
+          <li><strong>Q:</strong> Can Poisson counts be negative? <br/>
+              <strong>A:</strong> No—counts are nonnegative integers by definition.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- PART 5 -->
+    <section class="section" id="part5">
+      <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+
+      <h3>What each canvas shows</h3>
+      <ul>
+        <li><strong>Diagram canvas:</strong> A schematic photon source → detector during a time gate <span style="font-family:var(--mono)">T</span>. Random clicks are labeled by <span style="font-family:var(--mono)">n</span>. The slider sets the expected number <span style="font-family:var(--mono)">n̄</span>.</li>
+        <li><strong>Main PMF canvas:</strong> Bars/points for <span style="font-family:var(--mono)">p(n)</span> vs <span style="font-family:var(--mono)">n</span>. Axes include ticks, grid, and a title. The distribution’s peak near <span style="font-family:var(--mono)">n≈n̄</span> shifts as you move the slider.</li>
+        <li><strong>Secondary canvas (dropdown):</strong>
+          <ul>
+            <li><em>Gaussian approximation error:</em> sweeps <span style="font-family:var(--mono)">n̄</span> and shows how close Poisson is to a normal distribution (lower is better).</li>
+            <li><em>Fano factor &amp; relative noise:</em> shows <span style="font-family:var(--mono)">F = Var/Mean</span> (should be 1 for Poisson) and <span style="font-family:var(--mono)">σ/⟨n⟩</span>.</li>
+            <li><em>CDF:</em> plots <span style="font-family:var(--mono)">P(N≤n)</span> versus <span style="font-family:var(--mono)">n</span>, useful for threshold probabilities.</li>
+          </ul>
+        </li>
+      </ul>
+
+      <h3>Interactive controls</h3>
+      <ul>
+        <li><strong>Mean count <span style="font-family:var(--mono)">n̄</span> slider:</strong> changes the Poisson parameter. All plots update live.</li>
+        <li><strong>Plot range max <span style="font-family:var(--mono)">n</span>:</strong> adjusts how far out on the <span style="font-family:var(--mono)">n</span>-axis the PMF and (in CDF mode) the cumulative plot extend.</li>
+        <li><strong>Secondary plot metric dropdown:</strong> switches the meaning of the secondary canvas without changing the underlying distribution.</li>
+      </ul>
+
+      <div class="callout warn">
+        <div class="tag">Tip</div>
+        <p>
+          Try small <span style="font-family:var(--mono)">n̄</span> (like 0.5–2) to see strong asymmetry, then increase to 10–20 and watch the PMF become
+          more symmetric and the Gaussian-approximation error decrease.
+        </p>
+      </div>
+    </section>
+  </article>
+</main>
+
+<footer>
+  <div class="faint">Self-contained article • Vanilla HTML/CSS/JS • High-DPI canvas rendering • Copy-ready equations</div>
+</footer>
+
+<script>
+/* ========= Utilities ========= */
+function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+
+function copyTextFromId(id){
+  const el = document.getElementById(id);
+  const text = el ? el.textContent : "";
+  navigator.clipboard.writeText(text).then(()=> {
+    // brief visual feedback
+  }).catch(()=>{});
+}
+
+function niceTicks(min, max, n=6){
+  // simple "nice number" ticks
+  const span = max - min;
+  if(span <= 0) return {ticks:[min], step:1};
+  const raw = span / (n-1);
+  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / pow;
+  let nice;
+  if(norm < 1.5) nice = 1;
+  else if(norm < 3) nice = 2;
+  else if(norm < 7) nice = 5;
+  else nice = 10;
+  const step = nice * pow;
+  const t0 = Math.ceil(min / step) * step;
+  const ticks=[];
+  for(let t=t0; t<=max+1e-12; t+=step) ticks.push(t);
+  return {ticks, step};
+}
+
+function setHiDPICanvas(canvas){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(2, Math.floor(rect.width * dpr));
+  const h = Math.max(2, Math.floor(rect.height * dpr));
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w; canvas.height = h;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  return {ctx, dpr, cssW: rect.width, cssH: rect.height};
+}
+
+function drawAxes(ctx, box, xMin, xMax, yMin, yMax, opts){
+  const {xLabel, yLabel, title, grid=true} = opts || {};
+  const padL = box.l, padR = box.r, padT = box.t, padB = box.b;
+  const W = box.w, H = box.h;
+
+  // background
+  ctx.save();
+  ctx.clearRect(0,0,W,H);
+
+  // title
+  ctx.fillStyle = "rgba(233,238,252,.95)";
+  ctx.font = "600 14px ui-sans-serif, system-ui";
+  ctx.fillText(title || "", padL, 18);
+
+  // plot rect
+  const x0 = padL, y0 = padT, x1 = W - padR, y1 = H - padB;
+
+  // panel
+  ctx.fillStyle = "rgba(0,0,0,.14)";
+  ctx.fillRect(x0, y0, x1-x0, y1-y0);
+
+  // ticks
+  const xt = niceTicks(xMin, xMax, 6);
+  const yt = niceTicks(yMin, yMax, 6);
+
+  // grid lines
+  if(grid){
+    ctx.strokeStyle = "rgba(255,255,255,.08)";
+    ctx.lineWidth = 1;
+    xt.ticks.forEach(t=>{
+      const x = x0 + (t - xMin) / (xMax - xMin) * (x1-x0);
+      ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+    });
+    yt.ticks.forEach(t=>{
+      const y = y1 - (t - yMin) / (yMax - yMin) * (y1-y0);
+      ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+    });
+  }
+
+  // axes border
+  ctx.strokeStyle = "rgba(255,255,255,.14)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x0, y0, x1-x0, y1-y0);
+
+  // labels
+  ctx.fillStyle = "rgba(183,195,230,.95)";
+  ctx.font = "12px ui-sans-serif, system-ui";
+  if(xLabel) ctx.fillText(xLabel, x0 + (x1-x0)/2 - ctx.measureText(xLabel).width/2, H - 8);
+
+  if(yLabel){
+    ctx.save();
+    ctx.translate(12, y0 + (y1-y0)/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText(yLabel, 0 - ctx.measureText(yLabel).width/2, 0);
+    ctx.restore();
+  }
+
+  // tick labels
+  ctx.fillStyle = "rgba(183,195,230,.92)";
+  ctx.font = "11px ui-sans-serif, system-ui";
+
+  xt.ticks.forEach(t=>{
+    const x = x0 + (t - xMin) / (xMax - xMin) * (x1-x0);
+    ctx.fillText(formatTick(t), x - 8, y1 + 14);
+  });
+
+  yt.ticks.forEach(t=>{
+    const y = y1 - (t - yMin) / (yMax - yMin) * (y1-y0);
+    ctx.fillText(formatTick(t), x0 - 34, y + 4);
+  });
+
+  ctx.restore();
+
+  function formatTick(v){
+    if(Math.abs(v) >= 1000) return v.toFixed(0);
+    if(Math.abs(v) >= 10) return v.toFixed(0);
+    if(Math.abs(v) >= 1) return v.toFixed(1);
+    return v.toFixed(2);
+  }
+
+  return {
+    x0, y0, x1, y1,
+    xToPx: x => x0 + (x - xMin) / (xMax - xMin) * (x1-x0),
+    yToPx: y => y1 - (y - yMin) / (yMax - yMin) * (y1-y0),
+  };
+}
+
+/* ========= Poisson computation ========= */
+function poissonPMF(lambda, n){
+  // stable-ish recurrence for a single n isn't ideal, but fine for n<=80 and lambda<=25
+  // compute via log to reduce overflow risk
+  // p(n)=exp(n lnλ - λ - ln(n!))
+  if(n < 0) return 0;
+  if(lambda === 0) return (n===0 ? 1 : 0);
+  let logp = n*Math.log(lambda) - lambda - logFactorial(n);
+  return Math.exp(logp);
+}
+const logFactCache = [0]; // log(0!)=0
+function logFactorial(n){
+  n = Math.floor(n);
+  for(let k=logFactCache.length; k<=n; k++){
+    logFactCache[k] = logFactCache[k-1] + Math.log(k);
+  }
+  return logFactCache[n];
+}
+
+function poissonArray(lambda, nMax){
+  const arr = new Array(nMax+1);
+  // recurrence from p(0)=e^{-λ}, p(n+1)=p(n)*λ/(n+1)
+  let p0 = Math.exp(-lambda);
+  arr[0] = p0;
+  for(let n=0; n<nMax; n++){
+    arr[n+1] = arr[n] * lambda / (n+1);
+  }
+  return arr;
+}
+
+function poissonCDF(pmf){
+  const cdf = new Array(pmf.length);
+  let s=0;
+  for(let i=0; i<pmf.length; i++){
+    s += pmf[i];
+    cdf[i]=s;
+  }
+  return cdf;
+}
+
+/* ========= Gaussian approximation to discrete PMF ========= */
+function normalPDF(x, mu, sigma){
+  const z = (x-mu)/sigma;
+  return Math.exp(-0.5*z*z) / (sigma*Math.sqrt(2*Math.PI));
+}
+function normalApproxPMF(n, lambda){
+  // continuity correction: P(n-0.5 < X < n+0.5) for X~N(lambda, lambda)
+  // approximate with pdf*1 if we avoid erf; use midpoint pdf as a simple proxy:
+  // This is a pedagogical approximation; we then measure error consistently.
+  const sigma = Math.sqrt(Math.max(lambda, 1e-9));
+  return normalPDF(n, lambda, sigma); // midpoint
+}
+
+/* ========= Drawing ========= */
+function drawDiagram(lambda){
+  const canvas = document.getElementById('diagramCanvas');
+  const {ctx, cssW:W, cssH:H} = setHiDPICanvas(canvas);
+
+  ctx.clearRect(0,0,W,H);
+
+  // background vignette
+  const g = ctx.createRadialGradient(W*0.25,H*0.25,10, W*0.5,H*0.55, Math.max(W,H));
+  g.addColorStop(0,"rgba(125,211,252,.16)");
+  g.addColorStop(1,"rgba(0,0,0,.0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+
+  // Title
+  ctx.fillStyle = "rgba(233,238,252,.95)";
+  ctx.font = "600 14px ui-sans-serif, system-ui";
+  ctx.fillText("Photon counting in a time gate", 14, 20);
+
+  // draw source box
+  const src = {x: 24, y: H*0.40, w: W*0.22, h: H*0.22};
+  roundedRect(ctx, src.x, src.y, src.w, src.h, 14, "rgba(255,255,255,.10)", "rgba(0,0,0,.22)");
+  ctx.fillStyle = "rgba(233,238,252,.92)";
+  ctx.font = "600 13px ui-sans-serif, system-ui";
+  ctx.fillText("Light source", src.x+14, src.y+26);
+  ctx.fillStyle = "rgba(183,195,230,.92)";
+  ctx.font = "12px ui-sans-serif, system-ui";
+  ctx.fillText("mean flux →", src.x+14, src.y+48);
+
+  // beam to detector
+  const beamY = src.y + src.h/2;
+  const detX = W*0.70;
+  ctx.strokeStyle = "rgba(125,211,252,.55)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(src.x+src.w, beamY);
+  ctx.lineTo(detX-18, beamY);
+  ctx.stroke();
+
+  // photons (dots)
+  const nDots = Math.round(clamp(lambda, 0.2, 25) / 2.0) + 3;
+  for(let i=0;i<nDots;i++){
+    const t = (i+1)/(nDots+1);
+    const x = src.x+src.w + t*(detX - (src.x+src.w) - 30);
+    const jitter = (i%2===0? -1:1) * (6 + 2*Math.sin(i));
+    const y = beamY + jitter;
+    ctx.fillStyle = "rgba(125,211,252,.9)";
+    ctx.beginPath();
+    ctx.arc(x, y, 3.0, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // detector box
+  const det = {x: detX, y: H*0.33, w: W*0.26, h: H*0.34};
+  roundedRect(ctx, det.x, det.y, det.w, det.h, 14, "rgba(255,255,255,.10)", "rgba(0,0,0,.22)");
+  ctx.fillStyle = "rgba(233,238,252,.92)";
+  ctx.font = "600 13px ui-sans-serif, system-ui";
+  ctx.fillText("Detector", det.x+14, det.y+26);
+  ctx.fillStyle = "rgba(183,195,230,.92)";
+  ctx.font = "12px ui-sans-serif, system-ui";
+  ctx.fillText("counts in gate T", det.x+14, det.y+48);
+
+  // gate timeline
+  const lineX0 = det.x+14, lineX1 = det.x+det.w-14;
+  const lineY = det.y+det.h-48;
+  ctx.strokeStyle = "rgba(255,255,255,.18)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(lineX0, lineY);
+  ctx.lineTo(lineX1, lineY);
+  ctx.stroke();
+
+  // gate bracket
+  ctx.strokeStyle = "rgba(167,139,250,.55)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(lineX0, lineY+14);
+  ctx.lineTo(lineX0, lineY-14);
+  ctx.moveTo(lineX1, lineY+14);
+  ctx.lineTo(lineX1, lineY-14);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(167,139,250,.95)";
+  ctx.font = "600 12px ui-sans-serif, system-ui";
+  const label = "time gate T";
+  ctx.fillText(label, lineX0 + (lineX1-lineX0)/2 - ctx.measureText(label).width/2, lineY+34);
+
+  // clicks displayed
+  const clicks = Math.max(0, Math.round(lambda + (Math.sin(lambda*1.7)*0.3)));
+  ctx.fillStyle = "rgba(233,238,252,.92)";
+  ctx.font = "600 12px ui-sans-serif, system-ui";
+  const s1 = "Expected count n̄ = " + lambda.toFixed(2);
+  ctx.fillText(s1, 14, H - 18);
+
+  // draw click indicators
+  const cx0 = det.x+14, cy0 = det.y+84;
+  ctx.fillStyle = "rgba(134,239,172,.85)";
+  for(let i=0;i<Math.min(clicks, 12);i++){
+    ctx.beginPath();
+    ctx.arc(cx0 + (i%6)*18, cy0 + Math.floor(i/6)*18, 4.2, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.fillStyle = "rgba(183,195,230,.92)";
+  ctx.font = "12px ui-sans-serif, system-ui";
+  ctx.fillText("example clicks (illustrative)", det.x+14, det.y+76);
+
+  function roundedRect(ctx, x, y, w, h, r, stroke, fill){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+    if(fill){ ctx.fillStyle = fill; ctx.fill(); }
+    if(stroke){ ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+  }
+}
+
+function drawPMF(lambda, nMax){
+  const canvas = document.getElementById('pmfCanvas');
+  const {ctx, cssW:W, cssH:H} = setHiDPICanvas(canvas);
+
+  const box = {w:W, h:H, l:54, r:16, t:34, b:40};
+  const pmf = poissonArray(lambda, nMax);
+  const yMax = Math.max(...pmf) * 1.15;
+
+  const ax = drawAxes(ctx, box, 0, nMax, 0, yMax, {
+    title: "Poisson PMF  p(n)  vs  n",
+    xLabel: "n (counts)",
+    yLabel: "p(n) (probability)",
+    grid:true
+  });
+
+  // plot points + "lollipop" stems
+  ctx.save();
+  ctx.lineWidth = 2;
+  for(let n=0; n<=nMax; n++){
+    const x = ax.xToPx(n);
+    const y = ax.yToPx(pmf[n]);
+    const y0 = ax.yToPx(0);
+
+    // stem
+    ctx.strokeStyle = "rgba(125,211,252,.45)";
+    ctx.beginPath();
+    ctx.moveTo(x, y0);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+
+    // point
+    ctx.fillStyle = "rgba(125,211,252,.95)";
+    ctx.beginPath();
+    ctx.arc(x, y, 3.2, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // mean marker line
+  ctx.strokeStyle = "rgba(167,139,250,.75)";
+  ctx.setLineDash([6,4]);
+  ctx.lineWidth = 2;
+  const xMean = ax.xToPx(lambda);
+  ctx.beginPath();
+  ctx.moveTo(xMean, ax.y0);
+  ctx.lineTo(xMean, ax.y1);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // legend
+  const lx = ax.x1 - 180, ly = ax.y0 + 12;
+  legendBox(ctx, lx, ly, 170, 56, [
+    {label:"p(n) Poisson", color:"rgba(125,211,252,.95)"},
+    {label:"mean n̄", color:"rgba(167,139,250,.85)", dash:true}
+  ]);
+
+  ctx.restore();
+
+  function legendBox(ctx, x, y, w, h, items){
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,.28)";
+    ctx.strokeStyle = "rgba(255,255,255,.12)";
+    ctx.lineWidth = 1;
+    roundRect(ctx, x, y, w, h, 12);
+    ctx.fill(); ctx.stroke();
+    ctx.font = "12px ui-sans-serif, system-ui";
+    ctx.fillStyle = "rgba(233,238,252,.92)";
+
+    items.forEach((it, i)=>{
+      const yy = y + 18 + i*18;
+      ctx.strokeStyle = it.color;
+      ctx.lineWidth = 3;
+      if(it.dash) ctx.setLineDash([6,4]); else ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(x+12, yy);
+      ctx.lineTo(x+36, yy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillText(it.label, x+44, yy+4);
+    });
+    ctx.restore();
+  }
+  function roundRect(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+  }
+}
+
+function drawSecondary(lambda, nMax, mode){
+  const canvas = document.getElementById('secondaryCanvas');
+  const {ctx, cssW:W, cssH:H} = setHiDPICanvas(canvas);
+
+  if(mode === "gauss"){
+    drawGaussianErrorSweep(ctx, W, H, lambda);
+  }else if(mode === "fano"){
+    drawFano(ctx, W, H, lambda);
+  }else{
+    drawCDF(ctx, W, H, lambda, nMax);
+  }
+}
+
+function drawGaussianErrorSweep(ctx, W, H, lambda){
+  const box = {w:W, h:H, l:54, r:16, t:34, b:40};
+
+  // sweep lambdas
+  const Lmin = 0.2, Lmax = 25;
+  const steps = 160;
+  const xs = [];
+  const ys = [];
+  let ymax = 0;
+
+  for(let i=0;i<=steps;i++){
+    const L = Lmin + (Lmax-Lmin)*(i/steps);
+    const nMax = Math.max(20, Math.ceil(L + 6*Math.sqrt(L+1e-9)));
+    const pmf = poissonArray(L, Math.min(80, nMax));
+    let maxErr = 0;
+    for(let n=0;n<pmf.length;n++){
+      const g = normalApproxPMF(n, L);
+      const err = Math.abs(pmf[n] - g);
+      if(err > maxErr) maxErr = err;
+    }
+    xs.push(L); ys.push(maxErr);
+    ymax = Math.max(ymax, maxErr);
+  }
+  ymax *= 1.15;
+
+  const ax = drawAxes(ctx, box, Lmin, Lmax, 0, ymax, {
+    title: "Gaussian approximation error vs n̄",
+    xLabel: "n̄ (dimensionless)",
+    yLabel: "max |p_Poisson(n) - p_Gauss(n)|",
+    grid:true
+  });
+
+  // curve
+  ctx.save();
+  ctx.strokeStyle = "rgba(125,211,252,.85)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  xs.forEach((L,i)=>{
+    const x = ax.xToPx(L), y = ax.yToPx(ys[i]);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // marker for current lambda
+  const yNow = interpolate(xs, ys, lambda);
+  ctx.fillStyle = "rgba(167,139,250,.95)";
+  ctx.beginPath();
+  ctx.arc(ax.xToPx(lambda), ax.yToPx(yNow), 4.2, 0, Math.PI*2);
+  ctx.fill();
+
+  // legend
+  ctx.fillStyle = "rgba(233,238,252,.92)";
+  ctx.font = "12px ui-sans-serif, system-ui";
+  const txt = "current n̄ = " + lambda.toFixed(2) + "  →  error ≈ " + yNow.toExponential(2);
+  ctx.fillText(txt, ax.x0, ax.y0 - 10);
+
+  ctx.restore();
+
+  function interpolate(xs, ys, x){
+    if(x <= xs[0]) return ys[0];
+    if(x >= xs[xs.length-1]) return ys[ys.length-1];
+    let lo=0, hi=xs.length-1;
+    while(hi-lo>1){
+      const mid=(lo+hi)>>1;
+      if(xs[mid] <= x) lo=mid; else hi=mid;
+    }
+    const t = (x - xs[lo])/(xs[hi]-xs[lo]);
+    return ys[lo]*(1-t) + ys[hi]*t;
+  }
+}
+
+function drawFano(ctx, W, H, lambda){
+  const box = {w:W, h:H, l:54, r:16, t:34, b:40};
+
+  // For Poisson: Fano factor F = Var/Mean = 1.
+  // Relative noise R = sigma/mean = 1/sqrt(lambda).
+  const Lmin = 0.2, Lmax = 25;
+  const steps = 160;
+
+  const xs=[], fano=[], rel=[];
+  let ymax = 0;
+  for(let i=0;i<=steps;i++){
+    const L = Lmin + (Lmax-Lmin)*(i/steps);
+    xs.push(L);
+    fano.push(1);
+    rel.push(1/Math.sqrt(L));
+    ymax = Math.max(ymax, 1, 1/Math.sqrt(Lmin));
+  }
+  ymax *= 1.1;
+
+  const ax = drawAxes(ctx, box, Lmin, Lmax, 0, ymax, {
+    title: "Poisson noise metrics vs n̄",
+    xLabel: "n̄ (dimensionless)",
+    yLabel: "metric value (dimensionless)",
+    grid:true
+  });
+
+  ctx.save();
+  // Fano = 1 line
+  ctx.strokeStyle = "rgba(125,211,252,.85)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  xs.forEach((L,i)=>{
+    const x=ax.xToPx(L), y=ax.yToPx(fano[i]);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Relative noise
+  ctx.strokeStyle = "rgba(167,139,250,.85)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  xs.forEach((L,i)=>{
+    const x=ax.xToPx(L), y=ax.yToPx(rel[i]);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // markers at current lambda
+  const relNow = 1/Math.sqrt(lambda);
+  ctx.fillStyle = "rgba(125,211,252,.95)";
+  ctx.beginPath(); ctx.arc(ax.xToPx(lambda), ax.yToPx(1), 4.2, 0, Math.PI*2); ctx.fill();
+
+  ctx.fillStyle = "rgba(167,139,250,.95)";
+  ctx.beginPath(); ctx.arc(ax.xToPx(lambda), ax.yToPx(relNow), 4.2, 0, Math.PI*2); ctx.fill();
+
+  // legend
+  const lx = ax.x1 - 230, ly = ax.y0 + 12;
+  legend(ctx, lx, ly, 220, 62, [
+    {label:"Fano factor F = Var/Mean = 1", color:"rgba(125,211,252,.85)"},
+    {label:"Relative noise σ/⟨n⟩ = 1/√n̄", color:"rgba(167,139,250,.85)"}
+  ]);
+
+  ctx.fillStyle = "rgba(233,238,252,.92)";
+  ctx.font = "12px ui-sans-serif, system-ui";
+  ctx.fillText("current n̄ = " + lambda.toFixed(2) + "  →  σ/⟨n⟩ ≈ " + relNow.toFixed(3), ax.x0, ax.y0 - 10);
+
+  ctx.restore();
+
+  function legend(ctx, x, y, w, h, items){
+    ctx.save();
+    ctx.fillStyle="rgba(0,0,0,.28)";
+    ctx.strokeStyle="rgba(255,255,255,.12)";
+    roundRect(ctx, x,y,w,h,12); ctx.fill(); ctx.stroke();
+    ctx.font="12px ui-sans-serif, system-ui";
+    items.forEach((it,i)=>{
+      const yy=y+18+i*18;
+      ctx.strokeStyle=it.color; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(x+12,yy); ctx.lineTo(x+34,yy); ctx.stroke();
+      ctx.fillStyle="rgba(233,238,252,.92)";
+      ctx.fillText(it.label, x+42, yy+4);
+    });
+    ctx.restore();
+  }
+  function roundRect(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+  }
+}
+
+function drawCDF(ctx, W, H, lambda, nMax){
+  const box = {w:W, h:H, l:54, r:16, t:34, b:40};
+  const pmf = poissonArray(lambda, nMax);
+  const cdf = poissonCDF(pmf);
+
+  const ax = drawAxes(ctx, box, 0, nMax, 0, 1.0, {
+    title: "CDF  P(N ≤ n)  for Poisson(n̄)",
+    xLabel: "n (counts)",
+    yLabel: "cumulative probability",
+    grid:true
+  });
+
+  ctx.save();
+  // step-like curve
+  ctx.strokeStyle = "rgba(125,211,252,.85)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for(let n=0;n<=nMax;n++){
+    const x = ax.xToPx(n);
+    const y = ax.yToPx(cdf[n]);
+    if(n===0) ctx.moveTo(x,y);
+    else{
+      // horizontal then vertical to mimic steps
+      const xPrev = ax.xToPx(n-1);
+      const yPrev = ax.yToPx(cdf[n-1]);
+      ctx.lineTo(x, yPrev);
+      ctx.lineTo(x, y);
+    }
+  }
+  ctx.stroke();
+
+  // median-ish marker: first n with CDF>=0.5
+  let nMed=0;
+  while(nMed < cdf.length && cdf[nMed] < 0.5) nMed++;
+  const xMed=ax.xToPx(nMed), yMed=ax.yToPx(cdf[nMed]);
+  ctx.fillStyle="rgba(167,139,250,.95)";
+  ctx.beginPath(); ctx.arc(xMed, yMed, 4.2, 0, Math.PI*2); ctx.fill();
+
+  // label
+  ctx.fillStyle="rgba(233,238,252,.92)";
+  ctx.font="12px ui-sans-serif, system-ui";
+  ctx.fillText("current n̄ = " + lambda.toFixed(2) + "  →  median ≈ " + nMed, ax.x0, ax.y0 - 10);
+
+  // legend
+  const lx = ax.x1 - 210, ly = ax.y0 + 12;
+  ctx.fillStyle="rgba(0,0,0,.28)";
+  ctx.strokeStyle="rgba(255,255,255,.12)";
+  ctx.lineWidth=1;
+  roundRect(ctx,lx,ly,200,56,12); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle="rgba(125,211,252,.85)";
+  ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(lx+12, ly+20); ctx.lineTo(lx+34, ly+20); ctx.stroke();
+  ctx.fillStyle="rgba(233,238,252,.92)";
+  ctx.fillText("CDF P(N ≤ n)", lx+42, ly+24);
+  ctx.fillStyle="rgba(167,139,250,.95)";
+  ctx.beginPath(); ctx.arc(lx+23, ly+40, 4, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle="rgba(233,238,252,.92)";
+  ctx.fillText("median marker", lx+42, ly+44);
+
+  ctx.restore();
+
+  function roundRect(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+  }
+}
+
+/* ========= Interaction wiring ========= */
+const lambdaEl = document.getElementById('lambda');
+const nmaxEl = document.getElementById('nmax');
+const modeSel = document.getElementById('modeSel');
+const lambdaVal = document.getElementById('lambdaVal');
+const nmaxVal = document.getElementById('nmaxVal');
+const modeVal = document.getElementById('modeVal');
+
+function syncLabels(){
+  lambdaVal.textContent = (+lambdaEl.value).toFixed(2);
+  nmaxVal.textContent = String(Math.round(+nmaxEl.value));
+  const m = modeSel.value;
+  modeVal.textContent = (m==="gauss"?"Gaussian error":(m==="fano"?"Fano & relative noise":"CDF"));
+}
+
+function renderAll(){
+  const lambda = +lambdaEl.value;
+  const nMax = Math.round(+nmaxEl.value);
+  const mode = modeSel.value;
+
+  syncLabels();
+  drawDiagram(lambda);
+  drawPMF(lambda, nMax);
+  drawSecondary(lambda, nMax, mode);
+}
+
+lambdaEl.addEventListener('input', renderAll);
+nmaxEl.addEventListener('input', renderAll);
+modeSel.addEventListener('change', renderAll);
+
+window.addEventListener('resize', ()=>{ renderAll(); });
+
+/* Copy buttons */
+document.querySelectorAll('.copyBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const id = btn.getAttribute('data-copy');
+    copyTextFromId(id);
+    const old = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(()=> btn.textContent = old, 900);
+  });
+});
+
+/* TOC collapse */
+const collapseBtn = document.getElementById('collapseToc');
+const tocBody = document.getElementById('tocBody');
+let tocCollapsed = false;
+collapseBtn.addEventListener('click', ()=>{
+  tocCollapsed = !tocCollapsed;
+  tocBody.style.display = tocCollapsed ? "none" : "block";
+  collapseBtn.textContent = tocCollapsed ? "Expand" : "Collapse";
+});
+
+/* Initial render */
+renderAll();
+</script>
+</body>
+</html>

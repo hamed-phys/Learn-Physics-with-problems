@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Photon Flux: Power for One Photon per Optical Cycle Scales as 1/λ²</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#101a33;
+      --card2:#0f1830;
+      --text:#eaf0ff;
+      --muted:#b8c4e6;
+      --faint:#7f8bb3;
+      --accent:#7aa2ff;
+      --accent2:#7dffb2;
+      --danger:#ff6b6b;
+      --warn:#ffd166;
+      --ok:#69db7c;
+      --border:rgba(255,255,255,0.10);
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 15% 5%, rgba(122,162,255,0.16), transparent 55%),
+                  radial-gradient(900px 600px at 90% 20%, rgba(125,255,178,0.10), transparent 50%),
+                  radial-gradient(900px 700px at 60% 100%, rgba(255,209,102,0.08), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      font-family:var(--sans);
+      line-height:1.55;
+    }
+
+    header{
+      padding: 36px 18px 18px;
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+    header .kicker{
+      color: var(--muted);
+      letter-spacing:0.08em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+    header h1{
+      margin: 10px 0 10px;
+      font-size: clamp(26px, 3.2vw, 44px);
+      line-height:1.12;
+    }
+    header p{
+      margin: 0;
+      color: var(--muted);
+      max-width: 80ch;
+    }
+
+    main{
+      max-width:1120px;
+      margin: 0 auto;
+      padding: 0 18px 48px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      align-items:start;
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      align-self: start;
+      background: linear-gradient(180deg, rgba(16,26,51,0.95), rgba(16,26,51,0.82));
+      border:1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 14px;
+      backdrop-filter: blur(10px);
+    }
+    nav.toc .title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    nav.toc .title span{
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text);
+    }
+    nav.toc a{
+      display:block;
+      text-decoration:none;
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      font-size: 13px;
+    }
+    nav.toc a:hover{
+      color: var(--text);
+      background: rgba(122,162,255,0.10);
+      border-color: rgba(122,162,255,0.18);
+    }
+    nav.toc .hint{
+      margin-top:10px;
+      color: var(--faint);
+      font-size: 12px;
+    }
+
+    article.content{
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    section{
+      background: linear-gradient(180deg, rgba(16,26,51,0.92), rgba(15,24,48,0.86));
+      border:1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 18px;
+      overflow:hidden;
+    }
+    section h2{
+      margin:0 0 10px;
+      font-size: clamp(18px, 2.1vw, 26px);
+    }
+    section h3{
+      margin: 18px 0 10px;
+      font-size: 18px;
+      color: var(--text);
+    }
+    section p, section li{
+      color: var(--muted);
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr; }
+      nav.toc{ position: relative; top: 0; }
+      .grid2, .grid3{ grid-template-columns: 1fr; }
+    }
+
+    .callout{
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      padding: 12px 12px;
+    }
+    .callout strong{ color: var(--text); }
+    .callout.assumptions{ border-left: 4px solid var(--warn); }
+    .callout.keyeq{ border-left: 4px solid var(--accent); }
+    .callout.mistakes{ border-left: 4px solid var(--danger); }
+    .callout.final{ border-left: 4px solid var(--accent2); }
+
+    .eq{
+      margin: 10px 0;
+      padding: 12px 12px;
+      border: 1px dashed rgba(122,162,255,0.35);
+      border-radius: 14px;
+      background: rgba(122,162,255,0.07);
+      font-family: var(--mono);
+      color: var(--text);
+      position: relative;
+      overflow:auto;
+      white-space: nowrap;
+    }
+    .eq .label{
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      white-space: normal;
+    }
+    .copyRow{
+      display:flex;
+      gap: 10px;
+      flex-wrap:wrap;
+      margin-top: 8px;
+    }
+    button.copyBtn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      cursor:pointer;
+      transition: transform 0.08s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+    button.copyBtn:hover{
+      background: rgba(122,162,255,0.12);
+      border-color: rgba(122,162,255,0.22);
+    }
+    button.copyBtn:active{ transform: scale(0.98); }
+
+    .vizWrap{
+      display:grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 14px;
+      align-items: stretch;
+    }
+    @media (max-width: 980px){
+      .vizWrap{ grid-template-columns: 1fr; }
+    }
+
+    figure{
+      margin:0;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+      overflow:hidden;
+    }
+    figcaption{
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      color: var(--faint);
+      font-size: 12px;
+    }
+    canvas{
+      width:100%;
+      height: 320px;
+      display:block;
+    }
+    .smallCanvas canvas{ height: 300px; }
+
+    .controls{
+      display:flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 12px;
+      border:1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+    }
+    .control{
+      min-width: 220px;
+      flex: 1;
+    }
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .control input[type="range"]{
+      width:100%;
+    }
+    .control .readout{
+      font-family: var(--mono);
+      color: var(--text);
+      font-size: 12px;
+    }
+    .control .mini{
+      color: var(--faint);
+      font-size: 12px;
+    }
+    .control select, .control input[type="checkbox"]{
+      accent-color: var(--accent);
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    footer{
+      max-width:1120px;
+      margin: 0 auto;
+      padding: 12px 18px 36px;
+      color: var(--faint);
+      font-size: 12px;
+    }
+
+    /* subtle motion */
+    @media (prefers-reduced-motion: no-preference){
+      section{
+        animation: pop 0.35s ease both;
+      }
+      @keyframes pop{
+        from{ transform: translateY(6px); opacity: 0.0; }
+        to{ transform: translateY(0); opacity: 1; }
+      }
+    }
+
+    /* print */
+    @media print{
+      body{ background: #fff; color:#111; }
+      header, main, footer{ max-width: none; }
+      nav.toc{ display:none; }
+      section{ box-shadow:none; background:#fff; border:1px solid #ddd; }
+      .eq{ background:#f6f8ff; color:#111; }
+      button, .controls{ display:none !important; }
+      canvas{ display:none; }
+      figcaption{ color:#333; }
+      a{ color:#111; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="kicker">Photon flux • monochromatic beam • scaling law</div>
+    <h1>Power of a Beam with ⟨1 Photon per Optical Cycle⟩ Scales as 1/λ²</h1>
+    <p>
+      We connect three simple ideas—photon energy, optical period, and photon arrival rate—to show that if a monochromatic beam carries
+      an average of one photon per optical cycle, then its average power is proportional to the square of the optical frequency and
+      therefore inversely proportional to the square of the wavelength.
+    </p>
+  </header>
+
+  <main>
+    <nav class="toc" aria-label="Table of contents">
+      <div class="title">
+        <span>Table of Contents</span>
+        <span class="pill" title="Interactive plots included">Canvas + Live Controls</span>
+      </div>
+      <a href="#quick-summary">Quick Summary</a>
+      <a href="#part0">PART 0 — Concept Primer</a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a href="#part2">PART 2 — Strategy & Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a href="#part4">PART 4 — Deeper Understanding</a>
+      <a href="#part5">PART 5 — Visualization Guide</a>
+      <div class="hint">Tip: use the slider to change ⟨photons per cycle⟩ and watch both plots update.</div>
+    </nav>
+
+    <article class="content">
+      <section id="quick-summary">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li><strong>What it’s about:</strong> Relating optical <em>power</em> to <em>photon counting</em> for a monochromatic beam.</li>
+          <li><strong>Key physics idea:</strong> Average power = (energy per photon) × (photons per second).</li>
+          <li><strong>Governing relations:</strong> Photon energy <span style="font-family:var(--mono)">E = hν = hc/λ</span> and optical period <span style="font-family:var(--mono)">T = 1/ν</span>.</li>
+          <li><strong>Interpretation of “one photon per optical cycle”:</strong> On average, <span style="font-family:var(--mono)">1</span> photon arrives every period <span style="font-family:var(--mono)">T</span>, so photon rate is <span style="font-family:var(--mono)">ν</span> photons/s.</li>
+          <li><strong>Result type:</strong> <strong>Symbolic scaling law</strong> (and we show example numbers in the plots).</li>
+          <li><strong>Final result:</strong> <span style="font-family:var(--mono)">P = hν² = h(c/λ)² = hc²/λ²</span> ⇒ <strong>P ∝ 1/λ²</strong> for ⟨1 photon/cycle⟩.</li>
+        </ul>
+
+        <div class="callout final">
+          <strong>Final Answer (for ⟨1 photon per optical cycle⟩):</strong>
+          <div class="eq" data-copy="P = h*nu^2 = h*(c/lambda)^2 = h*c^2/lambda^2  (so P ∝ 1/lambda^2)">
+            <div class="label">Copy-friendly (plain text)</div>
+            P = h ν² = h (c/λ)² = h c² / λ²  ⇒  P ∝ 1/λ²
+          </div>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy-target="eqFinal">Copy final result</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="part0">
+        <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+        <div class="grid2">
+          <div class="callout">
+            <strong>Core definitions (symbols & units)</strong>
+            <ul>
+              <li><strong>Wavelength</strong> <span style="font-family:var(--mono)">λ</span> (meters, m): spatial period of the wave.</li>
+              <li><strong>Frequency</strong> <span style="font-family:var(--mono)">ν</span> (hertz, Hz = s⁻¹): temporal oscillation rate.</li>
+              <li><strong>Optical period</strong> <span style="font-family:var(--mono)">T</span> (seconds, s): time for one cycle, <span style="font-family:var(--mono)">T = 1/ν</span>.</li>
+              <li><strong>Planck constant</strong> <span style="font-family:var(--mono)">h</span> (J·s): sets the quantum of action.</li>
+              <li><strong>Speed of light (vacuum)</strong> <span style="font-family:var(--mono)">c</span> (m/s): relates ν and λ in vacuum, <span style="font-family:var(--mono)">c = λν</span>.</li>
+              <li><strong>Photon energy</strong> <span style="font-family:var(--mono)">E</span> (joules, J): <span style="font-family:var(--mono)">E = hν = hc/λ</span>.</li>
+              <li><strong>Photon flux</strong> <span style="font-family:var(--mono)">Φ</span> (photons/s): average photon rate.</li>
+              <li><strong>Optical power</strong> <span style="font-family:var(--mono)">P</span> (watts, W = J/s): average energy per unit time.</li>
+            </ul>
+          </div>
+
+          <div class="callout">
+            <strong>Physical meaning (what these quantities represent)</strong>
+            <ul>
+              <li><span style="font-family:var(--mono)">E = hν</span> means higher-frequency (shorter-wavelength) light carries <em>more energy per photon</em>.</li>
+              <li><span style="font-family:var(--mono)">T = 1/ν</span> means higher-frequency light has <em>shorter</em> cycles (more cycles per second).</li>
+              <li>Photon flux <span style="font-family:var(--mono)">Φ</span> tells you <em>how many photons per second</em> the beam carries on average.</li>
+              <li>Power <span style="font-family:var(--mono)">P</span> is the beam’s <em>energy delivery rate</em>. In a photon picture, it’s “energy per photon” × “photons per second.”</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Key laws/principles and validity</h3>
+        <div class="callout keyeq">
+          <strong>Quantum + wave relations (monochromatic, steady beam):</strong>
+          <div class="eq" data-copy="E = h*nu = h*c/lambda">
+            <div class="label">Photon energy</div>
+            E = hν = hc/λ
+          </div>
+          <div class="eq" data-copy="T = 1/nu, and in vacuum c = lambda*nu">
+            <div class="label">Period & dispersion (vacuum)</div>
+            T = 1/ν,  &nbsp; c = λν
+          </div>
+          <div class="eq" data-copy="P = (photons per second)*E = Phi*E">
+            <div class="label">Power from photon flux</div>
+            P = ΦE
+          </div>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy-target="eqKey">Copy key equations</button>
+          </div>
+        </div>
+
+        <div class="callout assumptions">
+          <strong>When these are valid (assumptions/conditions):</strong>
+          <ul>
+            <li><strong>Monochromatic</strong>: a single well-defined frequency ν (or very narrow linewidth).</li>
+            <li><strong>Steady average beam</strong>: we care about time-averaged photon rate and power (not individual random arrival times).</li>
+            <li><strong>Vacuum relation</strong> <span style="font-family:var(--mono)">c=λν</span> assumed; in a medium you’d use phase velocity <span style="font-family:var(--mono)">v = c/n</span> so the scaling can be discussed carefully (see notes in PART 4).</li>
+          </ul>
+        </div>
+
+        <h3>Common models/approximations and why we use them</h3>
+        <ul>
+          <li><strong>Photon-counting model:</strong> Treat energy transport as discrete photons. Great for linking optical power to count rates in detectors.</li>
+          <li><strong>Cycle-based averaging:</strong> “Photons per optical cycle” means an average number per period <span style="font-family:var(--mono)">T</span>. It converts directly into photons/s by multiplying by cycles/s (= ν).</li>
+          <li><strong>Time-averaged power:</strong> Real photon arrivals are stochastic (Poisson-like for coherent states), but the mean power depends only on mean flux.</li>
+        </ul>
+
+        <h3>Mini intuition examples (conceptual, no long algebra)</h3>
+        <ul>
+          <li>If you keep <em>one photon per cycle</em> but increase ν, you get <em>more cycles per second</em> and each photon is <em>more energetic</em> ⇒ power climbs fast.</li>
+          <li>Doubling wavelength (λ → 2λ) halves photon energy and halves cycles per second ⇒ power drops by a factor of 4.</li>
+        </ul>
+
+        <div class="callout mistakes">
+          <strong>What to watch for (typical pitfalls)</strong>
+          <ul>
+            <li>Confusing “one photon per cycle” with “one photon per second.” They differ by a factor of ν.</li>
+            <li>Forgetting that photon energy depends on ν (or 1/λ).</li>
+            <li>Mixing angular frequency ω (rad/s) with frequency ν (Hz): <span style="font-family:var(--mono)">E = ħω</span> and <span style="font-family:var(--mono)">ω = 2πν</span>.</li>
+            <li>In media: using vacuum λ without noting refractive index effects (see PART 4 discussion).</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="part1">
+        <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+        <h3>Problem restatement (in plain words)</h3>
+        <p>
+          You have a <strong>monochromatic optical beam</strong>. It is specified that the beam carries an <strong>average of one photon per optical cycle</strong>
+          (i.e., per period of the light’s oscillation). Show that the beam’s <strong>average power</strong> is <strong>inversely proportional to the square of the wavelength</strong>,
+          i.e., <span style="font-family:var(--mono)">P ∝ 1/λ²</span>.
+        </p>
+
+        <div class="grid2">
+          <div class="callout">
+            <strong>Given</strong>
+            <ul>
+              <li>Monochromatic light with wavelength <span style="font-family:var(--mono)">λ</span> and frequency <span style="font-family:var(--mono)">ν</span>.</li>
+              <li>Average photon number per optical cycle: <span style="font-family:var(--mono)">N̄_cycle = 1</span>.</li>
+              <li>Standard constants: <span style="font-family:var(--mono)">h</span>, <span style="font-family:var(--mono)">c</span>.</li>
+            </ul>
+          </div>
+          <div class="callout">
+            <strong>Unknowns / what to prove</strong>
+            <ul>
+              <li>Expression for average power <span style="font-family:var(--mono)">P</span> in terms of <span style="font-family:var(--mono)">λ</span>.</li>
+              <li>Show the scaling: <span style="font-family:var(--mono)">P ∝ 1/λ²</span> when <span style="font-family:var(--mono)">N̄_cycle = 1</span>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Relevant physical principles (and why they apply)</h3>
+        <ul>
+          <li><strong>Photon energy quantization</strong>: monochromatic photons have energy <span style="font-family:var(--mono)">E = hν</span>. This directly connects frequency to energy carried per photon.</li>
+          <li><strong>Definition of power</strong>: power is energy per unit time, <span style="font-family:var(--mono)">P = dE/dt</span>. With discrete photons, <span style="font-family:var(--mono)">P = (photons/s) × (J/photon)</span>.</li>
+          <li><strong>Wave relation</strong> in vacuum: <span style="font-family:var(--mono)">c = λν</span> to rewrite ν in terms of λ.</li>
+        </ul>
+        <p>
+          Other laws (Maxwell field intensity relations, Poynting vector integrals) <em>could</em> be used, but they’re unnecessary here because
+          the statement “one photon per cycle” already provides a direct time-counting handle via the period.
+        </p>
+
+        <div class="callout assumptions">
+          <strong>Assumptions stated explicitly</strong>
+          <ul>
+            <li>Light is effectively in vacuum (or use vacuum wavelength/frequency relationship).</li>
+            <li>The beam is stationary in average: one can speak of mean photons per cycle.</li>
+            <li>“Optical cycle” means one period <span style="font-family:var(--mono)">T = 1/ν</span> of the field oscillation (not envelope period).</li>
+          </ul>
+        </div>
+
+        <h3>Possible approaches (compare 2–3)</h3>
+        <div class="grid3">
+          <div class="callout">
+            <strong>Approach A: Photon bookkeeping</strong>
+            <ul>
+              <li><em>Idea:</em> compute photon rate from cycles/s, then multiply by photon energy.</li>
+              <li><strong>Pros:</strong> shortest, directly matches the wording “photons per cycle.”</li>
+              <li><strong>Cons:</strong> requires comfort with mean rates and the photon picture.</li>
+            </ul>
+          </div>
+          <div class="callout">
+            <strong>Approach B: Coherent-state average (quantum optics)</strong>
+            <ul>
+              <li><em>Idea:</em> relate mean photon number to energy in a mode and divide by time per cycle.</li>
+              <li><strong>Pros:</strong> connects to field quantization and mode energy.</li>
+              <li><strong>Cons:</strong> heavier machinery than needed for a scaling law.</li>
+            </ul>
+          </div>
+          <div class="callout">
+            <strong>Approach C: Classical field + normalization</strong>
+            <ul>
+              <li><em>Idea:</em> relate intensity to field amplitude, then impose a “one photon per cycle” constraint via energy in a wave packet.</li>
+              <li><strong>Pros:</strong> bridges classical and quantum viewpoints.</li>
+              <li><strong>Cons:</strong> needs careful definitions of volume/time window; easy to overcomplicate.</li>
+            </ul>
+          </div>
+        </div>
+
+        <p>
+          <strong>Best choice:</strong> <strong>Approach A (photon bookkeeping)</strong>—it is transparent, minimal, and directly targets the claimed scaling.
+        </p>
+      </section>
+
+      <section id="part2">
+        <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+        <ol>
+          <li>
+            <strong>Translate “one photon per cycle” into a photon rate.</strong><br/>
+            <span style="color:var(--faint)">Tool:</span> cycles per second = ν, period <span style="font-family:var(--mono)">T=1/ν</span>.<br/>
+            <span style="color:var(--faint)">Meaning:</span> if ⟨1 photon⟩ arrives each period, then ⟨ν photons⟩ arrive per second.
+          </li>
+          <li>
+            <strong>Write the energy per photon.</strong><br/>
+            <span style="color:var(--faint)">Tool:</span> <span style="font-family:var(--mono)">E = hν</span> (or <span style="font-family:var(--mono)">E=hc/λ</span>).<br/>
+            <span style="color:var(--faint)">Meaning:</span> sets “J/photon.”
+          </li>
+          <li>
+            <strong>Compute power as (photon rate) × (energy/photon).</strong><br/>
+            <span style="color:var(--faint)">Tool:</span> <span style="font-family:var(--mono)">P = ΦE</span>.<br/>
+            <span style="color:var(--faint)">Meaning:</span> average energy delivered per second.
+          </li>
+          <li>
+            <strong>Eliminate ν in favor of λ.</strong><br/>
+            <span style="color:var(--faint)">Tool:</span> <span style="font-family:var(--mono)">ν = c/λ</span> (vacuum).<br/>
+            <span style="color:var(--faint)">Meaning:</span> expresses the scaling with wavelength.
+          </li>
+          <li>
+            <strong>Check units and scaling.</strong><br/>
+            <span style="color:var(--faint)">Tool:</span> dimensional analysis and “doubling λ” test.<br/>
+            <span style="color:var(--faint)">Meaning:</span> confirm the result makes physical sense.
+          </li>
+        </ol>
+
+        <div class="callout mistakes">
+          <strong>Common mistakes + quick tips</strong>
+          <ul>
+            <li><strong>Mistake:</strong> using <span style="font-family:var(--mono)">ω</span> instead of <span style="font-family:var(--mono)">ν</span>. <strong>Tip:</strong> if you use ω, switch to <span style="font-family:var(--mono)">E=ħω</span> and <span style="font-family:var(--mono)">T=2π/ω</span>.</li>
+            <li><strong>Mistake:</strong> treating “per cycle” as “per second.” <strong>Tip:</strong> multiply by cycles/s (= ν) to get per second.</li>
+            <li><strong>Mistake:</strong> dropping constants incorrectly. <strong>Tip:</strong> keep the full expression once, then infer scaling.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="part3">
+        <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+        <h3>Physical intuition (before calculating)</h3>
+        <p>
+          If the beam has <em>one photon per cycle</em>, then higher-frequency light has <em>more cycles each second</em>, so it sends more photons per second.
+          At the same time, each photon has higher energy. So power should grow faster than linearly with frequency—specifically, we expect something like
+          <span style="font-family:var(--mono)">P ∝ ν²</span>, which becomes <span style="font-family:var(--mono)">P ∝ 1/λ²</span>.
+        </p>
+
+        <h3>Step-by-step derivation</h3>
+
+        <p><strong>Step 1 — Define “one photon per optical cycle.”</strong></p>
+        <p>
+          Let the optical frequency be <span style="font-family:var(--mono)">ν</span> (Hz). The optical period (time per cycle) is
+          <span style="font-family:var(--mono)">T</span>, defined by:
+        </p>
+        <div class="eq" id="eqT" data-copy="T = 1/nu">
+          <div class="label">Definition of optical period</div>
+          T = 1/ν
+        </div>
+        <p>
+          The statement “an average of one photon per optical cycle” means:
+          <span style="font-family:var(--mono)">N̄_cycle = 1</span> photon is carried (on average) during each interval of duration <span style="font-family:var(--mono)">T</span>.
+        </p>
+
+        <p><strong>Step 2 — Convert photons per cycle to photons per second (photon flux).</strong></p>
+        <p>
+          Each second contains <span style="font-family:var(--mono)">ν</span> optical cycles (because ν is cycles/s). Therefore, if the beam carries
+          <span style="font-family:var(--mono)">N̄_cycle</span> photons per cycle on average, the photon flux (photons per second) is:
+        </p>
+        <div class="eq" id="eqPhi" data-copy="Phi = Nbar_cycle * nu  (photons per second)">
+          <div class="label">Photon flux from “photons per cycle”</div>
+          Φ = N̄<sub>cycle</sub> · ν
+        </div>
+        <p>
+          For this problem, <span style="font-family:var(--mono)">N̄_cycle = 1</span>, so <span style="font-family:var(--mono)">Φ = ν</span> photons/s.
+          This is the crucial “counting” step.
+        </p>
+
+        <p><strong>Step 3 — Write the energy per photon.</strong></p>
+        <p>
+          A monochromatic photon at frequency ν has energy:
+        </p>
+        <div class="eq" id="eqE" data-copy="E = h*nu = h*c/lambda">
+          <div class="label">Photon energy</div>
+          E = hν = hc/λ
+        </div>
+        <p>
+          (Here <span style="font-family:var(--mono)">h</span> is Planck’s constant and <span style="font-family:var(--mono)">c</span> is the speed of light in vacuum.)
+        </p>
+
+        <p><strong>Step 4 — Compute power as energy per unit time.</strong></p>
+        <p>
+          Average power is the average energy delivered per second. With discrete photons:
+        </p>
+        <div class="eq" id="eqP1" data-copy="P = Phi*E">
+          <div class="label">Power from flux</div>
+          P = ΦE
+        </div>
+        <p>
+          Substitute <span style="font-family:var(--mono)">Φ = N̄_cycle·ν</span> and <span style="font-family:var(--mono)">E = hν</span>:
+        </p>
+        <div class="eq" id="eqP2" data-copy="P = (Nbar_cycle*nu)*(h*nu) = Nbar_cycle*h*nu^2">
+          <div class="label">Combine the two ingredients</div>
+          P = (N̄<sub>cycle</sub>·ν)(hν) = N̄<sub>cycle</sub>·h·ν²
+        </div>
+        <p>
+          This shows immediately that for fixed photons-per-cycle, <strong>power scales as ν²</strong>.
+        </p>
+
+        <p><strong>Step 5 — Express in terms of wavelength λ.</strong></p>
+        <p>
+          In vacuum, <span style="font-family:var(--mono)">c = λν</span>, so <span style="font-family:var(--mono)">ν = c/λ</span>. Insert this into the power:
+        </p>
+        <div class="eq" id="eqP3" data-copy="P = Nbar_cycle*h*(c/lambda)^2 = Nbar_cycle*h*c^2/lambda^2">
+          <div class="label">Rewrite using ν = c/λ</div>
+          P = N̄<sub>cycle</sub> · h · (c/λ)² = N̄<sub>cycle</sub> · h c² / λ²
+        </div>
+
+        <div class="callout final">
+          <strong>Boxed result (problem case N̄<sub>cycle</sub> = 1):</strong>
+          <div class="eq" id="eqFinal">
+            P = h(c/λ)² = h c² / λ²  &nbsp;⇒&nbsp;  P ∝ 1/λ²
+          </div>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy-target="eqFinal">Copy final result</button>
+          </div>
+        </div>
+
+        <h3>Sanity checks</h3>
+        <div class="grid2">
+          <div class="callout">
+            <strong>Units / dimensions</strong>
+            <p>
+              From <span style="font-family:var(--mono)">P = hν²</span>:
+              <span style="font-family:var(--mono)">[h] = J·s</span> and <span style="font-family:var(--mono)">[ν²] = s⁻²</span>.
+              So <span style="font-family:var(--mono)">[P] = (J·s)(s⁻²) = J/s = W</span>. ✅
+            </p>
+          </div>
+          <div class="callout">
+            <strong>Limiting / scaling test</strong>
+            <p>
+              If <span style="font-family:var(--mono)">λ → 2λ</span>, then
+              <span style="font-family:var(--mono)">P → P/4</span>. That matches the intuition:
+              energy per photon halves and photons per second halves, giving a quarter power. ✅
+            </p>
+          </div>
+        </div>
+
+        <p>
+          <strong>Connection to the diagram and plots:</strong>
+          The diagram shows the beam, a marked time window equal to one period <span style="font-family:var(--mono)">T</span>, and the mean photon count per period.
+          The main plot shows <span style="font-family:var(--mono)">P(λ)</span> falling as <span style="font-family:var(--mono)">1/λ²</span>.
+          The secondary plot in log–log axes makes the exponent visually obvious: the curve is a straight line with slope −2.
+        </p>
+      </section>
+
+      <section id="part4">
+        <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+        <h3>Re-interpreting the final formula</h3>
+        <ul>
+          <li><strong>Photon bookkeeping form:</strong> <span style="font-family:var(--mono)">P = (photons/s) × (J/photon)</span>.</li>
+          <li><strong>Cycle-based form:</strong> <span style="font-family:var(--mono)">P = N̄_cycle · h · ν²</span>. Two factors of ν appear because:
+            <ul>
+              <li>One ν from <span style="font-family:var(--mono)">Φ = N̄_cycle ν</span> (more cycles per second).</li>
+              <li>One ν from <span style="font-family:var(--mono)">E = hν</span> (more energy per photon).</li>
+            </ul>
+          </li>
+          <li><strong>Wavelength form (vacuum):</strong> <span style="font-family:var(--mono)">P = N̄_cycle · h c² / λ²</span>, so shorter wavelengths demand dramatically higher power to keep “one photon per cycle.”</li>
+        </ul>
+
+        <h3>How changing parameters affects the outcome (link to the interactive plots)</h3>
+        <ul>
+          <li>Increasing the slider <strong>N̄<sub>cycle</sub></strong> scales power <em>linearly</em>: doubling photons per cycle doubles <span style="font-family:var(--mono)">P</span>.</li>
+          <li>Changing wavelength changes power as <strong>1/λ²</strong>: halving λ increases <span style="font-family:var(--mono)">P</span> by a factor of 4.</li>
+          <li>On the log–log plot, changing <strong>N̄<sub>cycle</sub></strong> shifts the curve vertically (same slope), while changing λ moves along the x-axis and follows a slope of −2.</li>
+        </ul>
+
+        <h3>Alternative derivation idea (brief)</h3>
+        <p>
+          You can equivalently start from <span style="font-family:var(--mono)">P = hν Φ</span> with <span style="font-family:var(--mono)">Φ</span> the photon flux,
+          then interpret “one photon per cycle” as <span style="font-family:var(--mono)">Φ/ν = 1</span> (photons per cycle = photons/s divided by cycles/s).
+          This immediately gives <span style="font-family:var(--mono)">Φ = ν</span> and hence <span style="font-family:var(--mono)">P = hν²</span>.
+        </p>
+
+        <h3>Concept checks (quick self-test + answers)</h3>
+        <ul>
+          <li><strong>Q:</strong> If λ increases by 10%, what happens to P (approximately)? <strong>A:</strong> <span style="font-family:var(--mono)">P ∝ 1/λ²</span>, so <span style="font-family:var(--mono)">P</span> decreases by about <span style="font-family:var(--mono)">≈ 2×10% = 20%</span> (small-change estimate).</li>
+          <li><strong>Q:</strong> For fixed λ, what does “2 photons per cycle” do to P? <strong>A:</strong> Doubles <span style="font-family:var(--mono)">P</span> (linear in N̄<sub>cycle</sub>).</li>
+          <li><strong>Q:</strong> Why not <span style="font-family:var(--mono)">P ∝ 1/λ</span>? <strong>A:</strong> Because both photon energy <em>and</em> photon rate per second depend on 1/λ when photons-per-cycle is fixed.</li>
+          <li><strong>Q:</strong> If you accidentally used angular frequency ω, what changes? <strong>A:</strong> Use <span style="font-family:var(--mono)">E=ħω</span> and cycle time <span style="font-family:var(--mono)">T=2π/ω</span>; the final scaling in λ is still <span style="font-family:var(--mono)">1/λ²</span>.</li>
+        </ul>
+
+        <div class="callout assumptions">
+          <strong>Note on media (optional nuance)</strong>
+          <p>
+            In a medium with refractive index <span style="font-family:var(--mono)">n</span>, frequency ν is unchanged across boundaries, but wavelength becomes
+            <span style="font-family:var(--mono)">λ_medium = λ_vac/n</span>. If the problem’s “wavelength” refers to vacuum wavelength, the derived
+            <span style="font-family:var(--mono)">P ∝ 1/λ_vac²</span> stands as written. If it refers to in-medium wavelength, then
+            <span style="font-family:var(--mono)">ν = v/λ_medium</span> with <span style="font-family:var(--mono)">v ≈ c/n</span>, and you can track n accordingly.
+          </p>
+        </div>
+      </section>
+
+      <section id="part5">
+        <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+
+        <div class="controls" role="group" aria-label="Interactive controls">
+          <div class="control">
+            <label for="nbar">
+              <span>Average photons per optical cycle, <strong>N̄<sub>cycle</sub></strong> (photons/cycle)</span>
+              <span class="readout" id="nbarReadout">1.00</span>
+            </label>
+            <input id="nbar" type="range" min="0" max="5" step="0.01" value="1" />
+            <div class="mini">This scales Φ and P linearly; the 1/λ² shape stays the same.</div>
+          </div>
+
+          <div class="control" style="min-width:240px; flex:0.9">
+            <label for="lambda0">
+              <span>Reference wavelength for diagram, <strong>λ₀</strong> (nm)</span>
+              <span class="readout" id="lambda0Readout">1550</span>
+            </label>
+            <input id="lambda0" type="range" min="400" max="2000" step="1" value="1550" />
+            <div class="mini">Updates the diagram readouts (ν, Φ, E, P) and highlights a point on plots.</div>
+          </div>
+
+          <div class="control" style="min-width:200px; flex:0.6">
+            <label>
+              <span>Log–log overlay</span>
+              <span class="readout"><input id="showRef" type="checkbox" checked /> show ∝ λ⁻² guide</span>
+            </label>
+            <div class="mini">On the log–log plot, a slope −2 guide line helps you “see” the exponent.</div>
+          </div>
+        </div>
+
+        <div class="vizWrap" style="margin-top:14px;">
+          <figure>
+            <canvas id="diagram"></canvas>
+            <figcaption>
+              <strong>Diagram:</strong> Beam, one optical period T, and mean photon count per cycle. Numbers use the current slider values.
+            </figcaption>
+          </figure>
+
+          <div class="smallCanvas" style="display:grid; gap:14px;">
+            <figure>
+              <canvas id="plotMain"></canvas>
+              <figcaption>
+                <strong>Main plot:</strong> Average power P versus wavelength λ (example sweep). Shows the 1/λ² dependence.
+              </figcaption>
+            </figure>
+            <figure>
+              <canvas id="plotLog"></canvas>
+              <figcaption>
+                <strong>Secondary plot:</strong> log–log view of P vs λ. A straight line with slope −2 confirms the scaling.
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+
+        <h3>What each canvas shows</h3>
+        <ul>
+          <li><strong>Diagram canvas:</strong> A stylized beam with a highlighted time window equal to one optical period <span style="font-family:var(--mono)">T=1/ν</span>. It reports the derived quantities:
+            photon energy <span style="font-family:var(--mono)">E</span>, photon flux <span style="font-family:var(--mono)">Φ</span>, and power <span style="font-family:var(--mono)">P</span>.</li>
+          <li><strong>Main plot:</strong> <span style="font-family:var(--mono)">P(λ) = N̄_cycle h c² / λ²</span> for a wavelength sweep (example range 400–2000 nm). A marker highlights the current <span style="font-family:var(--mono)">λ₀</span>.</li>
+          <li><strong>Secondary log–log plot:</strong> The same data on logarithmic axes. The curve becomes a straight line, and the optional guide line has slope −2.</li>
+        </ul>
+
+        <h3>How the interactive controls work</h3>
+        <ul>
+          <li><strong>N̄<sub>cycle</sub> slider:</strong> multiplies Φ and P by the same factor. Both plots update live, and the diagram readouts change.</li>
+          <li><strong>λ₀ slider:</strong> changes the “chosen wavelength” point. You’ll see the marker move along the curves and the numeric readouts update.</li>
+          <li><strong>Guide checkbox:</strong> toggles a reference ∝ λ⁻² line on the log–log plot to emphasize the exponent.</li>
+        </ul>
+
+        <div class="callout keyeq">
+          <strong>Equations used by the plots (same symbols as the text)</strong>
+          <div class="eq" id="eqPlot" data-copy="nu = c/lambda;  Phi = Nbar_cycle*nu;  E = h*nu;  P = Phi*E = Nbar_cycle*h*c^2/lambda^2">
+            ν = c/λ; &nbsp; Φ = N̄<sub>cycle</sub>ν; &nbsp; E = hν; &nbsp; P = ΦE = N̄<sub>cycle</sub> h c² / λ²
+          </div>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy-target="eqPlot">Copy plot equations</button>
+          </div>
+        </div>
+      </section>
+    </article>
+  </main>
+
+  <footer>
+    <div>
+      Built with vanilla HTML/CSS/JS. Constants in code: Planck constant h and speed of light c. Plot values are example sweeps; the final result is symbolic.
+    </div>
+  </footer>
+
+  <script>
+    // ---------- Copy buttons ----------
+    (function(){
+      const eqKeyText =
+        "E = h*nu = h*c/lambda\n" +
+        "T = 1/nu, and in vacuum c = lambda*nu\n" +
+        "P = Phi*E";
+      const map = {
+        eqKey: eqKeyText,
+        eqFinal: "P = h*nu^2 = h*(c/lambda)^2 = h*c^2/lambda^2  (so P ∝ 1/lambda^2)",
+        eqPlot: "nu = c/lambda;  Phi = Nbar_cycle*nu;  E = h*nu;  P = Phi*E = Nbar_cycle*h*c^2/lambda^2"
+      };
+      function copyText(t){
+        navigator.clipboard.writeText(t).then(()=>toast("Copied.")).catch(()=>toast("Copy failed."));
+      }
+      document.querySelectorAll(".copyBtn").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const key = btn.getAttribute("data-copy-target");
+          if(key && map[key]) return copyText(map[key]);
+          // fallback: nearest .eq data-copy
+          const parentEq = btn.closest("section")?.querySelector(".eq[data-copy]");
+          if(parentEq) return copyText(parentEq.getAttribute("data-copy"));
+          toast("Nothing to copy.");
+        });
+      });
+
+      // Lightweight toast
+      let toastEl = null;
+      function toast(msg){
+        if(!toastEl){
+          toastEl = document.createElement("div");
+          toastEl.style.position="fixed";
+          toastEl.style.left="50%";
+          toastEl.style.bottom="18px";
+          toastEl.style.transform="translateX(-50%)";
+          toastEl.style.padding="10px 12px";
+          toastEl.style.border="1px solid rgba(255,255,255,0.16)";
+          toastEl.style.borderRadius="14px";
+          toastEl.style.background="rgba(10,16,32,0.86)";
+          toastEl.style.color="white";
+          toastEl.style.fontSize="12px";
+          toastEl.style.boxShadow="0 10px 30px rgba(0,0,0,0.35)";
+          toastEl.style.backdropFilter="blur(10px)";
+          toastEl.style.zIndex="9999";
+          document.body.appendChild(toastEl);
+        }
+        toastEl.textContent = msg;
+        toastEl.style.opacity="1";
+        toastEl.style.transition="opacity 0.25s ease";
+        clearTimeout(toastEl._t);
+        toastEl._t = setTimeout(()=>{ toastEl.style.opacity="0"; }, 900);
+      }
+    })();
+
+    // ---------- Physics + plotting ----------
+    const CONST = {
+      h: 6.62607015e-34,   // J·s (exact by SI definition)
+      c: 299792458         // m/s (exact)
+    };
+
+    const state = {
+      nbar: 1.0,          // photons per cycle
+      lambda0_nm: 1550,   // nm
+      showRef: true
+    };
+
+    const els = {
+      nbar: document.getElementById("nbar"),
+      nbarReadout: document.getElementById("nbarReadout"),
+      lambda0: document.getElementById("lambda0"),
+      lambda0Readout: document.getElementById("lambda0Readout"),
+      showRef: document.getElementById("showRef"),
+      diagram: document.getElementById("diagram"),
+      plotMain: document.getElementById("plotMain"),
+      plotLog: document.getElementById("plotLog")
+    };
+
+    function fmtSI(x, unit){
+      // Compact engineering-ish formatting
+      const abs = Math.abs(x);
+      const prefixes = [
+        {p:1e-12, s:"p"},
+        {p:1e-9,  s:"n"},
+        {p:1e-6,  s:"µ"},
+        {p:1e-3,  s:"m"},
+        {p:1,     s:""},
+        {p:1e3,   s:"k"},
+        {p:1e6,   s:"M"},
+        {p:1e9,   s:"G"},
+        {p:1e12,  s:"T"}
+      ];
+      let best = prefixes[4];
+      for (let i=0;i<prefixes.length;i++){
+        const p = prefixes[i].p;
+        if(abs >= p && abs < p*1000){ best = prefixes[i]; break; }
+        if(abs === 0){ best = prefixes[4]; break; }
+        if(abs < 1e-12){ best = prefixes[0]; break; }
+        if(abs >= 1e12){ best = prefixes[prefixes.length-1]; break; }
+      }
+      const v = x / best.p;
+      const digits = (Math.abs(v) < 10) ? 3 : (Math.abs(v) < 100 ? 2 : 1);
+      return `${v.toFixed(digits)} ${best.s}${unit}`;
+    }
+
+    // HiDPI canvas helper
+    function fitCanvas(canvas, cssHeight){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(280, Math.floor(rect.width));
+      const h = cssHeight || Math.floor(rect.height);
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      return {ctx, w, h, dpr};
+    }
+
+    function drawAxes(ctx, box, xMin, xMax, yMin, yMax, opts){
+      const {
+        xLabel="x", yLabel="y", title="", grid=true, ticks=6, yTicks=6
+      } = opts || {};
+      const {x, y, w, h} = box;
+
+      // background
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.02)";
+      ctx.fillRect(x, y, w, h);
+
+      // title
+      ctx.fillStyle = "rgba(234,240,255,0.95)";
+      ctx.font = "600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(title, x+10, y+18);
+
+      const padL = 56, padR = 16, padT = 30, padB = 44;
+      const px = x + padL;
+      const py = y + padT;
+      const pw = w - padL - padR;
+      const ph = h - padT - padB;
+
+      // frame
+      ctx.strokeStyle = "rgba(255,255,255,0.16)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px, py, pw, ph);
+
+      // grid + ticks
+      function xToPx(val){ return px + (val - xMin) / (xMax - xMin) * pw; }
+      function yToPx(val){ return py + (1 - (val - yMin) / (yMax - yMin)) * ph; }
+
+      if(grid){
+        ctx.strokeStyle = "rgba(255,255,255,0.08)";
+        ctx.lineWidth = 1;
+
+        for(let i=0;i<=ticks;i++){
+          const t = i/ticks;
+          const xv = xMin + t*(xMax-xMin);
+          const xx = xToPx(xv);
+          ctx.beginPath();
+          ctx.moveTo(xx, py);
+          ctx.lineTo(xx, py+ph);
+          ctx.stroke();
+        }
+        for(let j=0;j<=yTicks;j++){
+          const t = j/yTicks;
+          const yv = yMin + t*(yMax-yMin);
+          const yy = yToPx(yv);
+          ctx.beginPath();
+          ctx.moveTo(px, yy);
+          ctx.lineTo(px+pw, yy);
+          ctx.stroke();
+        }
+      }
+
+      // tick labels
+      ctx.fillStyle = "rgba(184,196,230,0.95)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+
+      for(let i=0;i<=ticks;i++){
+        const t = i/ticks;
+        const xv = xMin + t*(xMax-xMin);
+        const xx = xToPx(xv);
+        ctx.strokeStyle = "rgba(255,255,255,0.16)";
+        ctx.beginPath();
+        ctx.moveTo(xx, py+ph);
+        ctx.lineTo(xx, py+ph+6);
+        ctx.stroke();
+        const txt = (Math.abs(xv) >= 100 ? xv.toFixed(0) : xv.toFixed(1));
+        ctx.fillText(txt, xx-10, py+ph+22);
+      }
+
+      for(let j=0;j<=yTicks;j++){
+        const t = j/yTicks;
+        const yv = yMin + t*(yMax-yMin);
+        const yy = yToPx(yv);
+        ctx.strokeStyle = "rgba(255,255,255,0.16)";
+        ctx.beginPath();
+        ctx.moveTo(px-6, yy);
+        ctx.lineTo(px, yy);
+        ctx.stroke();
+        const txt = (Math.abs(yv) >= 100 ? yv.toFixed(0) : yv.toFixed(2));
+        ctx.fillText(txt, px-48, yy+4);
+      }
+
+      // axis labels
+      ctx.fillStyle = "rgba(234,240,255,0.92)";
+      ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(xLabel, px + pw/2 - ctx.measureText(xLabel).width/2, y + h - 14);
+
+      // yLabel rotated
+      ctx.save();
+      ctx.translate(x + 16, py + ph/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(yLabel, -ctx.measureText(yLabel).width/2, 0);
+      ctx.restore();
+
+      ctx.restore();
+      return {px, py, pw, ph, xToPx, yToPx};
+    }
+
+    function drawLineSeries(ctx, map, xs, ys, strokeStyle){
+      ctx.save();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for(let i=0;i<xs.length;i++){
+        const x = map.xToPx(xs[i]);
+        const y = map.yToPx(ys[i]);
+        if(i===0) ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLegend(ctx, box, items){
+      const {x, y} = box;
+      let lx = x + 12;
+      let ly = y + 28;
+      ctx.save();
+      ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      for(const it of items){
+        ctx.fillStyle = it.color;
+        ctx.fillRect(lx, ly-9, 10, 10);
+        ctx.fillStyle = "rgba(184,196,230,0.95)";
+        ctx.fillText(it.label, lx + 14, ly);
+        ly += 16;
+      }
+      ctx.restore();
+    }
+
+    // ---------- Data + physics ----------
+    function powerFromLambda(lambda_m, nbar){
+      // P = Nbar_cycle * h * (c/lambda)^2
+      return nbar * CONST.h * (CONST.c / lambda_m) ** 2;
+    }
+    function nuFromLambda(lambda_m){
+      return CONST.c / lambda_m;
+    }
+    function energyFromLambda(lambda_m){
+      return CONST.h * nuFromLambda(lambda_m);
+    }
+    function fluxFromLambda(lambda_m, nbar){
+      return nbar * nuFromLambda(lambda_m);
+    }
+
+    // ---------- Renderers ----------
+    function renderDiagram(){
+      const {ctx, w, h} = fitCanvas(els.diagram);
+      ctx.clearRect(0,0,w,h);
+
+      // background
+      ctx.fillStyle = "rgba(0,0,0,0.10)";
+      ctx.fillRect(0,0,w,h);
+
+      // Pull current state
+      const lambda_m = state.lambda0_nm * 1e-9;
+      const nu = nuFromLambda(lambda_m);
+      const T = 1/nu;
+      const E = energyFromLambda(lambda_m);
+      const Phi = fluxFromLambda(lambda_m, state.nbar);
+      const P = powerFromLambda(lambda_m, state.nbar);
+
+      // Draw beam
+      const pad = 18;
+      const beamY = h*0.45;
+      const beamH = 46;
+      const beamX0 = pad;
+      const beamX1 = w - pad;
+
+      // beam glow
+      const grad = ctx.createLinearGradient(beamX0, beamY, beamX1, beamY);
+      grad.addColorStop(0, "rgba(122,162,255,0.05)");
+      grad.addColorStop(0.5, "rgba(125,255,178,0.08)");
+      grad.addColorStop(1, "rgba(122,162,255,0.05)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(beamX0, beamY - beamH/2 - 10, beamX1-beamX0, beamH + 20);
+
+      ctx.fillStyle = "rgba(122,162,255,0.15)";
+      ctx.fillRect(beamX0, beamY - beamH/2, beamX1-beamX0, beamH);
+
+      // central axis line
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(beamX0, beamY);
+      ctx.lineTo(beamX1, beamY);
+      ctx.stroke();
+
+      // arrow head
+      ctx.fillStyle = "rgba(234,240,255,0.85)";
+      ctx.beginPath();
+      ctx.moveTo(beamX1, beamY);
+      ctx.lineTo(beamX1-14, beamY-6);
+      ctx.lineTo(beamX1-14, beamY+6);
+      ctx.closePath();
+      ctx.fill();
+
+      // Label: "Monochromatic beam"
+      ctx.fillStyle = "rgba(234,240,255,0.95)";
+      ctx.font = "700 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("Monochromatic beam", beamX0+10, beamY - beamH/2 - 14);
+
+      // Mark one optical cycle in time (conceptual)
+      // We'll draw a small "time strip" below showing one period T and mean photons per cycle
+      const stripX = beamX0 + 20;
+      const stripY = beamY + beamH/2 + 52;
+      const stripW = Math.min(360, w - 2*pad - 40);
+      const stripH = 38;
+
+      ctx.fillStyle = "rgba(255,255,255,0.04)";
+      ctx.strokeStyle = "rgba(255,255,255,0.14)";
+      ctx.lineWidth = 1;
+      roundRect(ctx, stripX, stripY, stripW, stripH, 12, true, true);
+
+      // ticks
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      for(let i=0;i<=6;i++){
+        const xx = stripX + i*(stripW/6);
+        ctx.beginPath();
+        ctx.moveTo(xx, stripY + stripH - 10);
+        ctx.lineTo(xx, stripY + stripH);
+        ctx.stroke();
+      }
+
+      // "T" bracket
+      ctx.strokeStyle = "rgba(125,255,178,0.65)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(stripX+10, stripY+10);
+      ctx.lineTo(stripX+stripW-10, stripY+10);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(stripX+10, stripY+6);
+      ctx.lineTo(stripX+10, stripY+14);
+      ctx.lineTo(stripX+10, stripY+10);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(stripX+stripW-10, stripY+6);
+      ctx.lineTo(stripX+stripW-10, stripY+14);
+      ctx.lineTo(stripX+stripW-10, stripY+10);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(184,196,230,0.95)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.fillText("1 optical period  T = 1/ν", stripX+12, stripY+30);
+
+      // Photon dot(s) representing mean photons per cycle: draw a dot with alpha proportional to nbar if <1, else multiple dots up to 5
+      const dotBaseX = stripX + stripW*0.5;
+      const dotBaseY = stripY + stripH*0.5 - 3;
+      const n = state.nbar;
+      const maxDots = 5;
+      const dots = Math.min(maxDots, Math.floor(n));
+      const frac = n - dots;
+
+      function drawPhotonDot(x,y,a){
+        ctx.save();
+        ctx.fillStyle = `rgba(122,162,255,${0.15 + 0.65*a})`;
+        ctx.strokeStyle = `rgba(234,240,255,${0.25 + 0.55*a})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(x,y,7,0,Math.PI*2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+      const spacing = 18;
+      const startX = dotBaseX - spacing*(maxDots-1)/2;
+      for(let i=0;i<dots;i++){
+        drawPhotonDot(startX + i*spacing, dotBaseY, 1);
+      }
+      if(dots < maxDots && frac > 0){
+        drawPhotonDot(startX + dots*spacing, dotBaseY, frac);
+      }
+
+      // Readout panel
+      const panelX = beamX0 + 20;
+      const panelY = pad;
+      const panelW = Math.min(420, w - 2*pad - 40);
+      const panelH = 150;
+
+      ctx.fillStyle = "rgba(16,26,51,0.60)";
+      ctx.strokeStyle = "rgba(255,255,255,0.14)";
+      ctx.lineWidth = 1;
+      roundRect(ctx, panelX, panelY, panelW, panelH, 14, true, true);
+
+      ctx.fillStyle = "rgba(234,240,255,0.95)";
+      ctx.font = "700 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("Live readout (from sliders)", panelX+12, panelY+22);
+
+      ctx.fillStyle = "rgba(184,196,230,0.95)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+
+      const lines = [
+        `λ₀ = ${state.lambda0_nm.toFixed(0)} nm`,
+        `ν = c/λ₀ = ${(nu/1e12).toFixed(3)} THz`,
+        `T = 1/ν = ${fmtSI(T,"s")}`,
+        `N̄_cycle = ${state.nbar.toFixed(2)} photons/cycle`,
+        `Φ = N̄_cycle·ν = ${fmtSI(Phi,"photons/s")}`.replace(" photons/s"," /s"),
+        `E = hν = ${fmtSI(E,"J")}  (${(E/1.602176634e-19).toFixed(3)} eV)`,
+        `P = ΦE = ${fmtSI(P,"W")}`
+      ];
+      let yy = panelY+44;
+      for(const L of lines){
+        ctx.fillText(L, panelX+12, yy);
+        yy += 16;
+      }
+
+      // Label the scaling
+      ctx.fillStyle = "rgba(125,255,178,0.9)";
+      ctx.font = "700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("For fixed N̄_cycle:  P ∝ 1/λ²", beamX0+10, beamY + beamH/2 + 26);
+    }
+
+    function roundRect(ctx, x, y, w, h, r, fill, stroke){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+      if(fill) ctx.fill();
+      if(stroke) ctx.stroke();
+    }
+
+    function renderMainPlot(){
+      const {ctx, w, h} = fitCanvas(els.plotMain);
+      ctx.clearRect(0,0,w,h);
+
+      // Sweep lambda (example values)
+      const lamMin_nm = 400;
+      const lamMax_nm = 2000;
+      const N = 220;
+      const xs = [];
+      const ys = [];
+
+      for(let i=0;i<N;i++){
+        const t = i/(N-1);
+        const lam_nm = lamMin_nm + t*(lamMax_nm - lamMin_nm);
+        const lam_m = lam_nm * 1e-9;
+        const P = powerFromLambda(lam_m, state.nbar);
+        xs.push(lam_nm);
+        ys.push(P);
+      }
+
+      // choose y units for display: use pW to nW range typically; we'll scale to pW for axis readability
+      const yScale = 1e-12; // pW
+      const ysScaled = ys.map(v => v / yScale);
+
+      // y bounds
+      const yMin = 0;
+      let yMax = 0;
+      for(const v of ysScaled) yMax = Math.max(yMax, v);
+      yMax *= 1.05;
+
+      const box = {x:0, y:0, w, h};
+      const map = drawAxes(ctx, box, lamMin_nm, lamMax_nm, yMin, yMax, {
+        title: "Average power vs wavelength (example sweep)",
+        xLabel: "Wavelength λ (nm)",
+        yLabel: "Power P (pW)",
+        ticks: 8,
+        yTicks: 6,
+        grid: true
+      });
+
+      // Draw series
+      drawLineSeries(ctx, map, xs, ysScaled, "rgba(122,162,255,0.95)");
+
+      // Highlight current lambda0
+      const lam0 = state.lambda0_nm;
+      const P0 = powerFromLambda(lam0*1e-9, state.nbar) / yScale;
+      const x0 = map.xToPx(lam0);
+      const y0 = map.yToPx(P0);
+
+      ctx.save();
+      ctx.fillStyle = "rgba(125,255,178,0.9)";
+      ctx.strokeStyle = "rgba(234,240,255,0.55)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(x0, y0, 5.5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+
+      // vertical guide
+      ctx.strokeStyle = "rgba(125,255,178,0.28)";
+      ctx.beginPath();
+      ctx.moveTo(x0, map.py);
+      ctx.lineTo(x0, map.py + map.ph);
+      ctx.stroke();
+
+      // label bubble
+      const label = `λ₀=${lam0.toFixed(0)} nm,  P=${(P0).toFixed(2)} pW`;
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      const tw = ctx.measureText(label).width;
+      const bx = Math.min(x0 + 10, map.px + map.pw - tw - 18);
+      const by = Math.max(y0 - 28, map.py + 8);
+      ctx.fillStyle = "rgba(16,26,51,0.85)";
+      ctx.strokeStyle = "rgba(255,255,255,0.14)";
+      roundRect(ctx, bx-8, by-14, tw+16, 22, 10, true, true);
+      ctx.fillStyle = "rgba(234,240,255,0.92)";
+      ctx.fillText(label, bx, by+2);
+      ctx.restore();
+
+      drawLegend(ctx, box, [
+        {label: "P(λ) = N̄_cycle h c² / λ²", color: "rgba(122,162,255,0.95)"},
+        {label: "Highlighted λ₀", color: "rgba(125,255,178,0.9)"}
+      ]);
+    }
+
+    function renderLogPlot(){
+      const {ctx, w, h} = fitCanvas(els.plotLog);
+      ctx.clearRect(0,0,w,h);
+
+      // Sweep lambda (example values)
+      const lamMin_nm = 400;
+      const lamMax_nm = 2000;
+      const N = 220;
+
+      const xs = [];
+      const ys = [];
+
+      for(let i=0;i<N;i++){
+        const t = i/(N-1);
+        const lam_nm = lamMin_nm + t*(lamMax_nm - lamMin_nm);
+        const lam_m = lam_nm * 1e-9;
+        const P = powerFromLambda(lam_m, state.nbar);
+        xs.push(Math.log10(lam_nm));   // log10 nm
+        ys.push(Math.log10(P));        // log10 W
+      }
+
+      // bounds
+      let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+      for(let i=0;i<N;i++){
+        xMin = Math.min(xMin, xs[i]);
+        xMax = Math.max(xMax, xs[i]);
+        yMin = Math.min(yMin, ys[i]);
+        yMax = Math.max(yMax, ys[i]);
+      }
+      // padding
+      const xPad = 0.04*(xMax-xMin);
+      const yPad = 0.08*(yMax-yMin);
+      xMin -= xPad; xMax += xPad;
+      yMin -= yPad; yMax += yPad;
+
+      const box = {x:0, y:0, w, h};
+      const map = drawAxes(ctx, box, xMin, xMax, yMin, yMax, {
+        title: "Log–log view: straight line with slope −2",
+        xLabel: "log10(λ / nm)",
+        yLabel: "log10(P / W)",
+        ticks: 6,
+        yTicks: 6,
+        grid: true
+      });
+
+      // series
+      drawLineSeries(ctx, map, xs, ys, "rgba(122,162,255,0.95)");
+
+      // optional reference line with slope -2: y = a - 2x
+      if(state.showRef){
+        // choose a passing through middle
+        const xm = (xMin + xMax)/2;
+        const ym = (yMin + yMax)/2;
+        const a = ym + 2*xm;
+        const xA = xMin, xB = xMax;
+        const yA = a - 2*xA;
+        const yB = a - 2*xB;
+
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,209,102,0.85)";
+        ctx.setLineDash([6,5]);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(map.xToPx(xA), map.yToPx(yA));
+        ctx.lineTo(map.xToPx(xB), map.yToPx(yB));
+        ctx.stroke();
+        ctx.restore();
+
+        // label
+        ctx.save();
+        ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.fillStyle = "rgba(255,209,102,0.95)";
+        const label = "guide: slope −2 (∝ λ⁻²)";
+        ctx.fillText(label, map.px + 10, map.py + 18);
+        ctx.restore();
+      }
+
+      // highlight lambda0
+      const lam0 = state.lambda0_nm;
+      const P0 = powerFromLambda(lam0*1e-9, state.nbar);
+      const x0 = Math.log10(lam0);
+      const y0 = Math.log10(P0);
+
+      ctx.save();
+      ctx.fillStyle = "rgba(125,255,178,0.9)";
+      ctx.strokeStyle = "rgba(234,240,255,0.55)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(map.xToPx(x0), map.yToPx(y0), 5.5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      drawLegend(ctx, box, [
+        {label: "log10 P vs log10 λ", color: "rgba(122,162,255,0.95)"},
+        {label: "Highlighted λ₀", color: "rgba(125,255,178,0.9)"},
+        ...(state.showRef ? [{label: "reference slope −2", color: "rgba(255,209,102,0.85)"}] : [])
+      ]);
+    }
+
+    function renderAll(){
+      els.nbarReadout.textContent = Number(state.nbar).toFixed(2);
+      els.lambda0Readout.textContent = Number(state.lambda0_nm).toFixed(0);
+      renderDiagram();
+      renderMainPlot();
+      renderLogPlot();
+    }
+
+    // ---------- Events ----------
+    els.nbar.addEventListener("input", () => {
+      state.nbar = parseFloat(els.nbar.value);
+      renderAll();
+    });
+    els.lambda0.addEventListener("input", () => {
+      state.lambda0_nm = parseFloat(els.lambda0.value);
+      renderAll();
+    });
+    els.showRef.addEventListener("change", () => {
+      state.showRef = !!els.showRef.checked;
+      renderAll();
+    });
+
+    // Resize observer for responsive redraw
+    const ro = new ResizeObserver(() => renderAll());
+    ro.observe(els.diagram);
+    ro.observe(els.plotMain);
+    ro.observe(els.plotLog);
+
+    // Initial render
+    renderAll();
+  </script>
+</body>
+</html>

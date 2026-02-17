@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mutual Coherence Function: Intensity, Spectrum, and Coherence Scales</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#101a33;
+      --card2:#0f1730;
+      --text:#eaf0ff;
+      --muted:#b9c3e6;
+      --accent:#7dd3fc;
+      --accent2:#a7f3d0;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --good:#34d399;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 20% -10%, rgba(125,211,252,.22), transparent 55%),
+                  radial-gradient(1000px 600px at 80% 10%, rgba(167,243,208,.14), transparent 60%),
+                  linear-gradient(180deg, #070a14 0%, #0b1020 40%, #070a14 100%);
+      color:var(--text);
+      line-height:1.55;
+    }
+    header{
+      padding:28px 18px 18px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+      position:relative;
+      overflow:hidden;
+    }
+    header .wrap{
+      max-width:1150px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap:18px;
+      align-items:center;
+    }
+    h1{
+      margin:0 0 8px;
+      font-size:clamp(1.45rem, 2.6vw, 2.2rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      max-width:70ch;
+      font-size:1.02rem;
+    }
+    .meta{
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:14px 14px;
+      box-shadow:var(--shadow);
+    }
+    .meta b{color:var(--accent)}
+    main{
+      max-width:1150px;
+      margin:0 auto;
+      padding:18px;
+      display:grid;
+      grid-template-columns: 290px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    nav{
+      position:sticky;
+      top:14px;
+      align-self:start;
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:14px;
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+    nav .toc-title{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:10px;
+    }
+    nav h2{
+      margin:0;
+      font-size:1rem;
+      letter-spacing:.3px;
+      color:var(--accent);
+    }
+    nav a{
+      display:block;
+      color:var(--muted);
+      text-decoration:none;
+      padding:7px 10px;
+      border-radius:12px;
+      border:1px solid transparent;
+      font-size:.95rem;
+    }
+    nav a:hover{
+      color:var(--text);
+      background:rgba(125,211,252,.08);
+      border-color:rgba(125,211,252,.22);
+    }
+    .content{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      min-width:0;
+    }
+    section, article{
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    section h2, article h2{
+      margin:0 0 10px;
+      font-size:1.25rem;
+      color:var(--accent);
+    }
+    section h3, article h3{
+      margin:14px 0 8px;
+      font-size:1.05rem;
+      color:var(--accent2);
+    }
+    p{margin:10px 0; color:var(--text)}
+    .muted{color:var(--muted)}
+    ul{margin:8px 0 8px 22px; color:var(--text)}
+    li{margin:6px 0}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:14px;
+    }
+    .callout{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px 12px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    }
+    .callout .tag{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      font-size:.85rem;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .pill{
+      display:inline-block;
+      padding:3px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--muted);
+      font-size:.85rem;
+      margin-right:6px;
+    }
+    .eqbox{
+      border:1px dashed rgba(125,211,252,.35);
+      background:rgba(125,211,252,.06);
+      border-radius:16px;
+      padding:12px;
+      position:relative;
+      overflow:hidden;
+    }
+    .eq{
+      font-family:var(--mono);
+      font-size:.95rem;
+      line-height:1.45;
+      white-space:pre-wrap;
+      word-break:break-word;
+      color:#e8f4ff;
+    }
+    .copyRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:10px;
+    }
+    button.copy{
+      cursor:pointer;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      border-radius:12px;
+      padding:8px 10px;
+      font-size:.92rem;
+      transition: transform .08s ease, background .2s ease;
+    }
+    button.copy:hover{background:rgba(125,211,252,.10)}
+    button.copy:active{transform:scale(.98)}
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    .ctrl{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px;
+      background:rgba(0,0,0,.12);
+    }
+    .ctrl label{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      color:var(--muted);
+      font-size:.9rem;
+      margin-bottom:6px;
+    }
+    input[type="range"]{width:100%}
+    select{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:8px 10px;
+      outline:none;
+    }
+    .canvasWrap{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+      margin-top:10px;
+    }
+    figure{
+      margin:0;
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+      background:rgba(0,0,0,.20);
+    }
+    figcaption{
+      padding:10px 12px;
+      border-top:1px solid var(--line);
+      color:var(--muted);
+      font-size:.92rem;
+    }
+    canvas{display:block; width:100%; height:340px}
+    .small canvas{height:300px}
+    .tiny canvas{height:250px}
+    .twoCanv{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .final{
+      border:1px solid rgba(167,243,208,.35);
+      background:rgba(167,243,208,.08);
+    }
+    .warn{
+      border:1px solid rgba(251,191,36,.35);
+      background:rgba(251,191,36,.08);
+    }
+    .mistake{
+      border:1px solid rgba(251,113,133,.35);
+      background:rgba(251,113,133,.07);
+    }
+    footer{
+      max-width:1150px;
+      margin:0 auto;
+      padding:20px 18px 40px;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap:10px;
+      margin-top:10px;
+    }
+    .kpi .box{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:10px;
+      background:rgba(0,0,0,.14);
+      min-width:0;
+    }
+    .kpi .box .label{color:var(--muted); font-size:.85rem}
+    .kpi .box .val{font-size:1.08rem; margin-top:4px; font-family:var(--mono); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr}
+      nav{position:relative; top:auto}
+      header .wrap{grid-template-columns:1fr}
+      .controls{grid-template-columns:1fr}
+      .twoCanv{grid-template-columns:1fr}
+      .kpi{grid-template-columns:1fr 1fr}
+    }
+    @media print{
+      body{background:#fff; color:#000}
+      header, nav{display:none}
+      section, article{box-shadow:none; background:#fff; border:1px solid #ddd}
+      .eq{color:#000}
+      canvas{display:none}
+      figcaption{display:none}
+      button{display:none}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div>
+      <h1>Mutual Coherence Function → Intensity, Spectrum, and Coherence Scales</h1>
+      <p class="subtitle">
+        We’re given a <span class="muted">Gaussian–Schell-model</span>-like mutual coherence function along the x-axis,
+        with a piecewise constant <b>mean optical frequency</b> depending on the sign of <span class="eq">x1 + x2</span>.
+        From it, we extract intensity, power spectral density, temporal coherence length, and transverse coherence distance—plus
+        what a color film would record.
+      </p>
+    </div>
+    <div class="meta">
+      <div><b>Given:</b> ρ<sub>c</sub> = 1 mm, τ<sub>c</sub> = 1 μs</div>
+      <div class="muted" style="margin-top:6px">
+        <span class="pill">stationary field</span>
+        <span class="pill">Gaussian temporal envelope</span>
+        <span class="pill">Gaussian spatial coherence</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <nav aria-label="Table of contents">
+    <div class="toc-title">
+      <h2>Table of Contents</h2>
+      <span class="pill">sticky</span>
+    </div>
+    <a href="#quick">Quick Summary</a>
+    <a href="#part0">PART 0 — Concept Primer</a>
+    <a href="#part1">PART 1 — Problem Analysis</a>
+    <a href="#part2">PART 2 — Strategy & Tips</a>
+    <a href="#part3">PART 3 — Full Solution</a>
+    <a href="#part4">PART 4 — Deeper Understanding</a>
+    <a href="#part5">PART 5 — Visualization Guide</a>
+  </nav>
+
+  <div class="content">
+    <section id="quick">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li>The problem gives a <b>mutual coherence function</b> Γ(x₁,x₂,τ) that factorizes into <b>temporal</b>, <b>spectral-center</b>, and <b>spatial</b> parts.</li>
+        <li>Key idea: <b>Intensity</b> is Γ(x,x,0). <b>Power spectral density</b> at a point is the Fourier transform of Γ(x,x,τ) over τ (Wiener–Khinchin).</li>
+        <li>Temporal part is Gaussian: <span class="eq">exp[-π τ²/(2 τc²)]</span> → spectrum is also Gaussian with width set by τc.</li>
+        <li>Spatial coherence is Gaussian: <span class="eq">exp[-(x1−x2)²/ρc²]</span> → transverse coherence distance is ρc (1/e point).</li>
+        <li>Given “carrier” frequency is piecewise: <span class="eq">ν0 = 5×10¹⁴ s⁻¹</span> for x₁+x₂&gt;0 and <span class="eq">ν0 = 6×10¹⁴ s⁻¹</span> for x₁+x₂&lt;0, so the <b>color</b> changes across x=0.</li>
+        <li>Numeric: coherence time (1/e) <span class="eq">τ(1/e)=τc√(2/π)=7.98×10⁻⁷ s</span> → coherence length <span class="eq">Lc≈239 m</span>.</li>
+        <li>What’s position-dependent? <b>Intensity</b> (here, by region) and <b>spectral center</b> (color) depend on x; <b>coherence scales</b> set by τc and ρc do not.</li>
+      </ul>
+    </section>
+
+    <article id="part0">
+      <h2>PART 0 — Concept Primer (THEORY BEFORE SOLVING)</h2>
+
+      <div class="grid2">
+        <div class="callout">
+          <div class="tag"><span class="pill">Core definition</span> mutual coherence</div>
+          <p class="muted" style="margin:0 0 8px">
+            For a scalar optical field <span class="eq">E(x,t)</span>, the (cross-)mutual coherence function is
+          </p>
+          <div class="eqbox">
+            <div class="eq" id="eq_def">
+Γ(x1,x2,τ) = ⟨ E*(x1,t) E(x2,t+τ) ⟩
+units: (field)^2   (often proportional to intensity)
+            </div>
+            <div class="copyRow">
+              <button class="copy" data-copy="#eq_def">Copy equation</button>
+            </div>
+          </div>
+          <p class="muted">
+            It measures how well the field at <span class="eq">x1</span> and time <span class="eq">t</span> “matches” the field at <span class="eq">x2</span> delayed by <span class="eq">τ</span>.
+          </p>
+        </div>
+
+        <div class="callout">
+          <div class="tag"><span class="pill">Key derived quantity</span> degree of coherence</div>
+          <p class="muted" style="margin:0 0 8px">
+            Normalize Γ to remove trivial intensity scaling:
+          </p>
+          <div class="eqbox">
+            <div class="eq" id="eq_deg">
+μ(x1,x2,τ) = Γ(x1,x2,τ) / sqrt[ Γ(x1,x1,0) Γ(x2,x2,0) ]
+|μ| ≤ 1
+            </div>
+            <div class="copyRow">
+              <button class="copy" data-copy="#eq_deg">Copy equation</button>
+            </div>
+          </div>
+          <p class="muted">
+            <span class="eq">|μ|</span> controls interference visibility: fringe contrast ≈ <span class="eq">|μ|</span> (for equal intensities).
+          </p>
+        </div>
+      </div>
+
+      <h3>Physical meaning of the key quantities</h3>
+      <ul>
+        <li><b>Intensity</b> at position x: <span class="eq">I(x) = Γ(x,x,0)</span>. It’s the time-averaged local power per area (or proportional to photon flux).</li>
+        <li><b>Temporal coherence</b>: how long the field remains phase-correlated in time. Shorter coherence time ⇔ broader spectrum.</li>
+        <li><b>Spatial (transverse) coherence</b>: how far apart two points can be while still interfering strongly.</li>
+        <li><b>Carrier/center frequency ν₀</b>: the oscillation frequency of the underlying quasi-monochromatic wave; in optics this maps to color via <span class="eq">λ = c/ν</span>.</li>
+      </ul>
+
+      <h3>Key laws/principles & validity</h3>
+      <div class="callout">
+        <div class="tag"><span class="pill">Wiener–Khinchin</span> for stationary light</div>
+        <p class="muted" style="margin:0 0 8px">
+          If the field is (wide-sense) stationary in time, the <b>power spectral density</b> at a point is the Fourier transform of Γ over τ:
+        </p>
+        <div class="eqbox">
+          <div class="eq" id="eq_wk">
+S(x,ν) = ∫_{-∞}^{∞} Γ(x,x,τ) e^{-j2πντ} dτ
+            </div>
+          <div class="copyRow">
+            <button class="copy" data-copy="#eq_wk">Copy equation</button>
+          </div>
+        </div>
+        <p class="muted">
+          Assumption: statistical properties do not depend on absolute time t (only on delay τ).
+        </p>
+      </div>
+
+      <h3>Common models/approximations used here</h3>
+      <ul>
+        <li><b>Gaussian temporal coherence</b>: convenient model where both Γ(τ) and S(ν) are Gaussian (Fourier pairs).</li>
+        <li><b>Gaussian–Schell spatial coherence</b>: intensity varies slowly (or piecewise) while spatial coherence decays as a Gaussian in separation.</li>
+        <li><b>Quasi-monochromatic</b>: a narrowband spectrum around a center ν₀ so the field behaves like a “carrier” times an envelope.</li>
+      </ul>
+
+      <h3>Mini intuition examples (quick)</h3>
+      <ul>
+        <li>If τc is huge, Γ(x,x,τ) decays slowly → spectrum is extremely narrow (laser-like).</li>
+        <li>If ρc is small, two points separated by more than ρc barely interfere, even if the intensity is high.</li>
+      </ul>
+
+      <div class="callout mistake">
+        <div class="tag"><span class="pill">What to watch for</span> pitfalls</div>
+        <ul>
+          <li>Confusing Γ with μ: Γ includes intensity scaling; μ is normalized and bounded by 1.</li>
+          <li>Mixing definitions of “coherence time/length” (FWHM vs 1/e vs rms). Always state the convention.</li>
+          <li>For spatial coherence, the relevant variable is <span class="eq">Δx = x1−x2</span>, not the average coordinate.</li>
+        </ul>
+      </div>
+    </article>
+
+    <article id="part1">
+      <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <h3>Restate the problem (in plain language)</h3>
+      <p>
+        We are given the mutual coherence function of an optical wave at two points on the x-axis and time delay τ:
+        it has a Gaussian decay in τ (temporal coherence), a phase term that sets the center optical frequency,
+        and a Gaussian decay with transverse separation (spatial coherence). The center frequency is different on the two sides
+        of the plane <span class="eq">x=0</span> (more precisely, depending on the sign of <span class="eq">x1+x2</span>).
+        We must compute:
+        <b>intensity</b>, <b>power spectral density</b>, <b>coherence length</b>, and <b>coherence distance</b> transversely,
+        identify which depend on position, and describe what a <b>color film</b> image would show.
+      </p>
+
+      <h3>Given quantities</h3>
+      <ul>
+        <li>Mutual coherence model (interpreting the statement):</li>
+      </ul>
+
+      <div class="eqbox">
+        <div class="eq" id="eq_given">
+Γ(x1,x2,τ) = U(x1,x2) · exp[-π τ^2/(2 τc^2)] · exp[ j 2π ν0(x1,x2) τ ] · exp[ -(x1−x2)^2 / ρc^2 ]
+
+with:
+ν0(x1,x2) = 5×10^14 s^-1  for (x1+x2)>0
+ν0(x1,x2) = 6×10^14 s^-1  for (x1+x2)<0
+
+ρc = 1 mm
+τc = 1 μs
+        </div>
+        <div class="copyRow">
+          <button class="copy" data-copy="#eq_given">Copy equation</button>
+        </div>
+      </div>
+
+      <ul>
+        <li>Note: At a single point, set <span class="eq">x1=x2=x</span> so the condition becomes sign of <span class="eq">2x</span> (i.e., sign of x).</li>
+      </ul>
+
+      <h3>Unknowns / what must be found</h3>
+      <ul>
+        <li>Intensity <span class="eq">I(x)=Γ(x,x,0)</span>.</li>
+        <li>Power spectral density <span class="eq">S(x,ν)</span>.</li>
+        <li>Temporal coherence time/length (we will use the <b>1/e</b> convention consistently).</li>
+        <li>Transverse coherence distance (again using <b>1/e</b> point).</li>
+        <li>Which of these depend on position x.</li>
+        <li>Description of the recorded image on color film.</li>
+      </ul>
+
+      <h3>Relevant principles (and why they apply)</h3>
+      <ul>
+        <li><b>Definition of intensity</b>: intensity is the zero-delay autocorrelation at the same point.</li>
+        <li><b>Wiener–Khinchin theorem</b>: for a stationary optical field, the power spectral density is the Fourier transform of Γ(x,x,τ).</li>
+        <li><b>Gaussian Fourier pairs</b>: the transform of a Gaussian in time is a Gaussian in frequency, making the PSD straightforward.</li>
+        <li><b>Spatial coherence width</b>: the transverse decay term depends only on point separation <span class="eq">Δx</span>.</li>
+      </ul>
+
+      <div class="callout warn">
+        <div class="tag"><span class="pill">Assumptions</span> explicit</div>
+        <ul>
+          <li>Wide-sense stationarity in time (Γ depends on τ, not absolute t).</li>
+          <li>Scalar, paraxial-like treatment along x (only transverse coordinate matters for coherence width).</li>
+          <li>Interpretation: the “piecewise” parameter with units s⁻¹ is the <b>center optical frequency</b> ν₀ (color), and U sets the amplitude scaling (intensity level).</li>
+          <li>We use the <b>1/e</b> definition for coherence time/length and coherence distance, because the model is exponential-Gaussian.</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (compare briefly)</h3>
+      <ul>
+        <li><b>Direct definitions</b> (best here): compute Γ(x,x,0) for intensity; Fourier transform Γ(x,x,τ) for PSD; read off 1/e widths for coherence scales. <span class="muted">Fast and transparent.</span></li>
+        <li><b>Normalize first</b>: compute μ then infer widths. <span class="muted">Good for interferometry problems; extra steps here.</span></li>
+        <li><b>Spectral-domain starting point</b>: assume a Gaussian PSD and show it yields the given Γ. <span class="muted">Useful for model-building, not necessary.</span></li>
+      </ul>
+      <p><b>Chosen approach:</b> direct definitions + Gaussian transform (minimal algebra, maximal physical clarity).</p>
+    </article>
+
+    <article id="part2">
+      <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+      <ol style="margin:8px 0 8px 22px">
+        <li>
+          <b>Goal:</b> Get intensity. <br/>
+          <span class="muted">Tool:</span> <span class="eq">I(x)=Γ(x,x,0)</span>. <br/>
+          <span class="muted">Meaning:</span> local average brightness.
+        </li>
+        <li>
+          <b>Goal:</b> Simplify Γ at one point. <br/>
+          <span class="muted">Tool:</span> set <span class="eq">x1=x2=x</span> → spatial factor becomes 1. <br/>
+          <span class="muted">Meaning:</span> temporal coherence at that location.
+        </li>
+        <li>
+          <b>Goal:</b> Compute PSD. <br/>
+          <span class="muted">Tool:</span> <span class="eq">S(x,ν)=∫Γ(x,x,τ)e^{-j2πντ}dτ</span>. <br/>
+          <span class="muted">Meaning:</span> frequency content (color distribution).
+        </li>
+        <li>
+          <b>Goal:</b> Read off spectral width. <br/>
+          <span class="muted">Tool:</span> Gaussian transform identity → Gaussian PSD centered at ν₀(x). <br/>
+          <span class="muted">Meaning:</span> narrower PSD ↔ longer coherence time.
+        </li>
+        <li>
+          <b>Goal:</b> Define coherence time and length (state convention). <br/>
+          <span class="muted">Tool:</span> solve for τ at which <span class="eq">|μ(τ)|=1/e</span>, then <span class="eq">Lc=c τ</span>. <br/>
+          <span class="muted">Meaning:</span> path-length mismatch tolerance for interference.
+        </li>
+        <li>
+          <b>Goal:</b> Determine transverse coherence distance. <br/>
+          <span class="muted">Tool:</span> set τ=0 and examine dependence on <span class="eq">Δx=x1−x2</span>. <br/>
+          <span class="muted">Meaning:</span> how far apart slits/points can be and still interfere.
+        </li>
+        <li>
+          <b>Goal:</b> Identify which are position-dependent. <br/>
+          <span class="muted">Tool:</span> check which expressions contain x via ν₀ or U. <br/>
+          <span class="muted">Meaning:</span> what changes across x=0.
+        </li>
+        <li>
+          <b>Goal:</b> Describe color film image. <br/>
+          <span class="muted">Tool:</span> map ν₀ → wavelength → perceived color; compare intensities. <br/>
+          <span class="muted">Meaning:</span> what a camera records without interference.
+        </li>
+      </ol>
+
+      <div class="callout mistake">
+        <div class="tag"><span class="pill">Common mistakes</span> quick tips</div>
+        <ul>
+          <li>Don’t use <span class="eq">x1+x2</span> when computing transverse width: spatial decay depends on <span class="eq">x1−x2</span>.</li>
+          <li>Don’t forget: PSD is at a <b>single point</b> (x1=x2). Cross-spectral density between different points is a different object.</li>
+          <li>Always declare whether coherence time/length is FWHM or 1/e; Gaussians differ by fixed factors.</li>
+        </ul>
+      </div>
+    </article>
+
+    <article id="part3">
+      <h2>PART 3 — Full Solution (DETAILED + TEACHING)</h2>
+
+      <h3>Physical intuition first (before calculating)</h3>
+      <p>
+        The given Γ is a product of three familiar pieces:
+        <b>(i)</b> a Gaussian in τ, so the field stays correlated for delays on the order of τc;
+        <b>(ii)</b> a complex exponential in τ that simply “shifts” the spectrum to be centered at ν₀;
+        <b>(iii)</b> a Gaussian in separation (x1−x2), so points farther than ρc apart become mutually incoherent.
+        Since ν₀ is different for <span class="eq">x&gt;0</span> versus <span class="eq">x&lt;0</span>, we expect two different colors on the two sides of the x=0 boundary.
+      </p>
+
+      <h3>Step 1 — Intensity</h3>
+      <p>By definition, the intensity at x is</p>
+      <div class="eqbox">
+        <div class="eq" id="eq_I">
+I(x) = Γ(x,x,0)
+        </div>
+        <div class="copyRow">
+          <button class="copy" data-copy="#eq_I">Copy equation</button>
+        </div>
+      </div>
+
+      <p>Insert <span class="eq">x1=x2=x</span> and <span class="eq">τ=0</span> into the given model:</p>
+      <ul>
+        <li>Temporal factor: <span class="eq">exp[-π·0/(2τc²)] = 1</span></li>
+        <li>Phase factor: <span class="eq">exp[j2πν0·0] = 1</span></li>
+        <li>Spatial factor: <span class="eq">exp[-(x−x)²/ρc²] = 1</span></li>
+      </ul>
+
+      <p>Therefore:</p>
+      <div class="eqbox final">
+        <div class="eq" id="eq_I_final">
+I(x) = U(x,x)
+= 5×10^14  (in given units)  for x>0
+= 6×10^14  (in given units)  for x<0
+        </div>
+        <div class="copyRow">
+          <button class="copy" data-copy="#eq_I_final">Copy final intensity</button>
+        </div>
+      </div>
+
+      <p class="muted">
+        Units note: The problem provides U in s⁻¹; depending on context this can represent an optical frequency scale used as a “carrier”
+        or (more commonly in coherence texts) a proportionality to intensity in arbitrary units. Here, since U multiplies Γ directly,
+        it sets the amplitude of Γ and thus the local intensity scale.
+      </p>
+
+      <h3>Step 2 — Mutual coherence at one point (temporal part)</h3>
+      <p>Set <span class="eq">x1=x2=x</span> but keep τ:</p>
+      <div class="eqbox">
+        <div class="eq" id="eq_Gxx">
+Γ(x,x,τ) = I(x) · exp[-π τ^2/(2 τc^2)] · exp[j2π ν0(x) τ]
+where ν0(x)=5×10^14 for x>0 and 6×10^14 for x<0
+        </div>
+        <div class="copyRow">
+          <button class="copy" data-copy="#eq_Gxx">Copy Γ(x,x,τ)</button>
+        </div>
+      </div>
+
+      <p>
+        The magnitude of the (normalized) temporal coherence is Gaussian:
+        <span class="eq">|μ(τ)| = exp[-π τ²/(2τc²)]</span>.
+        This makes it easy to define coherence time by a width criterion.
+      </p>
+
+      <h3>Step 3 — Power spectral density S(x,ν)</h3>
+      <p>
+        Use Wiener–Khinchin for stationarity:
+      </p>
+      <div class="eqbox">
+        <div class="eq" id="eq_Sdef">
+S(x,ν) = ∫_{-∞}^{∞} Γ(x,x,τ) e^{-j2πντ} dτ
+        </div>
+        <div class="copyRow">
+          <button class="copy" data-copy="#eq_Sdef">Copy PSD definition</button>
+        </div>
+      </div>
+
+      <p>Substitute Γ(x,x,τ):</p>
+      <div class="eqbox">
+        <div class="eq" id="eq_Ssub">
+S(x,ν) = I(x) ∫ exp[-π τ^2/(2 τc^2)] · exp[j2πν0(x)τ] · exp[-j2πντ] dτ
+       = I(x) ∫ exp[-π τ^2/(2 τc^2)] · exp[-j2π(ν-ν0(x))τ] dτ
+        </div>
+        <div class="copyRow">
+          <button class="copy" data-copy="#eq_Ssub">Copy substitution step</button>
+        </div>
+      </div>
+
+      <p>
+        Now use the standard Gaussian Fourier transform identity (for real <span class="eq">a&gt;0</span>):
+      </p>
+      <div class="eqbox">
+        <div class="eq" id="eq_gaussFT">
+∫_{-∞}^{∞} exp(-a τ^2) exp(-j2π f τ) dτ = sqrt(π/a) · exp(-(π^2 f^2)/a)
+        </div>
+        <div class="copyRow">
+          <button class="copy" data-copy="#eq_gaussFT">Copy Gaussian FT</button>
+        </div>
+      </div>
+
+      <p>
+        Match parameters:
+        <span class="eq">a = π/(2τc²)</span> and <span class="eq">f = ν - ν0(x)</span>.
+        Then:
+        <span class="eq">sqrt(π/a) = sqrt(2) τc</span> and
+        <span class="eq">exp(-(π² f²)/a) = exp[-2π τc² (ν-ν0(x))²]</span>.
+      </p>
+
+      <div class="eqbox final">
+        <div class="eq" id="eq_Sfinal">
+S(x,ν) = I(x) · (sqrt(2) τc) · exp[ -2π τc^2 (ν - ν0(x))^2 ]
+
+Gaussian PSD centered at ν0(x).
+        </div>
+        <div class="copyRow">
+          <button class="copy" data-copy="#eq_Sfinal">Copy final PSD</button>
+        </div>
+      </div>
+
+      <h3>Step 4 — Coherence time and coherence length (1/e convention)</h3>
+      <p>
+        The normalized temporal coherence magnitude is
+        <span class="eq">|μ(τ)| = exp[-π τ²/(2τc²)]</span>.
+        Define the <b>1/e coherence time</b> τ<sub>1/e</sub> by <span class="eq">|μ(τ1/e)| = 1/e</span>.
+      </p>
+
+      <p>Solve:</p>
+      <div class="eqbox">
+        <div class="eq" id="eq_tauSolve">
+exp[-π τ1/e^2 /(2 τc^2)] = 1/e
+⇒ π τ1/e^2 /(2 τc^2) = 1
+⇒ τ1/e = τc · sqrt(2/π)
+        </div>
+        <div class="copyRow">
+          <button class="copy" data-copy="#eq_tauSolve">Copy τ(1/e)</button>
+        </div>
+      </div>
+
+      <p>Convert to coherence length (path-length scale) using <span class="eq">Lc = c τ1/e</span>:</p>
+      <div class="eqbox final">
+        <div class="eq" id="eq_Lc">
+Lc = c τc sqrt(2/π)
+
+For τc = 1 μs:
+τ1/e = 7.98×10^-7 s
+Lc ≈ 2.39×10^2 m  (≈ 239 m)
+        </div>
+        <div class="copyRow">
+          <button class="copy" data-copy="#eq_Lc">Copy coherence length</button>
+        </div>
+      </div>
+
+      <p class="muted">
+        Sanity check: a microsecond is enormous on optical timescales, so the coherence length being hundreds of meters is plausible
+        for an extremely narrowband source.
+      </p>
+
+      <h3>Step 5 — Coherence distance in the transverse plane</h3>
+      <p>
+        At zero delay (τ=0), the spatial dependence of Γ is
+      </p>
+      <div class="eqbox">
+        <div class="eq" id="eq_spatial">
+Γ(x1,x2,0) = U(x1,x2) · exp[ -(x1−x2)^2 / ρc^2 ]
+        </div>
+        <div class="copyRow">
+          <button class="copy" data-copy="#eq_spatial">Copy spatial dependence</button>
+        </div>
+      </div>
+
+      <p>
+        If we focus on how coherence decays with separation, the normalized spatial degree is essentially
+        <span class="eq">|μ(Δx)| = exp[-(Δx)²/ρc²]</span>, where <span class="eq">Δx = x1−x2</span>.
+        The <b>1/e transverse coherence distance</b> is then:
+      </p>
+      <div class="eqbox final">
+        <div class="eq" id="eq_rho">
+|μ(Δx)| = 1/e  ⇒  (Δx)^2/ρc^2 = 1  ⇒  Δx = ρc
+
+So the transverse coherence distance (1/e) is ρc = 1 mm.
+        </div>
+        <div class="copyRow">
+          <button class="copy" data-copy="#eq_rho">Copy transverse coherence distance</button>
+        </div>
+      </div>
+
+      <h3>Step 6 — Which quantities depend on position?</h3>
+      <div class="callout">
+        <ul>
+          <li><b>Intensity I(x)</b>: depends on x because the model changes across x=0 (via U(x,x)).</li>
+          <li><b>PSD S(x,ν)</b>: depends on x in <b>two</b> ways:
+            amplitude ∝ I(x) and center frequency is ν₀(x) (hence different color).</li>
+          <li><b>Coherence time/length</b>: set by τc only → <b>not</b> position-dependent here.</li>
+          <li><b>Transverse coherence distance</b>: set by ρc only → <b>not</b> position-dependent here.</li>
+        </ul>
+      </div>
+
+      <h3>Step 7 — What would a color film record?</h3>
+      <p>
+        A color film (or camera sensor with color filters) records <b>intensity vs wavelength locally</b>, not mutual coherence directly
+        (unless you build an interferometer to convert coherence into visible fringes).
+        Here, the center frequency is:
+      </p>
+      <ul>
+        <li>For x&gt;0: <span class="eq">ν0 = 5×10^14 Hz</span> → <span class="eq">λ = c/ν ≈ 3×10^8 / 5×10^14 = 6×10^-7 m = 600 nm</span> (orange–red).</li>
+        <li>For x&lt;0: <span class="eq">ν0 = 6×10^14 Hz</span> → <span class="eq">λ ≈ 500 nm</span> (green–cyan).</li>
+      </ul>
+      <p>
+        Also, the x&lt;0 side has higher intensity (6×10¹⁴ vs 5×10¹⁴ in the given units), so it appears <b>brighter</b>.
+        Therefore the recorded image looks like two adjacent half-planes split at x=0:
+        <b>left (x&lt;0) brighter greenish/cyan</b>, <b>right (x&gt;0) slightly dimmer reddish/orange</b>, with a fairly sharp boundary.
+      </p>
+
+      <div class="eqbox final">
+        <div class="eq" id="eq_finalAnswer">
+FINAL RESULTS (1/e conventions):
+
+Intensity:
+I(x)=5×10^14 for x>0 ; I(x)=6×10^14 for x<0
+
+Power spectral density at position x:
+S(x,ν)= I(x) (sqrt(2) τc) exp[-2π τc^2 (ν-ν0(x))^2]
+with ν0(x)=5×10^14 (x>0) and 6×10^14 (x<0)
+
+Temporal coherence time (1/e):
+τ1/e = τc sqrt(2/π) = 7.98×10^-7 s  (for τc=1 μs)
+
+Coherence length:
+Lc = c τc sqrt(2/π) ≈ 239 m
+
+Transverse coherence distance (1/e):
+Δx1/e = ρc = 1 mm
+
+Position dependence:
+I and S (amplitude & center frequency) depend on x; coherence scales set by τc and ρc do not.
+
+Color film image:
+Two regions split at x=0: x<0 brighter green/cyan (~500 nm), x>0 dimmer orange/red (~600 nm).
+        </div>
+        <div class="copyRow">
+          <button class="copy" data-copy="#eq_finalAnswer">Copy final answer (plain text)</button>
+        </div>
+      </div>
+
+      <h3>Sanity checks</h3>
+      <ul>
+        <li><b>Units:</b> τc in seconds makes PSD prefactor proportional to seconds (as expected for a Fourier transform in time). The spatial coherence width is in meters (ρc).</li>
+        <li><b>Limiting case τc → ∞:</b> temporal Gaussian becomes flatter → PSD becomes a delta-like spike at ν₀ (perfect monochromatic).</li>
+        <li><b>Limiting case ρc → ∞:</b> spatial factor → 1, meaning full transverse coherence everywhere (ideal plane wave across x).</li>
+      </ul>
+    </article>
+
+    <article id="part4">
+      <h2>PART 4 — Deeper Understanding (THEORY AROUND THE RESULT)</h2>
+
+      <h3>Re-interpreting the final formulas</h3>
+      <ul>
+        <li><span class="eq">I(x)</span> controls overall brightness (scales Γ and S).</li>
+        <li><span class="eq">ν0(x)</span> shifts the spectrum: it sets the “color” locally (center wavelength).</li>
+        <li><span class="eq">τc</span> controls the temporal coherence envelope:
+          larger τc → slower decay in τ → narrower Gaussian PSD in ν.</li>
+        <li><span class="eq">ρc</span> controls spatial coherence: larger ρc → more long-range transverse interference possible.</li>
+      </ul>
+
+      <h3>How changing parameters affects outcomes (connect to plots)</h3>
+      <ul>
+        <li>Increase τc: the <b>temporal coherence curve</b> vs τ widens, while the <b>PSD</b> vs ν becomes narrower.</li>
+        <li>Increase ρc: the <b>spatial coherence</b> vs Δx decays more slowly (larger coherence distance).</li>
+        <li>Switch region (x&gt;0 vs x&lt;0): the PSD peak shifts between 5×10¹⁴ and 6×10¹⁴ Hz and the intensity scale changes.</li>
+      </ul>
+
+      <h3>Alternative derivation idea</h3>
+      <p class="muted">
+        Instead of Fourier transforming Γ, you could start by postulating a Gaussian PSD
+        <span class="eq">S(ν) ∝ exp[-(ν-ν0)²/(2σν²)]</span>
+        and then inverse-Fourier transform it to obtain a Gaussian coherence function in τ.
+        Matching widths gives the same time–bandwidth relation.
+      </p>
+
+      <h3>Concept checks (self-test)</h3>
+      <ul>
+        <li><b>Q:</b> If you double τc, what happens to the spectral width? <b>A:</b> It shrinks by √2 in the 1/e-width definition (because width ∝ 1/τc).</li>
+        <li><b>Q:</b> Does a small ρc make the image blurrier on film? <b>A:</b> Not by itself—film records intensity. Spatial coherence matters mainly for interference visibility, not mean intensity.</li>
+        <li><b>Q:</b> Why does ν₀ appear as a phase factor in Γ? <b>A:</b> A carrier oscillation in time corresponds to a spectral shift; in correlations it appears as <span class="eq">exp(j2πν0τ)</span>.</li>
+        <li><b>Q:</b> What coordinate controls the “piecewise” color? <b>A:</b> The average position (via x1+x2). At a single point, that reduces to the sign of x.</li>
+      </ul>
+    </article>
+
+    <article id="part5">
+      <h2>PART 5 — Visualization Guide (HOW TO READ THE PLOTS)</h2>
+
+      <div class="callout">
+        <div class="tag"><span class="pill">Interactive controls</span> change parameters live</div>
+        <div class="controls" role="group" aria-label="Interactive controls">
+          <div class="ctrl">
+            <label for="regionSel"><span>Region / side of x=0</span><span class="pill" id="regionRead">x &gt; 0</span></label>
+            <select id="regionSel">
+              <option value="pos">x &gt; 0 (ν0=5e14 Hz, I=5e14)</option>
+              <option value="neg">x &lt; 0 (ν0=6e14 Hz, I=6e14)</option>
+            </select>
+          </div>
+          <div class="ctrl">
+            <label for="tauSlider"><span>τc (temporal scale)</span><span class="pill" id="tauRead">1.00 μs</span></label>
+            <input id="tauSlider" type="range" min="0.1" max="5.0" step="0.01" value="1.00" />
+          </div>
+          <div class="ctrl">
+            <label for="rhoSlider"><span>ρc (spatial scale)</span><span class="pill" id="rhoRead">1.00 mm</span></label>
+            <input id="rhoSlider" type="range" min="0.1" max="5.0" step="0.01" value="1.00" />
+          </div>
+        </div>
+
+        <div class="kpi" aria-label="Computed key results">
+          <div class="box">
+            <div class="label">I(x) (given units)</div>
+            <div class="val" id="kpiI">5.00e14</div>
+          </div>
+          <div class="box">
+            <div class="label">ν0(x) (Hz)</div>
+            <div class="val" id="kpiNu0">5.00e14</div>
+          </div>
+          <div class="box">
+            <div class="label">τ(1/e) = τc√(2/π) (s)</div>
+            <div class="val" id="kpiTau1e">7.98e-07</div>
+          </div>
+          <div class="box">
+            <div class="label">Lc = c τ(1/e) (m)</div>
+            <div class="val" id="kpiLc">2.39e+02</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="canvasWrap">
+        <figure class="tiny">
+          <canvas id="cDiagram"></canvas>
+          <figcaption>
+            <b>Diagram:</b> Two points x₁ and x₂ on the x-axis, separation Δx=x₁−x₂. The color/center frequency depends on the sign of x₁+x₂
+            (i.e., which side of x=0 the midpoint lies), while transverse coherence depends on Δx.
+          </figcaption>
+        </figure>
+
+        <div class="twoCanv">
+          <figure class="small">
+            <canvas id="cMain"></canvas>
+            <figcaption>
+              <b>Main plot:</b> Temporal coherence magnitude |μ(τ)| (Gaussian) and the corresponding PSD S(ν) (Gaussian centered at ν₀).
+              Changing τc widens/narrows these as Fourier pairs.
+            </figcaption>
+          </figure>
+
+          <figure class="small">
+            <canvas id="cSecondary"></canvas>
+            <figcaption>
+              <b>Secondary plot:</b> Spatial coherence magnitude |μ(Δx)| = exp[-(Δx)²/ρc²]. Changing ρc changes the transverse coherence distance.
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <h3>How to read each canvas</h3>
+      <ul>
+        <li><b>Diagram canvas:</b> shows x=0 boundary and two sampling points. The midpoint determines which ν₀ applies; the separation controls coherence.</li>
+        <li><b>Main canvas:</b> left panel plots <span class="eq">|μ(τ)|</span> vs τ (μs). Right panel plots <span class="eq">S(ν)</span> vs ν around ν₀ (THz offset scale) with axes and grid.</li>
+        <li><b>Secondary canvas:</b> plots <span class="eq">|μ(Δx)|</span> vs Δx (mm) and marks the 1/e point at Δx=ρc.</li>
+      </ul>
+
+      <h3>What the controls do</h3>
+      <ul>
+        <li><b>Region selector:</b> switches ν₀ and intensity scale I(x), shifting the PSD peak and changing its amplitude.</li>
+        <li><b>τc slider:</b> changes temporal coherence time and coherence length; also changes PSD width (narrower for larger τc).</li>
+        <li><b>ρc slider:</b> changes transverse coherence distance (the spatial curve widens with larger ρc).</li>
+      </ul>
+    </article>
+  </div>
+</main>
+
+<footer>
+  <div class="muted">
+    Built as a self-contained article with vanilla HTML/CSS/JS and high-DPI responsive canvas plots. Coherence times/lengths here use the <b>1/e</b> width convention consistent with the given Gaussian model.
+  </div>
+</footer>
+
+<script>
+/* =========================
+   Utilities: copy buttons
+========================= */
+(function(){
+  function copyText(text){
+    navigator.clipboard.writeText(text).then(()=>{
+      // subtle feedback
+    }).catch(()=>{
+      // fallback
+      const ta=document.createElement('textarea');
+      ta.value=text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    });
+  }
+  document.querySelectorAll('button.copy').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const sel = btn.getAttribute('data-copy');
+      const el = document.querySelector(sel);
+      if(!el) return;
+      copyText(el.textContent.replace(/\n\s+\n/g,"\n\n").trim());
+      const old = btn.textContent;
+      btn.textContent = "Copied ✓";
+      setTimeout(()=>btn.textContent=old, 900);
+    });
+  });
+})();
+
+/* =========================
+   Canvas plotting helpers
+========================= */
+function setupCanvas(canvas){
+  const ctx = canvas.getContext('2d');
+  function resize(){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.max(2, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(2, Math.floor(rect.height * dpr));
+    ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  }
+  resize();
+  return {ctx, resize};
+}
+
+function clear(ctx, w, h){
+  ctx.clearRect(0,0,w,h);
+}
+
+function roundNice(x){
+  const exp = Math.floor(Math.log10(Math.abs(x)+1e-30));
+  const f = x / Math.pow(10,exp);
+  const nice = (f<=1)?1:(f<=2)?2:(f<=5)?5:10;
+  return nice * Math.pow(10,exp);
+}
+
+function drawAxes(ctx, box, xMin, xMax, yMin, yMax, xLabel, yLabel, title){
+  const {x,y,w,h} = box;
+  // frame
+  ctx.save();
+  ctx.translate(x,y);
+
+  // background
+  ctx.fillStyle = "rgba(0,0,0,0.12)";
+  ctx.fillRect(0,0,w,h);
+
+  // paddings
+  const padL = 52, padR = 16, padT = 34, padB = 42;
+  const px0 = padL, px1 = w - padR;
+  const py0 = h - padB, py1 = padT;
+
+  // grid & ticks
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
+  ctx.lineWidth = 1;
+
+  const xSpan = xMax - xMin;
+  const ySpan = yMax - yMin;
+
+  const xStep = roundNice(xSpan/5);
+  const yStep = roundNice(ySpan/5);
+
+  function xToPx(v){ return px0 + (v-xMin) * (px1-px0)/xSpan; }
+  function yToPy(v){ return py0 - (v-yMin) * (py0-py1)/ySpan; }
+
+  // vertical grid
+  for(let xv = Math.ceil(xMin/xStep)*xStep; xv<=xMax+1e-12; xv+=xStep){
+    const xp = xToPx(xv);
+    ctx.beginPath(); ctx.moveTo(xp, py1); ctx.lineTo(xp, py0); ctx.stroke();
+  }
+  // horizontal grid
+  for(let yv = Math.ceil(yMin/yStep)*yStep; yv<=yMax+1e-12; yv+=yStep){
+    const yp = yToPy(yv);
+    ctx.beginPath(); ctx.moveTo(px0, yp); ctx.lineTo(px1, yp); ctx.stroke();
+  }
+
+  // axes
+  ctx.strokeStyle = "rgba(255,255,255,0.35)";
+  ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(px0, py0); ctx.lineTo(px1, py0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px0, py0); ctx.lineTo(px0, py1); ctx.stroke();
+
+  // labels & title
+  ctx.fillStyle = "rgba(234,240,255,0.92)";
+  ctx.font = "600 13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(title, 10, 18);
+
+  ctx.fillStyle = "rgba(185,195,230,0.92)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+
+  // x ticks
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  for(let xv = Math.ceil(xMin/xStep)*xStep; xv<=xMax+1e-12; xv+=xStep){
+    const xp = xToPx(xv);
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+    ctx.beginPath(); ctx.moveTo(xp, py0); ctx.lineTo(xp, py0+5); ctx.stroke();
+    ctx.fillText(formatTick(xv), xp, py0+8);
+  }
+
+  // y ticks
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  for(let yv = Math.ceil(yMin/yStep)*yStep; yv<=yMax+1e-12; yv+=yStep){
+    const yp = yToPy(yv);
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+    ctx.beginPath(); ctx.moveTo(px0-5, yp); ctx.lineTo(px0, yp); ctx.stroke();
+    ctx.fillText(formatTick(yv), px0-8, yp);
+  }
+
+  // axis labels
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillStyle = "rgba(234,240,255,0.88)";
+  ctx.fillText(xLabel, (px0+px1)/2, h-10);
+
+  ctx.save();
+  ctx.translate(14, (py0+py1)/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+
+  ctx.restore();
+
+  return {
+    plotRect: {x: x+padL, y: y+padT, w: w-(padL+padR), h: h-(padT+padB)},
+    xToPx: (v)=> (x+padL) + (v-xMin)*(w-(padL+padR))/xSpan,
+    yToPy: (v)=> (y+h-padB) - (v-yMin)*(h-(padT+padB))/ySpan
+  };
+}
+
+function formatTick(v){
+  const av = Math.abs(v);
+  if(av>=1000 || (av>0 && av<0.01)) return v.toExponential(1).replace('e+','e');
+  // keep modest decimals
+  const s = (Math.round(v*1000)/1000).toString();
+  return s;
+}
+
+function plotLine(ctx, map, xs, ys, strokeStyle){
+  ctx.save();
+  ctx.strokeStyle = strokeStyle || "rgba(125,211,252,0.95)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for(let i=0;i<xs.length;i++){
+    const x = map.xToPx(xs[i]);
+    const y = map.yToPy(ys[i]);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawLegend(ctx, x, y, items){
+  ctx.save();
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  let yy = y;
+  items.forEach(it=>{
+    ctx.strokeStyle = it.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x, yy+6); ctx.lineTo(x+18, yy+6); ctx.stroke();
+    ctx.fillStyle = "rgba(234,240,255,0.92)";
+    ctx.fillText(it.text, x+24, yy+10);
+    yy += 18;
+  });
+  ctx.restore();
+}
+
+/* =========================
+   Physics model functions
+========================= */
+const C0 = 299792458;
+
+function muTemporal(tau, tau_c){
+  // |mu(τ)| = exp[-π τ^2/(2 τc^2)]
+  return Math.exp(-Math.PI * tau*tau / (2*tau_c*tau_c));
+}
+function psd(nu, I, nu0, tau_c){
+  // S(ν)= I * (sqrt(2) τc) * exp[-2π τc^2 (ν-ν0)^2]
+  const d = (nu - nu0);
+  return I * Math.sqrt(2) * tau_c * Math.exp(-2*Math.PI * tau_c*tau_c * d*d);
+}
+function muSpatial(dx, rho_c){
+  return Math.exp(-(dx*dx)/(rho_c*rho_c));
+}
+
+/* =========================
+   Draw: Diagram
+========================= */
+const diag = setupCanvas(document.getElementById('cDiagram'));
+const main = setupCanvas(document.getElementById('cMain'));
+const sec  = setupCanvas(document.getElementById('cSecondary'));
+
+function drawDiagram(state){
+  const canvas = document.getElementById('cDiagram');
+  const ctx = diag.ctx;
+  const w = canvas.getBoundingClientRect().width;
+  const h = canvas.getBoundingClientRect().height;
+  clear(ctx, w, h);
+
+  // background
+  ctx.fillStyle = "rgba(0,0,0,0.10)";
+  ctx.fillRect(0,0,w,h);
+
+  // axis line
+  const x0 = 40, x1 = w-30;
+  const yAxis = Math.round(h*0.58);
+
+  ctx.strokeStyle = "rgba(255,255,255,0.40)";
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x0,yAxis); ctx.lineTo(x1,yAxis); ctx.stroke();
+
+  // x=0 boundary in middle
+  const mid = (x0+x1)/2;
+  ctx.strokeStyle = "rgba(251,191,36,0.75)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6,6]);
+  ctx.beginPath(); ctx.moveTo(mid, yAxis-70); ctx.lineTo(mid, yAxis+60); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // labels regions
+  ctx.fillStyle = "rgba(185,195,230,0.95)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.textAlign="center"; ctx.textBaseline="bottom";
+  ctx.fillText("x < 0 region", (x0+mid)/2, yAxis-78);
+  ctx.fillText("x > 0 region", (mid+x1)/2, yAxis-78);
+
+  // color hint bar
+  const leftColor = "rgba(167,243,208,0.30)";  // greenish
+  const rightColor = "rgba(251,113,133,0.22)"; // reddish
+  ctx.fillStyle = leftColor;
+  ctx.fillRect(x0, yAxis-65, mid-x0, 18);
+  ctx.fillStyle = rightColor;
+  ctx.fillRect(mid, yAxis-65, x1-mid, 18);
+  ctx.strokeStyle = "rgba(255,255,255,0.15)";
+  ctx.strokeRect(x0, yAxis-65, x1-x0, 18);
+
+  // choose points positions
+  const p1x = mid + (state.region==='pos' ? 90 : -90);
+  const p2x = p1x + 110;
+  const pY = yAxis;
+
+  // points
+  function drawPoint(px, label){
+    ctx.fillStyle = "rgba(125,211,252,0.95)";
+    ctx.beginPath(); ctx.arc(px,pY,6,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.4)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(234,240,255,0.95)";
+    ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.textAlign="center"; ctx.textBaseline="top";
+    ctx.fillText(label, px, pY+10);
+  }
+  drawPoint(p1x, "x₁");
+  drawPoint(p2x, "x₂");
+
+  // separation arrow
+  ctx.strokeStyle = "rgba(167,243,208,0.85)";
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(p1x,pY+30); ctx.lineTo(p2x,pY+30); ctx.stroke();
+  // arrowheads
+  ctx.fillStyle = "rgba(167,243,208,0.85)";
+  ctx.beginPath(); ctx.moveTo(p1x, pY+30); ctx.lineTo(p1x+8, pY+26); ctx.lineTo(p1x+8, pY+34); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(p2x, pY+30); ctx.lineTo(p2x-8, pY+26); ctx.lineTo(p2x-8, pY+34); ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = "rgba(234,240,255,0.90)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.textAlign="center"; ctx.textBaseline="bottom";
+  ctx.fillText("Δx = x₁ − x₂ controls spatial coherence exp[-(Δx)²/ρc²]", (p1x+p2x)/2, pY+26);
+
+  // midpoint indicator
+  const mpx = (p1x+p2x)/2;
+  ctx.strokeStyle = "rgba(255,255,255,0.25)";
+  ctx.setLineDash([3,5]);
+  ctx.beginPath(); ctx.moveTo(mpx, pY-10); ctx.lineTo(mpx, pY+50); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(185,195,230,0.95)";
+  ctx.textAlign="center"; ctx.textBaseline="top";
+  ctx.fillText("midpoint sets sign of (x₁+x₂) → ν₀", mpx, pY-6);
+
+  // title
+  ctx.fillStyle = "rgba(234,240,255,0.92)";
+  ctx.font = "700 13px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.textAlign="left"; ctx.textBaseline="top";
+  ctx.fillText("Geometry on the x-axis (mutual coherence between two points)", 12, 10);
+}
+
+/* =========================
+   Draw: Main plot (two panels)
+   Left: |mu(τ)| vs τ (μs)
+   Right: S(ν) vs ν (offset from ν0 in THz)
+========================= */
+function drawMain(state){
+  const canvas = document.getElementById('cMain');
+  const ctx = main.ctx;
+  const w = canvas.getBoundingClientRect().width;
+  const h = canvas.getBoundingClientRect().height;
+  clear(ctx, w, h);
+
+  // layout: two panels with gap
+  const gap = 10;
+  const panelW = (w - gap) / 2;
+  const boxL = {x:0, y:0, w:panelW, h:h};
+  const boxR = {x:panelW+gap, y:0, w:panelW, h:h};
+
+  // left panel: temporal coherence
+  const tau_c = state.tau_c;
+  const tauMax = 4.0 * tau_c; // show up to 4 tau_c
+  const xMin = -tauMax*1e6; // in microseconds for axis
+  const xMax = +tauMax*1e6;
+  const yMin = 0;
+  const yMax = 1.05;
+
+  const mapL = drawAxes(ctx, boxL, xMin, xMax, yMin, yMax,
+    "τ (μs)", "|μ(τ)| (unitless)", "Temporal coherence (Gaussian)");
+
+  const N = 500;
+  const xs = new Array(N);
+  const ys = new Array(N);
+  for(let i=0;i<N;i++){
+    const tau_us = xMin + (xMax-xMin)*i/(N-1);
+    const tau = tau_us * 1e-6;
+    xs[i] = tau_us;
+    ys[i] = muTemporal(tau, tau_c);
+  }
+  plotLine(ctx, mapL, xs, ys, "rgba(125,211,252,0.95)");
+
+  // mark 1/e point
+  const tau1e = tau_c * Math.sqrt(2/Math.PI);
+  const tau1e_us = tau1e * 1e6;
+  ctx.save();
+  ctx.strokeStyle = "rgba(251,191,36,0.85)";
+  ctx.lineWidth = 1.6;
+  ctx.setLineDash([6,6]);
+  ctx.beginPath(); ctx.moveTo(mapL.xToPx(tau1e_us), mapL.yToPy(0)); ctx.lineTo(mapL.xToPx(tau1e_us), mapL.yToPy(1.02)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mapL.xToPx(-tau1e_us), mapL.yToPy(0)); ctx.lineTo(mapL.xToPx(-tau1e_us), mapL.yToPy(1.02)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(234,240,255,0.92)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.textAlign="left"; ctx.textBaseline="top";
+  ctx.fillText("±τ(1/e)", mapL.xToPx(tau1e_us)+4, mapL.yToPy(1.0)+6);
+  ctx.restore();
+
+  drawLegend(ctx, boxL.x+14, boxL.y+40, [
+    {color:"rgba(125,211,252,0.95)", text:"|μ(τ)| = exp[-π τ²/(2τc²)]"},
+    {color:"rgba(251,191,36,0.85)", text:"τ(1/e) markers"}
+  ]);
+
+  // right panel: PSD around nu0
+  const I = state.I;
+  const nu0 = state.nu0;
+  // choose frequency offset range based on 1/e width: Δν1/e = 1/(τc*sqrt(2π))
+  const dnu1e = 1/(tau_c*Math.sqrt(2*Math.PI)); // Hz
+  const span = 6*dnu1e; // show ±6 widths
+  const xMinR = -span/1e12; // THz offset
+  const xMaxR = +span/1e12;
+  // yMax: peak value at nu=nu0
+  const peak = psd(nu0, I, nu0, tau_c);
+  const yMinR = 0;
+  const yMaxR = peak*1.08;
+
+  const mapR = drawAxes(ctx, boxR, xMinR, xMaxR, yMinR, yMaxR,
+    "(ν − ν0) (THz)", "S(x,ν) (arb.)", "Power spectral density (Gaussian)");
+
+  const xsR = new Array(N);
+  const ysR = new Array(N);
+  for(let i=0;i<N;i++){
+    const dTHz = xMinR + (xMaxR-xMinR)*i/(N-1);
+    const nu = nu0 + dTHz*1e12;
+    xsR[i] = dTHz;
+    ysR[i] = psd(nu, I, nu0, tau_c);
+  }
+  plotLine(ctx, mapR, xsR, ysR, "rgba(167,243,208,0.95)");
+
+  // annotate center
+  ctx.save();
+  ctx.strokeStyle = "rgba(251,113,133,0.85)";
+  ctx.lineWidth = 1.6;
+  ctx.setLineDash([6,6]);
+  ctx.beginPath(); ctx.moveTo(mapR.xToPx(0), mapR.yToPy(yMinR)); ctx.lineTo(mapR.xToPx(0), mapR.yToPy(yMaxR)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(234,240,255,0.92)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.textAlign="left"; ctx.textBaseline="top";
+  ctx.fillText("ν0", mapR.xToPx(0)+4, mapR.yToPy(yMaxR*0.95));
+  ctx.restore();
+
+  drawLegend(ctx, boxR.x+14, boxR.y+40, [
+    {color:"rgba(167,243,208,0.95)", text:"S = I√2 τc exp[-2π τc²(ν-ν0)²]"},
+    {color:"rgba(251,113,133,0.85)", text:"center ν0 (region-dependent)"}
+  ]);
+}
+
+/* =========================
+   Draw: Secondary plot (spatial coherence)
+========================= */
+function drawSecondary(state){
+  const canvas = document.getElementById('cSecondary');
+  const ctx = sec.ctx;
+  const w = canvas.getBoundingClientRect().width;
+  const h = canvas.getBoundingClientRect().height;
+  clear(ctx, w, h);
+
+  const rho_c = state.rho_c;
+
+  // show Δx in mm
+  const dxMax = 3.5 * rho_c; // meters
+  const xMin = -dxMax*1e3;
+  const xMax = +dxMax*1e3;
+  const yMin = 0;
+  const yMax = 1.05;
+
+  const map = drawAxes(ctx, {x:0,y:0,w:w,h:h}, xMin, xMax, yMin, yMax,
+    "Δx (mm)", "|μ(Δx)| (unitless)", "Spatial coherence (transverse)");
+
+  const N = 500;
+  const xs = new Array(N), ys = new Array(N);
+  for(let i=0;i<N;i++){
+    const dx_mm = xMin + (xMax-xMin)*i/(N-1);
+    const dx = dx_mm * 1e-3; // meters
+    xs[i] = dx_mm;
+    ys[i] = muSpatial(dx, rho_c);
+  }
+  plotLine(ctx, map, xs, ys, "rgba(125,211,252,0.95)");
+
+  // mark 1/e at ±rho_c
+  const rho_mm = rho_c*1e3;
+  ctx.save();
+  ctx.strokeStyle = "rgba(251,191,36,0.85)";
+  ctx.lineWidth = 1.6;
+  ctx.setLineDash([6,6]);
+  ctx.beginPath(); ctx.moveTo(map.xToPx(rho_mm), map.yToPy(0)); ctx.lineTo(map.xToPx(rho_mm), map.yToPy(1.02)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(map.xToPx(-rho_mm), map.yToPy(0)); ctx.lineTo(map.xToPx(-rho_mm), map.yToPy(1.02)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(234,240,255,0.92)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.textAlign="left"; ctx.textBaseline="top";
+  ctx.fillText("±ρc (1/e)", map.xToPx(rho_mm)+4, map.yToPy(1.0)+6);
+  ctx.restore();
+
+  drawLegend(ctx, 14, 40, [
+    {color:"rgba(125,211,252,0.95)", text:"|μ(Δx)| = exp[-(Δx)²/ρc²]"},
+    {color:"rgba(251,191,36,0.85)", text:"Δx=±ρc markers"}
+  ]);
+}
+
+/* =========================
+   State + UI
+========================= */
+const ui = {
+  regionSel: document.getElementById('regionSel'),
+  tauSlider: document.getElementById('tauSlider'),
+  rhoSlider: document.getElementById('rhoSlider'),
+  regionRead: document.getElementById('regionRead'),
+  tauRead: document.getElementById('tauRead'),
+  rhoRead: document.getElementById('rhoRead'),
+  kpiI: document.getElementById('kpiI'),
+  kpiNu0: document.getElementById('kpiNu0'),
+  kpiTau1e: document.getElementById('kpiTau1e'),
+  kpiLc: document.getElementById('kpiLc')
+};
+
+function fmtSci(x){
+  // compact scientific notation
+  const s = x.toExponential(2).replace('e+','e').replace('e0','e0');
+  return s;
+}
+
+function computeState(){
+  const region = ui.regionSel.value; // pos/neg
+  const tau_c = parseFloat(ui.tauSlider.value) * 1e-6; // seconds
+  const rho_c = parseFloat(ui.rhoSlider.value) * 1e-3; // meters
+
+  const nu0 = (region==='pos') ? 5e14 : 6e14;
+  const I   = (region==='pos') ? 5e14 : 6e14;
+
+  return {region, tau_c, rho_c, nu0, I};
+}
+
+function updateReadouts(state){
+  ui.regionRead.textContent = (state.region==='pos') ? "x > 0" : "x < 0";
+  ui.tauRead.textContent = (state.tau_c*1e6).toFixed(2) + " μs";
+  ui.rhoRead.textContent = (state.rho_c*1e3).toFixed(2) + " mm";
+
+  const tau1e = state.tau_c * Math.sqrt(2/Math.PI);
+  const Lc = C0 * tau1e;
+
+  ui.kpiI.textContent = fmtSci(state.I);
+  ui.kpiNu0.textContent = fmtSci(state.nu0);
+  ui.kpiTau1e.textContent = fmtSci(tau1e);
+  ui.kpiLc.textContent = fmtSci(Lc);
+}
+
+function renderAll(){
+  const state = computeState();
+  updateReadouts(state);
+  drawDiagram(state);
+  drawMain(state);
+  drawSecondary(state);
+}
+
+['change','input'].forEach(ev=>{
+  ui.regionSel.addEventListener(ev, renderAll);
+  ui.tauSlider.addEventListener(ev, renderAll);
+  ui.rhoSlider.addEventListener(ev, renderAll);
+});
+
+window.addEventListener('resize', ()=>{
+  diag.resize(); main.resize(); sec.resize();
+  renderAll();
+});
+
+// initial render
+renderAll();
+</script>
+</body>
+</html>

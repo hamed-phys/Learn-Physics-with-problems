@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Scattering Loss in Optical Fibers: Estimating Total Attenuation vs Wavelength</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#111a33;
+      --panel2:#0f1730;
+      --text:#e9eefc;
+      --muted:#b9c3e6;
+      --faint:#7f8ab6;
+      --accent:#7aa2ff;
+      --accent2:#7dffcf;
+      --warn:#ffcc66;
+      --bad:#ff6b88;
+      --good:#7dff8a;
+      --border:rgba(255,255,255,0.10);
+      --shadow: 0 14px 35px rgba(0,0,0,0.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1000px 700px at 10% -10%, rgba(122,162,255,0.18), transparent 60%),
+        radial-gradient(900px 650px at 90% 0%, rgba(125,255,207,0.12), transparent 55%),
+        radial-gradient(1000px 800px at 50% 110%, rgba(255,204,102,0.08), transparent 55%),
+        linear-gradient(180deg, var(--bg), #070a14 80%);
+      color:var(--text);
+      line-height:1.55;
+    }
+
+    header{
+      padding: 34px 18px 18px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    .hero{
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 18px;
+      overflow:hidden;
+      position:relative;
+    }
+    .hero:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(600px 220px at 20% 0%, rgba(122,162,255,0.22), transparent 60%),
+        radial-gradient(520px 200px at 80% 20%, rgba(125,255,207,0.16), transparent 60%);
+      filter: blur(12px);
+      opacity:0.9;
+      pointer-events:none;
+    }
+    .hero > *{position:relative}
+    h1{
+      margin: 0 0 10px 0;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+      font-size: clamp(1.45rem, 1.2rem + 1.3vw, 2.25rem);
+    }
+    .sub{
+      margin:0;
+      color:var(--muted);
+      max-width: 75ch;
+    }
+
+    main{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 18px 52px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      align-items:start;
+    }
+
+    nav#toc{
+      position: sticky;
+      top: 14px;
+      align-self: start;
+      background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.02));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 14px 12px;
+      backdrop-filter: blur(6px);
+    }
+    nav#toc h2{
+      font-size: 0.98rem;
+      margin: 0 0 8px;
+      color: var(--text);
+      letter-spacing:0.02em;
+      text-transform: uppercase;
+      opacity:0.9;
+    }
+    nav#toc a{
+      display:block;
+      padding: 7px 10px;
+      margin: 4px 0;
+      border-radius: 12px;
+      color: var(--muted);
+      text-decoration:none;
+      border:1px solid transparent;
+      transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+      font-size: 0.94rem;
+    }
+    nav#toc a:hover{
+      background: rgba(122,162,255,0.10);
+      border-color: rgba(122,162,255,0.25);
+      transform: translateY(-1px);
+      color: var(--text);
+    }
+
+    .content{
+      min-width: 0;
+    }
+
+    section{
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.018));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin: 0 0 18px;
+      overflow:hidden;
+      position:relative;
+    }
+    section h2{
+      margin: 0 0 10px;
+      font-size: 1.2rem;
+      letter-spacing:-0.01em;
+    }
+    section h3{
+      margin: 16px 0 8px;
+      font-size: 1.05rem;
+      color: var(--text);
+      letter-spacing:-0.01em;
+    }
+    p{margin: 10px 0; color: var(--muted)}
+    ul,ol{margin: 10px 0 10px 18px; color: var(--muted)}
+    li{margin: 6px 0}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr}
+      nav#toc{position:relative; top:auto}
+    }
+    @media (max-width: 720px){
+      .grid2,.grid3{grid-template-columns: 1fr}
+    }
+
+    .callout{
+      border-radius: 16px;
+      padding: 12px 12px 10px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,0.18);
+    }
+    .callout strong{color: var(--text)}
+    .callout.eq{border-color: rgba(122,162,255,0.35); background: rgba(122,162,255,0.07)}
+    .callout.assume{border-color: rgba(125,255,207,0.28); background: rgba(125,255,207,0.06)}
+    .callout.warn{border-color: rgba(255,204,102,0.35); background: rgba(255,204,102,0.07)}
+    .callout.ans{border-color: rgba(125,255,138,0.30); background: rgba(125,255,138,0.07)}
+
+    .kpiRow{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .kpi{
+      border:1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(0,0,0,0.18);
+    }
+    .kpi .label{color:var(--faint); font-size:0.85rem}
+    .kpi .val{font-size: 1.25rem; font-weight: 750; letter-spacing:-0.02em; margin-top:4px}
+    .kpi .subval{color:var(--muted); font-size:0.9rem; margin-top:2px}
+    @media(max-width:720px){ .kpiRow{grid-template-columns:1fr} }
+
+    .eqLine{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      padding: 10px 10px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.18);
+      border:1px solid var(--border);
+      margin: 10px 0;
+    }
+    .eqText{
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 0;
+      flex: 1;
+    }
+    button.copyBtn{
+      flex: 0 0 auto;
+      border:1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+      font-size:0.9rem;
+    }
+    button.copyBtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(122,162,255,0.35);
+      background: rgba(122,162,255,0.10);
+    }
+    .smallNote{color:var(--faint); font-size:0.9rem}
+
+    .vizWrap{
+      display:grid;
+      grid-template-columns: 1.05fr 1.95fr;
+      gap: 12px;
+      align-items:stretch;
+      margin-top: 10px;
+    }
+    @media(max-width:900px){ .vizWrap{grid-template-columns:1fr} }
+    .canvasCard{
+      border:1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(0,0,0,0.18);
+      overflow:hidden;
+      padding: 10px;
+    }
+    .canvasTitle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 6px;
+    }
+    .canvasTitle h4{
+      margin:0;
+      font-size: 0.98rem;
+      color: var(--text);
+    }
+    canvas{
+      width:100%;
+      height: 300px;
+      display:block;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.08);
+    }
+    #plotMain{height: 340px;}
+    #plotSecondary{height: 260px;}
+    #diagram{height: 300px;}
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media(max-width:720px){ .controls{grid-template-columns:1fr} }
+    .ctrl{
+      border:1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,0.18);
+    }
+    .ctrl label{
+      display:block;
+      color: var(--faint);
+      font-size: 0.86rem;
+      margin-bottom: 6px;
+    }
+    .ctrl .row{
+      display:flex; align-items:center; gap:10px; justify-content:space-between;
+    }
+    input[type="range"]{
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    select{
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      outline:none;
+    }
+    .pill{
+      display:inline-block;
+      padding: 2px 9px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    footer{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 10px 18px 40px;
+      color: var(--faint);
+      font-size: 0.9rem;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff; color:#000}
+      header, main, section, nav#toc{box-shadow:none}
+      nav#toc{display:none}
+      section{break-inside:avoid; border:1px solid #ddd}
+      .callout{border:1px solid #ddd}
+      canvas{border:1px solid #ddd}
+      button.copyBtn{display:none}
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="hero">
+      <h1>Estimating Fiber Attenuation: Absorption + Rayleigh Scattering vs Wavelength</h1>
+      <p class="sub">
+        We combine measured absorption loss with wavelength-dependent scattering loss (Rayleigh ∝ 1/λ⁴)
+        to estimate the total attenuation of an optical fiber at a new operating wavelength.
+      </p>
+    </div>
+  </header>
+
+  <main>
+    <nav id="toc" aria-label="Table of contents">
+      <h2>Contents</h2>
+      <a href="#quick">Quick Summary</a>
+      <a href="#part0">PART 0 — Concept Primer</a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a href="#part2">PART 2 — Strategy & Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a href="#part4">PART 4 — Deeper Understanding</a>
+      <a href="#part5">PART 5 — Visualization Guide</a>
+    </nav>
+
+    <div class="content">
+      <section id="quick">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li><strong>What it’s about:</strong> estimating <span class="pill">total fiber attenuation</span> at <span class="pill">λ = 600 nm</span> from known losses at <span class="pill">λ = 820 nm</span> plus a new absorption measurement.</li>
+          <li><strong>Key physics idea:</strong> <em>Rayleigh scattering</em> in glass scales approximately as <span class="pill">α<sub>s</sub> ∝ 1/λ⁴</span>, while absorption is measured independently (calorimetry → heat).</li>
+          <li><strong>Governing model:</strong> total attenuation in dB/km is additive:
+            <span class="pill">α<sub>tot</sub>(λ) = α<sub>abs</sub>(λ) + α<sub>s</sub>(λ)</span>.
+          </li>
+          <li><strong>Scattering scaling:</strong> if α<sub>s</sub>(λ<sub>ref</sub>) is known, then
+            <span class="pill">α<sub>s</sub>(λ)=α<sub>s</sub>(λ<sub>ref</sub>) (λ<sub>ref</sub>/λ)⁴</span>.
+          </li>
+          <li><strong>Given:</strong> at 820 nm, α<sub>abs</sub>=0.25 dB/km, α<sub>s</sub>=2.25 dB/km.</li>
+          <li><strong>New measurement:</strong> at 600 nm, calorimetry gives α<sub>abs</sub>(600 nm)=2 dB/km.</li>
+          <li><strong>Result type:</strong> numeric total attenuation at 600 nm (in dB/km).</li>
+          <li><strong>Final numeric answer:</strong> <strong>α<sub>tot</sub>(600 nm) ≈ 9.85 dB/km</strong>.</li>
+        </ul>
+
+        <div class="kpiRow" aria-label="Key results snapshot">
+          <div class="kpi">
+            <div class="label">Scattering at 600 nm (Rayleigh)</div>
+            <div class="val" id="kpiScatter">—</div>
+            <div class="subval">using α<sub>s</sub> ∝ 1/λ⁴</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Absorption at 600 nm (measured)</div>
+            <div class="val" id="kpiAbs">—</div>
+            <div class="subval">from calorimetry</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Total at 600 nm</div>
+            <div class="val" id="kpiTotal">—</div>
+            <div class="subval">α<sub>tot</sub>=α<sub>abs</sub>+α<sub>s</sub></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="part0">
+        <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+        <h3>Core definitions (symbols & units)</h3>
+        <ul>
+          <li><strong>Wavelength</strong> <span class="pill">λ</span> (nm, μm): vacuum wavelength of the light used in the fiber.</li>
+          <li><strong>Attenuation coefficient (loss)</strong> <span class="pill">α</span> (dB/km): decrease in optical power per unit length on a decibel scale.</li>
+          <li><strong>Absorption loss</strong> <span class="pill">α<sub>abs</sub></span> (dB/km): power converted to heat via material absorption (electronic/vibrational transitions, impurities, OH⁻, etc.).</li>
+          <li><strong>Scattering loss</strong> <span class="pill">α<sub>s</sub></span> (dB/km): power redirected out of the guided mode due to refractive-index fluctuations; in silica, Rayleigh scattering dominates in the visible/near-IR.</li>
+          <li><strong>Total loss</strong> <span class="pill">α<sub>tot</sub></span> (dB/km): combined effect of independent loss mechanisms:
+            <span class="pill">α<sub>tot</sub>=α<sub>abs</sub>+α<sub>s</sub>+…</span>.
+          </li>
+        </ul>
+
+        <h3>Physical meaning</h3>
+        <p>
+          In a guided fiber mode, optical power decreases with propagation distance because some power is:
+          (i) <em>absorbed</em> (becoming heat), and (ii) <em>scattered</em> into radiation modes that don’t remain guided.
+          Calorimetry measures heat generation, so it directly probes <strong>absorption</strong>, not scattering.
+        </p>
+
+        <div class="callout eq">
+          <strong>Key equation (additivity in dB/km):</strong>
+          <div class="eqLine">
+            <pre class="eqText" id="eqAdd">α_tot(λ) = α_abs(λ) + α_s(λ)</pre>
+            <button class="copyBtn" data-copy-target="eqAdd">Copy</button>
+          </div>
+          <p class="smallNote">
+            This additivity is appropriate when mechanisms are independent and each causes exponential power decay with distance.
+          </p>
+        </div>
+
+        <h3>Key law: Rayleigh scattering wavelength dependence</h3>
+        <p>
+          For small-scale refractive index fluctuations (much smaller than λ), the scattered power scales as
+          <span class="pill">∝ 1/λ⁴</span>. That makes short-wavelength light (blue/green) scatter much more strongly than
+          near-IR light.
+        </p>
+
+        <div class="callout eq">
+          <strong>Rayleigh scaling (used in this problem):</strong>
+          <div class="eqLine">
+            <pre class="eqText" id="eqRay">α_s(λ) = α_s(λ_ref) · (λ_ref/λ)^4</pre>
+            <button class="copyBtn" data-copy-target="eqRay">Copy</button>
+          </div>
+          <p class="smallNote">
+            Valid when Rayleigh scattering dominates and the fiber’s microscopic fluctuation spectrum does not change with λ.
+          </p>
+        </div>
+
+        <h3>Common models & why we use them</h3>
+        <ul>
+          <li><strong>Independent-loss model:</strong> treat absorption and scattering separately; then add in dB/km.</li>
+          <li><strong>Rayleigh-only scattering:</strong> for silica fibers away from strong resonances, scattering ≈ Rayleigh ∝ λ⁻⁴.</li>
+          <li><strong>Absorption from measurement:</strong> calorimetry isolates absorption (heat), avoiding assumptions about absorption’s λ-dependence.</li>
+        </ul>
+
+        <h3>Mini intuition examples</h3>
+        <ul>
+          <li>If you halve the wavelength, Rayleigh scattering increases by <span class="pill">2⁴ = 16×</span> (huge change!).</li>
+          <li>Even if absorption is small at one wavelength, scattering can dominate at shorter wavelengths.</li>
+        </ul>
+
+        <div class="callout warn">
+          <strong>What to watch for (pitfalls)</strong>
+          <ul>
+            <li><strong>Don’t scale absorption</strong> with λ⁻⁴ — that law is for Rayleigh scattering, not absorption.</li>
+            <li><strong>Don’t add linear coefficients</strong> incorrectly: if everything is already in <span class="pill">dB/km</span>, you can add those numbers directly.</li>
+            <li><strong>Use the correct reference wavelength</strong> in the ratio (λ<sub>ref</sub>/λ)⁴.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="part1">
+        <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+        <h3>Problem restatement (in plain words)</h3>
+        <p>
+          At λ = 820 nm, a fiber has known absorption and scattering losses. If we instead operate the same fiber at λ = 600 nm,
+          and experiments (calorimetry) measure the absorption loss at 600 nm, estimate the <em>total</em> attenuation at 600 nm.
+          Use the wavelength dependence of scattering to infer the scattering loss at 600 nm, then add absorption + scattering.
+        </p>
+
+        <h3>Given quantities</h3>
+        <ul>
+          <li>Reference wavelength: <span class="pill">λ<sub>ref</sub> = 820 nm</span></li>
+          <li>At 820 nm:
+            <span class="pill">α<sub>abs</sub>(820) = 0.25 dB/km</span>,
+            <span class="pill">α<sub>s</sub>(820) = 2.25 dB/km</span>
+          </li>
+          <li>Operating wavelength: <span class="pill">λ = 600 nm</span></li>
+          <li>Measured absorption at 600 nm (calorimetry):
+            <span class="pill">α<sub>abs</sub>(600) = 2 dB/km</span>
+          </li>
+        </ul>
+
+        <h3>Unknowns</h3>
+        <ul>
+          <li><span class="pill">α<sub>s</sub>(600)</span> — scattering loss at 600 nm</li>
+          <li><span class="pill">α<sub>tot</sub>(600)</span> — total attenuation at 600 nm</li>
+        </ul>
+
+        <h3>What must be found</h3>
+        <p>
+          The numeric total attenuation (in dB/km) at 600 nm:
+          <span class="pill">α<sub>tot</sub>(600) = α<sub>abs</sub>(600) + α<sub>s</sub>(600)</span>.
+        </p>
+
+        <h3>Relevant physical principles (and why they apply)</h3>
+        <ul>
+          <li><strong>Rayleigh scattering scaling</strong> <span class="pill">α<sub>s</sub> ∝ λ⁻⁴</span>: appropriate for small refractive-index fluctuations in glass; gives strong wavelength dependence.</li>
+          <li><strong>Additivity of losses in dB/km</strong>: absorption and scattering each cause exponential decay, so attenuation coefficients (expressed consistently) add.</li>
+          <li><strong>Calorimetry measures absorption</strong>: heat generation tracks absorbed optical power, not merely scattered power (which typically leaves as light).</li>
+        </ul>
+        <p class="smallNote">
+          We do <em>not</em> need waveguide dispersion, mode profiles, or Fresnel reflections here; the problem is purely about bulk loss mechanisms and scaling.
+        </p>
+
+        <div class="callout assume">
+          <strong>Assumptions (explicit)</strong>
+          <ul>
+            <li>Scattering in this wavelength range is dominated by Rayleigh scattering, so <span class="pill">α<sub>s</sub>(λ)=α<sub>s</sub>(λ<sub>ref</sub>)(λ<sub>ref</sub>/λ)⁴</span>.</li>
+            <li>Absorption and scattering are independent and can be added as dB/km.</li>
+            <li>The fiber is the same physical fiber (same microstructure), only the operating wavelength changes.</li>
+          </ul>
+        </div>
+
+        <h3>Possible approaches (compare 2–3)</h3>
+        <ol>
+          <li><strong>Direct scaling approach (best):</strong> scale scattering by λ⁻⁴ from 820 → 600 nm, then add measured absorption at 600 nm. <em>Pros:</em> uses provided measurement; minimal assumptions. <em>Cons:</em> relies on Rayleigh dominance.</li>
+          <li><strong>Fit a wavelength model for both losses:</strong> infer an absorption law from the two absorption points (820 and 600) and then compute for any λ. <em>Pros:</em> good for plotting/intuition. <em>Cons:</em> not required for the asked value (already measured at 600).</li>
+          <li><strong>Convert dB/km to Np/m and back:</strong> fully rigorous for exponential decay. <em>Pros:</em> general. <em>Cons:</em> unnecessary because all losses are already given in dB/km and add directly.</li>
+        </ol>
+
+        <p><strong>Chosen approach:</strong> Approach 1, because the problem provides the absorption at 600 nm directly (via calorimetry), and only scattering needs a wavelength scaling.</p>
+      </section>
+
+      <section id="part2">
+        <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+        <ol>
+          <li>
+            <strong>Goal:</strong> identify the total-loss model.<br/>
+            <strong>Tool:</strong> additivity of losses in dB/km: <span class="pill">α<sub>tot</sub>=α<sub>abs</sub>+α<sub>s</sub></span>.<br/>
+            <strong>Meaning:</strong> independent mechanisms contribute linearly to dB/km attenuation.
+          </li>
+          <li>
+            <strong>Goal:</strong> compute scattering at 600 nm from 820 nm reference.<br/>
+            <strong>Tool:</strong> Rayleigh scaling: <span class="pill">α<sub>s</sub>(λ)=α<sub>s</sub>(λ<sub>ref</sub>)(λ<sub>ref</sub>/λ)⁴</span>.<br/>
+            <strong>Meaning:</strong> shorter wavelengths scatter much more strongly.
+          </li>
+          <li>
+            <strong>Goal:</strong> insert numbers (keep units consistent: nm in ratio, dB/km outside).<br/>
+            <strong>Tool:</strong> arithmetic with dimensionless wavelength ratio.<br/>
+            <strong>Meaning:</strong> obtain α<sub>s</sub>(600) in dB/km.
+          </li>
+          <li>
+            <strong>Goal:</strong> add measured absorption at 600 nm to the computed scattering at 600 nm.<br/>
+            <strong>Tool:</strong> <span class="pill">α<sub>tot</sub>(600)=2 + α<sub>s</sub>(600)</span> (dB/km).<br/>
+            <strong>Meaning:</strong> final total attenuation at the operating wavelength.
+          </li>
+          <li>
+            <strong>Goal:</strong> sanity checks.<br/>
+            <strong>Tool:</strong> scaling sense check (loss increases as λ decreases), units check (dB/km).<br/>
+            <strong>Meaning:</strong> confirm result is physically plausible.
+          </li>
+        </ol>
+
+        <div class="callout warn">
+          <strong>Common mistakes & quick tips</strong>
+          <ul>
+            <li><strong>Tip:</strong> compute the ratio first: <span class="pill">(820/600) ≈ 1.367</span>, then raise to the 4th power.</li>
+            <li><strong>Mistake:</strong> using (600/820)⁴ instead of (820/600)⁴ (this would incorrectly reduce scattering).</li>
+            <li><strong>Mistake:</strong> adding the 820 nm absorption (0.25) instead of the measured 600 nm absorption (2).</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="part3">
+        <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+        <h3>Physical intuition first</h3>
+        <p>
+          Going from 820 nm to 600 nm is a shift to a shorter wavelength. Rayleigh scattering grows very rapidly as wavelength decreases
+          (as 1/λ⁴), so we expect the scattering loss to increase substantially—possibly becoming the dominant contribution.
+          Absorption at 600 nm is given as 2 dB/km, which is already larger than the 820 nm absorption (0.25 dB/km), so absorption also rises here,
+          but the problem tells us to <em>use the measured value</em> rather than model it.
+        </p>
+
+        <div class="callout eq">
+          <strong>Step 1: Start from the total-loss model</strong>
+          <div class="eqLine">
+            <pre class="eqText">Define:
+α_tot(λ) = total attenuation (dB/km)
+α_abs(λ) = absorption loss (dB/km)
+α_s(λ)   = scattering loss (dB/km)
+
+Then:
+α_tot(λ) = α_abs(λ) + α_s(λ)</pre>
+            <button class="copyBtn" data-copy-text="α_tot(λ) = α_abs(λ) + α_s(λ)">Copy</button>
+          </div>
+          <p class="smallNote">
+            Because both mechanisms cause exponential decay of guided power, their attenuation coefficients add (when expressed consistently).
+          </p>
+        </div>
+
+        <h3>Step 2: Compute the scattering loss at 600 nm</h3>
+        <p>
+          Use Rayleigh scaling with a reference point at 820 nm:
+        </p>
+
+        <div class="callout eq">
+          <div class="eqLine">
+            <pre class="eqText">Given:
+λ_ref = 820 nm
+α_s(λ_ref) = α_s(820 nm) = 2.25 dB/km
+
+Rayleigh scaling:
+α_s(λ) = α_s(λ_ref) · (λ_ref/λ)^4</pre>
+            <button class="copyBtn" data-copy-text="α_s(λ) = α_s(λ_ref) · (λ_ref/λ)^4">Copy</button>
+          </div>
+        </div>
+
+        <p>
+          Now insert λ = 600 nm:
+        </p>
+
+        <div class="callout eq">
+          <div class="eqLine">
+            <pre class="eqText" id="eqNum">α_s(600) = 2.25 · (820/600)^4  (dB/km)</pre>
+            <button class="copyBtn" data-copy-target="eqNum">Copy</button>
+          </div>
+        </div>
+
+        <p>
+          Compute the wavelength ratio carefully:
+        </p>
+        <ul>
+          <li><span class="pill">820/600 = 1.366666…</span></li>
+          <li>Raise to the 4th power: <span class="pill">(1.366666…)⁴ ≈ 3.488593…</span></li>
+          <li>Multiply by 2.25 dB/km: <span class="pill">α<sub>s</sub>(600) ≈ 2.25 × 3.488593 ≈ 7.8493 dB/km</span></li>
+        </ul>
+
+        <div class="callout ans">
+          <strong>Intermediate result:</strong>
+          <div class="eqLine">
+            <pre class="eqText" id="scatterResult">α_s(600 nm) ≈ 7.85 dB/km</pre>
+            <button class="copyBtn" data-copy-target="scatterResult">Copy</button>
+          </div>
+        </div>
+
+        <h3>Step 3: Add the measured absorption at 600 nm</h3>
+        <p>
+          The calorimetric measurement reports heat generated by absorption, so we use:
+          <span class="pill">α<sub>abs</sub>(600 nm)=2 dB/km</span>.
+        </p>
+
+        <div class="callout ans">
+          <strong>Final calculation:</strong>
+          <div class="eqLine">
+            <pre class="eqText" id="finalEq">α_tot(600) = α_abs(600) + α_s(600) = 2.00 + 7.85 ≈ 9.85 dB/km</pre>
+            <button class="copyBtn" data-copy-target="finalEq">Copy</button>
+          </div>
+        </div>
+
+        <div class="callout ans">
+          <strong>Final Answer (boxed):</strong>
+          <div class="eqLine">
+            <pre class="eqText" id="finalAnswer">Total attenuation at λ = 600 nm:  α_tot ≈ 9.85 dB/km</pre>
+            <button class="copyBtn" data-copy-target="finalAnswer">Copy</button>
+          </div>
+        </div>
+
+        <h3>Sanity checks</h3>
+        <ul>
+          <li><strong>Units:</strong> the ratio (820/600) is dimensionless; multiplying 2.25 dB/km keeps units as dB/km.</li>
+          <li><strong>Trend check:</strong> since 600 nm &lt; 820 nm, Rayleigh scattering should increase; we found 7.85 &gt; 2.25 (correct direction).</li>
+          <li><strong>Dominance:</strong> scattering (≈7.85) dominates over absorption (2) at 600 nm, consistent with strong λ⁻⁴ scaling.</li>
+        </ul>
+
+        <p>
+          <strong>Connection to the diagram & plots:</strong> the diagram shows that absorption converts guided light into heat inside the core,
+          while Rayleigh scattering redirects light out of the guided mode. The main plot below visualizes how rapidly the scattering curve rises as λ decreases,
+          and the secondary plot shows the contribution split at the selected wavelength (default 600 nm).
+        </p>
+
+        <div class="vizWrap" aria-label="Interactive visualization area">
+          <div class="canvasCard">
+            <div class="canvasTitle">
+              <h4>Diagram: Guided Fiber Loss Mechanisms</h4>
+              <span class="pill" id="pillLambda">λ = 600 nm</span>
+            </div>
+            <canvas id="diagram"></canvas>
+            <div class="controls">
+              <div class="ctrl">
+                <label for="lambdaSlider">Interactive control: wavelength λ (nm)</label>
+                <div class="row">
+                  <input id="lambdaSlider" type="range" min="450" max="950" step="1" value="600" />
+                </div>
+                <div class="smallNote">Slide to see how scattering and total loss change with wavelength.</div>
+              </div>
+              <div class="ctrl">
+                <label for="absModel">Absorption model (for plotting beyond measured points)</label>
+                <select id="absModel">
+                  <option value="measured600">Use measured α_abs(600)=2 dB/km, constant outside (simple)</option>
+                  <option value="fitPower">Power-law fit through α_abs(820)=0.25 and α_abs(600)=2 (example model)</option>
+                </select>
+                <div class="smallNote">
+                  The <em>answer</em> uses the measured 600 nm value; the model choice mainly affects the plotted absorption curve.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="canvasCard">
+            <div class="canvasTitle">
+              <h4>Main Plot: Attenuation vs Wavelength</h4>
+              <span class="pill" id="pillTotals">α_tot(λ) and components</span>
+            </div>
+            <canvas id="plotMain"></canvas>
+            <div class="canvasTitle" style="margin-top:10px;">
+              <h4>Secondary Plot: Contribution Split at Selected λ</h4>
+              <span class="pill" id="pillSplit">Absorption vs Scattering</span>
+            </div>
+            <canvas id="plotSecondary"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section id="part4">
+        <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+        <h3>Re-interpreting the final formula</h3>
+        <p>
+          The result comes from a simple but powerful decomposition:
+          <span class="pill">α<sub>tot</sub>(λ)=α<sub>abs</sub>(λ)+α<sub>s</sub>(λ)</span>.
+          At 600 nm, we used a <em>measured</em> α<sub>abs</sub>(600), while α<sub>s</sub>(600) was predicted from the Rayleigh law.
+          So the total is dominated by the term that grows fastest with decreasing λ, i.e., scattering.
+        </p>
+
+        <h3>How changing parameters affects the outcome (connect to plots)</h3>
+        <ul>
+          <li><strong>Decrease λ:</strong> scattering rises rapidly as λ⁻⁴ → total loss shoots up (main plot).</li>
+          <li><strong>Increase λ:</strong> scattering falls quickly; total loss approaches absorption-dominated behavior.</li>
+          <li><strong>Absorption model choice:</strong> changes the absorption curve in the main plot, but the computed 600 nm answer still uses α<sub>abs</sub>(600)=2 dB/km.</li>
+        </ul>
+
+        <h3>Alternative derivation idea (brief)</h3>
+        <p>
+          You could work in linear attenuation units (Nepers per meter) where power decays as
+          <span class="pill">P(z)=P(0)e<sup>-γz</sup></span>,
+          convert all dB/km values to γ, add γ’s, then convert back to dB/km. Because every value here is already in dB/km,
+          direct addition is equivalent and simpler.
+        </p>
+
+        <h3>Concept checks (quick self-test)</h3>
+        <ul>
+          <li><strong>Q:</strong> Why does calorimetry isolate absorption rather than scattering?<br/>
+              <strong>A:</strong> absorption converts optical energy into heat locally; scattering redirects light without necessarily depositing energy as heat.</li>
+          <li><strong>Q:</strong> If λ decreases by 10%, what happens to Rayleigh scattering roughly?<br/>
+              <strong>A:</strong> it increases by about <span class="pill">(1/0.9)⁴ ≈ 1.52</span> (≈52% increase).</li>
+          <li><strong>Q:</strong> Can you add losses in dB/km directly?<br/>
+              <strong>A:</strong> yes, when they represent independent exponential attenuation processes expressed in the same dB-per-length units.</li>
+          <li><strong>Q:</strong> Which term dominates at 600 nm here, and why?<br/>
+              <strong>A:</strong> scattering dominates because it scales as λ⁻⁴ and grows strongly as λ decreases.</li>
+        </ul>
+      </section>
+
+      <section id="part5">
+        <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+
+        <h3>What each canvas shows</h3>
+        <ul>
+          <li><strong>Diagram (left):</strong> a simplified fiber cross-section and guided beam with two loss channels:
+            <em>absorption → heat</em> and <em>Rayleigh scattering → light leaking out</em>. The selected wavelength λ is annotated.</li>
+          <li><strong>Main plot (right, top):</strong> curves vs wavelength:
+            <span class="pill">α<sub>s</sub>(λ)</span>, <span class="pill">α<sub>abs</sub>(λ)</span> (model), and <span class="pill">α<sub>tot</sub>(λ)</span>.
+            A vertical marker indicates the selected λ.</li>
+          <li><strong>Secondary plot (right, bottom):</strong> a bar-style split at the selected λ showing the relative sizes of
+            absorption and scattering and their sum.</li>
+        </ul>
+
+        <h3>Interactive controls</h3>
+        <ul>
+          <li><strong>Wavelength slider:</strong> changes λ (nm). This updates:
+            (i) the diagram label, (ii) the marker on the main plot, (iii) the split in the secondary plot, and (iv) the numeric readouts.</li>
+          <li><strong>Absorption model selector:</strong> controls how α<sub>abs</sub>(λ) is drawn away from measured points.
+            The solution’s numeric answer at 600 nm still uses the measured value <span class="pill">α<sub>abs</sub>(600)=2 dB/km</span>.</li>
+        </ul>
+
+        <div class="callout warn">
+          <strong>Reading tip:</strong>
+          In the main plot, notice how the scattering curve steeply rises at short wavelengths—this is the visual signature of the λ⁻⁴ law.
+          Try sliding λ from 900 → 500 nm and watch the total curve follow scattering.
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    Built as a self-contained learning article (vanilla HTML/CSS/JS). Copy buttons copy plain text equations/results.
+  </footer>
+
+  <script>
+    // ---------------------------
+    // Problem constants (given)
+    // ---------------------------
+    const lambdaRef = 820; // nm
+    const alphaSRef = 2.25; // dB/km at 820 nm
+    const alphaAbsRef = 0.25; // dB/km at 820 nm (not required for final answer, but used for optional plotting model)
+    const lambdaMeasured = 600; // nm
+    const alphaAbsMeasured = 2.0; // dB/km at 600 nm (calorimetry)
+    // Rayleigh exponent
+    const rayExp = 4;
+
+    // Optional absorption model: power-law exponent fitted through (820,0.25) and (600,2)
+    // alphaAbs(λ) = alphaAbsRef * (lambdaRef/λ)^m, where m solves alphaAbsMeasured = alphaAbsRef*(lambdaRef/lambdaMeasured)^m
+    const mFit = Math.log(alphaAbsMeasured / alphaAbsRef) / Math.log(lambdaRef / lambdaMeasured);
+
+    // ---------------------------
+    // Utility: copy to clipboard
+    // ---------------------------
+    function copyTextToClipboard(text){
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(()=>fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+    function fallbackCopy(text){
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position='fixed';
+      ta.style.left='-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch(e) {}
+      document.body.removeChild(ta);
+    }
+
+    document.querySelectorAll('.copyBtn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const tgt = btn.getAttribute('data-copy-target');
+        const direct = btn.getAttribute('data-copy-text');
+        let text = direct || '';
+        if (!text && tgt){
+          const el = document.getElementById(tgt);
+          if (el) text = el.textContent.trim();
+        }
+        if (text) copyTextToClipboard(text);
+        btn.textContent = "Copied!";
+        setTimeout(()=>btn.textContent="Copy", 850);
+      });
+    });
+
+    // ---------------------------
+    // Models
+    // ---------------------------
+    function alphaScatter(lambdaNm){
+      return alphaSRef * Math.pow(lambdaRef / lambdaNm, rayExp);
+    }
+
+    // For plotting (not needed for final answer at 600): choose model by selector
+    function alphaAbsModel(lambdaNm, modelName){
+      if (modelName === 'fitPower'){
+        // power-law through (820,0.25) and (600,2)
+        return alphaAbsRef * Math.pow(lambdaRef / lambdaNm, mFit);
+      }
+      // simple: use measured 600 nm absorption as constant outside (keeps focus on scattering)
+      // But ensure it passes through the measured point.
+      return alphaAbsMeasured;
+    }
+
+    // For the actual asked answer at 600 nm: absorption is measured -> fixed
+    function alphaAbsUsed(lambdaNm){
+      // In this problem statement, only the 600 nm value is newly measured; we use it when lambdaNm==600 for the answer.
+      // For live slider readouts, we display the chosen model for absorption curve, but also show the known measured point.
+      return alphaAbsMeasured;
+    }
+
+    // ---------------------------
+    // Canvas helpers (HiDPI, axes)
+    // ---------------------------
+    function setupHiDPICanvas(canvas){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(2, Math.floor(rect.width * dpr));
+      const h = Math.max(2, Math.floor(rect.height * dpr));
+      if (canvas.width !== w || canvas.height !== h){
+        canvas.width = w;
+        canvas.height = h;
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.scale(dpr, dpr);
+      return {ctx, w: rect.width, h: rect.height, dpr};
+    }
+
+    function niceTicks(min, max, targetCount){
+      const span = max - min;
+      if (span <= 0) return {step:1, start:min, end:max};
+      const rawStep = span / Math.max(1, targetCount);
+      const pow10 = Math.pow(10, Math.floor(Math.log10(rawStep)));
+      const candidates = [1,2,5,10].map(m=>m*pow10);
+      let step = candidates[0];
+      for (const c of candidates){
+        if (rawStep <= c) { step = c; break; }
+        step = c;
+      }
+      const start = Math.floor(min/step)*step;
+      const end = Math.ceil(max/step)*step;
+      return {step, start, end};
+    }
+
+    function drawAxes(ctx, box, xMin, xMax, yMin, yMax, xLabel, yLabel, title){
+      const {x, y, w, h} = box;
+
+      // Title
+      ctx.save();
+      ctx.fillStyle = "rgba(233,238,252,0.95)";
+      ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(title, x+8, y+18);
+      ctx.restore();
+
+      // Plot area margins inside box
+      const mL = 54, mR = 14, mT = 34, mB = 44;
+      const px = x + mL;
+      const py = y + mT;
+      const pw = w - mL - mR;
+      const ph = h - mT - mB;
+
+      // Background
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.14)";
+      ctx.fillRect(px, py, pw, ph);
+      ctx.restore();
+
+      // Grid + ticks
+      const xt = niceTicks(xMin, xMax, 7);
+      const yt = niceTicks(yMin, yMax, 6);
+
+      // Grid lines
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.07)";
+      ctx.lineWidth = 1;
+
+      // vertical grid
+      for (let xv = xt.start; xv <= xt.end + 1e-9; xv += xt.step){
+        const t = (xv - xMin) / (xMax - xMin);
+        const gx = px + t * pw;
+        ctx.beginPath();
+        ctx.moveTo(gx, py);
+        ctx.lineTo(gx, py + ph);
+        ctx.stroke();
+      }
+      // horizontal grid
+      for (let yv = yt.start; yv <= yt.end + 1e-9; yv += yt.step){
+        const t = (yv - yMin) / (yMax - yMin);
+        const gy = py + ph - t * ph;
+        ctx.beginPath();
+        ctx.moveTo(px, gy);
+        ctx.lineTo(px + pw, gy);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Axes border
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(px, py, pw, ph);
+      ctx.restore();
+
+      // Tick labels
+      ctx.save();
+      ctx.fillStyle = "rgba(185,195,230,0.9)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+
+      // x labels
+      for (let xv = xt.start; xv <= xt.end + 1e-9; xv += xt.step){
+        if (xv < xMin-1e-9 || xv > xMax+1e-9) continue;
+        const t = (xv - xMin) / (xMax - xMin);
+        const gx = px + t * pw;
+        ctx.fillText(String(Math.round(xv)), gx - 10, py + ph + 18);
+      }
+      // y labels
+      for (let yv = yt.start; yv <= yt.end + 1e-9; yv += yt.step){
+        if (yv < yMin-1e-9 || yv > yMax+1e-9) continue;
+        const t = (yv - yMin) / (yMax - yMin);
+        const gy = py + ph - t * ph;
+        ctx.fillText((Math.abs(yv) >= 10 ? yv.toFixed(0) : yv.toFixed(1)), x + 8, gy + 4);
+      }
+      ctx.restore();
+
+      // Axis labels
+      ctx.save();
+      ctx.fillStyle = "rgba(233,238,252,0.9)";
+      ctx.font = "600 13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(xLabel, px + pw/2 - ctx.measureText(xLabel).width/2, y + h - 12);
+
+      // y label rotated
+      ctx.translate(x + 14, py + ph/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(yLabel, -ctx.measureText(yLabel).width/2, 0);
+      ctx.restore();
+
+      function xMap(xv){ return px + (xv - xMin) * pw / (xMax - xMin); }
+      function yMap(yv){ return py + ph - (yv - yMin) * ph / (yMax - yMin); }
+
+      return {px, py, pw, ph, xMap, yMap};
+    }
+
+    function drawLine(ctx, xMap, yMap, xs, ys, strokeStyle){
+      ctx.save();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i=0;i<xs.length;i++){
+        const X = xMap(xs[i]);
+        const Y = yMap(ys[i]);
+        if (i===0) ctx.moveTo(X,Y);
+        else ctx.lineTo(X,Y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLegend(ctx, x, y, items){
+      ctx.save();
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      const pad = 10;
+      const lineH = 18;
+      let w = 0;
+      items.forEach(it=>{
+        w = Math.max(w, ctx.measureText(it.label).width);
+      });
+      const boxW = w + 52;
+      const boxH = items.length*lineH + pad*2;
+      ctx.fillStyle = "rgba(0,0,0,0.25)";
+      ctx.strokeStyle = "rgba(255,255,255,0.14)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      roundRect(ctx, x, y, boxW, boxH, 12);
+      ctx.fill(); ctx.stroke();
+
+      items.forEach((it, i)=>{
+        const yy = y + pad + i*lineH + 12;
+        // line sample
+        ctx.strokeStyle = it.color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x+12, yy-4);
+        ctx.lineTo(x+30, yy-4);
+        ctx.stroke();
+        // label
+        ctx.fillStyle = "rgba(233,238,252,0.92)";
+        ctx.fillText(it.label, x+36, yy);
+      });
+      ctx.restore();
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    // ---------------------------
+    // Drawing: Diagram
+    // ---------------------------
+    function drawDiagram(canvas, lambdaNm){
+      const {ctx, w, h} = setupHiDPICanvas(canvas);
+      ctx.clearRect(0,0,w,h);
+
+      // Panel padding
+      const pad = 14;
+      const W = w, H = h;
+
+      // Title-ish label
+      ctx.save();
+      ctx.fillStyle = "rgba(185,195,230,0.9)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.fillText(`Selected λ = ${Math.round(lambdaNm)} nm`, pad, pad+10);
+      ctx.restore();
+
+      // Fiber cross-section (core/cladding)
+      const cx = W*0.36;
+      const cy = H*0.56;
+      const rClad = Math.min(W,H)*0.22;
+      const rCore = rClad*0.52;
+
+      // Cladding
+      ctx.save();
+      ctx.fillStyle = "rgba(122,162,255,0.10)";
+      ctx.strokeStyle = "rgba(122,162,255,0.35)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rClad, 0, Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Core
+      ctx.fillStyle = "rgba(125,255,207,0.10)";
+      ctx.strokeStyle = "rgba(125,255,207,0.35)";
+      ctx.beginPath();
+      ctx.arc(cx, cy, rCore, 0, Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      // Guided mode beam along x direction (stylized)
+      const beamY = cy;
+      const x0 = cx - rCore*0.85;
+      const x1 = cx + rCore*0.85;
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(233,238,252,0.85)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x0, beamY);
+      ctx.lineTo(x1, beamY);
+      ctx.stroke();
+
+      // Arrow head
+      ctx.fillStyle = "rgba(233,238,252,0.85)";
+      ctx.beginPath();
+      ctx.moveTo(x1, beamY);
+      ctx.lineTo(x1-10, beamY-6);
+      ctx.lineTo(x1-10, beamY+6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // Absorption: heat squiggles in core
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,204,102,0.85)";
+      ctx.lineWidth = 2;
+      for (let i=0;i<3;i++){
+        const sx = cx - rCore*0.2 + i*10;
+        const sy = cy + rCore*0.2 + i*4;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.bezierCurveTo(sx+6, sy-8, sx+12, sy+8, sx+18, sy-2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "rgba(255,204,102,0.95)";
+      ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("Absorption → heat", cx - rCore*0.2, cy + rCore + 28);
+      ctx.restore();
+
+      // Scattering: rays leaving the core
+      ctx.save();
+      ctx.strokeStyle = "rgba(122,162,255,0.85)";
+      ctx.lineWidth = 2;
+      const rays = [
+        {a:-0.8, len: rClad*1.1},
+        {a:-0.3, len: rClad*1.2},
+        {a: 0.35, len: rClad*1.15},
+        {a: 0.85, len: rClad*1.05},
+      ];
+      rays.forEach((r, idx)=>{
+        const ax = cx + rCore*0.15;
+        const ay = cy + (idx-1.5)*6;
+        const bx = ax + r.len*Math.cos(r.a);
+        const by = ay + r.len*Math.sin(r.a);
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(bx, by);
+        ctx.stroke();
+        // small arrow
+        const ang = Math.atan2(by-ay, bx-ax);
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx-8*Math.cos(ang-0.35), by-8*Math.sin(ang-0.35));
+        ctx.lineTo(bx-8*Math.cos(ang+0.35), by-8*Math.sin(ang+0.35));
+        ctx.closePath();
+        ctx.fillStyle = "rgba(122,162,255,0.85)";
+        ctx.fill();
+      });
+
+      ctx.fillStyle = "rgba(122,162,255,0.95)";
+      ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("Rayleigh scattering (leakage)", cx + rClad*0.55, cy - rClad*0.85);
+      ctx.restore();
+
+      // Labels core/cladding
+      ctx.save();
+      ctx.fillStyle = "rgba(233,238,252,0.9)";
+      ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("Core", cx - 14, cy - 6);
+      ctx.fillStyle = "rgba(185,195,230,0.85)";
+      ctx.fillText("Cladding", cx - rClad - 4, cy - rClad - 10);
+      ctx.restore();
+    }
+
+    // ---------------------------
+    // Drawing: Main plot (attenuation vs wavelength)
+    // ---------------------------
+    function drawMainPlot(canvas, lambdaSel, absModelName){
+      const {ctx, w, h} = setupHiDPICanvas(canvas);
+      ctx.clearRect(0,0,w,h);
+
+      const xMin = 450, xMax = 950;
+      // compute y range from data
+      const xs = [];
+      const ysS = [];
+      const ysA = [];
+      const ysT = [];
+      for (let L=xMin; L<=xMax; L+=5){
+        xs.push(L);
+        const s = alphaScatter(L);
+        const a = alphaAbsModel(L, absModelName);
+        ysS.push(s); ysA.push(a); ysT.push(s+a);
+      }
+      const yMax = Math.max(...ysT, 10);
+      const yMin = 0;
+
+      const box = {x:0, y:0, w:w, h:h};
+      const ax = drawAxes(ctx, box, xMin, xMax, yMin, yMax*1.05, "Wavelength λ (nm)", "Attenuation α (dB/km)", "Attenuation vs Wavelength");
+
+      // Curves
+      drawLine(ctx, ax.xMap, ax.yMap, xs, ysS, "rgba(122,162,255,0.95)");
+      drawLine(ctx, ax.xMap, ax.yMap, xs, ysA, "rgba(255,204,102,0.92)");
+      drawLine(ctx, ax.xMap, ax.yMap, xs, ysT, "rgba(125,255,207,0.92)");
+
+      // Marker at selected lambda
+      ctx.save();
+      const X = ax.xMap(lambdaSel);
+      ctx.strokeStyle = "rgba(233,238,252,0.75)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6,6]);
+      ctx.beginPath();
+      ctx.moveTo(X, ax.py);
+      ctx.lineTo(X, ax.py + ax.ph);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // marker dots
+      const sSel = alphaScatter(lambdaSel);
+      const aSel = alphaAbsModel(lambdaSel, absModelName);
+      const tSel = sSel + aSel;
+      const pts = [
+        {y:sSel, color:"rgba(122,162,255,0.95)"},
+        {y:aSel, color:"rgba(255,204,102,0.92)"},
+        {y:tSel, color:"rgba(125,255,207,0.92)"}
+      ];
+      pts.forEach(p=>{
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(X, ax.yMap(p.y), 4.2, 0, Math.PI*2);
+        ctx.fill();
+      });
+
+      // annotate measured points at 820 and 600 for absorption (if visible)
+      function drawPoint(lam, val, label){
+        const x = ax.xMap(lam);
+        const y = ax.yMap(val);
+        ctx.fillStyle = "rgba(255,204,102,0.95)";
+        ctx.beginPath();
+        ctx.arc(x, y, 4.2, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(233,238,252,0.86)";
+        ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.fillText(label, x+8, y-8);
+      }
+      drawPoint(lambdaRef, alphaAbsRef, "abs @820");
+      drawPoint(lambdaMeasured, alphaAbsMeasured, "abs @600");
+
+      ctx.restore();
+
+      // Legend
+      drawLegend(ctx, ax.px + ax.pw - 170, ax.py + 10, [
+        {label:"Scattering α_s", color:"rgba(122,162,255,0.95)"},
+        {label:"Absorption α_abs", color:"rgba(255,204,102,0.92)"},
+        {label:"Total α_tot", color:"rgba(125,255,207,0.92)"},
+      ]);
+    }
+
+    // ---------------------------
+    // Drawing: Secondary plot (split at selected lambda)
+    // ---------------------------
+    function drawSecondaryPlot(canvas, lambdaSel, absModelName){
+      const {ctx, w, h} = setupHiDPICanvas(canvas);
+      ctx.clearRect(0,0,w,h);
+
+      const s = alphaScatter(lambdaSel);
+      const a = alphaAbsModel(lambdaSel, absModelName);
+      const t = s + a;
+
+      const xMin = 0, xMax = 3; // category axis (0..3)
+      const yMin = 0, yMax = Math.max(10, t*1.15);
+
+      const box = {x:0, y:0, w:w, h:h};
+      const ax = drawAxes(ctx, box, xMin, xMax, yMin, yMax, "Category", "Attenuation (dB/km)", "Contribution Split at Selected λ");
+
+      // Category positions
+      const cats = [
+        {x:0.8, val:a, label:"Absorption"},
+        {x:1.8, val:s, label:"Scattering"},
+        {x:2.8, val:t, label:"Total"}
+      ];
+      const barW = ax.pw * 0.12;
+
+      ctx.save();
+      cats.forEach((c, i)=>{
+        const Xc = ax.xMap(c.x);
+        const Y0 = ax.yMap(0);
+        const Yv = ax.yMap(c.val);
+        const hBar = Y0 - Yv;
+        const xLeft = Xc - barW/2;
+
+        const color = (i===0) ? "rgba(255,204,102,0.88)" : (i===1) ? "rgba(122,162,255,0.90)" : "rgba(125,255,207,0.88)";
+        ctx.fillStyle = color;
+        ctx.strokeStyle = "rgba(255,255,255,0.16)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        roundRect(ctx, xLeft, Yv, barW, hBar, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        // value label
+        ctx.fillStyle = "rgba(233,238,252,0.92)";
+        ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+        const txt = c.val.toFixed(2);
+        ctx.fillText(txt, xLeft + barW/2 - ctx.measureText(txt).width/2, Yv - 8);
+
+        // category label
+        ctx.fillStyle = "rgba(185,195,230,0.9)";
+        ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.fillText(c.label, xLeft + barW/2 - ctx.measureText(c.label).width/2, ax.py + ax.ph + 18);
+      });
+
+      // If selected lambda equals 600, highlight that absorption is measured (not model-dependent)
+      if (Math.round(lambdaSel) === lambdaMeasured){
+        ctx.fillStyle = "rgba(255,204,102,0.95)";
+        ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        const note = "At 600 nm: absorption is measured (calorimetry)";
+        ctx.fillText(note, ax.px + 8, ax.py + 18);
+      }
+      ctx.restore();
+    }
+
+    // ---------------------------
+    // Live update glue
+    // ---------------------------
+    const diagram = document.getElementById('diagram');
+    const plotMain = document.getElementById('plotMain');
+    const plotSecondary = document.getElementById('plotSecondary');
+    const lambdaSlider = document.getElementById('lambdaSlider');
+    const absModelSel = document.getElementById('absModel');
+
+    const pillLambda = document.getElementById('pillLambda');
+    const kpiScatter = document.getElementById('kpiScatter');
+    const kpiAbs = document.getElementById('kpiAbs');
+    const kpiTotal = document.getElementById('kpiTotal');
+
+    function formatDbkm(x){
+      return `${x.toFixed(2)} dB/km`;
+    }
+
+    function updateKPIs(lambdaNm){
+      const s600 = alphaScatter(600);
+      // For KPIs, show the actual problem's 600 nm numbers (measured absorption at 600)
+      const a600 = alphaAbsMeasured;
+      const t600 = s600 + a600;
+      kpiScatter.textContent = formatDbkm(s600);
+      kpiAbs.textContent = formatDbkm(a600);
+      kpiTotal.textContent = formatDbkm(t600);
+    }
+
+    function updateAll(){
+      const lambdaSel = Number(lambdaSlider.value);
+      const absModelName = absModelSel.value;
+
+      pillLambda.textContent = `λ = ${Math.round(lambdaSel)} nm`;
+      document.getElementById('pillSplit').textContent = `Split at λ = ${Math.round(lambdaSel)} nm`;
+
+      // Update equation snippets with computed 600 values (fixed for the asked problem)
+      const s600 = alphaScatter(600);
+      document.getElementById('scatterResult').textContent = `α_s(600 nm) ≈ ${s600.toFixed(2)} dB/km`;
+      const t600 = s600 + alphaAbsMeasured;
+      document.getElementById('finalEq').textContent = `α_tot(600) = α_abs(600) + α_s(600) = 2.00 + ${s600.toFixed(2)} ≈ ${t600.toFixed(2)} dB/km`;
+      document.getElementById('finalAnswer').textContent = `Total attenuation at λ = 600 nm:  α_tot ≈ ${t600.toFixed(2)} dB/km`;
+
+      // Draw visuals
+      drawDiagram(diagram, lambdaSel);
+      drawMainPlot(plotMain, lambdaSel, absModelName);
+      drawSecondaryPlot(plotSecondary, lambdaSel, absModelName);
+
+      // KPIs (fixed to the asked 600 nm outcome)
+      updateKPIs(lambdaSel);
+    }
+
+    // Initial render
+    updateAll();
+
+    // Events
+    lambdaSlider.addEventListener('input', updateAll);
+    absModelSel.addEventListener('change', updateAll);
+    window.addEventListener('resize', updateAll);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Lorentzian LED Spectrum: Linewidth, Coherence Time & Coherence Length</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.085);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.72);
+      --faint: rgba(255,255,255,0.55);
+      --accent:#7ee4ff;
+      --accent2:#b8ff9a;
+      --warn:#ffd166;
+      --bad:#ff6b6b;
+      --good:#45f0b4;
+      --line: rgba(255,255,255,0.12);
+      --shadow: 0 18px 60px rgba(0,0,0,0.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 900px at 18% 20%, rgba(126,228,255,0.18), transparent 55%),
+        radial-gradient(1000px 800px at 78% 25%, rgba(184,255,154,0.12), transparent 55%),
+        radial-gradient(900px 700px at 45% 90%, rgba(255,209,102,0.10), transparent 60%),
+        linear-gradient(180deg, #070a14 0%, #0b1020 50%, #070a14 100%);
+      overflow-x:hidden;
+    }
+
+    header{
+      position:relative;
+      padding: 44px 18px 22px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px){
+      .hero{grid-template-columns: 1fr}
+    }
+
+    .titleCard{
+      background: linear-gradient(180deg, rgba(255,255,255,0.085), rgba(255,255,255,0.045));
+      border:1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px 18px 14px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .titleCard:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(700px 220px at 10% 0%, rgba(126,228,255,0.22), transparent 60%),
+                  radial-gradient(600px 240px at 90% 10%, rgba(184,255,154,0.18), transparent 62%);
+      filter: blur(2px);
+      opacity: 0.9;
+      pointer-events:none;
+    }
+
+    .titleCard > *{position:relative}
+
+    h1{
+      margin:0 0 8px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      font-size: clamp(1.7rem, 2.2vw + 1rem, 2.55rem);
+    }
+
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      line-height:1.55;
+      font-size: 1.02rem;
+      max-width: 78ch;
+    }
+
+    .meta{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .pill{
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(0,0,0,0.18);
+      color: var(--muted);
+      font-size: 0.92rem;
+      backdrop-filter: blur(6px);
+    }
+    .pill strong{color:var(--text); font-weight:700}
+
+    .toc{
+      position: sticky;
+      top: 12px;
+      align-self: start;
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.035));
+      border:1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 12px;
+      box-shadow: var(--shadow);
+    }
+    .toc h2{
+      margin: 2px 6px 8px;
+      font-size: 0.98rem;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      color: var(--text);
+      text-decoration:none;
+      border:1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size: 0.96rem;
+    }
+    .toc a:hover{
+      background: rgba(126,228,255,0.10);
+      border-color: rgba(126,228,255,0.24);
+      transform: translateY(-1px);
+    }
+
+    main{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 18px 64px;
+    }
+
+    section{
+      margin-top: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border:1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.22);
+    }
+    section h2{
+      margin: 2px 0 10px;
+      font-size: 1.35rem;
+      letter-spacing: -0.01em;
+    }
+    section h3{
+      margin: 14px 0 8px;
+      font-size: 1.08rem;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid2{grid-template-columns:1fr}
+    }
+
+    .callout{
+      background: rgba(0,0,0,0.18);
+      border:1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 14px;
+      position:relative;
+      overflow:hidden;
+    }
+    .callout:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(420px 190px at 0% 0%, rgba(126,228,255,0.17), transparent 60%);
+      opacity:0.7;
+      pointer-events:none;
+    }
+    .callout > *{position:relative}
+
+    .callout.warn:before{background: radial-gradient(420px 190px at 0% 0%, rgba(255,209,102,0.18), transparent 60%)}
+    .callout.good:before{background: radial-gradient(420px 190px at 0% 0%, rgba(69,240,180,0.18), transparent 60%)}
+    .callout.bad:before{background: radial-gradient(420px 190px at 0% 0%, rgba(255,107,107,0.18), transparent 60%)}
+
+    ul{margin: 8px 0 0 20px}
+    li{margin: 6px 0; color: var(--muted); line-height: 1.55}
+    p{margin: 8px 0; color: var(--muted); line-height: 1.65}
+
+    .eq{
+      font-family: var(--mono);
+      color: rgba(255,255,255,0.92);
+      background: rgba(0,0,0,0.20);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 2px 6px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+    .eqBlock{
+      display:flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      margin: 10px 0;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,0.18);
+    }
+    .eqBlock .eqText{
+      font-family: var(--mono);
+      color: rgba(255,255,255,0.92);
+      overflow-x:auto;
+      padding-bottom:2px;
+    }
+    .btn{
+      cursor:pointer;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 8px 10px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+      white-space: nowrap;
+    }
+    .btn:hover{
+      background: rgba(126,228,255,0.10);
+      border-color: rgba(126,228,255,0.26);
+      transform: translateY(-1px);
+    }
+    .btn:active{transform: translateY(0px) scale(0.99)}
+    .btnRow{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
+
+    .vizGrid{
+      display:grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 16px;
+      align-items: stretch;
+      margin-top: 10px;
+    }
+    @media (max-width: 980px){
+      .vizGrid{grid-template-columns:1fr}
+    }
+
+    figure{
+      margin:0;
+      background: rgba(0,0,0,0.18);
+      border:1px solid var(--line);
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 14px 50px rgba(0,0,0,0.20);
+    }
+    figcaption{
+      margin-top: 10px;
+      color: var(--faint);
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    canvas{
+      width: 100%;
+      height: 340px;
+      display:block;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.02);
+    }
+    .smallCanvas{height: 300px}
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 740px){
+      .controls{grid-template-columns:1fr}
+    }
+    .control{
+      background: rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .control label{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 8px;
+      font-size: 0.98rem;
+    }
+    .control .val{
+      font-family: var(--mono);
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+    input[type="range"]{
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    .readout{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 740px){
+      .readout{grid-template-columns:1fr}
+    }
+    .stat{
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.14);
+      padding: 12px;
+    }
+    .stat .k{color: var(--faint); font-size:0.95rem}
+    .stat .v{font-family: var(--mono); color: rgba(255,255,255,0.92); font-size: 1.05rem; font-weight: 900; margin-top: 6px}
+    .stat .v strong{color: var(--accent2)}
+    .divider{
+      height:1px;
+      background: var(--line);
+      margin: 14px 0;
+    }
+
+    .finalBox{
+      border-radius: 18px;
+      border:1px solid rgba(184,255,154,0.25);
+      background: linear-gradient(180deg, rgba(184,255,154,0.12), rgba(0,0,0,0.16));
+      padding: 14px;
+      position:relative;
+      overflow:hidden;
+    }
+    .finalBox:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(520px 260px at 10% 0%, rgba(184,255,154,0.25), transparent 60%);
+      opacity:0.7;
+      pointer-events:none;
+    }
+    .finalBox > *{position:relative}
+    .finalBox h3{margin-top:0}
+    .finalList{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top:10px;
+    }
+    @media (max-width: 740px){
+      .finalList{grid-template-columns:1fr}
+    }
+    .finalItem{
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.14);
+      padding: 10px 12px;
+    }
+    .finalItem .lbl{color: var(--faint); font-size:0.92rem}
+    .finalItem .num{font-family: var(--mono); font-weight: 900; margin-top:6px; font-size: 1.04rem}
+
+    footer{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 14px 18px 42px;
+      color: rgba(255,255,255,0.55);
+      font-size: 0.95rem;
+    }
+
+    @media print{
+      body{background:#fff; color:#000}
+      section, .titleCard, .toc, figure{box-shadow:none}
+      .toc{position:relative; top:auto}
+      canvas{background:#fff}
+      .btn{display:none}
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="hero">
+    <div class="titleCard">
+      <h1>Lorentzian LED Spectrum → Linewidth in Wavelength, Coherence Time, Coherence Length</h1>
+      <p class="subtitle">
+        An LED emits light with a <b>Lorentzian</b> spectrum of frequency FWHM <span class="eq">Δν</span>, centered at wavelength
+        <span class="eq">λ₀</span>. We convert between frequency and wavelength linewidths, derive the temporal coherence function
+        <span class="eq">g(τ)</span>, and compute coherence time/length and a “half-coherence” delay threshold.
+      </p>
+      <div class="meta">
+        <div class="pill"><strong>Given:</strong> Lorentzian FWHM <span class="eq">Δν = 10¹³ Hz</span></div>
+        <div class="pill"><strong>Center:</strong> <span class="eq">λ₀ = 0.7 μm</span></div>
+        <div class="pill"><strong>Model:</strong> stationary quasi-monochromatic field</div>
+      </div>
+    </div>
+
+    <nav class="toc" aria-label="Table of contents">
+      <h2>Contents</h2>
+      <a href="#quick">Quick Summary</a>
+      <a href="#part0">PART 0 — Concept Primer</a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a href="#part2">PART 2 — Strategy & Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a href="#part4">PART 4 — Deeper Understanding</a>
+      <a href="#part5">PART 5 — Visualization Guide</a>
+      <a href="#viz">Interactive Visualizations</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section id="quick">
+    <h2>Quick Summary</h2>
+    <ul>
+      <li>This problem links an LED’s <b>spectral linewidth</b> (Lorentzian in frequency) to <b>temporal coherence</b> in time.</li>
+      <li>Key idea: the (normalized) temporal coherence <span class="eq">g(τ)</span> is essentially the Fourier transform of the normalized spectrum (Wiener–Khinchin).</li>
+      <li>For a Lorentzian spectrum with FWHM <span class="eq">Δν</span>, the magnitude decays exponentially:
+        <span class="eq">|g(τ)| = exp(-π Δν |τ|)</span>.</li>
+      <li>Coherence time (1/e amplitude decay) is <span class="eq">τ<sub>c</sub> = 1/(πΔν)</span>, and coherence length is <span class="eq">l<sub>c</sub> = c τ<sub>c</sub></span>.</li>
+      <li>Convert linewidths using <span class="eq">ν=c/λ</span> ⇒ (small linewidth) <span class="eq">Δλ ≈ (λ₀²/c) Δν</span>.</li>
+      <li><b>Numerical results</b> for <span class="eq">Δν=10¹³ Hz</span>, <span class="eq">λ₀=0.7 μm</span>:
+        <span class="eq">Δλ ≈ 16.3 nm</span>, <span class="eq">τ<sub>c</sub> ≈ 31.8 fs</span>, <span class="eq">l<sub>c</sub> ≈ 9.55 μm</span>.</li>
+      <li>Threshold delay for <span class="eq">|g(τ)|&gt;0.5</span>: <span class="eq">|τ| &lt; (ln 2)/(πΔν) ≈ 22.1 fs</span> (path difference <span class="eq">c|τ| ≈ 6.62 μm</span>).</li>
+    </ul>
+  </section>
+
+  <section id="part0">
+    <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+    <div class="grid2">
+      <div class="callout">
+        <h3>Core definitions (symbols & units)</h3>
+        <ul>
+          <li><span class="eq">S(ν)</span>: optical power spectral density vs frequency <span class="eq">ν</span> (Hz).</li>
+          <li><span class="eq">Δν</span>: full-width at half-maximum (FWHM) of the spectrum (Hz).</li>
+          <li><span class="eq">λ₀</span>: center wavelength (m), with center frequency <span class="eq">ν₀ = c/λ₀</span>.</li>
+          <li><span class="eq">g(τ)</span>: complex degree of temporal coherence (dimensionless), normalized so <span class="eq">g(0)=1</span>.</li>
+          <li><span class="eq">τ</span>: time delay between two copies of the field (s).</li>
+          <li><span class="eq">τ<sub>c</sub></span>: coherence time (s), a characteristic decay time of <span class="eq">|g(τ)|</span>.</li>
+          <li><span class="eq">l<sub>c</sub></span>: coherence length (m), typically <span class="eq">l<sub>c</sub>=c τ<sub>c</sub></span>.</li>
+        </ul>
+      </div>
+
+      <div class="callout good">
+        <h3>Physical meaning</h3>
+        <p>
+          “Coherence” in time tells you how well a light field can interfere with a delayed version of itself.
+          If you split the beam, delay one arm by <span class="eq">τ</span>, and recombine, the fringe visibility is proportional to
+          <span class="eq">|g(τ)|</span>. A broader spectrum means faster phase “washout” → shorter coherence time/length.
+        </p>
+      </div>
+    </div>
+
+    <div class="callout warn" style="margin-top:16px;">
+      <h3>Key principles & validity (what assumptions are hiding here?)</h3>
+      <ul>
+        <li><b>Stationary field</b>: statistics do not change in time, so correlations depend only on the delay <span class="eq">τ</span>.</li>
+        <li><b>Quasi-monochromatic</b>: linewidth is small compared to the center frequency (<span class="eq">Δν ≪ ν₀</span>) so linear conversions like <span class="eq">Δλ ≈ (λ₀²/c)Δν</span> are valid.</li>
+        <li><b>Wiener–Khinchin</b>: the (normalized) temporal coherence is the Fourier transform of the normalized spectrum.</li>
+        <li><b>Lorentzian spectrum</b> corresponds to an <b>exponential</b> decay of coherence in time.</li>
+      </ul>
+    </div>
+
+    <h3>Common models/approximations (why we use them)</h3>
+    <ul>
+      <li><b>Lorentzian line</b>: arises from exponential decay of the emitting dipole’s polarization in time (simple damping model).</li>
+      <li><b>Small-linewidth conversion</b>: since <span class="eq">ν=c/λ</span> is nonlinear, exact conversion would distort the shape in wavelength; for small widths, the first-order derivative is enough.</li>
+    </ul>
+
+    <h3>Mini intuition examples</h3>
+    <ul>
+      <li>If you double the linewidth <span class="eq">Δν</span>, the coherence time halves (for Lorentzian: <span class="eq">τ<sub>c</sub> ∝ 1/Δν</span>).</li>
+      <li>At longer center wavelength <span class="eq">λ₀</span>, the same <span class="eq">Δν</span> corresponds to a larger <span class="eq">Δλ</span> because <span class="eq">Δλ ∝ λ₀²</span>.</li>
+    </ul>
+
+    <div class="callout bad">
+      <h3>What to watch for (pitfalls)</h3>
+      <ul>
+        <li><b>Different coherence-time conventions:</b> some texts use <span class="eq">τ<sub>c</sub> = 1/Δν</span> or <span class="eq">0.44/Δν</span> (Gaussian). Here we use the Lorentzian 1/e-amplitude definition: <span class="eq">τ<sub>c</sub>=1/(πΔν)</span>.</li>
+        <li><b>FWHM vs half-width at half-maximum (HWHM):</b> Lorentzian formulas often use the HWHM <span class="eq">γ=Δν/2</span>. Keep track!</li>
+        <li><b>Don’t confuse</b> the rapid carrier oscillation <span class="eq">e^{i2πν₀τ}</span> with the envelope decay <span class="eq">exp(-πΔν|τ|)</span>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="part1">
+    <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+    <h3>Restate the problem (in plain words)</h3>
+    <p>
+      An LED emits light whose frequency spectrum is Lorentzian with FWHM <span class="eq">Δν = 10¹³ Hz</span>, centered at wavelength
+      <span class="eq">λ₀ = 0.7 μm</span>. Find:
+      (i) the wavelength linewidth <span class="eq">Δλ₀</span> (nm),
+      (ii) coherence time <span class="eq">τ<sub>c</sub></span>,
+      (iii) coherence length <span class="eq">l<sub>c</sub></span>,
+      and (iv) the maximum delay <span class="eq">τ</span> such that <span class="eq">|g(τ)| &gt; 0.5</span>.
+    </p>
+
+    <div class="grid2">
+      <div class="callout">
+        <h3>Given quantities</h3>
+        <ul>
+          <li><span class="eq">Δν = 10¹³ Hz</span> (Lorentzian FWHM in frequency)</li>
+          <li><span class="eq">λ₀ = 0.7 μm = 0.7×10⁻⁶ m</span></li>
+          <li>Speed of light: <span class="eq">c = 2.99792458×10⁸ m/s</span></li>
+        </ul>
+      </div>
+      <div class="callout">
+        <h3>Unknowns to determine</h3>
+        <ul>
+          <li><span class="eq">Δλ₀</span> in nm</li>
+          <li><span class="eq">τ<sub>c</sub></span> (coherence time, s)</li>
+          <li><span class="eq">l<sub>c</sub></span> (coherence length, m)</li>
+          <li><span class="eq">τ<sub>0.5</sub></span>: maximum |delay| with <span class="eq">|g(τ)|&gt;0.5</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Relevant physics principles (and why)</h3>
+    <ul>
+      <li><b>Dispersion relation between frequency and wavelength</b>: <span class="eq">ν=c/λ</span> converts linewidths (small-signal approximation).</li>
+      <li><b>Wiener–Khinchin theorem</b>: temporal coherence is related to the Fourier transform of the spectrum for stationary light.</li>
+      <li><b>Lorentzian ↔ exponential</b>: the Fourier transform of a Lorentzian is an exponential decay in time, giving a simple form for <span class="eq">g(τ)</span>.</li>
+      <li>We do <b>not</b> need spatial mode structure, waveguide dispersion, or cavity resonance details—only spectral shape and center wavelength are required.</li>
+    </ul>
+
+    <div class="callout warn">
+      <h3>Assumptions (explicit)</h3>
+      <ul>
+        <li>Linewidth is small compared with center frequency: <span class="eq">Δν ≪ ν₀</span> so <span class="eq">Δλ ≈ (λ₀²/c)Δν</span> is accurate.</li>
+        <li>Spectrum in frequency is Lorentzian with FWHM <span class="eq">Δν</span> (power spectrum).</li>
+        <li>Coherence time defined via 1/e decay of <span class="eq">|g(τ)|</span> (common for Lorentzian lines).</li>
+        <li>Coherence length computed in free space: <span class="eq">l<sub>c</sub> = c τ<sub>c</sub></span>.</li>
+      </ul>
+    </div>
+
+    <h3>Possible approaches (compare briefly)</h3>
+    <ul>
+      <li><b>Approach A (best):</b> Use known Lorentzian ↔ exponential Fourier transform to write <span class="eq">g(τ)</span> directly; then read off coherence time and thresholds. Fast, clean, and emphasizes physics.</li>
+      <li><b>Approach B:</b> Derive Wiener–Khinchin integral explicitly and compute the Fourier transform of the Lorentzian step-by-step. More algebra, but instructive.</li>
+      <li><b>Approach C:</b> Use heuristic “coherence time ≈ 1/Δν” estimates. Quick but risks wrong numerical factors (π, 2, 0.44).</li>
+    </ul>
+    <p><b>We choose Approach A</b> to keep the derivation rigorous while avoiding unnecessary integral heaviness, and because the Lorentzian transform is standard and physically meaningful.</p>
+  </section>
+
+  <section id="part2">
+    <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+    <ol style="margin:8px 0 0 20px; color:var(--muted); line-height:1.65;">
+      <li><b>Compute center frequency</b>: use <span class="eq">ν₀=c/λ₀</span>. (Sets the scale; also checks <span class="eq">Δν ≪ ν₀</span>.)</li>
+      <li><b>Convert linewidth to wavelength</b>: linearize <span class="eq">ν=c/λ</span> to get <span class="eq">Δλ ≈ (λ₀²/c)Δν</span>.</li>
+      <li><b>Write Lorentzian spectrum</b> in a normalized form with FWHM <span class="eq">Δν</span>.</li>
+      <li><b>Use Wiener–Khinchin</b> to relate spectrum to coherence: <span class="eq">g(τ) = ∫ S(ν) e^{i2πντ} dν / ∫ S(ν)dν</span>.</li>
+      <li><b>Use the known transform</b>: Lorentzian in frequency → exponential decay in time envelope.</li>
+      <li><b>Define coherence time</b> via <span class="eq">|g(τ<sub>c</sub>)|=1/e</span> to get <span class="eq">τ<sub>c</sub>=1/(πΔν)</span>.</li>
+      <li><b>Compute coherence length</b>: <span class="eq">l<sub>c</sub>=cτ<sub>c</sub></span>.</li>
+      <li><b>Threshold delay</b>: solve <span class="eq">exp(-πΔν|τ|)&gt;0.5</span> for <span class="eq">|τ|</span>.</li>
+      <li><b>Sanity checks</b>: units, limiting trends (<span class="eq">Δν↑ ⇒ τ<sub>c</sub>↓</span>), and reasonableness of nm/μm/fs scales.</li>
+    </ol>
+
+    <div class="callout bad" style="margin-top:14px;">
+      <h3>Common mistakes & quick tips</h3>
+      <ul>
+        <li>Using <span class="eq">τ<sub>c</sub>=1/Δν</span> without the Lorentzian factor <span class="eq">π</span> (that’s a different convention/model).</li>
+        <li>Forgetting the absolute value: <span class="eq">|g(τ)|</span> depends on <span class="eq">|τ|</span>.</li>
+        <li>Mixing wavelength- and frequency-domain widths without the derivative factor <span class="eq">λ₀²/c</span>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="part3">
+    <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+    <h3>Qualitative expectation (before calculating)</h3>
+    <p>
+      An LED is typically broadband compared to a laser. A frequency width of <span class="eq">10¹³ Hz</span> is large, so we expect a
+      very short coherence time (tens of femtoseconds) and coherence length on the order of micrometers.
+      Because Lorentzian spectra map to exponential coherence decay, the “useful interference” will drop quickly with delay.
+    </p>
+
+    <div class="divider"></div>
+
+    <h3>Step 1 — Convert the center wavelength to center frequency (scale check)</h3>
+    <p>Define:</p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="nu0=c/lambda0">ν₀ = c / λ₀</div>
+      <button class="btn" data-copy-target="nu0=c/lambda0">Copy</button>
+    </div>
+
+    <p>
+      With <span class="eq">λ₀ = 0.7 μm = 0.7×10⁻⁶ m</span>:
+    </p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="nu0_value= (2.99792458e8)/(0.7e-6) = 4.28275e14 Hz">ν₀ = (2.99792458×10⁸)/(0.7×10⁻⁶) ≈ 4.28×10¹⁴ Hz</div>
+      <button class="btn" data-copy-target="nu0_value= (2.99792458e8)/(0.7e-6) = 4.28275e14 Hz">Copy</button>
+    </div>
+    <p>
+      Check the quasi-monochromatic condition: <span class="eq">Δν/ν₀ ≈ 10¹³ / 4.28×10¹⁴ ≈ 0.023</span> (a few percent), so a first-order conversion between
+      <span class="eq">Δν</span> and <span class="eq">Δλ</span> is acceptable for typical coherence estimates.
+    </p>
+
+    <div class="divider"></div>
+
+    <h3>Step 2 — Convert frequency linewidth to wavelength linewidth</h3>
+    <p>
+      Start from the exact relation <span class="eq">ν = c/λ</span>.
+      For small changes around <span class="eq">λ₀</span>:
+    </p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="dnu = -(c/lambda^2) dlambda  =>  DeltaLambda ≈ (lambda0^2/c) DeltaNu">dν = -(c/λ²) dλ  ⇒  Δλ ≈ (λ₀²/c) Δν</div>
+      <button class="btn" data-copy-target="dnu = -(c/lambda^2) dlambda  =>  DeltaLambda ≈ (lambda0^2/c) DeltaNu">Copy</button>
+    </div>
+
+    <p>
+      Now plug in numbers:
+      <span class="eq">λ₀² = (0.7×10⁻⁶)² = 0.49×10⁻¹² = 4.9×10⁻¹³ m²</span>.
+    </p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="DeltaLambda = (lambda0^2/c) DeltaNu = (4.9e-13 / 2.99792458e8)*1e13 = 1.634e-8 m ≈ 16.3 nm">Δλ₀ = (4.9×10⁻¹³ / 2.9979×10⁸)×10¹³ ≈ 1.63×10⁻⁸ m ≈ 16.3 nm</div>
+      <button class="btn" data-copy-target="DeltaLambda = (lambda0^2/c) DeltaNu = (4.9e-13 / 2.99792458e8)*1e13 = 1.634e-8 m ≈ 16.3 nm">Copy</button>
+    </div>
+
+    <p><b>Meaning:</b> a 10 THz FWHM around 700 nm corresponds to a spectral width of about 16 nm—typical of a fairly broadband emitter.</p>
+
+    <div class="divider"></div>
+
+    <h3>Step 3 — Lorentzian spectrum and temporal coherence function</h3>
+    <p>
+      A Lorentzian power spectrum centered at <span class="eq">ν₀</span> with FWHM <span class="eq">Δν</span> can be written (up to a constant):
+    </p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="S(nu) ∝ 1 / [ (nu-nu0)^2 + (Δν/2)^2 ]">S(ν) ∝ 1 / [ (ν-ν₀)² + (Δν/2)² ]</div>
+      <button class="btn" data-copy-target="S(nu) ∝ 1 / [ (nu-nu0)^2 + (Δν/2)^2 ]">Copy</button>
+    </div>
+
+    <p>
+      For a stationary source, the (normalized) complex degree of temporal coherence is:
+    </p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="g(τ)= (∫ S(ν) e^{i2πντ} dν) / (∫ S(ν) dν)">g(τ)= (∫ S(ν) e^{i2πντ} dν) / (∫ S(ν) dν)</div>
+      <button class="btn" data-copy-target="g(τ)= (∫ S(ν) e^{i2πντ} dν) / (∫ S(ν) dν)">Copy</button>
+    </div>
+
+    <p>
+      A standard Fourier-transform result is:
+    </p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="If S(ν) is Lorentzian with FWHM Δν, then g(τ)=exp(i2πν0τ) exp(-πΔν|τ|)">Lorentzian S(ν) (FWHM Δν) ⇒ g(τ)=e^{i2πν₀τ} e^{-πΔν|τ|}</div>
+      <button class="btn" data-copy-target="If S(ν) is Lorentzian with FWHM Δν, then g(τ)=exp(i2πν0τ) exp(-πΔν|τ|)">Copy</button>
+    </div>
+
+    <p>
+      The complex phase factor <span class="eq">e^{i2πν₀τ}</span> oscillates rapidly, while the envelope <span class="eq">e^{-πΔν|τ|}</span> sets the interference visibility.
+      Therefore:
+    </p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="|g(τ)| = exp(-πΔν|τ|)">|g(τ)| = exp(-πΔν|τ|)</div>
+      <button class="btn" data-copy-target="|g(τ)| = exp(-πΔν|τ|)">Copy</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <h3>Step 4 — Coherence time τ<sub>c</sub> (1/e definition for Lorentzian)</h3>
+    <p>
+      Define coherence time by the 1/e decay of the magnitude:
+      <span class="eq">|g(τ<sub>c</sub>)| = 1/e</span>.
+      Using <span class="eq">|g(τ)| = exp(-πΔν|τ|)</span>:
+    </p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="exp(-πΔν τc)=1/e  =>  τc = 1/(πΔν)">exp(-πΔν τ<sub>c</sub>)=1/e  ⇒  τ<sub>c</sub> = 1/(πΔν)</div>
+      <button class="btn" data-copy-target="exp(-πΔν τc)=1/e  =>  τc = 1/(πΔν)">Copy</button>
+    </div>
+
+    <p>Numerically, for <span class="eq">Δν = 10¹³ Hz</span>:</p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="τc = 1/(π·1e13) = 3.183e-14 s = 31.8 fs">τ<sub>c</sub> = 1/(π·10¹³) ≈ 3.18×10⁻¹⁴ s ≈ 31.8 fs</div>
+      <button class="btn" data-copy-target="τc = 1/(π·1e13) = 3.183e-14 s = 31.8 fs">Copy</button>
+    </div>
+
+    <p><b>Interpretation:</b> delay the beam by only a few ×10 fs and the interference visibility drops significantly.</p>
+
+    <div class="divider"></div>
+
+    <h3>Step 5 — Coherence length l<sub>c</sub></h3>
+    <p>
+      In free space, path difference corresponds to time delay via <span class="eq">ΔL = c|τ|</span>.
+      Using <span class="eq">l<sub>c</sub> = c τ<sub>c</sub></span>:
+    </p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="lc = c τc = c/(πΔν)">l<sub>c</sub> = c τ<sub>c</sub> = c/(πΔν)</div>
+      <button class="btn" data-copy-target="lc = c τc = c/(πΔν)">Copy</button>
+    </div>
+    <p>Numerically:</p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="lc = (2.99792458e8)*(3.183e-14) = 9.54e-6 m = 9.55 μm">l<sub>c</sub> ≈ (2.998×10⁸)(3.18×10⁻¹⁴) ≈ 9.55×10⁻⁶ m ≈ 9.55 μm</div>
+      <button class="btn" data-copy-target="lc = (2.99792458e8)*(3.183e-14) = 9.54e-6 m = 9.55 μm">Copy</button>
+    </div>
+
+    <p><b>Meaning:</b> in an interferometer, arm length mismatch much larger than ~10 μm will strongly wash out fringes for this LED.</p>
+
+    <div class="divider"></div>
+
+    <h3>Step 6 — Maximum delay for |g(τ)| &gt; 0.5</h3>
+    <p>
+      Solve:
+      <span class="eq">exp(-πΔν|τ|) &gt; 0.5</span>.
+      Taking natural logarithms (remember <span class="eq">ln</span> is monotonic):
+    </p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="-πΔν|τ| > ln(0.5) = -ln2  =>  |τ| < (ln2)/(πΔν)">-πΔν|τ| &gt; -ln2  ⇒  |τ| &lt; (ln2)/(πΔν)</div>
+      <button class="btn" data-copy-target="-πΔν|τ| > ln(0.5) = -ln2  =>  |τ| < (ln2)/(πΔν)">Copy</button>
+    </div>
+
+    <p>Numerically, with <span class="eq">Δν=10¹³ Hz</span>:</p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="τ0.5 = (ln2)/(π·1e13)= 2.206e-14 s = 22.1 fs">|τ| &lt; τ<sub>0.5</sub> = (ln2)/(π·10¹³) ≈ 2.21×10⁻¹⁴ s ≈ 22.1 fs</div>
+      <button class="btn" data-copy-target="τ0.5 = (ln2)/(π·1e13)= 2.206e-14 s = 22.1 fs">Copy</button>
+    </div>
+
+    <p>Equivalent path difference threshold:</p>
+    <div class="eqBlock">
+      <div class="eqText" data-copy="ΔL0.5 = c τ0.5 ≈ (2.998e8)(2.206e-14)=6.62e-6 m = 6.62 μm">ΔL<sub>0.5</sub> = c τ<sub>0.5</sub> ≈ 6.62 μm</div>
+      <button class="btn" data-copy-target="ΔL0.5 = c τ0.5 ≈ (2.998e8)(2.206e-14)=6.62e-6 m = 6.62 μm">Copy</button>
+    </div>
+
+    <div class="finalBox" style="margin-top:16px;">
+      <h3>Final Answer (boxed)</h3>
+
+      <div class="eqBlock" style="margin-top:10px;">
+        <div class="eqText" id="finalText" data-copy="Δλ0 ≈ 16.3 nm
+τc = 1/(πΔν) ≈ 31.8 fs
+lc = c/(πΔν) ≈ 9.55 μm
+|g(τ)| = exp(-πΔν|τ|)
+|g(τ)| > 0.5 when |τ| < (ln2)/(πΔν) ≈ 22.1 fs (ΔL < 6.62 μm)">
+Δλ₀ ≈ 16.3 nm
+τc = 1/(πΔν) ≈ 31.8 fs
+lc = c/(πΔν) ≈ 9.55 μm
+|g(τ)| = exp(-πΔν|τ|)
+|g(τ)| > 0.5 when |τ| < (ln2)/(πΔν) ≈ 22.1 fs (ΔL < 6.62 μm)
+        </div>
+        <button class="btn" data-copy-target="#finalText">Copy Final</button>
+      </div>
+
+      <div class="finalList">
+        <div class="finalItem">
+          <div class="lbl">Wavelength linewidth (FWHM)</div>
+          <div class="num"><span id="ans_dlambda">16.3</span> nm</div>
+        </div>
+        <div class="finalItem">
+          <div class="lbl">Coherence time (1/e of |g|)</div>
+          <div class="num"><span id="ans_tc">31.8</span> fs</div>
+        </div>
+        <div class="finalItem">
+          <div class="lbl">Coherence length (free space)</div>
+          <div class="num"><span id="ans_lc">9.55</span> μm</div>
+        </div>
+        <div class="finalItem">
+          <div class="lbl">Max |delay| for |g(τ)| &gt; 0.5</div>
+          <div class="num"><span id="ans_t05">22.1</span> fs</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:14px;">
+      <h3>Sanity checks</h3>
+      <ul>
+        <li><b>Units:</b> <span class="eq">τ<sub>c</sub>=1/(πΔν)</span> has units of seconds because <span class="eq">Δν</span> is Hz.</li>
+        <li><b>Trend:</b> larger <span class="eq">Δν</span> → smaller <span class="eq">τ<sub>c</sub></span> and <span class="eq">l<sub>c</sub></span> (broader spectrum destroys coherence faster).</li>
+        <li><b>Scale:</b> <span class="eq">Δλ ≈ 16 nm</span> at 700 nm is plausible for an LED; <span class="eq">l<sub>c</sub> ~ 10 μm</span> matches the idea that LEDs have short coherence lengths.</li>
+        <li><b>Threshold delay:</b> <span class="eq">τ<sub>0.5</sub> = (ln2) τ<sub>c</sub></span> (because exponential), so it must be smaller than <span class="eq">τ<sub>c</sub></span>—it is.</li>
+      </ul>
+    </div>
+
+    <p>
+      <b>Connection to the diagram/plots:</b> In a Michelson interferometer, arm mismatch sets <span class="eq">τ</span>.
+      The coherence plot shows the envelope <span class="eq">|g(τ)|</span>; the spectrum plot shows the Lorentzian width <span class="eq">Δν</span>.
+      Changing <span class="eq">Δν</span> in the interactive controls updates both pictures consistently.
+    </p>
+  </section>
+
+  <section id="part4">
+    <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+    <h3>Re-interpreting the final formulas</h3>
+    <ul>
+      <li><span class="eq">Δλ ≈ (λ₀²/c)Δν</span>: conversion grows like <span class="eq">λ₀²</span>; longer wavelengths map the same frequency width into a larger wavelength width.</li>
+      <li><span class="eq">|g(τ)| = exp(-πΔν|τ|)</span>: Lorentzian lines produce an <b>exponential</b> coherence envelope. The parameter <span class="eq">πΔν</span> is the decay rate in time.</li>
+      <li><span class="eq">τ<sub>c</sub>=1/(πΔν)</span>: coherence time is inversely proportional to linewidth with a specific Lorentzian constant <span class="eq">π</span>.</li>
+      <li><span class="eq">l<sub>c</sub>=c/(πΔν)</span>: coherence length is the distance light travels during one coherence time.</li>
+    </ul>
+
+    <h3>How parameters affect the outcome (tie to interactive plots)</h3>
+    <ul>
+      <li>Increase <span class="eq">Δν</span> → Lorentzian broadens in the spectrum plot and the coherence envelope in time shrinks (faster decay).</li>
+      <li>Increase <span class="eq">λ₀</span> (keeping <span class="eq">Δν</span> fixed) → wavelength linewidth <span class="eq">Δλ</span> increases, but <span class="eq">τ<sub>c</sub></span> and <span class="eq">l<sub>c</sub></span> stay the same (they depend on <span class="eq">Δν</span> only, in this model).</li>
+      <li>The “half-coherence” delay <span class="eq">τ<sub>0.5</sub></span> always satisfies <span class="eq">τ<sub>0.5</sub> = (ln2) τ<sub>c</sub></span> for an exponential decay.</li>
+    </ul>
+
+    <h3>Alternative derivation idea (brief)</h3>
+    <p>
+      You can compute <span class="eq">g(τ)</span> by directly evaluating the Fourier integral of the Lorentzian using contour integration in the complex plane.
+      The poles at <span class="eq">ν = ν₀ ± i(Δν/2)</span> give the exponential decay in <span class="eq">|τ|</span>. This is the mathematical origin of the “Lorentzian ↔ exponential” pairing.
+    </p>
+
+    <h3>Concept checks (self-test)</h3>
+    <ul>
+      <li><b>Q:</b> If <span class="eq">Δν</span> becomes 10× smaller, what happens to <span class="eq">τ<sub>c</sub></span> and <span class="eq">l<sub>c</sub></span>? <b>A:</b> Both become 10× larger.</li>
+      <li><b>Q:</b> Does changing <span class="eq">λ₀</span> change <span class="eq">τ<sub>c</sub></span> for fixed <span class="eq">Δν</span>? <b>A:</b> No, not in this frequency-Lorentzian model; it only changes <span class="eq">Δλ</span>.</li>
+      <li><b>Q:</b> Why is <span class="eq">|g(τ)|</span> symmetric in <span class="eq">τ</span>? <b>A:</b> Because the spectrum is real and (effectively) even about <span class="eq">ν₀</span>, giving a correlation that depends on <span class="eq">|τ|</span>.</li>
+      <li><b>Q:</b> What physical measurement relates to <span class="eq">|g(τ)|</span>? <b>A:</b> Fringe visibility in an interferometer with delay <span class="eq">τ</span>.</li>
+    </ul>
+  </section>
+
+  <section id="part5">
+    <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+    <div class="grid2">
+      <div class="callout">
+        <h3>What each canvas shows</h3>
+        <ul>
+          <li><b>Diagram:</b> LED feeding a Michelson interferometer; arm mismatch creates a time delay <span class="eq">τ</span> and path difference <span class="eq">ΔL=cτ</span>.</li>
+          <li><b>Main plot:</b> <span class="eq">|g(τ)|</span> vs delay <span class="eq">τ</span> (fs), showing exponential decay and the <span class="eq">0.5</span> threshold line.</li>
+          <li><b>Secondary plot:</b> Lorentzian spectrum <span class="eq">S(ν)</span> vs frequency offset <span class="eq">ν-ν₀</span> (THz), highlighting the FWHM <span class="eq">Δν</span>.</li>
+        </ul>
+      </div>
+      <div class="callout warn">
+        <h3>Interactive controls</h3>
+        <ul>
+          <li><b>Linewidth slider</b> changes <span class="eq">Δν</span> (FWHM). Expect: broader spectrum and faster coherence decay.</li>
+          <li><b>Center wavelength slider</b> changes <span class="eq">λ₀</span>. Expect: <span class="eq">Δλ</span> changes, but the coherence curves (in time) stay fixed for constant <span class="eq">Δν</span>.</li>
+          <li>All readouts and both plots update live; the vertical marker on the coherence plot shows <span class="eq">τ<sub>0.5</sub></span>.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="viz">
+    <h2>Interactive Visualizations</h2>
+
+    <div class="controls">
+      <div class="control">
+        <label>
+          Lorentzian FWHM linewidth <span class="eq">Δν</span> (Hz)
+          <span class="val" id="nuVal">1.00e13</span>
+        </label>
+        <input id="nuSlider" type="range" min="11.0" max="13.7" step="0.01" value="13.0" />
+        <p style="margin:8px 0 0; color:var(--faint); font-size:0.93rem;">
+          Slider is logarithmic: value shown is <span class="eq">10^x</span> Hz.
+        </p>
+      </div>
+
+      <div class="control">
+        <label>
+          Center wavelength <span class="eq">λ₀</span> (μm)
+          <span class="val" id="lamVal">0.700</span>
+        </label>
+        <input id="lamSlider" type="range" min="0.40" max="1.00" step="0.001" value="0.700" />
+        <p style="margin:8px 0 0; color:var(--faint); font-size:0.93rem;">
+          Changes the <span class="eq">Δλ</span> conversion through <span class="eq">Δλ ∝ λ₀²</span>.
+        </p>
+      </div>
+    </div>
+
+    <div class="readout" aria-live="polite">
+      <div class="stat">
+        <div class="k">Wavelength linewidth (FWHM)</div>
+        <div class="v"><strong id="dlambdaRO">16.3</strong> nm</div>
+      </div>
+      <div class="stat">
+        <div class="k">Coherence time (1/e of |g|)</div>
+        <div class="v"><strong id="tcRO">31.8</strong> fs</div>
+      </div>
+      <div class="stat">
+        <div class="k">Coherence length (free space)</div>
+        <div class="v"><strong id="lcRO">9.55</strong> μm</div>
+      </div>
+      <div class="stat">
+        <div class="k">Max |delay| for |g(τ)| &gt; 0.5</div>
+        <div class="v"><strong id="t05RO">22.1</strong> fs</div>
+      </div>
+    </div>
+
+    <div class="vizGrid">
+      <figure>
+        <canvas id="diagramCanvas" aria-label="Interferometer diagram"></canvas>
+        <figcaption>
+          <b>Diagram:</b> A Michelson interferometer “tests” temporal coherence by comparing the field with a delayed copy.
+          The delay <span class="eq">τ</span> (set by arm mismatch) controls the fringe visibility ∝ <span class="eq">|g(τ)|</span>.
+        </figcaption>
+      </figure>
+
+      <figure>
+        <canvas id="cohCanvas" aria-label="Temporal coherence plot"></canvas>
+        <figcaption>
+          <b>Main plot:</b> Lorentzian spectrum → exponential coherence envelope <span class="eq">|g(τ)|=exp(-πΔν|τ|)</span>.
+          The dashed line marks <span class="eq">|g|=0.5</span> and the vertical marker shows the computed <span class="eq">τ<sub>0.5</sub></span>.
+        </figcaption>
+      </figure>
+
+      <figure style="grid-column: 1 / -1;">
+        <canvas id="specCanvas" class="smallCanvas" aria-label="Lorentzian spectrum plot"></canvas>
+        <figcaption>
+          <b>Secondary plot:</b> Lorentzian spectrum <span class="eq">S(ν)</span> vs frequency offset <span class="eq">ν-ν₀</span> (THz).
+          The half-maximum points define the FWHM <span class="eq">Δν</span>.
+        </figcaption>
+      </figure>
+    </div>
+
+    <div class="btnRow">
+      <button class="btn" id="resetBtn">Reset to problem values</button>
+      <button class="btn" id="snapBtn">Snap τ-axis to show τc region</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>
+    Notes: Coherence-time conventions differ across texts. Here, for a Lorentzian frequency spectrum of FWHM Δν,
+    we used <span class="eq">|g(τ)|=exp(-πΔν|τ|)</span> and defined <span class="eq">τ<sub>c</sub></span> by 1/e decay of <span class="eq">|g|</span>.
+  </p>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Utilities ----------
+  const c = 2.99792458e8; // m/s
+  const ln2 = Math.log(2);
+
+  function fmtSci(x, sig=3){
+    if (x === 0) return "0";
+    const exp = Math.floor(Math.log10(Math.abs(x)));
+    const m = x / Math.pow(10, exp);
+    return m.toFixed(sig-1) + "e" + (exp>=0?"+":"") + exp;
+  }
+  function fmtHz(x){
+    // show in scientific with 3 sig
+    return fmtSci(x,3).replace("e+","e");
+  }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  function niceTicks(min, max, target=6){
+    // returns {ticks:[...], step}
+    const span = max - min;
+    if (span <= 0) return {ticks:[min], step:1};
+    const raw = span / target;
+    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    const candidates = [1,2,5,10].map(k => k*pow);
+    let step = candidates[0];
+    let best = Infinity;
+    for(const s of candidates){
+      const n = span/s;
+      const score = Math.abs(n - target);
+      if(score < best){ best = score; step = s; }
+    }
+    const start = Math.ceil(min/step)*step;
+    const ticks = [];
+    for(let t=start; t<=max+1e-12; t+=step) ticks.push(t);
+    return {ticks, step};
+  }
+
+  function setupHiDPI(canvas){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(1, Math.floor(rect.width * dpr));
+    const h = Math.max(1, Math.floor(rect.height * dpr));
+    if(canvas.width !== w || canvas.height !== h){
+      canvas.width = w; canvas.height = h;
+    }
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+    return ctx;
+  }
+
+  function clear(ctx, w, h){
+    ctx.clearRect(0,0,w,h);
+  }
+
+  function roundRect(ctx, x,y,w,h,r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    ctx.closePath();
+  }
+
+  function drawAxes(ctx, box, xMin, xMax, yMin, yMax, xLabel, yLabel, title){
+    // box: {x,y,w,h}
+    const {x,y,w,h} = box;
+
+    // background
+    ctx.save();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "rgba(255,255,255,0.02)";
+    roundRect(ctx, x, y, w, h, 12);
+    ctx.fill();
+
+    // title
+    ctx.fillStyle = "rgba(255,255,255,0.90)";
+    ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.fillText(title, x+12, y+22);
+
+    // plot area margins
+    const mL = 56, mR = 16, mT = 34, mB = 44;
+    const px = x + mL, py = y + mT, pw = w - mL - mR, ph = h - mT - mB;
+
+    // grid & ticks
+    const xt = niceTicks(xMin, xMax, 6);
+    const yt = niceTicks(yMin, yMax, 5);
+
+    // grid
+    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+
+    // vertical grid
+    for(const t of xt.ticks){
+      const X = px + (t - xMin)/(xMax-xMin)*pw;
+      ctx.beginPath();
+      ctx.moveTo(X, py);
+      ctx.lineTo(X, py+ph);
+      ctx.stroke();
+    }
+    // horizontal grid
+    for(const t of yt.ticks){
+      const Y = py + (1 - (t - yMin)/(yMax-yMin))*ph;
+      ctx.beginPath();
+      ctx.moveTo(px, Y);
+      ctx.lineTo(px+pw, Y);
+      ctx.stroke();
+    }
+
+    // axes
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+    ctx.lineWidth = 1.25;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px, py+ph);
+    ctx.lineTo(px+pw, py+ph);
+    ctx.stroke();
+
+    // tick labels
+    ctx.fillStyle = "rgba(255,255,255,0.70)";
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+
+    for(const t of xt.ticks){
+      const X = px + (t - xMin)/(xMax-xMin)*pw;
+      ctx.beginPath();
+      ctx.moveTo(X, py+ph);
+      ctx.lineTo(X, py+ph+5);
+      ctx.strokeStyle = "rgba(255,255,255,0.35)";
+      ctx.stroke();
+
+      const txt = (Math.abs(t) >= 1000 || (Math.abs(t) > 0 && Math.abs(t) < 0.01)) ? fmtSci(t,3) : (Math.round(t*1000)/1000).toString();
+      const tw = ctx.measureText(txt).width;
+      ctx.fillText(txt, X - tw/2, py+ph+18);
+    }
+
+    for(const t of yt.ticks){
+      const Y = py + (1 - (t - yMin)/(yMax-yMin))*ph;
+      ctx.beginPath();
+      ctx.moveTo(px-5, Y);
+      ctx.lineTo(px, Y);
+      ctx.strokeStyle = "rgba(255,255,255,0.35)";
+      ctx.stroke();
+
+      const txt = (Math.abs(t) >= 1000 || (Math.abs(t) > 0 && Math.abs(t) < 0.01)) ? fmtSci(t,3) : (Math.round(t*1000)/1000).toString();
+      const tw = ctx.measureText(txt).width;
+      ctx.fillText(txt, px-10-tw, Y+4);
+    }
+
+    // labels
+    ctx.fillStyle = "rgba(255,255,255,0.78)";
+    ctx.font = "700 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    // x label
+    const xTw = ctx.measureText(xLabel).width;
+    ctx.fillText(xLabel, px + pw/2 - xTw/2, y + h - 12);
+
+    // y label (rotated)
+    ctx.save();
+    ctx.translate(x+14, py + ph/2);
+    ctx.rotate(-Math.PI/2);
+    const yTw = ctx.measureText(yLabel).width;
+    ctx.fillText(yLabel, -yTw/2, 0);
+    ctx.restore();
+
+    ctx.restore();
+
+    return {plot:{x:px, y:py, w:pw, h:ph}};
+  }
+
+  function xToPx(x, xMin, xMax, plot){ return plot.x + (x - xMin)/(xMax-xMin)*plot.w; }
+  function yToPx(y, yMin, yMax, plot){ return plot.y + (1 - (y - yMin)/(yMax-yMin))*plot.h; }
+
+  // ---------- State ----------
+  const nuSlider = document.getElementById("nuSlider");
+  const lamSlider = document.getElementById("lamSlider");
+  const nuVal = document.getElementById("nuVal");
+  const lamVal = document.getElementById("lamVal");
+
+  const dlambdaRO = document.getElementById("dlambdaRO");
+  const tcRO = document.getElementById("tcRO");
+  const lcRO = document.getElementById("lcRO");
+  const t05RO = document.getElementById("t05RO");
+
+  const ans_dlambda = document.getElementById("ans_dlambda");
+  const ans_tc = document.getElementById("ans_tc");
+  const ans_lc = document.getElementById("ans_lc");
+  const ans_t05 = document.getElementById("ans_t05");
+
+  const diagramCanvas = document.getElementById("diagramCanvas");
+  const cohCanvas = document.getElementById("cohCanvas");
+  const specCanvas = document.getElementById("specCanvas");
+
+  const resetBtn = document.getElementById("resetBtn");
+  const snapBtn = document.getElementById("snapBtn");
+
+  let viewMode = "wide"; // "wide" or "snap" (for coherence plot time axis)
+
+  function getParams(){
+    const log10nu = parseFloat(nuSlider.value);
+    const deltaNu = Math.pow(10, log10nu);
+    const lambda0_um = parseFloat(lamSlider.value);
+    const lambda0 = lambda0_um * 1e-6;
+    return {deltaNu, lambda0, lambda0_um};
+  }
+
+  function computeDerived(deltaNu, lambda0){
+    const dlambda = (lambda0*lambda0 / c) * deltaNu; // meters
+    const dlambda_nm = dlambda * 1e9;
+    const tc = 1/(Math.PI * deltaNu); // seconds
+    const tc_fs = tc * 1e15;
+    const lc = c * tc; // meters
+    const lc_um = lc * 1e6;
+    const t05 = ln2/(Math.PI * deltaNu);
+    const t05_fs = t05 * 1e15;
+    return {dlambda_nm, tc_fs, lc_um, t05_fs, tc, t05, lc};
+  }
+
+  // ---------- Draw: Diagram ----------
+  function drawDiagram(ctx, W, H, params){
+    const {deltaNu, lambda0_um} = params;
+    const {tc_fs, lc_um} = computeDerived(deltaNu, lambda0_um*1e-6);
+
+    const pad = 14;
+    const box = {x: pad, y: pad, w: W-2*pad, h: H-2*pad};
+
+    // panel background
+    ctx.save();
+    roundRect(ctx, box.x, box.y, box.w, box.h, 14);
+    ctx.fillStyle = "rgba(255,255,255,0.02)";
+    ctx.fill();
+
+    // title
+    ctx.fillStyle = "rgba(255,255,255,0.90)";
+    ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.fillText("Physical setup (concept): LED + Michelson interferometer", box.x+12, box.y+22);
+
+    // coordinates in plot area
+    const mL=16, mR=16, mT=34, mB=16;
+    const x0 = box.x+mL, y0=box.y+mT, w=box.w-mL-mR, h=box.h-mT-mB;
+
+    // helper draw
+    function line(x1,y1,x2,y2,stroke="rgba(255,255,255,0.55)", lw=2, dash=[]){
+      ctx.save();
+      ctx.strokeStyle=stroke; ctx.lineWidth=lw; ctx.setLineDash(dash);
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      ctx.restore();
+    }
+    function arrow(x1,y1,x2,y2,stroke="rgba(255,255,255,0.62)", lw=2){
+      line(x1,y1,x2,y2,stroke,lw);
+      const ang = Math.atan2(y2-y1,x2-x1);
+      const L=10;
+      line(x2,y2,x2-L*Math.cos(ang-Math.PI/7), y2-L*Math.sin(ang-Math.PI/7), stroke, lw);
+      line(x2,y2,x2-L*Math.cos(ang+Math.PI/7), y2-L*Math.sin(ang+Math.PI/7), stroke, lw);
+    }
+    function label(text,x,y,color="rgba(255,255,255,0.78)", align="left"){
+      ctx.save();
+      ctx.fillStyle=color;
+      ctx.font="700 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.textAlign=align;
+      ctx.fillText(text,x,y);
+      ctx.restore();
+    }
+    function labelMono(text,x,y,color="rgba(255,255,255,0.75)", align="left"){
+      ctx.save();
+      ctx.fillStyle=color;
+      ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.textAlign=align;
+      ctx.fillText(text,x,y);
+      ctx.restore();
+    }
+    function boxRect(x,y,ww,hh,fill="rgba(255,255,255,0.05)", stroke="rgba(255,255,255,0.18)"){
+      ctx.save();
+      roundRect(ctx,x,y,ww,hh,12);
+      ctx.fillStyle=fill; ctx.fill();
+      ctx.strokeStyle=stroke; ctx.lineWidth=1.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Layout points
+    const ledX = x0 + 60, ledY = y0 + h/2;
+    const bsX = x0 + w/2, bsY = y0 + h/2;
+    const mTopX = x0 + w - 90, mTopY = y0 + 80;
+    const mBotX = x0 + w - 90, mBotY = y0 + h - 70;
+    const detX = x0 + 110, detY = y0 + h/2 + 90;
+
+    // LED
+    boxRect(ledX-35, ledY-22, 70, 44, "rgba(126,228,255,0.06)", "rgba(126,228,255,0.25)");
+    label("LED source", ledX, ledY-2, "rgba(255,255,255,0.88)", "center");
+    labelMono(`λ₀=${lambda0_um.toFixed(3)} μm`, ledX, ledY+14, "rgba(126,228,255,0.85)", "center");
+
+    // Beam splitter
+    boxRect(bsX-26, bsY-26, 52, 52, "rgba(255,255,255,0.04)", "rgba(255,255,255,0.22)");
+    // diagonal splitter line
+    ctx.save();
+    ctx.strokeStyle="rgba(255,255,255,0.65)";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(bsX-18, bsY+18);
+    ctx.lineTo(bsX+18, bsY-18);
+    ctx.stroke();
+    ctx.restore();
+    label("BS", bsX, bsY+44, "rgba(255,255,255,0.80)", "center");
+
+    // Mirrors
+    boxRect(mTopX-28, mTopY-18, 56, 36, "rgba(184,255,154,0.06)", "rgba(184,255,154,0.26)");
+    label("Mirror 1", mTopX, mTopY+4, "rgba(255,255,255,0.86)", "center");
+
+    boxRect(mBotX-28, mBotY-18, 56, 36, "rgba(184,255,154,0.06)", "rgba(184,255,154,0.26)");
+    label("Mirror 2", mBotX, mBotY+4, "rgba(255,255,255,0.86)", "center");
+
+    // Detector
+    boxRect(detX-34, detY-20, 68, 40, "rgba(255,209,102,0.05)", "rgba(255,209,102,0.26)");
+    label("Detector", detX, detY+4, "rgba(255,255,255,0.88)", "center");
+
+    // Paths: LED -> BS
+    arrow(ledX+35, ledY, bsX-26, bsY, "rgba(126,228,255,0.70)", 2.2);
+
+    // BS -> Mirrors and back (top arm)
+    arrow(bsX+26, bsY-10, mTopX-28, mTopY, "rgba(255,255,255,0.55)", 2.0);
+    arrow(mTopX-28, mTopY, bsX+26, bsY-10, "rgba(255,255,255,0.30)", 2.0);
+
+    // bottom arm
+    arrow(bsX+26, bsY+10, mBotX-28, mBotY, "rgba(255,255,255,0.55)", 2.0);
+    arrow(mBotX-28, mBotY, bsX+26, bsY+10, "rgba(255,255,255,0.30)", 2.0);
+
+    // recombined to detector
+    arrow(bsX-12, bsY+26, detX+34, detY-2, "rgba(255,209,102,0.70)", 2.2);
+
+    // Delay annotation
+    const annX = bsX + 10, annY = y0 + 18;
+    label("Arm mismatch → delay", annX, annY, "rgba(255,255,255,0.85)", "left");
+    labelMono("τ = ΔL / c", annX, annY+16, "rgba(255,255,255,0.70)", "left");
+
+    // Coherence annotation
+    label("Fringe visibility ∝ |g(τ)|", x0+10, y0+h-14, "rgba(255,255,255,0.80)", "left");
+    labelMono(`τc≈${tc_fs.toFixed(1)} fs,  lc≈${lc_um.toFixed(2)} μm`, x0+w-10, y0+h-14, "rgba(184,255,154,0.80)", "right");
+
+    ctx.restore();
+  }
+
+  // ---------- Draw: Coherence plot ----------
+  function drawCoherence(ctx, W, H, params){
+    const pad = 12;
+    const box = {x: pad, y: pad, w: W-2*pad, h: H-2*pad};
+
+    const {deltaNu} = params;
+    const d = computeDerived(deltaNu, params.lambda0);
+
+    // Choose x-range (fs)
+    let xMin, xMax;
+    if(viewMode === "snap"){
+      // show roughly ±4 tc or at least ±120 fs
+      const span = Math.max(120, 8*d.tc_fs);
+      xMin = -span/2;
+      xMax = span/2;
+    }else{
+      // wide view: ±220 fs but adapt if very short or very long
+      const span = clamp(16*d.tc_fs, 180, 900); // show ~16 tc, but bounded
+      xMin = -span/2;
+      xMax = span/2;
+    }
+
+    const yMin = 0, yMax = 1.05;
+
+    const axes = drawAxes(
+      ctx,
+      box,
+      xMin, xMax,
+      yMin, yMax,
+      "Delay τ (fs)",
+      "|g(τ)| (dimensionless)",
+      "Temporal coherence for Lorentzian spectrum"
+    );
+    const plot = axes.plot;
+
+    // Curve
+    ctx.save();
+    ctx.strokeStyle = "rgba(126,228,255,0.92)";
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    const N = 900;
+    for(let i=0;i<=N;i++){
+      const t_fs = xMin + (xMax-xMin)*i/N;
+      const t = t_fs * 1e-15;
+      const y = Math.exp(-Math.PI*deltaNu*Math.abs(t));
+      const X = xToPx(t_fs, xMin, xMax, plot);
+      const Y = yToPx(y, yMin, yMax, plot);
+      if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+    }
+    ctx.stroke();
+
+    // 0.5 threshold line
+    ctx.strokeStyle = "rgba(255,209,102,0.85)";
+    ctx.lineWidth = 1.8;
+    ctx.setLineDash([7,6]);
+    const Y05 = yToPx(0.5, yMin, yMax, plot);
+    ctx.beginPath();
+    ctx.moveTo(plot.x, Y05);
+    ctx.lineTo(plot.x+plot.w, Y05);
+    ctx.stroke();
+
+    // Marker at t05
+    ctx.setLineDash([5,5]);
+    ctx.strokeStyle = "rgba(255,107,107,0.90)";
+    ctx.lineWidth = 2;
+    const xMark = d.t05_fs;
+    const Xm1 = xToPx(-xMark, xMin, xMax, plot);
+    const Xm2 = xToPx(xMark, xMin, xMax, plot);
+    ctx.beginPath();
+    ctx.moveTo(Xm2, plot.y);
+    ctx.lineTo(Xm2, plot.y+plot.h);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(Xm1, plot.y);
+    ctx.lineTo(Xm1, plot.y+plot.h);
+    ctx.stroke();
+
+    // Legend
+    ctx.setLineDash([]);
+    const lx = plot.x + 12, ly = plot.y + 12;
+    roundRect(ctx, lx, ly, 300, 64, 12);
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,255,255,0.88)";
+    ctx.font = "700 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.fillText("|g(τ)| = exp(-πΔν|τ|)", lx+12, ly+22);
+
+    ctx.fillStyle = "rgba(255,255,255,0.72)";
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+    ctx.fillText(`Δν = ${fmtHz(deltaNu)} Hz`, lx+12, ly+40);
+    ctx.fillText(`τ0.5 = ${d.t05_fs.toFixed(1)} fs`, lx+12, ly+56);
+
+    // Highlight point at τ=0
+    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.beginPath();
+    ctx.arc(xToPx(0, xMin, xMax, plot), yToPx(1, yMin, yMax, plot), 3.2, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // ---------- Draw: Spectrum plot ----------
+  function drawSpectrum(ctx, W, H, params){
+    const pad = 12;
+    const box = {x: pad, y: pad, w: W-2*pad, h: H-2*pad};
+
+    const {deltaNu} = params;
+    const deltaTHz = deltaNu / 1e12;
+    // Plot in frequency offset (THz), show around ±(2.5*Δν)
+    const halfSpan = clamp(2.8*deltaTHz, 2.5, 120);
+    const xMin = -halfSpan, xMax = halfSpan;
+
+    // Normalized Lorentzian: L(Δ) = 1 / (1 + (2Δ/Δν)^2)
+    // This yields L(±Δν/2) = 1/2 (FWHM)
+    const yMin = 0, yMax = 1.12;
+
+    const axes = drawAxes(
+      ctx,
+      box,
+      xMin, xMax,
+      yMin, yMax,
+      "Frequency offset (ν - ν₀) (THz)",
+      "Normalized S(ν) (a.u.)",
+      "Lorentzian spectrum (normalized peak = 1)"
+    );
+    const plot = axes.plot;
+
+    // Draw Lorentzian curve
+    ctx.save();
+    ctx.strokeStyle = "rgba(184,255,154,0.92)";
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    const N = 1000;
+    for(let i=0;i<=N;i++){
+      const x = xMin + (xMax-xMin)*i/N; // THz offset
+      const dnu = x * 1e12;
+      const y = 1 / (1 + Math.pow(2*dnu/deltaNu, 2));
+      const X = xToPx(x, xMin, xMax, plot);
+      const Y = yToPx(y, yMin, yMax, plot);
+      if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+    }
+    ctx.stroke();
+
+    // Half-maximum line
+    ctx.strokeStyle = "rgba(255,209,102,0.85)";
+    ctx.lineWidth = 1.8;
+    ctx.setLineDash([7,6]);
+    const Yhm = yToPx(0.5, yMin, yMax, plot);
+    ctx.beginPath();
+    ctx.moveTo(plot.x, Yhm);
+    ctx.lineTo(plot.x+plot.w, Yhm);
+    ctx.stroke();
+
+    // FWHM markers at ±Δν/2 (in THz)
+    const xF = (deltaNu/2)/1e12;
+    ctx.strokeStyle = "rgba(126,228,255,0.90)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5,5]);
+
+    const Xp = xToPx(xF, xMin, xMax, plot);
+    const Xm = xToPx(-xF, xMin, xMax, plot);
+    ctx.beginPath(); ctx.moveTo(Xp, plot.y); ctx.lineTo(Xp, plot.y+plot.h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(Xm, plot.y); ctx.lineTo(Xm, plot.y+plot.h); ctx.stroke();
+
+    // Legend box
+    ctx.setLineDash([]);
+    const lx = plot.x + 12, ly = plot.y + 12;
+    roundRect(ctx, lx, ly, 350, 70, 12);
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,255,255,0.88)";
+    ctx.font = "700 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.fillText("S(ν) = 1 / [1 + (2(ν-ν₀)/Δν)²]", lx+12, ly+22);
+
+    ctx.fillStyle = "rgba(255,255,255,0.72)";
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+    ctx.fillText(`Δν (FWHM) = ${ (deltaNu/1e12).toFixed(2) } THz`, lx+12, ly+42);
+    ctx.fillText(`Half-max at ±Δν/2 = ±${ (xF).toFixed(2) } THz`, lx+12, ly+60);
+
+    ctx.restore();
+  }
+
+  // ---------- Copy buttons ----------
+  function wireCopy(){
+    function getCopyText(target){
+      // target can be a selector "#id" or literal string
+      if(target.startsWith("#")){
+        const el = document.querySelector(target);
+        if(!el) return "";
+        return (el.dataset.copy || el.textContent || "").trim();
+      }
+      // literal equation id (match data-copy-target with a data-copy eqBlock)
+      // If it's not a selector, treat as exact text
+      return target;
+    }
+
+    document.addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-copy-target]");
+      if(!btn) return;
+      const t = btn.getAttribute("data-copy-target");
+      let txt = "";
+      if(t && t.startsWith("#")){
+        txt = getCopyText(t);
+      }else{
+        // find eqText whose data-copy matches t exactly (or if t itself is text)
+        const eq = document.querySelector(`.eqText[data-copy="${CSS.escape(t)}"]`);
+        txt = eq ? eq.dataset.copy : t;
+      }
+      if(!txt) return;
+      try{
+        await navigator.clipboard.writeText(txt);
+        const old = btn.textContent;
+        btn.textContent = "Copied ✓";
+        setTimeout(()=>btn.textContent=old, 900);
+      }catch(err){
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = txt;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        const old = btn.textContent;
+        btn.textContent = "Copied ✓";
+        setTimeout(()=>btn.textContent=old, 900);
+      }
+    });
+  }
+
+  // ---------- Update readouts ----------
+  function updateReadouts(params){
+    const d = computeDerived(params.deltaNu, params.lambda0);
+
+    nuVal.textContent = fmtHz(params.deltaNu);
+    lamVal.textContent = params.lambda0_um.toFixed(3);
+
+    dlambdaRO.textContent = d.dlambda_nm.toFixed(1);
+    tcRO.textContent = d.tc_fs.toFixed(1);
+    lcRO.textContent = d.lc_um.toFixed(2);
+    t05RO.textContent = d.t05_fs.toFixed(1);
+
+    // also update the "final answer" mini tiles dynamically
+    ans_dlambda.textContent = d.dlambda_nm.toFixed(1);
+    ans_tc.textContent = d.tc_fs.toFixed(1);
+    ans_lc.textContent = d.lc_um.toFixed(2);
+    ans_t05.textContent = d.t05_fs.toFixed(1);
+
+    // update finalText dataset copy too
+    const finalEl = document.getElementById("finalText");
+    if(finalEl){
+      finalEl.dataset.copy =
+        `Δλ0 ≈ ${d.dlambda_nm.toFixed(1)} nm\n`+
+        `τc = 1/(πΔν) ≈ ${d.tc_fs.toFixed(1)} fs\n`+
+        `lc = c/(πΔν) ≈ ${d.lc_um.toFixed(2)} μm\n`+
+        `|g(τ)| = exp(-πΔν|τ|)\n`+
+        `|g(τ)| > 0.5 when |τ| < (ln2)/(πΔν) ≈ ${d.t05_fs.toFixed(1)} fs (ΔL < ${(c*d.t05*1e6).toFixed(2)} μm)`;
+      finalEl.textContent =
+        `Δλ₀ ≈ ${d.dlambda_nm.toFixed(1)} nm\n`+
+        `τc = 1/(πΔν) ≈ ${d.tc_fs.toFixed(1)} fs\n`+
+        `lc = c/(πΔν) ≈ ${d.lc_um.toFixed(2)} μm\n`+
+        `|g(τ)| = exp(-πΔν|τ|)\n`+
+        `|g(τ)| > 0.5 when |τ| < (ln2)/(πΔν) ≈ ${d.t05_fs.toFixed(1)} fs (ΔL < ${(c*d.t05*1e6).toFixed(2)} μm)`;
+    }
+  }
+
+  // ---------- Render all canvases ----------
+  function render(){
+    const params = getParams();
+    updateReadouts(params);
+
+    // diagram
+    {
+      const ctx = setupHiDPI(diagramCanvas);
+      const W = diagramCanvas.clientWidth;
+      const H = diagramCanvas.clientHeight;
+      clear(ctx, W, H);
+      drawDiagram(ctx, W, H, params);
+    }
+    // coherence
+    {
+      const ctx = setupHiDPI(cohCanvas);
+      const W = cohCanvas.clientWidth;
+      const H = cohCanvas.clientHeight;
+      clear(ctx, W, H);
+      drawCoherence(ctx, W, H, params);
+    }
+    // spectrum
+    {
+      const ctx = setupHiDPI(specCanvas);
+      const W = specCanvas.clientWidth;
+      const H = specCanvas.clientHeight;
+      clear(ctx, W, H);
+      drawSpectrum(ctx, W, H, params);
+    }
+  }
+
+  // ---------- Events ----------
+  function wireEvents(){
+    nuSlider.addEventListener("input", render);
+    lamSlider.addEventListener("input", render);
+
+    resetBtn.addEventListener("click", () => {
+      nuSlider.value = "13.0";    // 1e13
+      lamSlider.value = "0.700";  // 0.7 um
+      viewMode = "wide";
+      render();
+    });
+
+    snapBtn.addEventListener("click", () => {
+      viewMode = (viewMode === "wide") ? "snap" : "wide";
+      snapBtn.textContent = (viewMode === "snap") ? "Unsnap τ-axis (wide view)" : "Snap τ-axis to show τc region";
+      render();
+    });
+
+    // smooth scrolling for TOC links
+    document.querySelectorAll('.toc a').forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        const href = a.getAttribute('href');
+        if(href && href.startsWith('#')){
+          const el = document.querySelector(href);
+          if(el){
+            e.preventDefault();
+            el.scrollIntoView({behavior:'smooth', block:'start'});
+          }
+        }
+      });
+    });
+
+    // responsive render
+    let rAF = null;
+    window.addEventListener("resize", () => {
+      if(rAF) cancelAnimationFrame(rAF);
+      rAF = requestAnimationFrame(render);
+    }, {passive:true});
+  }
+
+  wireCopy();
+  wireEvents();
+  // initial render
+  render();
+
+})();
+</script>
+</body>
+</html>

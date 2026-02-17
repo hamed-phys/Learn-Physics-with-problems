@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Single-Photon Hit Probability on a Screen with Exponential Radial Intensity</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#0f1a2e;
+      --panel2:#0c1629;
+      --text:#eaf1ff;
+      --muted:#b9c7e6;
+      --faint:#93a6cf;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 20% 5%, rgba(125,211,252,.14), transparent 60%),
+                  radial-gradient(1200px 800px at 80% 15%, rgba(167,139,250,.12), transparent 60%),
+                  radial-gradient(1000px 700px at 50% 90%, rgba(52,211,153,.10), transparent 55%),
+                  var(--bg);
+      line-height:1.55;
+    }
+
+    header{
+      padding: 34px 18px 18px;
+      max-width: 1180px;
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: 1.4fr .6fr;
+      gap:18px;
+      align-items:start;
+    }
+    .hero{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 20px;
+      overflow:hidden;
+      position:relative;
+    }
+    .hero:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(500px 200px at 20% 10%, rgba(125,211,252,.16), transparent 60%),
+                  radial-gradient(420px 220px at 70% 20%, rgba(167,139,250,.14), transparent 60%);
+      pointer-events:none;
+      filter: blur(.2px);
+    }
+    .hero > *{position:relative}
+    h1{
+      margin:0 0 10px 0;
+      font-size: clamp(1.35rem, 2.4vw, 2.05rem);
+      letter-spacing: .2px;
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:0;
+      font-size: 0.98rem;
+      max-width: 70ch;
+    }
+    .meta{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 16px;
+      position: sticky;
+      top: 10px;
+      align-self:start;
+    }
+    .meta h2{
+      margin:0 0 10px 0;
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+    .toc{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-top:6px;
+    }
+    .toc a{
+      color: var(--muted);
+      text-decoration:none;
+      font-size:.95rem;
+      padding:7px 10px;
+      border-radius: 12px;
+      border:1px solid transparent;
+      transition: all .18s ease;
+      background: rgba(255,255,255,.02);
+    }
+    .toc a:hover{
+      color: var(--text);
+      border-color: rgba(125,211,252,.35);
+      background: rgba(125,211,252,.08);
+      transform: translateY(-1px);
+    }
+
+    main{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 18px 56px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:18px;
+    }
+
+    section{
+      background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.025));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+    }
+
+    h2{
+      margin: 0 0 12px 0;
+      font-size: 1.25rem;
+      letter-spacing:.2px;
+    }
+    h3{
+      margin: 16px 0 10px 0;
+      font-size: 1.08rem;
+      color: var(--text);
+    }
+    p{margin: 10px 0; color: var(--muted);}
+    ul{margin: 10px 0 10px 22px; color: var(--muted);}
+    li{margin: 6px 0;}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 920px){
+      header{grid-template-columns: 1fr; }
+      .meta{position:relative; top:auto;}
+      .grid2{grid-template-columns:1fr;}
+    }
+
+    .callouts{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .card{
+      grid-column: span 6;
+      background: rgba(0,0,0,.16);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 12px 12px 10px;
+      overflow:hidden;
+      position:relative;
+    }
+    .card:after{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(400px 160px at 10% 10%, rgba(125,211,252,.10), transparent 55%),
+                  radial-gradient(340px 160px at 90% 20%, rgba(167,139,250,.08), transparent 60%);
+      pointer-events:none;
+      opacity:.9;
+    }
+    .card > *{position:relative}
+    .card h4{
+      margin:0 0 6px 0;
+      font-size: .98rem;
+      color: var(--text);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .badge{
+      font-size:.75rem;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      color: var(--text);
+      background: rgba(255,255,255,.04);
+    }
+    .badge.good{border-color: rgba(52,211,153,.35); background: rgba(52,211,153,.10);}
+    .badge.warn{border-color: rgba(251,191,36,.35); background: rgba(251,191,36,.10);}
+    .badge.eq{border-color: rgba(125,211,252,.35); background: rgba(125,211,252,.10);}
+    .card p{margin:6px 0; color: var(--muted); font-size:.95rem;}
+
+    .eqbox{
+      margin: 10px 0;
+      padding: 12px 12px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(125,211,252,.22);
+      border-radius: 14px;
+      position:relative;
+    }
+    .eqbox .row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .eq{
+      font-family: var(--mono);
+      font-size: .95rem;
+      color: var(--text);
+      white-space: pre-wrap;
+      line-height:1.45;
+      margin:0;
+    }
+    .copybtn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-size: .86rem;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      flex: 0 0 auto;
+    }
+    .copybtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,.40);
+      background: rgba(125,211,252,.10);
+    }
+    .copyhint{
+      font-size:.82rem; color: var(--faint); margin-top:6px;
+    }
+
+    .vizwrap{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 12px;
+      align-items: start;
+      margin-top: 10px;
+    }
+    .vizpanel{
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .vizpanel h3{margin-top:0}
+    .canvasBox{
+      width:100%;
+      aspect-ratio: 16/10;
+      border-radius: 14px;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(7,10,18,.55);
+      position:relative;
+    }
+    canvas{width:100%; height:100%; display:block;}
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .ctrl{
+      padding: 10px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+    }
+    .ctrl label{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:10px;
+      font-size:.92rem;
+      color: var(--text);
+      margin-bottom:8px;
+    }
+    .ctrl .val{
+      font-family: var(--mono);
+      font-size:.88rem;
+      color: var(--accent);
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+    .small{
+      font-size:.86rem;
+      color: var(--faint);
+      margin-top:6px;
+    }
+    .kpiRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top:10px;
+    }
+    .kpi{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+      border-radius: 14px;
+      padding: 10px;
+    }
+    .kpi .t{font-size:.82rem; color: var(--faint);}
+    .kpi .v{font-family: var(--mono); font-size: 1.02rem; color: var(--text); margin-top:4px;}
+    .kpi .v strong{color: var(--good);}
+    @media (max-width: 980px){
+      .vizwrap{grid-template-columns:1fr;}
+      .controls{grid-template-columns:1fr;}
+      .kpiRow{grid-template-columns:1fr;}
+    }
+
+    .hr{
+      height:1px;
+      background: var(--line);
+      margin: 14px 0;
+    }
+
+    footer{
+      max-width:1180px;
+      margin: 0 auto;
+      padding: 0 18px 36px;
+      color: var(--faint);
+      font-size:.9rem;
+    }
+
+    /* print-friendly */
+    @media print{
+      body{background:#fff; color:#111;}
+      header, main, section, .hero, .meta{box-shadow:none}
+      .meta{position:relative}
+      .copybtn, .controls{display:none!important}
+      canvas{display:none!important}
+      .canvasBox:before{content:"[Canvas visualization hidden in print]"; color:#444; padding:10px; display:block;}
+      a{color:#111; text-decoration:none;}
+    }
+
+    /* subtle entrance */
+    @keyframes rise {from{transform: translateY(6px); opacity:0} to{transform: translateY(0); opacity:1}}
+    section, .hero, .meta{animation: rise .35s ease both}
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="hero">
+    <h1>Position of a Single Photon at a Screen (Radial Exponential Intensity)</h1>
+    <p class="subtitle">
+      A single photon arrives at an infinite screen (plane <span style="font-family:var(--mono)">z = 0</span>) from a monochromatic beam whose intensity varies with radial distance
+      <span style="font-family:var(--mono)">I(ρ) = I₀ e^{-ρ/ρ₀}</span>. We treat intensity as a probability density (after normalization) and compute the chance the photon lands inside a circle of radius <span style="font-family:var(--mono)">ρ₀</span>.
+    </p>
+  </div>
+
+  <aside class="meta" aria-label="Sticky Table of Contents">
+    <h2>Table of Contents</h2>
+    <nav class="toc">
+      <a href="#quick" data-scroll>Quick Summary</a>
+      <a href="#part0" data-scroll>PART 0 — Concept Primer</a>
+      <a href="#part1" data-scroll>PART 1 — Problem Analysis</a>
+      <a href="#part2" data-scroll>PART 2 — Strategy & Tips</a>
+      <a href="#part3" data-scroll>PART 3 — Full Solution</a>
+      <a href="#part4" data-scroll>PART 4 — Deeper Understanding</a>
+      <a href="#part5" data-scroll>PART 5 — Visualization Guide</a>
+      <a href="#viz" data-scroll>Interactive Visualizations</a>
+    </nav>
+    <div class="hr"></div>
+    <p class="small">
+      Tip: try the sliders in the visualization section to see how the probability changes when you vary the scale radius <span style="font-family:var(--mono)">ρ₀</span> and the chosen circle radius <span style="font-family:var(--mono)">R</span>.
+    </p>
+  </aside>
+</header>
+
+<main>
+  <section id="quick">
+    <h2>Quick Summary</h2>
+    <ul>
+      <li><strong>What this is about:</strong> Convert a spatial intensity pattern on a screen into a <em>single-photon hit probability</em>.</li>
+      <li><strong>Key physics idea:</strong> In quantum optics, the probability density for detecting a photon at position <span style="font-family:var(--mono)">r</span> is proportional to the local intensity <span style="font-family:var(--mono)">I(r)</span> (after normalization).</li>
+      <li><strong>Given intensity:</strong> <span style="font-family:var(--mono)">I(ρ)=I₀ e^{-ρ/ρ₀}</span> with <span style="font-family:var(--mono)">ρ = √(x²+y²)</span>.</li>
+      <li><strong>Governing normalization:</strong> <span style="font-family:var(--mono)">p(x,y) = I(x,y)/∬ I dA</span>, so <span style="font-family:var(--mono)">P(R)=∬_{ρ≤R} p dA</span>.</li>
+      <li><strong>Best coordinates:</strong> Polar area element <span style="font-family:var(--mono)">dA = ρ dρ dφ</span> matches radial symmetry.</li>
+      <li><strong>Result type:</strong> Fully symbolic probability and expected count; optional numerical value for <span style="font-family:var(--mono)">R=ρ₀</span>.</li>
+      <li><strong>Final results:</strong> <span style="font-family:var(--mono)">P(ρ≤ρ₀)=1−2/e ≈ 0.264</span>; for <span style="font-family:var(--mono)">N=10⁶</span> photons, average inside radius <span style="font-family:var(--mono)">ρ₀</span> is <span style="font-family:var(--mono)">N(1−2/e) ≈ 2.64×10⁵</span>.</li>
+    </ul>
+  </section>
+
+  <section id="part0">
+    <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+    <div class="callouts">
+      <div class="card" style="grid-column: span 6;">
+        <h4><span class="badge eq">Core definitions</span></h4>
+        <p><strong>Intensity</strong> <span style="font-family:var(--mono)">I(x,y)</span> (W/m²): time-averaged power per unit area arriving at the screen.</p>
+        <p><strong>Detection probability density</strong> <span style="font-family:var(--mono)">p(x,y)</span> (1/m²): probability per unit area that a single photon is detected near <span style="font-family:var(--mono)">(x,y)</span>.</p>
+        <p><strong>Radial coordinate</strong> <span style="font-family:var(--mono)">ρ = √(x²+y²)</span> (m): distance from the origin in the screen plane.</p>
+        <p><strong>Scale radius</strong> <span style="font-family:var(--mono)">ρ₀</span> (m): the characteristic length over which intensity decays by a factor of <span style="font-family:var(--mono)">e</span>.</p>
+      </div>
+
+      <div class="card" style="grid-column: span 6;">
+        <h4><span class="badge good">Physical meaning</span></h4>
+        <p>If you dim the light so that (effectively) only <em>one photon</em> arrives, repeated trials build up a “cloud” of hit positions whose density is proportional to the classical intensity pattern.</p>
+        <p>So: bright regions are where a photon is <em>more likely</em> to be detected—not because the photon spreads as “little bullets,” but because its wave-like probability distribution is stronger there.</p>
+      </div>
+
+      <div class="card" style="grid-column: span 6;">
+        <h4><span class="badge warn">Assumptions & validity</span></h4>
+        <p><strong>Steady, monochromatic field:</strong> intensity is time-independent on the detection timescale.</p>
+        <p><strong>Ideal screen:</strong> every photon incident is detected (uniform efficiency), so probabilities come purely from spatial variation of intensity.</p>
+        <p><strong>Far from saturation:</strong> “single-photon regime” means detections are independent events; intensity just sets relative likelihood.</p>
+      </div>
+
+      <div class="card" style="grid-column: span 6;">
+        <h4><span class="badge eq">Common models</span></h4>
+        <p><strong>Born-like rule for position detection:</strong> <span style="font-family:var(--mono)">p ∝ I</span> for optical detection on a screen (after normalization).</p>
+        <p><strong>Radial symmetry:</strong> when <span style="font-family:var(--mono)">I</span> depends only on <span style="font-family:var(--mono)">ρ</span>, polar coordinates simplify integrals via <span style="font-family:var(--mono)">dA = ρ dρ dφ</span>.</p>
+      </div>
+    </div>
+
+    <h3>Mini intuition examples (quick)</h3>
+    <ul>
+      <li>If <span style="font-family:var(--mono)">I(ρ)</span> were constant, the probability to land in a circle of radius <span style="font-family:var(--mono)">R</span> would scale like area: <span style="font-family:var(--mono)">P ∝ R²</span>.</li>
+      <li>If intensity decays quickly with <span style="font-family:var(--mono)">ρ</span>, most photons land near the origin, so <span style="font-family:var(--mono)">P(R)</span> rises rapidly and then saturates near 1.</li>
+    </ul>
+
+    <h3>What to watch for (pitfalls)</h3>
+    <ul>
+      <li>For radial patterns, forgetting the polar area factor <span style="font-family:var(--mono)">ρ</span> in <span style="font-family:var(--mono)">dA = ρ dρ dφ</span> gives a wrong normalization.</li>
+      <li>Do <em>not</em> confuse intensity <span style="font-family:var(--mono)">I</span> (W/m²) with probability density <span style="font-family:var(--mono)">p</span> (1/m²); you must normalize.</li>
+      <li>The wavelength <span style="font-family:var(--mono)">λ₀</span> is irrelevant here because the problem gives the intensity pattern directly on the screen.</li>
+    </ul>
+  </section>
+
+  <section id="part1">
+    <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+    <h3>Restate the problem (in plain words)</h3>
+    <p>
+      Monochromatic light strikes an infinite screen at <span style="font-family:var(--mono)">z=0</span>. The intensity on the screen depends only on radial distance
+      <span style="font-family:var(--mono)">ρ = √(x²+y²)</span> and is
+      <span style="font-family:var(--mono)">I(ρ)=I₀ e^{-ρ/ρ₀}</span>.
+      We reduce the source so only a single photon arrives. (a) Find the probability that it hits within radius <span style="font-family:var(--mono)">ρ₀</span> of the origin. (b) If the beam contains <span style="font-family:var(--mono)">10⁶</span> photons, find the average number landing within that circle.
+    </p>
+
+    <div class="grid2">
+      <div>
+        <h3>Given</h3>
+        <ul>
+          <li>Intensity profile: <span style="font-family:var(--mono)">I(ρ)=I₀ e^{-ρ/ρ₀}</span></li>
+          <li>Radial coordinate: <span style="font-family:var(--mono)">ρ=√(x²+y²)</span></li>
+          <li>Screen is infinite (integrals go to <span style="font-family:var(--mono)">∞</span>)</li>
+          <li>Single-photon detection (one photon per trial)</li>
+          <li>Part (b): total photons <span style="font-family:var(--mono)">N = 10⁶</span></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Unknowns</h3>
+        <ul>
+          <li>(a) <span style="font-family:var(--mono)">P(ρ ≤ ρ₀)</span></li>
+          <li>(b) Expected count inside radius <span style="font-family:var(--mono)">ρ₀</span>: <span style="font-family:var(--mono)">⟨n⟩</span></li>
+        </ul>
+
+        <h3>What must be found</h3>
+        <ul>
+          <li>A normalized probability from an intensity distribution.</li>
+          <li>An average (expectation) for many independent photons.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Relevant principles (and why)</h3>
+    <ul>
+      <li><strong>Normalization of detection probability:</strong> the probability density is proportional to intensity because the screen detects energy flux; for identical photons, this translates into detection likelihood.</li>
+      <li><strong>Symmetry + polar coordinates:</strong> since <span style="font-family:var(--mono)">I</span> depends only on <span style="font-family:var(--mono)">ρ</span>, integrate over rings.</li>
+      <li><strong>Independent trials:</strong> for <span style="font-family:var(--mono)">N</span> photons, expected number in a region is <span style="font-family:var(--mono)">N × P(region)</span>.</li>
+    </ul>
+
+    <div class="callouts">
+      <div class="card" style="grid-column: span 12;">
+        <h4><span class="badge warn">Assumptions (explicit)</span></h4>
+        <p>
+          (1) The given <span style="font-family:var(--mono)">I(ρ)</span> describes the spatial distribution on the screen (no diffraction calculation needed).
+          (2) Detection efficiency is uniform over the screen.
+          (3) Photons are independent and identically distributed by that intensity pattern.
+          (4) “Infinite screen” means total probability is normalized by integrating over <span style="font-family:var(--mono)">ρ ∈ [0,∞)</span>.
+        </p>
+      </div>
+    </div>
+
+    <h3>Possible approaches (compare briefly)</h3>
+    <ul>
+      <li><strong>Approach A (best):</strong> Normalize <span style="font-family:var(--mono)">I(ρ)</span> using polar integrals → direct probability. <em>Fast, clean, uses symmetry.</em></li>
+      <li><strong>Approach B:</strong> Compute the radial PDF first (<span style="font-family:var(--mono)">p_ρ(ρ)</span>) then integrate to <span style="font-family:var(--mono)">ρ₀</span>. <em>Very instructive, matches visualization.</em></li>
+      <li><strong>Approach C:</strong> Treat intensity as unnormalized weight and compute ratio of weighted areas (same as A). <em>Equivalent but less explicit about PDFs.</em></li>
+    </ul>
+    <p><strong>Choice:</strong> Use A/B together: normalize in polar form (A), then interpret via a radial PDF and CDF (B) for intuition and plotting.</p>
+  </section>
+
+  <section id="part2">
+    <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+    <ol style="color:var(--muted); margin-left: 22px;">
+      <li>
+        <strong>Goal:</strong> Convert intensity into a probability density.
+        <br><strong>Tool:</strong> <span style="font-family:var(--mono)">p(x,y)=I(x,y)/∬ I dA</span>.
+        <br><strong>Meaning:</strong> intensity is a “weight”; normalization turns it into probability.
+      </li>
+      <li>
+        <strong>Goal:</strong> Compute the total normalization <span style="font-family:var(--mono)">∬ I dA</span> on an infinite plane.
+        <br><strong>Tool:</strong> Polar coordinates: <span style="font-family:var(--mono)">dA = ρ dρ dφ</span>, <span style="font-family:var(--mono)">φ∈[0,2π)</span>.
+        <br><strong>Meaning:</strong> total photon “likelihood mass” over the whole screen is 1 after normalization.
+      </li>
+      <li>
+        <strong>Goal:</strong> Compute probability inside radius <span style="font-family:var(--mono)">R=ρ₀</span>.
+        <br><strong>Tool:</strong> Ratio of integrals: <span style="font-family:var(--mono)">P(ρ≤R) = (∫₀^R 2πρ I(ρ) dρ)/(∫₀^∞ 2πρ I(ρ) dρ)</span>.
+        <br><strong>Meaning:</strong> fraction of total intensity contained in the circle.
+      </li>
+      <li>
+        <strong>Goal:</strong> Evaluate the needed exponential integrals carefully.
+        <br><strong>Tool:</strong> Substitute <span style="font-family:var(--mono)">u=ρ/ρ₀</span>, and use <span style="font-family:var(--mono)">∫ u e^{-u} du</span>.
+        <br><strong>Meaning:</strong> yields a compact closed form CDF.
+      </li>
+      <li>
+        <strong>Goal:</strong> For <span style="font-family:var(--mono)">N</span> photons, compute expectation.
+        <br><strong>Tool:</strong> <span style="font-family:var(--mono)">⟨n⟩=NP</span> (binomial mean).
+        <br><strong>Meaning:</strong> average count in region for many independent photons.
+      </li>
+    </ol>
+
+    <div class="callouts">
+      <div class="card" style="grid-column: span 6;">
+        <h4><span class="badge warn">Common mistakes</span></h4>
+        <p>Not including the <span style="font-family:var(--mono)">ρ</span> factor from <span style="font-family:var(--mono)">dA</span> (this changes the answer dramatically).</p>
+        <p>Forgetting that <span style="font-family:var(--mono)">I₀</span> cancels in the probability ratio (probabilities do not depend on absolute brightness).</p>
+      </div>
+      <div class="card" style="grid-column: span 6;">
+        <h4><span class="badge good">Quick tips</span></h4>
+        <p>Always check: does <span style="font-family:var(--mono)">P(R)</span> go to 0 as <span style="font-family:var(--mono)">R→0</span> and to 1 as <span style="font-family:var(--mono)">R→∞</span>?</p>
+        <p>Use a dimensionless radius <span style="font-family:var(--mono)">x=R/ρ₀</span> to simplify and to understand scaling.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="part3">
+    <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+    <h3>Physical intuition before calculating</h3>
+    <p>
+      The intensity is largest at the origin (<span style="font-family:var(--mono)">I(0)=I₀</span>) and decays exponentially as you move outward.
+      So we expect a decent fraction of detections near the center, but not overwhelming, because the area of rings grows like <span style="font-family:var(--mono)">2πρ</span>.
+      In other words: even if the intensity is smaller farther out, there is <em>more area</em> there—so the probability balance is set by both decay and area growth.
+    </p>
+
+    <h3>Step 1: Turn intensity into a normalized probability density</h3>
+    <p>
+      Let <span style="font-family:var(--mono)">p(x,y)</span> be the probability density (units 1/m²) for detecting the photon at position <span style="font-family:var(--mono)">(x,y)</span>.
+      We take
+    </p>
+
+    <div class="eqbox">
+      <div class="row">
+        <pre class="eq" id="eq1">p(x,y) = I(x,y) / ∬_{all space} I(x,y) dA</pre>
+        <button class="copybtn" data-copy-target="eq1">Copy</button>
+      </div>
+      <div class="copyhint">Copies plain text. (Intensity is a weight; normalization makes total probability 1.)</div>
+    </div>
+
+    <p>
+      Because <span style="font-family:var(--mono)">I</span> depends only on <span style="font-family:var(--mono)">ρ</span>, use polar coordinates:
+      <span style="font-family:var(--mono)">ρ ≥ 0</span>, <span style="font-family:var(--mono)">φ ∈ [0,2π)</span>, and <span style="font-family:var(--mono)">dA = ρ dρ dφ</span>.
+    </p>
+
+    <h3>Step 2: Compute the total normalization integral</h3>
+    <p>Compute the total “weight” (total intensity integrated over the infinite screen):</p>
+
+    <div class="eqbox">
+      <div class="row">
+        <pre class="eq" id="eq2">W = ∬ I dA
+  = ∫_{0}^{2π} ∫_{0}^{∞} I₀ e^{-ρ/ρ₀} (ρ dρ dφ)
+  = 2π I₀ ∫_{0}^{∞} ρ e^{-ρ/ρ₀} dρ</pre>
+        <button class="copybtn" data-copy-target="eq2">Copy</button>
+      </div>
+    </div>
+
+    <p>
+      Evaluate the radial integral by substituting <span style="font-family:var(--mono)">u = ρ/ρ₀</span>, so <span style="font-family:var(--mono)">ρ = ρ₀ u</span>, <span style="font-family:var(--mono)">dρ = ρ₀ du</span>:
+    </p>
+
+    <div class="eqbox">
+      <div class="row">
+        <pre class="eq" id="eq3">∫_{0}^{∞} ρ e^{-ρ/ρ₀} dρ
+= ∫_{0}^{∞} (ρ₀ u) e^{-u} (ρ₀ du)
+= ρ₀² ∫_{0}^{∞} u e^{-u} du</pre>
+        <button class="copybtn" data-copy-target="eq3">Copy</button>
+      </div>
+    </div>
+
+    <p>
+      The integral <span style="font-family:var(--mono)">∫₀^∞ u e^{-u} du = 1</span> (it is the mean of an exponential distribution / a Gamma function value).
+      Therefore:
+    </p>
+
+    <div class="eqbox">
+      <div class="row">
+        <pre class="eq" id="eq4">W = 2π I₀ ρ₀²</pre>
+        <button class="copybtn" data-copy-target="eq4">Copy</button>
+      </div>
+    </div>
+
+    <p><em>What we did and why:</em> We integrated the intensity over the entire plane to find the total weight. This will cancel out the unknown brightness <span style="font-family:var(--mono)">I₀</span> when forming probabilities.</p>
+
+    <h3>Step 3: Probability inside a circle of radius R</h3>
+    <p>
+      The probability that the photon lands within radial distance <span style="font-family:var(--mono)">R</span> is
+    </p>
+
+    <div class="eqbox">
+      <div class="row">
+        <pre class="eq" id="eq5">P(ρ ≤ R) = ∬_{ρ≤R} p dA
+= (∫_{0}^{2π} ∫_{0}^{R} I₀ e^{-ρ/ρ₀} ρ dρ dφ) / (2π I₀ ρ₀²)
+= (2π I₀ ∫_{0}^{R} ρ e^{-ρ/ρ₀} dρ) / (2π I₀ ρ₀²)
+= (1/ρ₀²) ∫_{0}^{R} ρ e^{-ρ/ρ₀} dρ</pre>
+        <button class="copybtn" data-copy-target="eq5">Copy</button>
+      </div>
+    </div>
+
+    <p>
+      Now evaluate <span style="font-family:var(--mono)">∫₀^R ρ e^{-ρ/ρ₀} dρ</span>.
+      Use the same substitution <span style="font-family:var(--mono)">u = ρ/ρ₀</span>, and define the dimensionless radius
+      <span style="font-family:var(--mono)">x = R/ρ₀</span>.
+    </p>
+
+    <div class="eqbox">
+      <div class="row">
+        <pre class="eq" id="eq6">∫_{0}^{R} ρ e^{-ρ/ρ₀} dρ
+= ρ₀² ∫_{0}^{x} u e^{-u} du</pre>
+        <button class="copybtn" data-copy-target="eq6">Copy</button>
+      </div>
+    </div>
+
+    <p>
+      Compute the antiderivative:
+      <span style="font-family:var(--mono)">∫ u e^{-u} du</span>.
+      Integration by parts (or known result) gives
+      <span style="font-family:var(--mono)">∫ u e^{-u} du = -(u+1)e^{-u} + C</span>.
+      Therefore,
+    </p>
+
+    <div class="eqbox">
+      <div class="row">
+        <pre class="eq" id="eq7">∫_{0}^{x} u e^{-u} du
+= [-(u+1)e^{-u}]_{0}^{x}
+= -(x+1)e^{-x} - (-(0+1)e^{0})
+= 1 - (x+1)e^{-x}</pre>
+        <button class="copybtn" data-copy-target="eq7">Copy</button>
+      </div>
+    </div>
+
+    <p>
+      Plugging into <span style="font-family:var(--mono)">P</span>:
+    </p>
+
+    <div class="eqbox">
+      <div class="row">
+        <pre class="eq" id="eq8">P(ρ ≤ R) = (1/ρ₀²) · ρ₀² [1 - (x+1)e^{-x}]
+= 1 - (1 + R/ρ₀) e^{-R/ρ₀}</pre>
+        <button class="copybtn" data-copy-target="eq8">Copy</button>
+      </div>
+      <div class="copyhint">This is the cumulative probability inside radius R. It depends only on the ratio R/ρ₀.</div>
+    </div>
+
+    <h3>Part (a): probability inside radius ρ₀</h3>
+    <p>
+      Set <span style="font-family:var(--mono)">R = ρ₀</span> so <span style="font-family:var(--mono)">x = 1</span>:
+    </p>
+
+    <div class="eqbox" style="border-color: rgba(52,211,153,.28);">
+      <div class="row">
+        <pre class="eq" id="ansA">P(ρ ≤ ρ₀) = 1 - (1+1)e^{-1} = 1 - 2/e ≈ 0.264241...</pre>
+        <button class="copybtn" data-copy-target="ansA">Copy</button>
+      </div>
+      <div class="copyhint">Final answer (a). About 26.4% of detections occur within one scale radius.</div>
+    </div>
+
+    <h3>Part (b): average number inside radius ρ₀ for N photons</h3>
+    <p>
+      For <span style="font-family:var(--mono)">N</span> independent photons, the number that land inside the circle is binomial with mean
+      <span style="font-family:var(--mono)">⟨n⟩ = N P</span>. With <span style="font-family:var(--mono)">N = 10⁶</span>:
+    </p>
+
+    <div class="eqbox" style="border-color: rgba(52,211,153,.28);">
+      <div class="row">
+        <pre class="eq" id="ansB">⟨n⟩ = N(1 - 2/e)
+For N = 10^6:  ⟨n⟩ ≈ 10^6 × 0.264241... ≈ 2.64 × 10^5 photons</pre>
+        <button class="copybtn" data-copy-target="ansB">Copy</button>
+      </div>
+      <div class="copyhint">Final answer (b). This is an average over many runs (not a guaranteed exact count).</div>
+    </div>
+
+    <h3>Sanity checks</h3>
+    <ul>
+      <li><strong>Units:</strong> Probability is dimensionless. In the ratio, <span style="font-family:var(--mono)">I₀</span> cancels, and the remaining expression depends only on <span style="font-family:var(--mono)">R/ρ₀</span> (dimensionless).</li>
+      <li><strong>Limiting cases:</strong>
+        <ul>
+          <li><span style="font-family:var(--mono)">R→0</span> ⇒ <span style="font-family:var(--mono)">P→0</span> (since the region shrinks to a point).</li>
+          <li><span style="font-family:var(--mono)">R→∞</span> ⇒ <span style="font-family:var(--mono)">P→1</span> (entire plane).</li>
+        </ul>
+      </li>
+      <li><strong>Reasonableness of <span style="font-family:var(--mono)">P(ρ≤ρ₀)</span>:</strong> It is less than 1/2 because although intensity is strong near the center, the outer rings have much more area.</li>
+    </ul>
+
+    <p>
+      Connection to the diagram/plots: the diagram shows the exponential “spot” on the screen and the chosen circle radius.
+      The plots show (i) the cumulative probability <span style="font-family:var(--mono)">P(R)</span> and (ii) the radial probability density that balances intensity decay against growing ring area.
+    </p>
+  </section>
+
+  <section id="part4">
+    <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+    <h3>Re-interpreting the final formula</h3>
+    <p>
+      The cumulative probability inside radius <span style="font-family:var(--mono)">R</span> is
+      <span style="font-family:var(--mono)">P(R)=1-(1+R/ρ₀)e^{-R/ρ₀}</span>.
+      Two competing effects appear:
+    </p>
+    <ul>
+      <li><strong>Exponential decay</strong> <span style="font-family:var(--mono)">e^{-R/ρ₀}</span>: intensity weakens outward, lowering probability at large radii.</li>
+      <li><strong>Geometric growth</strong> <span style="font-family:var(--mono)">(1+R/ρ₀)</span>: as you include more radius, you include more circumference/area, increasing probability.</li>
+    </ul>
+
+    <h3>How changing parameters affects the outcome</h3>
+    <ul>
+      <li>Changing <span style="font-family:var(--mono)">ρ₀</span> rescales the whole pattern: probabilities depend only on <span style="font-family:var(--mono)">R/ρ₀</span>. If you keep <span style="font-family:var(--mono)">R/ρ₀</span> fixed, <span style="font-family:var(--mono)">P</span> is unchanged.</li>
+      <li>For a fixed physical radius <span style="font-family:var(--mono)">R</span>, increasing <span style="font-family:var(--mono)">ρ₀</span> spreads the light out more slowly (less decay), so the same <span style="font-family:var(--mono)">R</span> contains a smaller fraction of the total—<span style="font-family:var(--mono)">P</span> decreases.</li>
+    </ul>
+
+    <h3>Alternative derivation idea (brief)</h3>
+    <p>
+      Instead of normalizing in 2D first, you can derive the <em>radial</em> probability density directly by noting that probability in an annulus
+      <span style="font-family:var(--mono)">[ρ, ρ+dρ]</span> is proportional to intensity times annulus area:
+      <span style="font-family:var(--mono)">dP ∝ I(ρ) · 2πρ dρ</span>.
+      Normalizing gives a 1D PDF in <span style="font-family:var(--mono)">ρ</span> and integrating yields the same <span style="font-family:var(--mono)">P(R)</span>.
+    </p>
+
+    <h3>Concept checks (self-test)</h3>
+    <ul>
+      <li><strong>Q:</strong> Why does <span style="font-family:var(--mono)">λ₀</span> not appear in the final probability? <strong>A:</strong> The screen intensity profile is already given; wavelength would matter only if we had to compute the pattern from interference/diffraction.</li>
+      <li><strong>Q:</strong> If the screen were finite, would the answer change? <strong>A:</strong> Yes—normalization would be over the finite area, and the “total probability” would be constrained to that region.</li>
+      <li><strong>Q:</strong> What sets the most likely detection radius? <strong>A:</strong> The radial PDF peaks where ring area growth and exponential decay balance (visible in the secondary plot).</li>
+      <li><strong>Q:</strong> For <span style="font-family:var(--mono)">R=ρ₀</span>, is the probability closer to 0.1 or 0.9? <strong>A:</strong> Closer to 0.1–0.3; it is <span style="font-family:var(--mono)">1-2/e≈0.264</span>.</li>
+    </ul>
+  </section>
+
+  <section id="part5">
+    <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+    <ul>
+      <li><strong>Diagram canvas:</strong> shows the screen plane, the origin, and a shaded radial “spot” representing <span style="font-family:var(--mono)">I(ρ)</span>. The circle indicates the chosen radius <span style="font-family:var(--mono)">R</span>.</li>
+      <li><strong>Main plot:</strong> <span style="font-family:var(--mono)">P(R)</span> vs <span style="font-family:var(--mono)">R</span> (in mm). A marker indicates your current <span style="font-family:var(--mono)">R</span>. This is the key quantitative result.</li>
+      <li><strong>Secondary plot:</strong> radial probability density <span style="font-family:var(--mono)">p_ρ(ρ)</span> vs <span style="font-family:var(--mono)">ρ</span> (in mm). The shaded area up to <span style="font-family:var(--mono)">R</span> equals <span style="font-family:var(--mono)">P(R)</span>.</li>
+      <li><strong>Interactive controls:</strong>
+        <ul>
+          <li><span style="font-family:var(--mono)">ρ₀</span> slider rescales the intensity decay length (example units in mm).</li>
+          <li><span style="font-family:var(--mono)">R/ρ₀</span> slider chooses the circle radius as a multiple of <span style="font-family:var(--mono)">ρ₀</span>. Changing it updates the marker and the computed probability.</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section id="viz">
+    <h2>Interactive Visualizations</h2>
+
+    <div class="vizwrap">
+      <div class="vizpanel">
+        <h3>Geometry Diagram (screen at z = 0)</h3>
+        <div class="canvasBox" aria-label="Diagram canvas">
+          <canvas id="cDiagram"></canvas>
+        </div>
+
+        <div class="controls" aria-label="Interactive controls">
+          <div class="ctrl">
+            <label for="rho0">
+              Scale radius <span style="font-family:var(--mono)">ρ₀</span> <span class="val" id="rho0Val">2.00 mm</span>
+            </label>
+            <input id="rho0" type="range" min="0.5" max="6.0" step="0.01" value="2.00"/>
+            <div class="small">Example value for plotting (final answers remain symbolic).</div>
+          </div>
+
+          <div class="ctrl">
+            <label for="xRatio">
+              Circle radius ratio <span style="font-family:var(--mono)">x = R/ρ₀</span> <span class="val" id="xVal">1.00</span>
+            </label>
+            <input id="xRatio" type="range" min="0" max="5" step="0.01" value="1.00"/>
+            <div class="small">Try x = 1 to reproduce part (a).</div>
+          </div>
+        </div>
+
+        <div class="kpiRow" aria-label="Key computed values">
+          <div class="kpi">
+            <div class="t">Chosen radius</div>
+            <div class="v" id="RVal">R = 2.00 mm</div>
+          </div>
+          <div class="kpi">
+            <div class="t">Probability inside radius</div>
+            <div class="v" id="PVal">P = 0.2642</div>
+          </div>
+          <div class="kpi">
+            <div class="t">Avg. count for N = 10⁶</div>
+            <div class="v" id="NVal"><strong>2.64×10⁵</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="vizpanel">
+        <h3>Main Plot: Cumulative probability <span style="font-family:var(--mono)">P(R)</span></h3>
+        <div class="canvasBox" aria-label="Main plot canvas">
+          <canvas id="cMain"></canvas>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3>Secondary Plot: Radial PDF <span style="font-family:var(--mono)">pₚ(ρ)</span></h3>
+        <div class="canvasBox" aria-label="Secondary plot canvas">
+          <canvas id="cPDF"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="callouts" style="margin-top:14px;">
+      <div class="card" style="grid-column: span 12;">
+        <h4><span class="badge eq">Key functions used in the plots</span></h4>
+        <div class="eqbox" style="margin-top:10px;">
+          <div class="row">
+            <pre class="eq" id="eqPlot">x = R/ρ₀
+P(R) = 1 - (1 + x) e^{-x}
+p_ρ(ρ) = (ρ/ρ₀²) e^{-ρ/ρ₀}   (normalized radial density)</pre>
+            <button class="copybtn" data-copy-target="eqPlot">Copy</button>
+          </div>
+          <div class="copyhint">The secondary plot uses the radial density whose integral from 0 to R equals P(R).</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="hr"></div>
+  <p>
+    Built as a self-contained tutorial with interactive canvases (no external libraries). All numeric values in plots are example scalings; the analytic results are symbolic and general.
+  </p>
+</footer>
+
+<script>
+/* ---------- smooth scrolling ---------- */
+document.querySelectorAll('[data-scroll]').forEach(a=>{
+  a.addEventListener('click', (e)=>{
+    e.preventDefault();
+    const id = a.getAttribute('href');
+    const el = document.querySelector(id);
+    if(!el) return;
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+});
+
+/* ---------- copy buttons ---------- */
+function copyText(txt){
+  navigator.clipboard.writeText(txt).then(()=>{}, ()=>{});
+}
+document.querySelectorAll('.copybtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const id = btn.getAttribute('data-copy-target');
+    const el = document.getElementById(id);
+    if(!el) return;
+    copyText(el.textContent.trim());
+    btn.textContent = "Copied!";
+    setTimeout(()=>btn.textContent="Copy", 900);
+  });
+});
+
+/* ---------- math helpers ---------- */
+function Pofx(x){
+  // P(R) with x = R/rho0
+  return 1 - (1 + x) * Math.exp(-x);
+}
+function pdf_rho(r, rho0){
+  // radial density in rho (1/m), but we plot vs rho in mm, so treat numerically
+  return (r/(rho0*rho0)) * Math.exp(-r/rho0);
+}
+
+/* ---------- canvas plotting utilities ---------- */
+function setupCanvas(canvas){
+  const ctx = canvas.getContext('2d');
+  function resize(){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(2, Math.floor(rect.width * dpr));
+    const h = Math.max(2, Math.floor(rect.height * dpr));
+    if(canvas.width !== w || canvas.height !== h){
+      canvas.width = w; canvas.height = h;
+    }
+    ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  }
+  resize();
+  return {ctx, resize};
+}
+
+function drawAxes(ctx, box, opts){
+  const {xMin,xMax,yMin,yMax, xLabel, yLabel, title} = opts;
+  const {x,y,w,h, padL, padR, padT, padB} = box;
+
+  // Background
+  ctx.save();
+  ctx.fillStyle = "rgba(7,10,18,0.55)";
+  ctx.fillRect(x,y,w,h);
+
+  // Title
+  ctx.fillStyle = "rgba(234,241,255,0.95)";
+  ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText(title || "", x+padL, y+padT-10);
+
+  // Plot area
+  const px = x+padL, py = y+padT, pw = w-padL-padR, ph = h-padT-padB;
+
+  // Grid & ticks
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
+  ctx.lineWidth = 1;
+
+  const nGrid = 6;
+  for(let i=0;i<=nGrid;i++){
+    const gx = px + (pw*i/nGrid);
+    const gy = py + (ph*i/nGrid);
+    ctx.beginPath(); ctx.moveTo(gx, py); ctx.lineTo(gx, py+ph); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px, gy); ctx.lineTo(px+pw, gy); ctx.stroke();
+  }
+
+  // Axes border
+  ctx.strokeStyle = "rgba(255,255,255,0.22)";
+  ctx.strokeRect(px, py, pw, ph);
+
+  // Tick labels
+  ctx.fillStyle = "rgba(185,199,230,0.95)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+
+  function fmt(v){
+    const av = Math.abs(v);
+    if(av >= 100) return v.toFixed(0);
+    if(av >= 10) return v.toFixed(1);
+    if(av >= 1) return v.toFixed(2);
+    return v.toFixed(3);
+  }
+
+  // x ticks
+  for(let i=0;i<=nGrid;i++){
+    const xv = xMin + (xMax-xMin)*i/nGrid;
+    const tx = px + (pw*i/nGrid);
+    ctx.fillText(fmt(xv), tx-12, py+ph+18);
+  }
+  // y ticks
+  for(let i=0;i<=nGrid;i++){
+    const yv = yMax - (yMax-yMin)*i/nGrid;
+    const ty = py + (ph*i/nGrid);
+    ctx.fillText(fmt(yv), px-54, ty+4);
+  }
+
+  // Axis labels
+  ctx.fillStyle = "rgba(234,241,255,0.92)";
+  ctx.font = "600 13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText(xLabel || "", px + pw*0.5 - 40, py + ph + 40);
+
+  ctx.save();
+  ctx.translate(x + 16, py + ph*0.5 + 40);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel || "", 0, 0);
+  ctx.restore();
+
+  ctx.restore();
+
+  function xMap(xv){ return px + (xv-xMin)/(xMax-xMin)*pw; }
+  function yMap(yv){ return py + (yMax-yv)/(yMax-yMin)*ph; }
+
+  return {px,py,pw,ph,xMap,yMap};
+}
+
+function drawPolyline(ctx, points, strokeStyle, lineWidth){
+  if(points.length < 2) return;
+  ctx.save();
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = lineWidth || 2;
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for(let i=1;i<points.length;i++) ctx.lineTo(points[i].x, points[i].y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawMarker(ctx, x, y, color){
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(x,y,4.5,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,0.35)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawLegend(ctx, x, y, items){
+  ctx.save();
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  let yy = y;
+  items.forEach(it=>{
+    ctx.fillStyle = it.color;
+    ctx.fillRect(x, yy-9, 14, 3);
+    ctx.fillStyle = "rgba(234,241,255,0.92)";
+    ctx.fillText(it.label, x+20, yy-3);
+    yy += 16;
+  });
+  ctx.restore();
+}
+
+/* ---------- canvases ---------- */
+const diag = setupCanvas(document.getElementById('cDiagram'));
+const main = setupCanvas(document.getElementById('cMain'));
+const pdf = setupCanvas(document.getElementById('cPDF'));
+
+const rho0Slider = document.getElementById('rho0');
+const xSlider = document.getElementById('xRatio');
+const rho0Val = document.getElementById('rho0Val');
+const xVal = document.getElementById('xVal');
+const RVal = document.getElementById('RVal');
+const PVal = document.getElementById('PVal');
+const NVal = document.getElementById('NVal');
+
+function formatSci(n){
+  if(n === 0) return "0";
+  const exp = Math.floor(Math.log10(Math.abs(n)));
+  const mant = n / Math.pow(10, exp);
+  if(exp >= 3) return `${mant.toFixed(2)}×10^${exp}`;
+  return n.toFixed(0);
+}
+
+function renderDiagram(rho0_mm, x){
+  const ctx = diag.ctx;
+  const rect = ctx.canvas.getBoundingClientRect();
+  const W = rect.width, H = rect.height;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Panel background
+  ctx.fillStyle = "rgba(7,10,18,0.55)";
+  ctx.fillRect(0,0,W,H);
+
+  // Title
+  ctx.fillStyle = "rgba(234,241,255,0.95)";
+  ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText("Screen plane z = 0 with radial intensity I(ρ) = I₀ e^{-ρ/ρ₀}", 12, 20);
+
+  // Coordinate frame
+  const cx = W*0.52, cy = H*0.58;
+  const scale = Math.min(W,H)*0.32; // visual radius scale
+  const R_mm = x * rho0_mm;
+
+  // Draw "intensity spot" as concentric rings (exponential shading)
+  const rings = 60;
+  for(let i=rings;i>=1;i--){
+    const rr = (i/rings)*scale;
+    const rho_here = (i/rings)* (5*rho0_mm); // map to 0..5 rho0 in mm
+    const Irel = Math.exp(-(rho_here)/(rho0_mm)); // dimensionless
+    const alpha = 0.20 * Irel + 0.02;
+    ctx.fillStyle = `rgba(125,211,252,${alpha})`;
+    ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Axes
+  ctx.strokeStyle = "rgba(255,255,255,0.18)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(cx - scale*1.15, cy); ctx.lineTo(cx + scale*1.15, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy - scale*1.15); ctx.lineTo(cx, cy + scale*1.15); ctx.stroke();
+
+  ctx.fillStyle = "rgba(185,199,230,0.95)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  ctx.fillText("x", cx + scale*1.18, cy - 6);
+  ctx.fillText("y", cx + 6, cy - scale*1.18);
+
+  // Circle of radius R (map R_mm to visual radius in same mapping as rho_here)
+  const rVis = (R_mm/(5*rho0_mm)) * scale;
+  ctx.strokeStyle = "rgba(251,191,36,0.95)";
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, cy, rVis, 0, Math.PI*2); ctx.stroke();
+
+  // Label R
+  ctx.fillStyle = "rgba(251,191,36,0.95)";
+  ctx.fillText(`R = ${R_mm.toFixed(2)} mm`, cx + rVis + 8, cy - 8);
+
+  // Origin marker
+  ctx.fillStyle = "rgba(234,241,255,0.95)";
+  ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI*2); ctx.fill();
+  ctx.fillText("origin", cx + 8, cy + 14);
+
+  // Legend
+  drawLegend(ctx, 12, 44, [
+    {color:"rgba(125,211,252,0.9)", label:"Intensity shading (higher = brighter)"},
+    {color:"rgba(251,191,36,0.95)", label:"Selected circle boundary (ρ = R)"}
+  ]);
+
+  // Small note
+  ctx.fillStyle = "rgba(147,166,207,0.95)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText("Note: Diagram is schematic; scaling chosen for visualization.", 12, H-12);
+}
+
+function renderMainPlot(rho0_mm, x){
+  const ctx = main.ctx;
+  const rect = ctx.canvas.getBoundingClientRect();
+  const W = rect.width, H = rect.height;
+
+  ctx.clearRect(0,0,W,H);
+
+  const Rmax_mm = 5*rho0_mm;
+  const box = {x:0,y:0,w:W,h:H, padL:64, padR:18, padT:42, padB:54};
+  const ax = drawAxes(ctx, box, {
+    xMin: 0, xMax: Rmax_mm,
+    yMin: 0, yMax: 1,
+    xLabel: "R (mm)",
+    yLabel: "P(ρ ≤ R) (unitless)",
+    title: "Cumulative probability inside radius R"
+  });
+
+  // Curve
+  const pts = [];
+  const N = 260;
+  for(let i=0;i<=N;i++){
+    const R = Rmax_mm * i / N;
+    const xx = R / rho0_mm;
+    const P = Pofx(xx);
+    pts.push({x: ax.xMap(R), y: ax.yMap(P)});
+  }
+  drawPolyline(ctx, pts, "rgba(125,211,252,0.95)", 2.5);
+
+  // Marker at chosen R
+  const Rsel = x*rho0_mm;
+  const Psel = Pofx(x);
+  const mx = ax.xMap(Rsel);
+  const my = ax.yMap(Psel);
+  drawMarker(ctx, mx, my, "rgba(251,191,36,0.95)");
+
+  // Reference line for x=1 (R=rho0) and label
+  const x1 = ax.xMap(rho0_mm);
+  ctx.save();
+  ctx.strokeStyle = "rgba(167,139,250,0.55)";
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6,6]);
+  ctx.beginPath(); ctx.moveTo(x1, ax.py); ctx.lineTo(x1, ax.py+ax.ph); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(167,139,250,0.9)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  ctx.fillText("R = ρ₀", x1+6, ax.py+14);
+  ctx.restore();
+
+  // Legend
+  drawLegend(ctx, ax.px + 8, ax.py + 24, [
+    {color:"rgba(125,211,252,0.95)", label:"P(R) = 1 - (1 + R/ρ₀)e^{-R/ρ₀}"},
+    {color:"rgba(251,191,36,0.95)", label:"Selected R"},
+    {color:"rgba(167,139,250,0.9)", label:"Reference: R = ρ₀"}
+  ]);
+}
+
+function renderPDFPlot(rho0_mm, x){
+  const ctx = pdf.ctx;
+  const rect = ctx.canvas.getBoundingClientRect();
+  const W = rect.width, H = rect.height;
+
+  ctx.clearRect(0,0,W,H);
+
+  const Rmax_mm = 5*rho0_mm;
+  // yMax: peak of pdf occurs at rho=rho0, value = (1/rho0)*e^-1 (in 1/mm if rho0 in mm)
+  const yPeak = (1/rho0_mm) * Math.exp(-1);
+  const yMax = yPeak*1.6;
+
+  const box = {x:0,y:0,w:W,h:H, padL:64, padR:18, padT:42, padB:54};
+  const ax = drawAxes(ctx, box, {
+    xMin: 0, xMax: Rmax_mm,
+    yMin: 0, yMax: yMax,
+    xLabel: "ρ (mm)",
+    yLabel: "pρ(ρ) (1/mm)",
+    title: "Radial probability density (annulus weighting included)"
+  });
+
+  // Draw filled area up to Rsel
+  const Rsel = x*rho0_mm;
+  const ptsFill = [];
+  const Nfill = 240;
+  for(let i=0;i<=Nfill;i++){
+    const r = Rsel * i / Nfill;
+    const y = pdf_rho(r, rho0_mm);
+    ptsFill.push({x: ax.xMap(r), y: ax.yMap(y)});
+  }
+  ctx.save();
+  ctx.fillStyle = "rgba(251,191,36,0.18)";
+  ctx.beginPath();
+  ctx.moveTo(ax.xMap(0), ax.yMap(0));
+  ptsFill.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(ax.xMap(Rsel), ax.yMap(0));
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Curve across full domain
+  const pts = [];
+  const N = 320;
+  for(let i=0;i<=N;i++){
+    const r = Rmax_mm * i / N;
+    const y = pdf_rho(r, rho0_mm);
+    pts.push({x: ax.xMap(r), y: ax.yMap(y)});
+  }
+  drawPolyline(ctx, pts, "rgba(125,211,252,0.95)", 2.5);
+
+  // Marker at r=rho0 (mode of pdf)
+  const rMode = rho0_mm;
+  const yMode = pdf_rho(rMode, rho0_mm);
+  drawMarker(ctx, ax.xMap(rMode), ax.yMap(yMode), "rgba(167,139,250,0.95)");
+
+  // Marker at selected radius
+  const ySel = pdf_rho(Rsel, rho0_mm);
+  drawMarker(ctx, ax.xMap(Rsel), ax.yMap(ySel), "rgba(251,191,36,0.95)");
+
+  // Legend
+  drawLegend(ctx, ax.px + 8, ax.py + 24, [
+    {color:"rgba(125,211,252,0.95)", label:"pρ(ρ) = (ρ/ρ₀²)e^{-ρ/ρ₀}"},
+    {color:"rgba(251,191,36,0.95)", label:"Selected R (shaded area = P(R))"},
+    {color:"rgba(167,139,250,0.95)", label:"Peak at ρ = ρ₀"}
+  ]);
+
+  // Note about area equals probability
+  ctx.save();
+  ctx.fillStyle = "rgba(185,199,230,0.95)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText("Shaded area from 0 to R equals P(ρ ≤ R).", ax.px + 8, ax.py + ax.ph - 10);
+  ctx.restore();
+}
+
+function updateReadouts(rho0_mm, x){
+  const R_mm = x * rho0_mm;
+  const P = Pofx(x);
+  rho0Val.textContent = `${rho0_mm.toFixed(2)} mm`;
+  xVal.textContent = `${x.toFixed(2)}`;
+  RVal.textContent = `R = ${R_mm.toFixed(2)} mm`;
+  PVal.textContent = `P = ${P.toFixed(4)}`;
+
+  const N = 1e6;
+  const mean = N * P;
+  NVal.innerHTML = `<strong>${formatSci(mean)}</strong>`;
+}
+
+function renderAll(){
+  const rho0_mm = parseFloat(rho0Slider.value);
+  const x = parseFloat(xSlider.value);
+  updateReadouts(rho0_mm, x);
+  renderDiagram(rho0_mm, x);
+  renderMainPlot(rho0_mm, x);
+  renderPDFPlot(rho0_mm, x);
+}
+
+function resizeAll(){
+  diag.resize(); main.resize(); pdf.resize();
+  renderAll();
+}
+
+rho0Slider.addEventListener('input', renderAll);
+xSlider.addEventListener('input', renderAll);
+window.addEventListener('resize', resizeAll);
+
+renderAll();
+</script>
+</body>
+</html>

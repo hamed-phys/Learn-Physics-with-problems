@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Fourier-Transform Lens with Spatially Incoherent Illumination</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1730;
+      --card:#111c3a;
+      --ink:#e9eefc;
+      --muted:#b8c3e6;
+      --faint:#7f8bb3;
+      --accent:#7cf7c2;
+      --accent2:#9aa7ff;
+      --warn:#ffcf5a;
+      --danger:#ff6b8a;
+      --ok:#56d7ff;
+      --border:rgba(255,255,255,.10);
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    html,body{height:100%; background: radial-gradient(1200px 800px at 10% 0%, rgba(124,247,194,.10), transparent 55%),
+                                         radial-gradient(900px 650px at 90% 10%, rgba(154,167,255,.10), transparent 52%),
+                                         linear-gradient(180deg, var(--bg), #070a14 75%);
+              color:var(--ink); font-family:var(--sans); margin:0;}
+    a{color:var(--accent); text-decoration:none;}
+    a:hover{text-decoration:underline;}
+    header{
+      position:relative;
+      padding: 28px 18px 18px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), transparent 65%);
+    }
+    header .wrap{
+      max-width: 1180px;
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap: 18px;
+      align-items: start;
+    }
+    h1{
+      margin:0 0 8px;
+      font-weight: 780;
+      letter-spacing: .2px;
+      line-height: 1.08;
+      font-size: clamp(1.5rem, 2.2vw, 2.35rem);
+    }
+    .subtitle{
+      margin: 0;
+      color: var(--muted);
+      max-width: 70ch;
+      font-size: 1.02rem;
+      line-height: 1.5;
+    }
+    .meta{
+      background: rgba(255,255,255,.04);
+      border:1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px 14px 12px;
+      box-shadow: var(--shadow);
+    }
+    .meta .pillrow{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(124,247,194,.10);
+      border:1px solid rgba(124,247,194,.18);
+      color: var(--ink);
+      font-size: .88rem;
+      white-space:nowrap;
+    }
+    .pill b{color: var(--accent);}
+    main{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      align-items:start;
+    }
+    nav#toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: rgba(255,255,255,.04);
+      border:1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+    nav#toc h2{font-size:1rem; margin: 0 0 10px; color: var(--ink); letter-spacing: .2px;}
+    nav#toc ul{list-style:none; padding:0; margin:0; display:grid; gap:6px;}
+    nav#toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      color: var(--muted);
+      border: 1px solid transparent;
+      transition: transform .12s ease, background .12s ease, color .12s ease, border-color .12s ease;
+      font-size:.95rem;
+      line-height: 1.2;
+    }
+    nav#toc a:hover{background: rgba(255,255,255,.06); color: var(--ink); transform: translateY(-1px);}
+    nav#toc a.active{background: rgba(124,247,194,.10); border-color: rgba(124,247,194,.18); color: var(--ink);}
+    .content{display:grid; gap: 16px;}
+    section, article{
+      background: rgba(255,255,255,.04);
+      border:1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    section h2, article h2{
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+      letter-spacing: .2px;
+    }
+    section h3, article h3{
+      margin: 16px 0 8px;
+      font-size: 1.02rem;
+      color: var(--ink);
+      letter-spacing: .2px;
+    }
+    p{margin: 8px 0 10px; color: var(--muted); line-height: 1.62;}
+    ul{margin: 8px 0 10px 18px; color: var(--muted); line-height:1.62;}
+    li{margin: 6px 0;}
+    .grid2{display:grid; grid-template-columns: 1fr 1fr; gap: 12px;}
+    .grid3{display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;}
+    .callout{
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      padding: 12px;
+    }
+    .callout strong{color: var(--ink);}
+    .tag{
+      display:inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      color: var(--muted);
+      font-size: .82rem;
+      margin-right: 6px;
+    }
+    .tag.ok{border-color: rgba(86,215,255,.25); background: rgba(86,215,255,.08); color: var(--ink);}
+    .tag.warn{border-color: rgba(255,207,90,.25); background: rgba(255,207,90,.08); color: var(--ink);}
+    .tag.danger{border-color: rgba(255,107,138,.25); background: rgba(255,107,138,.08); color: var(--ink);}
+    .eqbox{
+      margin: 10px 0;
+      border-radius: 16px;
+      border: 1px solid rgba(154,167,255,.22);
+      background: rgba(154,167,255,.08);
+      padding: 10px 10px 10px 12px;
+      position: relative;
+      overflow:hidden;
+    }
+    .eqbox .label{
+      font-size: .82rem;
+      color: var(--ink);
+      opacity: .9;
+      letter-spacing: .2px;
+      margin-bottom: 8px;
+    }
+    .eq{
+      font-family: var(--mono);
+      font-size: .95rem;
+      color: var(--ink);
+      white-space: pre-wrap;
+      line-height: 1.55;
+      margin: 0;
+    }
+    .copybtn{
+      position:absolute;
+      top:10px; right:10px;
+      border-radius: 12px;
+      padding: 8px 10px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.25);
+      color: var(--ink);
+      cursor:pointer;
+      font-size: .86rem;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .copybtn:hover{transform: translateY(-1px); background: rgba(0,0,0,.35); border-color: rgba(255,255,255,.18);}
+    .copybtn:active{transform: translateY(0px);}
+
+    figure{margin: 0;}
+    .canvasCard{
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+    }
+    .canvasHeader{
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      display:flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), transparent);
+    }
+    .canvasHeader .title{
+      font-weight: 700;
+      letter-spacing:.2px;
+      font-size:.98rem;
+      color: var(--ink);
+    }
+    .canvasHeader .hint{
+      font-size: .86rem;
+      color: var(--faint);
+    }
+    canvas{display:block; width:100%; height: 320px;}
+    #plotMain{height: 340px;}
+    #plotSecondary{height: 290px;}
+    #diagram{height: 280px;}
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .control{
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px;
+      background: rgba(255,255,255,.03);
+    }
+    .control label{
+      display:flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      color: var(--muted);
+      font-size: .92rem;
+      margin-bottom: 8px;
+    }
+    .control label span.value{
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: .9rem;
+    }
+    input[type="range"]{width:100%;}
+    select{
+      width:100%;
+      border-radius: 12px;
+      padding: 9px 10px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.22);
+      color: var(--ink);
+      outline:none;
+    }
+
+    .split{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    footer{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 12px 18px 26px;
+      color: var(--faint);
+      font-size: .92rem;
+    }
+    .printNote{
+      display:none;
+    }
+
+    @media (max-width: 980px){
+      header .wrap{grid-template-columns: 1fr; gap: 12px;}
+      main{grid-template-columns: 1fr; }
+      nav#toc{position: relative; top: 0;}
+      .controls{grid-template-columns: 1fr;}
+      .split{grid-template-columns: 1fr;}
+    }
+
+    @media print{
+      :root{--bg:#fff; --panel:#fff; --card:#fff; --ink:#000; --muted:#111; --faint:#333; --border:#ccc;}
+      body{background:#fff; color:#000;}
+      nav#toc{display:none;}
+      header, section, article{box-shadow:none;}
+      .copybtn{display:none;}
+      .printNote{display:block; padding: 8px 0; color:#000;}
+      canvas{height: 240px;}
+    }
+
+    /* subtle animation */
+    @keyframes floatIn{
+      from{transform: translateY(6px); opacity: 0;}
+      to{transform: translateY(0); opacity:1;}
+    }
+    section, article, nav#toc, .meta{animation: floatIn .35s ease both;}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div>
+      <h1>Fourier-Transform Lens under Spatially Incoherent Illumination</h1>
+      <p class="subtitle">
+        A lens can map a field to its Fourier transform when illumination is coherent. But what if the illumination is
+        spatially incoherent (random phases across the object) and has uniform intensity? This article derives the observed
+        intensity between focal planes and contrasts it with the coherent Fourier-transform case.
+      </p>
+      <div class="printNote">Print-friendly note: Copy buttons and the sticky TOC are hidden when printing.</div>
+    </div>
+    <div class="meta">
+      <div style="font-weight:750; letter-spacing:.2px;">What you will learn</div>
+      <div class="pillrow">
+        <div class="pill"><b>Coherent:</b> lens → FT of field</div>
+        <div class="pill"><b>Incoherent:</b> intensities add</div>
+        <div class="pill"><b>Key result:</b> object detail vanishes</div>
+        <div class="pill"><b>Plot:</b> coherent vs incoherent</div>
+      </div>
+      <p style="margin:10px 0 0; color:var(--faint); line-height:1.5;">
+        We keep the final solution symbolic, and use <em>example values</em> only for the interactive plots.
+      </p>
+    </div>
+  </div>
+</header>
+
+<main>
+  <nav id="toc" aria-label="Table of Contents">
+    <h2>Table of Contents</h2>
+    <ul>
+      <li><a href="#quick">Quick Summary</a></li>
+      <li><a href="#part0">PART 0 — Concept Primer</a></li>
+      <li><a href="#part1">PART 1 — Problem Analysis</a></li>
+      <li><a href="#part2">PART 2 — Strategy &amp; Tips</a></li>
+      <li><a href="#part3">PART 3 — Full Solution</a></li>
+      <li><a href="#part4">PART 4 — Deeper Understanding</a></li>
+      <li><a href="#part5">PART 5 — Visualization Guide</a></li>
+    </ul>
+  </nav>
+
+  <div class="content">
+    <section id="quick">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><span class="tag ok">Topic</span> A lens used between its front and back focal planes; object is a transparency with <b>intensity</b> transmittance <code>f(x,y)</code>.</li>
+        <li><span class="tag ok">Key idea</span> With <b>spatially incoherent</b> illumination, different object points have uncorrelated phases → <b>intensities add</b>, not fields.</li>
+        <li><span class="tag ok">Governing tool</span> Mutual intensity (cross-spectral density) propagation: output intensity is a bilinear form in the system kernel.</li>
+        <li><span class="tag ok">Main result type</span> Symbolic expression for observed intensity: it depends on the <b>pupil intensity</b> and the object’s <b>total transmitted power</b> (not its spatial detail).</li>
+        <li><span class="tag warn">Contrast</span> For coherent light, the back focal plane intensity is proportional to <b>|FT{amplitude transmittance}|²</b> (i.e., a real Fourier-spectrum pattern appears).</li>
+        <li><span class="tag warn">Physical punchline</span> A “Fourier-transform lens” ceases to reveal object structure in its Fourier plane when illumination is fully spatially incoherent.</li>
+      </ul>
+    </section>
+
+    <article id="part0">
+      <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+      <div class="grid2">
+        <div class="callout">
+          <h3 style="margin-top:0;">Core definitions (symbols &amp; units)</h3>
+          <ul>
+            <li><b>Wavelength</b>: <code>λ</code> [m]. Wavenumber <code>k = 2π/λ</code> [rad/m].</li>
+            <li><b>Lens focal length</b>: <code>f</code> [m].</li>
+            <li><b>Object/transparency</b>: intensity transmittance <code>f(x,y)</code> [dimensionless], where
+              <code>I_out(x,y) = I_in(x,y) f(x,y)</code>.</li>
+            <li><b>Amplitude transmittance</b>: <code>t(x,y)</code> [dimensionless], related by <code>|t|² = f</code>
+              if the transparency is purely absorptive (no phase).</li>
+            <li><b>Spatially incoherent illumination</b>: mutual intensity at the object plane
+              <code>J0(r1,r2) = I0 δ(r1 − r2)</code> [W/m²], where <code>r=(x,y)</code>.</li>
+            <li><b>Pupil function</b>: <code>P(νx,νy)</code> [dimensionless], describing which spatial frequencies (angles)
+              the lens transmits. Often <code>P</code> is 1 inside a cutoff and 0 outside.</li>
+          </ul>
+        </div>
+
+        <div class="callout">
+          <h3 style="margin-top:0;">Physical meaning of key quantities</h3>
+          <ul>
+            <li><b>Field vs intensity</b>: Coherent systems act on the <em>complex field</em> (amplitude and phase).
+              Incoherent systems act on <em>intensity</em> because phases fluctuate too fast / are uncorrelated across points.</li>
+            <li><b>Mutual intensity</b> <code>J(r1,r2)</code> tells you how correlated the field is between two points.
+              Fully spatially incoherent ⇒ only “self-correlation” survives: <code>r1=r2</code>.</li>
+            <li><b>Back focal plane</b> coordinates map to spatial frequency:
+              <code>νx = X/(λ f)</code>, <code>νy = Y/(λ f)</code> where <code>(X,Y)</code> are in meters.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Key laws / principles and validity</h3>
+      <ul>
+        <li><b>Paraxial scalar diffraction + thin lens</b>: valid for small angles (NA not extreme), slowly varying polarization, and fields describable by scalar wave optics.</li>
+        <li><b>Quasi-monochromatic</b>: spectrum narrow enough that you can treat <code>λ</code> as a single wavelength in propagation.</li>
+        <li><b>Linear system</b> (for the field): propagation through free space + lens is linear in the field; for incoherent light the intensity obeys a different “linear” rule (superposition in intensity).</li>
+      </ul>
+
+      <h3>Common models / approximations (and why)</h3>
+      <ul>
+        <li><b>Spatial incoherence model</b>: <code>J0(r1,r2)=I0 δ(r1−r2)</code> compresses the idea “different points have uncorrelated phases.”</li>
+        <li><b>Ideal Fourier-transform lens</b>: object placed in the <b>front focal plane</b>, observation in the <b>back focal plane</b>. Then the propagation kernel becomes a Fourier kernel.</li>
+        <li><b>Finite pupil</b>: limits which angles/spatial frequencies the lens passes; crucial because it shapes what appears in the back focal plane.</li>
+      </ul>
+
+      <div class="grid2">
+        <div class="callout">
+          <h3 style="margin-top:0;">Mini intuition examples</h3>
+          <ul>
+            <li><b>Coherent plane wave + grating</b> → bright diffraction orders in the Fourier plane (because fields interfere).</li>
+            <li><b>Incoherent illumination + same grating</b> → diffraction orders wash out; what remains is essentially the lens pupil “lit up,” scaled by total transmitted power.</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <h3 style="margin-top:0;">What to watch for (pitfalls)</h3>
+          <ul>
+            <li>Confusing <b>intensity transmittance</b> <code>f</code> with <b>amplitude transmittance</b> <code>t</code>.</li>
+            <li>Using <code>|FT{f}|²</code> for incoherent illumination: generally wrong. Incoherent → delta correlation collapses cross-terms.</li>
+            <li>Forgetting the <b>pupil</b>: without it, some kernels have constant magnitude and you can mistakenly conclude “everything is uniform” without seeing why.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article id="part1">
+      <h2>PART 1 — Problem Analysis (No solving yet)</h2>
+
+      <h3>Restate the problem (in plain words)</h3>
+      <p>
+        Uniform-intensity, quasi-monochromatic, <b>spatially incoherent</b> light illuminates a transparency characterized by
+        <b>intensity transmittance</b> <code>f(x,y)</code>. The light emerging from the transparency is then sent through a lens
+        arranged so that the transparency lies in the <b>front focal plane</b> and we observe in (or around) the <b>back focal plane</b>.
+        Find an expression for the <b>observed intensity</b>. Then compare with the coherent illumination case where the lens
+        performs a Fourier transform.
+      </p>
+
+      <div class="grid2">
+        <div class="callout">
+          <h3 style="margin-top:0;">Given</h3>
+          <ul>
+            <li>Uniform incident intensity: <code>I0</code> [W/m²].</li>
+            <li>Spatial incoherence at object plane: <code>J0(r1,r2)=I0 δ(r1−r2)</code>.</li>
+            <li>Transparency intensity transmittance: <code>f(x,y)</code> (dimensionless).</li>
+            <li>Thin lens, focal length <code>f</code> (we’ll denote focal length as <code>fL</code> below to avoid confusion with transmittance).</li>
+            <li>Quasi-monochromatic wavelength <code>λ</code>.</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <h3 style="margin-top:0;">Unknowns / what to find</h3>
+          <ul>
+            <li>Observed intensity distribution <code>I(X,Y)</code> in the back focal plane (or within the “between focal planes” region interpreted as the Fourier plane of the lens).</li>
+            <li>Comparison formula for coherent illumination: field Fourier transform relationship.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Relevant principles (and why they apply)</h3>
+      <ul>
+        <li><b>Mutual intensity propagation</b>: because the input is partially coherent/incoherent, we must propagate second-order statistics, not just a deterministic field.</li>
+        <li><b>Fourier-transform property of a lens</b>: when an object is placed at the front focal plane, the back focal plane carries the angular spectrum / Fourier transform (for coherent fields).</li>
+        <li><b>Why not simple Fraunhofer intensity?</b> For incoherent illumination, the field is random; the observed intensity is the ensemble average, which removes interference cross-terms between unrelated points.</li>
+      </ul>
+
+      <div class="callout">
+        <span class="tag warn">Assumptions</span>
+        <ul style="margin-top:8px;">
+          <li>Scalar, paraxial approximation; thin lens; negligible aberrations.</li>
+          <li>Quasi-monochromatic (single <code>λ</code> for propagation phase factors).</li>
+          <li>Illumination is <b>spatially incoherent</b> and <b>uniform in intensity</b> across the transparency.</li>
+          <li>Transparency is described by intensity transmittance <code>f(x,y)</code>; when needed, take amplitude <code>t(x,y)=√f(x,y)</code> for a purely absorbing object.</li>
+          <li>Finite pupil described by <code>P(νx,νy)</code> (kept general).</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (compare &amp; choose)</h3>
+      <div class="grid3">
+        <div class="callout">
+          <strong>Approach A: Mutual intensity (recommended)</strong>
+          <ul>
+            <li>Pros: rigorous for incoherence; naturally yields intensity.</li>
+            <li>Cons: requires comfort with <code>J(r1,r2)</code> integrals.</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <strong>Approach B: “Sum of independent point contributions”</strong>
+          <ul>
+            <li>Pros: strong intuition (incoherent points add in intensity).</li>
+            <li>Cons: can miss prefactors and pupil mapping without care.</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <strong>Approach C: Coherent transfer + statistical averaging</strong>
+          <ul>
+            <li>Pros: connects directly to coherent Fourier optics.</li>
+            <li>Cons: more algebra; must insert delta-correlation properly.</li>
+          </ul>
+        </div>
+      </div>
+      <p>
+        We’ll use <b>Approach A</b>: it is compact, clean, and makes the incoherent-vs-coherent comparison explicit.
+      </p>
+    </article>
+
+    <article id="part2">
+      <h2>PART 2 — Strategy &amp; Tips (Roadmap only)</h2>
+
+      <ol style="color:var(--muted); line-height:1.62; margin: 8px 0 10px 18px;">
+        <li>
+          <b>Goal:</b> represent the object properly.<br/>
+          <b>Tool:</b> relate intensity transmittance <code>f</code> to amplitude <code>t</code> via <code>|t|²=f</code> (for purely absorbing).<br/>
+          <b>Meaning:</b> object multiplies the field by <code>t</code>, and multiplies intensity by <code>f</code>.
+        </li>
+        <li>
+          <b>Goal:</b> write the input mutual intensity (incoherence model).<br/>
+          <b>Tool:</b> <code>J0(r1,r2)=I0 δ(r1−r2)</code>.<br/>
+          <b>Meaning:</b> different points are uncorrelated; only same-point correlations survive.
+        </li>
+        <li>
+          <b>Goal:</b> propagate through the transparency.<br/>
+          <b>Tool:</b> <code>J1(r1,r2)=t(r1)t*(r2)J0(r1,r2)</code>.<br/>
+          <b>Meaning:</b> object weights correlations; under δ-correlation it becomes proportional to <code>f(r)</code>.
+        </li>
+        <li>
+          <b>Goal:</b> express lens mapping from front focal plane to back focal plane (coherent kernel).<br/>
+          <b>Tool:</b> Fourier kernel; include finite pupil as a multiplicative transfer in spatial-frequency coordinates.<br/>
+          <b>Meaning:</b> coherent field gets Fourier transformed and filtered by the pupil.
+        </li>
+        <li>
+          <b>Goal:</b> compute output intensity.<br/>
+          <b>Tool:</b> <code>Iout(ρ)=Jout(ρ,ρ)=∬ h(ρ,r1)h*(ρ,r2)J1(r1,r2)dr1dr2</code> and collapse the integral with the δ-function.<br/>
+          <b>Meaning:</b> incoherence kills cross-terms, leaving a simple dependence on total transmitted power.
+        </li>
+        <li>
+          <b>Goal:</b> compare to coherent case.<br/>
+          <b>Tool:</b> for coherent plane-wave illumination, <code>Icoh ∝ |P(ν)·FT{t}|²</code>.<br/>
+          <b>Meaning:</b> coherent illumination reveals spatial structure via interference; incoherent does not.
+        </li>
+      </ol>
+
+      <div class="callout">
+        <span class="tag danger">Common mistakes</span>
+        <ul style="margin-top:8px;">
+          <li>Using <code>FT{f}</code> where you need <code>FT{t}</code> (coherent) or just <code>∬ f</code> (incoherent).</li>
+          <li>Forgetting that the “Fourier plane” coordinate is a spatial frequency: <code>ν = X/(λ fL)</code>.</li>
+          <li>Dropping the pupil: the pupil typically becomes the <b>only spatial pattern</b> visible under full incoherence.</li>
+        </ul>
+      </div>
+    </article>
+
+    <article id="part3">
+      <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+      <h3>Physical intuition (before math)</h3>
+      <p>
+        A Fourier-transform lens produces structure in the back focal plane because <b>fields</b> from the whole object interfere.
+        With <b>spatially incoherent</b> illumination, the phases from distinct object points are unrelated, so interference fringes
+        average out. Each object point contributes an intensity distribution in the back focal plane, and these contributions
+        add. If the system’s response has the same shape for each point (here it does—up to the pupil), the final pattern
+        cannot encode the object’s spatial details; it only scales with the object’s <b>total transmitted power</b>.
+      </p>
+
+      <h3>Step 1 — Object model and coherence model</h3>
+      <p>
+        Let <code>r = (x,y)</code>. Incident light has uniform intensity <code>I0</code> and is spatially incoherent, so we model its
+        mutual intensity (cross-spectral density) in the object plane as:
+      </p>
+
+      <div class="eqbox">
+        <div class="label">Key equation: spatially incoherent, uniform illumination</div>
+        <button class="copybtn" data-copy="J0(r1,r2) = I0 * delta(r1 - r2)">Copy</button>
+        <pre class="eq">J0(r1,r2) = I0 δ(r1 − r2)</pre>
+      </div>
+
+      <p>
+        The transparency is specified by <b>intensity transmittance</b> <code>f(r)</code>. For a purely absorbing transparency
+        (no phase modulation), we may take the amplitude transmittance
+        <code>t(r) = √f(r)</code> so that <code>|t(r)|² = f(r)</code>.
+      </p>
+
+      <h3>Step 2 — Mutual intensity just after the transparency</h3>
+      <p>
+        A thin transparency multiplies the field by <code>t(r)</code>, hence it multiplies mutual intensity by <code>t(r1)t*(r2)</code>:
+      </p>
+      <div class="eqbox">
+        <div class="label">Propagation through a multiplicative object</div>
+        <button class="copybtn" data-copy="J1(r1,r2) = t(r1) t*(r2) J0(r1,r2)">Copy</button>
+        <pre class="eq">J1(r1,r2) = t(r1) t*(r2) J0(r1,r2)</pre>
+      </div>
+
+      <p>
+        Substitute the incoherent source model:
+      </p>
+      <div class="eqbox">
+        <div class="label">Collapse with the delta correlation</div>
+        <button class="copybtn" data-copy="J1(r1,r2) = I0 * |t(r1)|^2 * delta(r1 - r2) = I0 * f(r1) * delta(r1 - r2)">Copy</button>
+        <pre class="eq">J1(r1,r2) = I0 t(r1) t*(r2) δ(r1 − r2)
+          = I0 |t(r1)|² δ(r1 − r2)
+          = I0 f(r1) δ(r1 − r2)</pre>
+      </div>
+
+      <p>
+        <b>Explanation:</b> because points are uncorrelated, the only surviving correlation is at <code>r1=r2</code>, and then the object
+        contributes only its local intensity factor <code>f(r)</code>.
+      </p>
+
+      <h3>Step 3 — Lens kernel from front focal plane to back focal plane</h3>
+      <p>
+        Place the transparency in the <b>front focal plane</b> of an ideal thin lens (focal length <code>fL</code>) and observe in the
+        <b>back focal plane</b>. Define back focal plane coordinates <code>ρ=(X,Y)</code>.
+        Introduce the spatial-frequency coordinates:
+      </p>
+
+      <div class="eqbox">
+        <div class="label">Fourier-plane coordinate mapping</div>
+        <button class="copybtn" data-copy="nu_x = X/(lambda fL),  nu_y = Y/(lambda fL)">Copy</button>
+        <pre class="eq">νx = X/(λ fL),    νy = Y/(λ fL)</pre>
+      </div>
+
+      <p>
+        For coherent propagation through this Fourier-transform geometry, the field in the back focal plane is (up to a
+        global phase) proportional to the Fourier transform of the input field, filtered by the pupil:
+      </p>
+
+      <div class="eqbox">
+        <div class="label">Coherent field mapping (Fourier-transform lens)</div>
+        <button class="copybtn" data-copy="U_bf(νx,νy) = (1/(i λ fL)) * P(νx,νy) * ∬ U_obj(x,y) exp[-i 2π (νx x + νy y)] dx dy">Copy</button>
+        <pre class="eq">U_bf(νx,νy) = (1/(i λ fL)) · P(νx,νy) · ∬ U_obj(x,y) e^{-i 2π(νx x + νy y)} dx dy</pre>
+      </div>
+
+      <p>
+        <b>Explanation:</b> The pupil function <code>P</code> is a coherent transfer function in this Fourier plane: it selects which
+        spatial frequencies (angles) pass through the lens.
+      </p>
+
+      <p>
+        This implies a coherent-space kernel (Green’s function) of the form:
+      </p>
+
+      <div class="eqbox">
+        <div class="label">Equivalent coherent kernel from object plane to Fourier plane</div>
+        <button class="copybtn" data-copy="h(ν, r) = (1/(i λ fL)) * P(ν) * exp[-i 2π ν·r]">Copy</button>
+        <pre class="eq">h(ν, r) = (1/(i λ fL)) · P(ν) · e^{-i 2π (νx x + νy y)}</pre>
+      </div>
+
+      <h3>Step 4 — Output intensity for incoherent illumination</h3>
+      <p>
+        In general, if the system is linear in the field with kernel <code>h</code>, the output mutual intensity is
+      </p>
+
+      <div class="eqbox">
+        <div class="label">Mutual intensity propagation through a linear optical system</div>
+        <button class="copybtn" data-copy="J_out(ν1,ν2) = ∬ h(ν1,r1) h*(ν2,r2) J_in(r1,r2) dr1 dr2">Copy</button>
+        <pre class="eq">J_out(ν1,ν2) = ∬ h(ν1,r1) h*(ν2,r2) J_in(r1,r2) dr1 dr2</pre>
+      </div>
+
+      <p>
+        We want the observed intensity, which is the diagonal:
+        <code>I_out(ν) = J_out(ν,ν)</code>.
+        Insert <code>J_in = J1</code> from Step 2:
+      </p>
+
+      <div class="eqbox">
+        <div class="label">Insert the incoherent-after-object mutual intensity</div>
+        <button class="copybtn" data-copy="I_out(ν) = ∬ h(ν,r1) h*(ν,r2) [I0 f(r1) δ(r1-r2)] dr1 dr2">Copy</button>
+        <pre class="eq">I_out(ν) = ∬ h(ν,r1) h*(ν,r2) [I0 f(r1) δ(r1−r2)] dr1 dr2</pre>
+      </div>
+
+      <p>
+        Use the δ-function to set <code>r2 = r1</code> and collapse one integral:
+      </p>
+
+      <div class="eqbox">
+        <div class="label">Delta-correlation removes cross-terms</div>
+        <button class="copybtn" data-copy="I_out(ν) = I0 ∫ |h(ν,r)|^2 f(r) dr">Copy</button>
+        <pre class="eq">I_out(ν) = I0 ∫ |h(ν,r)|² f(r) d²r</pre>
+      </div>
+
+      <p>
+        Now insert the specific kernel magnitude:
+        since <code>|e^{-i2πν·r}|=1</code>, we have
+      </p>
+
+      <div class="eqbox">
+        <div class="label">Kernel magnitude in the Fourier-plane geometry</div>
+        <button class="copybtn" data-copy="|h(ν,r)|^2 = (1/(λ fL)^2) * |P(ν)|^2">Copy</button>
+        <pre class="eq">|h(ν,r)|² = (1/(λ fL)²) · |P(ν)|²</pre>
+      </div>
+
+      <p>
+        Therefore,
+      </p>
+
+      <div class="eqbox" style="border-color: rgba(124,247,194,.28); background: rgba(124,247,194,.10);">
+        <div class="label"><b>Final (incoherent) intensity in the back focal plane</b></div>
+        <button class="copybtn" data-copy="I_incoh(νx,νy) = (I0/(λ fL)^2) * |P(νx,νy)|^2 * ∬ f(x,y) dx dy">Copy</button>
+        <pre class="eq">I_incoh(νx,νy) = (I0/(λ fL)²) · |P(νx,νy)|² · ∬ f(x,y) dx dy</pre>
+      </div>
+
+      <p>
+        <b>What did we do and why?</b> The incoherence model turns the input mutual intensity into a delta function, which
+        kills all interference cross-terms between different object points. The Fourier kernel then contributes only a phase
+        factor of unit magnitude, so the spatial dependence of <code>I_incoh</code> is carried solely by the pupil magnitude
+        <code>|P|²</code>. The object influences only the <b>overall scale</b> through its total transmitted power
+        <code>∬ f dx dy</code>.
+      </p>
+
+      <h3>Coherent comparison (Fourier-transform lens behavior)</h3>
+      <p>
+        For coherent illumination (e.g., a uniform plane wave field <code>Uinc = constant</code>), the field just after the object is
+        <code>U_obj(x,y) = Uinc · t(x,y)</code>. In the back focal plane:
+      </p>
+
+      <div class="eqbox">
+        <div class="label">Coherent Fourier-plane field and intensity</div>
+        <button class="copybtn" data-copy="I_coh(ν) = (|Uinc|^2/(λ fL)^2) * |P(ν)|^2 * |FT{t}(ν)|^2">Copy</button>
+        <pre class="eq">U_bf(ν) = (Uinc/(i λ fL)) · P(ν) · FT{ t(x,y) }(ν)
+
+I_coh(ν) = |U_bf(ν)|²
+         = (|Uinc|²/(λ fL)²) · |P(ν)|² · |FT{t}(ν)|²</pre>
+      </div>
+
+      <p>
+        <b>Key comparison:</b>
+      </p>
+      <ul>
+        <li><b>Coherent:</b> spatial structure comes from <code>|FT{t}|²</code> (diffraction pattern / spectrum).</li>
+        <li><b>Incoherent:</b> spatial structure is only <code>|P|²</code>; the object reduces to the scalar <code>∬ f</code>.</li>
+      </ul>
+
+      <h3>Sanity checks</h3>
+      <div class="grid2">
+        <div class="callout">
+          <strong>Units / dimensions</strong>
+          <p style="margin-top:8px;">
+            <code>I0</code> has units [W/m²]. The factor <code>1/(λ fL)²</code> has units [1/m²].
+            The area integral <code>∬ f dx dy</code> has units [m²] because <code>f</code> is dimensionless.
+            So <code>I_incoh</code> ends in [W/m²], as it should.
+          </p>
+        </div>
+        <div class="callout">
+          <strong>Limiting cases</strong>
+          <ul style="margin-top:8px;">
+            <li>If <code>f(x,y)=0</code> everywhere → <code>I_incoh=0</code>.</li>
+            <li>If the pupil is closed (<code>P=0</code>) → <code>I_incoh=0</code>.</li>
+            <li>If the object transmittance changes shape but keeps the same total integral <code>∬ f</code>, the incoherent Fourier-plane pattern is unchanged (only scale stays the same).</li>
+          </ul>
+        </div>
+      </div>
+
+      <p>
+        <b>Connection to the diagram and plots:</b> In the interactive main plot, the coherent curve shows oscillatory Fourier
+        features (fringes / lobes) that shift when you change object structure. The incoherent curve, in contrast, stays
+        “pupil-shaped” and only scales with total transmitted power.
+      </p>
+
+      <div class="eqbox" style="border-color: rgba(255,207,90,.30); background: rgba(255,207,90,.10);">
+        <div class="label"><b>Final Answer (plain text)</b></div>
+        <button class="copybtn" data-copy="Incoherent (uniform, spatially incoherent) illumination:\nI_incoh(νx,νy) = (I0/(λ fL)^2) |P(νx,νy)|^2 ∬ f(x,y) dx dy.\n\nCoherent plane-wave illumination:\nI_coh(ν) = (|Uinc|^2/(λ fL)^2) |P(ν)|^2 |FT{t}(ν)|^2, with |t|^2=f for a purely absorbing transparency.">Copy</button>
+        <pre class="eq">Incoherent (uniform, spatially incoherent) illumination:
+I_incoh(νx,νy) = (I0/(λ fL)^2) |P(νx,νy)|^2 ∬ f(x,y) dx dy.
+
+Coherent plane-wave illumination:
+I_coh(ν) = (|Uinc|^2/(λ fL)^2) |P(ν)|^2 |FT{t}(ν)|^2, with |t|^2=f for a purely absorbing transparency.</pre>
+      </div>
+    </article>
+
+    <article id="part4">
+      <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+      <h3>Re-interpreting the final formula</h3>
+      <p>
+        The incoherent result
+        <code>I_incoh(ν) ∝ |P(ν)|² ∬ f</code> separates cleanly into:
+      </p>
+      <ul>
+        <li><b><code>|P(ν)|²</code></b>: the <em>instrument’s angular acceptance</em> (what the lens passes). This sets the spatial shape in the Fourier plane.</li>
+        <li><b><code>∬ f(x,y) dx dy</code></b>: the <em>object’s total transmitted power</em> under uniform illumination. This is only a scale factor.</li>
+        <li><b><code>1/(λ fL)²</code></b>: Fourier-plane scaling; larger focal length spreads the mapping and lowers intensity density by geometric scaling.</li>
+      </ul>
+
+      <div class="callout">
+        <span class="tag ok">Big idea</span>
+        <p style="margin-top:8px;">
+          A “Fourier-transform lens” transforms <b>fields</b>, not intensities. If coherence is lost, the Fourier-plane
+          interference pattern disappears because the cross-terms average to zero.
+        </p>
+      </div>
+
+      <h3>Parameter effects (connect to interactive plots)</h3>
+      <ul>
+        <li><b>Pupil radius / NA:</b> changes the width of the pupil-shaped incoherent curve and also truncates coherent spectra (removing high spatial frequencies).</li>
+        <li><b>Object structure (e.g., grating period or slit separation):</b> strongly changes coherent fringes/peaks; for incoherent illumination it mainly changes the <em>total area</em> <code>∬ f</code> (often only weakly).</li>
+        <li><b>Wavelength:</b> changes the frequency-to-position mapping <code>ν = X/(λ fL)</code>. Larger <code>λ</code> compresses spatial frequencies into smaller Fourier-plane coordinates.</li>
+      </ul>
+
+      <h3>Alternative derivation idea (brief)</h3>
+      <p>
+        You can view the object as a continuum of tiny patches. Each patch emits light independently (no fixed phase relation)
+        into angles determined by the lens. The intensity pattern from a single patch in the Fourier plane is proportional to
+        <code>|P(ν)|²</code>. Summing over all patches weights this by <code>f(x,y)</code> and yields the same integral scaling.
+      </p>
+
+      <h3>Concept checks (self-test)</h3>
+      <ul>
+        <li><b>Q:</b> Why does the object’s spatial detail disappear in <code>I_incoh(ν)</code>?<br/>
+            <b>A:</b> Because incoherence makes <code>J(r1,r2)</code> proportional to <code>δ(r1−r2)</code>, killing interference cross-terms that encode spatial detail.</li>
+        <li><b>Q:</b> What would you see in the back focal plane for a fully opaque disk (same total area as a checkerboard)?<br/>
+            <b>A:</b> Under full spatial incoherence and uniform illumination, essentially the same pupil-shaped pattern scaled by total transmitted area; the checkerboard structure does not appear.</li>
+        <li><b>Q:</b> In coherent illumination, does the pupil matter? How?<br/>
+            <b>A:</b> Yes—<code>P(ν)</code> multiplies the Fourier transform, acting as a spatial-frequency filter (bandlimit).</li>
+        <li><b>Q:</b> If illumination were only <em>partially</em> coherent, what changes qualitatively?<br/>
+            <b>A:</b> Some cross-terms survive; you’d see a mixture: blurred spectral features that strengthen as coherence increases.</li>
+      </ul>
+    </article>
+
+    <article id="part5">
+      <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+
+      <div class="split">
+        <div>
+          <p>
+            The canvases below visualize the geometry and the key consequence:
+            <b>coherent</b> illumination produces a structured Fourier spectrum, while <b>incoherent</b> illumination yields
+            a pupil-shaped intensity distribution scaled by the object’s total transmitted power.
+          </p>
+
+          <div class="controls">
+            <div class="control">
+              <label for="objType">Object model (for plotting) <span class="value" id="objTypeVal"></span></label>
+              <select id="objType">
+                <option value="grating">Absorptive sinusoidal grating (intensity)</option>
+                <option value="double">Two Gaussian apertures (intensity)</option>
+                <option value="single">Single Gaussian aperture (intensity)</option>
+              </select>
+            </div>
+
+            <div class="control">
+              <label for="pupil">Pupil cutoff (example NA) <span class="value" id="pupilVal"></span></label>
+              <input id="pupil" type="range" min="0.10" max="0.95" step="0.01" value="0.55"/>
+            </div>
+
+            <div class="control">
+              <label for="sep">Structure parameter (period / separation) <span class="value" id="sepVal"></span></label>
+              <input id="sep" type="range" min="0.6" max="6.0" step="0.05" value="2.2"/>
+            </div>
+
+            <div class="control">
+              <label for="lambda">Wavelength λ (nm, example) <span class="value" id="lambdaVal"></span></label>
+              <input id="lambda" type="range" min="450" max="800" step="1" value="633"/>
+            </div>
+          </div>
+
+          <div class="callout" style="margin-top:12px;">
+            <span class="tag ok">What changes when you move sliders?</span>
+            <ul style="margin-top:8px;">
+              <li><b>Pupil cutoff</b>: changes the incoherent curve width (pupil shape) and truncates coherent spectra.</li>
+              <li><b>Structure parameter</b>: strongly shifts coherent fringes/peaks; incoherent changes mostly scale.</li>
+              <li><b>Wavelength</b>: rescales Fourier-plane coordinate mapping, shifting where features appear in mm.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div>
+          <div class="canvasCard">
+            <div class="canvasHeader">
+              <div class="title">Diagram: Fourier-transform lens geometry</div>
+              <div class="hint">Object at front focal plane → Fourier plane at back focal plane</div>
+            </div>
+            <canvas id="diagram"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="canvasCard" style="margin-top:12px;">
+        <div class="canvasHeader">
+          <div class="title">Main plot: Back focal plane intensity (coherent vs incoherent)</div>
+          <div class="hint">x-axis: X (mm) in back focal plane; mapping νx = X/(λ fL)</div>
+        </div>
+        <canvas id="plotMain"></canvas>
+      </div>
+
+      <div class="canvasCard" style="margin-top:12px;">
+        <div class="canvasHeader">
+          <div class="title">Secondary plot: Object intensity transmittance f(x) (example) + transmitted power</div>
+          <div class="hint">x-axis: object coordinate x (mm); inset text shows ∬ f dx dy (1D proxy integral here)</div>
+        </div>
+        <canvas id="plotSecondary"></canvas>
+      </div>
+    </article>
+  </div>
+</main>
+
+<footer>
+  <div style="border-top:1px solid var(--border); padding-top: 12px;">
+    Built with vanilla HTML/CSS/JS. Equations are plain text (copyable). Plots use example parameters for visualization only; the derived results remain symbolic.
+  </div>
+</footer>
+
+<script>
+(function(){
+  // ---------- Helpers ----------
+  const $ = (id)=>document.getElementById(id);
+  const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+
+  function copyText(text){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).catch(()=>fallbackCopy(text));
+    }else{
+      fallbackCopy(text);
+    }
+  }
+  function fallbackCopy(text){
+    const ta=document.createElement('textarea');
+    ta.value=text;
+    ta.style.position='fixed';
+    ta.style.left='-10000px';
+    ta.style.top='-10000px';
+    document.body.appendChild(ta);
+    ta.select();
+    try{document.execCommand('copy');}catch(e){}
+    document.body.removeChild(ta);
+  }
+
+  // Attach copy buttons
+  document.querySelectorAll('.copybtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const t = btn.getAttribute('data-copy') || '';
+      copyText(t);
+      const old = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(()=>btn.textContent=old, 900);
+    });
+  });
+
+  // TOC active link on scroll
+  const tocLinks = Array.from(document.querySelectorAll('#toc a'));
+  const sections = tocLinks.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        tocLinks.forEach(l=>l.classList.remove('active'));
+        const idx = sections.indexOf(en.target);
+        if(idx>=0) tocLinks[idx].classList.add('active');
+      }
+    });
+  }, {root:null, threshold: 0.35});
+  sections.forEach(s=>io.observe(s));
+
+  // Smooth scroll for TOC
+  tocLinks.forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+
+  // ---------- Canvas drawing framework ----------
+  function fitCanvas(canvas){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(2, Math.floor(rect.width * dpr));
+    const h = Math.max(2, Math.floor(rect.height * dpr));
+    if(canvas.width !== w || canvas.height !== h){
+      canvas.width = w;
+      canvas.height = h;
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+    return {ctx, w: rect.width, h: rect.height, dpr};
+  }
+
+  function clear(ctx,w,h){
+    ctx.clearRect(0,0,w,h);
+    // subtle background grid vignette
+    const g = ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0, 'rgba(255,255,255,0.03)');
+    g.addColorStop(1, 'rgba(0,0,0,0.0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,w,h);
+  }
+
+  function drawAxes(ctx, box, xLabel, yLabel, title){
+    const {x,y,w,h} = box;
+
+    // title
+    ctx.save();
+    ctx.fillStyle = 'rgba(233,238,252,0.95)';
+    ctx.font = '700 14px ui-sans-serif, system-ui';
+    ctx.fillText(title, x, y - 10);
+    ctx.restore();
+
+    // axes lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y+h);
+    ctx.lineTo(x+w, y+h);
+    ctx.stroke();
+
+    // labels
+    ctx.fillStyle = 'rgba(184,195,230,0.95)';
+    ctx.font = '12px ui-sans-serif, system-ui';
+    ctx.fillText(xLabel, x + w - ctx.measureText(xLabel).width, y + h + 22);
+
+    ctx.save();
+    ctx.translate(x - 28, y + 8);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+  }
+
+  function drawGrid(ctx, box, nx=8, ny=5){
+    const {x,y,w,h} = box;
+    ctx.strokeStyle='rgba(255,255,255,0.08)';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    for(let i=1;i<nx;i++){
+      const xx = x + w*i/nx;
+      ctx.moveTo(xx, y);
+      ctx.lineTo(xx, y+h);
+    }
+    for(let j=1;j<ny;j++){
+      const yy = y + h*j/ny;
+      ctx.moveTo(x, yy);
+      ctx.lineTo(x+w, yy);
+    }
+    ctx.stroke();
+  }
+
+  function drawTicks(ctx, box, xTicks, yTicks, fmtX, fmtY){
+    const {x,y,w,h} = box;
+    ctx.strokeStyle='rgba(255,255,255,0.18)';
+    ctx.fillStyle='rgba(184,195,230,0.95)';
+    ctx.font='11px ui-sans-serif, system-ui';
+
+    // x ticks
+    xTicks.forEach(t=>{
+      const xx = x + w*t.pos;
+      ctx.beginPath();
+      ctx.moveTo(xx, y+h);
+      ctx.lineTo(xx, y+h+5);
+      ctx.stroke();
+      const s = fmtX(t.val);
+      const tw = ctx.measureText(s).width;
+      ctx.fillText(s, xx - tw/2, y+h+18);
+    });
+
+    // y ticks
+    yTicks.forEach(t=>{
+      const yy = y + h*(1-t.pos);
+      ctx.beginPath();
+      ctx.moveTo(x-5, yy);
+      ctx.lineTo(x, yy);
+      ctx.stroke();
+      const s = fmtY(t.val);
+      const tw = ctx.measureText(s).width;
+      ctx.fillText(s, x-8 - tw, yy+4);
+    });
+  }
+
+  function polyline(ctx, xs, ys, mapX, mapY){
+    ctx.beginPath();
+    for(let i=0;i<xs.length;i++){
+      const X = mapX(xs[i]);
+      const Y = mapY(ys[i]);
+      if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+    }
+    ctx.stroke();
+  }
+
+  function legend(ctx, x, y, items){
+    // items: [{name, strokeStyle}]
+    const pad=10, line=18;
+    const w = Math.max(...items.map(it=>ctx.measureText(it.name).width)) + 52;
+    const h = pad*2 + line*items.length;
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,0.30)';
+    ctx.strokeStyle='rgba(255,255,255,0.14)';
+    ctx.lineWidth=1;
+    roundRect(ctx, x, y, w, h, 12);
+    ctx.fill(); ctx.stroke();
+
+    ctx.font='12px ui-sans-serif, system-ui';
+    for(let i=0;i<items.length;i++){
+      const yy = y + pad + line*i + 6;
+      ctx.strokeStyle = items[i].strokeStyle;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(x+12, yy-4);
+      ctx.lineTo(x+32, yy-4);
+      ctx.stroke();
+      ctx.fillStyle='rgba(233,238,252,0.95)';
+      ctx.fillText(items[i].name, x+38, yy);
+    }
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+  // ---------- Fourier / data generation (1D for visualization) ----------
+  // We visualize a 1D slice in x, assuming separability / representative behavior.
+  function makeObject1D(type, sepParam, N, xMax){
+    // x in meters from -xMax..xMax, returned in meters
+    const xs = new Float64Array(N);
+    const f = new Float64Array(N);
+    const t = new Float64Array(N);
+    const dx = (2*xMax)/(N-1);
+    const sep = sepParam; // in meters
+    for(let i=0;i<N;i++){
+      const x = -xMax + dx*i;
+      xs[i]=x;
+
+      let fi=0;
+      if(type==='grating'){
+        // intensity transmittance: baseline + modulation, clamped to [0,1]
+        // period = sepParam
+        const period = sep;
+        const m = 0.75;
+        const base = 0.55;
+        fi = base + m*0.5*Math.cos(2*Math.PI*x/period);
+        fi = clamp(fi, 0.02, 0.98);
+        // apodize with Gaussian envelope so FT looks finite
+        const w = 0.35e-3;
+        fi *= Math.exp(-(x*x)/(2*w*w));
+      }else if(type==='double'){
+        // two Gaussian apertures in intensity
+        const w = 0.18e-3;
+        const x0 = 0.5*sep;
+        fi = Math.exp(-((x-x0)*(x-x0))/(2*w*w)) + Math.exp(-((x+x0)*(x+x0))/(2*w*w));
+        fi = clamp(fi, 0, 1);
+      }else{ // single
+        const w = 0.22e-3;
+        fi = Math.exp(-(x*x)/(2*w*w));
+      }
+
+      f[i]=fi;
+      t[i]=Math.sqrt(fi); // purely absorptive: |t|^2 = f
+    }
+    return {xs, f, t, dx};
+  }
+
+  // Naive DFT for real input -> complex output arrays (re, im)
+  // N kept moderate for interactivity.
+  function dftReal(xs, u, dx){
+    // compute integral sum xs(x) * exp(-i 2π u x) dx
+    let re=0, im=0;
+    const N = xs.length;
+    for(let n=0;n<N;n++){
+      const phase = -2*Math.PI*u* ( (-0) + 0 ); // placeholder, overwritten below
+    }
+    // We'll do in caller with x array for speed.
+  }
+
+  function computeSpectrum(tArr, xArr, dx, uArr){
+    const Nu = uArr.length;
+    const re = new Float64Array(Nu);
+    const im = new Float64Array(Nu);
+    const N = tArr.length;
+    for(let k=0;k<Nu;k++){
+      const u = uArr[k];
+      let r=0, ii=0;
+      for(let n=0;n<N;n++){
+        const ph = -2*Math.PI*u*xArr[n];
+        const c = Math.cos(ph);
+        const s = Math.sin(ph);
+        const val = tArr[n];
+        r += val*c;
+        ii += val*s;
+      }
+      re[k]=r*dx;
+      im[k]=ii*dx;
+    }
+    return {re, im};
+  }
+
+  function magnitudeSquared(re, im){
+    const N = re.length;
+    const out = new Float64Array(N);
+    for(let i=0;i<N;i++) out[i]=re[i]*re[i] + im[i]*im[i];
+    return out;
+  }
+
+  function pupil1D(uArr, uCut){
+    // Hard cutoff pupil: 1 inside |u|<=uCut
+    const P = new Float64Array(uArr.length);
+    for(let i=0;i<uArr.length;i++){
+      P[i] = (Math.abs(uArr[i]) <= uCut) ? 1 : 0;
+    }
+    return P;
+  }
+
+  function integrate1D(fArr, dx){
+    let s=0;
+    for(let i=0;i<fArr.length;i++) s += fArr[i];
+    return s*dx;
+  }
+
+  // ---------- State / controls ----------
+  const state = {
+    objType: 'grating',
+    pupilNA: 0.55,   // dimensionless knob for cutoff
+    sepMM: 2.2,      // mm (interpretation depends on object model)
+    lambdaNM: 633,   // nm
+    // example optical system constants:
+    fL: 0.10,        // m, example focal length for plots
+    I0: 1.0          // normalized intensity
+  };
+
+  const ui = {
+    objType: $('objType'),
+    pupil: $('pupil'),
+    sep: $('sep'),
+    lambda: $('lambda'),
+    objTypeVal: $('objTypeVal'),
+    pupilVal: $('pupilVal'),
+    sepVal: $('sepVal'),
+    lambdaVal: $('lambdaVal')
+  };
+
+  function syncLabels(){
+    ui.objTypeVal.textContent = ui.objType.options[ui.objType.selectedIndex].text.split('(')[0].trim();
+    ui.pupilVal.textContent = state.pupilNA.toFixed(2);
+    ui.sepVal.textContent = state.sepMM.toFixed(2) + ' mm';
+    ui.lambdaVal.textContent = state.lambdaNM.toFixed(0) + ' nm';
+  }
+
+  ui.objType.addEventListener('change', ()=>{
+    state.objType = ui.objType.value;
+    renderAll();
+  });
+  ui.pupil.addEventListener('input', ()=>{
+    state.pupilNA = parseFloat(ui.pupil.value);
+    renderAll();
+  });
+  ui.sep.addEventListener('input', ()=>{
+    state.sepMM = parseFloat(ui.sep.value);
+    renderAll();
+  });
+  ui.lambda.addEventListener('input', ()=>{
+    state.lambdaNM = parseFloat(ui.lambda.value);
+    renderAll();
+  });
+
+  // ---------- Rendering ----------
+  const canv = {
+    diagram: $('diagram'),
+    main: $('plotMain'),
+    secondary: $('plotSecondary')
+  };
+
+  function renderDiagram(){
+    const {ctx, w, h} = fitCanvas(canv.diagram);
+    clear(ctx,w,h);
+
+    // coordinate
+    const pad = 16;
+    const x0 = pad;
+    const x1 = w - pad;
+    const yMid = h*0.55;
+
+    // baseline axis
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x0, yMid);
+    ctx.lineTo(x1, yMid);
+    ctx.stroke();
+
+    // draw object plane at left (front focal)
+    const objX = x0 + w*0.10;
+    const lensX = x0 + w*0.52;
+    const imgX  = x0 + w*0.88;
+
+    // object plane line
+    ctx.strokeStyle='rgba(124,247,194,0.65)';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(objX, yMid-70);
+    ctx.lineTo(objX, yMid+70);
+    ctx.stroke();
+
+    // lens symbol
+    ctx.strokeStyle='rgba(154,167,255,0.70)';
+    ctx.lineWidth=2.2;
+    ctx.beginPath();
+    ctx.moveTo(lensX, yMid-85);
+    ctx.quadraticCurveTo(lensX+18, yMid, lensX, yMid+85);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(lensX, yMid-85);
+    ctx.quadraticCurveTo(lensX-18, yMid, lensX, yMid+85);
+    ctx.stroke();
+
+    // back focal plane line
+    ctx.strokeStyle='rgba(86,215,255,0.65)';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(imgX, yMid-70);
+    ctx.lineTo(imgX, yMid+70);
+    ctx.stroke();
+
+    // rays
+    ctx.lineWidth=1.6;
+    ctx.strokeStyle='rgba(255,255,255,0.20)';
+    for(let k=-2;k<=2;k++){
+      const yObj = yMid + k*18;
+      // to lens
+      ctx.beginPath();
+      ctx.moveTo(objX, yObj);
+      ctx.lineTo(lensX, yMid + k*10);
+      ctx.stroke();
+      // from lens to back focal plane (different angles)
+      ctx.beginPath();
+      ctx.moveTo(lensX, yMid + k*10);
+      ctx.lineTo(imgX, yMid + k*26);
+      ctx.stroke();
+    }
+
+    // labels
+    ctx.fillStyle='rgba(233,238,252,0.95)';
+    ctx.font='700 12px ui-sans-serif, system-ui';
+    ctx.fillText('Front focal plane (object)', objX-62, yMid-88);
+    ctx.fillText('Lens (fL)', lensX-22, yMid-92);
+    ctx.fillText('Back focal plane (Fourier plane)', imgX-98, yMid-88);
+
+    // coordinate mapping note
+    ctx.font='12px ui-sans-serif, system-ui';
+    ctx.fillStyle='rgba(184,195,230,0.95)';
+    ctx.fillText('Fourier mapping: νx = X/(λ fL),  νy = Y/(λ fL)', x0+10, h-16);
+
+    // show pupil
+    ctx.fillStyle='rgba(154,167,255,0.14)';
+    ctx.strokeStyle='rgba(154,167,255,0.35)';
+    ctx.lineWidth=1;
+    roundRect(ctx, lensX-58, yMid+92, 116, 32, 12);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle='rgba(233,238,252,0.95)';
+    ctx.font='700 12px ui-sans-serif, system-ui';
+    ctx.fillText('Pupil P(ν)', lensX-33, yMid+113);
+  }
+
+  function renderPlots(){
+    // --- build example data ---
+    const lambda = state.lambdaNM * 1e-9;
+    const fL = state.fL;
+
+    // object axis in meters (for plotting x in mm)
+    const N = 320;               // keep moderate for DFT
+    const xMax = 1.2e-3;         // +/- 1.2 mm
+    const sep = state.sepMM * 1e-3; // mm -> m
+
+    const obj = makeObject1D(state.objType, sep, N, xMax);
+    const xArr = obj.xs;
+    const fArr = obj.f;
+    const tArr = obj.t;
+    const dx   = obj.dx;
+
+    // spatial frequency axis νx (1/m) and back focal coordinate X = νx λ fL (m)
+    const Nu = 420;
+    const uMax = 2500; // 1/m, sets displayed range
+    const uArr = new Float64Array(Nu);
+    for(let i=0;i<Nu;i++){
+      const a = -uMax + 2*uMax*i/(Nu-1);
+      uArr[i]=a;
+    }
+
+    // pupil cutoff in spatial frequency:
+    // max angle ~ NA; νmax ~ NA/λ (paraxial sinθ≈θ)
+    // We'll use uCut = (NA / λ) scaled by a user knob but kept within plot range.
+    const NAeff = state.pupilNA * 0.25; // example: 0..~0.24
+    const uCut = Math.min(uMax*0.98, NAeff / lambda);
+
+    const P = pupil1D(uArr, uCut);
+
+    // coherent spectrum: |P * FT{t}|^2
+    const spec = computeSpectrum(tArr, xArr, dx, uArr);
+    const mag2 = magnitudeSquared(spec.re, spec.im);
+
+    const Icoh = new Float64Array(Nu);
+    const Iinc = new Float64Array(Nu);
+
+    // incoherent scale: proportional to integral of f
+    const Fint = integrate1D(fArr, dx); // 1D proxy integral (m)
+    // normalized constants (we only need relative shapes in plots)
+    for(let i=0;i<Nu;i++){
+      const p2 = P[i]*P[i];
+      Icoh[i] = p2 * mag2[i];
+      Iinc[i] = p2 * Fint; // object detail collapses to scalar
+    }
+
+    // normalize for display (keep relative scaling between coherent and incoherent visible)
+    const maxC = Math.max(...Icoh);
+    const maxI = Math.max(...Iinc);
+    const norm = Math.max(maxC, maxI, 1e-12);
+    for(let i=0;i<Nu;i++){
+      Icoh[i] /= norm;
+      Iinc[i] /= norm;
+    }
+
+    // convert uArr to Xmm
+    const Xmm = new Float64Array(Nu);
+    for(let i=0;i<Nu;i++){
+      const X = uArr[i] * lambda * fL; // meters
+      Xmm[i] = X * 1e3; // mm
+    }
+
+    // --- Main plot ---
+    {
+      const {ctx, w, h} = fitCanvas(canv.main);
+      clear(ctx,w,h);
+
+      const box = {x: 60, y: 38, w: w-78, h: h-78};
+      drawGrid(ctx, box, 10, 6);
+      drawAxes(ctx, box, 'X in back focal plane (mm)', 'Normalized intensity (a.u.)', 'Coherent vs Incoherent intensity in Fourier plane');
+
+      // axis range
+      const xMin = Xmm[0], xMaxP = Xmm[Xmm.length-1];
+      const yMin = 0, yMax = 1.02;
+
+      const mapX = (xv)=> box.x + (xv - xMin) * box.w / (xMaxP - xMin);
+      const mapY = (yv)=> box.y + box.h * (1 - (yv - yMin) / (yMax - yMin));
+
+      // ticks
+      const xTicks = [];
+      const yTicks = [];
+      for(let i=0;i<=5;i++){
+        const val = xMin + (xMaxP-xMin)*i/5;
+        xTicks.push({pos:i/5, val});
+      }
+      for(let j=0;j<=5;j++){
+        const val = yMin + (yMax-yMin)*j/5;
+        yTicks.push({pos:j/5, val});
+      }
+      drawTicks(ctx, box, xTicks, yTicks, (v)=>v.toFixed(2), (v)=>v.toFixed(1));
+
+      // curves
+      ctx.save();
+      ctx.lineWidth = 2.2;
+
+      ctx.strokeStyle = 'rgba(124,247,194,0.95)'; // coherent
+      polyline(ctx, Xmm, Icoh, mapX, mapY);
+
+      ctx.strokeStyle = 'rgba(86,215,255,0.95)';  // incoherent
+      polyline(ctx, Xmm, Iinc, mapX, mapY);
+
+      // annotate cutoff lines (pupil)
+      const Xcut = uCut * lambda * fL * 1e3;
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([6,6]);
+      ctx.beginPath(); ctx.moveTo(mapX(-Xcut), box.y); ctx.lineTo(mapX(-Xcut), box.y+box.h); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(mapX(+Xcut), box.y); ctx.lineTo(mapX(+Xcut), box.y+box.h); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = 'rgba(184,195,230,0.95)';
+      ctx.font = '12px ui-sans-serif, system-ui';
+      const txt = 'Pupil cutoff';
+      ctx.fillText(txt, mapX(+Xcut)+6, box.y+16);
+
+      ctx.restore();
+
+      // legend
+      ctx.save();
+      ctx.font='12px ui-sans-serif, system-ui';
+      legend(ctx, box.x + 10, box.y + 10, [
+        {name:'Coherent: |P·FT{t}|²', strokeStyle:'rgba(124,247,194,0.95)'},
+        {name:'Incoherent: |P|² · ∬f', strokeStyle:'rgba(86,215,255,0.95)'}
+      ]);
+      ctx.restore();
+
+      // footnote text
+      ctx.fillStyle='rgba(184,195,230,0.95)';
+      ctx.font='12px ui-sans-serif, system-ui';
+      ctx.fillText('Example values: fL = 100 mm; scaling normalized. Incoherent curve retains only pupil shape.', 60, h-16);
+    }
+
+    // --- Secondary plot: object f(x) ---
+    {
+      const {ctx, w, h} = fitCanvas(canv.secondary);
+      clear(ctx,w,h);
+
+      const box = {x: 60, y: 38, w: w-78, h: h-78};
+      drawGrid(ctx, box, 10, 6);
+      drawAxes(ctx, box, 'Object coordinate x (mm)', 'Intensity transmittance f(x) (a.u.)', 'Example object intensity transmittance and total transmitted power');
+
+      const xmm = new Float64Array(N);
+      for(let i=0;i<N;i++) xmm[i] = xArr[i]*1e3;
+
+      const xMin = xmm[0], xMaxP = xmm[xmm.length-1];
+      let yMin = 0, yMax = 1.02;
+
+      const mapX = (xv)=> box.x + (xv - xMin) * box.w / (xMaxP - xMin);
+      const mapY = (yv)=> box.y + box.h * (1 - (yv - yMin) / (yMax - yMin));
+
+      // ticks
+      const xTicks = [];
+      const yTicks = [];
+      for(let i=0;i<=5;i++){
+        const val = xMin + (xMaxP-xMin)*i/5;
+        xTicks.push({pos:i/5, val});
+      }
+      for(let j=0;j<=5;j++){
+        const val = yMin + (yMax-yMin)*j/5;
+        yTicks.push({pos:j/5, val});
+      }
+      drawTicks(ctx, box, xTicks, yTicks, (v)=>v.toFixed(2), (v)=>v.toFixed(1));
+
+      // draw f(x)
+      ctx.save();
+      ctx.strokeStyle='rgba(154,167,255,0.95)';
+      ctx.lineWidth=2.2;
+      polyline(ctx, xmm, fArr, mapX, mapY);
+      ctx.restore();
+
+      // show integral proxy
+      ctx.save();
+      ctx.fillStyle='rgba(233,238,252,0.95)';
+      ctx.font='700 12px ui-sans-serif, system-ui';
+      const title = '1D proxy integral: ∫ f(x) dx = ' + (Fint*1e3).toFixed(3) + ' mm';
+      ctx.fillText(title, box.x + 10, box.y + box.h - 10);
+
+      ctx.fillStyle='rgba(184,195,230,0.95)';
+      ctx.font='12px ui-sans-serif, system-ui';
+      ctx.fillText('In the full 2D formula this corresponds to ∬ f(x,y) dx dy (total transmitted power scaling).', box.x + 10, box.y + box.h + 28);
+      ctx.restore();
+
+      // small legend
+      ctx.save();
+      ctx.font='12px ui-sans-serif, system-ui';
+      legend(ctx, box.x + 10, box.y + 10, [
+        {name:'f(x) (example intensity transmittance)', strokeStyle:'rgba(154,167,255,0.95)'}
+      ]);
+      ctx.restore();
+    }
+
+    // Update labels in the UI
+    syncLabels();
+  }
+
+  function renderAll(){
+    state.objType = ui.objType.value;
+    renderDiagram();
+    renderPlots();
+  }
+
+  // Handle responsive resizing
+  let resizeTimer = null;
+  window.addEventListener('resize', ()=>{
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderAll, 120);
+  });
+
+  // init
+  ui.objType.value = state.objType;
+  ui.pupil.value = String(state.pupilNA);
+  ui.sep.value = String(state.sepMM);
+  ui.lambda.value = String(state.lambdaNM);
+  syncLabels();
+  renderAll();
+})();
+</script>
+</body>
+</html>

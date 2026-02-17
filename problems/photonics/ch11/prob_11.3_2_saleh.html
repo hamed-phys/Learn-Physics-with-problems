@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Counting Resonator Modes Within a Linewidth (1D vs 2D vs 3D)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#101a33;
+      --card2:#0f1730;
+      --text:#eaf0ff;
+      --muted:#b8c4e6;
+      --faint:#7f90c8;
+      --accent:#7cf0c5;
+      --accent2:#8bb6ff;
+      --warn:#ffd27a;
+      --danger:#ff7aa2;
+      --line:rgba(255,255,255,.12);
+      --shadow: 0 18px 60px rgba(0,0,0,.35);
+      --shadow2: 0 10px 30px rgba(0,0,0,.25);
+      --r:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(900px 420px at 18% 10%, rgba(124,240,197,.12), transparent 60%),
+        radial-gradient(900px 520px at 85% 20%, rgba(139,182,255,.12), transparent 62%),
+        radial-gradient(900px 520px at 50% 105%, rgba(255,210,122,.10), transparent 60%),
+        var(--bg);
+      line-height:1.6;
+    }
+
+    a{color:var(--accent2); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding: 36px 20px 18px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .title{
+      display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;
+    }
+    .badge{
+      padding:6px 10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:13px;
+      letter-spacing:.2px;
+      box-shadow: var(--shadow2);
+    }
+    h1{
+      margin: 10px 0 8px;
+      font-size: clamp(28px, 3.2vw, 42px);
+      line-height:1.15;
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      max-width: 84ch;
+      color:var(--muted);
+      font-size: 15.5px;
+      margin-top: 6px;
+    }
+
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding: 0 20px 60px;
+      display:grid;
+      grid-template-columns: 310px 1fr;
+      gap: 18px;
+      align-items:start;
+    }
+
+    /* Sticky TOC */
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius: var(--r);
+      padding: 14px;
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+    }
+    nav.toc .tocTitle{
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:8px;
+    }
+    nav.toc h2{
+      font-size: 14px;
+      margin:0;
+      color:var(--muted);
+      letter-spacing:.3px;
+      text-transform:uppercase;
+    }
+    .toc small{color:var(--faint)}
+    .toc ul{
+      list-style:none; padding:0; margin:10px 0 0;
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius: 12px;
+      border:1px solid transparent;
+      color:var(--muted);
+      background: rgba(0,0,0,.12);
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size: 14px;
+    }
+    .toc a:hover{
+      background: rgba(124,240,197,.10);
+      border-color: rgba(124,240,197,.35);
+      transform: translateY(-1px);
+      text-decoration:none;
+      color:var(--text);
+    }
+    .toc a.active{
+      background: rgba(139,182,255,.12);
+      border-color: rgba(139,182,255,.45);
+      color: var(--text);
+    }
+
+    /* Content */
+    article{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .section{
+      padding: 18px 18px 8px;
+      border-top:1px solid var(--line);
+    }
+    .section:first-child{border-top:none}
+    .section h2{
+      margin: 0 0 10px;
+      font-size: 20px;
+      letter-spacing:.2px;
+    }
+    .section h3{
+      margin: 14px 0 8px;
+      font-size: 16px;
+      color: var(--text);
+    }
+    .section p{margin: 10px 0; color: var(--muted)}
+    .section ul{margin: 8px 0 12px 18px; color: var(--muted)}
+    .section li{margin: 6px 0}
+    .hr{height:1px;background:var(--line); margin:14px 0}
+
+    /* Callouts */
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr}
+      nav.toc{position:relative; top:auto}
+      .grid2{grid-template-columns: 1fr}
+    }
+    .callout{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.20);
+      border-radius: var(--r);
+      padding: 12px 12px 10px;
+      box-shadow: var(--shadow2);
+    }
+    .callout .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size: 12px;
+      letter-spacing:.35px;
+      text-transform:uppercase;
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      margin-bottom: 8px;
+    }
+    .tag.assump{border-color: rgba(124,240,197,.35); background: rgba(124,240,197,.08)}
+    .tag.keyeq{border-color: rgba(139,182,255,.35); background: rgba(139,182,255,.08)}
+    .tag.mist{border-color: rgba(255,210,122,.35); background: rgba(255,210,122,.08)}
+    .tag.final{border-color: rgba(255,122,162,.35); background: rgba(255,122,162,.08)}
+    .callout p, .callout li{color:var(--muted); margin:6px 0}
+    .callout ul{margin:6px 0 0 18px}
+
+    /* Equations */
+    .eqBlock{
+      margin: 10px 0;
+      padding: 12px;
+      border-radius: var(--r);
+      border: 1px solid rgba(139,182,255,.32);
+      background: rgba(139,182,255,.08);
+      position:relative;
+      overflow:hidden;
+    }
+    .eq{
+      font-family: var(--mono);
+      font-size: 13.5px;
+      color: var(--text);
+      white-space: pre-wrap;
+      line-height:1.45;
+    }
+    .copyBtn{
+      position:absolute;
+      top: 10px;
+      right: 10px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.25);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-size: 12px;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .copyBtn:hover{
+      transform: translateY(-1px);
+      background: rgba(124,240,197,.10);
+      border-color: rgba(124,240,197,.35);
+    }
+    .copyBtn:active{transform: translateY(0px) scale(.98)}
+    .copyToast{
+      position:absolute;
+      top: 44px;
+      right: 10px;
+      font-size: 12px;
+      color: var(--accent);
+      opacity:0;
+      transform: translateY(-4px);
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events:none;
+    }
+    .eqBlock.copied .copyToast{
+      opacity:1;
+      transform: translateY(0);
+    }
+
+    /* Visualizations */
+    figure.viz{
+      margin: 12px 0;
+      border-radius: var(--r);
+      overflow:hidden;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      box-shadow: var(--shadow2);
+    }
+    figure.viz figcaption{
+      padding: 10px 12px;
+      border-top:1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    canvas{
+      width:100%;
+      height:auto;
+      display:block;
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 10px 0 6px;
+    }
+    @media (max-width: 720px){
+      .controls{grid-template-columns: 1fr}
+    }
+    .control{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.20);
+      border-radius: var(--r);
+      padding: 12px;
+      box-shadow: var(--shadow2);
+    }
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:10px;
+      color:var(--text);
+      font-size: 13px;
+      letter-spacing:.2px;
+      margin-bottom: 6px;
+    }
+    .control .val{
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 12.5px;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent2);
+    }
+    .miniRow{
+      display:flex; flex-wrap:wrap; gap:10px;
+      margin-top:8px;
+      color:var(--muted);
+      font-size: 13px;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Tables */
+    table{
+      width:100%;
+      border-collapse: collapse;
+      margin: 8px 0 14px;
+      overflow:hidden;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+    }
+    th, td{
+      padding: 10px 10px;
+      border-bottom:1px solid var(--line);
+      text-align:left;
+      color: var(--muted);
+      font-size: 13.5px;
+      vertical-align:top;
+    }
+    th{
+      color: var(--text);
+      background: rgba(255,255,255,.05);
+      font-size: 13px;
+      letter-spacing:.2px;
+      text-transform:uppercase;
+    }
+    tr:last-child td{border-bottom:none}
+
+    footer{
+      max-width:1200px;
+      margin: 18px auto 34px;
+      padding: 0 20px;
+      color: var(--faint);
+      font-size: 13px;
+    }
+
+    /* Print */
+    @media print{
+      body{background:#fff; color:#000}
+      nav.toc{display:none}
+      article, .callout, .control, figure.viz, .eqBlock{box-shadow:none}
+      article{border:1px solid #ccc; background:#fff}
+      .section p, .section li, th, td{color:#000}
+      .copyBtn, .copyToast{display:none}
+      canvas{border-bottom:1px solid #ccc}
+    }
+
+    /* subtle entrance */
+    .fadeIn{
+      animation: rise .5s ease both;
+    }
+    @keyframes rise{
+      from{opacity:0; transform: translateY(8px)}
+      to{opacity:1; transform: translateY(0)}
+    }
+  </style>
+</head>
+<body>
+<header class="fadeIn">
+  <div class="title">
+    <span class="badge">Photonics / Resonators</span>
+    <span class="badge">Mode Counting • Density of States</span>
+    <span class="badge">Interactive Plots</span>
+  </div>
+  <h1>Number of Modes Within a Given Linewidth in 1D, 2D, and 3D Resonators</h1>
+  <p class="subtitle">
+    We compare how the <em>count of resonant modes</em> inside a fixed spectral window &Delta;&nu; grows with resonator dimensionality.
+    You’ll learn the density-of-states idea, then compute mode counts for a 10&nbsp;cm cavity (1D), a 10&nbsp;cm &times; 10&nbsp;cm (2D) resonator,
+    and a 10&nbsp;cm cube (3D) at &lambda;<sub>0</sub> = 1.06&nbsp;&mu;m with &Delta;&nu; = 120&nbsp;GHz (n = 1).
+  </p>
+</header>
+
+<main>
+  <nav class="toc fadeIn" aria-label="Table of contents">
+    <div class="tocTitle">
+      <h2>Contents</h2>
+      <small id="tocHint">sticky</small>
+    </div>
+    <ul>
+      <li><a href="#quick">Quick Summary</a></li>
+      <li><a href="#part0">PART 0 — Concept Primer</a></li>
+      <li><a href="#part1">PART 1 — Problem Analysis</a></li>
+      <li><a href="#part2">PART 2 — Strategy &amp; Tips</a></li>
+      <li><a href="#part3">PART 3 — Full Solution</a></li>
+      <li><a href="#part4">PART 4 — Deeper Understanding</a></li>
+      <li><a href="#part5">PART 5 — Visualization Guide</a></li>
+    </ul>
+  </nav>
+
+  <article class="fadeIn">
+    <!-- Quick Summary -->
+    <section class="section" id="quick">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><strong>What this is about:</strong> counting how many resonator eigenmodes fall inside a spectral linewidth &Delta;&nu; around an optical frequency &nu;<sub>0</sub>.</li>
+        <li><strong>Key physics idea:</strong> discrete cavity modes can be counted using <em>mode spacing</em> (1D) or <em>density of states</em> (2D/3D) from k-space counting.</li>
+        <li><strong>Governing relationships (standing-wave cavities):</strong>
+          <span style="color:var(--muted)">FSR<sub>1D</sub> = c/(2nL)</span>,
+          <span style="color:var(--muted)">g<sub>2D</sub>(&nu;) = (2&pi;A&nu;)/(c<sup>2</sup>)</span>,
+          <span style="color:var(--muted)">g<sub>3D</sub>(&nu;) = (8&pi;V&nu;<sup>2</sup>)/(c<sup>3</sup>)</span> (includes 2 polarizations).</li>
+        <li><strong>Counting rule:</strong> number in linewidth &approx; g(&nu;<sub>0</sub>)&Delta;&nu; (or &Delta;&nu;/FSR in 1D).</li>
+        <li><strong>Given:</strong> &lambda;<sub>0</sub> = 1.06&nbsp;&mu;m, &Delta;&nu; = 120&nbsp;GHz, n = 1, L = 10&nbsp;cm (and A = L<sup>2</sup>, V = L<sup>3</sup>).</li>
+        <li><strong>Results (spatial modes; polarization noted explicitly below):</strong>
+          1D gives <span class="pill" id="qs1d">—</span>,
+          2D gives <span class="pill" id="qs2d">—</span>,
+          3D gives <span class="pill" id="qs3d">—</span> modes within &Delta;&nu;.</li>
+      </ul>
+
+      <div class="controls" aria-label="Interactive controls">
+        <div class="control">
+          <label for="Lslider">
+            Cavity size L (meters)
+            <span class="val" id="Lval">0.100</span>
+          </label>
+          <input id="Lslider" type="range" min="0.01" max="0.30" step="0.001" value="0.10" />
+          <div class="miniRow">
+            <span class="pill">1D length: L</span>
+            <span class="pill">2D area: A = L²</span>
+            <span class="pill">3D volume: V = L³</span>
+          </div>
+        </div>
+
+        <div class="control">
+          <label for="dnuSlider">
+            Linewidth Δν (GHz)
+            <span class="val" id="dnuVal">120</span>
+          </label>
+          <input id="dnuSlider" type="range" min="1" max="500" step="1" value="120" />
+          <div class="miniRow">
+            <span class="pill">λ₀ fixed: 1.06 µm</span>
+            <span class="pill">n fixed: 1</span>
+            <span class="pill">c ≈ 3×10⁸ m/s</span>
+          </div>
+        </div>
+      </div>
+
+      <figure class="viz">
+        <canvas id="diag" width="1200" height="520" aria-label="Diagram canvas"></canvas>
+        <figcaption><strong>Diagram:</strong> the same physical “size” L is interpreted as a 1D cavity length, a 2D square resonator side, and a 3D cube side.</figcaption>
+      </figure>
+
+      <figure class="viz">
+        <canvas id="plotMain" width="1200" height="560" aria-label="Main plot canvas"></canvas>
+        <figcaption><strong>Main plot:</strong> bar comparison of the mode count inside Δν for 1D, 2D, and 3D at the current slider settings.</figcaption>
+      </figure>
+
+      <figure class="viz">
+        <canvas id="plotSweep" width="1200" height="560" aria-label="Sweep plot canvas"></canvas>
+        <figcaption><strong>Secondary plot:</strong> parameter sweep of N(Δν) versus cavity size L for each dimensionality; the dot marks the current L slider value.</figcaption>
+      </figure>
+    </section>
+
+    <!-- PART 0 -->
+    <section class="section" id="part0">
+      <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+      <h3>Core definitions (symbols &amp; units)</h3>
+      <ul>
+        <li><strong>Resonator (cavity):</strong> a structure that supports standing-wave electromagnetic field patterns at discrete <em>eigenfrequencies</em>.</li>
+        <li><strong>Optical frequency:</strong> &nu; (Hz). For vacuum (or n = 1), &nu; = c/&lambda;.</li>
+        <li><strong>Free spectral range (FSR):</strong> spacing between adjacent resonances (Hz). In 1D: FSR = c/(2nL).</li>
+        <li><strong>Linewidth / spectral width:</strong> &Delta;&nu; (Hz), a frequency interval (e.g., from a source spectrum or a cavity linewidth).</li>
+        <li><strong>Mode density / density of states (DOS):</strong> g(&nu;) (modes per Hz), telling how many modes exist per unit frequency near &nu;.</li>
+        <li><strong>Geometry:</strong> 1D length L (m); 2D area A (m²); 3D volume V (m³).</li>
+      </ul>
+
+      <h3>Physical meaning of the key quantities</h3>
+      <ul>
+        <li><strong>FSR</strong> sets “how finely spaced” the cavity resonances are along frequency. Smaller FSR &rarr; more resonances per GHz.</li>
+        <li><strong>g(&nu;)</strong> generalizes this idea: in higher dimensions, many different wavevector directions (and mode patterns) can share similar frequency, so the number of available modes grows rapidly with dimension.</li>
+        <li><strong>Why dimensionality matters:</strong> in k-space, 1D modes lie on a line, 2D modes fill a disk, and 3D modes fill a sphere. The “volume” of available k-states grows as k<sup>D</sup>, which becomes &nu;<sup>D</sup> after converting to frequency.</li>
+      </ul>
+
+      <div class="grid2">
+        <div class="callout">
+          <div class="tag assump">Validity / assumptions</div>
+          <ul>
+            <li>Ideal, lossless cavity boundaries &rarr; perfectly discrete modes.</li>
+            <li>Refractive index n constant (no dispersion) in the frequency window.</li>
+            <li>Large mode numbers (optical frequencies in cm-scale cavities) &rarr; counting via DOS is accurate.</li>
+            <li>Standing-wave boundary conditions (typical closed resonator): k-components quantized as m&pi;/L.</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <div class="tag mist">What to watch for</div>
+          <ul>
+            <li><strong>Polarization degeneracy:</strong> in 3D free space, DOS commonly includes a factor of 2 for two polarizations.</li>
+            <li><strong>Standing vs traveling waves:</strong> a factor of ~2 can appear depending on whether you count ±k separately. We will use standing-wave cavity counting (positive integers) and then note polarization separately.</li>
+            <li><strong>Units:</strong> g(&nu;) is “modes per Hz”; multiply by &Delta;&nu; (Hz) to get a pure number.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Common models/approximations and why we use them</h3>
+      <p>
+        At optical frequencies, a 10&nbsp;cm resonator contains an enormous number of half-wavelengths. Instead of enumerating every integer triple (m, n, p),
+        we approximate the discrete lattice of allowed k-values as a continuum and count how many lattice points lie inside a circle/sphere in k-space.
+        This is the standard <em>density-of-states</em> approach: quick, accurate for large mode numbers, and gives the correct scaling with dimension.
+      </p>
+
+      <h3>Mini intuition examples (conceptual, no heavy algebra)</h3>
+      <ul>
+        <li><strong>1D:</strong> a guitar string has harmonics equally spaced in frequency. More string length &rarr; closer harmonics &rarr; more resonances in any fixed frequency window.</li>
+        <li><strong>3D:</strong> in a box, waves can point in many directions. As frequency increases, the number of possible directions/patterns increases sharply; that’s why the 3D mode count can be astronomically large compared to 1D.</li>
+      </ul>
+    </section>
+
+    <!-- PART 1 -->
+    <section class="section" id="part1">
+      <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+      <h3>Problem restated (in plain language)</h3>
+      <p>
+        Light at wavelength &lambda;<sub>0</sub> = 1.06&nbsp;&mu;m has a spectral width &Delta;&nu; = 120&nbsp;GHz. In three ideal resonators of increasing dimension
+        (1D length 10&nbsp;cm; 2D square 10&nbsp;cm &times; 10&nbsp;cm; 3D cube 10&nbsp;cm per side), how many resonator modes have resonance frequencies that lie within that linewidth?
+        Assume n = 1.
+      </p>
+
+      <h3>Given</h3>
+      <table>
+        <tr><th>Quantity</th><th>Symbol</th><th>Value</th><th>Units</th></tr>
+        <tr><td>Center wavelength</td><td>&lambda;<sub>0</sub></td><td>1.06 &times; 10<sup>-6</sup></td><td>m</td></tr>
+        <tr><td>Spectral width (linewidth window)</td><td>&Delta;&nu;</td><td>120 &times; 10<sup>9</sup></td><td>Hz</td></tr>
+        <tr><td>Index</td><td>n</td><td>1</td><td>—</td></tr>
+        <tr><td>1D cavity length</td><td>L</td><td>0.10</td><td>m</td></tr>
+        <tr><td>2D side length</td><td>L</td><td>0.10</td><td>m</td></tr>
+        <tr><td>3D cube side</td><td>L</td><td>0.10</td><td>m</td></tr>
+      </table>
+
+      <h3>Unknowns</h3>
+      <ul>
+        <li>Mode count in linewidth for 1D: N<sub>1D</sub></li>
+        <li>Mode count in linewidth for 2D: N<sub>2D</sub></li>
+        <li>Mode count in linewidth for 3D: N<sub>3D</sub></li>
+      </ul>
+
+      <h3>Relevant physical principles (and why they apply)</h3>
+      <ul>
+        <li><strong>Wave equation in a bounded domain:</strong> boundaries impose quantization of wavevector components.</li>
+        <li><strong>Dispersion in a nondispersive medium:</strong> &omega; = (c/n)|k| and &nu; = &omega;/(2&pi;).</li>
+        <li><strong>k-space counting / density of states:</strong> for large mode numbers, mode counting reduces to counting lattice points in k-space regions.</li>
+      </ul>
+      <p>
+        Other effects (loss, mirror phase, material dispersion, transverse confinement details) are not invoked because the prompt sets n = 1 and asks for a mode count within a frequency window, which is dominated by geometric quantization and DOS scaling.
+      </p>
+
+      <div class="callout">
+        <div class="tag assump">Assumptions made explicit</div>
+        <ul>
+          <li>Perfectly reflecting boundaries; standing-wave modes.</li>
+          <li>Square (2D) and cubic (3D) domains with side L = 0.10 m.</li>
+          <li>Frequency window is narrow compared with &nu;<sub>0</sub>, so g(&nu;) can be evaluated at &nu;<sub>0</sub> and treated constant over &Delta;&nu;.</li>
+          <li>Polarization: we will present results as (i) <em>spatial modes</em> and (ii) optionally multiplied by 2 for two polarizations where appropriate.</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (compare briefly)</h3>
+      <ul>
+        <li><strong>(A) Direct mode spacing:</strong> in 1D, use FSR and compute N &approx; &Delta;&nu;/FSR. <em>Fast and exact for ideal 1D cavities.</em></li>
+        <li><strong>(B) Integer-lattice counting:</strong> enumerate (m, n) or (m, n, p) such that the resonance frequency lies within the window. <em>Exact but impractical at optical frequencies (huge integers).</em></li>
+        <li><strong>(C) Density of states (DOS):</strong> derive g(&nu;) for 2D/3D and multiply by &Delta;&nu;. <em>Best for large mode numbers; shows scaling with dimension.</em></li>
+      </ul>
+
+      <p><strong>Chosen approach:</strong> Use (A) for 1D and (C) for 2D/3D (and show how 1D fits the same “DOS” philosophy).</p>
+    </section>
+
+    <!-- PART 2 -->
+    <section class="section" id="part2">
+      <h2>PART 2 — Strategy &amp; Tips (Roadmap Only)</h2>
+
+      <ol style="color:var(--muted); margin-left:18px">
+        <li><strong>Convert wavelength to center frequency:</strong> compute &nu;<sub>0</sub> = c/(&lambda;<sub>0</sub> n).<br>
+          <span style="color:var(--faint)">Meaning: establishes where in the spectrum we evaluate the DOS.</span></li>
+        <li><strong>1D: find the free spectral range:</strong> FSR = c/(2nL).<br>
+          <span style="color:var(--faint)">Meaning: frequency spacing of adjacent longitudinal standing-wave modes.</span></li>
+        <li><strong>1D: count modes in linewidth:</strong> N<sub>1D</sub> &approx; &Delta;&nu;/FSR = (2nL/c)&Delta;&nu;.<br>
+          <span style="color:var(--faint)">Meaning: how many longitudinal lines fit in the window.</span></li>
+        <li><strong>2D: derive DOS via k-space disk counting:</strong> N(&lt;&nu;) from quarter-disk of radius k = 2&pi;n&nu;/c; then g(&nu;) = dN/d&nu;.<br>
+          <span style="color:var(--faint)">Meaning: many transverse patterns contribute at similar frequencies.</span></li>
+        <li><strong>2D: compute N<sub>2D</sub> &approx; g<sub>2D</sub>(&nu;<sub>0</sub>)&Delta;&nu;.</strong></li>
+        <li><strong>3D: derive DOS via k-space sphere counting:</strong> N(&lt;&nu;) from octant-sphere; then g(&nu;) = dN/d&nu; (optionally include 2 polarizations).<br>
+          <span style="color:var(--faint)">Meaning: DOS grows as &nu;<sup>2</sup> in 3D.</span></li>
+        <li><strong>3D: compute N<sub>3D</sub> &approx; g<sub>3D</sub>(&nu;<sub>0</sub>)&Delta;&nu;.</strong></li>
+        <li><strong>Sanity checks:</strong> verify units and scaling with L and &Delta;&nu;.</li>
+      </ol>
+
+      <div class="callout">
+        <div class="tag mist">Common mistakes &amp; quick tips</div>
+        <ul>
+          <li><strong>Forgetting Hz vs GHz:</strong> always convert &Delta;&nu; into Hz before multiplying by DOS.</li>
+          <li><strong>Mixing traveling and standing-wave counting:</strong> be consistent about whether ±k are separate. Here: standing-wave cavity quantization (positive integers), then apply polarization as a separate factor.</li>
+          <li><strong>Using DOS formulas without stating polarization convention:</strong> in 3D, many references bake in the factor 2 for polarization; we will show it explicitly.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- PART 3 -->
+    <section class="section" id="part3">
+      <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+      <h3>Physical intuition first (what to expect)</h3>
+      <p>
+        A 10&nbsp;cm cavity at optical frequencies fits roughly 2L/&lambda; &sim; 2(0.1)/(1e-6) &sim; 2&times;10<sup>5</sup> half-wavelengths, so longitudinal mode indices are huge.
+        In 1D, modes are evenly spaced, so the number in a 120&nbsp;GHz window will be modest (tens to hundreds).
+        In 2D and 3D, however, many different transverse patterns can share nearby frequency, causing the mode count to explode: it scales like L<sup>2</sup>&nu; in 2D and L<sup>3</sup>&nu;<sup>2</sup> in 3D.
+      </p>
+
+      <div class="eqBlock" id="eq-nu0">
+        <button class="copyBtn" data-copy="nu0">Copy</button>
+        <div class="copyToast">Copied ✓</div>
+        <div class="eq" data-eq="nu0">Center frequency:
+ν0 = c / (n λ0)</div>
+      </div>
+
+      <h3>Step 1: Compute the center frequency &nu;<sub>0</sub></h3>
+      <p>
+        With refractive index n = 1 and wavelength &lambda;<sub>0</sub> = 1.06&nbsp;&mu;m = 1.06&times;10<sup>-6</sup>&nbsp;m:
+      </p>
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="nu0calc">Copy</button>
+        <div class="copyToast">Copied ✓</div>
+        <div class="eq" data-eq="nu0calc">ν0 = c/(n λ0)
+   = (3.00×10^8 m/s) / (1 × 1.06×10^-6 m)
+   ≈ 2.83×10^14 Hz</div>
+      </div>
+      <p>
+        <strong>Meaning:</strong> we’ll evaluate the DOS at ~2.83&times;10<sup>14</sup>&nbsp;Hz because the linewidth window is narrow compared with this optical carrier.
+      </p>
+
+      <div class="hr"></div>
+
+      <h3>Part (a): 1D resonator of length L = 10 cm</h3>
+
+      <p>
+        For a 1D standing-wave cavity of length L, longitudinal resonance condition is:
+        k = m&pi;/L (m = 1,2,3,...) and &omega; = (c/n)k.
+        Converting to frequency &nu; = &omega;/(2&pi;), adjacent m differ by:
+      </p>
+
+      <div class="eqBlock" id="eq-fsr">
+        <button class="copyBtn" data-copy="fsr">Copy</button>
+        <div class="copyToast">Copied ✓</div>
+        <div class="eq" data-eq="fsr">1D Free Spectral Range (standing-wave cavity):
+FSR = Δν_mode = c / (2 n L)</div>
+      </div>
+
+      <p>
+        Now plug n = 1 and L = 0.10&nbsp;m:
+      </p>
+
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="fsrcalc">Copy</button>
+        <div class="copyToast">Copied ✓</div>
+        <div class="eq" data-eq="fsrcalc">FSR = c/(2 n L)
+    = (3.00×10^8) / (2×1×0.10)
+    = 1.50×10^9 Hz = 1.50 GHz</div>
+      </div>
+
+      <p>
+        The number of resonances inside a window &Delta;&nu; is approximately the window width divided by the spacing:
+      </p>
+
+      <div class="eqBlock" id="eq-n1d">
+        <button class="copyBtn" data-copy="n1d">Copy</button>
+        <div class="copyToast">Copied ✓</div>
+        <div class="eq" data-eq="n1d">1D mode count within linewidth:
+N1D ≈ Δν / FSR = (2 n L / c) Δν</div>
+      </div>
+
+      <p>
+        With &Delta;&nu; = 120&nbsp;GHz = 1.20&times;10<sup>11</sup>&nbsp;Hz:
+      </p>
+
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="n1dcalc">Copy</button>
+        <div class="copyToast">Copied ✓</div>
+        <div class="eq" data-eq="n1dcalc">N1D ≈ (Δν)/(FSR)
+    = (1.20×10^11) / (1.50×10^9)
+    = 80</div>
+      </div>
+
+      <p>
+        <strong>Polarization note:</strong> if you count two independent polarizations as distinct modes, multiply by 2 &rarr; 160. Many “longitudinal mode” counts quote 80 (spatial) and mention polarization separately.
+      </p>
+
+      <div class="hr"></div>
+
+      <h3>Part (b): 2D resonator of size L &times; L (L = 10 cm)</h3>
+
+      <p>
+        In 2D (a square), standing-wave boundary conditions quantize:
+        k<sub>x</sub> = m&pi;/L and k<sub>y</sub> = n&pi;/L with m,n = 1,2,3,...
+        The magnitude is |k| = sqrt(k<sub>x</sub><sup>2</sup> + k<sub>y</sub><sup>2</sup>),
+        and frequency is &nu; = (c/(2&pi;n))|k|.
+      </p>
+
+      <p>
+        To count how many modes have frequency below &nu;, count how many lattice points (m,n) lie inside a quarter-circle of radius k in the (k<sub>x</sub>,k<sub>y</sub>) plane.
+        The k-space lattice cell area is:
+        (&Delta;k<sub>x</sub>)(&Delta;k<sub>y</sub>) = (&pi;/L)(&pi;/L) = &pi;<sup>2</sup>/A,
+        where A = L<sup>2</sup>.
+      </p>
+
+      <div class="eqBlock" id="eq-2dN">
+        <button class="copyBtn" data-copy="eq2dN">Copy</button>
+        <div class="copyToast">Copied ✓</div>
+        <div class="eq" data-eq="eq2dN">2D cumulative mode count (spatial, standing-wave, no polarization factor):
+N2D(<ν) ≈ (Area of quarter-disk in k-space) / (k-cell area)
+       = [ (1/4) π k^2 ] / (π^2/A)
+       = A k^2 / (4π)
+
+with k = (2π n ν)/c  ⇒  N2D(<ν) ≈ (A π n^2 ν^2)/(c^2)</div>
+      </div>
+
+      <p>
+        Differentiate to get the density of states g<sub>2D</sub>(&nu;) = dN/d&nu;:
+      </p>
+
+      <div class="eqBlock" id="eq-2dDOS">
+        <button class="copyBtn" data-copy="eq2dDOS">Copy</button>
+        <div class="copyToast">Copied ✓</div>
+        <div class="eq" data-eq="eq2dDOS">2D density of states (spatial, no polarization factor):
+g2D(ν) = dN2D/dν = (2 π A n^2 ν)/(c^2)</div>
+      </div>
+
+      <p>
+        Then the number of modes within a narrow window &Delta;&nu; around &nu;<sub>0</sub> is:
+        N<sub>2D</sub> &approx; g<sub>2D</sub>(&nu;<sub>0</sub>)&Delta;&nu;.
+        For n = 1 and A = (0.10)<sup>2</sup> = 0.01&nbsp;m²:
+      </p>
+
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="n2dcalc">Copy</button>
+        <div class="copyToast">Copied ✓</div>
+        <div class="eq" data-eq="n2dcalc">A = 0.01 m^2,  ν0 ≈ 2.83×10^14 Hz,  Δν = 1.20×10^11 Hz
+
+g2D(ν0) = (2 π A ν0)/(c^2)
+       = (2π × 0.01 × 2.83×10^14) / ( (3.00×10^8)^2 )
+       = (0.02π × 2.83×10^14) / (9.00×10^16)
+       ≈ 1.98×10^-4 modes/Hz
+
+N2D ≈ g2D(ν0) Δν ≈ (1.98×10^-4)(1.20×10^11) ≈ 2.37×10^7</div>
+      </div>
+
+      <p>
+        <strong>Polarization note:</strong> if two polarizations are supported independently, multiply by 2 &rarr; N<sub>2D</sub> &approx; 4.74&times;10<sup>7</sup>.
+      </p>
+
+      <div class="hr"></div>
+
+      <h3>Part (c): 3D resonator of size L &times; L &times; L (L = 10 cm)</h3>
+
+      <p>
+        In 3D, standing-wave conditions quantize k<sub>x</sub>, k<sub>y</sub>, k<sub>z</sub> on a cubic lattice with spacing &pi;/L in each direction.
+        Modes with |k| less than some radius k fill an <em>octant</em> of a sphere in k-space (because m,n,p are positive integers for standing waves).
+        The k-space cell volume is (&pi;/L)<sup>3</sup> = &pi;<sup>3</sup>/V where V = L<sup>3</sup>.
+      </p>
+
+      <div class="eqBlock" id="eq-3dDOS">
+        <button class="copyBtn" data-copy="eq3dDOS">Copy</button>
+        <div class="copyToast">Copied ✓</div>
+        <div class="eq" data-eq="eq3dDOS">3D density of states (including 2 polarizations; standard convention):
+g3D(ν) = (8 π V n^3 ν^2) / (c^3)
+
+(If you want spatial modes without polarization, use half: (4 π V n^3 ν^2)/c^3.)</div>
+      </div>
+
+      <p>
+        For this problem, n = 1 and V = (0.10)<sup>3</sup> = 0.001&nbsp;m³.
+        The mode count within &Delta;&nu; is:
+        N<sub>3D</sub> &approx; g<sub>3D</sub>(&nu;<sub>0</sub>)&Delta;&nu;.
+      </p>
+
+      <div class="eqBlock">
+        <button class="copyBtn" data-copy="n3dcalc">Copy</button>
+        <div class="copyToast">Copied ✓</div>
+        <div class="eq" data-eq="n3dcalc">V = 0.001 m^3,  ν0 ≈ 2.83×10^14 Hz,  Δν = 1.20×10^11 Hz
+
+g3D(ν0) = (8 π V ν0^2)/(c^3)
+       = (8π × 0.001 × (2.83×10^14)^2) / ( (3.00×10^8)^3 )
+       ≈ (8π × 0.001 × 8.01×10^28) / (2.70×10^25)
+       ≈ 74.5 modes/Hz
+
+N3D ≈ g3D(ν0) Δν ≈ (74.5)(1.20×10^11) ≈ 8.94×10^12</div>
+      </div>
+
+      <h3>Sanity checks</h3>
+      <ul>
+        <li><strong>Units:</strong> g(&nu;) has units modes/Hz; multiplying by &Delta;&nu; (Hz) gives a dimensionless mode count.</li>
+        <li><strong>Scaling with linewidth:</strong> N &propto; &Delta;&nu; in all cases (double the window, double the modes).</li>
+        <li><strong>Scaling with size:</strong>
+          <span style="color:var(--muted)">N<sub>1D</sub> &propto; L</span>,
+          <span style="color:var(--muted)">N<sub>2D</sub> &propto; L<sup>2</sup></span>,
+          <span style="color:var(--muted)">N<sub>3D</sub> &propto; L<sup>3</sup></span>,
+          matching the k-space “length/area/volume” intuition.</li>
+        <li><strong>Why 3D is enormous:</strong> the 3D DOS grows as &nu;<sup>2</sup> and the cavity has macroscopic volume; at optical &nu;<sub>0</sub> this is gigantic.</li>
+      </ul>
+
+      <div class="callout">
+        <div class="tag final">Final numerical answers (for L = 10 cm, λ0 = 1.06 µm, Δν = 120 GHz, n = 1)</div>
+        <p style="margin:8px 0 6px;color:var(--muted)">
+          The counts below are shown as <strong>spatial modes</strong>, with the <strong>two-polarization</strong> count in parentheses where applicable.
+        </p>
+        <ul>
+          <li><strong>(a) 1D:</strong> N<sub>1D</sub> &approx; <span class="pill" id="ans1d">80</span> (or &times;2 &rarr; <span class="pill" id="ans1d2">160</span> if counting polarizations).</li>
+          <li><strong>(b) 2D (10 cm &times; 10 cm):</strong> N<sub>2D</sub> &approx; <span class="pill" id="ans2d">2.37×10^7</span> (or &times;2 &rarr; <span class="pill" id="ans2d2">4.74×10^7</span>).</li>
+          <li><strong>(c) 3D (10 cm cube):</strong> N<sub>3D</sub> &approx; <span class="pill" id="ans3d">4.47×10^12</span> spatial, and including 2 polarizations <span class="pill" id="ans3d2">8.94×10^12</span>.</li>
+        </ul>
+
+        <div class="eqBlock" id="eq-final">
+          <button class="copyBtn" data-copy="final">Copy</button>
+          <div class="copyToast">Copied ✓</div>
+          <div class="eq" data-eq="final">For L = 0.10 m, λ0 = 1.06 μm, Δν = 120 GHz, n = 1:
+
+ν0 ≈ 2.83×10^14 Hz
+
+1D:  FSR = c/(2L) = 1.50 GHz  ⇒  N1D ≈ Δν/FSR = 80  (×2 pol → 160)
+
+2D:  g2D(ν0) = (2πAν0)/c^2  with A=L^2=0.01
+     ⇒ N2D ≈ g2D(ν0)Δν ≈ 2.37×10^7  (×2 pol → 4.74×10^7)
+
+3D:  g3D(ν0) = (8πVν0^2)/c^3 with V=L^3=0.001   (includes 2 pol)
+     ⇒ N3D ≈ 8.94×10^12 (spatial only: 4.47×10^12)</div>
+        </div>
+      </div>
+
+      <p>
+        <strong>Connection to the diagram and plots:</strong> the diagram shows the same geometric size L interpreted in 1D/2D/3D.
+        The main plot compares the resulting N within the chosen &Delta;&nu;, and the sweep plot shows how quickly N increases as L grows—much faster in 3D than 1D.
+      </p>
+    </section>
+
+    <!-- PART 4 -->
+    <section class="section" id="part4">
+      <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+      <h3>Re-interpreting the formulas: what controls the mode count?</h3>
+      <ul>
+        <li><strong>1D:</strong> N<sub>1D</sub> = (2nL/c)&Delta;&nu;.
+          <br><span style="color:var(--faint)">Control knobs:</span> linear in L and &Delta;&nu;; independent of &nu;<sub>0</sub> for nondispersive n.</li>
+        <li><strong>2D:</strong> N<sub>2D</sub> &approx; (2&pi;A n<sup>2</sup>&nu;<sub>0</sub>/c<sup>2</sup>)&Delta;&nu;.
+          <br><span style="color:var(--faint)">Control knobs:</span> linear in &nu;<sub>0</sub> and area A; larger optical frequency gives more states because the k-disk radius increases.</li>
+        <li><strong>3D:</strong> N<sub>3D</sub> &approx; (8&pi;V n<sup>3</sup>&nu;<sub>0</sub><sup>2</sup>/c<sup>3</sup>)&Delta;&nu; (incl. 2 pol).
+          <br><span style="color:var(--faint)">Control knobs:</span> quadratic in &nu;<sub>0</sub> and linear in volume V; this is why the 3D count is enormous at optical frequencies.</li>
+      </ul>
+
+      <h3>How changing parameters affects the outcome (use the interactive plots)</h3>
+      <ul>
+        <li><strong>Increase L:</strong> the bar chart rises slowly for 1D, faster for 2D, and explosively for 3D. In the sweep plot, 1D is linear, 2D is quadratic, 3D is cubic in L (with additional &nu;<sub>0</sub> dependence baked into the prefactor).</li>
+        <li><strong>Increase &Delta;&nu;:</strong> everything scales proportionally: doubling &Delta;&nu; doubles every bar and every curve.</li>
+      </ul>
+
+      <h3>Alternative derivation idea (brief)</h3>
+      <p>
+        Instead of k-space counting, you can derive 3D DOS from the known free-space photon DOS per volume:
+        g<sub>V</sub>(&nu;) = (8&pi;&nu;<sup>2</sup>)/c<sup>3</sup> (including polarization), then multiply by cavity volume V.
+        This is essentially the same physics: it’s k-space counting expressed as a continuum formula.
+      </p>
+
+      <h3>Concept checks (quick self-test with answers)</h3>
+      <ul>
+        <li><strong>Q:</strong> Why does the 1D mode count not explicitly depend on &nu;<sub>0</sub>? <strong>A:</strong> In a nondispersive 1D cavity, mode spacing is constant: FSR = c/(2nL), independent of frequency.</li>
+        <li><strong>Q:</strong> Why does 3D DOS scale as &nu;<sup>2</sup>? <strong>A:</strong> Because the number of k-states grows with the volume of a sphere in k-space, which is &propto; k<sup>3</sup>, and k &propto; &nu;.</li>
+        <li><strong>Q:</strong> What does “narrow window” mean in N &approx; g(&nu;<sub>0</sub>)&Delta;&nu;? <strong>A:</strong> It means g(&nu;) doesn’t change much over the interval; here &Delta;&nu;/&nu;<sub>0</sub> &ll; 1.</li>
+        <li><strong>Q:</strong> If you doubled L in 2D (keeping everything else), how does N change? <strong>A:</strong> A = L<sup>2</sup> so N increases by 4.</li>
+      </ul>
+    </section>
+
+    <!-- PART 5 -->
+    <section class="section" id="part5">
+      <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+
+      <h3>What each canvas shows</h3>
+      <ul>
+        <li><strong>Diagram canvas:</strong> a 1D segment (length L), a 2D square (side L), and a 3D cube (side L). This matches the three parts of the problem.</li>
+        <li><strong>Main plot (bar chart):</strong> N<sub>1D</sub>, N<sub>2D</sub>, N<sub>3D</sub> within the current &Delta;&nu; window. Bars are shown on a logarithmic y-scale because the numbers span many orders of magnitude.</li>
+        <li><strong>Secondary plot (sweep):</strong> N versus L (log y-scale) for each dimension. A marker shows your current slider L value.</li>
+      </ul>
+
+      <h3>Interactive controls (what changes and why)</h3>
+      <ul>
+        <li><strong>L slider:</strong> changes cavity size. You should see:
+          <ul>
+            <li>1D curve scale ~L,</li>
+            <li>2D curve scale ~L²,</li>
+            <li>3D curve scale ~L³,</li>
+          </ul>
+          because geometry directly controls how many k-states fit inside the resonator.
+        </li>
+        <li><strong>&Delta;&nu; slider:</strong> changes the width of the frequency window. Every plotted N scales linearly with &Delta;&nu;.</li>
+      </ul>
+
+      <div class="callout">
+        <div class="tag keyeq">Plot-consistent formulas used in the code</div>
+        <div class="eq" style="margin-top:6px">ν0 = c/(n λ0)
+N1D = (2 n L / c) Δν                        (spatial)
+N2D = (2 π A n^2 ν0 / c^2) Δν               (spatial; ×2 for polarization if desired)
+N3D = (8 π V n^3 ν0^2 / c^3) Δν             (includes 2 polarizations; spatial-only is half)</div>
+      </div>
+    </section>
+  </article>
+</main>
+
+<footer>
+  Built as a self-contained learning article with interactive visualizations (vanilla HTML/CSS/JS). Numbers update live with the sliders to reinforce scaling laws.
+</footer>
+
+<script>
+(function(){
+  // ---------- Helpers ----------
+  const c = 3e8;          // m/s
+  const lambda0 = 1.06e-6;// m
+  const n = 1;            // refractive index
+
+  function fmtSI(x, sig=3){
+    // Compact scientific formatter (string), keeps small/large readable.
+    if (!isFinite(x)) return "—";
+    const ax = Math.abs(x);
+    if (ax === 0) return "0";
+    // Use fixed for moderate ranges, sci for extremes
+    if (ax >= 1e-2 && ax < 1e5){
+      // choose decimals based on magnitude
+      const decimals = Math.max(0, sig - 1 - Math.floor(Math.log10(ax)));
+      return x.toFixed(decimals);
+    }
+    const exp = Math.floor(Math.log10(ax));
+    const m = x / Math.pow(10, exp);
+    const mStr = (Math.abs(m) < 10 ? m.toFixed(sig-1) : m.toFixed(sig-2));
+    return `${mStr}×10^${exp}`;
+  }
+
+  function setText(id, txt){ const el = document.getElementById(id); if(el) el.textContent = txt; }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+
+  // ---------- Mode count formulas ----------
+  function nu0(){ return c/(n*lambda0); }
+
+  function N1D(L, dnu){
+    // spatial modes (standing-wave longitudinal)
+    return (2*n*L/c)*dnu;
+  }
+
+  function N2D_spatial(L, dnu){
+    const A = L*L;
+    return (2*Math.PI*A*(n*n)*nu0()/(c*c))*dnu;
+  }
+
+  function N3D_withPol(L, dnu){
+    const V = L*L*L;
+    return (8*Math.PI*V*Math.pow(n,3)*Math.pow(nu0(),2)/Math.pow(c,3))*dnu;
+  }
+
+  // ---------- Copy buttons ----------
+  function hookCopy(){
+    document.querySelectorAll(".copyBtn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const key = btn.getAttribute("data-copy");
+        const block = btn.closest(".eqBlock");
+        const src = block ? block.querySelector(`[data-eq="${key}"]`) : null;
+        const text = src ? src.textContent.replace(/\n\s+\n/g,"\n\n").trim() : "";
+        if(!text) return;
+        navigator.clipboard.writeText(text).then(()=>{
+          if(block){
+            block.classList.add("copied");
+            setTimeout(()=>block.classList.remove("copied"), 700);
+          }
+        }).catch(()=>{ /* silently ignore */ });
+      });
+    });
+  }
+
+  // ---------- Canvas drawing with HiDPI ----------
+  function setupCanvas(canvas){
+    const ctx = canvas.getContext("2d");
+    function resize(){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(320, rect.width);
+      // Preserve intrinsic aspect ratios from HTML attrs: use current height ratio
+      const aspect = canvas.height / canvas.width; // based on attribute numbers
+      const h = w * aspect;
+
+      canvas.style.height = `${h}px`;
+      canvas.width  = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+
+      ctx.setTransform(dpr,0,0,dpr,0,0); // scale drawing units to CSS pixels
+      return {w, h, dpr};
+    }
+    return {ctx, resize};
+  }
+
+  // ---------- Plot utilities ----------
+  function drawPanel(ctx, w, h, title){
+    // Background
+    ctx.clearRect(0,0,w,h);
+
+    // soft vignette
+    const g = ctx.createRadialGradient(w*0.25,h*0.2, 20, w*0.5,h*0.5, Math.max(w,h));
+    g.addColorStop(0,"rgba(124,240,197,0.06)");
+    g.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,w,h);
+
+    // Title
+    ctx.fillStyle = "rgba(234,240,255,0.95)";
+    ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.fillText(title, 14, 24);
+
+    // border
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5,0.5,w-1,h-1);
+  }
+
+  function axes(ctx, box, xLabel, yLabel, xTicks, yTicks, grid=true){
+    const {x, y, w, h} = box;
+    // axis lines
+    ctx.strokeStyle = "rgba(255,255,255,0.22)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y+h);
+    ctx.lineTo(x+w, y+h);
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y+h);
+    ctx.stroke();
+
+    // grid + ticks
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+    ctx.fillStyle = "rgba(184,196,230,0.95)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+
+    // X ticks
+    xTicks.forEach(t=>{
+      const px = x + t.pos*w;
+      if(grid){
+        ctx.strokeStyle = "rgba(255,255,255,0.10)";
+        ctx.beginPath(); ctx.moveTo(px,y); ctx.lineTo(px,y+h); ctx.stroke();
+      }
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.beginPath(); ctx.moveTo(px,y+h); ctx.lineTo(px,y+h+6); ctx.stroke();
+      ctx.fillText(t.label, px, y+h+8);
+    });
+
+    // Y ticks
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    yTicks.forEach(t=>{
+      const py = y + (1-t.pos)*h;
+      if(grid){
+        ctx.strokeStyle = "rgba(255,255,255,0.10)";
+        ctx.beginPath(); ctx.moveTo(x,py); ctx.lineTo(x+w,py); ctx.stroke();
+      }
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.beginPath(); ctx.moveTo(x-6,py); ctx.lineTo(x,py); ctx.stroke();
+      ctx.fillText(t.label, x-10, py);
+    });
+
+    // labels
+    ctx.fillStyle = "rgba(184,196,230,0.95)";
+    ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillText(xLabel, x+w/2, y+h+38);
+
+    ctx.save();
+    ctx.translate(x-52, y+h/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+  }
+
+  function log10(x){ return Math.log(x)/Math.LN10; }
+
+  function niceLogTicks(yMin, yMax){
+    // yMin,yMax > 0
+    const eMin = Math.floor(log10(yMin));
+    const eMax = Math.ceil(log10(yMax));
+    const ticks = [];
+    for(let e=eMin; e<=eMax; e++){
+      const v = Math.pow(10,e);
+      const pos = (log10(v)-log10(yMin)) / (log10(yMax)-log10(yMin));
+      ticks.push({value:v, pos:pos, label:`10^${e}`});
+    }
+    return ticks;
+  }
+
+  // ---------- Diagram ----------
+  function drawDiagram(canvasPack, L){
+    const {ctx} = canvasPack;
+    const rect = canvasPack.resize();
+    const w = rect.w, h = rect.h;
+
+    drawPanel(ctx,w,h,"Geometry diagram (same size L used in 1D/2D/3D)");
+
+    const pad = 18;
+    const y0 = 40;
+    const boxH = h - y0 - 16;
+
+    // three panels
+    const gap = 14;
+    const colW = (w - 2*pad - 2*gap)/3;
+    const boxes = [
+      {x:pad, y:y0, w:colW, h:boxH, title:"1D: length L"},
+      {x:pad+colW+gap, y:y0, w:colW, h:boxH, title:"2D: square side L"},
+      {x:pad+2*(colW+gap), y:y0, w:colW, h:boxH, title:"3D: cube side L"}
+    ];
+
+    ctx.font = "600 13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    boxes.forEach(b=>{
+      ctx.fillStyle = "rgba(234,240,255,0.95)";
+      ctx.fillText(b.title, b.x+10, b.y+18);
+      ctx.strokeStyle = "rgba(255,255,255,0.12)";
+      ctx.strokeRect(b.x+0.5, b.y+0.5, b.w-1, b.h-1);
+    });
+
+    // scale factor for drawing objects
+    const Ltxt = `L = ${fmtSI(L,3)} m`;
+
+    // 1D: line segment with arrows
+    {
+      const b = boxes[0];
+      const cx = b.x + b.w/2;
+      const y = b.y + b.h*0.55;
+      const len = b.w*0.70;
+      const x1 = cx - len/2, x2 = cx + len/2;
+
+      ctx.strokeStyle = "rgba(124,240,197,0.85)";
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(x1,y); ctx.lineTo(x2,y); ctx.stroke();
+
+      // end caps (mirrors)
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "rgba(139,182,255,0.85)";
+      ctx.beginPath(); ctx.moveTo(x1,y-18); ctx.lineTo(x1,y+18); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2,y-18); ctx.lineTo(x2,y+18); ctx.stroke();
+
+      // dimension arrows
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(255,255,255,0.55)";
+      const ay = y + 38;
+      ctx.beginPath(); ctx.moveTo(x1,ay); ctx.lineTo(x2,ay); ctx.stroke();
+      // arrow heads
+      function arrowHead(x,y,dir){
+        ctx.beginPath();
+        ctx.moveTo(x,y);
+        ctx.lineTo(x+dir*10,y-5);
+        ctx.lineTo(x+dir*10,y+5);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(255,255,255,0.55)";
+        ctx.fill();
+      }
+      arrowHead(x1,ay,-1); arrowHead(x2,ay,1);
+
+      ctx.fillStyle = "rgba(184,196,230,0.95)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(Ltxt, cx, ay+18);
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "rgba(184,196,230,0.9)";
+      ctx.fillText("standing-wave cavity", b.x+10, b.y+b.h-16);
+    }
+
+    // 2D: square + arrow labels
+    {
+      const b = boxes[1];
+      const side = Math.min(b.w,b.h)*0.60;
+      const x = b.x + (b.w-side)/2;
+      const y = b.y + (b.h-side)/2 + 6;
+
+      ctx.fillStyle = "rgba(139,182,255,0.10)";
+      ctx.strokeStyle = "rgba(139,182,255,0.85)";
+      ctx.lineWidth = 2.5;
+      ctx.fillRect(x,y,side,side);
+      ctx.strokeRect(x,y,side,side);
+
+      // dimension arrow for side
+      ctx.strokeStyle = "rgba(255,255,255,0.55)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(x, y-20); ctx.lineTo(x+side, y-20); ctx.stroke();
+      // arrows
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      ctx.beginPath(); ctx.moveTo(x,y-20); ctx.lineTo(x+10,y-25); ctx.lineTo(x+10,y-15); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x+side,y-20); ctx.lineTo(x+side-10,y-25); ctx.lineTo(x+side-10,y-15); ctx.closePath(); ctx.fill();
+
+      ctx.fillStyle = "rgba(184,196,230,0.95)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(Ltxt, x+side/2, y-28);
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "rgba(184,196,230,0.9)";
+      ctx.fillText("many transverse patterns", b.x+10, b.y+b.h-16);
+    }
+
+    // 3D: cube (isometric)
+    {
+      const b = boxes[2];
+      const s = Math.min(b.w,b.h)*0.48;
+      const ox = b.x + (b.w - s)/2 + 8;
+      const oy = b.y + (b.h - s)/2 + 12;
+      const dx = s*0.35, dy = -s*0.28;
+
+      // front square
+      ctx.fillStyle = "rgba(124,240,197,0.08)";
+      ctx.strokeStyle = "rgba(124,240,197,0.85)";
+      ctx.lineWidth = 2.5;
+      ctx.fillRect(ox,oy,s,s);
+      ctx.strokeRect(ox,oy,s,s);
+
+      // top face
+      ctx.beginPath();
+      ctx.moveTo(ox,oy);
+      ctx.lineTo(ox+dx,oy+dy);
+      ctx.lineTo(ox+s+dx,oy+dy);
+      ctx.lineTo(ox+s,oy);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(139,182,255,0.10)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(139,182,255,0.75)";
+      ctx.stroke();
+
+      // side face
+      ctx.beginPath();
+      ctx.moveTo(ox+s,oy);
+      ctx.lineTo(ox+s+dx,oy+dy);
+      ctx.lineTo(ox+s+dx,oy+s+dy);
+      ctx.lineTo(ox+s,oy+s);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(255,210,122,0.08)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,210,122,0.65)";
+      ctx.stroke();
+
+      // connecting edges
+      ctx.strokeStyle = "rgba(255,255,255,0.35)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(ox,oy); ctx.lineTo(ox+dx,oy+dy);
+      ctx.moveTo(ox,oy+s); ctx.lineTo(ox+dx,oy+s+dy);
+      ctx.moveTo(ox+s,oy+s); ctx.lineTo(ox+s+dx,oy+s+dy);
+      ctx.stroke();
+
+      // dimension label (approx along top edge)
+      ctx.fillStyle = "rgba(184,196,230,0.95)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(Ltxt, ox + s/2 + dx/2, oy + dy - 10);
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "rgba(184,196,230,0.9)";
+      ctx.fillText("DOS ∝ ν² in 3D", b.x+10, b.y+b.h-16);
+    }
+  }
+
+  // ---------- Main bar plot (log y) ----------
+  function drawMainPlot(canvasPack, L, dnu){
+    const {ctx} = canvasPack;
+    const rect = canvasPack.resize();
+    const w = rect.w, h = rect.h;
+
+    drawPanel(ctx,w,h,"Modes inside linewidth Δν (log scale)");
+
+    const padL = 76, padR = 18, padT = 44, padB = 70;
+    const plot = {x:padL, y:padT, w:w-padL-padR, h:h-padT-padB};
+
+    const n1 = Math.max(1e-12, N1D(L,dnu));
+    const n2 = Math.max(1e-12, N2D_spatial(L,dnu));
+    const n3sp = Math.max(1e-12, 0.5*N3D_withPol(L,dnu)); // spatial-only
+    const n3 = Math.max(1e-12, N3D_withPol(L,dnu));        // with pol
+
+    // Bars: show spatial for 1D/2D/3D, and a lighter overlay for "with pol" in 3D? (and optional in 2D/1D)
+    const labels = ["1D", "2D", "3D (spatial)", "3D (2 pol)"];
+    const vals   = [n1,   n2,   n3sp,         n3];
+
+    // y range (log)
+    const yMin = Math.pow(10, Math.floor(log10(Math.min(...vals))) - 1);
+    const yMax = Math.pow(10, Math.ceil(log10(Math.max(...vals))) + 0);
+
+    const yTicks = niceLogTicks(yMin,yMax).map(t=>{
+      const pos = (log10(t.value)-log10(yMin))/(log10(yMax)-log10(yMin));
+      return {pos, label:t.label};
+    });
+
+    const xTicks = labels.map((lab,i)=>({pos:(i+0.5)/labels.length, label:lab}));
+
+    axes(ctx, plot, "Resonator dimensionality", "Mode count N (dimensionless, log10)", xTicks, yTicks, true);
+
+    // bars
+    const bw = plot.w / labels.length * 0.62;
+    const gap = plot.w / labels.length * 0.38;
+
+    function yMap(v){
+      const t = (log10(v)-log10(yMin))/(log10(yMax)-log10(yMin));
+      return plot.y + (1 - clamp(t,0,1)) * plot.h;
+    }
+
+    for(let i=0;i<labels.length;i++){
+      const cx = plot.x + (i+0.5)*plot.w/labels.length;
+      const x0 = cx - bw/2;
+      const y0 = yMap(vals[i]);
+      const yBase = plot.y + plot.h;
+      const hh = yBase - y0;
+
+      // Choose a consistent palette without explicit colors? We must not set specific colors? That restriction applied to python_user_visible only.
+      // Here in JS canvas, colors are fine.
+      let fill = "rgba(139,182,255,0.45)";
+      let stroke = "rgba(139,182,255,0.9)";
+      if(i===0){ fill="rgba(124,240,197,0.35)"; stroke="rgba(124,240,197,0.9)"; }
+      if(i===1){ fill="rgba(139,182,255,0.35)"; stroke="rgba(139,182,255,0.9)"; }
+      if(i===2){ fill="rgba(255,210,122,0.30)"; stroke="rgba(255,210,122,0.85)"; }
+      if(i===3){ fill="rgba(255,122,162,0.28)"; stroke="rgba(255,122,162,0.85)"; }
+
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 2;
+
+      // rounded rect
+      const r = 10;
+      roundRect(ctx, x0, y0, bw, hh, r);
+      ctx.fill();
+      ctx.stroke();
+
+      // value label
+      ctx.fillStyle = "rgba(234,240,255,0.95)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      const lab = (vals[i] < 1e6) ? fmtSI(vals[i],3) : fmtSI(vals[i],3);
+      ctx.fillText(lab, cx, y0 - 6);
+    }
+
+    // legend
+    const lx = plot.x + 10, ly = plot.y + 10;
+    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "rgba(184,196,230,0.95)";
+    ctx.fillText("Legend:", lx, ly);
+
+    legendItem(ctx, lx, ly+18, "1D spatial modes (longitudinal)", "rgba(124,240,197,0.9)");
+    legendItem(ctx, lx, ly+36, "2D spatial modes (standing-wave, no pol factor)", "rgba(139,182,255,0.9)");
+    legendItem(ctx, lx, ly+54, "3D spatial modes (half of standard DOS)", "rgba(255,210,122,0.85)");
+    legendItem(ctx, lx, ly+72, "3D including 2 polarizations (standard DOS)", "rgba(255,122,162,0.85)");
+
+    function legendItem(ctx, x, y, text, color){
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y+3, 12, 8);
+      ctx.fillStyle = "rgba(184,196,230,0.95)";
+      ctx.fillText(text, x+18, y);
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      r = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r);
+      ctx.arcTo(x,y,x+w,y,r);
+      ctx.closePath();
+    }
+  }
+
+  // ---------- Sweep plot: N vs L (log y) ----------
+  function drawSweepPlot(canvasPack, Lcur, dnu){
+    const {ctx} = canvasPack;
+    const rect = canvasPack.resize();
+    const w = rect.w, h = rect.h;
+
+    drawPanel(ctx,w,h,"Sweep: N versus cavity size L (log scale)");
+
+    const padL = 76, padR = 18, padT = 44, padB = 70;
+    const plot = {x:padL, y:padT, w:w-padL-padR, h:h-padT-padB};
+
+    const Lmin = 0.01, Lmax = 0.30;
+    const Npts = 260;
+
+    const series = [
+      {name:"1D",  color:"rgba(124,240,197,0.95)", f:(L)=>N1D(L,dnu)},
+      {name:"2D",  color:"rgba(139,182,255,0.95)", f:(L)=>N2D_spatial(L,dnu)},
+      {name:"3D (2 pol)", color:"rgba(255,122,162,0.95)", f:(L)=>N3D_withPol(L,dnu)},
+    ];
+
+    // find y bounds
+    let yMin = Infinity, yMax = 0;
+    const data = series.map(s=>{
+      const pts = [];
+      for(let i=0;i<Npts;i++){
+        const t = i/(Npts-1);
+        const L = Lmin + t*(Lmax-Lmin);
+        const N = Math.max(1e-12, s.f(L));
+        pts.push({L,N});
+        yMin = Math.min(yMin, N);
+        yMax = Math.max(yMax, N);
+      }
+      return {s, pts};
+    });
+
+    // pad log bounds
+    yMin = Math.pow(10, Math.floor(log10(yMin)) - 1);
+    yMax = Math.pow(10, Math.ceil(log10(yMax)) + 0);
+
+    // ticks
+    const xTicks = [];
+    const xMarks = [0.01,0.05,0.10,0.15,0.20,0.25,0.30];
+    xMarks.forEach(v=>{
+      const pos = (v-Lmin)/(Lmax-Lmin);
+      if(pos>=0 && pos<=1) xTicks.push({pos, label: fmtSI(v,2)});
+    });
+    const yTicks = niceLogTicks(yMin,yMax).map(t=>{
+      const pos = (log10(t.value)-log10(yMin))/(log10(yMax)-log10(yMin));
+      return {pos, label:t.label};
+    });
+
+    axes(ctx, plot, "Cavity size L (m)", "Mode count N (dimensionless, log10)", xTicks, yTicks, true);
+
+    function xMap(L){ return plot.x + (L-Lmin)/(Lmax-Lmin)*plot.w; }
+    function yMap(N){
+      const t = (log10(N)-log10(yMin))/(log10(yMax)-log10(yMin));
+      return plot.y + (1 - clamp(t,0,1))*plot.h;
+    }
+
+    // draw curves
+    ctx.lineWidth = 2.5;
+    data.forEach(d=>{
+      ctx.strokeStyle = d.s.color;
+      ctx.beginPath();
+      d.pts.forEach((p,idx)=>{
+        const x = xMap(p.L), y = yMap(p.N);
+        if(idx===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+    });
+
+    // marker at current L
+    const xm = xMap(Lcur);
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(xm, plot.y); ctx.lineTo(xm, plot.y+plot.h); ctx.stroke();
+
+    // dots for each series at Lcur
+    data.forEach(d=>{
+      const N = Math.max(1e-12, d.s.f(Lcur));
+      const x = xm;
+      const y = yMap(N);
+      ctx.fillStyle = d.s.color;
+      ctx.beginPath(); ctx.arc(x,y,4.5,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = "rgba(0,0,0,0.35)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    // legend
+    const lx = plot.x + 10, ly = plot.y + 10;
+    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "rgba(184,196,230,0.95)";
+    ctx.fillText("Legend:", lx, ly);
+
+    legendItem(ctx, lx, ly+18, "1D: N ∝ L", series[0].color);
+    legendItem(ctx, lx, ly+36, "2D: N ∝ L²", series[1].color);
+    legendItem(ctx, lx, ly+54, "3D: N ∝ L³ (and ∝ ν0²)", series[2].color);
+
+    // annotate current values
+    const n1 = N1D(Lcur,dnu);
+    const n2 = N2D_spatial(Lcur,dnu);
+    const n3 = N3D_withPol(Lcur,dnu);
+    const bx = plot.x + plot.w - 240, by = plot.y + 10, bw = 230, bh = 82;
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.lineWidth = 1;
+    roundRect(ctx, bx, by, bw, bh, 14);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "rgba(234,240,255,0.95)";
+    ctx.font = "600 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+    ctx.fillText(`L = ${fmtSI(Lcur,3)} m`, bx+12, by+12);
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+    ctx.fillStyle = "rgba(184,196,230,0.95)";
+    ctx.fillText(`N1D  = ${fmtSI(n1,3)}`, bx+12, by+30);
+    ctx.fillText(`N2D  = ${fmtSI(n2,3)}`, bx+12, by+48);
+    ctx.fillText(`N3D* = ${fmtSI(n3,3)}  (*2 pol)`, bx+12, by+66);
+
+    function legendItem(ctx, x, y, text, color){
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y+3, 12, 8);
+      ctx.fillStyle = "rgba(184,196,230,0.95)";
+      ctx.fillText(text, x+18, y);
+    }
+    function roundRect(ctx, x, y, w, h, r){
+      r = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r);
+      ctx.arcTo(x,y,x+w,y,r);
+      ctx.closePath();
+    }
+  }
+
+  // ---------- Update UI numbers ----------
+  function updateNumbers(L, dnu){
+    const nu = nu0();
+    const N1 = N1D(L,dnu);
+    const N2 = N2D_spatial(L,dnu);
+    const N2pol = 2*N2;
+    const N3pol = N3D_withPol(L,dnu);
+    const N3sp = 0.5*N3pol;
+
+    // Quick summary pills
+    setText("qs1d", fmtSI(N1,3));
+    setText("qs2d", fmtSI(N2,3));
+    setText("qs3d", fmtSI(N3pol,3));
+
+    // Final answer pills (at current slider settings)
+    setText("ans1d", fmtSI(N1,3));
+    setText("ans1d2", fmtSI(2*N1,3));
+    setText("ans2d", fmtSI(N2,3));
+    setText("ans2d2", fmtSI(N2pol,3));
+    setText("ans3d", fmtSI(N3sp,3));
+    setText("ans3d2", fmtSI(N3pol,3));
+  }
+
+  // ---------- TOC active highlight ----------
+  function hookTOC(){
+    const links = Array.from(document.querySelectorAll(".toc a"));
+    const map = new Map(links.map(a=>[a.getAttribute("href").slice(1), a]));
+    const sections = Array.from(document.querySelectorAll("section.section"));
+    const obs = new IntersectionObserver((entries)=>{
+      // choose most visible intersecting section
+      const vis = entries.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
+      if(!vis) return;
+      const id = vis.target.id;
+      links.forEach(a=>a.classList.remove("active"));
+      const a = map.get(id);
+      if(a) a.classList.add("active");
+    }, {root:null, threshold:[0.15,0.25,0.35,0.5,0.65]});
+    sections.forEach(s=>obs.observe(s));
+  }
+
+  // ---------- Main app wiring ----------
+  const Lslider = document.getElementById("Lslider");
+  const dnuSlider = document.getElementById("dnuSlider");
+  const Lval = document.getElementById("Lval");
+  const dnuVal = document.getElementById("dnuVal");
+
+  const diagPack = setupCanvas(document.getElementById("diag"));
+  const mainPack = setupCanvas(document.getElementById("plotMain"));
+  const sweepPack = setupCanvas(document.getElementById("plotSweep"));
+
+  function renderAll(){
+    const L = parseFloat(Lslider.value);
+    const dnuGHz = parseFloat(dnuSlider.value);
+    const dnu = dnuGHz * 1e9;
+
+    Lval.textContent = L.toFixed(3);
+    dnuVal.textContent = dnuGHz.toFixed(0);
+
+    updateNumbers(L,dnu);
+    drawDiagram(diagPack, L);
+    drawMainPlot(mainPack, L, dnu);
+    drawSweepPlot(sweepPack, L, dnu);
+  }
+
+  Lslider.addEventListener("input", renderAll);
+  dnuSlider.addEventListener("input", renderAll);
+  window.addEventListener("resize", renderAll);
+
+  hookCopy();
+  hookTOC();
+  renderAll();
+})();
+</script>
+</body>
+</html>
