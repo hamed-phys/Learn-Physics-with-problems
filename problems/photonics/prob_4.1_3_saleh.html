@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Harmonic (Angular Spectrum) Propagation Between Two Planes</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --panel:#0f1626;
+      --panel2:#0c1322;
+      --text:#e8eefc;
+      --muted:#aab7d6;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(125,211,252,.12), transparent 55%),
+        radial-gradient(900px 500px at 80% 15%, rgba(167,139,250,.10), transparent 60%),
+        radial-gradient(900px 700px at 60% 90%, rgba(52,211,153,.08), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding:28px 18px 10px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .title{
+      display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;
+      padding:18px 18px 14px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    .title h1{
+      margin:0;
+      font-size:clamp(22px, 2.5vw, 34px);
+      letter-spacing:.2px;
+    }
+    .title p{margin:6px 0 0; color:var(--muted); max-width:76ch}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:7px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:var(--muted);
+      background:rgba(255,255,255,.03);
+      font-size:13px;
+      height:fit-content;
+    }
+
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding:12px 18px 60px;
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap:16px;
+      align-items:start;
+    }
+
+    nav.toc{
+      position:sticky;
+      top:14px;
+      align-self:start;
+      padding:14px 14px 12px;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      box-shadow:var(--shadow);
+    }
+    nav.toc h2{
+      margin:0 0 8px;
+      font-size:14px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      color:var(--text);
+      border:1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size:14px;
+    }
+    .toc a:hover{
+      background:rgba(125,211,252,.08);
+      border-color:rgba(125,211,252,.25);
+      transform:translateY(-1px);
+      text-decoration:none;
+    }
+
+    article{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+    section.card{
+      padding:18px;
+      border-radius:var(--radius);
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015));
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    section.card h2{
+      margin:0 0 10px;
+      font-size:20px;
+    }
+    section.card h3{
+      margin:18px 0 10px;
+      font-size:16px;
+      color:var(--accent);
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns:1fr}
+      nav.toc{position:relative; top:auto}
+      .grid2{grid-template-columns:1fr}
+    }
+
+    .callouts{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:12px;
+      margin-top:10px;
+    }
+    @media (max-width: 980px){
+      .callouts{grid-template-columns:1fr}
+    }
+    .callout{
+      padding:12px 12px 10px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+    }
+    .callout b{display:block; margin-bottom:4px}
+    .muted{color:var(--muted)}
+    .eq{
+      margin:10px 0 0;
+      padding:12px 12px 10px;
+      border-radius:16px;
+      border:1px dashed rgba(125,211,252,.35);
+      background:rgba(125,211,252,.06);
+      overflow:auto;
+      position:relative;
+    }
+    pre, code{
+      font-family:var(--mono);
+      font-size:13px;
+      line-height:1.5;
+      color:#eaf2ff;
+      margin:0;
+      white-space:pre-wrap;
+    }
+    .copyRow{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+      margin-top:10px;
+    }
+    .btn{
+      cursor:pointer;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      border-radius:12px;
+      padding:9px 11px;
+      font-size:13px;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+      user-select:none;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,.35);
+      background: rgba(125,211,252,.06);
+    }
+    .btn:active{transform: translateY(0px)}
+    .btn.primary{
+      border-color: rgba(167,139,250,.35);
+      background: rgba(167,139,250,.08);
+    }
+    .badge{
+      display:inline-block;
+      padding:3px 8px;
+      border-radius:999px;
+      font-size:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--muted);
+      margin-left:6px;
+    }
+    .boxed{
+      margin-top:12px;
+      padding:14px 14px 12px;
+      border-radius:18px;
+      border:1px solid rgba(52,211,153,.35);
+      background:rgba(52,211,153,.07);
+    }
+    .boxed h4{
+      margin:0 0 8px;
+      font-size:14px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--ok);
+    }
+    ul{margin:8px 0 0 18px}
+    li{margin:6px 0}
+    .fine{
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    /* Visualization layout */
+    .vizWrap{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:12px;
+      align-items:start;
+      margin-top:10px;
+    }
+    @media (max-width: 980px){
+      .vizWrap{grid-template-columns:1fr}
+    }
+    .vizCard{
+      padding:12px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+      overflow:hidden;
+    }
+    .vizCard h3{
+      margin:0 0 8px;
+      font-size:15px;
+      color:var(--text);
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(5,8,14,.55);
+    }
+    .controls{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+    }
+    .control{
+      padding:10px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+    }
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+    .control select, .control input[type="range"]{
+      width:100%;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+      margin-top:10px;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .kv div{
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.16);
+    }
+    footer{
+      max-width:1200px;
+      margin:0 auto;
+      padding:0 18px 30px;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .printHint{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.18);
+      background:rgba(255,255,255,.02);
+    }
+    @media print{
+      body{background:#fff; color:#000}
+      nav.toc{display:none}
+      section.card, .title{box-shadow:none; background:#fff; border:1px solid #ddd}
+      canvas{border:1px solid #ccc; background:#fff}
+      .btn{display:none}
+      .eq{background:#f6fbff}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="title">
+    <div style="flex:1 1 520px; min-width:260px;">
+      <h1>Correspondence Between Harmonic Functions and Plane Waves (Angular Spectrum Propagation)</h1>
+      <p>
+        We propagate a known complex field <span class="pill">f(x,y) at z=0</span> to the plane
+        <span class="pill">z=d</span> using harmonic (Fourier) analysis, then interpret what kind of wave each case represents.
+      </p>
+      <div class="copyRow">
+        <span class="pill">Given: d = 10<sup>4</sup> λ</span>
+        <span class="pill">Monochromatic, wavelength λ</span>
+        <span class="pill">Propagation in +z</span>
+      </div>
+    </div>
+    <div class="pill">Vanilla HTML/CSS/JS • interactive plots</div>
+  </div>
+</header>
+
+<main>
+  <nav class="toc" aria-label="Table of contents">
+    <h2>Contents</h2>
+    <a href="#quick">Quick Summary</a>
+    <a href="#part1">Part 1 — Problem Analysis</a>
+    <a href="#part2">Part 2 — Strategy & Tips</a>
+    <a href="#part3">Part 3 — Full Solution</a>
+    <a href="#cases">Results for Cases (a–e)</a>
+    <a href="#visuals">Interactive Visualizations</a>
+    <a href="#sanity">Sanity Checks</a>
+  </nav>
+
+  <article>
+    <section class="card" id="quick">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li>The field propagates via its <b>2D spatial Fourier transform</b> (angular spectrum): each transverse harmonic becomes a plane wave.</li>
+        <li>Propagation over distance <b>d</b> multiplies each spatial-frequency component by <b>H(kx,ky)=exp(i kz d)</b> with <b>kz = √(k²−kx²−ky²)</b>.</li>
+        <li>If <b>kx²+ky² &gt; k²</b>, then <b>kz = iα</b> and the component is <b>evanescent</b>, decaying as <b>exp(−α d)</b>. For <b>d=10⁴λ</b>, evanescent parts are essentially gone.</li>
+        <li>Cases (a–d) are sums of a few harmonics ⇒ <b>g(x,y)</b> is the same pattern times phase factors (sometimes different phases for different harmonics).</li>
+        <li>Case (e) is a <b>periodic rectangular grating</b> ⇒ discrete diffraction orders <b>n</b> with angles <b>sinθₙ = n/20</b>; only |n|≤20 propagate.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="part1">
+      <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <h3>1) Restate the problem</h3>
+      <p class="muted">
+        A monochromatic scalar field of wavelength λ is known on the plane z=0 as a complex amplitude f(x,y).
+        We want the complex amplitude g(x,y) on the plane z=d, where d=10⁴λ, using harmonic (Fourier) analysis.
+        Do this for five specific choices of f(x,y), and describe the physical nature of the wave in each case.
+      </p>
+
+      <h3>2) Given quantities</h3>
+      <ul>
+        <li>Wavelength: <b>λ</b>, wavenumber <b>k = 2π/λ</b></li>
+        <li>Two planes: <b>z=0</b> and <b>z=d</b></li>
+        <li>Distance: <b>d = 10⁴ λ</b></li>
+        <li>Input field: <b>f(x,y)</b> (given in cases a–e)</li>
+      </ul>
+
+      <h3>3) Unknowns</h3>
+      <ul>
+        <li>Output field: <b>g(x,y)</b> at z=d</li>
+        <li>Physical interpretation (plane wave? tilted? interference? diffraction orders? evanescent?)</li>
+      </ul>
+
+      <h3>4) Relevant physical principles (and why they apply)</h3>
+      <div class="callouts">
+        <div class="callout">
+          <b>Helmholtz equation</b>
+          <div class="muted">A monochromatic wave in homogeneous space satisfies (∇² + k²)U = 0.</div>
+        </div>
+        <div class="callout">
+          <b>Fourier (harmonic) decomposition</b>
+          <div class="muted">Any transverse field can be written as a superposition of spatial harmonics e^{i(kx x + ky y)}.</div>
+        </div>
+        <div class="callout">
+          <b>Angular spectrum propagation</b>
+          <div class="muted">Each harmonic propagates independently with kz fixed by kx,ky via dispersion.</div>
+        </div>
+      </div>
+
+      <h3>5) Possible approaches</h3>
+      <ul>
+        <li><b>Angular spectrum method (2D Fourier):</b> exact for homogeneous propagation; directly matches “harmonic analysis.”</li>
+        <li><b>Plane-wave identification by inspection:</b> for simple exponentials/cosines, read off kx,ky and propagate each component.</li>
+        <li><b>Fresnel/Fraunhofer diffraction integrals:</b> useful for apertures, but here the harmonic approach is cleaner and exact.</li>
+      </ul>
+
+      <h3>6) Best approach and justification</h3>
+      <p class="muted">
+        Use the <b>angular spectrum (harmonic/Fourier) propagation</b>. It is the most direct interpretation of “harmonic analysis,”
+        gives a single transfer function from z=0 to z=d, and handles both propagating and evanescent components—important because d=10⁴λ strongly filters evanescent waves.
+      </p>
+    </section>
+
+    <section class="card" id="part2">
+      <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+      <h3>Step-by-step plan (5–10 steps)</h3>
+      <ol>
+        <li><b>Goal:</b> Set up the propagation rule. <b>Tool:</b> Angular spectrum transfer function H(kx,ky).</li>
+        <li><b>Goal:</b> Express f(x,y) as a sum/integral of harmonics. <b>Tool:</b> 2D Fourier transform or Fourier series.</li>
+        <li><b>Goal:</b> For each harmonic, compute kz. <b>Tool:</b> dispersion kz = √(k²−kx²−ky²).</li>
+        <li><b>Goal:</b> Multiply each harmonic by exp(i kz d). <b>Tool:</b> propagation factor.</li>
+        <li><b>Goal:</b> Inverse-transform (or re-sum) to get g(x,y). <b>Tool:</b> inverse Fourier transform or series reconstruction.</li>
+        <li><b>Goal:</b> Interpret the result physically. <b>Tool:</b> identify plane-wave angles, interference, diffraction orders, evanescent decay.</li>
+      </ol>
+
+      <h3>Common mistakes & quick tips</h3>
+      <ul>
+        <li><b>Sign conventions:</b> be consistent with exp(+i k·r) vs exp(−i k·r). Here we use exp(i(kx x + ky y + kz z)).</li>
+        <li><b>Branch of kz:</b> choose kz with <b>Re(kz) ≥ 0</b> for forward propagation; for evanescent components use kz = iα with α&gt;0 so they decay.</li>
+        <li><b>Do not forget the DC term</b> when expanding cos² or periodic functions.</li>
+        <li><b>Huge d = 10⁴λ:</b> any evanescent term exp(−α d) is essentially zero unless α is extremely tiny (near cutoff).</li>
+      </ul>
+    </section>
+
+    <section class="card" id="part3">
+      <h2>PART 3 — Full Solution</h2>
+
+      <h3>Physical intuition first</h3>
+      <p class="muted">
+        Think of the transverse pattern f(x,y) as made of “ripples” of different spatial periods.
+        Each ripple corresponds to a plane wave tilted at some angle. Low spatial frequency (slow variation) means small tilt and propagates well.
+        High spatial frequency can demand a transverse wavevector larger than k, which is impossible for a propagating plane wave—those components become evanescent and die off quickly with z.
+        Because <b>d = 10⁴λ</b>, the field at z=d is essentially built only from the <b>propagating</b> part of the spectrum.
+      </p>
+
+      <h3>Angular spectrum (harmonic) representation</h3>
+      <p>
+        Let the monochromatic scalar field be <b>U(x,y,z)</b>. At z=0:
+        <b>U(x,y,0)=f(x,y)</b>, and at z=d:
+        <b>U(x,y,d)=g(x,y)</b>.
+      </p>
+
+      <div class="eq" id="eq1">
+        <pre><code>k = 2π/λ
+
+Angular spectrum (2D Fourier transform):
+F(kx,ky) = ∬ f(x,y) e^{-i(kx x + ky y)} dx dy
+
+Reconstruction at z=0:
+f(x,y) = (1/(2π)^2) ∬ F(kx,ky) e^{ i(kx x + ky y)} dkx dky</code></pre>
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="#eq1">Copy equations (Fourier pair)</button>
+      </div>
+
+      <h3>Propagation of each harmonic</h3>
+      <p>
+        A single harmonic at z=0 is <code>e^{i(kx x + ky y)}</code>.
+        In free space it propagates as a plane wave with some <b>kz</b>, so:
+      </p>
+
+      <div class="eq" id="eq2">
+        <pre><code>Plane-wave component:
+U_k(x,y,z) = A e^{ i(kx x + ky y + kz z) }
+
+Dispersion (Helmholtz constraint):
+kx^2 + ky^2 + kz^2 = k^2
+
+So choose forward-propagating branch:
+kz = √(k^2 - kx^2 - ky^2)</code></pre>
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="#eq2">Copy equations (kz relation)</button>
+      </div>
+
+      <p>
+        This gives the <b>transfer function</b> from z=0 to z=d in the (kx,ky) domain:
+      </p>
+
+      <div class="eq" id="eq3">
+        <pre><code>Propagation transfer function:
+H(kx,ky; d) = exp(i kz d),   kz = √(k^2 - kx^2 - ky^2)
+
+If kx^2 + ky^2 ≤ k^2  → kz is real  → propagating component
+If kx^2 + ky^2 >  k^2 → kz = iα, α = √(kx^2+ky^2 - k^2) → evanescent decay:
+H = exp(-α d)</code></pre>
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="#eq3">Copy equations (transfer function)</button>
+      </div>
+
+      <h3>General solution formula</h3>
+      <div class="eq" id="eq4">
+        <pre><code>G(kx,ky) = F(kx,ky) H(kx,ky; d)
+
+g(x,y) = (1/(2π)^2) ∬ F(kx,ky) exp(i kz d) e^{ i(kx x + ky y)} dkx dky</code></pre>
+      </div>
+      <div class="copyRow">
+        <button class="btn primary" data-copy="#eq4">Copy equations (final propagation rule)</button>
+      </div>
+
+      <div class="boxed">
+        <h4>Key takeaway</h4>
+        <div>
+          <b>To find g(x,y):</b> decompose f into spatial harmonics, multiply each by <code>exp(i kz d)</code>, then recombine.
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="cases">
+      <h2>Results for Cases (a–e) + Physical Nature</h2>
+
+      <h3>Define common symbols</h3>
+      <div class="eq" id="eqCommon">
+        <pre><code>k = 2π/λ
+For a plane wave exp(i(kx x + ky y)) at z=0:
+g(x,y) = exp(i kz d) exp(i(kx x + ky y))
+kz = √(k^2 - kx^2 - ky^2)</code></pre>
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="#eqCommon">Copy common plane-wave propagation</button>
+      </div>
+
+      <h3>(a) f(x,y) = 1</h3>
+      <p>
+        This is a single spatial harmonic with <b>kx=0, ky=0</b> (no transverse variation).
+        Then <b>kz = k</b>.
+      </p>
+      <div class="boxed" id="ansA">
+        <h4>Final result (a)</h4>
+        <pre><code>g(x,y) = exp(i k d)</code></pre>
+        <div class="fine">Often the global phase exp(i k d) is physically unobservable in intensity, but it is part of the complex amplitude.</div>
+      </div>
+      <p class="muted">
+        <b>Physical nature:</b> A uniform plane wave propagating straight along +z (normal incidence).
+      </p>
+
+      <h3>(b) f(x,y) = exp[ -(iπ/λ)(x + y) ]</h3>
+      <p>
+        Identify the transverse wavevector from the exponent:
+      </p>
+      <div class="eq" id="eqB">
+        <pre><code>f(x,y) = exp( i(kx x + ky y) ) with:
+kx = -π/λ,  ky = -π/λ
+
+Transverse magnitude:
+kt = √(kx^2 + ky^2) = √2 (π/λ)
+
+k = 2π/λ  ⇒  kt/k = (√2 π/λ) / (2π/λ) = √2/2
+
+So kz = k √(1 - (kt/k)^2) = k √(1 - 1/2) = k / √2 = √2 π/λ</code></pre>
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="#eqB">Copy derivation (b)</button>
+      </div>
+      <div class="boxed" id="ansB">
+        <h4>Final result (b)</h4>
+        <pre><code>g(x,y) = exp(i kz d) exp( -(iπ/λ)(x + y) ),
+with kz = √2 π/λ</code></pre>
+      </div>
+      <p class="muted">
+        <b>Physical nature:</b> A single tilted plane wave. Its tilt angle satisfies
+        <b>sinθ = kt/k = √2/2</b> ⇒ <b>θ = 45°</b> from the +z axis, propagating diagonally in the (x,y) direction (equal x and y components).
+      </p>
+
+      <h3>(c) f(x,y) = cos( (πx)/(2λ) )</h3>
+      <p>
+        Use cosine as a sum of two harmonics:
+      </p>
+      <div class="eq" id="eqC">
+        <pre><code>cos(βx) = (1/2)(e^{iβx} + e^{-iβx})
+Here β = π/(2λ)
+
+So components have:
+(kx,ky) = (±β, 0)
+
+kt/k = β/k = (π/(2λ)) / (2π/λ) = 1/4
+kz = k √(1 - 1/16) = k √(15/16) = (2π/λ)(√15/4) = (π√15)/(2λ)</code></pre>
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="#eqC">Copy derivation (c)</button>
+      </div>
+      <div class="boxed" id="ansC">
+        <h4>Final result (c)</h4>
+        <pre><code>g(x,y) = exp(i kz d) cos( (πx)/(2λ) ),
+with kz = (π√15)/(2λ)</code></pre>
+      </div>
+      <p class="muted">
+        <b>Physical nature:</b> Interference of two symmetric plane waves tilted in ±x with small angle
+        <b>sinθ = 1/4</b>. The cosine is a standing pattern in x at any fixed z, while energy still flows in +z.
+      </p>
+
+      <h3>(d) f(x,y) = cos²( (πy)/(2λ) )</h3>
+      <p>
+        Use the identity cos²u = (1 + cos(2u))/2:
+      </p>
+      <div class="eq" id="eqD">
+        <pre><code>Let u = (πy)/(2λ).
+Then cos^2(u) = (1/2)[1 + cos(2u)] = (1/2)[1 + cos( (πy)/λ )].
+
+So f(y) has:
+- a DC term (kx=ky=0) with amplitude 1/2
+- a cosine term with ky = ±(π/λ) and amplitude 1/2
+
+For the cosine term:
+kt = |ky| = π/λ
+kt/k = (π/λ)/(2π/λ) = 1/2
+kz1 = k √(1 - 1/4) = k(√3/2) = (2π/λ)(√3/2) = (π√3)/λ</code></pre>
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="#eqD">Copy derivation (d)</button>
+      </div>
+
+      <div class="boxed" id="ansD">
+        <h4>Final result (d)</h4>
+        <pre><code>g(x,y) = (1/2) exp(i k d)  +  (1/2) exp(i kz1 d) cos( (πy)/λ ),
+where kz1 = (π√3)/λ</code></pre>
+      </div>
+      <p class="muted">
+        <b>Physical nature:</b> A superposition of (i) a normally-propagating plane wave (DC term) and
+        (ii) two symmetric tilted plane waves in ±y (cos term). Because these components acquire different phase shifts over d,
+        the relative phase between the DC and cosine parts can change the detailed complex field pattern at z=d.
+      </p>
+
+      <h3>(e) f(x,y) = rect[(x/10λ) − 2m], m = 0, ±1, ±2, …</h3>
+      <p>
+        This describes a <b>periodic 1D grating</b> in x: in each period, a rectangular window of width 10λ is “on,” repeated every 20λ.
+        (Because rect(t)=1 for |t|≤1/2, each pulse occupies x ∈ [−5λ, +5λ] around each center x=20mλ.)
+      </p>
+
+      <div class="eq" id="eqE1">
+        <pre><code>Period: P = 20λ
+Pulse width: w = 10λ  (duty cycle w/P = 1/2)
+
+Complex Fourier series:
+f(x) = Σ_{n=-∞}^{∞} c_n exp(i kx_n x),
+kx_n = 2π n / P = (π n)/(10λ)
+
+Coefficients for an even, centered rectangular pulse:
+c_n = (w/P) sinc( n w/P )  with sinc(u) = sin(πu)/(πu)
+
+Here: c_n = (1/2) sinc(n/2) = sin(π n/2)/(π n)   (for n ≠ 0)
+and c_0 = w/P = 1/2</code></pre>
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="#eqE1">Copy Fourier series (e)</button>
+      </div>
+
+      <p>
+        Each order n propagates with
+        <b>kz,n = √(k² − kx,n²)</b> if |kx,n|≤k, otherwise it is evanescent and decays.
+        Since k=2π/λ:
+      </p>
+
+      <div class="eq" id="eqE2">
+        <pre><code>Propagation condition:
+|kx_n| ≤ k
+| (π n)/(10λ) | ≤ (2π)/λ
+⇒ |n| ≤ 20
+
+Diffraction order angle (for propagating orders):
+sin θ_n = kx_n / k = [(π n)/(10λ)] / [(2π)/λ] = n/20</code></pre>
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="#eqE2">Copy order condition + angles</button>
+      </div>
+
+      <div class="boxed" id="ansE">
+        <h4>Final result (e)</h4>
+        <pre><code>g(x,y) = Σ_{n=-∞}^{∞} c_n exp(i kz,n d) exp(i kx_n x),
+kx_n = (π n)/(10λ),
+c_0 = 1/2,   c_n = sin(π n/2)/(π n)  (n ≠ 0)
+
+kz,n = √(k^2 - kx_n^2) for |n|≤20 (propagating),
+kz,n = i √(kx_n^2 - k^2) for |n|>20 (evanescent ⇒ exp(-α d))</code></pre>
+      </div>
+      <p class="muted">
+        <b>Physical nature:</b> A diffraction grating producing discrete plane-wave orders n with angles
+        <b>sinθₙ = n/20</b>. For <b>d=10⁴λ</b>, all evanescent orders (|n|&gt;20) are exponentially suppressed; the field is essentially a superposition of the propagating orders |n|≤20 (41 possible orders).
+      </p>
+
+      <div class="copyRow">
+        <button class="btn primary" data-copy="#ansA">Copy final answer (a)</button>
+        <button class="btn primary" data-copy="#ansB">Copy final answer (b)</button>
+        <button class="btn primary" data-copy="#ansC">Copy final answer (c)</button>
+        <button class="btn primary" data-copy="#ansD">Copy final answer (d)</button>
+        <button class="btn primary" data-copy="#ansE">Copy final answer (e)</button>
+      </div>
+    </section>
+
+    <section class="card" id="visuals">
+      <h2>Interactive Visualizations</h2>
+      <p class="muted">
+        The plots below use <b>example values</b> for visualization while keeping the final answers symbolic.
+        We set <b>λ = 1</b> (units), hence <b>k = 2π</b>. You can change the propagation distance in units of λ and switch cases.
+        All plots update live.
+      </p>
+
+      <div class="vizWrap">
+        <div class="vizCard">
+          <h3>1) Geometry diagram (two planes + representative wavevector)</h3>
+          <canvas id="cDiagram" aria-label="Propagation geometry diagram"></canvas>
+          <div class="kv" id="diagKV">
+            <div><b>Selected case:</b> <span id="kvCase">—</span></div>
+            <div><b>Distance:</b> <span id="kvD">—</span></div>
+            <div><b>Representative (kx,ky)/k:</b> <span id="kvKt">—</span></div>
+            <div><b>Representative angle θ:</b> <span id="kvTheta">—</span></div>
+          </div>
+        </div>
+
+        <div class="vizCard">
+          <h3>Controls</h3>
+          <div class="controls">
+            <div class="control">
+              <label>
+                <span>Choose case</span>
+                <span class="pill" id="caseHint">—</span>
+              </label>
+              <select id="selCase">
+                <option value="a">(a) f=1</option>
+                <option value="b">(b) f=exp[-iπ(x+y)/λ]</option>
+                <option value="c">(c) f=cos(πx/2λ)</option>
+                <option value="d">(d) f=cos²(πy/2λ)</option>
+                <option value="e">(e) periodic rect grating</option>
+              </select>
+            </div>
+
+            <div class="control">
+              <label>
+                <span>Distance d / λ</span>
+                <span><span id="dVal">10000</span></span>
+              </label>
+              <input id="rngD" type="range" min="0" max="10000" value="10000" step="10" />
+              <div class="fine">Tip: smaller d makes phase effects easier to see; large d shows evanescent filtering strongly.</div>
+            </div>
+
+            <div class="control">
+              <label>
+                <span>Plot mode</span>
+                <span class="pill" id="modeHint">Intensity</span>
+              </label>
+              <select id="selMode">
+                <option value="I">Intensity |g|²</option>
+                <option value="Re">Real part Re{g}</option>
+                <option value="Ph">Phase arg(g)</option>
+              </select>
+            </div>
+
+            <div class="control">
+              <label>
+                <span>For grating (e): number of Fourier orders included</span>
+                <span><span id="nVal">60</span></span>
+              </label>
+              <input id="rngN" type="range" min="10" max="200" value="60" step="1" />
+              <div class="fine">Orders beyond |n|&gt;20 are evanescent (for λ=1, P=20λ); increasing N shows how they vanish with distance.</div>
+            </div>
+
+            <button class="btn" id="btnReset">Reset to problem distance (d=10⁴λ)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div class="vizCard">
+          <h3>2) Main quantitative plot: propagation magnitude |H| vs normalized spatial frequency s = kx/k</h3>
+          <canvas id="cMain" aria-label="Transfer function magnitude plot"></canvas>
+          <div class="fine">
+            For |s|≤1, components propagate with |H|=1. For |s|&gt;1, |H|=exp(−k√(s²−1)d) decays rapidly.
+          </div>
+        </div>
+        <div class="vizCard">
+          <h3>3) Secondary plot: field profile at z=d (1D slice)</h3>
+          <canvas id="cField" aria-label="Field profile plot"></canvas>
+          <div class="fine" id="sliceHint">Slice shown: y=0 (vary x). For case (d), we vary y instead.</div>
+        </div>
+      </div>
+
+      <div class="printHint">
+        <b>What to look for:</b>
+        <span class="muted">
+          In cases (a–c), intensity is unchanged (only a global phase). In (d), the mix of two kz values can shift phase between DC and cosine terms.
+          In (e), increasing d strongly suppresses evanescent (high spatial frequency) components.
+        </span>
+      </div>
+    </section>
+
+    <section class="card" id="sanity">
+      <h2>Sanity Checks</h2>
+
+      <h3>Units</h3>
+      <ul>
+        <li>k, kx, ky, kz all have units of <b>1/length</b>.</li>
+        <li>kz d is dimensionless, so exp(i kz d) is consistent.</li>
+      </ul>
+
+      <h3>Limiting cases</h3>
+      <ul>
+        <li><b>d → 0:</b> H → 1, so g(x,y) → f(x,y).</li>
+        <li><b>Small spatial frequencies (kx,ky ≪ k):</b> kz ≈ k − (kx²+ky²)/(2k), giving nearly a global phase plus mild quadratic phase (paraxial intuition).</li>
+        <li><b>High spatial frequencies (kx²+ky² &gt; k²):</b> exponential decay with distance; for d=10⁴λ these are essentially removed → far-field is “band-limited” to propagating spectrum.</li>
+      </ul>
+
+      <h3>Physical interpretation</h3>
+      <ul>
+        <li>Pure exponentials correspond to <b>single plane waves</b> with specific direction.</li>
+        <li>Cosines correspond to <b>two symmetric plane waves</b> (interference fringes).</li>
+        <li>Cos² adds a <b>DC plane wave</b> plus a cosine fringe component.</li>
+        <li>Periodic rectangles are <b>diffraction gratings</b> producing discrete orders with angles fixed by the grating period.</li>
+      </ul>
+    </section>
+  </article>
+</main>
+
+<footer>
+  <div>
+    <b>Note:</b> This solution uses the standard angular-spectrum convention
+    <code style="font-family:var(--mono)">e^{i(kx x + ky y + kz z)}</code>. If your textbook uses the opposite sign convention,
+    the results change by complex conjugation and/or a sign flip in the phase factor, but the physical content (angles, evanescence, magnitudes) is the same.
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Utilities ----------
+  const $ = (sel) => document.querySelector(sel);
+
+  function clamp(x,a,b){ return Math.max(a, Math.min(b,x)); }
+
+  function niceTicks(min, max, n=6){
+    // simple linear ticks
+    const span = max - min;
+    if(span <= 0) return [min];
+    const raw = span / (n-1);
+    const pow10 = Math.pow(10, Math.floor(Math.log10(raw)));
+    const frac = raw / pow10;
+    let step;
+    if(frac < 1.5) step = 1*pow10;
+    else if(frac < 3) step = 2*pow10;
+    else if(frac < 7) step = 5*pow10;
+    else step = 10*pow10;
+    const t0 = Math.ceil(min/step)*step;
+    const ticks = [];
+    for(let t=t0; t<=max+1e-12; t+=step) ticks.push(t);
+    return ticks;
+  }
+
+  function formatNum(x){
+    if(!isFinite(x)) return "—";
+    const ax = Math.abs(x);
+    if(ax === 0) return "0";
+    if(ax >= 1e4 || ax < 1e-3) return x.toExponential(2);
+    return (Math.round(x*1000)/1000).toString();
+  }
+
+  function copyFromElement(el){
+    const node = (typeof el === "string") ? $(el) : el;
+    if(!node) return;
+    const txt = node.innerText.replace(/\n{3,}/g,"\n\n").trim();
+    navigator.clipboard.writeText(txt).then(()=>{
+      flashToast("Copied to clipboard");
+    }).catch(()=>{
+      flashToast("Copy failed (browser permission)");
+    });
+  }
+
+  let toastTimer = null;
+  function flashToast(msg){
+    let t = $("#toast");
+    if(!t){
+      t = document.createElement("div");
+      t.id = "toast";
+      t.style.position="fixed";
+      t.style.left="50%";
+      t.style.bottom="18px";
+      t.style.transform="translateX(-50%)";
+      t.style.padding="10px 12px";
+      t.style.borderRadius="999px";
+      t.style.border="1px solid rgba(255,255,255,.18)";
+      t.style.background="rgba(10,14,22,.92)";
+      t.style.color="#e8eefc";
+      t.style.fontSize="13px";
+      t.style.boxShadow="0 10px 30px rgba(0,0,0,.35)";
+      t.style.zIndex="9999";
+      t.style.opacity="0";
+      t.style.transition="opacity .15s ease, transform .15s ease";
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity="1";
+    t.style.transform="translateX(-50%) translateY(-2px)";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>{
+      t.style.opacity="0";
+      t.style.transform="translateX(-50%) translateY(0px)";
+    }, 1100);
+  }
+
+  // Copy buttons
+  document.addEventListener("click", (e)=>{
+    const btn = e.target.closest("[data-copy]");
+    if(!btn) return;
+    const sel = btn.getAttribute("data-copy");
+    copyFromElement(sel);
+  });
+
+  // Smooth scroll TOC
+  document.querySelectorAll('nav.toc a').forEach(a=>{
+    a.addEventListener("click",(ev)=>{
+      ev.preventDefault();
+      const id = a.getAttribute("href");
+      const target = document.querySelector(id);
+      if(target) target.scrollIntoView({behavior:"smooth", block:"start"});
+    });
+  });
+
+  // ---------- Physics model (example visualization parameters) ----------
+  // Use example λ=1 unit.
+  const lambda = 1.0;
+  const k = 2*Math.PI/lambda;
+
+  function kzFrom(kx, ky){
+    const kt2 = kx*kx + ky*ky;
+    if(kt2 <= k*k){
+      return { kind:"prop", kz: Math.sqrt(k*k - kt2), alpha:0 };
+    }else{
+      return { kind:"eva", kz: 0, alpha: Math.sqrt(kt2 - k*k) };
+    }
+  }
+
+  function Hmag(kx, ky, d){
+    const z = kzFrom(kx,ky);
+    if(z.kind === "prop") return 1.0;
+    return Math.exp(-z.alpha * d);
+  }
+
+  // complex arithmetic helpers
+  function c(re, im){ return {re, im}; }
+  function cAdd(a,b){ return {re:a.re+b.re, im:a.im+b.im}; }
+  function cMul(a,b){ return {re:a.re*b.re - a.im*b.im, im:a.re*b.im + a.im*b.re}; }
+  function cExp(iPhase){ // exp(i*phase)
+    return {re: Math.cos(iPhase), im: Math.sin(iPhase)};
+  }
+  function cScale(a,s){ return {re:a.re*s, im:a.im*s}; }
+  function cAbs2(a){ return a.re*a.re + a.im*a.im; }
+  function cArg(a){ return Math.atan2(a.im, a.re); }
+
+  // Cases: define f and g along a 1D slice (either x or y)
+  function evalCaseSlice(caseId, u, d, Norders){
+    // u is x (for a,b,c,e) or y (for d)
+    // return complex g(u) at z=d
+    if(caseId === "a"){
+      // f=1, kx=ky=0
+      return cExp(k*d);
+    }
+    if(caseId === "b"){
+      // f = exp(-(iπ/λ)(x+y)); slice set y=0 so f=exp(-iπ x/λ) with λ=1 => exp(-iπ u)
+      const kx = -Math.PI/lambda;
+      const ky = 0; // slice y=0
+      const z = kzFrom(kx,ky);
+      const phase = (z.kind==="prop") ? z.kz*d : 0;
+      const H = (z.kind==="prop") ? cExp(phase) : cScale(c(1,0), Math.exp(-z.alpha*d));
+      const f = cExp(kx*u); // exp(i kx u) with kx negative => exp(-iπ u)
+      return cMul(H, f);
+    }
+    if(caseId === "c"){
+      // f = cos(π x /2λ); slice y=0 => u=x
+      const beta = Math.PI/(2*lambda);
+      const kx = beta, ky = 0;
+      const z = kzFrom(kx,ky);
+      const H = (z.kind==="prop") ? cExp(z.kz*d) : cScale(c(1,0), Math.exp(-z.alpha*d));
+      // cos(beta u) is real
+      return cScale(H, Math.cos(beta*u));
+    }
+    if(caseId === "d"){
+      // f = cos^2(π y /2λ) = 0.5 + 0.5 cos(π y/λ)
+      // slice variable u=y
+      const term0 = cScale(cExp(k*d), 0.5);
+
+      const ky = Math.PI/lambda;
+      const z = kzFrom(0,ky);
+      const H1 = (z.kind==="prop") ? cExp(z.kz*d) : cScale(c(1,0), Math.exp(-z.alpha*d));
+      const term1 = cScale(H1, 0.5*Math.cos(ky*u)); // cos(π y/λ)
+      return cAdd(term0, term1);
+    }
+    if(caseId === "e"){
+      // periodic rect grating along x with P=20λ, w=10λ.
+      // f(x)= Σ c_n exp(i kx_n x). Propagate each order.
+      const P = 20*lambda;
+      const w = 10*lambda;
+      const maxN = Math.max(10, Math.floor(Norders||60));
+      let sum = c(0,0);
+      for(let n=-maxN; n<=maxN; n++){
+        // coefficients
+        let cn;
+        if(n===0) cn = 0.5;
+        else cn = Math.sin(Math.PI*n/2)/(Math.PI*n); // equals (1/2)*sinc(n/2)
+        if(Math.abs(cn) < 1e-14) continue;
+
+        const kx = 2*Math.PI*n/P; // = πn/(10λ)
+        const z = kzFrom(kx,0);
+        let H;
+        if(z.kind==="prop"){
+          H = cExp(z.kz*d);
+        }else{
+          H = cScale(c(1,0), Math.exp(-z.alpha*d));
+        }
+        const plane = cExp(kx*u); // exp(i kx x)
+        const contrib = cScale(cMul(H, plane), cn);
+        sum = cAdd(sum, contrib);
+      }
+      return sum;
+    }
+    return c(0,0);
+  }
+
+  function representativeK(caseId){
+    // Provide a representative (kx,ky) for diagram, not exhaustive.
+    if(caseId==="a") return {kx:0, ky:0, label:"(0,0)"};
+    if(caseId==="b") return {kx:-Math.PI/lambda, ky:-Math.PI/lambda, label:"(-π/λ, -π/λ)"};
+    if(caseId==="c") return {kx:Math.PI/(2*lambda), ky:0, label:"(π/2λ, 0)"};
+    if(caseId==="d") return {kx:0, ky:Math.PI/lambda, label:"(0, π/λ)"};
+    if(caseId==="e") return {kx:2*Math.PI/(20*lambda), ky:0, label:"(π/10λ, 0) (1st order)"};
+    return {kx:0, ky:0, label:"(0,0)"};
+  }
+
+  function caseHint(caseId){
+    if(caseId==="a") return "Normal plane wave";
+    if(caseId==="b") return "Single tilted plane wave";
+    if(caseId==="c") return "Two-wave interference (cosine)";
+    if(caseId==="d") return "DC + cosine component";
+    if(caseId==="e") return "Diffraction grating (orders)";
+    return "—";
+  }
+
+  // ---------- Canvas plotting ----------
+  function setupCanvas(canvas){
+    const ctx = canvas.getContext("2d");
+    function resize(){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(10, Math.floor(rect.width * dpr));
+      const h = Math.max(10, Math.floor(rect.height * dpr));
+      if(canvas.width !== w || canvas.height !== h){
+        canvas.width = w;
+        canvas.height = h;
+      }
+      return {w, h, dpr};
+    }
+    return {canvas, ctx, resize};
+  }
+
+  function drawAxes(ctx, W, H, plot, title){
+    // plot: {x0,y0,x1,y1, xmin,xmax,ymin,ymax, xLabel,yLabel}
+    ctx.save();
+    ctx.clearRect(0,0,W,H);
+
+    // background gradient
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,"rgba(255,255,255,0.03)");
+    g.addColorStop(1,"rgba(255,255,255,0.00)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    // title
+    ctx.fillStyle = "rgba(232,238,252,.92)";
+    ctx.font = `${Math.max(12, Math.round(W/60))}px system-ui, sans-serif`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(title, 14, 10);
+
+    const {x0,y0,x1,y1,xmin,xmax,ymin,ymax,xLabel,yLabel} = plot;
+
+    // frame
+    ctx.strokeStyle = "rgba(255,255,255,.14)";
+    ctx.lineWidth = 1;
+    roundRect(ctx, x0, y0, x1-x0, y1-y0, 10);
+    ctx.stroke();
+
+    // ticks & grid
+    const xt = niceTicks(xmin, xmax, 6);
+    const yt = niceTicks(ymin, ymax, 6);
+
+    ctx.font = `${Math.max(10, Math.round(W/85))}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`;
+    ctx.fillStyle = "rgba(170,183,214,.90)";
+    ctx.strokeStyle = "rgba(255,255,255,.08)";
+    ctx.lineWidth = 1;
+
+    // grid and labels
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    xt.forEach(v=>{
+      const x = mapX(v, plot);
+      ctx.beginPath();
+      ctx.moveTo(x, y0);
+      ctx.lineTo(x, y1);
+      ctx.stroke();
+      // tick label
+      ctx.fillText(formatNum(v), x, y1+6);
+    });
+
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    yt.forEach(v=>{
+      const y = mapY(v, plot);
+      ctx.beginPath();
+      ctx.moveTo(x0, y);
+      ctx.lineTo(x1, y);
+      ctx.stroke();
+      ctx.fillText(formatNum(v), x0-6, y);
+    });
+
+    // axis labels
+    ctx.fillStyle = "rgba(232,238,252,.88)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.font = `${Math.max(11, Math.round(W/75))}px system-ui, sans-serif`;
+    ctx.fillText(xLabel, (x0+x1)/2, H-8);
+
+    ctx.save();
+    ctx.translate(12, (y0+y1)/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function roundRect(ctx,x,y,w,h,r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    ctx.closePath();
+  }
+
+  function mapX(x, plot){
+    return plot.x0 + (x - plot.xmin) * (plot.x1 - plot.x0) / (plot.xmax - plot.xmin);
+  }
+  function mapY(y, plot){
+    return plot.y1 - (y - plot.ymin) * (plot.y1 - plot.y0) / (plot.ymax - plot.ymin);
+  }
+
+  function drawLine(ctx, plot, xs, ys, strokeStyle, legend){
+    ctx.save();
+    ctx.beginPath();
+    for(let i=0;i<xs.length;i++){
+      const X = mapX(xs[i], plot);
+      const Y = mapY(ys[i], plot);
+      if(i===0) ctx.moveTo(X,Y);
+      else ctx.lineTo(X,Y);
+    }
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    if(legend){
+      // small legend box top-right inside plot
+      const pad=8, bw=180, bh=36;
+      const x = plot.x1 - bw - 10;
+      const y = plot.y0 + 10;
+      ctx.fillStyle = "rgba(0,0,0,.35)";
+      ctx.strokeStyle = "rgba(255,255,255,.14)";
+      ctx.lineWidth = 1;
+      roundRect(ctx, x, y, bw, bh, 10);
+      ctx.fill(); ctx.stroke();
+
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x+pad, y+bh/2);
+      ctx.lineTo(x+pad+30, y+bh/2);
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(232,238,252,.92)";
+      ctx.font = `12px system-ui, sans-serif`;
+      ctx.textAlign="left"; ctx.textBaseline="middle";
+      ctx.fillText(legend, x+pad+40, y+bh/2);
+    }
+
+    ctx.restore();
+  }
+
+  // ---------- Specific drawings ----------
+  const diag = setupCanvas($("#cDiagram"));
+  const mainPlot = setupCanvas($("#cMain"));
+  const fieldPlot = setupCanvas($("#cField"));
+
+  function drawDiagram(caseId, d){
+    const {ctx} = diag;
+    const {w:W, h:H} = diag.resize();
+    ctx.clearRect(0,0,W,H);
+
+    // world coords
+    const margin = 22;
+    const x0=margin, y0=margin+10, x1=W-margin, y1=H-margin;
+    // background
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,"rgba(125,211,252,0.07)");
+    g.addColorStop(1,"rgba(167,139,250,0.04)");
+    ctx.fillStyle = g;
+    roundRect(ctx, x0-8, y0-8, (x1-x0)+16, (y1-y0)+16, 16);
+    ctx.fill();
+
+    // planes z=0 and z=d as horizontal lines
+    const zTop = y0 + 70;
+    const zBot = y1 - 70;
+    const xL = x0 + 40;
+    const xR = x1 - 40;
+
+    // draw axes
+    ctx.strokeStyle="rgba(255,255,255,.18)";
+    ctx.lineWidth=1;
+    // z axis
+    ctx.beginPath();
+    ctx.moveTo(xL-20, zBot+30);
+    ctx.lineTo(xL-20, zTop-30);
+    ctx.stroke();
+    // arrow head
+    ctx.beginPath();
+    ctx.moveTo(xL-20, zTop-30);
+    ctx.lineTo(xL-25, zTop-20);
+    ctx.lineTo(xL-15, zTop-20);
+    ctx.closePath();
+    ctx.fillStyle="rgba(232,238,252,.85)";
+    ctx.fill();
+    ctx.font="12px system-ui, sans-serif";
+    ctx.fillText("+z", xL-12, zTop-44);
+
+    // planes
+    ctx.strokeStyle="rgba(255,255,255,.22)";
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(xL, zBot); ctx.lineTo(xR, zBot); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(xL, zTop); ctx.lineTo(xR, zTop); ctx.stroke();
+
+    // labels
+    ctx.fillStyle="rgba(232,238,252,.92)";
+    ctx.font="13px system-ui, sans-serif";
+    ctx.textAlign="left"; ctx.textBaseline="bottom";
+    ctx.fillText("z = 0 plane  (field f)", xL, zBot-8);
+    ctx.textBaseline="top";
+    ctx.fillText("z = d plane  (field g)", xL, zTop+8);
+
+    // draw distance bracket
+    ctx.strokeStyle="rgba(170,183,214,.6)";
+    ctx.lineWidth=1.5;
+    const bx = xR+10;
+    ctx.beginPath();
+    ctx.moveTo(bx, zBot);
+    ctx.lineTo(bx+16, zBot);
+    ctx.lineTo(bx+16, zTop);
+    ctx.lineTo(bx, zTop);
+    ctx.stroke();
+    ctx.fillStyle="rgba(170,183,214,.92)";
+    ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+    ctx.textAlign="left"; ctx.textBaseline="middle";
+    ctx.fillText(`d`, bx+22, (zTop+zBot)/2);
+
+    // representative wavevector arrow
+    const rep = representativeK(caseId);
+    const kt = Math.sqrt(rep.kx*rep.kx + rep.ky*rep.ky);
+    const sinTheta = (k===0)?0: clamp(kt/k, 0, 1);
+    const theta = Math.asin(sinTheta); // from z axis
+    // arrow starting near bottom plane center
+    const sx = (xL+xR)/2;
+    const sy = zBot - 10;
+
+    // project arrow with some tilt
+    const L = 140;
+    const dx = Math.sin(theta) * L; // sideways
+    const dy = Math.cos(theta) * L; // upward in -y (since screen y down)
+    const ex = sx + dx;
+    const ey = sy - dy;
+
+    ctx.strokeStyle="rgba(125,211,252,.9)";
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+
+    // arrow head
+    const ang = Math.atan2(ey-sy, ex-sx);
+    const ah=10;
+    ctx.fillStyle="rgba(125,211,252,.92)";
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - ah*Math.cos(ang-0.45), ey - ah*Math.sin(ang-0.45));
+    ctx.lineTo(ex - ah*Math.cos(ang+0.45), ey - ah*Math.sin(ang+0.45));
+    ctx.closePath();
+    ctx.fill();
+
+    // annotate theta
+    ctx.strokeStyle="rgba(255,255,255,.14)";
+    ctx.lineWidth=1.5;
+    const arcR = 34;
+    ctx.beginPath();
+    ctx.arc(sx, sy, arcR, -Math.PI/2, -Math.PI/2 + theta, false);
+    ctx.stroke();
+    ctx.fillStyle="rgba(232,238,252,.88)";
+    ctx.font="12px system-ui, sans-serif";
+    ctx.fillText("θ", sx + arcR + 6, sy - 6);
+
+    // info box
+    ctx.fillStyle="rgba(0,0,0,.35)";
+    ctx.strokeStyle="rgba(255,255,255,.14)";
+    ctx.lineWidth=1;
+    const ibw = Math.min(320, W - 2*margin);
+    const ibh = 70;
+    const ibx = x0+12;
+    const iby = y0+10;
+    roundRect(ctx, ibx, iby, ibw, ibh, 14);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle="rgba(232,238,252,.92)";
+    ctx.font="12px system-ui, sans-serif";
+    ctx.textAlign="left"; ctx.textBaseline="top";
+    ctx.fillText("Setup: harmonic components propagate independently", ibx+10, iby+10);
+    ctx.fillStyle="rgba(170,183,214,.92)";
+    ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+    ctx.fillText(`rep (kx,ky) = ${rep.label}`, ibx+10, iby+30);
+    ctx.fillText(`kz = √(k² - kx² - ky²)`, ibx+10, iby+48);
+
+    // update KV panel
+    $("#kvCase").textContent = `(${caseId})`;
+    $("#kvD").textContent = `d/λ = ${formatNum(d/lambda)}`;
+    $("#kvKt").textContent = `${formatNum(rep.kx/k)}, ${formatNum(rep.ky/k)}`;
+    const thetaDeg = (isFinite(theta)? (theta*180/Math.PI): 0);
+    $("#kvTheta").textContent = (kt===0) ? "0°" : `${formatNum(thetaDeg)}°`;
+  }
+
+  function drawMain(d){
+    const {ctx} = mainPlot;
+    const {w:W, h:H} = mainPlot.resize();
+
+    const plot = {
+      x0: 62, y0: 50, x1: W-22, y1: H-52,
+      xmin: -2.0, xmax: 2.0,
+      ymin: 0.0, ymax: 1.05,
+      xLabel: "s = kx / k  (dimensionless)",
+      yLabel: "|H|  (magnitude)"
+    };
+    drawAxes(ctx, W, H, plot, "Transfer magnitude vs normalized spatial frequency");
+
+    // sample
+    const xs=[], ys=[];
+    const N=700;
+    for(let i=0;i<=N;i++){
+      const s = plot.xmin + (plot.xmax-plot.xmin)*i/N;
+      const kx = s*k;
+      const mag = Hmag(kx, 0, d);
+      xs.push(s);
+      ys.push(mag);
+    }
+    drawLine(ctx, plot, xs, ys, "rgba(167,139,250,.95)", " |H(kx,0; d)| ");
+
+    // draw cutoff lines at s = ±1
+    ctx.save();
+    ctx.strokeStyle="rgba(251,191,36,.75)";
+    ctx.lineWidth=2;
+    [ -1, 1 ].forEach(s=>{
+      const x = mapX(s, plot);
+      ctx.beginPath();
+      ctx.moveTo(x, plot.y0);
+      ctx.lineTo(x, plot.y1);
+      ctx.stroke();
+    });
+    ctx.fillStyle="rgba(251,191,36,.90)";
+    ctx.font="12px system-ui, sans-serif";
+    ctx.textAlign="left"; ctx.textBaseline="top";
+    ctx.fillText("propagating |s|≤1", mapX(-0.98, plot), plot.y0+6);
+    ctx.textAlign="right";
+    ctx.fillText("evanescent |s|>1", mapX(1.98, plot), plot.y0+6);
+    ctx.restore();
+  }
+
+  function drawField(caseId, d, mode, Norders){
+    const {ctx} = fieldPlot;
+    const {w:W, h:H} = fieldPlot.resize();
+
+    const isY = (caseId === "d");
+    const uLabel = isY ? "y / λ" : "x / λ";
+    const title = `Field slice at z=d  (mode: ${modeLabel(mode)})`;
+
+    // domain
+    const uMin = -25;
+    const uMax = 25;
+    const Nu = 900;
+
+    const us=[], vals=[];
+    let yMin=+Infinity, yMax=-Infinity;
+
+    // compute values
+    for(let i=0;i<=Nu;i++){
+      const u = uMin + (uMax-uMin)*i/Nu; // in units of λ already
+      const uu = u*lambda; // actual length
+      const g = evalCaseSlice(caseId, uu, d, Norders);
+
+      let v;
+      if(mode==="I") v = cAbs2(g);
+      else if(mode==="Re") v = g.re;
+      else v = cArg(g);
+
+      us.push(u);
+      vals.push(v);
+      yMin = Math.min(yMin, v);
+      yMax = Math.max(yMax, v);
+    }
+
+    // padding
+    if(mode==="Ph"){
+      yMin = -Math.PI;
+      yMax = Math.PI;
+    }else{
+      const pad = 0.08*(yMax-yMin || 1);
+      yMin -= pad; yMax += pad;
+    }
+
+    const plot = {
+      x0: 62, y0: 50, x1: W-22, y1: H-52,
+      xmin: uMin, xmax: uMax,
+      ymin: yMin, ymax: yMax,
+      xLabel: uLabel,
+      yLabel: (mode==="I") ? "|g|²" : (mode==="Re" ? "Re{g}" : "arg(g) [rad]")
+    };
+    drawAxes(ctx, W, H, plot, title);
+
+    // draw line
+    drawLine(ctx, plot, us, vals, "rgba(125,211,252,.95)", isY ? "g(y) slice" : "g(x) slice");
+
+    // zero line for Re
+    if(mode==="Re"){
+      ctx.save();
+      ctx.strokeStyle="rgba(255,255,255,.18)";
+      ctx.lineWidth=1.5;
+      const y0line = mapY(0, plot);
+      ctx.beginPath();
+      ctx.moveTo(plot.x0, y0line);
+      ctx.lineTo(plot.x1, y0line);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // update slice hint
+    $("#sliceHint").textContent = isY ? "Slice shown: x=0 (vary y) for case (d)." : "Slice shown: y=0 (vary x).";
+  }
+
+  function modeLabel(m){
+    if(m==="I") return "Intensity |g|²";
+    if(m==="Re") return "Real part Re{g}";
+    return "Phase arg(g)";
+  }
+
+  // ---------- Controls & updates ----------
+  const selCase = $("#selCase");
+  const rngD = $("#rngD");
+  const selMode = $("#selMode");
+  const rngN = $("#rngN");
+
+  function syncUI(){
+    const caseId = selCase.value;
+    const d = parseFloat(rngD.value) * lambda;
+    const mode = selMode.value;
+    const Norders = parseInt(rngN.value, 10);
+
+    $("#dVal").textContent = Math.round(d/lambda).toString();
+    $("#nVal").textContent = Norders.toString();
+    $("#caseHint").textContent = caseHint(caseId);
+    $("#modeHint").textContent = modeLabel(mode);
+
+    // Diagram KV
+    drawDiagram(caseId, d);
+
+    // Main plot |H|
+    drawMain(d);
+
+    // Field plot
+    drawField(caseId, d, mode, Norders);
+  }
+
+  // Reset button
+  $("#btnReset").addEventListener("click", ()=>{
+    rngD.value = "10000";
+    selCase.value = "e";
+    selMode.value = "I";
+    rngN.value = "60";
+    syncUI();
+    flashToast("Reset to d=10⁴λ (problem distance)");
+  });
+
+  // On change
+  [selCase, rngD, selMode, rngN].forEach(el=>{
+    el.addEventListener("input", syncUI);
+    el.addEventListener("change", syncUI);
+  });
+
+  // Responsive redraw
+  window.addEventListener("resize", ()=>{
+    syncUI();
+  });
+
+  // init
+  syncUI();
+
+})();
+</script>
+</body>
+</html>

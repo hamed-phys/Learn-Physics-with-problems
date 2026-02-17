@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Fresnel Diffraction from Two Pinholes (Derivation + Interactive Plots)</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1620;
+      --card:#121b27;
+      --text:#e9eef6;
+      --muted:#b5c0d3;
+      --faint:#7f8aa3;
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.07);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --radius2:24px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% -10%, rgba(125,211,252,.18), transparent 55%),
+        radial-gradient(900px 650px at 110% 10%, rgba(167,139,250,.16), transparent 55%),
+        radial-gradient(700px 500px at 50% 110%, rgba(52,211,153,.10), transparent 55%),
+        var(--bg);
+      line-height:1.55;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding:38px 18px 22px;
+    }
+    .wrap{
+      width:min(1100px, 92vw);
+      margin:0 auto;
+    }
+    .hero{
+      display:grid;
+      grid-template-columns: 1.5fr .9fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    @media (max-width: 980px){
+      .hero{grid-template-columns:1fr; }
+    }
+    .titleCard{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      padding:22px 22px 18px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .titleCard::before{
+      content:"";
+      position:absolute; inset:-60px -60px auto auto;
+      width:200px; height:200px;
+      background: radial-gradient(circle at 30% 30%, rgba(125,211,252,.35), transparent 60%);
+      filter: blur(2px);
+      transform: rotate(12deg);
+      opacity:.9;
+      pointer-events:none;
+    }
+    h1{
+      margin:0 0 8px;
+      font-size: clamp(1.35rem, 2.6vw, 2.1rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size: 0.98rem;
+      max-width: 70ch;
+    }
+    .badgeRow{
+      margin-top:12px;
+      display:flex; flex-wrap:wrap; gap:10px;
+    }
+    .badge{
+      font-size:.82rem;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+    }
+    .badge strong{color:var(--text)}
+    .quick{
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      padding:18px 18px 16px;
+      box-shadow: var(--shadow);
+    }
+    .quick h2{
+      font-size:1.05rem;
+      margin:0 0 10px;
+      color: var(--text);
+    }
+    .quick ul{
+      margin:0; padding-left:18px;
+      color: var(--muted);
+    }
+    main{
+      padding: 0 18px 54px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    /* Sticky ToC */
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: rgba(18,27,39,.75);
+      backdrop-filter: blur(10px);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding:14px 14px 10px;
+      box-shadow: var(--shadow);
+    }
+    nav.toc .tocTitle{
+      font-weight:650;
+      font-size:.95rem;
+      margin:0 0 10px;
+      letter-spacing:.2px;
+    }
+    .toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      color: var(--muted);
+      border:1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size:.92rem;
+    }
+    .toc a:hover{
+      background: rgba(255,255,255,.04);
+      border-color: var(--line);
+      transform: translateY(-1px);
+      color: var(--text);
+      text-decoration:none;
+    }
+    .toc small{color:var(--faint)}
+    section{
+      background: rgba(18,27,39,.55);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      padding: 18px 18px 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+    section h2{
+      margin:0 0 10px;
+      font-size:1.2rem;
+    }
+    section h3{
+      margin:16px 0 8px;
+      font-size:1.02rem;
+      color: var(--text);
+    }
+    .callouts{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:12px;
+      margin-top: 12px;
+    }
+    .callout{
+      grid-column: span 6;
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--line2);
+      border-radius: var(--radius);
+      padding: 14px 14px 12px;
+    }
+    @media (max-width: 720px){
+      .callout{grid-column: span 12;}
+    }
+    .callout .k{
+      font-weight:700;
+      margin-bottom:6px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(125,211,252,.18);
+      flex:0 0 auto;
+    }
+    .dot.p2{background: var(--accent2); box-shadow:0 0 0 3px rgba(167,139,250,.18)}
+    .dot.good{background: var(--good); box-shadow:0 0 0 3px rgba(52,211,153,.18)}
+    .dot.warn{background: var(--warn); box-shadow:0 0 0 3px rgba(251,191,36,.18)}
+    .callout p{margin:0; color:var(--muted)}
+    .eq{
+      position:relative;
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(0,0,0,.22);
+      padding: 12px 12px 10px;
+      margin: 10px 0 12px;
+      overflow:hidden;
+    }
+    .eq pre{
+      margin:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-family: var(--mono);
+      font-size: .94rem;
+      color: #dfe7f6;
+      line-height: 1.4;
+    }
+    .copyBtn{
+      position:absolute;
+      top:10px; right:10px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 7px 10px;
+      cursor:pointer;
+      font-size: .82rem;
+      transition: transform .12s ease, background .12s ease;
+      user-select:none;
+    }
+    .copyBtn:hover{transform: translateY(-1px); background: rgba(255,255,255,.08)}
+    .copyBtn:active{transform: translateY(0px)}
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 900px){
+      .twoCol{grid-template-columns:1fr}
+    }
+    .canvasCard{
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      padding: 12px 12px 10px;
+      overflow:hidden;
+    }
+    .canvasTitle{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+      padding: 4px 6px 10px;
+      border-bottom:1px solid var(--line2);
+      margin-bottom:10px;
+    }
+    .canvasTitle h3{
+      margin:0;
+      font-size:1.02rem;
+    }
+    .canvasTitle .meta{
+      color: var(--faint);
+      font-size:.84rem;
+      white-space:nowrap;
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      border-radius: 16px;
+      background: rgba(0,0,0,.20);
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .controls{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:12px;
+      margin-top: 12px;
+    }
+    .ctrl{
+      grid-column: span 4;
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--line2);
+      border-radius: var(--radius);
+      padding: 12px 12px 10px;
+    }
+    @media (max-width: 900px){
+      .ctrl{grid-column: span 12;}
+    }
+    .ctrl label{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:10px;
+      font-size:.9rem;
+      color: var(--muted);
+      margin-bottom:8px;
+    }
+    .ctrl input[type="range"]{width:100%}
+    .ctrl .val{
+      font-family: var(--mono);
+      color: var(--text);
+      font-size: .88rem;
+    }
+    .note{
+      color: var(--muted);
+      margin: 6px 0 0;
+      font-size: .9rem;
+    }
+    .boxed{
+      border:1px solid rgba(52,211,153,.35);
+      background: rgba(52,211,153,.08);
+      border-radius: 18px;
+      padding: 14px 14px 12px;
+      margin-top: 12px;
+    }
+    .boxed h3{margin:0 0 6px; color: var(--text)}
+    .boxed .eq{margin:10px 0 0; border-color: rgba(52,211,153,.25)}
+    .muted{color:var(--muted)}
+    .small{color:var(--faint); font-size:.9rem}
+    .hr{
+      height:1px;
+      background: var(--line2);
+      margin: 14px 0;
+    }
+    footer{
+      padding: 22px 18px 44px;
+      color: var(--faint);
+    }
+    .printOnly{display:none}
+    @media print{
+      body{background:#fff; color:#000}
+      header, footer{color:#000}
+      section, nav.toc, .titleCard, .quick{box-shadow:none; background:#fff; border-color:#bbb}
+      .eq{background:#fff; border-color:#bbb}
+      canvas{border-color:#bbb}
+      .copyBtn{display:none}
+      .printOnly{display:block}
+      .noPrint{display:none !important}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap hero">
+    <div class="titleCard">
+      <h1>Fresnel Diffraction from Two Pinholes: deriving the periodic intensity pattern</h1>
+      <p class="subtitle">
+        We model two pinholes separated by distance <span class="muted">2a</span> as delta functions and use the Fresnel diffraction integral
+        to show the observation-plane intensity is
+        proportional to <span class="muted">cos²(2π a x / (λ d))</span>.
+      </p>
+      <div class="badgeRow">
+        <div class="badge"><strong>Topic:</strong> Scalar diffraction (Fresnel)</div>
+        <div class="badge"><strong>Key idea:</strong> superposition of two quadratic-phase contributions</div>
+        <div class="badge"><strong>Result:</strong> interference fringes with spacing ~ λd/a</div>
+      </div>
+    </div>
+    <aside class="quick">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li>Two pinholes at <span class="muted">x′ = ±a, y′ = 0</span> act like two point sources in the Fresnel regime.</li>
+        <li>Fresnel propagation gives a common quadratic phase times a sum of two linear phase factors in <span class="muted">x</span>.</li>
+        <li>The complex field is proportional to <span class="muted">2 cos(k a x / d)</span>, where <span class="muted">k = 2π/λ</span>.</li>
+        <li>Intensity becomes <span class="muted">(2/(λ d))² cos²(2π a x/(λ d))</span> (up to any source-strength constant).</li>
+        <li>Fringe period: <span class="muted">Δx = λ d / (2a)</span>.</li>
+      </ul>
+      <p class="note small">Use the sliders below to see how <span class="muted">a, λ, d</span> change the fringe spacing.</p>
+    </aside>
+  </div>
+</header>
+
+<main>
+  <div class="wrap grid">
+    <nav class="toc noPrint" aria-label="Table of contents">
+      <div class="tocTitle">Table of Contents</div>
+      <a href="#viz">Interactive Visualizations <small>(diagram + plots)</small></a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a href="#part2">PART 2 — Strategy &amp; Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a href="#checks">Sanity Checks</a>
+      <a href="#final">Final Result</a>
+    </nav>
+
+    <article>
+      <section id="viz">
+        <h2>Interactive Visualizations</h2>
+        <p class="muted">
+          Example values are used for plotting (you can change them). The derivation remains fully symbolic.
+        </p>
+
+        <div class="controls noPrint" aria-label="Interactive controls">
+          <div class="ctrl">
+            <label for="aSlider">Half-separation <span class="muted">a</span> <span class="val" id="aVal"></span></label>
+            <input id="aSlider" type="range" min="0.05" max="2.50" step="0.01" value="0.50" />
+            <p class="note">Pinhole positions: <span class="muted">x′ = ±a</span>. Units: <span class="muted">mm</span>.</p>
+          </div>
+          <div class="ctrl">
+            <label for="dSlider">Propagation distance <span class="muted">d</span> <span class="val" id="dVal"></span></label>
+            <input id="dSlider" type="range" min="0.10" max="4.00" step="0.01" value="1.00" />
+            <p class="note">Observation plane at <span class="muted">z = d</span>. Units: <span class="muted">m</span>.</p>
+          </div>
+          <div class="ctrl">
+            <label for="lamSlider">Wavelength <span class="muted">λ</span> <span class="val" id="lamVal"></span></label>
+            <input id="lamSlider" type="range" min="400" max="1000" step="1" value="633" />
+            <p class="note">Units: <span class="muted">nm</span> (typical visible/near-IR).</p>
+          </div>
+
+          <div class="ctrl">
+            <label for="xRangeSlider">Plot half-range <span class="muted">X</span> <span class="val" id="xRangeVal"></span></label>
+            <input id="xRangeSlider" type="range" min="0.5" max="25" step="0.5" value="8" />
+            <p class="note">Plots show <span class="muted">x ∈ [−X, X]</span> in <span class="muted">mm</span>.</p>
+          </div>
+          <div class="ctrl">
+            <label for="yRangeSlider">2D map half-range <span class="muted">Y</span> <span class="val" id="yRangeVal"></span></label>
+            <input id="yRangeSlider" type="range" min="0.5" max="12" step="0.5" value="4" />
+            <p class="note">2D map shows <span class="muted">y ∈ [−Y, Y]</span> in <span class="muted">mm</span>.</p>
+          </div>
+          <div class="ctrl">
+            <label>Fringe period <span class="muted">Δx</span> <span class="val" id="dxVal"></span></label>
+            <div class="note">Computed from <span class="muted">Δx = λd/(2a)</span>.</div>
+            <div class="note small">This is the spacing between adjacent bright maxima.</div>
+          </div>
+        </div>
+
+        <div class="twoCol">
+          <div class="canvasCard">
+            <div class="canvasTitle">
+              <h3>Diagram: two pinholes → observation screen</h3>
+              <div class="meta">geometry + phases</div>
+            </div>
+            <canvas id="diagramCanvas" aria-label="Diagram canvas"></canvas>
+            <p class="note small">The two pinholes are at <span class="muted">(x′,y′)=(±a,0)</span>, and the screen is at distance <span class="muted">d</span>.</p>
+          </div>
+
+          <div class="canvasCard">
+            <div class="canvasTitle">
+              <h3>Main plot: intensity cross-section <span class="muted">I(x)</span> at any <span class="muted">y</span></h3>
+              <div class="meta">cos² fringes</div>
+            </div>
+            <canvas id="plotCanvas1" aria-label="Main plot canvas"></canvas>
+            <p class="note small">Because the source has <span class="muted">δ(y′)</span>, the <span class="muted">y</span>-dependence is only a common phase → intensity is independent of <span class="muted">y</span>.</p>
+          </div>
+        </div>
+
+        <div style="height:14px"></div>
+
+        <div class="twoCol">
+          <div class="canvasCard">
+            <div class="canvasTitle">
+              <h3>Secondary plot: 2D intensity map <span class="muted">I(x,y)</span></h3>
+              <div class="meta">vertical stripes</div>
+            </div>
+            <canvas id="plotCanvas2" aria-label="2D intensity map canvas"></canvas>
+            <p class="note small">The map shows that fringes vary with <span class="muted">x</span> but not with <span class="muted">y</span> (ideal delta pinholes).</p>
+          </div>
+
+          <div class="canvasCard">
+            <div class="canvasTitle">
+              <h3>Parameter sweep: how fringe spacing changes</h3>
+              <div class="meta">Δx vs a</div>
+            </div>
+            <canvas id="plotCanvas3" aria-label="Parameter sweep canvas"></canvas>
+            <p class="note small">At fixed <span class="muted">λ,d</span>, increasing <span class="muted">a</span> makes fringes tighter: <span class="muted">Δx ∝ 1/a</span>.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="part1">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+        <h3>Restate the problem</h3>
+        <p class="muted">
+          Two pinholes lie in an aperture plane and are separated along the <span class="muted">x</span>-axis by a distance <span class="muted">2a</span>.
+          Model the aperture (transmittance) as
+          <span class="muted">p(x′,y′) = [δ(x′−a)+δ(x′+a)] δ(y′)</span>.
+          Show that the Fresnel diffraction intensity at propagation distance <span class="muted">d</span> is the periodic pattern
+          <span class="muted">I(x,y) = (2/(λ d))² cos²(2π a x/(λ d))</span>.
+        </p>
+
+        <h3>Given quantities</h3>
+        <ul class="muted">
+          <li>Two pinholes: positions <span class="muted">(x′,y′)=(+a,0)</span> and <span class="muted">(−a,0)</span>.</li>
+          <li>Aperture model: <span class="muted">p(x′,y′) = [δ(x′−a)+δ(x′+a)] δ(y′)</span>.</li>
+          <li>Wavelength <span class="muted">λ</span>, propagation distance <span class="muted">d</span>.</li>
+          <li>Fresnel (paraxial, near-to-intermediate field) diffraction regime.</li>
+        </ul>
+
+        <h3>Unknowns</h3>
+        <ul class="muted">
+          <li>Complex field <span class="muted">U(x,y;d)</span> in the observation plane.</li>
+          <li>Intensity <span class="muted">I(x,y)=|U(x,y;d)|²</span>.</li>
+        </ul>
+
+        <h3>What must be proved</h3>
+        <ul class="muted">
+          <li>Show that the intensity is a cosine-squared fringe pattern with argument <span class="muted">2π a x/(λ d)</span>.</li>
+          <li>Recover the prefactor <span class="muted">(2/(λ d))²</span> from the Fresnel propagation kernel (up to any constant source amplitude).</li>
+        </ul>
+
+        <h3>Relevant physical principles (and why they apply)</h3>
+        <div class="callouts">
+          <div class="callout">
+            <div class="k"><span class="dot"></span>Linear superposition</div>
+            <p>Scalar diffraction in the paraxial regime is linear: the field from multiple pinholes is the sum of fields from each pinhole.</p>
+          </div>
+          <div class="callout">
+            <div class="k"><span class="dot p2"></span>Fresnel diffraction integral</div>
+            <p>At finite distance <span class="muted">d</span> (not necessarily far field), propagation is described by the Fresnel kernel with a quadratic phase factor.</p>
+          </div>
+          <div class="callout">
+            <div class="k"><span class="dot good"></span>Intensity as |field|²</div>
+            <p>Observable irradiance is proportional to <span class="muted">|U|²</span>; common phase factors disappear in intensity.</p>
+          </div>
+          <div class="callout">
+            <div class="k"><span class="dot warn"></span>Delta-function aperture</div>
+            <p>The δ-model idealizes tiny pinholes; it makes the integral trivial by sampling the kernel at two points.</p>
+          </div>
+        </div>
+
+        <h3>Possible approaches (2–3) and comparison</h3>
+        <ol class="muted">
+          <li><strong>Direct Fresnel integral with δ functions</strong>: plug <span class="muted">p(x′,y′)</span> into the Fresnel propagation formula; the integrals collapse immediately. <em>Fastest and most transparent.</em></li>
+          <li><strong>Interpret pinholes as point sources</strong>: write the paraxial Green’s function from each pinhole and sum. Equivalent to (1), but uses more physical language.</li>
+          <li><strong>Fourier-optics route</strong>: express Fresnel propagation as a quadratic-phase pre/post factor times a Fourier transform. Overkill here because δ functions already simplify the integral.</li>
+        </ol>
+
+        <h3>Chosen approach</h3>
+        <p class="muted">
+          We use the <strong>direct Fresnel diffraction integral</strong> because the δ-functions turn the 2D convolution-like integral into a
+          simple two-term sum, making the cosine interference structure appear immediately.
+        </p>
+      </section>
+
+      <section id="part2">
+        <h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+
+        <h3>Plan (5–10 steps)</h3>
+        <ol class="muted">
+          <li><strong>Write the Fresnel propagation formula</strong><br/>
+            <span class="small">Tool: Fresnel diffraction integral (paraxial scalar propagation).</span>
+          </li>
+          <li><strong>Insert the aperture function</strong> <span class="muted">p(x′,y′)</span><br/>
+            <span class="small">Tool: properties of δ-functions to evaluate integrals.</span>
+          </li>
+          <li><strong>Evaluate the two sampled kernel contributions</strong><br/>
+            <span class="small">Goal: express the field as a common prefactor times a sum of two exponentials.</span>
+          </li>
+          <li><strong>Factor out any common phase</strong><br/>
+            <span class="small">Goal: keep only relative phase for intensity.</span>
+          </li>
+          <li><strong>Recognize the cosine form</strong><br/>
+            <span class="small">Tool: <span class="muted">e^{iθ}+e^{-iθ}=2cosθ</span>.</span>
+          </li>
+          <li><strong>Compute intensity</strong> <span class="muted">I=|U|²</span><br/>
+            <span class="small">Goal: show <span class="muted">cos²</span> pattern and prefactor.</span>
+          </li>
+          <li><strong>Extract fringe period and interpret</strong><br/>
+            <span class="small">Tool: maxima when the cosine argument is <span class="muted">mπ</span>.</span>
+          </li>
+        </ol>
+
+        <h3>Common mistakes &amp; quick tips</h3>
+        <ul class="muted">
+          <li><strong>Mixing source-plane and observation-plane coordinates:</strong> keep <span class="muted">(x′,y′)</span> for the pinhole plane and <span class="muted">(x,y)</span> for the screen.</li>
+          <li><strong>Dropping the prefactor too early:</strong> the kernel contributes a <span class="muted">1/(iλd)</span> factor; intensity then has <span class="muted">1/(λd)²</span>.</li>
+          <li><strong>Overthinking the y-dependence:</strong> with <span class="muted">δ(y′)</span>, any remaining <span class="muted">y</span> appears only in a common phase factor and vanishes in <span class="muted">|U|²</span>.</li>
+          <li><strong>Sign errors in the phase:</strong> expand <span class="muted">(x-x′)²</span> carefully; only the cross-term <span class="muted">−2xx′</span> creates the relative phase.</li>
+        </ul>
+      </section>
+
+      <section id="part3">
+        <h2>PART 3 — Full Solution</h2>
+
+        <h3>Physical intuition</h3>
+        <p class="muted">
+          Each pinhole emits a spherical wave. In the paraxial (small-angle) regime, the field on a screen a distance <span class="muted">d</span> away
+          is well-approximated by a Fresnel kernel with a quadratic phase. Because the two pinholes are laterally separated by <span class="muted">2a</span>,
+          their waves arrive with a relative phase that varies linearly with the observation coordinate <span class="muted">x</span>. The sum of two equal-amplitude waves with opposite phase shifts produces cosine fringes; squaring the magnitude produces a cosine-squared intensity pattern.
+        </p>
+
+        <div class="hr"></div>
+
+        <h3>Step 1: Fresnel diffraction integral</h3>
+        <p class="muted">
+          For a scalar field and paraxial propagation over distance <span class="muted">d</span>, the Fresnel diffraction formula (one common convention) is
+        </p>
+        <div class="eq" data-copy="eq1">
+          <button class="copyBtn" data-copy-target="eq1">Copy</button>
+          <pre id="eq1">U(x,y;d) = (e^{ikd}/(i λ d)) ∬ p(x′,y′) exp{ i k/(2d) [ (x−x′)^2 + (y−y′)^2 ] } dx′ dy′
+where k = 2π/λ.</pre>
+        </div>
+        <p class="muted">
+          Any overall constant multiplying <span class="muted">p</span> would scale the result, but the <span class="muted">x</span>-dependence (fringes) is set by the phase terms.
+        </p>
+
+        <h3>Step 2: Insert the two-pinhole aperture model</h3>
+        <p class="muted">We are given</p>
+        <div class="eq" data-copy="eqP">
+          <button class="copyBtn" data-copy-target="eqP">Copy</button>
+          <pre id="eqP">p(x′,y′) = [ δ(x′−a) + δ(x′+a) ] δ(y′).</pre>
+        </div>
+        <p class="muted">
+          Substituting into the Fresnel integral collapses the integration to evaluating the kernel at <span class="muted">(x′,y′)=(±a,0)</span>.
+        </p>
+
+        <h3>Step 3: Evaluate the integrals using δ-functions</h3>
+        <p class="muted">
+          Substitute <span class="muted">p(x′,y′)</span> into the integral:
+        </p>
+        <div class="eq" data-copy="eq2">
+          <button class="copyBtn" data-copy-target="eq2">Copy</button>
+          <pre id="eq2">U(x,y;d)
+= (e^{ikd}/(i λ d)) ∬ [δ(x′−a)+δ(x′+a)] δ(y′)
+   exp{ i k/(2d) [ (x−x′)^2 + (y−y′)^2 ] } dx′ dy′.</pre>
+        </div>
+        <p class="muted">
+          First apply <span class="muted">δ(y′)</span>, setting <span class="muted">y′=0</span>. Then apply the two <span class="muted">δ</span>-terms in <span class="muted">x′</span>:
+        </p>
+        <div class="eq" data-copy="eq3">
+          <button class="copyBtn" data-copy-target="eq3">Copy</button>
+          <pre id="eq3">U(x,y;d)
+= (e^{ikd}/(i λ d)) { exp[ i k/(2d) ( (x−a)^2 + y^2 ) ]  +  exp[ i k/(2d) ( (x+a)^2 + y^2 ) ] }.</pre>
+        </div>
+
+        <h3>Step 4: Factor out common phase terms</h3>
+        <p class="muted">
+          Expand the squares:
+          <span class="muted">(x∓a)^2 = x^2 + a^2 ∓ 2ax</span>.
+          Then each exponential contains the same <span class="muted">x^2 + a^2 + y^2</span> term, plus a term that changes sign.
+        </p>
+        <div class="eq" data-copy="eq4">
+          <button class="copyBtn" data-copy-target="eq4">Copy</button>
+          <pre id="eq4">U(x,y;d)
+= (e^{ikd}/(i λ d)) exp[ i k/(2d) (x^2 + y^2 + a^2) ]
+  { exp[ − i k a x / d ] + exp[ + i k a x / d ] }.</pre>
+        </div>
+        <p class="muted">
+          The prefactor <span class="muted">exp[i k/(2d) (x^2 + y^2 + a^2)]</span> is a <em>pure phase</em>. It will disappear when we take <span class="muted">|U|²</span>.
+        </p>
+
+        <h3>Step 5: Convert the sum of exponentials into a cosine</h3>
+        <p class="muted">
+          Use the identity <span class="muted">e^{iθ}+e^{-iθ}=2cosθ</span> with <span class="muted">θ = k a x/d</span>:
+        </p>
+        <div class="eq" data-copy="eq5">
+          <button class="copyBtn" data-copy-target="eq5">Copy</button>
+          <pre id="eq5">U(x,y;d)
+= (e^{ikd}/(i λ d)) exp[ i k/(2d) (x^2 + y^2 + a^2) ] · 2 cos( k a x / d ).</pre>
+        </div>
+
+        <h3>Step 6: Compute the intensity</h3>
+        <p class="muted">
+          Intensity (irradiance) is proportional to the squared magnitude:
+        </p>
+        <div class="eq" data-copy="eq6">
+          <button class="copyBtn" data-copy-target="eq6">Copy</button>
+          <pre id="eq6">I(x,y) = |U(x,y;d)|^2.</pre>
+        </div>
+        <p class="muted">
+          The magnitude of <span class="muted">e^{ikd}</span> and of any <span class="muted">exp(i·phase)</span> factor is 1, so only the real amplitude factors remain:
+        </p>
+        <div class="eq" data-copy="eq7">
+          <button class="copyBtn" data-copy-target="eq7">Copy</button>
+          <pre id="eq7">I(x,y)
+= |(1/(i λ d)) · 2 cos( k a x / d )|^2
+= (2/(λ d))^2 cos^2( k a x / d ).</pre>
+        </div>
+        <p class="muted">
+          Finally substitute <span class="muted">k = 2π/λ</span>:
+        </p>
+
+        <div class="boxed" id="final">
+          <h3>Final Result (boxed)</h3>
+          <div class="eq" data-copy="eqFinal">
+            <button class="copyBtn" data-copy-target="eqFinal">Copy</button>
+            <pre id="eqFinal">I(x,y) = (2/(λ d))^2 cos^2( 2π a x / (λ d) ).</pre>
+          </div>
+          <p class="note">
+            This matches the required periodic pattern. Note that <span class="muted">I</span> is independent of <span class="muted">y</span> in this ideal δ-pinhole model
+            (any <span class="muted">y</span> dependence is a common phase removed by <span class="muted">|·|²</span>).
+          </p>
+        </div>
+      </section>
+
+      <section id="checks">
+        <h2>Sanity Checks</h2>
+
+        <h3>1) Units</h3>
+        <p class="muted">
+          The cosine argument is dimensionless:
+          <span class="muted">2π a x/(λ d)</span> has units
+          <span class="muted">(length·length)/(length·length) = 1</span>.
+          The prefactor <span class="muted">(2/(λ d))²</span> has units of <span class="muted">1/length²</span>, consistent with the Fresnel kernel amplitude scaling.
+          (Any real physical intensity would also include source amplitude and impedance factors not specified in the problem.)
+        </p>
+
+        <h3>2) Limiting cases</h3>
+        <ul class="muted">
+          <li><strong>a → 0</strong>: the two pinholes merge; <span class="muted">cos²(0)=1</span> → constant intensity (no fringes), as expected.</li>
+          <li><strong>d increases</strong>: argument <span class="muted">∝ 1/d</span>, so fringes widen; the screen is farther away, angular separation maps to larger spatial spacing.</li>
+          <li><strong>λ increases</strong>: fringes widen (longer wavelength → broader interference pattern).</li>
+        </ul>
+
+        <h3>3) Physical interpretation: fringe spacing</h3>
+        <p class="muted">
+          Bright maxima occur when
+          <span class="muted">2π a x/(λ d) = mπ</span> (integer <span class="muted">m</span>), so
+          <span class="muted">x_m = m (λ d)/(2a)</span>.
+          Therefore the spacing between adjacent bright fringes is
+          <span class="muted">Δx = x_{m+1}-x_m = λ d/(2a)</span>,
+          matching what you see in the interactive plots.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="printOnly">Notes for Print</h2>
+        <p class="printOnly">
+          Interactive canvases and copy buttons are optimized for screen use. The boxed final result is the key takeaway:
+          <span style="font-family: ui-monospace, monospace;">I(x,y) = (2/(λ d))^2 cos^2(2π a x/(λ d)).</span>
+        </p>
+      </section>
+    </article>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="small">
+      Built with vanilla HTML/CSS/JS. Sliders use <em>example values</em> for visualization; the derivation is symbolic and general.
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // ---------- Smooth scrolling ----------
+  document.querySelectorAll('a[href^="#"]').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      const id = a.getAttribute('href');
+      const el = document.querySelector(id);
+      if(!el) return;
+      e.preventDefault();
+      el.scrollIntoView({behavior:'smooth', block:'start'});
+      history.replaceState(null, '', id);
+    });
+  });
+
+  // ---------- Copy buttons ----------
+  function copyText(txt){
+    navigator.clipboard.writeText(txt).then(()=>{
+      // lightweight feedback
+      toast("Copied");
+    }).catch(()=>{
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = txt;
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand('copy'); toast("Copied"); } catch(_){}
+      ta.remove();
+    });
+  }
+  document.querySelectorAll('.copyBtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.getAttribute('data-copy-target');
+      const el = document.getElementById(id);
+      if(!el) return;
+      copyText(el.textContent.trim());
+    });
+  });
+
+  // ---------- Tiny toast ----------
+  let toastTimer = null;
+  function toast(msg){
+    let t = document.getElementById('toast');
+    if(!t){
+      t = document.createElement('div');
+      t.id = 'toast';
+      t.style.position='fixed';
+      t.style.left='50%';
+      t.style.bottom='18px';
+      t.style.transform='translateX(-50%)';
+      t.style.padding='10px 12px';
+      t.style.border='1px solid rgba(255,255,255,.16)';
+      t.style.background='rgba(18,27,39,.85)';
+      t.style.backdropFilter='blur(10px)';
+      t.style.borderRadius='999px';
+      t.style.color='rgba(233,238,246,.95)';
+      t.style.fontSize='.9rem';
+      t.style.boxShadow='0 12px 30px rgba(0,0,0,.35)';
+      t.style.opacity='0';
+      t.style.transition='opacity .18s ease, transform .18s ease';
+      t.style.zIndex='9999';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity='1';
+    t.style.transform='translateX(-50%) translateY(-2px)';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>{
+      t.style.opacity='0';
+      t.style.transform='translateX(-50%) translateY(0px)';
+    }, 900);
+  }
+
+  // ---------- Math helpers ----------
+  const TAU = Math.PI * 2;
+
+  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+
+  // Convert mm->m, nm->m
+  function mm(x){ return x * 1e-3; }
+  function nm(x){ return x * 1e-9; }
+
+  // ---------- Canvas utilities ----------
+  function setupCanvas(canvas){
+    const ctx = canvas.getContext('2d');
+    function resize(){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(2, Math.floor(rect.width * dpr));
+      const h = Math.max(2, Math.floor(rect.height * dpr));
+      if(canvas.width !== w || canvas.height !== h){
+        canvas.width = w;
+        canvas.height = h;
+      }
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.scale(dpr, dpr);
+      return {w: rect.width, h: rect.height, dpr};
+    }
+    return {ctx, resize};
+  }
+
+  function clear(ctx, w, h){
+    ctx.clearRect(0,0,w,h);
+  }
+
+  function drawRoundedRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+  function gridAndAxes(ctx, plot){
+    const {x, y, w, h, xMin, xMax, yMin, yMax, xLabel, yLabel, title} = plot;
+
+    // Panel background
+    ctx.save();
+    ctx.globalAlpha = 1;
+    drawRoundedRect(ctx, x, y, w, h, 14);
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+
+    const padL=52, padR=16, padT=38, padB=44;
+    const ix = x+padL, iy=y+padT, iw=w-padL-padR, ih=h-padT-padB;
+
+    // Title
+    ctx.save();
+    ctx.fillStyle = 'rgba(233,238,246,0.92)';
+    ctx.font = '600 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.fillText(title, x+14, y+22);
+    ctx.restore();
+
+    // Grid + ticks
+    const nXTicks = 6;
+    const nYTicks = 5;
+
+    function xToPx(X){ return ix + (X - xMin) * iw / (xMax - xMin); }
+    function yToPx(Y){ return iy + ih - (Y - yMin) * ih / (yMax - yMin); }
+
+    // Gridlines
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+
+    for(let i=0;i<=nXTicks;i++){
+      const t = i/nXTicks;
+      const X = xMin + t*(xMax-xMin);
+      const px = xToPx(X);
+      ctx.beginPath();
+      ctx.moveTo(px, iy);
+      ctx.lineTo(px, iy+ih);
+      ctx.stroke();
+    }
+    for(let j=0;j<=nYTicks;j++){
+      const t = j/nYTicks;
+      const Y = yMin + t*(yMax-yMin);
+      const py = yToPx(Y);
+      ctx.beginPath();
+      ctx.moveTo(ix, py);
+      ctx.lineTo(ix+iw, py);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Axes box
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.rect(ix, iy, iw, ih);
+    ctx.stroke();
+    ctx.restore();
+
+    // Tick labels
+    ctx.save();
+    ctx.fillStyle = 'rgba(181,192,211,0.95)';
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+
+    for(let i=0;i<=nXTicks;i++){
+      const t = i/nXTicks;
+      const X = xMin + t*(xMax-xMin);
+      const px = xToPx(X);
+      const lbl = formatTick(X);
+      ctx.textAlign='center';
+      ctx.textBaseline='top';
+      ctx.fillText(lbl, px, iy+ih+8);
+    }
+    for(let j=0;j<=nYTicks;j++){
+      const t = j/nYTicks;
+      const Y = yMin + t*(yMax-yMin);
+      const py = yToPx(Y);
+      const lbl = formatTick(Y);
+      ctx.textAlign='right';
+      ctx.textBaseline='middle';
+      ctx.fillText(lbl, ix-8, py);
+    }
+
+    // Axis labels
+    ctx.fillStyle = 'rgba(181,192,211,0.95)';
+    ctx.font = '600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.textAlign='center';
+    ctx.textBaseline='bottom';
+    ctx.fillText(xLabel, ix+iw/2, y+h-12);
+
+    // y label rotated
+    ctx.save();
+    ctx.translate(x+16, iy+ih/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign='center';
+    ctx.textBaseline='top';
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    ctx.restore();
+
+    return {ix, iy, iw, ih, xToPx, yToPx};
+  }
+
+  function formatTick(v){
+    const av = Math.abs(v);
+    if(av >= 1000) return (v/1000).toFixed(1)+'k';
+    if(av >= 100) return v.toFixed(0);
+    if(av >= 10) return v.toFixed(1);
+    if(av >= 1) return v.toFixed(2);
+    if(av >= 0.1) return v.toFixed(3);
+    return v.toExponential(1);
+  }
+
+  // ---------- Physics: intensity formula ----------
+  // I(x,y) = (2/(λ d))^2 cos^2(2π a x/(λ d))
+  // In plotting we use x in meters, a in meters, λ in meters, d in meters.
+  function intensity(x_m, a_m, lam_m, d_m){
+    const arg = TAU * a_m * x_m / (lam_m * d_m);
+    const c = Math.cos(arg);
+    const pref = 2/(lam_m * d_m);
+    return (pref*pref) * (c*c);
+  }
+
+  // ---------- Diagram drawing ----------
+  function drawDiagram(canvas, a_m, d_m){
+    const {ctx, resize} = canvas;
+    const {w, h} = resize();
+    clear(ctx, w, h);
+
+    // layout
+    const margin = 18;
+    const x0 = margin, y0 = margin, W = w - 2*margin, H = h - 2*margin;
+
+    // coordinate mapping (not to scale: illustrative)
+    const planeX = x0 + W*0.28;
+    const screenX = x0 + W*0.84;
+
+    const centerY = y0 + H*0.56;
+    const aPx = clamp( (a_m / mm(1)) * 14, 10, H*0.22 ); // rough mapping: mm -> pixels
+    const p1Y = centerY - aPx;
+    const p2Y = centerY + aPx;
+
+    // background frame
+    ctx.save();
+    drawRoundedRect(ctx, x0, y0, W, H, 16);
+    ctx.fillStyle = 'rgba(0,0,0,0.16)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.stroke();
+    ctx.restore();
+
+    // aperture plane
+    ctx.save();
+    ctx.strokeStyle='rgba(125,211,252,0.75)';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(planeX, y0+20);
+    ctx.lineTo(planeX, y0+H-20);
+    ctx.stroke();
+    ctx.fillStyle='rgba(125,211,252,0.85)';
+    ctx.font='600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.fillText('Aperture plane (z=0)', planeX-82, y0+16);
+    ctx.restore();
+
+    // screen plane
+    ctx.save();
+    ctx.strokeStyle='rgba(167,139,250,0.75)';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(screenX, y0+20);
+    ctx.lineTo(screenX, y0+H-20);
+    ctx.stroke();
+    ctx.fillStyle='rgba(167,139,250,0.9)';
+    ctx.font='600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.fillText('Observation screen (z=d)', screenX-115, y0+16);
+    ctx.restore();
+
+    // pinholes as dots
+    function dot(x,y, col){
+      ctx.save();
+      ctx.fillStyle=col;
+      ctx.beginPath();
+      ctx.arc(x,y,4.5,0,TAU);
+      ctx.fill();
+      ctx.shadowColor=col;
+      ctx.shadowBlur=10;
+      ctx.beginPath();
+      ctx.arc(x,y,2.8,0,TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+    dot(planeX, p1Y, 'rgba(233,238,246,0.95)');
+    dot(planeX, p2Y, 'rgba(233,238,246,0.95)');
+
+    // labels for pinholes
+    ctx.save();
+    ctx.fillStyle='rgba(181,192,211,0.95)';
+    ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    ctx.fillText('(+a,0)', planeX-58, p1Y-8);
+    ctx.fillText('(-a,0)', planeX-58, p2Y-8);
+    ctx.restore();
+
+    // rays (two sample rays to a point on screen)
+    const obsY = centerY - H*0.12;
+    ctx.save();
+    ctx.strokeStyle='rgba(233,238,246,0.30)';
+    ctx.lineWidth=1.6;
+    ctx.setLineDash([6,6]);
+    ctx.beginPath();
+    ctx.moveTo(planeX, p1Y);
+    ctx.lineTo(screenX, obsY);
+    ctx.moveTo(planeX, p2Y);
+    ctx.lineTo(screenX, obsY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    // observation point
+    dot(screenX, obsY, 'rgba(52,211,153,0.95)');
+    ctx.save();
+    ctx.fillStyle='rgba(52,211,153,0.95)';
+    ctx.font='600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.fillText('Observation point (x,y)', screenX-168, obsY-12);
+    ctx.restore();
+
+    // distance d arrow
+    ctx.save();
+    ctx.strokeStyle='rgba(181,192,211,0.65)';
+    ctx.lineWidth=1.6;
+    const yArrow = y0 + H*0.88;
+    ctx.beginPath();
+    ctx.moveTo(planeX, yArrow);
+    ctx.lineTo(screenX, yArrow);
+    ctx.stroke();
+    // arrowheads
+    function arrowHead(x,y,dir){
+      ctx.beginPath();
+      ctx.moveTo(x,y);
+      ctx.lineTo(x-8*dir, y-4);
+      ctx.lineTo(x-8*dir, y+4);
+      ctx.closePath();
+      ctx.fillStyle='rgba(181,192,211,0.65)';
+      ctx.fill();
+    }
+    arrowHead(planeX, yArrow, -1);
+    arrowHead(screenX, yArrow, +1);
+    ctx.fillStyle='rgba(181,192,211,0.9)';
+    ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    ctx.textAlign='center';
+    ctx.fillText('d', (planeX+screenX)/2, yArrow-8);
+    ctx.restore();
+
+    // separation 2a bracket
+    ctx.save();
+    ctx.strokeStyle='rgba(181,192,211,0.55)';
+    ctx.lineWidth=1.4;
+    const bx = planeX + 18;
+    ctx.beginPath();
+    ctx.moveTo(bx, p1Y);
+    ctx.lineTo(bx, p2Y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(bx-8, p1Y);
+    ctx.lineTo(bx+8, p1Y);
+    ctx.moveTo(bx-8, p2Y);
+    ctx.lineTo(bx+8, p2Y);
+    ctx.stroke();
+    ctx.fillStyle='rgba(181,192,211,0.9)';
+    ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    ctx.textAlign='left';
+    ctx.fillText('2a', bx+10, (p1Y+p2Y)/2 + 4);
+    ctx.restore();
+
+    // small formula hint
+    ctx.save();
+    ctx.fillStyle='rgba(233,238,246,0.92)';
+    ctx.font='600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.fillText('Interference term: 2 cos(k a x / d)', x0+14, y0+H-16);
+    ctx.restore();
+  }
+
+  // ---------- 1D plot ----------
+  function drawIntensity1D(canvas, a_m, d_m, lam_m, X_mm){
+    const {ctx, resize} = canvas;
+    const {w, h} = resize();
+    clear(ctx, w, h);
+
+    const xMin = -X_mm, xMax = X_mm; // mm
+    // Determine y range dynamically (normalize by prefactor for visual clarity?)
+    // We'll plot normalized intensity Inorm = cos^2(...) to show shape, plus show true prefactor in legend.
+    // But the problem's formula includes prefactor; we can plot true I and auto-scale.
+    const N = 800;
+    let yMax = 0;
+    for(let i=0;i<N;i++){
+      const t = i/(N-1);
+      const x_mm = xMin + t*(xMax-xMin);
+      const I = intensity(mm(x_mm), a_m, lam_m, d_m);
+      if(I > yMax) yMax = I;
+    }
+    const yMin = 0;
+    yMax *= 1.08;
+
+    const plot = gridAndAxes(ctx, {
+      x:10, y:10, w:w-20, h:h-20,
+      xMin, xMax, yMin, yMax,
+      xLabel:'x (mm)',
+      yLabel:'I (arb. units)',
+      title:'I(x) = (2/(λd))² cos²(2π a x/(λd))'
+    });
+    const {ix, iy, iw, ih, xToPx, yToPx} = plot;
+
+    // Curve
+    ctx.save();
+    ctx.strokeStyle='rgba(125,211,252,0.95)';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    for(let i=0;i<N;i++){
+      const t=i/(N-1);
+      const x_mm = xMin + t*(xMax-xMin);
+      const I = intensity(mm(x_mm), a_m, lam_m, d_m);
+      const px = xToPx(x_mm);
+      const py = yToPx(I);
+      if(i===0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // Legend
+    ctx.save();
+    const lx = ix + 10, ly = iy + 10;
+    drawRoundedRect(ctx, lx, ly, 250, 52, 12);
+    ctx.fillStyle='rgba(0,0,0,0.22)';
+    ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.10)';
+    ctx.stroke();
+
+    ctx.fillStyle='rgba(233,238,246,0.95)';
+    ctx.font='12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.fillText('Curve: I(x) (includes prefactor)', lx+12, ly+18);
+
+    ctx.fillStyle='rgba(181,192,211,0.95)';
+    ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    const pref = 2/(lam_m*d_m);
+    ctx.fillText(`(2/(λd)) = ${pref.toExponential(2)} 1/m`, lx+12, ly+36);
+    ctx.restore();
+
+    // Mark fringe period
+    const dx_m = lam_m*d_m/(2*a_m);
+    const dx_mm = dx_m*1e3;
+    const x0 = 0;
+    const x1 = dx_mm;
+    if(x1>=xMin && x1<=xMax){
+      ctx.save();
+      ctx.strokeStyle='rgba(52,211,153,0.85)';
+      ctx.lineWidth=1.5;
+      ctx.setLineDash([5,5]);
+      ctx.beginPath();
+      ctx.moveTo(xToPx(x0), iy);
+      ctx.lineTo(xToPx(x0), iy+ih);
+      ctx.moveTo(xToPx(x1), iy);
+      ctx.lineTo(xToPx(x1), iy+ih);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='rgba(52,211,153,0.95)';
+      ctx.font='12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText('Δx', (xToPx(x0)+xToPx(x1))/2 - 8, iy+ih-10);
+      ctx.restore();
+    }
+  }
+
+  // ---------- 2D map ----------
+  function drawIntensity2D(canvas, a_m, d_m, lam_m, X_mm, Y_mm){
+    const {ctx, resize} = canvas;
+    const {w, h} = resize();
+    clear(ctx, w, h);
+
+    // We'll draw a plot panel and then rasterize in the inner area.
+    const xMin=-X_mm, xMax=X_mm;
+    const yMin=-Y_mm, yMax=Y_mm;
+
+    const plot = gridAndAxes(ctx, {
+      x:10, y:10, w:w-20, h:h-20,
+      xMin, xMax, yMin, yMax,
+      xLabel:'x (mm)',
+      yLabel:'y (mm)',
+      title:'2D map of I(x,y) (ideal δ pinholes → stripes independent of y)'
+    });
+    const {ix, iy, iw, ih, xToPx, yToPx} = plot;
+
+    // Rasterize intensity into inner area; normalize for display (since prefactor could be huge).
+    const imgW = Math.max(30, Math.floor(iw));
+    const imgH = Math.max(30, Math.floor(ih));
+    const imageData = ctx.createImageData(imgW, imgH);
+
+    // Find max in range for normalization
+    let Imax = 0;
+    const sampleN = 500;
+    for(let i=0;i<sampleN;i++){
+      const t=i/(sampleN-1);
+      const x_mm = xMin + t*(xMax-xMin);
+      const I = intensity(mm(x_mm), a_m, lam_m, d_m);
+      if(I > Imax) Imax = I;
+    }
+    Imax = Imax || 1;
+
+    for(let j=0;j<imgH;j++){
+      const ty = j/(imgH-1);
+      const y_mm = yMax - ty*(yMax-yMin);
+      for(let i=0;i<imgW;i++){
+        const tx = i/(imgW-1);
+        const x_mm = xMin + tx*(xMax-xMin);
+        const I = intensity(mm(x_mm), a_m, lam_m, d_m);
+        const v = Math.sqrt(I / Imax); // gamma-like for contrast
+        const c = clamp(v, 0, 1);
+
+        // Color: dark->bright using a subtle cyan/purple mix
+        // We avoid external palettes; simple interpolation.
+        const r = Math.floor(18 + 150*c);
+        const g = Math.floor(28 + 190*c);
+        const b = Math.floor(45 + 210*c);
+
+        const idx = (j*imgW + i)*4;
+        imageData.data[idx+0] = r;
+        imageData.data[idx+1] = g;
+        imageData.data[idx+2] = b;
+        imageData.data[idx+3] = 255;
+      }
+    }
+
+    // Draw raster to inner plot region
+    ctx.save();
+    // Clip to inner area
+    ctx.beginPath();
+    ctx.rect(ix, iy, iw, ih);
+    ctx.clip();
+
+    // Draw image with nearest-neighbor feel (for crisp stripes)
+    ctx.imageSmoothingEnabled = false;
+    ctx.putImageData(imageData, Math.floor(ix), Math.floor(iy));
+    // If inner area isn't integer aligned, scale image to fill (better fit)
+    if(Math.floor(ix)!==ix || Math.floor(iy)!==iy || Math.floor(iw)!==imgW || Math.floor(ih)!==imgH){
+      // fallback: draw scaled via offscreen
+      const off = document.createElement('canvas');
+      off.width = imgW; off.height = imgH;
+      off.getContext('2d').putImageData(imageData, 0, 0);
+      ctx.clearRect(ix, iy, iw, ih);
+      ctx.drawImage(off, ix, iy, iw, ih);
+    }
+
+    ctx.restore();
+
+    // Add a small note legend
+    ctx.save();
+    const lx = ix + 10, ly = iy + 10;
+    drawRoundedRect(ctx, lx, ly, 265, 48, 12);
+    ctx.fillStyle='rgba(0,0,0,0.22)';
+    ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.10)';
+    ctx.stroke();
+    ctx.fillStyle='rgba(233,238,246,0.95)';
+    ctx.font='12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.fillText('Color ∝ √(I/Imax) for contrast', lx+12, ly+18);
+    ctx.fillStyle='rgba(181,192,211,0.95)';
+    ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    ctx.fillText('Ideal model: no y-variation', lx+12, ly+36);
+    ctx.restore();
+  }
+
+  // ---------- Sweep plot Δx vs a ----------
+  function drawSweep(canvas, d_m, lam_m, a_current_m){
+    const {ctx, resize} = canvas;
+    const {w, h} = resize();
+    clear(ctx, w, h);
+
+    // Sweep a in mm
+    const aMin_mm = 0.05, aMax_mm = 2.50;
+    // Δx in mm
+    function dx_mm(a_mm){
+      const a_m = mm(a_mm);
+      return (lam_m * d_m / (2*a_m)) * 1e3;
+    }
+    // find yMax
+    let yMax = 0;
+    for(let i=0;i<300;i++){
+      const t=i/299;
+      const a_mm = aMin_mm + t*(aMax_mm-aMin_mm);
+      yMax = Math.max(yMax, dx_mm(a_mm));
+    }
+    const yMin = 0;
+
+    const plot = gridAndAxes(ctx, {
+      x:10, y:10, w:w-20, h:h-20,
+      xMin:aMin_mm, xMax:aMax_mm,
+      yMin, yMax:yMax*1.08,
+      xLabel:'a (mm)',
+      yLabel:'Δx (mm)',
+      title:'Fringe spacing Δx = λd/(2a) as a varies (λ, d fixed)'
+    });
+    const {ix, iy, iw, ih, xToPx, yToPx} = plot;
+
+    // Curve
+    ctx.save();
+    ctx.strokeStyle='rgba(167,139,250,0.95)';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    for(let i=0;i<600;i++){
+      const t=i/599;
+      const a_mm = aMin_mm + t*(aMax_mm-aMin_mm);
+      const y = dx_mm(a_mm);
+      const px = xToPx(a_mm);
+      const py = yToPx(y);
+      if(i===0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // Mark current a
+    const a_mm_cur = a_current_m * 1e3;
+    const dx_cur = dx_mm(a_mm_cur);
+    ctx.save();
+    ctx.strokeStyle='rgba(52,211,153,0.9)';
+    ctx.lineWidth=1.5;
+    ctx.setLineDash([5,5]);
+    ctx.beginPath();
+    ctx.moveTo(xToPx(a_mm_cur), iy);
+    ctx.lineTo(xToPx(a_mm_cur), iy+ih);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(52,211,153,0.95)';
+    ctx.beginPath();
+    ctx.arc(xToPx(a_mm_cur), yToPx(dx_cur), 4.2, 0, TAU);
+    ctx.fill();
+
+    // label box
+    const lbl = `a=${a_mm_cur.toFixed(2)} mm → Δx=${dx_cur.toFixed(2)} mm`;
+    const tw = ctx.measureText(lbl).width;
+    const bx = clamp(xToPx(a_mm_cur)+10, ix+10, ix+iw- (tw+22));
+    const by = clamp(yToPx(dx_cur)-28, iy+10, iy+ih-40);
+    drawRoundedRect(ctx, bx, by, tw+18, 28, 10);
+    ctx.fillStyle='rgba(0,0,0,0.24)';
+    ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.10)';
+    ctx.stroke();
+    ctx.fillStyle='rgba(233,238,246,0.95)';
+    ctx.font='12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.fillText(lbl, bx+9, by+19);
+    ctx.restore();
+  }
+
+  // ---------- Wiring + live update ----------
+  const aSlider = document.getElementById('aSlider');
+  const dSlider = document.getElementById('dSlider');
+  const lamSlider = document.getElementById('lamSlider');
+  const xRangeSlider = document.getElementById('xRangeSlider');
+  const yRangeSlider = document.getElementById('yRangeSlider');
+
+  const aVal = document.getElementById('aVal');
+  const dVal = document.getElementById('dVal');
+  const lamVal = document.getElementById('lamVal');
+  const xRangeVal = document.getElementById('xRangeVal');
+  const yRangeVal = document.getElementById('yRangeVal');
+  const dxVal = document.getElementById('dxVal');
+
+  const diagram = setupCanvas(document.getElementById('diagramCanvas'));
+  const plot1 = setupCanvas(document.getElementById('plotCanvas1'));
+  const plot2 = setupCanvas(document.getElementById('plotCanvas2'));
+  const plot3 = setupCanvas(document.getElementById('plotCanvas3'));
+
+  function updateLabels(a_m, d_m, lam_m, X_mm, Y_mm){
+    aVal.textContent = `${(a_m*1e3).toFixed(2)} mm`;
+    dVal.textContent = `${d_m.toFixed(2)} m`;
+    lamVal.textContent = `${(lam_m*1e9).toFixed(0)} nm`;
+    xRangeVal.textContent = `${X_mm.toFixed(1)} mm`;
+    yRangeVal.textContent = `${Y_mm.toFixed(1)} mm`;
+
+    const dx_m = lam_m*d_m/(2*a_m);
+    const dx_mm = dx_m*1e3;
+    dxVal.textContent = `${dx_mm.toFixed(2)} mm`;
+  }
+
+  function redraw(){
+    const a_m = mm(parseFloat(aSlider.value));
+    const d_m = parseFloat(dSlider.value);
+    const lam_m = nm(parseFloat(lamSlider.value));
+    const X_mm = parseFloat(xRangeSlider.value);
+    const Y_mm = parseFloat(yRangeSlider.value);
+
+    updateLabels(a_m, d_m, lam_m, X_mm, Y_mm);
+
+    drawDiagram(diagram, a_m, d_m);
+    drawIntensity1D(plot1, a_m, d_m, lam_m, X_mm);
+    drawIntensity2D(plot2, a_m, d_m, lam_m, X_mm, Y_mm);
+    drawSweep(plot3, d_m, lam_m, a_m);
+  }
+
+  [aSlider, dSlider, lamSlider, xRangeSlider, yRangeSlider].forEach(el=>{
+    el.addEventListener('input', redraw);
+  });
+
+  window.addEventListener('resize', redraw);
+
+  // Initial draw
+  redraw();
+})();
+</script>
+</body>
+</html>

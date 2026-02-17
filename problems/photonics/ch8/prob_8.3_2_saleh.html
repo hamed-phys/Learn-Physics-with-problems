@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Layered Metal–Dielectric Hyperbolic Metamaterial (Effective Medium + Drude)</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --panel:#0f1624;
+      --card:#121c2e;
+      --text:#eaf0ff;
+      --muted:#a9b6d6;
+      --faint:#6f7ea5;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line: rgba(255,255,255,.10);
+      --line2: rgba(255,255,255,.06);
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --r: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 900px at 20% -10%, rgba(125,211,252,.18), transparent 60%),
+        radial-gradient(900px 700px at 90% 10%, rgba(167,139,250,.14), transparent 55%),
+        radial-gradient(1200px 800px at 50% 120%, rgba(52,211,153,.10), transparent 55%),
+        var(--bg);
+      line-height:1.55;
+    }
+    a{color:var(--accent)}
+    header{
+      padding: 36px 18px 14px;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    .hero{
+      display:grid;
+      grid-template-columns: 1.3fr .7fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+    @media (max-width: 980px){
+      .hero{grid-template-columns:1fr}
+    }
+    .titleCard{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 14px;
+      overflow:hidden;
+      position:relative;
+    }
+    .titleCard:before{
+      content:"";
+      position:absolute; inset:-2px -2px auto -2px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--good));
+      opacity:.9;
+    }
+    h1{
+      margin: 6px 0 6px;
+      font-size: clamp(1.35rem, 2.4vw, 2.05rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      color: var(--muted);
+      margin: 0;
+      font-size: 0.98rem;
+      max-width: 70ch;
+    }
+    .meta{
+      margin-top: 12px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      color: var(--faint);
+      font-size: .92rem;
+    }
+    .chip{
+      padding: 6px 10px;
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,.03);
+      border-radius: 999px;
+    }
+
+    .toc{
+      background: rgba(18,28,46,.78);
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding: 14px 14px 10px;
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      backdrop-filter: blur(10px);
+    }
+    .toc h2{
+      font-size: 1rem;
+      margin: 0 0 8px;
+      color: var(--text);
+    }
+    .toc a{
+      display:block;
+      text-decoration:none;
+      color: var(--muted);
+      padding: 7px 8px;
+      border-radius: 12px;
+      border:1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size: .95rem;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,.08);
+      border-color: rgba(125,211,252,.18);
+      transform: translateX(2px);
+      color: var(--text);
+    }
+
+    main{
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 10px 18px 70px;
+      display:grid;
+      grid-template-columns: 1.55fr .95fr;
+      gap: 16px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns:1fr}
+      .toc{position:relative; top:auto}
+    }
+    section{
+      background: rgba(15,22,36,.75);
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      overflow:hidden;
+    }
+    section + section{margin-top: 16px}
+    .side section{padding: 14px}
+    h2{
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+      letter-spacing:.2px;
+    }
+    h3{
+      margin: 14px 0 8px;
+      font-size: 1.03rem;
+      color: var(--text);
+    }
+    p{margin: 10px 0; color: var(--muted)}
+    ul{margin: 8px 0 10px 18px; color: var(--muted)}
+    li{margin: 6px 0}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 720px){ .grid2{grid-template-columns:1fr} }
+
+    .callout{
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      padding: 12px 12px 10px;
+      margin: 10px 0;
+      position:relative;
+      overflow:hidden;
+    }
+    .callout strong{color: var(--text)}
+    .callout:before{
+      content:"";
+      position:absolute; left:0; top:0; bottom:0; width: 4px;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      opacity:.9;
+    }
+    .callout.assumptions:before{background: linear-gradient(180deg, var(--good), var(--accent))}
+    .callout.mistakes:before{background: linear-gradient(180deg, var(--warn), var(--bad))}
+    .callout.final:before{background: linear-gradient(180deg, var(--accent2), var(--good))}
+    .callout code{font-family: var(--mono); color: var(--text)}
+    .eqBlock{
+      margin: 10px 0;
+      border: 1px dashed rgba(255,255,255,.18);
+      background: rgba(0,0,0,.18);
+      border-radius: 16px;
+      padding: 10px 10px 10px;
+      position:relative;
+    }
+    .eqTitle{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom: 6px;
+    }
+    .eqTitle span{
+      font-size:.92rem;
+      color: var(--text);
+      opacity:.95;
+      font-weight: 600;
+    }
+    pre.eq{
+      margin: 0;
+      padding: 6px 6px 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: var(--mono);
+      font-size: .95rem;
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .btn{
+      cursor:pointer;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: .86rem;
+      transition: transform .14s ease, background .14s ease, border-color .14s ease;
+      user-select:none;
+      white-space: nowrap;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,.35);
+      background: rgba(125,211,252,.10);
+    }
+    .btn:active{transform: translateY(0px) scale(.99)}
+    .mini{
+      font-size: .86rem;
+      color: var(--faint);
+      margin-top: 4px;
+    }
+
+    .vizCard{
+      background: rgba(18,28,46,.72);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow:hidden;
+      margin: 10px 0 14px;
+    }
+    .vizHeader{
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line2);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .vizHeader .t{
+      font-weight:700;
+      color: var(--text);
+      font-size: .98rem;
+    }
+    .vizBody{padding: 10px 12px 12px}
+    canvas{
+      width:100%;
+      height: 320px;
+      display:block;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .small canvas{height: 240px}
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 560px){ .controls{grid-template-columns:1fr} }
+
+    .ctrl{
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,.03);
+      border-radius: 16px;
+      padding: 10px 10px 8px;
+    }
+    label{
+      display:flex;
+      justify-content: space-between;
+      gap:10px;
+      font-size:.9rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    input[type="range"]{width:100%}
+    select{
+      width:100%;
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius: 12px;
+      padding: 8px 10px;
+      outline:none;
+    }
+    .statusRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top: 10px;
+    }
+    .pill{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .pill b{color: var(--text)}
+    .pill.good{border-color: rgba(52,211,153,.35); background: rgba(52,211,153,.10)}
+    .pill.bad{border-color: rgba(251,113,133,.35); background: rgba(251,113,133,.10)}
+    .pill.warn{border-color: rgba(251,191,36,.35); background: rgba(251,191,36,.10)}
+    footer{
+      max-width:1180px;
+      margin: 0 auto;
+      padding: 18px;
+      color: var(--faint);
+      font-size: .9rem;
+      opacity: .95;
+    }
+    @media print{
+      body{background:white; color:black}
+      section, .toc, .titleCard, .vizCard{box-shadow:none; background:white}
+      .toc{position:relative; top:auto}
+      .btn{display:none}
+      canvas{border:1px solid #ccc}
+      a{color:black}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="hero">
+    <div class="titleCard">
+      <div class="meta">
+        <span class="chip">Photonics / Metamaterials</span>
+        <span class="chip">Effective Medium Theory</span>
+        <span class="chip">Drude Metal</span>
+        <span class="chip">Hyperbolic Dispersion</span>
+      </div>
+      <h1>Layered Metal–Dielectric Hyperbolic Metamaterial (Problem 8.3–2)</h1>
+      <p class="subtitle">
+        We model a metal–dielectric multilayer as a uniaxial anisotropic medium. Using effective-medium formulas and a simplified Drude model for the metal permittivity, we show when one tensor component becomes negative while the other stays positive—producing a <b>hyperbolic</b> (open) k-surface.
+      </p>
+      <p class="mini">All equations are shown in plain text (no MathJax). Use the copy buttons to grab key results.</p>
+    </div>
+
+    <nav class="toc" aria-label="Table of Contents">
+      <h2>Contents</h2>
+      <a href="#qs">Quick Summary</a>
+      <a href="#p0">PART 0 — Concept Primer</a>
+      <a href="#p1">PART 1 — Problem Analysis</a>
+      <a href="#p2">PART 2 — Strategy & Tips</a>
+      <a href="#p3">PART 3 — Full Solution</a>
+      <a href="#p4">PART 4 — Deeper Understanding</a>
+      <a href="#p5">PART 5 — Visualization Guide</a>
+      <a href="#viz">Interactive Visualizations</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="content">
+    <section id="qs">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><b>What it’s about:</b> A periodic stack of metal and dielectric layers behaves like an <b>anisotropic</b> effective medium when the period is ≪ wavelength.</li>
+        <li><b>Key idea:</b> The in-plane permittivity uses an <b>arithmetic mean</b>, while the out-of-plane permittivity uses a <b>harmonic mean</b> (series vs parallel field lines).</li>
+        <li><b>Governing effective-medium formulas:</b> ε₁=ε₂=(ε_m d_m + ε_d d_d)/(d_m+d_d), and 1/ε₃=(d_m/ε_m + d_d/ε_d)/(d_m+d_d).</li>
+        <li><b>Metal model:</b> Simplified Drude: ε_m(ω)=ε∞ − ω_p²/(ω² + iγω) (lossless limit: ε_m≈ε∞(1 − ω_p²/ω²)).</li>
+        <li><b>Hyperbolic condition:</b> The extraordinary-wave dispersion becomes hyperbolic when <b>ε₁·ε₃ &lt; 0</b> (opposite signs).</li>
+        <li><b>Which component is negative?</b> Depends on frequency ω and metal fill fraction f=d_m/(d_m+d_d): either <b>ε₃&lt;0 with ε₁&gt;0</b> (Type I) or <b>ε₁&lt;0 with ε₃&gt;0</b> (Type II).</li>
+        <li><b>Final result type:</b> Symbolic sign-conditions + qualitative <b>k-surface sketch</b> (hyperboloid), supported by interactive plots (example parameters).</li>
+      </ul>
+    </section>
+
+    <section id="p0">
+      <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+      <h3>0.1 Core definitions (symbols & units)</h3>
+      <ul>
+        <li><b>Permittivity tensor (relative):</b> for a uniaxial medium with optic axis z,
+          <span style="font-family:var(--mono);color:var(--text)">ε̿ = diag(ε₁, ε₁, ε₃)</span> (dimensionless).</li>
+        <li><b>Wavevector:</b> <span style="font-family:var(--mono);color:var(--text)">k = (k_x, k_y, k_z)</span> with units 1/m.</li>
+        <li><b>Free-space wavenumber:</b> <span style="font-family:var(--mono);color:var(--text)">k₀ = ω/c</span> (1/m).</li>
+        <li><b>Metal plasma frequency:</b> <span style="font-family:var(--mono);color:var(--text)">ω_p</span> (rad/s), sets where the metal permittivity changes sign.</li>
+        <li><b>Layer thicknesses:</b> metal <span style="font-family:var(--mono);color:var(--text)">d_m</span>, dielectric <span style="font-family:var(--mono);color:var(--text)">d_d</span> (m). Period <span style="font-family:var(--mono);color:var(--text)">a=d_m+d_d</span>.</li>
+        <li><b>Fill fraction:</b> <span style="font-family:var(--mono);color:var(--text)">f = d_m/(d_m+d_d)</span> (dimensionless).</li>
+      </ul>
+
+      <h3>0.2 Physical meaning (what these quantities represent)</h3>
+      <ul>
+        <li><b>ε₁ (in-plane):</b> how easily the medium polarizes for electric fields parallel to the layers (x,y directions).</li>
+        <li><b>ε₃ (out-of-plane):</b> how easily the medium polarizes for electric fields normal to layers (z direction).</li>
+        <li><b>Hyperbolic dispersion:</b> when the medium acts “metal-like” in one direction (negative ε component) and “dielectric-like” in the orthogonal direction (positive ε component), the allowed k-vectors form an <b>open surface</b>, enabling very large transverse wavevectors (high-k modes).</li>
+      </ul>
+
+      <h3>0.3 Key laws/principles & validity</h3>
+      <div class="callout assumptions">
+        <strong>Effective-medium approximation (EMA):</strong>
+        We treat the multilayer as homogeneous when the unit cell is much smaller than the wavelength inside the structure:
+        <span style="font-family:var(--mono);color:var(--text)">a = d_m + d_d ≪ λ</span>.
+        Under EMA, fields vary slowly across one period, so averaged constitutive relations are meaningful.
+      </div>
+      <ul>
+        <li><b>Maxwell + plane waves in anisotropic media:</b> lead to direction-dependent dispersion relations.</li>
+        <li><b>Boundary-condition intuition for averaging:</b>
+          <ul>
+            <li>For fields <b>parallel</b> to layers, E is approximately continuous, D averages → <b>arithmetic mean</b>.</li>
+            <li>For fields <b>normal</b> to layers, D is approximately continuous, E averages → <b>harmonic mean</b>.</li>
+          </ul>
+        </li>
+      </ul>
+
+      <h3>0.4 Common models/approximations</h3>
+      <ul>
+        <li><b>Drude metal:</b> captures free-electron response. In simplified lossless form:
+          <span style="font-family:var(--mono);color:var(--text)">ε_m(ω) ≈ ε∞ (1 − ω_p²/ω²)</span>.
+          Below the “plasma edge,” ε_m becomes negative.</li>
+        <li><b>Small-loss correction:</b> include damping γ to make ε_m complex:
+          <span style="font-family:var(--mono);color:var(--text)">ε_m(ω)=ε∞ − ω_p²/(ω²+iγω)</span>.
+          Hyperbolicity is mainly about the <b>sign of Re(ε)</b>, but losses limit propagation length.</li>
+      </ul>
+
+      <h3>0.5 Mini intuition examples (conceptual)</h3>
+      <ul>
+        <li><b>Parallel vs series capacitors:</b> Layers with in-plane E behave like capacitors in parallel → arithmetic mean of ε. Normal E behaves like capacitors in series → harmonic mean.</li>
+        <li><b>Sign mixing:</b> If the metal has ε_m&lt;0 and the dielectric has ε_d&gt;0, the arithmetic mean may remain positive (if metal fraction is small), while the harmonic mean can flip sign in a different parameter range. That sign mismatch is the origin of hyperbolic media.</li>
+      </ul>
+
+      <div class="callout mistakes">
+        <strong>What to watch for (pitfalls):</strong>
+        <ul>
+          <li>Confusing which component uses arithmetic vs harmonic mean (it depends on field direction relative to layers).</li>
+          <li>For wave dispersion, hyperbolicity refers to the <b>extraordinary (TM-like)</b> wave surface, not the ordinary wave.</li>
+          <li>Ignoring that ε_m can be complex; sign discussions typically use <b>Re(ε)</b> (but losses matter physically).</li>
+          <li>Mixing conventions: some texts swap “parallel/perpendicular” naming. Here: ε₁=ε₂ are <b>in-plane</b>, ε₃ is <b>normal</b>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="p1">
+      <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+      <h3>1.1 Restate the problem (in plain words)</h3>
+      <p>
+        We have a multilayer stack: alternating metal and dielectric planar layers. Under an effective-medium approximation, the stack behaves as a uniaxial anisotropic medium with tensor components ε₁=ε₂ (in the plane) and ε₃ (normal). Using the given mixing formulas and a simplified Drude model for the metal, we must show the structure can act as a <b>hyperbolic material</b>, determine whether ε₁ or ε₃ becomes negative, and sketch the <b>k-surface</b> (dispersion surface).
+      </p>
+
+      <div class="grid2">
+        <div>
+          <h3>1.2 Given</h3>
+          <ul>
+            <li>Metal permittivity: <span style="font-family:var(--mono);color:var(--text)">ε_m(ω)</span> (Drude).</li>
+            <li>Dielectric permittivity: <span style="font-family:var(--mono);color:var(--text)">ε_d &gt; 0</span> (assume real for simplicity).</li>
+            <li>Thicknesses: <span style="font-family:var(--mono);color:var(--text)">d_m, d_d</span>.</li>
+            <li>EMA mixing:
+              <span style="font-family:var(--mono);color:var(--text)">ε₁=ε₂=(ε_m d_m + ε_d d_d)/(d_m+d_d)</span>,
+              <span style="font-family:var(--mono);color:var(--text)">1/ε₃=(d_m/ε_m + d_d/ε_d)/(d_m+d_d)</span>.
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h3>1.3 Unknowns / tasks</h3>
+          <ul>
+            <li>Show there exist ω and layer ratios such that the effective medium is <b>hyperbolic</b>.</li>
+            <li>Identify which component (ε₁ or ε₃) is negative in that regime.</li>
+            <li>Sketch/describe the <b>k-surface</b> (open hyperboloid).</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>1.4 Relevant physics & why it applies</h3>
+      <ul>
+        <li><b>EMA / homogenization:</b> Because the layers are subwavelength, the structure can be replaced by an effective ε tensor.</li>
+        <li><b>Drude model:</b> Gives a frequency range where the metal’s real permittivity is negative, enabling anisotropic sign mixing.</li>
+        <li><b>Anisotropic dispersion relation:</b> In a uniaxial dielectric tensor, the extraordinary wave satisfies a quadratic form in k; opposite signs produce hyperbolae/hyperboloids.</li>
+      </ul>
+
+      <div class="callout assumptions">
+        <strong>Assumptions we will use:</strong>
+        <ul>
+          <li>Period <span style="font-family:var(--mono);color:var(--text)">a=d_m+d_d ≪ λ</span> so EMA holds.</li>
+          <li>Non-magnetic layers: <span style="font-family:var(--mono);color:var(--text)">μ≈μ₀</span>.</li>
+          <li>Linear, isotropic layers individually; anisotropy arises only from stacking.</li>
+          <li>For sign arguments, we focus on <span style="font-family:var(--mono);color:var(--text)">Re(ε)</span> (lossless or small-loss Drude).</li>
+        </ul>
+      </div>
+
+      <h3>1.5 Possible approaches (compare)</h3>
+      <ul>
+        <li><b>(A) Direct sign analysis</b> of ε₁ and ε₃ using Drude ε_m(ω) and fill fraction f. <i>Pros:</i> fast, transparent for “which component is negative.” <i>Cons:</i> doesn’t automatically show k-surface geometry unless we add dispersion.</li>
+        <li><b>(B) Dispersion-first approach</b> deriving the extraordinary-wave dispersion and then mapping signs to conic sections. <i>Pros:</i> directly yields the k-surface shape. <i>Cons:</i> still needs ε sign conditions.</li>
+        <li><b>(C) Energy/impedance viewpoint</b> (series/parallel capacitor analogy) to motivate arithmetic vs harmonic means and sign behavior. <i>Pros:</i> strong intuition. <i>Cons:</i> not as explicit for the final hyperbolic dispersion equation.</li>
+      </ul>
+      <p>
+        <b>We choose (A)+(B):</b> first compute/interpret ε₁, ε₃ vs ω and f; then plug into the anisotropic dispersion relation to identify the k-surface (hyperboloid type).
+      </p>
+    </section>
+
+    <section id="p2">
+      <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+      <ol style="color:var(--muted); margin-left: 18px;">
+        <li><b>Rewrite the EMA in terms of fill fraction</b> <span style="font-family:var(--mono);color:var(--text)">f=d_m/(d_m+d_d)</span>.
+          <br><span class="mini">Tool: algebra; meaning: separates geometry (f) from material response (ε_m, ε_d).</span></li>
+        <li><b>Insert Drude ε_m(ω)</b> and identify frequency ranges where <span style="font-family:var(--mono);color:var(--text)">Re(ε_m)&lt;0</span>.
+          <br><span class="mini">Tool: Drude sign; meaning: metal-like response below plasma edge.</span></li>
+        <li><b>Determine sign of ε₁</b> from the arithmetic mean.
+          <br><span class="mini">Tool: inequality; meaning: whether in-plane behaves metal-like or dielectric-like.</span></li>
+        <li><b>Determine sign of ε₃</b> from the harmonic mean (sign of its denominator).
+          <br><span class="mini">Tool: inequality on <span style="font-family:var(--mono);color:var(--text)">f/ε_m + (1-f)/ε_d</span>; meaning: normal response can flip sign differently than ε₁.</span></li>
+        <li><b>State hyperbolic condition</b> <span style="font-family:var(--mono);color:var(--text)">ε₁·ε₃&lt;0</span> and classify Type I vs II.
+          <br><span class="mini">Tool: sign product; meaning: open k-surface exists for extraordinary waves.</span></li>
+        <li><b>Write the extraordinary-wave dispersion</b> for uniaxial ε̿ and show it becomes a hyperboloid.
+          <br><span class="mini">Tool: anisotropic plane-wave dispersion; meaning: “k-surface sketch.”</span></li>
+        <li><b>Sanity checks</b>: limiting cases f→0 and f→1; ω≫ω_p (metal becomes dielectric-like); units.
+          <br><span class="mini">Tool: limiting analysis; meaning: confirms the formulas behave sensibly.</span></li>
+      </ol>
+
+      <div class="callout mistakes">
+        <strong>Quick tips / common mistakes:</strong>
+        <ul>
+          <li>When checking ε₃ sign, don’t look at ε₃ directly—look at the <b>denominator</b> of 1/ε₃.</li>
+          <li>Hyperbolicity is about <b>opposite signs</b>, not about large magnitudes.</li>
+          <li>For real materials, losses mean ε is complex: hyperbolicity typically uses <b>Re(ε)</b>, but propagation lengths depend on Im(ε).</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="p3">
+      <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+      <h3>3.1 Physical intuition (before math)</h3>
+      <p>
+        Below a metal’s plasma edge, the metal has <span style="font-family:var(--mono);color:var(--text)">Re(ε_m)&lt;0</span>, while the dielectric has <span style="font-family:var(--mono);color:var(--text)">ε_d&gt;0</span>.
+        In a layered system, fields parallel to layers “see” the materials in parallel (arithmetic mean), so the in-plane response can stay positive if the dielectric fraction is big enough.
+        But fields normal to layers “see” the materials in series (harmonic mean), so the out-of-plane response can flip sign under a different condition.
+        When one component is positive and the other is negative, the dispersion relation becomes <b>hyperbolic</b> (open surface), allowing large transverse k.
+      </p>
+
+      <h3>3.2 Rewrite the EMA using fill fraction f</h3>
+      <p>Define the metal fill fraction:</p>
+      <div class="eqBlock" data-copy="f = d_m/(d_m + d_d)">
+        <div class="eqTitle">
+          <span>Definition (geometry)</span>
+          <button class="btn copyBtn" type="button">Copy</button>
+        </div>
+        <pre class="eq">f = d_m/(d_m + d_d) ,    1−f = d_d/(d_m + d_d)</pre>
+      </div>
+
+      <p>Then the effective components become:</p>
+      <div class="eqBlock" data-copy="ε1 = ε2 = f εm + (1−f) εd">
+        <div class="eqTitle">
+          <span>In-plane (arithmetic mean)</span>
+          <button class="btn copyBtn" type="button">Copy</button>
+        </div>
+        <pre class="eq">ε1 = ε2 = (εm d_m + εd d_d)/(d_m + d_d) = f εm + (1−f) εd</pre>
+      </div>
+
+      <div class="eqBlock" data-copy="ε3 = 1 / ( f/εm + (1−f)/εd )">
+        <div class="eqTitle">
+          <span>Out-of-plane (harmonic mean)</span>
+          <button class="btn copyBtn" type="button">Copy</button>
+        </div>
+        <pre class="eq">1/ε3 = (d_m/εm + d_d/εd)/(d_m + d_d) = f/εm + (1−f)/εd
+⇒  ε3 = 1 / ( f/εm + (1−f)/εd )</pre>
+      </div>
+
+      <p class="mini">
+        <b>Why two different means?</b> Parallel-to-layer fields average D, while normal-to-layer fields average E due to boundary conditions—mirroring parallel vs series capacitor combinations.
+      </p>
+
+      <h3>3.3 Insert the simplified Drude model and find where εm is negative</h3>
+      <p>Use a simplified Drude metal:</p>
+      <div class="eqBlock" data-copy="εm(ω) = ε∞ − ωp^2/(ω^2 + i γ ω)  (lossless: εm≈ε∞(1 − ωp^2/ω^2))">
+        <div class="eqTitle">
+          <span>Drude metal permittivity</span>
+          <button class="btn copyBtn" type="button">Copy</button>
+        </div>
+        <pre class="eq">εm(ω) = ε∞ − ωp^2/(ω^2 + i γ ω)
+
+Lossless limit (γ→0):
+Re(εm) ≈ ε∞(1 − ωp^2/ω^2)</pre>
+      </div>
+
+      <p>
+        In the lossless limit, <span style="font-family:var(--mono);color:var(--text)">εm(ω)=0</span> occurs at
+        <span style="font-family:var(--mono);color:var(--text)">ω = ωp/√ε∞</span>.
+        For <span style="font-family:var(--mono);color:var(--text)">ω &lt; ωp/√ε∞</span>, we have <span style="font-family:var(--mono);color:var(--text)">Re(εm)&lt;0</span>.
+      </p>
+
+      <h3>3.4 Sign of ε1 (in-plane)</h3>
+      <p>
+        Using <span style="font-family:var(--mono);color:var(--text)">ε1 = f εm + (1−f) εd</span>, with εd&gt;0 and (below plasma edge) εm&lt;0:
+      </p>
+
+      <div class="eqBlock" data-copy="ε1 < 0  ⇔  f |εm| > (1−f) εd  ⇔  f > εd/(εd + |εm|)">
+        <div class="eqTitle">
+          <span>Condition for ε1 to be negative</span>
+          <button class="btn copyBtn" type="button">Copy</button>
+        </div>
+        <pre class="eq">Assume Re(εm) < 0 and εd > 0.
+
+ε1 = f εm + (1−f) εd < 0
+⇔ (1−f) εd < f |εm|
+⇔ f > εd / (εd + |εm|)</pre>
+      </div>
+
+      <p class="mini">
+        <b>Meaning:</b> ε1 becomes negative only if the metal fraction is large enough (or |εm| not too huge). If metal fraction is small, the dielectric dominates in-plane and ε1 stays positive.
+      </p>
+
+      <h3>3.5 Sign of ε3 (out-of-plane)</h3>
+      <p>
+        Since <span style="font-family:var(--mono);color:var(--text)">ε3 = 1 / ( f/εm + (1−f)/εd )</span>, its sign is the sign of the denominator:
+      </p>
+
+      <div class="eqBlock" data-copy="ε3 < 0  ⇔  f/εm + (1−f)/εd < 0  ⇔  f > |εm|/(|εm| + εd)  (when εm<0)">
+        <div class="eqTitle">
+          <span>Condition for ε3 to be negative</span>
+          <button class="btn copyBtn" type="button">Copy</button>
+        </div>
+        <pre class="eq">Assume Re(εm) < 0 and εd > 0.
+
+ε3 < 0  ⇔  f/εm + (1−f)/εd < 0
+
+Because εm < 0, write εm = −|εm|:
+
+f/(−|εm|) + (1−f)/εd < 0
+⇔ (1−f)/εd < f/|εm|
+⇔ |εm|(1−f) < f εd
+⇔ f > |εm| / (|εm| + εd)</pre>
+      </div>
+
+      <p class="mini">
+        <b>Meaning:</b> To make ε3 negative, the metal fraction must exceed a (different) threshold. Notice the threshold involves |εm| in the numerator, so it can behave quite differently than ε1’s condition as ω changes.
+      </p>
+
+      <h3>3.6 Hyperbolic condition and “which component is negative?”</h3>
+      <p>
+        The medium is <b>hyperbolic</b> when the principal components have opposite signs:
+      </p>
+
+      <div class="eqBlock" data-copy="Hyperbolic (extraordinary wave):  Re(ε1)·Re(ε3) < 0">
+        <div class="eqTitle">
+          <span>Hyperbolicity criterion (sign-mismatch)</span>
+          <button class="btn copyBtn" type="button">Copy</button>
+        </div>
+        <pre class="eq">Hyperbolic regime (using signs of real parts):
+Re(ε1) · Re(ε3) < 0</pre>
+      </div>
+
+      <p>
+        There are two common cases (often called “Type I” and “Type II”):
+      </p>
+      <ul>
+        <li><b>Type I:</b> <span style="font-family:var(--mono);color:var(--text)">ε1&gt;0</span>, <span style="font-family:var(--mono);color:var(--text)">ε3&lt;0</span> → two-sheet hyperboloid in k-space (open along ±kz).</li>
+        <li><b>Type II:</b> <span style="font-family:var(--mono);color:var(--text)">ε1&lt;0</span>, <span style="font-family:var(--mono);color:var(--text)">ε3&gt;0</span> → one-sheet hyperboloid (open in transverse directions).</li>
+      </ul>
+
+      <p>
+        <b>Which component is negative?</b> It depends on ω and f:
+        <br>
+        • If f is moderate and εm is negative but not overwhelmingly so, you can have <b>ε3&lt;0 while ε1&gt;0</b> (Type I).
+        <br>
+        • If f is larger (or εm is such that the arithmetic mean flips), you can have <b>ε1&lt;0 while ε3&gt;0</b> (Type II).
+        <br>
+        The interactive plots below illustrate these sign regions using example values.
+      </p>
+
+      <h3>3.7 k-surface (dispersion) and the hyperboloid shape</h3>
+      <p>
+        For a uniaxial, non-magnetic medium with <span style="font-family:var(--mono);color:var(--text)">ε̿=diag(ε1,ε1,ε3)</span>,
+        the extraordinary (TM-like) wave satisfies (one standard form):
+      </p>
+
+      <div class="eqBlock" data-copy="(k_x^2 + k_y^2)/ε3 + (k_z^2)/ε1 = k0^2  ,  k0=ω/c">
+        <div class="eqTitle">
+          <span>Extraordinary-wave dispersion (k-surface)</span>
+          <button class="btn copyBtn" type="button">Copy</button>
+        </div>
+        <pre class="eq">(k_x^2 + k_y^2)/ε3 + (k_z^2)/ε1 = k0^2
+where k0 = ω/c</pre>
+      </div>
+
+      <p>
+        Let <span style="font-family:var(--mono);color:var(--text)">k_t^2 = k_x^2 + k_y^2</span>. Then:
+        <span style="font-family:var(--mono);color:var(--text)">k_t^2/ε3 + k_z^2/ε1 = k0^2</span>.
+      </p>
+
+      <p>
+        Now see what happens if ε1 and ε3 have opposite signs:
+      </p>
+      <ul>
+        <li>If <span style="font-family:var(--mono);color:var(--text)">ε1&gt;0</span> and <span style="font-family:var(--mono);color:var(--text)">ε3&lt;0</span>:
+          <span style="font-family:var(--mono);color:var(--text)">k_z^2/ε1 − k_t^2/|ε3| = k0^2</span> → <b>two-sheet hyperboloid</b>.</li>
+        <li>If <span style="font-family:var(--mono);color:var(--text)">ε1&lt;0</span> and <span style="font-family:var(--mono);color:var(--text)">ε3&gt;0</span>:
+          <span style="font-family:var(--mono);color:var(--text)">k_t^2/ε3 − k_z^2/|ε1| = k0^2</span> → <b>one-sheet hyperboloid</b>.</li>
+      </ul>
+
+      <div class="callout final">
+        <strong>Final Answer (what you would “write on the exam”):</strong>
+        <div class="eqBlock" data-copy="Using EMA: ε1=ε2=f εm+(1−f)εd and ε3=1/(f/εm+(1−f)/εd). With Drude εm(ω)≈ε∞(1−ωp^2/ω^2), there exists ω<ωp/√ε∞ where Re(εm)<0. For suitable fill fraction f, Re(ε1) and Re(ε3) can have opposite signs, i.e. Re(ε1)·Re(ε3)<0, giving a hyperbolic metamaterial. The extraordinary-wave k-surface satisfies (k_x^2+k_y^2)/ε3 + k_z^2/ε1 = k0^2, which becomes a hyperboloid when ε1 and ε3 have opposite signs (Type I: ε1>0, ε3<0; Type II: ε1<0, ε3>0).">
+          <div class="eqTitle">
+            <span>Copy-ready final statement</span>
+            <button class="btn copyBtn" type="button">Copy</button>
+          </div>
+          <pre class="eq">Using EMA:
+ε1=ε2=f εm+(1−f)εd ,  ε3=1/( f/εm + (1−f)/εd ).
+
+With Drude (lossless) εm(ω)≈ε∞(1−ωp^2/ω^2), there exists ω<ωp/√ε∞ where Re(εm)<0.
+For suitable fill fraction f, Re(ε1) and Re(ε3) can have opposite signs ⇒ Re(ε1)·Re(ε3)<0,
+so the structure behaves as a hyperbolic metamaterial.
+
+The extraordinary-wave k-surface:
+(k_x^2+k_y^2)/ε3 + k_z^2/ε1 = k0^2 (k0=ω/c),
+which becomes a hyperboloid when ε1 and ε3 have opposite signs
+(Type I: ε1>0, ε3<0; Type II: ε1<0, ε3>0).</pre>
+        </div>
+      </div>
+
+      <h3>3.8 Sanity checks</h3>
+      <ul>
+        <li><b>Units:</b> ε’s are dimensionless. Dispersion has k² on the left and k0² on the right → consistent.</li>
+        <li><b>Limiting f→0:</b> mostly dielectric → ε1→εd, ε3→εd (isotropic dielectric).</li>
+        <li><b>Limiting f→1:</b> mostly metal → ε1→εm, ε3→εm (isotropic metal).</li>
+        <li><b>High frequency ω≫ωp:</b> Drude gives εm→ε∞ (positive) → both ε1, ε3 become positive → ordinary ellipsoid (not hyperbolic).</li>
+      </ul>
+
+      <p class="mini">
+        Connection to the diagram/plots: the layering defines the anisotropy axis (z). The k-surface plot you’ll see is a cross-section in the (k_t, k_z) plane of the dispersion above.
+      </p>
+    </section>
+
+    <section id="p4">
+      <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+      <h3>4.1 Re-interpreting the formulas</h3>
+      <ul>
+        <li><b>ε1 = f εm + (1−f) εd</b>: linear blending → in-plane response is dominated by whichever constituent occupies more volume (weighted by f).</li>
+        <li><b>ε3 = 1 / ( f/εm + (1−f)/εd )</b>: series-type blending → the smaller-magnitude denominator term can dominate, so ε3 may change sign in a different band than ε1.</li>
+        <li><b>ω controls εm(ω)</b>: by tuning frequency, the metal can move from negative to positive permittivity, switching hyperbolic behavior on/off.</li>
+      </ul>
+
+      <h3>4.2 Parameter effects (connect to plots)</h3>
+      <ul>
+        <li><b>Increase f (more metal):</b> ε1 tends to decrease (more negative), and ε3 can also flip depending on the denominator—hyperbolic region shifts.</li>
+        <li><b>Increase ω/ωp:</b> εm becomes less negative and eventually positive; hyperbolicity typically disappears above the plasma edge.</li>
+        <li><b>Increase εd:</b> pushes the mixture more dielectric-like; tends to require larger f to flip signs.</li>
+        <li><b>Include damping γ:</b> introduces Im(εm); Re(ε) sign patterns remain, but loss makes high-k waves strongly attenuated.</li>
+      </ul>
+
+      <h3>4.3 Alternative derivation idea (brief)</h3>
+      <p>
+        You can derive the EMA formulas by applying Maxwell boundary conditions to a single period and averaging fields:
+        for in-plane E, E is continuous → average D gives arithmetic mean; for normal D, D is continuous → average E gives harmonic mean.
+        This is mathematically equivalent to effective capacitance of layered media.
+      </p>
+
+      <h3>4.4 Concept checks (quick self-test)</h3>
+      <ul>
+        <li><b>Q:</b> Why can ε1 and ε3 have different signs? <b>A:</b> Because they are formed by different averages (arithmetic vs harmonic) and respond differently when one constituent has ε&lt;0.</li>
+        <li><b>Q:</b> If ε1=ε3&gt;0, what is the k-surface? <b>A:</b> A closed ellipsoid (ordinary dielectric-like dispersion).</li>
+        <li><b>Q:</b> What does “open k-surface” imply physically? <b>A:</b> It allows very large transverse k (high spatial frequencies), enabling subwavelength field variation (though losses limit it).</li>
+        <li><b>Q:</b> Does hyperbolicity require ε to be real? <b>A:</b> No, but sign discussions usually use Re(ε); Im(ε) determines attenuation.</li>
+      </ul>
+    </section>
+
+    <section id="p5">
+      <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+      <ul>
+        <li><b>Diagram canvas:</b> shows alternating metal and dielectric layers. The z-axis is normal to layers; ε1 (x,y) is in-plane, ε3 is along z.</li>
+        <li><b>Main plot (Permittivity vs frequency):</b> displays Re(εm), Re(ε1), Re(ε3) versus normalized frequency ω/ωp (using example values). The vertical cursor marks your chosen ω/ωp.</li>
+        <li><b>Secondary plot (k-surface cross-section):</b> plots the dispersion cross-section in (k_t, k_z) for the chosen ω and f using
+          <span style="font-family:var(--mono);color:var(--text)">k_t^2/ε3 + k_z^2/ε1 = k0^2</span>.
+          If the curve opens (hyperbola), you are in a hyperbolic regime.</li>
+        <li><b>Parameter-sweep map:</b> heatmap over (ω/ωp, f) labeling regions:
+          ellipsoidal (both positive), metallic (both negative), and hyperbolic (opposite signs).</li>
+        <li><b>Interactive controls:</b> change the frequency ω/ωp and metal fill fraction f. All canvases update live; the status pills report the signs and “Type I/II” classification.</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="side">
+    <section id="viz">
+      <h2>Interactive Visualizations</h2>
+      <p class="mini">Example plotting parameters (editable below): εd=4, ε∞=1.0. You can toggle loss model.</p>
+
+      <div class="controls" aria-label="Controls">
+        <div class="ctrl">
+          <label for="freq">
+            <span>Normalized frequency <b>ω/ωp</b></span>
+            <span id="freqVal" style="font-family:var(--mono);color:var(--text)">0.55</span>
+          </label>
+          <input id="freq" type="range" min="0.20" max="1.20" value="0.55" step="0.005" />
+          <div class="mini">Below ~1, the Drude metal can have Re(εm)&lt;0 (depends on ε∞).</div>
+        </div>
+
+        <div class="ctrl">
+          <label for="fill">
+            <span>Metal fill fraction <b>f</b></span>
+            <span id="fillVal" style="font-family:var(--mono);color:var(--text)">0.35</span>
+          </label>
+          <input id="fill" type="range" min="0.02" max="0.98" value="0.35" step="0.005" />
+          <div class="mini">f = d_m/(d_m+d_d). Larger f generally drives ε1 more negative.</div>
+        </div>
+
+        <div class="ctrl">
+          <label for="lossModel">
+            <span>Metal model</span>
+            <span id="lossVal" style="font-family:var(--mono);color:var(--text)">Lossless</span>
+          </label>
+          <select id="lossModel">
+            <option value="lossless" selected>Lossless Drude (γ=0)</option>
+            <option value="lossy">Lossy Drude (γ = 0.04 ωp)</option>
+          </select>
+          <div class="mini">Plots use Re(ε) for sign/hyperbolicity; losses add Im(εm).</div>
+        </div>
+
+        <div class="ctrl">
+          <label for="epsd">
+            <span>Dielectric permittivity <b>εd</b></span>
+            <span id="epsdVal" style="font-family:var(--mono);color:var(--text)">4.00</span>
+          </label>
+          <input id="epsd" type="range" min="1.5" max="12" value="4" step="0.05" />
+          <div class="mini">Higher εd makes the mixture more dielectric-like (shifts sign boundaries).</div>
+        </div>
+      </div>
+
+      <div class="statusRow" aria-live="polite">
+        <span class="pill" id="pillEpsm">Re(εm)=…</span>
+        <span class="pill" id="pillEps1">Re(ε1)=…</span>
+        <span class="pill" id="pillEps3">Re(ε3)=…</span>
+        <span class="pill" id="pillType">Regime: …</span>
+      </div>
+
+      <div class="vizCard">
+        <div class="vizHeader">
+          <div class="t">Diagram: Layered stack & anisotropy axis</div>
+          <button class="btn" id="btnReset" type="button">Reset defaults</button>
+        </div>
+        <div class="vizBody small">
+          <canvas id="cDiagram" aria-label="Layer diagram"></canvas>
+        </div>
+      </div>
+
+      <div class="vizCard">
+        <div class="vizHeader">
+          <div class="t">Main plot: Re(εm), Re(ε1), Re(ε3) vs ω/ωp</div>
+          <button class="btn" id="btnCopyState" type="button">Copy current numbers</button>
+        </div>
+        <div class="vizBody">
+          <canvas id="cMain" aria-label="Permittivity plot"></canvas>
+        </div>
+      </div>
+
+      <div class="vizCard">
+        <div class="vizHeader">
+          <div class="t">Secondary plot: k-surface cross-section (kz vs kt)</div>
+          <span class="mini" style="margin:0">Units: k normalized by k0</span>
+        </div>
+        <div class="vizBody">
+          <canvas id="cK" aria-label="k-surface plot"></canvas>
+        </div>
+      </div>
+
+      <div class="vizCard">
+        <div class="vizHeader">
+          <div class="t">Parameter sweep: sign map in (ω/ωp, f)</div>
+          <span class="mini" style="margin:0">Hyperbolic = opposite signs</span>
+        </div>
+        <div class="vizBody">
+          <canvas id="cMap" aria-label="Hyperbolic region map"></canvas>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Note on “example values”:</strong>
+        <p style="margin:8px 0 0;color:var(--muted)">
+          The problem statement is symbolic. The plots choose reasonable example parameters to visualize sign changes.
+          The <b>final analytic conditions</b> in the solution remain symbolic.
+        </p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div>
+    Built as a self-contained learning article (vanilla HTML/CSS/JS). Visuals are interactive and update with frequency and fill fraction.
+  </div>
+</footer>
+
+<script>
+(() => {
+  // ---------- helpers ----------
+  const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+  const lerp = (a,b,t)=>a+(b-a)*t;
+
+  function complex(re, im){ return {re, im}; }
+  function cAdd(a,b){ return complex(a.re+b.re, a.im+b.im); }
+  function cSub(a,b){ return complex(a.re-b.re, a.im-b.im); }
+  function cMul(a,b){ return complex(a.re*b.re - a.im*b.im, a.re*b.im + a.im*b.re); }
+  function cDiv(a,b){
+    const den = b.re*b.re + b.im*b.im;
+    return complex((a.re*b.re + a.im*b.im)/den, (a.im*b.re - a.re*b.im)/den);
+  }
+  function cInv(a){
+    const den = a.re*a.re + a.im*a.im;
+    return complex(a.re/den, -a.im/den);
+  }
+
+  // ---------- DOM ----------
+  const elFreq = document.getElementById('freq');
+  const elFill = document.getElementById('fill');
+  const elLoss = document.getElementById('lossModel');
+  const elEpsd = document.getElementById('epsd');
+  const elFreqVal = document.getElementById('freqVal');
+  const elFillVal = document.getElementById('fillVal');
+  const elLossVal = document.getElementById('lossVal');
+  const elEpsdVal = document.getElementById('epsdVal');
+
+  const pillEpsm = document.getElementById('pillEpsm');
+  const pillEps1 = document.getElementById('pillEps1');
+  const pillEps3 = document.getElementById('pillEps3');
+  const pillType = document.getElementById('pillType');
+
+  const cDiagram = document.getElementById('cDiagram');
+  const cMain = document.getElementById('cMain');
+  const cK = document.getElementById('cK');
+  const cMap = document.getElementById('cMap');
+
+  // ---------- copy buttons for equations ----------
+  function attachCopyButtons(){
+    document.querySelectorAll('.eqBlock').forEach(block=>{
+      const btn = block.querySelector('.copyBtn');
+      if(!btn) return;
+      btn.addEventListener('click', async ()=>{
+        const txt = block.getAttribute('data-copy') || block.innerText;
+        try{
+          await navigator.clipboard.writeText(txt);
+          const old = btn.textContent;
+          btn.textContent = "Copied ✓";
+          setTimeout(()=>btn.textContent = old, 900);
+        }catch(e){
+          const old = btn.textContent;
+          btn.textContent = "Copy failed";
+          setTimeout(()=>btn.textContent = old, 1000);
+        }
+      });
+    });
+  }
+
+  // ---------- sticky TOC smooth scroll ----------
+  function enableSmoothScroll(){
+    document.querySelectorAll('.toc a[href^="#"]').forEach(a=>{
+      a.addEventListener('click', (ev)=>{
+        ev.preventDefault();
+        const id = a.getAttribute('href').slice(1);
+        const target = document.getElementById(id);
+        if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+  }
+
+  // ---------- canvas utilities ----------
+  function setupCanvas(canvas){
+    const ctx = canvas.getContext('2d');
+    function resize(){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(10, Math.floor(rect.width));
+      const h = Math.max(10, Math.floor(rect.height));
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+      return {w, h, dpr};
+    }
+    return {ctx, resize};
+  }
+
+  function clear(ctx, w, h){
+    ctx.clearRect(0,0,w,h);
+    // subtle background grid tint
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fillRect(0,0,w,h);
+  }
+
+  function roundRect(ctx,x,y,w,h,r){
+    r = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function drawAxes(ctx, plot){
+    const {x0,y0,x1,y1} = plot;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.20)';
+    ctx.lineWidth = 1;
+
+    // border
+    ctx.strokeRect(x0,y0,x1-x0,y1-y0);
+
+    ctx.restore();
+  }
+
+  function drawGrid(ctx, plot, nx=10, ny=8){
+    const {x0,y0,x1,y1} = plot;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+
+    for(let i=1;i<nx;i++){
+      const x = x0 + (x1-x0)*i/nx;
+      ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x,y1); ctx.stroke();
+    }
+    for(let j=1;j<ny;j++){
+      const y = y0 + (y1-y0)*j/ny;
+      ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawTicks(ctx, plot, xMin, xMax, yMin, yMax, nx=5, ny=5){
+    const {x0,y0,x1,y1} = plot;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillStyle = 'rgba(233,240,255,0.75)';
+    ctx.lineWidth = 1;
+    ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+
+    // x ticks
+    for(let i=0;i<=nx;i++){
+      const t=i/nx;
+      const x = lerp(x0,x1,t);
+      ctx.beginPath(); ctx.moveTo(x,y1); ctx.lineTo(x,y1+5); ctx.stroke();
+      const val = lerp(xMin,xMax,t);
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText(formatNum(val,2), x, y1+7);
+    }
+    // y ticks
+    for(let j=0;j<=ny;j++){
+      const t=j/ny;
+      const y = lerp(y1,y0,t);
+      ctx.beginPath(); ctx.moveTo(x0-5,y); ctx.lineTo(x0,y); ctx.stroke();
+      const val = lerp(yMin,yMax,t);
+      ctx.textAlign='right'; ctx.textBaseline='middle';
+      ctx.fillText(formatNum(val,2), x0-7, y);
+    }
+
+    ctx.restore();
+  }
+
+  function drawTitle(ctx, w, text){
+    ctx.save();
+    ctx.fillStyle = 'rgba(233,240,255,0.92)';
+    ctx.font = '700 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.textAlign='left';
+    ctx.textBaseline='top';
+    ctx.fillText(text, 12, 10);
+    ctx.restore();
+  }
+
+  function drawLabel(ctx, x, y, text, align='left'){
+    ctx.save();
+    ctx.fillStyle = 'rgba(233,240,255,0.80)';
+    ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.textAlign = align;
+    ctx.textBaseline='middle';
+    ctx.fillText(text, x, y);
+    ctx.restore();
+  }
+
+  function formatNum(x, digits=3){
+    if(!isFinite(x)) return '—';
+    const ax = Math.abs(x);
+    if(ax >= 1000) return x.toFixed(0);
+    if(ax >= 100) return x.toFixed(1);
+    if(ax >= 10) return x.toFixed(2);
+    if(ax >= 1) return x.toFixed(digits);
+    return x.toFixed(digits+1);
+  }
+
+  function signClass(x){
+    if(!isFinite(x)) return 'warn';
+    if(x > 0) return 'good';
+    if(x < 0) return 'bad';
+    return 'warn';
+  }
+
+  // ---------- physics model ----------
+  const params = {
+    epsInf: 1.0,
+    gammaNorm: 0.04, // gamma = 0.04 ωp (when lossy)
+  };
+
+  function epsMetal(omegaNorm, model){
+    // ω normalized by ωp, so ω = omegaNorm * ωp, ωp=1 in normalized units
+    const w = omegaNorm;
+    const epsInf = params.epsInf;
+
+    if(model === 'lossy'){
+      const g = params.gammaNorm;
+      // εm = ε∞ − 1/(w^2 + i g w)   (since ωp^2=1 in normalized units)
+      const denom = complex(w*w, g*w);
+      const term = cDiv(complex(1,0), denom);
+      return cSub(complex(epsInf,0), term);
+    }else{
+      // lossless: εm = ε∞ (1 − 1/w^2)
+      const re = epsInf*(1 - 1/(w*w));
+      return complex(re, 0);
+    }
+  }
+
+  function epsEffective(omegaNorm, f, epsd, model){
+    const em = epsMetal(omegaNorm, model);
+    const ed = complex(epsd, 0);
+
+    // ε1 = f εm + (1−f) εd
+    const e1 = cAdd(cMul(complex(f,0), em), cMul(complex(1-f,0), ed));
+
+    // ε3 = 1 / ( f/εm + (1−f)/εd )
+    const term1 = cMul(complex(f,0), cInv(em));
+    const term2 = cMul(complex(1-f,0), cInv(ed));
+    const denom = cAdd(term1, term2);
+    const e3 = cInv(denom);
+
+    return {em, e1, e3};
+  }
+
+  function regimeType(e1re, e3re){
+    if(!(isFinite(e1re) && isFinite(e3re))) return {name:'Invalid', cls:'warn'};
+    if(e1re>0 && e3re>0) return {name:'Ellipsoidal (both +)', cls:'good'};
+    if(e1re<0 && e3re<0) return {name:'Metallic-like (both −)', cls:'bad'};
+    if(e1re>0 && e3re<0) return {name:'Hyperbolic Type I (ε1>0, ε3<0)', cls:'warn'};
+    if(e1re<0 && e3re>0) return {name:'Hyperbolic Type II (ε1<0, ε3>0)', cls:'warn'};
+    return {name:'Boundary (near 0)', cls:'warn'};
+  }
+
+  // ---------- plots ----------
+  const D = setupCanvas(cDiagram);
+  const M = setupCanvas(cMain);
+  const K = setupCanvas(cK);
+  const MAP = setupCanvas(cMap);
+
+  function drawDiagram(state){
+    const {ctx, resize} = D;
+    const {w,h} = resize();
+    clear(ctx,w,h);
+    drawTitle(ctx,w,"Layer stack (metal/dielectric) and tensor components");
+
+    const pad = 16;
+    const x0 = pad, x1 = w-pad;
+    const y0 = 34, y1 = h-pad;
+
+    // stack area
+    const stackW = (x1-x0)*0.62;
+    const stackX = x0;
+    const stackY = y0+8;
+    const stackH = (y1-stackY);
+
+    // draw rounded panel
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    roundRect(ctx, stackX, stackY, stackW, stackH, 14);
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    // layers
+    const nLayers = 10;
+    const layerH = stackH/nLayers;
+    const f = state.f;
+    const metalFracVisual = clamp(f,0.05,0.95);
+
+    for(let i=0;i<nLayers;i++){
+      const y = stackY + i*layerH;
+      const isMetal = (i%2===0);
+      ctx.save();
+      ctx.fillStyle = isMetal ? 'rgba(125,211,252,0.22)' : 'rgba(167,139,250,0.18)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+      roundRect(ctx, stackX+10, y+4, stackW-20, layerH-8, 10);
+      ctx.fill(); ctx.stroke();
+      ctx.restore();
+
+      // label a couple
+      if(i===1){
+        ctx.save();
+        ctx.fillStyle = 'rgba(233,240,255,0.80)';
+        ctx.font = '12px ' + getComputedStyle(document.body).fontFamily;
+        ctx.textAlign='left'; ctx.textBaseline='middle';
+        ctx.fillText('Dielectric (εd > 0)', stackX+20, y+layerH/2);
+        ctx.restore();
+      }
+      if(i===0){
+        ctx.save();
+        ctx.fillStyle = 'rgba(233,240,255,0.80)';
+        ctx.font = '12px ' + getComputedStyle(document.body).fontFamily;
+        ctx.textAlign='left'; ctx.textBaseline='middle';
+        ctx.fillText('Metal (εm(ω), Drude)', stackX+20, y+layerH/2);
+        ctx.restore();
+      }
+    }
+
+    // axis + tensor note
+    const axX = stackX + stackW + 22;
+    const axY = stackY + stackH*0.72;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(233,240,255,0.55)';
+    ctx.lineWidth = 2;
+    // x axis
+    ctx.beginPath(); ctx.moveTo(axX, axY); ctx.lineTo(axX+88, axY); ctx.stroke();
+    // z axis
+    ctx.beginPath(); ctx.moveTo(axX, axY); ctx.lineTo(axX, axY-88); ctx.stroke();
+
+    // arrowheads
+    function arrowHead(x,y,dx,dy){
+      const L = 10;
+      const ang = Math.atan2(dy,dx);
+      ctx.beginPath();
+      ctx.moveTo(x,y);
+      ctx.lineTo(x - L*Math.cos(ang-0.45), y - L*Math.sin(ang-0.45));
+      ctx.lineTo(x - L*Math.cos(ang+0.45), y - L*Math.sin(ang+0.45));
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(233,240,255,0.55)';
+      ctx.fill();
+    }
+    arrowHead(axX+88, axY, 1,0);
+    arrowHead(axX, axY-88, 0,-1);
+
+    ctx.fillStyle = 'rgba(233,240,255,0.80)';
+    ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText('x (in-plane)', axX+92, axY);
+    ctx.fillText('z (normal)', axX-10, axY-92);
+
+    ctx.restore();
+
+    // tensor callout
+    ctx.save();
+    const boxX = axX-8, boxY = stackY + 10;
+    const boxW = x1 - boxX - 2;
+    const boxH = 98;
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    roundRect(ctx, boxX, boxY, boxW, boxH, 14);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = 'rgba(233,240,255,0.92)';
+    ctx.font = '700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText('Effective tensor (uniaxial)', boxX+10, boxY+10);
+
+    ctx.fillStyle = 'rgba(233,240,255,0.78)';
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    ctx.fillText('ε̿ = diag(ε1, ε1, ε3)', boxX+10, boxY+34);
+
+    ctx.fillStyle = 'rgba(233,240,255,0.78)';
+    ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText('ε1 : in-plane (layers)', boxX+10, boxY+58);
+    ctx.fillText('ε3 : normal to layers', boxX+10, boxY+76);
+    ctx.restore();
+
+    // show f
+    ctx.save();
+    ctx.fillStyle = 'rgba(233,240,255,0.80)';
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    ctx.textAlign='left'; ctx.textBaseline='bottom';
+    ctx.fillText(`f = ${formatNum(f,3)}   (metal fraction)`, stackX+12, stackY+stackH-6);
+    ctx.restore();
+  }
+
+  function drawMainPlot(state){
+    const {ctx, resize} = M;
+    const {w,h} = resize();
+    clear(ctx,w,h);
+    drawTitle(ctx,w,"Re(ε) vs ω/ωp (example values)");
+
+    const padL=52, padR=16, padT=40, padB=44;
+    const plot = {x0:padL, y0:padT, x1:w-padR, y1:h-padB};
+
+    drawGrid(ctx, plot, 10, 8);
+    drawAxes(ctx, plot);
+
+    const xMin=0.20, xMax=1.20;
+
+    // compute curves
+    const N=380;
+    const xs = new Array(N);
+    const yEm = new Array(N);
+    const yE1 = new Array(N);
+    const yE3 = new Array(N);
+
+    let yMin=+1e9, yMax=-1e9;
+    for(let i=0;i<N;i++){
+      const x = xMin + (xMax-xMin)*i/(N-1);
+      xs[i]=x;
+      const {em, e1, e3} = epsEffective(x, state.f, state.epsd, state.model);
+      const a = em.re, b = e1.re, c = e3.re;
+      yEm[i]=a; yE1[i]=b; yE3[i]=c;
+      // choose reasonable clamp bounds for visualization
+      for(const v of [a,b,c]){
+        if(isFinite(v)){
+          yMin = Math.min(yMin, v);
+          yMax = Math.max(yMax, v);
+        }
+      }
+    }
+    if(!isFinite(yMin) || !isFinite(yMax)){ yMin=-5; yMax=5; }
+    // pad and clamp extreme spikes (harmonic mean near poles)
+    const span = yMax-yMin || 1;
+    yMin -= 0.12*span; yMax += 0.12*span;
+    yMin = clamp(yMin, -30, 10);
+    yMax = clamp(yMax, -10, 30);
+    if(yMax-yMin < 6){ yMin -= 3; yMax += 3; }
+
+    // ticks
+    drawTicks(ctx, plot, xMin, xMax, yMin, yMax, 5, 5);
+
+    // axis labels
+    drawLabel(ctx, (plot.x0+plot.x1)/2, h-18, 'ω/ωp (dimensionless)', 'center');
+    ctx.save();
+    ctx.translate(16, (plot.y0+plot.y1)/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillStyle = 'rgba(233,240,255,0.80)';
+    ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('Re(ε) (dimensionless)', 0, 0);
+    ctx.restore();
+
+    function X(x){ return plot.x0 + (x-xMin)/(xMax-xMin)*(plot.x1-plot.x0); }
+    function Y(y){ return plot.y1 - (y-yMin)/(yMax-yMin)*(plot.y1-plot.y0); }
+
+    // draw a curve with given style
+    function drawCurve(arr, strokeStyle){
+      ctx.save();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      let started=false;
+      for(let i=0;i<N;i++){
+        const x = X(xs[i]);
+        const y = Y(arr[i]);
+        if(!isFinite(arr[i])){ started=false; continue; }
+        if(!started){ ctx.moveTo(x,y); started=true; }
+        else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // palette via rgba (no hardcoding named colors)
+    drawCurve(yEm, 'rgba(125,211,252,0.92)'); // metal
+    drawCurve(yE1, 'rgba(52,211,153,0.90)');  // eps1
+    drawCurve(yE3, 'rgba(167,139,250,0.92)'); // eps3
+
+    // legend
+    ctx.save();
+    const lx = plot.x0 + 10, ly = plot.y0 + 10;
+    const items = [
+      {name:'Re(εm)', col:'rgba(125,211,252,0.92)'},
+      {name:'Re(ε1)', col:'rgba(52,211,153,0.90)'},
+      {name:'Re(ε3)', col:'rgba(167,139,250,0.92)'},
+    ];
+    ctx.font='12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    items.forEach((it, i)=>{
+      const y = ly + i*18;
+      ctx.strokeStyle = it.col; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(lx+18, y); ctx.stroke();
+      ctx.fillStyle = 'rgba(233,240,255,0.80)';
+      ctx.fillText(it.name, lx+24, y);
+    });
+    ctx.restore();
+
+    // vertical cursor at chosen frequency
+    const xC = state.omega;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+    ctx.lineWidth=1.5;
+    ctx.setLineDash([6,5]);
+    const xc = X(xC);
+    ctx.beginPath(); ctx.moveTo(xc, plot.y0); ctx.lineTo(xc, plot.y1); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(233,240,255,0.82)';
+    ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    ctx.textAlign='center'; ctx.textBaseline='bottom';
+    ctx.fillText(`ω/ωp = ${formatNum(xC,3)}`, xc, plot.y0-6);
+    ctx.restore();
+  }
+
+  function drawKSurface(state){
+    const {ctx, resize} = K;
+    const {w,h} = resize();
+    clear(ctx,w,h);
+    drawTitle(ctx,w,"Extraordinary-wave k-surface (cross-section) — normalized by k0");
+
+    // For visualization: use normalized equation with k0=1:
+    // (kt^2)/ε3 + (kz^2)/ε1 = 1
+    const {e1re, e3re} = state;
+
+    const padL=56, padR=18, padT=40, padB=44;
+    const plot = {x0:padL, y0:padT, x1:w-padR, y1:h-padB};
+    drawGrid(ctx, plot, 10, 8);
+    drawAxes(ctx, plot);
+
+    // choose view window in normalized units
+    const xMin=0, xMax=4.0;     // kt/k0
+    const yMin=-4.0, yMax=4.0;  // kz/k0
+    drawTicks(ctx, plot, xMin, xMax, yMin, yMax, 4, 4);
+
+    drawLabel(ctx, (plot.x0+plot.x1)/2, h-18, 'k_t / k0', 'center');
+    ctx.save();
+    ctx.translate(18, (plot.y0+plot.y1)/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillStyle = 'rgba(233,240,255,0.80)';
+    ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('k_z / k0', 0, 0);
+    ctx.restore();
+
+    function X(x){ return plot.x0 + (x-xMin)/(xMax-xMin)*(plot.x1-plot.x0); }
+    function Y(y){ return plot.y1 - (y-yMin)/(yMax-yMin)*(plot.y1-plot.y0); }
+
+    // draw axes lines at kt=0 and kz=0 inside plot
+    ctx.save();
+    ctx.strokeStyle='rgba(255,255,255,0.20)';
+    ctx.lineWidth=1;
+    // kz=0
+    ctx.beginPath(); ctx.moveTo(plot.x0, Y(0)); ctx.lineTo(plot.x1, Y(0)); ctx.stroke();
+    // kt=0 (left border already)
+    ctx.restore();
+
+    // If not hyperbolic, k-surface cross-section is ellipse; if hyperbolic, hyperbola.
+    // Solve for kz as function of kt:
+    // kz^2 = ε1(1 - kt^2/ε3)
+    // Only real points are drawn.
+    const N=420;
+    ctx.save();
+    const col = 'rgba(251,191,36,0.95)'; // warm highlight
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2.2;
+
+    function drawBranch(sign){
+      ctx.beginPath();
+      let started=false;
+      for(let i=0;i<N;i++){
+        const kt = xMin + (xMax-xMin)*i/(N-1);
+        let rhs = 1 - (kt*kt)/e3re;
+        let kz2 = e1re*rhs;
+        if(!isFinite(kz2) || kz2 < 0){
+          started=false;
+          continue;
+        }
+        const kz = sign*Math.sqrt(kz2);
+        const x = X(kt), y = Y(kz);
+        if(!started){ ctx.moveTo(x,y); started=true; }
+        else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+
+    if(isFinite(e1re) && isFinite(e3re) && Math.abs(e1re) > 1e-6 && Math.abs(e3re) > 1e-6){
+      drawBranch(+1);
+      drawBranch(-1);
+    }
+    ctx.restore();
+
+    // Legend / note
+    ctx.save();
+    ctx.fillStyle = 'rgba(233,240,255,0.82)';
+    ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText('Curve: (k_t^2)/ε3 + (k_z^2)/ε1 = 1  (k normalized by k0)', plot.x0+10, plot.y0+10);
+
+    const reg = regimeType(e1re, e3re);
+    ctx.fillStyle = 'rgba(233,240,255,0.78)';
+    ctx.fillText(`Regime: ${reg.name}`, plot.x0+10, plot.y0+28);
+    ctx.restore();
+  }
+
+  function drawMap(state){
+    const {ctx, resize} = MAP;
+    const {w,h} = resize();
+    clear(ctx,w,h);
+    drawTitle(ctx,w,"Sign map in (ω/ωp, f) using Re(ε1), Re(ε3)");
+
+    const padL=56, padR=18, padT=40, padB=48;
+    const plot = {x0:padL, y0:padT, x1:w-padR, y1:h-padB};
+    drawGrid(ctx, plot, 10, 8);
+    drawAxes(ctx, plot);
+
+    const xMin=0.20, xMax=1.20; // ω/ωp
+    const yMin=0.02, yMax=0.98; // f
+    drawTicks(ctx, plot, xMin, xMax, yMin, yMax, 5, 4);
+
+    drawLabel(ctx, (plot.x0+plot.x1)/2, h-18, 'ω/ωp', 'center');
+    ctx.save();
+    ctx.translate(18, (plot.y0+plot.y1)/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillStyle = 'rgba(233,240,255,0.80)';
+    ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('metal fill fraction f', 0, 0);
+    ctx.restore();
+
+    function X(x){ return plot.x0 + (x-xMin)/(xMax-xMin)*(plot.x1-plot.x0); }
+    function Y(y){ return plot.y1 - (y-yMin)/(yMax-yMin)*(plot.y1-plot.y0); }
+
+    // heatmap resolution
+    const nx=120, ny=80;
+    const cellW = (plot.x1-plot.x0)/nx;
+    const cellH = (plot.y1-plot.y0)/ny;
+
+    for(let j=0;j<ny;j++){
+      const f = yMin + (yMax-yMin)*(j+0.5)/ny;
+      for(let i=0;i<nx;i++){
+        const om = xMin + (xMax-xMin)*(i+0.5)/nx;
+        const {e1, e3} = epsEffective(om, f, state.epsd, state.model);
+        const e1re = e1.re, e3re = e3.re;
+
+        // classify:
+        // both + (ellipsoid) : greenish
+        // both - (metallic)  : reddish
+        // opposite signs (hyperbolic) : amber/purple blend
+        let fill;
+        if(!isFinite(e1re) || !isFinite(e3re)){
+          fill = 'rgba(255,255,255,0.10)';
+        } else if(e1re>0 && e3re>0){
+          fill = 'rgba(52,211,153,0.20)';
+        } else if(e1re<0 && e3re<0){
+          fill = 'rgba(251,113,133,0.20)';
+        } else if(e1re>0 && e3re<0){
+          fill = 'rgba(251,191,36,0.22)'; // Type I
+        } else if(e1re<0 && e3re>0){
+          fill = 'rgba(167,139,250,0.20)'; // Type II
+        } else {
+          fill = 'rgba(255,255,255,0.12)';
+        }
+
+        ctx.fillStyle = fill;
+        const x = plot.x0 + i*cellW;
+        const y = plot.y0 + (ny-1-j)*cellH;
+        ctx.fillRect(x,y,cellW+0.6,cellH+0.6);
+      }
+    }
+
+    // legend
+    ctx.save();
+    const lx = plot.x0 + 10, ly = plot.y0 + 10;
+    const items = [
+      {name:'Ellipsoidal (ε1>0, ε3>0)', col:'rgba(52,211,153,0.35)'},
+      {name:'Metallic-like (ε1<0, ε3<0)', col:'rgba(251,113,133,0.35)'},
+      {name:'Type I (ε1>0, ε3<0)', col:'rgba(251,191,36,0.38)'},
+      {name:'Type II (ε1<0, ε3>0)', col:'rgba(167,139,250,0.35)'},
+    ];
+    ctx.font='12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    let y = ly;
+    items.forEach(it=>{
+      ctx.fillStyle = it.col;
+      ctx.fillRect(lx, y-6, 18, 12);
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.strokeRect(lx, y-6, 18, 12);
+      ctx.fillStyle = 'rgba(233,240,255,0.80)';
+      ctx.fillText(it.name, lx+26, y);
+      y += 18;
+    });
+    ctx.restore();
+
+    // current point marker
+    const cx = X(state.omega);
+    const cy = Y(state.f);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(233,240,255,0.92)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI*2); ctx.stroke();
+    ctx.fillStyle = 'rgba(233,240,255,0.20)';
+    ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    // marker label
+    ctx.save();
+    ctx.fillStyle = 'rgba(233,240,255,0.85)';
+    ctx.font='12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+    ctx.textAlign='left'; ctx.textBaseline='bottom';
+    const label = `(ω/ωp=${formatNum(state.omega,3)}, f=${formatNum(state.f,3)})`;
+    ctx.fillText(label, clamp(cx+10, plot.x0+10, plot.x1-140), clamp(cy-10, plot.y0+22, plot.y1-6));
+    ctx.restore();
+  }
+
+  // ---------- state & update ----------
+  function getState(){
+    const omega = parseFloat(elFreq.value);
+    const f = parseFloat(elFill.value);
+    const epsd = parseFloat(elEpsd.value);
+    const model = elLoss.value;
+    const {em, e1, e3} = epsEffective(omega, f, epsd, model);
+    return {
+      omega, f, epsd, model,
+      em, e1, e3,
+      emre: em.re, e1re: e1.re, e3re: e3.re
+    };
+  }
+
+  function updateUI(state){
+    elFreqVal.textContent = formatNum(state.omega,3);
+    elFillVal.textContent = formatNum(state.f,3);
+    elEpsdVal.textContent = formatNum(state.epsd,2);
+    elLossVal.textContent = (state.model==='lossy') ? 'Lossy' : 'Lossless';
+
+    // pills
+    const rm = state.emre, r1 = state.e1re, r3 = state.e3re;
+    pillEpsm.className = `pill ${signClass(rm)}`;
+    pillEps1.className = `pill ${signClass(r1)}`;
+    pillEps3.className = `pill ${signClass(r3)}`;
+
+    pillEpsm.innerHTML = `Re(εm)=<b>${formatNum(rm,3)}</b>`;
+    pillEps1.innerHTML = `Re(ε1)=<b>${formatNum(r1,3)}</b>`;
+    pillEps3.innerHTML = `Re(ε3)=<b>${formatNum(r3,3)}</b>`;
+
+    const reg = regimeType(r1,r3);
+    pillType.className = `pill ${reg.cls}`;
+    pillType.innerHTML = `Regime: <b>${reg.name}</b>`;
+  }
+
+  function renderAll(){
+    const state = getState();
+    updateUI(state);
+    drawDiagram(state);
+    drawMainPlot(state);
+    drawKSurface(state);
+    drawMap(state);
+  }
+
+  // ---------- events ----------
+  ['input','change'].forEach(evt=>{
+    elFreq.addEventListener(evt, renderAll);
+    elFill.addEventListener(evt, renderAll);
+    elLoss.addEventListener(evt, renderAll);
+    elEpsd.addEventListener(evt, renderAll);
+  });
+
+  window.addEventListener('resize', renderAll);
+
+  document.getElementById('btnReset').addEventListener('click', ()=>{
+    elFreq.value = '0.55';
+    elFill.value = '0.35';
+    elLoss.value = 'lossless';
+    elEpsd.value = '4';
+    renderAll();
+  });
+
+  document.getElementById('btnCopyState').addEventListener('click', async ()=>{
+    const s = getState();
+    const txt =
+`Current example parameters:
+omega/omega_p = ${s.omega}
+f = ${s.f}
+eps_d = ${s.epsd}
+model = ${s.model}
+
+Computed (real parts):
+Re(eps_m) = ${s.emre}
+Re(eps_1) = ${s.e1re}
+Re(eps_3) = ${s.e3re}`;
+    try{
+      await navigator.clipboard.writeText(txt);
+      const btn = document.getElementById('btnCopyState');
+      const old = btn.textContent;
+      btn.textContent = "Copied ✓";
+      setTimeout(()=>btn.textContent = old, 900);
+    }catch(e){
+      // ignore
+    }
+  });
+
+  attachCopyButtons();
+  enableSmoothScroll();
+  renderAll();
+})();
+</script>
+</body>
+</html>

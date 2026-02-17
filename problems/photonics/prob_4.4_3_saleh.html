@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Optical Spatial Filtering (4f System) — Derivation + Interactive Plots</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --panel:#101827;
+      --panel2:#0f1624;
+      --text:#e7eefc;
+      --muted:#a8b3c7;
+      --accent:#66e3ff;
+      --accent2:#9bff9b;
+      --warn:#ffd36a;
+      --danger:#ff6a8a;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(102,227,255,.12), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(155,255,155,.10), transparent 60%),
+        radial-gradient(900px 700px at 50% 120%, rgba(255,211,106,.08), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding:28px 18px 16px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    header .title{
+      display:flex; gap:14px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;
+    }
+    h1{
+      font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.4rem);
+      margin:0;
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:8px 0 0;
+      color:var(--muted);
+      max-width: 78ch;
+    }
+    .badgeRow{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px}
+    .badge{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      padding:6px 10px;
+      border-radius:999px;
+      color:var(--muted);
+      font-size:.9rem;
+      backdrop-filter: blur(6px);
+    }
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding: 0 18px 60px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:18px;
+    }
+    nav#toc{
+      position:sticky;
+      top:14px;
+      align-self:start;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius: var(--radius);
+      padding:14px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    #toc h2{
+      font-size:1rem;
+      margin:0 0 8px;
+      color:var(--text);
+      display:flex; align-items:center; justify-content:space-between;
+      letter-spacing:.3px;
+    }
+    #toc .tocHint{font-size:.85rem; color:var(--muted)}
+    #toc ul{list-style:none; padding:0; margin:10px 0 0; display:grid; gap:8px}
+    #toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid transparent;
+      color:var(--muted);
+      background: rgba(0,0,0,.10);
+    }
+    #toc a:hover{border-color: var(--line); color: var(--text)}
+    #toc a.active{border-color: rgba(102,227,255,.40); color: var(--text); background: rgba(102,227,255,.10)}
+    .content{
+      display:grid;
+      gap:18px;
+      min-width:0;
+    }
+    section{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border-radius: var(--radius);
+      padding: 16px 16px 14px;
+      box-shadow: var(--shadow);
+    }
+    section h2{
+      margin:0 0 10px;
+      font-size:1.15rem;
+      letter-spacing:.2px;
+    }
+    section h3{
+      margin:14px 0 8px;
+      font-size:1.02rem;
+      color:var(--text);
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr}
+      nav#toc{position:relative; top:0}
+    }
+    @media (max-width: 760px){
+      .grid2{grid-template-columns:1fr}
+    }
+
+    .callout{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      border-radius: 14px;
+      padding: 12px 12px;
+    }
+    .callout strong{color:var(--text)}
+    .callout .muted{color:var(--muted)}
+    .kpiRow{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin-top:10px;
+    }
+    .kpi{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px;
+      background: rgba(255,255,255,.03);
+    }
+    .kpi .lbl{font-size:.82rem; color:var(--muted)}
+    .kpi .val{font-family:var(--mono); font-size:.98rem; margin-top:4px}
+    .eq{
+      border:1px dashed rgba(102,227,255,.35);
+      background: rgba(102,227,255,.08);
+      border-radius: 14px;
+      padding:12px;
+      overflow:auto;
+      position:relative;
+    }
+    .eq code{
+      font-family:var(--mono);
+      font-size:.95rem;
+      white-space:pre-wrap;
+    }
+    .copyBtn{
+      position:absolute;
+      top:10px;
+      right:10px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.30);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-size:.85rem;
+      transition: transform .12s ease, background .12s ease;
+    }
+    .copyBtn:hover{transform: translateY(-1px); background: rgba(255,255,255,.10)}
+    .copyBtn:active{transform: translateY(0px) scale(.98)}
+    .note{
+      color:var(--muted);
+      font-size:.95rem;
+      margin-top:8px;
+    }
+    .hr{
+      height:1px; background: var(--line);
+      margin: 12px 0;
+    }
+    figure{
+      margin:0;
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+    }
+    figcaption{
+      padding:10px 12px;
+      border-top:1px solid var(--line);
+      color: var(--muted);
+      font-size:.92rem;
+    }
+    canvas{display:block; width:100%; height:320px}
+    .controls{
+      display:grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap:12px;
+      align-items:end;
+    }
+    @media (max-width: 900px){
+      .controls{grid-template-columns: 1fr}
+    }
+    label{display:block; font-size:.9rem; color:var(--muted); margin-bottom:6px}
+    select, input[type="range"], button, input[type="number"]{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      padding:10px 10px;
+      outline:none;
+    }
+    input[type="range"]{padding:10px 0}
+    .rowInline{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      color: var(--muted);
+      font-size:.92rem;
+      margin-top:6px;
+    }
+    .pill{
+      font-family:var(--mono);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:4px 8px;
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-size:.88rem;
+    }
+    .btn{
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease;
+    }
+    .btn:hover{transform: translateY(-1px); background: rgba(255,255,255,.10)}
+    .btn:active{transform: translateY(0px) scale(.98)}
+    .boxFinal{
+      border:1px solid rgba(155,255,155,.35);
+      background: rgba(155,255,155,.10);
+      border-radius: 14px;
+      padding:12px;
+      position:relative;
+    }
+    .boxFinal h3{margin-top:0}
+    .boxFinal .copyBtn{border-color: rgba(155,255,155,.35)}
+    footer{
+      max-width:1200px;
+      margin: 0 auto;
+      padding: 18px;
+      color: var(--muted);
+      font-size:.92rem;
+    }
+    .tiny{font-size:.86rem; color:var(--muted)}
+    .fadeIn{
+      animation: pop .35s ease both;
+    }
+    @keyframes pop{
+      from{transform: translateY(6px); opacity:0}
+      to{transform: translateY(0px); opacity:1}
+    }
+    @media print{
+      body{background:#fff; color:#000}
+      header, main, footer{max-width: 100%}
+      nav#toc{display:none}
+      section, figure{box-shadow:none}
+      .copyBtn, .controls{display:none !important}
+      .eq{background:#fff}
+      canvas{height:240px}
+    }
+  </style>
+</head>
+
+<body>
+<header class="fadeIn">
+  <div class="title">
+    <div>
+      <h1>Optical Spatial Filtering in a 4f System (Derivation + Interactive Sketches)</h1>
+      <p class="subtitle">
+        We relate the image-plane complex amplitude <span class="pill">g(x,y)</span> to the object transparency
+        <span class="pill">f(x,y)</span> and Fourier-plane mask <span class="pill">p(x,y)</span>,
+        then sketch <span class="pill">g(x,0)</span> for two specific cases and design a mask that implements the transverse Laplacian.
+      </p>
+      <div class="badgeRow">
+        <span class="badge">Given: f = 1000 mm</span>
+        <span class="badge">λ = 10<sup>−3</sup> mm</span>
+        <span class="badge">Key scale: λf = 1 mm</span>
+        <span class="badge">Uniform plane wave input (unit amplitude)</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <nav id="toc" aria-label="Table of contents">
+    <h2>
+      Contents
+      <span class="tocHint">scroll</span>
+    </h2>
+    <ul>
+      <li><a href="#quick" class="toclink">Quick Summary</a></li>
+      <li><a href="#part1" class="toclink">PART 1 — Problem Analysis</a></li>
+      <li><a href="#part2" class="toclink">PART 2 — Strategy & Tips</a></li>
+      <li><a href="#part3" class="toclink">PART 3 — Full Solution</a></li>
+      <li><a href="#interactive" class="toclink">Interactive Visualizations</a></li>
+    </ul>
+    <div class="hr"></div>
+    <div class="tiny">
+      Tip: use the interactive controls to see how the frequency mask changes the output in real time.
+    </div>
+  </nav>
+
+  <div class="content">
+    <section id="quick" class="fadeIn">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li>A 4f spatial filter performs: <span class="pill">g = ℱ⁻¹{ H · ℱ{f} }</span> (up to a constant phase/amplitude factor).</li>
+        <li>The system transfer function is <span class="pill">H(νx,νy) = p(λfνx, λfνy)</span>.</li>
+        <li>With <span class="pill">λf = 1 mm</span>, the scaling is especially simple: <span class="pill">H(ν) = p(ν)</span> (numerically, for consistent units).</li>
+        <li>Case (a) <span class="pill">f(x)=δ(x−5)</span>, <span class="pill">p=rect</span> → band-limited impulse → <span class="pill">g(x,0) ∝ sinc(x−5)</span>.</li>
+        <li>Case (b) <span class="pill">f=rect</span>, <span class="pill">p=sinc</span> → spectrum multiplies to <span class="pill">sinc²</span> → <span class="pill">g(x,0) ∝ tri(x)</span>.</li>
+        <li>To implement <span class="pill">g = ∇<sub>T</sub>² f</span>, choose <span class="pill">H(νx,νy)=−(2π)²(νx²+νy²)</span> ⇒ <span class="pill">p(u,v)=−(2π)²(u²+v²)/(λf)²</span>.</li>
+      </ul>
+    </section>
+
+    <section id="part1" class="fadeIn">
+      <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <h3>1) Restate the problem (in plain words)</h3>
+      <p>
+        A standard <strong>4f spatial filtering</strong> setup uses two lenses separated by <span class="pill">2f</span>.
+        The object transparency <span class="pill">f(x,y)</span> sits in the front focal plane of lens 1.
+        Lens 1 produces the Fourier transform of the object in its back focal plane, where a mask with amplitude transmittance
+        <span class="pill">p(x,y)</span> multiplies that spectrum. Lens 2 then inverse-Fourier-transforms the result into the image plane,
+        producing the output field <span class="pill">g(x,y)</span>.
+      </p>
+      <p>
+        You must:
+        (i) write the expression relating <span class="pill">g(x,y)</span> to <span class="pill">f(x,y)</span> and <span class="pill">p(x,y)</span>,
+        (ii) sketch <span class="pill">g(x,0)</span> for two specific pairs of <span class="pill">f</span> and <span class="pill">p</span>,
+        and (iii) design <span class="pill">p(x,y)</span> so the system computes the transverse Laplacian of the input.
+      </p>
+
+      <div class="grid2">
+        <div class="callout">
+          <strong>Given quantities</strong>
+          <ul>
+            <li>Focal length: <span class="pill">f = 1000 mm</span></li>
+            <li>Wavelength: <span class="pill">λ = 10<sup>−3</sup> mm</span></li>
+            <li>Illumination: uniform plane wave of unit amplitude</li>
+            <li>Object amplitude transmittance: <span class="pill">f(x,y)</span></li>
+            <li>Fourier-plane mask amplitude transmittance: <span class="pill">p(x,y)</span></li>
+          </ul>
+        </div>
+        <div class="callout">
+          <strong>Unknowns / what must be found</strong>
+          <ul>
+            <li>A formula for <span class="pill">g(x,y)</span> in terms of <span class="pill">f</span> and <span class="pill">p</span></li>
+            <li>Sketch/shape of <span class="pill">g(x,0)</span> for:
+              <ul>
+                <li>(a) <span class="pill">f(x,y)=δ(x−5)</span>, <span class="pill">p(x,y)=rect(x)</span></li>
+                <li>(b) <span class="pill">f(x,y)=rect(x)</span>, <span class="pill">p(x,y)=sinc(x)</span></li>
+              </ul>
+            </li>
+            <li>A mask <span class="pill">p(x,y)</span> that yields <span class="pill">g(x,y)=∇<sub>T</sub>² f(x,y)</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>2) Relevant physical principles (and why they apply)</h3>
+      <ul>
+        <li>
+          <strong>Fourier transforming property of a thin lens</strong>:
+          A field in the front focal plane is mapped (up to a constant phase factor) to its spatial Fourier transform at the back focal plane.
+          This is exactly how the 4f system creates a controllable “spectrum plane.”
+        </li>
+        <li>
+          <strong>Linear shift-invariant (LSI) filtering in coherent optics</strong>:
+          Multiplication by a mask in the Fourier plane corresponds to applying a transfer function <span class="pill">H(νx,νy)</span> in spatial-frequency space,
+          giving convolution in the spatial domain.
+        </li>
+        <li>
+          <strong>Derivative operators in Fourier space</strong>:
+          The Laplacian becomes a multiplication by <span class="pill">−(2π)²(νx²+νy²)</span> in frequency space, so it is implementable by a suitable mask.
+        </li>
+      </ul>
+
+      <h3>3) Possible approaches</h3>
+      <ol>
+        <li>
+          <strong>Frequency-domain transfer-function approach</strong>:
+          Write <span class="pill">G = H·F</span> with <span class="pill">H(ν)=p(λfν)</span>, then inverse transform.
+          <span class="muted">(Fastest, most transparent for filtering.)</span>
+        </li>
+        <li>
+          <strong>Impulse-response / convolution approach</strong>:
+          Compute <span class="pill">h=ℱ⁻¹{H}</span> then <span class="pill">g=f*h</span>.
+          <span class="muted">(Great for interpreting “blur kernels.”)</span>
+        </li>
+        <li>
+          <strong>Direct Fresnel diffraction integrals through the two lenses</strong>:
+          More general but much heavier; it collapses to the transfer-function result under the usual 4f assumptions.
+        </li>
+      </ol>
+      <p><strong>Chosen approach:</strong> the <em>frequency-domain transfer-function approach</em>, because the mask is specified in the Fourier plane and the requested outputs
+        (band-limited impulse, triangular function, Laplacian) are most naturally derived using Fourier transform pairs and derivative properties.</p>
+    </section>
+
+    <section id="part2" class="fadeIn">
+      <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+      <h3>Step-by-step plan (roadmap)</h3>
+      <ol>
+        <li><strong>Model the 4f system as coherent LSI filtering</strong> — goal: express output spectrum <span class="pill">G</span> from input spectrum <span class="pill">F</span>.</li>
+        <li><strong>Relate mask-plane coordinates to spatial frequencies</strong> — tool: lens Fourier mapping <span class="pill">u = λ f νx</span>, <span class="pill">v = λ f νy</span>.</li>
+        <li><strong>Write transfer function</strong> — equation: <span class="pill">H(νx,νy)=p(λfνx, λfνy)</span>.</li>
+        <li><strong>Write output field</strong> — equation: <span class="pill">g=ℱ⁻¹{H·ℱ{f}}</span> (keep track of constants).</li>
+        <li><strong>Case (a)</strong> — use: FT of a shifted delta gives a pure phase; multiply by a rectangular low-pass; inverse transform gives a sinc centered at the shift.</li>
+        <li><strong>Case (b)</strong> — use: <span class="pill">rect ↔ sinc</span>; multiplying by another sinc gives <span class="pill">sinc²</span>; inverse transform yields a triangle.</li>
+        <li><strong>Laplacian mask</strong> — use derivative property: <span class="pill">ℱ{∇<sub>T</sub>² f}=−(2π)²(νx²+νy²)F</span>; set <span class="pill">H</span> equal to that factor and convert back to <span class="pill">p(u,v)</span>.</li>
+        <li><strong>Sanity checks</strong> — check units, symmetry, limiting cases (mask → 1 gives g → f; bandwidth → ∞ gives delta-like response).</li>
+      </ol>
+
+      <h3>Common mistakes & quick tips</h3>
+      <ul>
+        <li><strong>Mixing coordinate planes:</strong> the mask <span class="pill">p(u,v)</span> is defined in the Fourier plane coordinates (mm), while <span class="pill">H(νx,νy)</span> lives in spatial-frequency units (1/mm).</li>
+        <li><strong>Forgetting the scaling</strong> <span class="pill">u=λfν</span>. Here <span class="pill">λf=1 mm</span>, which makes the mapping numerically simple, but the units still matter conceptually.</li>
+        <li><strong>Fourier conventions:</strong> decide a consistent definition for <span class="pill">sinc</span> and <span class="pill">rect</span>.
+          In this article we use:
+          <span class="pill">sinc(t)=sin(πt)/(πt)</span>, <span class="pill">rect(t)=1 for |t|≤1/2</span>.</li>
+        <li><strong>Derivative filters blow up at high frequencies:</strong> a true Laplacian mask has unbounded magnitude, so practical systems approximate it within a finite aperture/bandwidth.</li>
+      </ul>
+    </section>
+
+    <section id="part3" class="fadeIn">
+      <h2>PART 3 — Full Solution</h2>
+
+      <h3>Physical intuition (what the 4f system “does”)</h3>
+      <p>
+        The first lens converts the object field into a <em>spatial spectrum</em>. The mask selectively attenuates or phase-shifts particular spatial frequencies.
+        The second lens converts the modified spectrum back into a spatial field. Therefore, the mask behaves like a coherent transfer function.
+      </p>
+
+      <h3>Definitions (use these consistently)</h3>
+      <div class="eq">
+        <button class="copyBtn" data-copy="defs">Copy</button>
+        <code id="defs">Fourier transform pair (spatial frequencies νx, νy in 1/mm):
+F(νx,νy) = ∬ f(x,y) e^{-i2π(νx x + νy y)} dx dy
+f(x,y)   = ∬ F(νx,νy) e^{+i2π(νx x + νy y)} dνx dνy
+
+sinc(t) = sin(πt)/(πt),   rect(t)=1 for |t|≤1/2, else 0.</code>
+      </div>
+
+      <h3>1) General relation between g(x,y), f(x,y), and p(x,y)</h3>
+      <p>
+        In a 4f system, the Fourier-plane (back focal plane of lens 1) coordinates <span class="pill">(u,v)</span> (in mm) correspond to spatial frequencies
+        <span class="pill">(νx,νy)</span> (in 1/mm) via:
+      </p>
+      <div class="eq">
+        <button class="copyBtn" data-copy="map">Copy</button>
+        <code id="map">u = λ f νx,   v = λ f νy   (Fourier-plane coordinate mapping)</code>
+      </div>
+      <p>
+        The mask multiplies the spectrum in that plane, so the coherent transfer function is:
+      </p>
+      <div class="eq">
+        <button class="copyBtn" data-copy="H">Copy</button>
+        <code id="H">H(νx,νy) = p(λ f νx, λ f νy)</code>
+      </div>
+      <p>
+        Therefore, the output field in the image plane is:
+      </p>
+      <div class="eq">
+        <button class="copyBtn" data-copy="ggen">Copy</button>
+        <code id="ggen">G(νx,νy) = H(νx,νy) F(νx,νy)
+g(x,y) = ℱ^{-1}{ G } = ∬ H(νx,νy) F(νx,νy) e^{i2π(νx x + νy y)} dνx dνy</code>
+      </div>
+
+      <p class="note">
+        <strong>About constants:</strong> A rigorous lens-to-lens derivation introduces overall factors like <span class="pill">e^{ikf}/(iλf)</span> per lens.
+        These are global multiplicative constants (and global phase) that do not change the filtering <em>shape</em>. The problem’s key relationship is the
+        transfer-function form above.
+      </p>
+
+      <div class="kpiRow">
+        <div class="kpi">
+          <div class="lbl">Given scale</div>
+          <div class="val">λf = (10⁻³ mm)(1000 mm) = 1 mm</div>
+        </div>
+        <div class="kpi">
+          <div class="lbl">Interpretation</div>
+          <div class="val">u = νx (numerically), v = νy</div>
+        </div>
+        <div class="kpi">
+          <div class="lbl">So (here)</div>
+          <div class="val">H(νx,νy) = p(νx,νy)</div>
+        </div>
+      </div>
+
+      <h3>2) Sketch g(x,0) for the two cases (1D dependence in x)</h3>
+      <p>
+        In both cases, the functions depend only on <span class="pill">x</span>, so the output is effectively 1D along <span class="pill">x</span> (and constant in <span class="pill">y</span>).
+        We will sketch <span class="pill">g(x,0)</span> using standard 1D Fourier pairs. (The interactive section below lets you vary the mask parameters.)
+      </p>
+
+      <h4>(a) f(x,y)=δ(x−5),  p(x,y)=rect(x)</h4>
+      <p>
+        Start with the 1D Fourier transform of a shifted delta:
+      </p>
+      <div class="eq">
+        <button class="copyBtn" data-copy="casea1">Copy</button>
+        <code id="casea1">If f(x)=δ(x-x0), then F(ν)=e^{-i2πν x0}.</code>
+      </div>
+      <p>
+        The mask is <span class="pill">p(u)=rect(u)</span>, so with <span class="pill">u=λfν</span> the transfer function is:
+      </p>
+      <div class="eq">
+        <button class="copyBtn" data-copy="casea2">Copy</button>
+        <code id="casea2">H(ν) = p(λfν) = rect(λfν).
+Given λf=1 mm → H(ν)=rect(ν).</code>
+      </div>
+      <p>
+        Then:
+      </p>
+      <div class="eq">
+        <button class="copyBtn" data-copy="casea3">Copy</button>
+        <code id="casea3">G(ν) = H(ν)F(ν) = rect(ν) e^{-i2πν·5}.</code>
+      </div>
+      <p>
+        Inverse transform: multiplication by <span class="pill">rect(ν)</span> band-limits the delta, so the output becomes a sinc-like impulse response centered at <span class="pill">x=5</span>.
+        Using <span class="pill">rect(ν)=1</span> for <span class="pill">|ν|≤1/2</span>, we get:
+      </p>
+      <div class="eq">
+        <button class="copyBtn" data-copy="casea4">Copy</button>
+        <code id="casea4">g(x) = ∫_{-1/2}^{1/2} e^{i2πν(x-5)} dν
+     = sinc(x-5)    (with sinc(t)=sin(πt)/(πt)).</code>
+      </div>
+      <p class="note">
+        <strong>Sketch:</strong> a sinc centered at <span class="pill">x=5 mm</span>, with main lobe width set by the mask bandwidth (fixed here by the rect definition).
+      </p>
+
+      <h4>(b) f(x,y)=rect(x),  p(x,y)=sinc(x)</h4>
+      <p>
+        Use the classic Fourier pair (with our conventions):
+      </p>
+      <div class="eq">
+        <button class="copyBtn" data-copy="caseb1">Copy</button>
+        <code id="caseb1">rect(x) ↔ sinc(ν)
+(where rect(x)=1 for |x|≤1/2, and sinc(ν)=sin(πν)/(πν)).</code>
+      </div>
+      <p>
+        So if <span class="pill">f(x)=rect(x)</span>, then <span class="pill">F(ν)=sinc(ν)</span>. The mask is <span class="pill">p(u)=sinc(u)</span>, hence:
+      </p>
+      <div class="eq">
+        <button class="copyBtn" data-copy="caseb2">Copy</button>
+        <code id="caseb2">H(ν) = p(λfν) = sinc(λfν).
+Given λf=1 mm → H(ν)=sinc(ν).</code>
+      </div>
+      <p>
+        Therefore:
+      </p>
+      <div class="eq">
+        <button class="copyBtn" data-copy="caseb3">Copy</button>
+        <code id="caseb3">G(ν) = H(ν)F(ν) = sinc(ν)·sinc(ν) = sinc^2(ν).</code>
+      </div>
+      <p>
+        Another standard pair is:
+      </p>
+      <div class="eq">
+        <button class="copyBtn" data-copy="caseb4">Copy</button>
+        <code id="caseb4">tri(x) ↔ sinc^2(ν),
+where tri(x)=max(1-|x|, 0).</code>
+      </div>
+      <p>
+        Hence:
+      </p>
+      <div class="eq">
+        <button class="copyBtn" data-copy="caseb5">Copy</button>
+        <code id="caseb5">g(x) = tri(x)  (up to overall constants).</code>
+      </div>
+      <p class="note">
+        <strong>Sketch:</strong> a triangular “tent” centered at <span class="pill">x=0</span>, going linearly down to zero at <span class="pill">x=±1 mm</span> for the normalized definition above.
+      </p>
+
+      <h3>3) Design p(x,y) so that g(x,y)=∇<sub>T</sub><sup>2</sup>f(x,y)</h3>
+      <p>
+        The transverse Laplacian is:
+        <span class="pill">∇<sub>T</sub><sup>2</sup> = ∂²/∂x² + ∂²/∂y²</span>.
+        In Fourier space, derivatives become multiplication by powers of frequency:
+      </p>
+      <div class="eq">
+        <button class="copyBtn" data-copy="lap1">Copy</button>
+        <code id="lap1">ℱ{ ∂²f/∂x² } = -(2πνx)² F(νx,νy)
+ℱ{ ∂²f/∂y² } = -(2πνy)² F(νx,νy)
+
+So ℱ{ ∇T² f } = -(2π)²(νx²+νy²) F(νx,νy).</code>
+      </div>
+      <p>
+        We want <span class="pill">G(νx,νy)=ℱ{g}=ℱ{∇<sub>T</sub>² f}</span>, so we must choose:
+      </p>
+
+      <div class="boxFinal">
+        <h3>Final mask/transfer-function design (boxed)</h3>
+        <button class="copyBtn" data-copy="final">Copy</button>
+        <pre class="eq" style="margin:0; border-style:solid; border-color: rgba(155,255,155,.25); background: rgba(155,255,155,.06);">
+<code id="final">Target: g(x,y)=∇T² f(x,y)
+
+Choose transfer function:
+H(νx,νy) = -(2π)²(νx² + νy²).
+
+Since H(νx,νy)=p(λfνx, λfνy), let (u,v) be Fourier-plane coordinates:
+u=λfνx, v=λfνy  ⇒  νx=u/(λf), νy=v/(λf).
+
+Therefore choose the mask transmittance:
+p(u,v) = -(2π)²/(λf)² · (u² + v²).
+
+Given λf=1 mm → p(u,v) = -(2π)² (u² + v²).</code></pre>
+        <p class="note" style="margin:10px 0 0;">
+          <strong>Practical note:</strong> this “ideal Laplacian” mask has unbounded magnitude as <span class="pill">u²+v²</span> grows,
+          so real systems implement an <em>aperture-limited</em> or <em>scaled</em> version (e.g., multiply by a circular pupil).
+        </p>
+      </div>
+
+      <h3>Sanity checks</h3>
+      <ul>
+        <li><strong>Units:</strong> <span class="pill">ν</span> has units 1/mm, so <span class="pill">H</span> for Laplacian has units 1/mm², matching a second derivative operator.</li>
+        <li><strong>Limiting case (no mask):</strong> if <span class="pill">p=1</span>, then <span class="pill">H=1</span> and <span class="pill">g=f</span> (identity).</li>
+        <li><strong>Case (a):</strong> low-pass filtering a delta must produce a spread-out sinc (band-limited impulse response) — matches result.</li>
+        <li><strong>Case (b):</strong> multiplying <span class="pill">sinc</span> by <span class="pill">sinc</span> narrows the effective bandwidth and produces a smoother spatial function; <span class="pill">tri</span> is indeed smoother than <span class="pill">rect</span>.</li>
+      </ul>
+    </section>
+
+    <section id="interactive" class="fadeIn">
+      <h2>Interactive Visualizations</h2>
+
+      <div class="callout">
+        <strong>What you are seeing:</strong>
+        The plots numerically simulate the coherent 4f filter in 1D (along x) using FFT:
+        <span class="pill">g(x)=IFFT( H(ν)·FFT(f(x)) )</span>.
+        The <span class="pill">λf=1 mm</span> scaling is baked into the displayed transfer functions.
+      </div>
+
+      <div class="controls" style="margin-top:12px">
+        <div>
+          <label for="modeSel">Choose case / mask</label>
+          <select id="modeSel">
+            <option value="a">Case (a): f(x)=δ(x−x0), H(ν)=rect(|ν|≤B)</option>
+            <option value="b">Case (b): f(x)=rect(x), H(ν)=sinc(ν/f0)</option>
+            <option value="lap">Laplacian (1D demo): g(x)=d²f/dx², H(ν)=−(2πν)²</option>
+          </select>
+          <div class="rowInline">
+            <span>Example x0:</span> <span class="pill" id="x0Pill">5.00 mm</span>
+            <span class="tiny">(used in case a)</span>
+          </div>
+        </div>
+
+        <div>
+          <label for="paramRange">Main parameter</label>
+          <input id="paramRange" type="range" min="0.2" max="4.0" step="0.01" value="1.0"/>
+          <div class="rowInline">
+            <span id="paramLabel">Bandwidth B:</span> <span class="pill" id="paramPill">1.00 1/mm</span>
+          </div>
+          <div class="tiny" id="paramHint">B sets the low-pass cutoff (case a). For case b it sets f0 in sinc(ν/f0).</div>
+        </div>
+
+        <div>
+          <label for="domainRange">Plot window (±Xmax)</label>
+          <input id="domainRange" type="range" min="6" max="40" step="1" value="20"/>
+          <div class="rowInline">
+            <span>Xmax:</span> <span class="pill" id="xmaxPill">20 mm</span>
+          </div>
+          <button class="btn" id="resetBtn" style="margin-top:10px">Reset to defaults</button>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:14px">
+        <figure>
+          <canvas id="cDiagram" aria-label="4f system diagram"></canvas>
+          <figcaption>
+            <strong>Diagram:</strong> 4f spatial filtering. Lens 1 forms the Fourier plane, mask multiplies the spectrum, Lens 2 forms the image.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <canvas id="cMain" aria-label="Main plot: output field g(x)"></canvas>
+          <figcaption>
+            <strong>Main plot:</strong> Output field <span class="pill">g(x)</span> (real part) versus <span class="pill">x</span> in mm.
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="grid2" style="margin-top:14px">
+        <figure>
+          <canvas id="cFreq" aria-label="Frequency-domain plot"></canvas>
+          <figcaption>
+            <strong>Secondary plot:</strong> Frequency domain magnitudes (scaled): <span class="pill">|F(ν)|</span>, <span class="pill">|H(ν)|</span>, and <span class="pill">|H(ν)F(ν)|</span>.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <canvas id="cSweep" aria-label="Parameter sweep plot"></canvas>
+          <figcaption>
+            <strong>Parameter sweep:</strong> Output energy <span class="pill">E = ∫|g|² dx</span> versus the chosen parameter (B or f0). Marker shows current setting.
+          </figcaption>
+        </figure>
+      </div>
+
+      <p class="note">
+        In the Laplacian mode, the plot uses a <em>1D</em> second derivative demo (so you can see the idea clearly).
+        The derived mask above is the full 2D transverse Laplacian.
+      </p>
+    </section>
+  </div>
+</main>
+
+<footer>
+  Built as a self-contained HTML article (no external libraries). You can paste this directly into a website.
+</footer>
+
+<script>
+/* =========================
+   Utilities
+========================= */
+function sinc(x){
+  // normalized sinc: sin(pi x)/(pi x)
+  if (Math.abs(x) < 1e-12) return 1;
+  return Math.sin(Math.PI*x)/(Math.PI*x);
+}
+function rect(x){
+  // rect(x)=1 for |x|<=1/2 else 0
+  return (Math.abs(x) <= 0.5) ? 1 : 0;
+}
+function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+
+/* =========================
+   Clipboard copy buttons
+========================= */
+function copyText(text){
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).catch(()=>{ fallbackCopy(text); });
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+}
+document.querySelectorAll('.copyBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const id = btn.getAttribute('data-copy');
+    const el = document.getElementById(id);
+    if (!el) return;
+    copyText(el.textContent.trim());
+    const old = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(()=>btn.textContent=old, 800);
+  });
+});
+
+/* =========================
+   Sticky TOC highlighting
+========================= */
+const tocLinks = [...document.querySelectorAll('.toclink')];
+const sections = tocLinks.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      tocLinks.forEach(l=>l.classList.remove('active'));
+      const link = tocLinks.find(l => l.getAttribute('href') === '#'+e.target.id);
+      if(link) link.classList.add('active');
+    }
+  });
+},{rootMargin:'-40% 0px -55% 0px', threshold: 0.02});
+sections.forEach(s=>obs.observe(s));
+
+/* =========================
+   Canvas helpers (hi-DPI)
+========================= */
+function fitCanvas(canvas, desiredCssHeight){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const cssW = rect.width;
+  const cssH = desiredCssHeight ?? rect.height;
+  canvas.style.height = cssH + 'px';
+  const rect2 = canvas.getBoundingClientRect();
+  const w = Math.max(2, Math.floor(rect2.width * dpr));
+  const h = Math.max(2, Math.floor(rect2.height * dpr));
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w; canvas.height = h;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx, w: rect2.width, h: rect2.height, dpr};
+}
+function drawAxes(ctx, box, opts){
+  const {x0,y0,w,h} = box;
+  const {
+    title='', xlabel='', ylabel='',
+    xMin=0,xMax=1,yMin=-1,yMax=1,
+    xTicks=5,yTicks=5,
+    grid=true
+  } = opts;
+
+  // background
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.fillRect(x0,y0,w,h);
+
+  const padL = 56, padR = 16, padT = 34, padB = 44;
+  const ix0 = x0 + padL, iy0 = y0 + padT;
+  const iw = w - padL - padR, ih = h - padT - padB;
+
+  // title
+  ctx.fillStyle = 'rgba(231,238,252,0.92)';
+  ctx.font = '600 13px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText(title, x0 + 12, y0 + 20);
+
+  // grid + ticks
+  ctx.lineWidth = 1;
+  if(grid){
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    for(let i=0;i<=xTicks;i++){
+      const t = i/xTicks;
+      const x = ix0 + t*iw;
+      ctx.beginPath(); ctx.moveTo(x, iy0); ctx.lineTo(x, iy0+ih); ctx.stroke();
+    }
+    for(let j=0;j<=yTicks;j++){
+      const t = j/yTicks;
+      const y = iy0 + t*ih;
+      ctx.beginPath(); ctx.moveTo(ix0, y); ctx.lineTo(ix0+iw, y); ctx.stroke();
+    }
+  }
+
+  // axes lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.beginPath(); ctx.moveTo(ix0, iy0+ih); ctx.lineTo(ix0+iw, iy0+ih); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ix0, iy0); ctx.lineTo(ix0, iy0+ih); ctx.stroke();
+
+  // labels
+  ctx.fillStyle = 'rgba(168,179,199,0.95)';
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.fillText(xlabel, ix0 + iw/2 - ctx.measureText(xlabel).width/2, y0 + h - 14);
+
+  ctx.save();
+  ctx.translate(x0 + 16, iy0 + ih/2 + ctx.measureText(ylabel).width/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(ylabel, 0, 0);
+  ctx.restore();
+
+  // tick labels
+  ctx.fillStyle = 'rgba(168,179,199,0.9)';
+  ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace';
+
+  for(let i=0;i<=xTicks;i++){
+    const t = i/xTicks;
+    const xv = xMin + t*(xMax-xMin);
+    const x = ix0 + t*iw;
+    const s = (Math.abs(xv) < 1e-9 ? '0' : xv.toFixed(2));
+    ctx.fillText(s, x - ctx.measureText(s).width/2, iy0 + ih + 16);
+  }
+  for(let j=0;j<=yTicks;j++){
+    const t = 1 - j/yTicks;
+    const yv = yMin + t*(yMax-yMin);
+    const y = iy0 + j*ih;
+    const s = (Math.abs(yv) < 1e-9 ? '0' : yv.toFixed(2));
+    ctx.fillText(s, ix0 - 10 - ctx.measureText(s).width, y + 4);
+  }
+
+  ctx.restore();
+  return {plot:{x:ix0,y:iy0,w:iw,h:ih}, pad:{padL,padR,padT,padB}};
+}
+function toPxX(x, xMin, xMax, plot){ return plot.x + (x - xMin)/(xMax-xMin)*plot.w; }
+function toPxY(y, yMin, yMax, plot){ return plot.y + (1 - (y - yMin)/(yMax-yMin))*plot.h; }
+function polyline(ctx, xs, ys, xMin,xMax,yMin,yMax, plot, strokeStyle){
+  ctx.save();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = strokeStyle;
+  ctx.beginPath();
+  for(let i=0;i<xs.length;i++){
+    const X = toPxX(xs[i], xMin,xMax, plot);
+    const Y = toPxY(ys[i], yMin,yMax, plot);
+    if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+function legend(ctx, plot, items){
+  // items: [{label, color}]
+  ctx.save();
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  const x0 = plot.x + 10;
+  const y0 = plot.y + 10;
+  let y = y0;
+  items.forEach(it=>{
+    ctx.fillStyle = it.color;
+    ctx.fillRect(x0, y-9, 16, 3);
+    ctx.fillStyle = 'rgba(231,238,252,0.9)';
+    ctx.fillText(it.label, x0 + 22, y-2);
+    y += 16;
+  });
+  ctx.restore();
+}
+
+/* =========================
+   FFT (radix-2, in-place)
+   Convention here:
+   - forward FFT: X[k] = Σ x[n] e^{-i2πkn/N}
+   - inverse FFT: x[n] = (1/N) Σ X[k] e^{+i2πkn/N}
+========================= */
+function bitReverse(n, bits){
+  let r=0;
+  for(let i=0;i<bits;i++){
+    r = (r<<1) | (n & 1);
+    n >>= 1;
+  }
+  return r;
+}
+function fft(re, im, inverse=false){
+  const N = re.length;
+  const bits = Math.log2(N);
+  // bit-reversal permutation
+  for(let i=0;i<N;i++){
+    const j = bitReverse(i, bits);
+    if(j>i){
+      [re[i], re[j]] = [re[j], re[i]];
+      [im[i], im[j]] = [im[j], im[i]];
+    }
+  }
+  for(let size=2; size<=N; size<<=1){
+    const half = size>>1;
+    const sign = inverse ? +1 : -1;
+    const theta = sign * (2*Math.PI/size);
+    for(let start=0; start<N; start+=size){
+      for(let k=0;k<half;k++){
+        const wr = Math.cos(theta*k);
+        const wi = Math.sin(theta*k);
+        const i0 = start + k;
+        const i1 = i0 + half;
+        const tr = wr*re[i1] - wi*im[i1];
+        const ti = wr*im[i1] + wi*re[i1];
+        const ur = re[i0], ui = im[i0];
+        re[i0] = ur + tr;
+        im[i0] = ui + ti;
+        re[i1] = ur - tr;
+        im[i1] = ui - ti;
+      }
+    }
+  }
+  if(inverse){
+    for(let i=0;i<N;i++){
+      re[i] /= N; im[i] /= N;
+    }
+  }
+}
+function fftShift(arr){
+  const N = arr.length;
+  const h = N>>1;
+  const out = new Array(N);
+  for(let i=0;i<h;i++){ out[i] = arr[i+h]; out[i+h] = arr[i]; }
+  return out;
+}
+function fftShiftComplex(re, im){
+  return {re: fftShift(re), im: fftShift(im)};
+}
+function ifftShift(arr){
+  // shift back is same as shift for even N
+  return fftShift(arr);
+}
+function ifftShiftComplex(re, im){
+  return {re: ifftShift(re), im: ifftShift(im)};
+}
+
+/* =========================
+   Simulation setup
+========================= */
+const modeSel = document.getElementById('modeSel');
+const paramRange = document.getElementById('paramRange');
+const paramPill = document.getElementById('paramPill');
+const paramLabel = document.getElementById('paramLabel');
+const paramHint = document.getElementById('paramHint');
+const domainRange = document.getElementById('domainRange');
+const xmaxPill = document.getElementById('xmaxPill');
+const resetBtn = document.getElementById('resetBtn');
+const x0Pill = document.getElementById('x0Pill');
+
+const cDiagram = document.getElementById('cDiagram');
+const cMain = document.getElementById('cMain');
+const cFreq = document.getElementById('cFreq');
+const cSweep = document.getElementById('cSweep');
+
+let N = 1024;             // power of 2
+let L = 80;               // mm, total span for internal FFT grid
+let x0 = 5.0;             // mm (case a)
+x0Pill.textContent = x0.toFixed(2) + ' mm';
+
+function buildGrid(){
+  const dx = L / N;
+  const x = new Array(N);
+  for(let n=0;n<N;n++){
+    x[n] = (n - N/2) * dx; // centered
+  }
+  // frequency grid (cycles/mm): ν_k = (k - N/2)/L
+  const nu = new Array(N);
+  for(let k=0;k<N;k++){
+    nu[k] = (k - N/2) / L;
+  }
+  return {dx, x, nu};
+}
+
+function makeInput(mode, grid){
+  const {dx, x} = grid;
+  const re = new Array(N).fill(0);
+  const im = new Array(N).fill(0);
+
+  if(mode === 'a'){
+    // delta at x0 approximated as 1/dx at closest sample so integral ≈ 1
+    let idx = 0, best = Infinity;
+    for(let i=0;i<N;i++){
+      const d = Math.abs(x[i]-x0);
+      if(d<best){best=d; idx=i;}
+    }
+    re[idx] = 1/dx;
+  } else if(mode === 'b'){
+    // rect(x): 1 for |x|<=0.5
+    for(let i=0;i<N;i++){
+      re[i] = (Math.abs(x[i]) <= 0.5) ? 1 : 0;
+    }
+  } else if(mode === 'lap'){
+    // a smooth-ish test input so d2/dx2 is readable: Gaussian
+    const sigma = 1.2;
+    for(let i=0;i<N;i++){
+      re[i] = Math.exp(-(x[i]*x[i])/(2*sigma*sigma));
+    }
+  }
+  return {re, im};
+}
+
+function makeH(mode, grid, param){
+  // param: for case a -> B (cutoff); for case b -> f0; for lap -> ignored
+  const {nu} = grid;
+  const Hre = new Array(N).fill(0);
+  const Him = new Array(N).fill(0);
+
+  if(mode === 'a'){
+    const B = param; // cutoff in 1/mm
+    for(let k=0;k<N;k++){
+      Hre[k] = (Math.abs(nu[k]) <= B) ? 1 : 0; // ideal low-pass
+    }
+  } else if(mode === 'b'){
+    const f0 = Math.max(0.05, param);
+    for(let k=0;k<N;k++){
+      Hre[k] = sinc(nu[k]/f0);
+    }
+  } else if(mode === 'lap'){
+    // 1D demo: H(ν)=-(2πν)^2
+    for(let k=0;k<N;k++){
+      const v = nu[k];
+      Hre[k] = - (2*Math.PI*v)*(2*Math.PI*v);
+    }
+  }
+  return {Hre, Him};
+}
+
+function applyFilter(xre, xim, Hre, Him){
+  // forward FFT of x (centered -> uncenter for FFT by ifftShift)
+  const xs = ifftShiftComplex(xre.slice(), xim.slice());
+  const re = xs.re, im = xs.im;
+
+  fft(re, im, false);
+
+  // Build frequency-domain arrays aligned with nu grid centered at k=N/2.
+  // Our nu grid is centered. FFT output is uncentered. So shift FFT output to match nu,
+  // multiply, then unshift back.
+  const Xc = fftShiftComplex(re, im);
+  const Yr = new Array(N), Yi = new Array(N);
+
+  for(let k=0;k<N;k++){
+    const ar = Xc.re[k], ai = Xc.im[k];
+    const br = Hre[k], bi = Him[k];
+    Yr[k] = ar*br - ai*bi;
+    Yi[k] = ar*bi + ai*br;
+  }
+
+  // unshift, inverse FFT, then shift spatial result back to centered x grid
+  const Yu = ifftShiftComplex(Yr, Yi);
+  fft(Yu.re, Yu.im, true);
+
+  const yc = fftShiftComplex(Yu.re, Yu.im);
+  return {yre: yc.re, yim: yc.im, Xmag: Xc.re.map((v,i)=>Math.hypot(v,Xc.im[i])), Ymag: Yr.map((v,i)=>Math.hypot(v,Yi[i]))};
+}
+
+function energyOf(yre, yim, dx){
+  let sum = 0;
+  for(let i=0;i<N;i++){
+    sum += (yre[i]*yre[i] + yim[i]*yim[i]) * dx;
+  }
+  return sum;
+}
+
+/* =========================
+   Drawing: diagram
+========================= */
+function drawDiagram(){
+  const {ctx,w,h} = fitCanvas(cDiagram, 320);
+  ctx.clearRect(0,0,w,h);
+
+  // subtle background
+  ctx.fillStyle = 'rgba(0,0,0,0.10)';
+  ctx.fillRect(0,0,w,h);
+
+  const midY = h*0.55;
+  const left = 28, right = w-28;
+
+  // beam line
+  ctx.strokeStyle = 'rgba(102,227,255,0.35)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(left, midY);
+  ctx.lineTo(right, midY);
+  ctx.stroke();
+
+  // helper to draw lens
+  function lens(x){
+    ctx.save();
+    ctx.translate(x, midY);
+    ctx.strokeStyle = 'rgba(231,238,252,0.55)';
+    ctx.fillStyle = 'rgba(102,227,255,0.10)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 12, 50, 0, 0, 2*Math.PI);
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+  // helper to draw plane
+  function plane(x, label){
+    ctx.save();
+    ctx.translate(x, midY);
+    ctx.strokeStyle = 'rgba(231,238,252,0.35)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0,-62);
+    ctx.lineTo(0, 62);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(168,179,199,0.95)';
+    ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText(label, -ctx.measureText(label).width/2, -72);
+    ctx.restore();
+  }
+  // mask symbol
+  function mask(x){
+    ctx.save();
+    ctx.translate(x, midY);
+    ctx.strokeStyle = 'rgba(255,211,106,0.60)';
+    ctx.fillStyle = 'rgba(255,211,106,0.12)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.rect(-12,-60,24,120);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,211,106,0.85)';
+    ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText('Mask p(u,v)', -42, 74);
+    ctx.restore();
+  }
+
+  const xObj = left + (right-left)*0.12;
+  const xL1  = left + (right-left)*0.28;
+  const xF   = left + (right-left)*0.50;
+  const xL2  = left + (right-left)*0.70;
+  const xImg = left + (right-left)*0.88;
+
+  plane(xObj, 'Object plane: f(x,y)');
+  lens(xL1);
+  mask(xF);
+  lens(xL2);
+  plane(xImg, 'Image plane: g(x,y)');
+
+  // annotations for f distances
+  ctx.fillStyle = 'rgba(168,179,199,0.95)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace';
+
+  function arrow(x1,y1,x2,y2, text){
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    const ang = Math.atan2(y2-y1,x2-x1);
+    const ah = 7;
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-ah*Math.cos(ang-Math.PI/6), y2-ah*Math.sin(ang-Math.PI/6));
+    ctx.lineTo(x2-ah*Math.cos(ang+Math.PI/6), y2-ah*Math.sin(ang+Math.PI/6));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.fill();
+    ctx.fillStyle = 'rgba(168,179,199,0.95)';
+    ctx.fillText(text, (x1+x2)/2 - ctx.measureText(text).width/2, y1-6);
+  }
+  arrow(xObj, midY-90, xL1, midY-90, 'f');
+  arrow(xL1, midY-90, xF,  midY-90, 'f');
+  arrow(xF,  midY-90, xL2, midY-90, 'f');
+  arrow(xL2, midY-90, xImg,midY-90, 'f');
+
+  // small note about λf
+  ctx.fillStyle = 'rgba(102,227,255,0.85)';
+  const note = 'Given: λf = 1 mm → u = λfν ≈ ν (numerically)';
+  ctx.fillText(note, 18, 22);
+}
+
+/* =========================
+   Plotting: main, frequency, sweep
+========================= */
+function drawMainPlot(grid, yre, yim, mode, xmax){
+  const {ctx,w,h} = fitCanvas(cMain, 320);
+  ctx.clearRect(0,0,w,h);
+
+  const x = grid.x;
+  // slice to visible window
+  const xs = [], yr = [], yi = [];
+  for(let i=0;i<N;i++){
+    if (Math.abs(x[i]) <= xmax){
+      xs.push(x[i]);
+      yr.push(yre[i]);
+      yi.push(yim[i]);
+    }
+  }
+
+  // y limits
+  let yMin = Infinity, yMax = -Infinity;
+  for(let i=0;i<yr.length;i++){
+    yMin = Math.min(yMin, yr[i]);
+    yMax = Math.max(yMax, yr[i]);
+  }
+  // pad
+  const span = (yMax-yMin) || 1;
+  yMin -= 0.10*span; yMax += 0.10*span;
+
+  const ax = drawAxes(ctx, {x0:0,y0:0,w,h}, {
+    title: (mode==='a') ? 'Output g(x): band-limited impulse (real part)' :
+           (mode==='b') ? 'Output g(x): filtered rectangle (real part)' :
+                          'Output g(x): 1D Laplacian demo (real part)',
+    xlabel: 'x (mm)',
+    ylabel: 'Re{g(x)} (arb.)',
+    xMin: -xmax, xMax: xmax,
+    yMin, yMax,
+    xTicks: 6, yTicks: 5,
+    grid: true
+  });
+
+  polyline(ctx, xs, yr, -xmax, xmax, yMin, yMax, ax.plot, 'rgba(102,227,255,0.90)');
+
+  // optional imaginary part if meaningful
+  let imPeak = 0;
+  for(let i=0;i<yi.length;i++) imPeak = Math.max(imPeak, Math.abs(yi[i]));
+  if(imPeak > 1e-6){
+    polyline(ctx, xs, yi, -xmax, xmax, yMin, yMax, ax.plot, 'rgba(255,211,106,0.75)');
+    legend(ctx, ax.plot, [
+      {label:'Re{g(x)}', color:'rgba(102,227,255,0.90)'},
+      {label:'Im{g(x)}', color:'rgba(255,211,106,0.75)'}
+    ]);
+  }else{
+    legend(ctx, ax.plot, [
+      {label:'Re{g(x)}', color:'rgba(102,227,255,0.90)'}
+    ]);
+  }
+
+  // mark x0 for case a
+  if(mode==='a'){
+    ctx.save();
+    ctx.strokeStyle = 'rgba(155,255,155,0.55)';
+    ctx.lineWidth = 1.5;
+    const X0 = toPxX(x0, -xmax, xmax, ax.plot);
+    ctx.beginPath();
+    ctx.moveTo(X0, ax.plot.y);
+    ctx.lineTo(X0, ax.plot.y + ax.plot.h);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(155,255,155,0.85)';
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace';
+    ctx.fillText('x0', X0+6, ax.plot.y+14);
+    ctx.restore();
+  }
+}
+
+function drawFreqPlot(grid, Xmag, Hre, Ymag, mode){
+  const {ctx,w,h} = fitCanvas(cFreq, 320);
+  ctx.clearRect(0,0,w,h);
+
+  // show centered frequency ν in a symmetric window
+  const nu = grid.nu;
+  const nuMaxShow = 3.0; // 1/mm
+  const xs = [], fmag = [], hmag = [], ymag = [];
+  for(let k=0;k<N;k++){
+    if (Math.abs(nu[k]) <= nuMaxShow){
+      xs.push(nu[k]);
+      fmag.push(Xmag[k]);
+      hmag.push(Math.abs(Hre[k])); // Him is 0 in our masks
+      ymag.push(Ymag[k]);
+    }
+  }
+
+  // normalize magnitudes for readable overlay
+  function norm(arr){
+    let m=0; for(const v of arr) m=Math.max(m,v);
+    if(m<1e-12) m=1;
+    return arr.map(v=>v/m);
+  }
+  const F = norm(fmag);
+  const H = norm(hmag);
+  const Y = norm(ymag);
+
+  const ax = drawAxes(ctx, {x0:0,y0:0,w,h}, {
+    title: 'Frequency domain (normalized magnitudes)',
+    xlabel: 'ν (1/mm)',
+    ylabel: 'Normalized magnitude (arb.)',
+    xMin: -nuMaxShow, xMax: nuMaxShow,
+    yMin: -0.05, yMax: 1.15,
+    xTicks: 6, yTicks: 4,
+    grid: true
+  });
+
+  polyline(ctx, xs, F, -nuMaxShow, nuMaxShow, -0.05, 1.15, ax.plot, 'rgba(231,238,252,0.75)');
+  polyline(ctx, xs, H, -nuMaxShow, nuMaxShow, -0.05, 1.15, ax.plot, 'rgba(255,211,106,0.85)');
+  polyline(ctx, xs, Y, -nuMaxShow, nuMaxShow, -0.05, 1.15, ax.plot, 'rgba(102,227,255,0.90)');
+
+  legend(ctx, ax.plot, [
+    {label:'|F(ν)| (norm.)', color:'rgba(231,238,252,0.75)'},
+    {label:'|H(ν)| (norm.)', color:'rgba(255,211,106,0.85)'},
+    {label:'|H(ν)F(ν)| (norm.)', color:'rgba(102,227,255,0.90)'}
+  ]);
+
+  // small mode note
+  ctx.save();
+  ctx.fillStyle = 'rgba(168,179,199,0.9)';
+  ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  const note = (mode==='a') ? 'H(ν)=rect(|ν|≤B)' : (mode==='b') ? 'H(ν)=sinc(ν/f0)' : 'H(ν)=−(2πν)² (scaled)';
+  ctx.fillText(note, ax.plot.x+10, ax.plot.y+ax.plot.h-10);
+  ctx.restore();
+}
+
+function drawSweepPlot(mode, grid, paramCurrent){
+  const {ctx,w,h} = fitCanvas(cSweep, 320);
+  ctx.clearRect(0,0,w,h);
+
+  // sweep range based on mode
+  const nPts = 34;
+  let pMin, pMax, label;
+  if(mode === 'a'){
+    pMin = 0.2; pMax = 4.0; label = 'B (1/mm)';
+  } else if(mode === 'b'){
+    pMin = 0.2; pMax = 4.0; label = 'f0 (1/mm)';
+  } else {
+    // Laplacian: sweep a "soft cutoff" by multiplying H with a low-pass rect for realism
+    pMin = 0.4; pMax = 3.0; label = 'cutoff B (1/mm) (aperture-limited demo)';
+  }
+
+  const params = [];
+  for(let i=0;i<nPts;i++){
+    params.push(pMin + (pMax-pMin)*i/(nPts-1));
+  }
+
+  // compute energy vs parameter
+  const xIn = makeInput(mode, grid);
+  const energies = [];
+  const {dx} = grid;
+
+  for(const p of params){
+    let H;
+    if(mode !== 'lap'){
+      H = makeH(mode, grid, p);
+    } else {
+      // Laplacian * finite pupil: H = -(2πν)^2 * rect(|ν|<=B)
+      const base = makeH('lap', grid, p);
+      const pupil = makeH('a', grid, p); // rect pupil with cutoff p
+      const Hre = base.Hre.map((v,i)=>v*pupil.Hre[i]);
+      H = {Hre, Him: base.Him};
+    }
+    const out = applyFilter(xIn.re, xIn.im, H.Hre, H.Him);
+    energies.push(energyOf(out.yre, out.yim, dx));
+  }
+
+  // y limits
+  let yMin = Math.min(...energies), yMax = Math.max(...energies);
+  const span = (yMax-yMin) || 1;
+  yMin -= 0.08*span; yMax += 0.12*span;
+
+  const ax = drawAxes(ctx, {x0:0,y0:0,w,h}, {
+    title: 'Parameter sweep: output energy E = ∫|g|² dx',
+    xlabel: label,
+    ylabel: 'E (arb.)',
+    xMin: pMin, xMax: pMax,
+    yMin, yMax,
+    xTicks: 6, yTicks: 5,
+    grid: true
+  });
+
+  polyline(ctx, params, energies, pMin,pMax, yMin,yMax, ax.plot, 'rgba(155,255,155,0.90)');
+
+  // current marker
+  const pc = clamp(paramCurrent, pMin, pMax);
+  // interpolate for marker y
+  let yc = energies[0];
+  for(let i=0;i<params.length-1;i++){
+    if(pc>=params[i] && pc<=params[i+1]){
+      const t = (pc-params[i])/(params[i+1]-params[i]);
+      yc = energies[i]*(1-t) + energies[i+1]*t;
+      break;
+    }
+  }
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,211,106,0.95)';
+  const X = toPxX(pc, pMin,pMax, ax.plot);
+  const Y = toPxY(yc, yMin,yMax, ax.plot);
+  ctx.beginPath(); ctx.arc(X,Y,5,0,2*Math.PI); ctx.fill();
+  ctx.fillStyle = 'rgba(231,238,252,0.90)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace';
+  const tag = 'current';
+  ctx.fillText(tag, X+8, Y-8);
+  ctx.restore();
+
+  legend(ctx, ax.plot, [{label:'E vs parameter', color:'rgba(155,255,155,0.90)'}]);
+}
+
+/* =========================
+   UI behavior
+========================= */
+function setModeUI(mode){
+  if(mode === 'a'){
+    paramLabel.textContent = 'Bandwidth B:';
+    paramHint.textContent = 'B sets the low-pass cutoff: H(ν)=rect(|ν|≤B). Larger B → narrower sinc in x.';
+    paramRange.min = '0.2';
+    paramRange.max = '4.0';
+    paramRange.step = '0.01';
+    paramRange.value = '1.00';
+  } else if(mode === 'b'){
+    paramLabel.textContent = 'Sinc scale f0:';
+    paramHint.textContent = 'H(ν)=sinc(ν/f0). Larger f0 → broader H(ν) → output closer to rect; smaller f0 → stronger smoothing.';
+    paramRange.min = '0.2';
+    paramRange.max = '4.0';
+    paramRange.step = '0.01';
+    paramRange.value = '1.00';
+  } else {
+    paramLabel.textContent = 'Aperture cutoff (demo):';
+    paramHint.textContent = 'Pure Laplacian grows with ν². For the sweep we apply an aperture-limited Laplacian: H=−(2πν)²·rect(|ν|≤B).';
+    paramRange.min = '0.4';
+    paramRange.max = '3.0';
+    paramRange.step = '0.01';
+    paramRange.value = '1.50';
+  }
+  updatePills();
+}
+
+function updatePills(){
+  const mode = modeSel.value;
+  const p = parseFloat(paramRange.value);
+  if(mode === 'a'){
+    paramPill.textContent = p.toFixed(2) + ' 1/mm';
+  } else if(mode === 'b'){
+    paramPill.textContent = p.toFixed(2) + ' 1/mm';
+  } else {
+    paramPill.textContent = p.toFixed(2) + ' 1/mm';
+  }
+  const xmax = parseFloat(domainRange.value);
+  xmaxPill.textContent = xmax.toFixed(0) + ' mm';
+}
+
+/* =========================
+   Main render
+========================= */
+let lastGrid = null;
+function renderAll(){
+  updatePills();
+  drawDiagram();
+
+  const mode = modeSel.value;
+  const param = parseFloat(paramRange.value);
+  const xmax = parseFloat(domainRange.value);
+
+  const grid = buildGrid();
+  lastGrid = grid;
+
+  // input + filter
+  const xIn = makeInput(mode, grid);
+
+  let H;
+  if(mode !== 'lap'){
+    H = makeH(mode, grid, param);
+  } else {
+    // display main Laplacian as pure, but note: huge values can dominate; keep as is for main plots
+    H = makeH('lap', grid, param);
+  }
+
+  const out = applyFilter(xIn.re, xIn.im, H.Hre, H.Him);
+
+  drawMainPlot(grid, out.yre, out.yim, mode, xmax);
+  drawFreqPlot(grid, out.Xmag, H.Hre, out.Ymag, mode);
+  drawSweepPlot(mode, grid, param);
+}
+
+modeSel.addEventListener('change', ()=>{ setModeUI(modeSel.value); renderAll(); });
+paramRange.addEventListener('input', renderAll);
+domainRange.addEventListener('input', renderAll);
+resetBtn.addEventListener('click', ()=>{
+  modeSel.value = 'a';
+  domainRange.value = '20';
+  setModeUI('a');
+  renderAll();
+});
+
+// handle resizing
+let resizeTimer = null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderAll, 80);
+});
+
+// init
+setModeUI(modeSel.value);
+renderAll();
+</script>
+
+</body>
+</html>

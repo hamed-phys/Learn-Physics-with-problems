@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Generating an Airy Beam with an Optical Fourier-Transform System (Lens + Cubic Phase Mask)</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --panel:#0f1624;
+      --card:#121b2c;
+      --text:#e9eefc;
+      --muted:#b7c2e3;
+      --faint:#7f8bb2;
+      --accent:#7aa2ff;
+      --accent2:#59e0c5;
+      --warn:#ffd27a;
+      --ok:#8bffb0;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 15% 10%, rgba(122,162,255,.18), transparent 60%),
+        radial-gradient(900px 700px at 85% 20%, rgba(89,224,197,.14), transparent 55%),
+        linear-gradient(180deg, #070a11 0%, var(--bg) 100%);
+    }
+
+    header{
+      padding:28px 18px 10px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .title{
+      display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;
+    }
+    .badge{
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:var(--muted);
+      background:rgba(255,255,255,.04);
+      font-size:12px;
+      letter-spacing:.3px;
+      align-self:center;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(22px, 2.6vw, 36px);
+      line-height:1.15;
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:10px 0 0;
+      color:var(--muted);
+      max-width: 80ch;
+      line-height:1.5;
+    }
+
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding: 10px 18px 50px;
+      display:grid;
+      grid-template-columns: 300px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+
+    nav.toc{
+      position:sticky;
+      top:14px;
+      background:rgba(18,27,44,.72);
+      backdrop-filter: blur(10px);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding:14px 14px 12px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    nav.toc h2{
+      margin:0 0 10px;
+      font-size:14px;
+      letter-spacing:.5px;
+      color:var(--muted);
+      text-transform:uppercase;
+    }
+    .toc a{
+      display:block;
+      padding:9px 10px;
+      border-radius:12px;
+      color:var(--text);
+      text-decoration:none;
+      border:1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size:14px;
+      line-height:1.2;
+    }
+    .toc a:hover{
+      background:rgba(255,255,255,.05);
+      border-color:rgba(255,255,255,.10);
+      transform: translateY(-1px);
+    }
+    .toc .small{
+      color:var(--faint);
+      font-size:12px;
+      margin-top:10px;
+      padding: 0 6px 2px;
+      line-height:1.4;
+    }
+
+    article{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      min-width: 0;
+    }
+
+    section{
+      background: rgba(18,27,44,.62);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px 16px 14px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    section::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background: linear-gradient(120deg, rgba(122,162,255,.10), transparent 35%, rgba(89,224,197,.08));
+      opacity:.55;
+      mix-blend-mode: screen;
+    }
+    section > *{ position:relative; }
+
+    h2{
+      margin:0 0 10px;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+    h3{
+      margin:12px 0 6px;
+      font-size: 15px;
+      color:var(--muted);
+    }
+    p{ margin: 8px 0; color: var(--text); line-height: 1.6; }
+    ul,ol{ margin:8px 0 8px 22px; color: var(--text); line-height:1.6; }
+    li{ margin:4px 0; }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 980px){
+      main{ grid-template-columns: 1fr; }
+      nav.toc{ position:relative; top:auto; }
+      .grid2,.grid3{ grid-template-columns: 1fr; }
+    }
+
+    .callout{
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      padding:12px 12px;
+    }
+    .callout strong{ color: var(--muted); }
+    .callout.ok{ border-color: rgba(139,255,176,.25); }
+    .callout.warn{ border-color: rgba(255,210,122,.25); }
+    .callout.accent{ border-color: rgba(122,162,255,.25); }
+
+    .equation{
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 10px 10px 10px;
+      position:relative;
+    }
+
+    .copyRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin: 8px 0 0;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-size: 13px;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.09);
+      border-color: rgba(255,255,255,.18);
+    }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+    .btn.primary{
+      border-color: rgba(122,162,255,.35);
+      background: rgba(122,162,255,.10);
+    }
+
+    .kpi{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:stretch;
+    }
+    .kpi .box{
+      flex: 1 1 180px;
+      min-width: 180px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      border-radius: 16px;
+      padding: 10px 12px;
+    }
+    .kpi .label{
+      color: var(--faint);
+      font-size: 12px;
+      letter-spacing:.3px;
+      text-transform:uppercase;
+    }
+    .kpi .value{
+      font-family: var(--mono);
+      font-size: 14px;
+      margin-top:6px;
+      color: var(--text);
+    }
+
+    .vizWrap{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:12px;
+      align-items:stretch;
+    }
+    @media (max-width: 980px){
+      .vizWrap{ grid-template-columns: 1fr; }
+    }
+
+    figure{
+      margin:0;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+    }
+    figcaption{
+      padding: 10px 12px;
+      color: var(--muted);
+      border-top:1px solid rgba(255,255,255,.10);
+      font-size: 13px;
+      line-height:1.4;
+    }
+    canvas{
+      display:block;
+      width:100%;
+      height:320px;
+    }
+    .controls{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .control{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      border-radius: 16px;
+      padding: 10px 12px;
+    }
+    .control .row{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:baseline;
+      flex-wrap:wrap;
+    }
+    .control label{
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control .readout{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text);
+      opacity:.95;
+    }
+    input[type="range"]{
+      width:100%;
+      margin-top:8px;
+      accent-color: var(--accent);
+    }
+    select{
+      width:100%;
+      margin-top:8px;
+      padding:8px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      outline:none;
+    }
+
+    .finalBox{
+      border: 1px solid rgba(89,224,197,.28);
+      background: linear-gradient(135deg, rgba(89,224,197,.10), rgba(122,162,255,.08));
+      border-radius: 18px;
+      padding: 12px 12px;
+    }
+    .finalBox .equation{
+      border-color: rgba(89,224,197,.24);
+      background: rgba(0,0,0,.20);
+    }
+
+    footer{
+      max-width:1200px;
+      margin: 0 auto;
+      padding: 16px 18px 40px;
+      color: var(--faint);
+      font-size: 12px;
+      line-height:1.5;
+    }
+
+    @media print{
+      body{ background:#fff; color:#000; }
+      section, nav.toc, figure{ box-shadow:none; background:#fff; }
+      .btn, .controls{ display:none !important; }
+      a{ color:#000; text-decoration:none; }
+      .equation{ background:#f5f5f5; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="title">
+    <h1>Generation of an Airy Beam using a Lens Fourier-Transform System</h1>
+    <span class="badge">Fourier optics • cubic phase mask • scaling</span>
+  </div>
+  <p class="subtitle">
+    We design a simple 1D optical Fourier-transform setup (mask + lens) that produces an Airy-beam amplitude
+    and derive the beam-width parameter <span style="font-family:var(--mono)">W0</span> in terms of focal length <span style="font-family:var(--mono)">f</span> and wavelength <span style="font-family:var(--mono)">λ</span>.
+  </p>
+</header>
+
+<main>
+  <nav class="toc" aria-label="Table of contents">
+    <h2>On this page</h2>
+    <a href="#quick">Quick Summary</a>
+    <a href="#viz">Interactive Visualizations</a>
+    <a href="#part1">Part 1 — Problem Analysis</a>
+    <a href="#part2">Part 2 — Strategy & Tips</a>
+    <a href="#part3">Part 3 — Full Solution</a>
+    <a href="#checks">Sanity Checks</a>
+    <div class="small">
+      Tip: use the sliders to see how <span style="font-family:var(--mono)">W0 ∝ fλ</span> changes the Airy pattern scale.
+    </div>
+  </nav>
+
+  <article>
+    <section id="quick">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li>A thin lens produces (up to a constant prefactor) the <em>Fourier transform</em> of the field at its front focal plane in its back focal plane.</li>
+        <li>Given the transform pair <span style="font-family:var(--mono)">FT{exp(i x³/3)} = 2π Ai(2π ν)</span>, a cubic phase mask generates an Airy function in the Fourier plane.</li>
+        <li>In a lens Fourier transform, the spatial frequency is <span style="font-family:var(--mono)">ν = X/(λ f)</span>, where <span style="font-family:var(--mono)">X</span> is the transverse coordinate in the back focal plane.</li>
+        <li>Therefore the field becomes proportional to <span style="font-family:var(--mono)">Ai(2π X/(λ f))</span>, i.e., an Airy beam with scale <span style="font-family:var(--mono)">W0 = λ f / (2π)</span>.</li>
+        <li>The output amplitude scale factor is <span style="font-family:var(--mono)">(e^{ikf}/(i λ f))·(2π)</span> (global phase and overall amplitude).</li>
+      </ul>
+
+      <div class="finalBox">
+        <h3 style="margin-top:0">Final Result (beam width)</h3>
+        <div class="equation" id="eqFinal">W0 = (λ f) / (2π)</div>
+        <div class="copyRow">
+          <button class="btn primary" data-copy="eqFinal">Copy final answer</button>
+          <button class="btn" data-copy-text="W0 = (λ f) / (2π)">Copy as plain text</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="viz">
+      <h2>Interactive Visualizations</h2>
+      <p>
+        The plots below use <strong>example values</strong> (you can change them). The model uses the derived scaling
+        <span style="font-family:var(--mono)">W0 = λ f / (2π)</span> to map physical coordinate <span style="font-family:var(--mono)">X</span> to the Airy argument
+        <span style="font-family:var(--mono)">X/W0</span>.
+      </p>
+
+      <div class="vizWrap">
+        <figure>
+          <canvas id="cSetup" aria-label="Optical setup diagram"></canvas>
+          <figcaption>
+            <strong>Diagram:</strong> cubic phase mask placed in the lens front focal plane; the back focal plane contains the Fourier transform,
+            yielding an Airy amplitude profile.
+          </figcaption>
+        </figure>
+
+        <div class="controls" aria-label="Interactive controls">
+          <div class="control">
+            <div class="row">
+              <label for="fSlider">Focal length <span style="font-family:var(--mono)">f</span> (mm)</label>
+              <div class="readout" id="fReadout"></div>
+            </div>
+            <input id="fSlider" type="range" min="30" max="300" step="1" value="150" />
+          </div>
+
+          <div class="control">
+            <div class="row">
+              <label for="lamSelect">Wavelength <span style="font-family:var(--mono)">λ</span> (nm)</label>
+              <div class="readout" id="lamReadout"></div>
+            </div>
+            <select id="lamSelect">
+              <option value="532" selected>532 (green)</option>
+              <option value="633">633 (HeNe red)</option>
+              <option value="780">780 (near-IR)</option>
+              <option value="1064">1064 (Nd:YAG)</option>
+              <option value="1550">1550 (telecom)</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <div class="row">
+              <label for="xRangeSlider">Plot half-range in <span style="font-family:var(--mono)">X</span> (mm)</label>
+              <div class="readout" id="xRangeReadout"></div>
+            </div>
+            <input id="xRangeSlider" type="range" min="0.2" max="6" step="0.1" value="2.5" />
+            <p style="margin:8px 0 0; color:var(--faint); font-size:12px;">
+              Smaller range zooms into the main lobe; larger range reveals oscillatory tails.
+            </p>
+          </div>
+
+          <div class="kpi">
+            <div class="box">
+              <div class="label">Computed W0</div>
+              <div class="value" id="w0Kpi"></div>
+            </div>
+            <div class="box">
+              <div class="label">Mapping</div>
+              <div class="value" id="mapKpi"></div>
+            </div>
+          </div>
+
+          <div class="copyRow">
+            <button class="btn" data-copy-text="U_f(X) ∝ ∫ U_0(x) exp[-i (2π/(λ f)) x X] dx">Copy lens FT kernel</button>
+            <button class="btn" data-copy-text="ν = X/(λ f)">Copy frequency mapping</button>
+            <button class="btn" data-copy-text="U_f(X) ∝ Ai(2π X/(λ f))">Copy Airy field form</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <figure>
+          <canvas id="cMain" aria-label="Main quantitative plot"></canvas>
+          <figcaption>
+            <strong>Main plot:</strong> normalized intensity <span style="font-family:var(--mono)">I(X) ∝ |Ai(X/W0)|²</span> at the Fourier (back focal) plane.
+            Axes include units; gridlines and ticks are shown.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <canvas id="cSweep" aria-label="Parameter sweep plot"></canvas>
+          <figcaption>
+            <strong>Secondary plot:</strong> beam-width scale <span style="font-family:var(--mono)">W0(f) = λ f /(2π)</span> across the focal-length range
+            (for the currently selected wavelength). The current <span style="font-family:var(--mono)">f</span> is highlighted.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="part1">
+      <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <h3>1) Restate the problem in plain words</h3>
+      <p>
+        We want to generate an Airy beam whose transverse amplitude at the output plane (called <span style="font-family:var(--mono)">z=0</span>)
+        is
+        <span style="font-family:var(--mono)">A(x,0) = Ai(x/W0)</span>,
+        where <span style="font-family:var(--mono)">Ai</span> is the Airy function and <span style="font-family:var(--mono)">W0</span> sets the beam width.
+        We are told that the Fourier transform of the cubic phase function <span style="font-family:var(--mono)">exp(i x³/3)</span> equals
+        <span style="font-family:var(--mono)">2π Ai(2π νx)</span>.
+        Using a lens (focal length <span style="font-family:var(--mono)">f</span>) and a mask with transmittance <span style="font-family:var(--mono)">exp(i x³/3)</span>,
+        we must design an optical Fourier-transform system that generates the Airy beam and find <span style="font-family:var(--mono)">W0</span> in terms of <span style="font-family:var(--mono)">f</span> and wavelength <span style="font-family:var(--mono)">λ</span>.
+      </p>
+
+      <div class="grid2">
+        <div class="callout accent">
+          <strong>Given</strong>
+          <ul>
+            <li>Target field form: <span style="font-family:var(--mono)">A(x,0) = Ai(x/W0)</span></li>
+            <li>Fourier pair: <span style="font-family:var(--mono)">FT{exp(i x³/3)} = 2π Ai(2π νx)</span></li>
+            <li>Lens focal length: <span style="font-family:var(--mono)">f</span></li>
+            <li>Wavelength: <span style="font-family:var(--mono)">λ</span></li>
+            <li>Mask amplitude transmittance: <span style="font-family:var(--mono)">t(x) = exp(i x³/3)</span></li>
+          </ul>
+        </div>
+        <div class="callout ok">
+          <strong>Unknowns / must find</strong>
+          <ul>
+            <li>Optical arrangement (where to place mask relative to lens)</li>
+            <li>Output-plane field expression produced by the system</li>
+            <li>Beam-width parameter <span style="font-family:var(--mono)">W0</span> in terms of <span style="font-family:var(--mono)">f</span> and <span style="font-family:var(--mono)">λ</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>2) Relevant physical principles (and why they apply)</h3>
+      <ul>
+        <li>
+          <strong>Fraunhofer diffraction / Fourier optics:</strong> A thin lens, under paraxial conditions, produces the Fourier transform of the complex field in its
+          <em>front focal plane</em> at its <em>back focal plane</em>. This directly connects a designed mask field to a desired output pattern.
+        </li>
+        <li>
+          <strong>Fourier-transform scaling:</strong> The lens FT uses spatial frequency <span style="font-family:var(--mono)">ν = X/(λ f)</span>, so any known analytic transform pair
+          must be mapped to physical coordinates through this scaling.
+        </li>
+        <li>
+          <strong>Airy function as the FT of a cubic phase:</strong> The problem explicitly gives the transform pair; we use it as a “design recipe.”
+        </li>
+      </ul>
+
+      <h3>3) Possible approaches (compare briefly)</h3>
+      <ol>
+        <li>
+          <strong>Direct Fourier optics approach (best):</strong> Write the lens Fourier-transform integral, insert the mask transmittance,
+          match the result to the given transform pair, then identify <span style="font-family:var(--mono)">W0</span>.
+          <em>Fastest and most transparent.</em>
+        </li>
+        <li>
+          <strong>Dimensional/scaling argument:</strong> Use the frequency mapping <span style="font-family:var(--mono)">ν=X/(λ f)</span> and the given transform pair to infer the Airy argument scaling.
+          <em>Quick, but you must be careful about 2π conventions.</em>
+        </li>
+        <li>
+          <strong>Propagation-from-phase-mask derivation:</strong> Start from Fresnel diffraction and show how a cubic phase becomes Airy at the focal plane.
+          <em>More general, but longer than needed here.</em>
+        </li>
+      </ol>
+
+      <div class="callout warn">
+        <strong>Chosen approach:</strong> The <em>direct Fourier optics</em> method, because the problem hands us the exact transform pair and asks specifically for
+        the scaling of <span style="font-family:var(--mono)">W0</span> in terms of <span style="font-family:var(--mono)">f</span> and <span style="font-family:var(--mono)">λ</span>.
+      </div>
+    </section>
+
+    <section id="part2">
+      <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+      <h3>Step-by-step plan (no algebra yet)</h3>
+      <ol>
+        <li><strong>Set the geometry:</strong> Place the cubic phase mask in the lens <em>front focal plane</em>. (Goal: ensure the back focal plane is the Fourier plane.)</li>
+        <li><strong>Write the lens FT relation:</strong> Use the standard Fourier-transform kernel for a thin lens. (Tool: Fraunhofer diffraction via a lens.)</li>
+        <li><strong>Identify spatial frequency mapping:</strong> Read off <span style="font-family:var(--mono)">ν = X/(λ f)</span>. (Tool: lens FT scaling.)</li>
+        <li><strong>Insert the mask field:</strong> Set <span style="font-family:var(--mono)">U0(x)=exp(i x³/3)</span> (assuming uniform illumination). (Goal: match to the provided transform pair.)</li>
+        <li><strong>Use the given Fourier pair:</strong> Replace the integral with <span style="font-family:var(--mono)">2π Ai(2π ν)</span>. (Tool: provided transform identity.)</li>
+        <li><strong>Match to desired Airy-beam form:</strong> Compare <span style="font-family:var(--mono)">Ai(2π X/(λ f))</span> to <span style="font-family:var(--mono)">Ai(X/W0)</span>. (Goal: extract <span style="font-family:var(--mono)">W0</span>.)</li>
+        <li><strong>Report the design + result:</strong> State the optical system and provide <span style="font-family:var(--mono)">W0</span>. (Goal: final expression and interpretation.)</li>
+      </ol>
+
+      <div class="grid2">
+        <div class="callout warn">
+          <strong>Common mistakes</strong>
+          <ul>
+            <li>Mixing Fourier-transform conventions (missing or extra factors of <span style="font-family:var(--mono)">2π</span>).</li>
+            <li>Forgetting that the lens FT uses <span style="font-family:var(--mono)">ν = X/(λ f)</span> (not <span style="font-family:var(--mono)">X/f</span>).</li>
+            <li>Confusing the “Airy argument scale” with the overall amplitude prefactor (global constants don’t change <span style="font-family:var(--mono)">W0</span>).</li>
+          </ul>
+        </div>
+        <div class="callout ok">
+          <strong>Quick tips</strong>
+          <ul>
+            <li>Separate <em>shape</em> from <em>prefactor</em>: <span style="font-family:var(--mono)">W0</span> comes from the argument of <span style="font-family:var(--mono)">Ai(·)</span>.</li>
+            <li>If the Airy argument is <span style="font-family:var(--mono)">2πX/(λf)</span>, then <span style="font-family:var(--mono)">W0</span> is the inverse coefficient multiplying <span style="font-family:var(--mono)">X</span>.</li>
+            <li>Check units: <span style="font-family:var(--mono)">W0</span> must be a length.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="part3">
+      <h2>PART 3 — Full Solution</h2>
+
+      <h3>Physical intuition</h3>
+      <p>
+        A cubic phase mask is like a “phase-only hologram” designed so that, after a Fourier transform, the field becomes an Airy function.
+        A lens naturally performs that Fourier transform between its focal planes. Therefore, illuminating the cubic phase mask and placing it one focal length
+        in front of the lens will produce an Airy-shaped field one focal length behind the lens. The only remaining task is to map the abstract Fourier variable
+        <span style="font-family:var(--mono)">ν</span> to the physical coordinate <span style="font-family:var(--mono)">X</span>, which is where <span style="font-family:var(--mono)">λ</span> and <span style="font-family:var(--mono)">f</span> enter.
+      </p>
+
+      <h3>Step-by-step derivation</h3>
+
+      <p><strong>1) Optical Fourier-transform relation for a thin lens</strong></p>
+      <p>
+        Let <span style="font-family:var(--mono)">U0(x)</span> be the complex field in the <em>front focal plane</em> of a thin lens (paraxial regime).
+        Then the field in the <em>back focal plane</em>, as a function of transverse coordinate <span style="font-family:var(--mono)">X</span>, is (up to a global phase):
+      </p>
+      <div class="equation" id="eqLens">
+U_f(X) = (e^{i k f} / (i λ f)) ∫_{-∞}^{∞} U_0(x) · exp[ -i (2π/(λ f)) x X ] dx
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="eqLens">Copy equation</button>
+      </div>
+      <p>
+        Here <span style="font-family:var(--mono)">k = 2π/λ</span>. The integral has exactly the form of a Fourier transform with spatial frequency:
+      </p>
+      <div class="equation" id="eqNu">
+ν = X / (λ f)
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="eqNu">Copy equation</button>
+      </div>
+
+      <p><strong>2) Insert the cubic phase mask field</strong></p>
+      <p>
+        The problem specifies an amplitude transmittance
+        <span style="font-family:var(--mono)">t(x) = exp(i x³/3)</span>.
+        Under uniform illumination (or treating the mask as the dominant modulation), we take:
+      </p>
+      <div class="equation" id="eqU0">
+U_0(x) = exp(i x³/3)
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="eqU0">Copy equation</button>
+      </div>
+
+      <p><strong>3) Use the provided Fourier transform identity</strong></p>
+      <p>
+        The statement
+        <span style="font-family:var(--mono)">FT{exp(i x³/3)} = 2π Ai(2π ν)</span>
+        means that the integral
+        <span style="font-family:var(--mono)">∫ exp(i x³/3) exp(-i 2π ν x) dx</span>
+        evaluates to
+        <span style="font-family:var(--mono)">2π Ai(2π ν)</span>,
+        using the same <span style="font-family:var(--mono)">2π</span>-based Fourier convention as the lens kernel above.
+      </p>
+      <p>
+        In the lens, the role of <span style="font-family:var(--mono)">ν</span> is played by <span style="font-family:var(--mono)">X/(λ f)</span>. Therefore:
+      </p>
+      <div class="equation" id="eqAiryOut">
+U_f(X) = (e^{i k f} / (i λ f)) · 2π · Ai( 2π · X/(λ f) )
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="eqAiryOut">Copy equation</button>
+      </div>
+
+      <p><strong>4) Match the output to the desired Airy-beam form</strong></p>
+      <p>
+        The problem defines the Airy beam transverse amplitude (at the relevant plane) as
+        <span style="font-family:var(--mono)">A(X,0) = Ai(X/W0)</span>.
+        Comparing the <em>argument</em> of the Airy function:
+      </p>
+      <div class="equation" id="eqMatch">
+Ai( 2π X/(λ f) )  ↔  Ai( X/W0 )
+      </div>
+      <div class="copyRow">
+        <button class="btn" data-copy="eqMatch">Copy equation</button>
+      </div>
+      <p>
+        We identify the coefficients multiplying <span style="font-family:var(--mono)">X</span>:
+      </p>
+      <div class="equation" id="eqW0Derive">
+X/W0 = 2π X/(λ f)  ⇒  W0 = (λ f)/(2π)
+      </div>
+      <div class="copyRow">
+        <button class="btn primary" data-copy="eqW0Derive">Copy derivation</button>
+      </div>
+
+      <div class="finalBox" style="margin-top:12px;">
+        <h3 style="margin-top:0;">Boxed final answer</h3>
+        <div class="equation" id="eqBoxed">W0 = (λ f) / (2π)</div>
+        <div class="copyRow">
+          <button class="btn primary" data-copy="eqBoxed">Copy final equation</button>
+          <button class="btn" data-copy-text="W0 = (λ f) / (2π)">Copy plain text</button>
+        </div>
+        <p style="margin:10px 0 0; color:var(--muted);">
+          <strong>System design:</strong> Illuminate a cubic phase mask with amplitude transmittance <span style="font-family:var(--mono)">exp(i x³/3)</span>
+          placed at the lens front focal plane; the Airy beam appears at the back focal plane.
+        </p>
+      </div>
+    </section>
+
+    <section id="checks">
+      <h2>Sanity Checks</h2>
+
+      <div class="grid3">
+        <div class="callout ok">
+          <strong>Units</strong>
+          <p style="margin:8px 0 0;">
+            <span style="font-family:var(--mono)">λ</span> has units of length and <span style="font-family:var(--mono)">f</span> has units of length, so
+            <span style="font-family:var(--mono)">λ f</span> has units of length²; dividing by a dimensionless <span style="font-family:var(--mono)">2π</span> still gives length²—wait, we must check carefully:
+          </p>
+          <p style="margin:8px 0 0;">
+            In the identification <span style="font-family:var(--mono)">X/W0 = 2π X/(λ f)</span>,
+            both sides are dimensionless, so <span style="font-family:var(--mono)">W0</span> must have units of length. Since <span style="font-family:var(--mono)">X</span> cancels,
+            <span style="font-family:var(--mono)">W0 = λ f /(2π)</span> indeed has units of (length·length)??? This seems inconsistent unless we remember that in Fourier optics,
+            <span style="font-family:var(--mono)">ν</span> is a spatial frequency (1/length) and equals <span style="font-family:var(--mono)">X/(λ f)</span>, so <span style="font-family:var(--mono)">λ f</span> has units of length² and dividing <span style="font-family:var(--mono)">X</span> (length)
+            by <span style="font-family:var(--mono)">λ f</span> (length²) gives 1/length — correct. Therefore <span style="font-family:var(--mono)">2π X/(λ f)</span> is dimensionless only if the Airy argument expects a dimensionless product of (1/length)×(length).
+            It does: <span style="font-family:var(--mono)">X/W0</span> is dimensionless, so <span style="font-family:var(--mono)">W0</span> must be length.
+            And <span style="font-family:var(--mono)">λ f</span> is length², divided by <span style="font-family:var(--mono)">2π</span> is length² — so we need to reconcile: the equality <span style="font-family:var(--mono)">X/W0 = 2π X/(λ f)</span> implies <span style="font-family:var(--mono)">1/W0 = 2π/(λ f)</span> so <span style="font-family:var(--mono)">W0 = λ f /(2π)</span>. Dimensional analysis gives length², which suggests the coordinate x in the mask transform pair is implicitly <em>dimensionless</em> or scaled.
+          </p>
+        </div>
+
+        <div class="callout warn">
+          <strong>Important note about scaling</strong>
+          <p style="margin:8px 0 0;">
+            The transform identity provided uses a normalized variable <span style="font-family:var(--mono)">x</span> inside <span style="font-family:var(--mono)">exp(i x³/3)</span>,
+            which must be dimensionless. In physical units, a cubic phase mask is typically <span style="font-family:var(--mono)">exp(i α x_phys³)</span>, where <span style="font-family:var(--mono)">α</span> has units 1/length³.
+          </p>
+          <p style="margin:8px 0 0;">
+            However, this textbook-style problem is constructed so that the lens Fourier transform directly maps to the given identity, and it asks for
+            <span style="font-family:var(--mono)">W0</span> purely “in terms of <span style="font-family:var(--mono)">f</span> and <span style="font-family:var(--mono)">λ</span>,”
+            meaning the intended scaling is exactly:
+            <span style="font-family:var(--mono)">W0 = λ f /(2π)</span>
+            under their normalization.
+          </p>
+        </div>
+
+        <div class="callout ok">
+          <strong>Limiting/physical interpretation</strong>
+          <ul style="margin:8px 0 0 18px;">
+            <li>Larger <span style="font-family:var(--mono)">f</span> → smaller spatial frequency for a given <span style="font-family:var(--mono)">X</span> → Airy pattern stretches (larger width scale).</li>
+            <li>Larger <span style="font-family:var(--mono)">λ</span> → stronger diffraction scaling → Airy pattern stretches (larger width scale).</li>
+            <li>The overall prefactor <span style="font-family:var(--mono)">(e^{ikf}/(i λ f))·2π</span> changes amplitude and phase, not the Airy width parameter.</li>
+          </ul>
+        </div>
+      </div>
+
+      <p style="color:var(--muted); margin-top:10px;">
+        In the interactive plots, we follow the problem’s normalization and treat <span style="font-family:var(--mono)">W0</span> as the physical scaling length for the Airy argument.
+      </p>
+    </section>
+  </article>
+</main>
+
+<footer>
+  <div>
+    Built as a single self-contained HTML article (vanilla HTML/CSS/JS). Interactive plots use a numerical integral representation of the Airy function for demonstration.
+  </div>
+</footer>
+
+<script>
+/* ========= Utilities ========= */
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function lerp(a,b,t){ return a + (b-a)*t; }
+function fmtSI(x, unit){
+  // simple SI formatter for small set
+  const abs = Math.abs(x);
+  if(abs === 0) return "0 " + unit;
+  const prefixes = [
+    {p:1e-12, s:"p"},
+    {p:1e-9, s:"n"},
+    {p:1e-6, s:"µ"},
+    {p:1e-3, s:"m"},
+    {p:1, s:""},
+    {p:1e3, s:"k"},
+    {p:1e6, s:"M"}
+  ];
+  let best = prefixes[4];
+  for(const pr of prefixes){
+    if(abs/pr.p >= 0.8 && abs/pr.p < 800){ best = pr; break; }
+  }
+  const v = x/best.p;
+  return (v.toFixed(v < 10 ? 3 : v < 100 ? 2 : 1)) + " " + best.s + unit;
+}
+
+/* ========= Airy Ai(x) via integral =========
+Ai(x) = (1/π) ∫_0^∞ cos(t^3/3 + x t) dt
+We approximate with finite upper bound + step.
+This is for interactive visualization (not for high-precision numerics).
+*/
+function airyAi(x){
+  // adaptive-ish parameters
+  // For negative x oscillations are stronger; use larger T
+  const T = (x < 0) ? 18 : 14;
+  const N = 1600; // step count
+  const dt = T / N;
+  let sum = 0;
+  // Trapezoid rule
+  for(let i=0;i<=N;i++){
+    const t = i*dt;
+    const phase = (t*t*t)/3 + x*t;
+    const w = (i===0 || i===N) ? 0.5 : 1.0;
+    sum += w * Math.cos(phase);
+  }
+  return (dt * sum) / Math.PI;
+}
+
+/* ========= Canvas helpers ========= */
+function setupCanvas(canvas){
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(2, Math.floor(rect.width * dpr));
+  const h = Math.max(2, Math.floor(rect.height * dpr));
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w; canvas.height = h;
+  }
+  ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  return {ctx, w: rect.width, h: rect.height, dpr};
+}
+
+function drawPanelBackground(ctx, w, h){
+  ctx.clearRect(0,0,w,h);
+  // subtle vignette
+  const g = ctx.createRadialGradient(w*0.2,h*0.2, 10, w*0.5,h*0.6, Math.max(w,h));
+  g.addColorStop(0, "rgba(122,162,255,0.10)");
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = "rgba(0,0,0,0.10)";
+  ctx.fillRect(0,0,w,h);
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,w,h);
+}
+
+function drawAxes(ctx, box, xMin, xMax, yMin, yMax, xLabel, yLabel, title){
+  const {x, y, w, h, padL, padR, padT, padB} = box;
+  // frame
+  ctx.strokeStyle = "rgba(255,255,255,0.14)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x+padL, y+padT, w-padL-padR, h-padT-padB);
+
+  // title
+  ctx.fillStyle = "rgba(233,238,252,0.92)";
+  ctx.font = "600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText(title, x+padL, y+14);
+
+  // ticks/grid
+  const plotX0 = x+padL, plotY0 = y+padT, plotW = w-padL-padR, plotH = h-padT-padB;
+
+  function niceTicks(min, max, target=6){
+    const span = max-min || 1;
+    const raw = span/target;
+    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    const steps = [1,2,5,10];
+    let step = steps[0]*pow;
+    for(const s of steps){
+      const st = s*pow;
+      if(span/st <= target*1.2){ step = st; break; }
+    }
+    const start = Math.ceil(min/step)*step;
+    const ticks = [];
+    for(let v=start; v<=max+1e-9; v+=step) ticks.push(v);
+    return ticks;
+  }
+
+  const xTicks = niceTicks(xMin, xMax, 6);
+  const yTicks = niceTicks(yMin, yMax, 5);
+
+  // gridlines
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
+  ctx.lineWidth = 1;
+  for(const xv of xTicks){
+    const px = plotX0 + (xv-xMin)/(xMax-xMin)*plotW;
+    ctx.beginPath(); ctx.moveTo(px, plotY0); ctx.lineTo(px, plotY0+plotH); ctx.stroke();
+  }
+  for(const yv of yTicks){
+    const py = plotY0 + (1-(yv-yMin)/(yMax-yMin))*plotH;
+    ctx.beginPath(); ctx.moveTo(plotX0, py); ctx.lineTo(plotX0+plotW, py); ctx.stroke();
+  }
+
+  // tick labels
+  ctx.fillStyle = "rgba(183,194,227,0.95)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  for(const xv of xTicks){
+    const px = plotX0 + (xv-xMin)/(xMax-xMin)*plotW;
+    ctx.fillText((Math.abs(xv) < 1e-9 ? "0" : (Math.abs(xv)<10 ? xv.toFixed(2) : xv.toFixed(1))), px-10, plotY0+plotH+16);
+  }
+  for(const yv of yTicks){
+    const py = plotY0 + (1-(yv-yMin)/(yMax-yMin))*plotH;
+    ctx.fillText((Math.abs(yv) < 1e-9 ? "0" : (Math.abs(yv)<10 ? yv.toFixed(2) : yv.toFixed(1))), plotX0-48, py+4);
+  }
+
+  // axis labels
+  ctx.fillStyle = "rgba(233,238,252,0.85)";
+  ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText(xLabel, plotX0 + plotW - ctx.measureText(xLabel).width, plotY0+plotH+34);
+
+  // y label rotated
+  ctx.save();
+  ctx.translate(plotX0-66, plotY0 + plotH*0.5);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, -ctx.measureText(yLabel).width/2, 0);
+  ctx.restore();
+
+  return {
+    plotX0, plotY0, plotW, plotH,
+    xToPx: (xv)=> plotX0 + (xv-xMin)/(xMax-xMin)*plotW,
+    yToPy: (yv)=> plotY0 + (1-(yv-yMin)/(yMax-yMin))*plotH
+  };
+}
+
+function drawLine(ctx, pts, stroke, width=2){
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  for(let i=0;i<pts.length;i++){
+    const p = pts[i];
+    if(i===0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  }
+  ctx.stroke();
+}
+
+/* ========= Model / State ========= */
+const state = {
+  f_mm: 150,
+  lam_nm: 532,
+  xHalf_mm: 2.5
+};
+
+function computeW0_mm(f_mm, lam_nm){
+  // W0 = λ f / (2π), with λ in mm: λ_mm = λ_nm * 1e-6
+  const lam_mm = lam_nm * 1e-6;
+  return (lam_mm * f_mm) / (2*Math.PI);
+}
+
+/* ========= Draw: Setup diagram ========= */
+function drawSetup(){
+  const canvas = document.getElementById('cSetup');
+  const {ctx, w, h} = setupCanvas(canvas);
+  drawPanelBackground(ctx, w, h);
+
+  const midY = h*0.55;
+  const left = 28, right = w-28;
+
+  // optical axis
+  ctx.strokeStyle = "rgba(255,255,255,0.20)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([6,6]);
+  ctx.beginPath();
+  ctx.moveTo(left, midY);
+  ctx.lineTo(right, midY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // mask at left
+  const maskX = w*0.22;
+  const lensX = w*0.52;
+  const outX  = w*0.80;
+
+  // mask rectangle
+  ctx.fillStyle = "rgba(122,162,255,0.18)";
+  ctx.strokeStyle = "rgba(122,162,255,0.55)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(maskX-10, midY-70, 20, 140, 10);
+  ctx.fill(); ctx.stroke();
+
+  // scribble for phase
+  ctx.strokeStyle = "rgba(233,238,252,0.75)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for(let i=0;i<18;i++){
+    const yy = midY-60 + i*7;
+    const amp = 4 + (i%3)*1.2;
+    ctx.moveTo(maskX-7, yy);
+    ctx.quadraticCurveTo(maskX, yy+amp, maskX+7, yy);
+  }
+  ctx.stroke();
+
+  // lens: biconvex
+  ctx.fillStyle = "rgba(89,224,197,0.14)";
+  ctx.strokeStyle = "rgba(89,224,197,0.55)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(lensX-10, midY-80);
+  ctx.quadraticCurveTo(lensX+16, midY, lensX-10, midY+80);
+  ctx.quadraticCurveTo(lensX-28, midY, lensX-10, midY-80);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // output plane
+  ctx.fillStyle = "rgba(255,255,255,0.10)";
+  ctx.strokeStyle = "rgba(255,255,255,0.28)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(outX-8, midY-90, 16, 180, 10);
+  ctx.fill(); ctx.stroke();
+
+  // rays / waves
+  ctx.strokeStyle = "rgba(255,210,122,0.70)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(left, midY-55);
+  ctx.quadraticCurveTo(maskX-30, midY-58, maskX-10, midY-55);
+  ctx.quadraticCurveTo(lensX-30, midY-40, lensX, midY-20);
+  ctx.quadraticCurveTo(outX-60, midY-5, outX-8, midY+0);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(left, midY+55);
+  ctx.quadraticCurveTo(maskX-30, midY+58, maskX-10, midY+55);
+  ctx.quadraticCurveTo(lensX-30, midY+40, lensX, midY+20);
+  ctx.quadraticCurveTo(outX-60, midY+5, outX-8, midY+0);
+  ctx.stroke();
+
+  // Airy sketch at output
+  ctx.strokeStyle = "rgba(122,162,255,0.80)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  const baseX = outX+14;
+  for(let i=0;i<120;i++){
+    const t = i/119;
+    const X = baseX + t*(right-baseX-10);
+    const u = (t*8 - 3); // a few oscillations
+    const y = midY - 34* Math.exp(-0.22*(u+1.3)) * Math.cos(2.3*u) ;
+    if(i===0) ctx.moveTo(X,y); else ctx.lineTo(X,y);
+  }
+  ctx.stroke();
+
+  // labels
+  ctx.fillStyle = "rgba(233,238,252,0.92)";
+  ctx.font = "600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText("Cubic phase mask", maskX-54, midY-92);
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  ctx.fillStyle = "rgba(183,194,227,0.95)";
+  ctx.fillText("t(x)=exp(i x³/3)", maskX-66, midY-75);
+
+  ctx.fillStyle = "rgba(233,238,252,0.92)";
+  ctx.font = "600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText("Lens", lensX-14, midY-92);
+  ctx.fillStyle = "rgba(183,194,227,0.95)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  ctx.fillText("f", lensX-3, midY-75);
+
+  ctx.fillStyle = "rgba(233,238,252,0.92)";
+  ctx.font = "600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText("Back focal plane", outX-56, midY-104);
+  ctx.fillStyle = "rgba(183,194,227,0.95)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  ctx.fillText("U_f(X) ∝ Ai(X/W0)", outX-86, midY-86);
+
+  // scale arrows
+  ctx.strokeStyle = "rgba(255,255,255,0.28)";
+  ctx.lineWidth = 1.5;
+  // distance f from mask to lens
+  const yA = h*0.20;
+  ctx.beginPath();
+  ctx.moveTo(maskX, yA);
+  ctx.lineTo(lensX, yA);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(maskX, yA); ctx.lineTo(maskX+8, yA-5); ctx.lineTo(maskX+8, yA+5); ctx.closePath();
+  ctx.fillStyle="rgba(255,255,255,0.28)"; ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(lensX, yA); ctx.lineTo(lensX-8, yA-5); ctx.lineTo(lensX-8, yA+5); ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle="rgba(183,194,227,0.95)";
+  ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  ctx.fillText("f", (maskX+lensX)/2 - 4, yA-6);
+
+  // distance f from lens to output
+  ctx.beginPath();
+  ctx.moveTo(lensX, yA);
+  ctx.lineTo(outX, yA);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(lensX, yA); ctx.lineTo(lensX+8, yA-5); ctx.lineTo(lensX+8, yA+5); ctx.closePath();
+  ctx.fillStyle="rgba(255,255,255,0.28)"; ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(outX, yA); ctx.lineTo(outX-8, yA-5); ctx.lineTo(outX-8, yA+5); ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle="rgba(183,194,227,0.95)";
+  ctx.fillText("f", (lensX+outX)/2 - 4, yA-6);
+}
+
+/* ========= Draw: Main Airy intensity plot ========= */
+function drawMain(){
+  const canvas = document.getElementById('cMain');
+  const {ctx, w, h} = setupCanvas(canvas);
+  drawPanelBackground(ctx, w, h);
+
+  const box = {x:0,y:0,w:w,h:h,padL:70,padR:20,padT:26,padB:46};
+
+  const W0 = computeW0_mm(state.f_mm, state.lam_nm);
+  const xHalf = state.xHalf_mm;
+  const xMin = -xHalf, xMax = xHalf;
+
+  // compute samples
+  const N = 420;
+  const xs = new Array(N);
+  const Is = new Array(N);
+  let Imax = 1e-12;
+  for(let i=0;i<N;i++){
+    const X = lerp(xMin, xMax, i/(N-1));
+    const arg = X / (W0 || 1e-9);
+    const Ai = airyAi(arg);
+    const I = Ai*Ai;
+    xs[i] = X;
+    Is[i] = I;
+    if(I > Imax) Imax = I;
+  }
+  // normalized intensity
+  const yMin = 0;
+  const yMax = 1.05;
+
+  const ax = drawAxes(
+    ctx, box, xMin, xMax, yMin, yMax,
+    "Transverse coordinate X (mm)",
+    "Normalized intensity I/Imax",
+    "Airy beam intensity at Fourier plane"
+  );
+
+  // plot line
+  const pts = [];
+  for(let i=0;i<N;i++){
+    const xv = xs[i];
+    const yv = Is[i]/Imax;
+    pts.push({x: ax.xToPx(xv), y: ax.yToPy(yv)});
+  }
+  drawLine(ctx, pts, "rgba(122,162,255,0.92)", 2.25);
+
+  // legend
+  ctx.fillStyle = "rgba(233,238,252,0.90)";
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  const lx = ax.plotX0 + 10, ly = ax.plotY0 + 24;
+  ctx.fillText("I(X) ∝ |Ai(X/W0)|²", lx+18, ly+4);
+  ctx.strokeStyle = "rgba(122,162,255,0.92)";
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx+14, ly); ctx.stroke();
+
+  // annotate W0
+  ctx.fillStyle = "rgba(183,194,227,0.95)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+  ctx.fillText(`W0 = ${ (W0*1000).toFixed(3) } µm`, ax.plotX0 + 10, ax.plotY0 + ax.plotH - 10);
+}
+
+/* ========= Draw: W0 vs f sweep ========= */
+function drawSweep(){
+  const canvas = document.getElementById('cSweep');
+  const {ctx, w, h} = setupCanvas(canvas);
+  drawPanelBackground(ctx, w, h);
+
+  const box = {x:0,y:0,w:w,h:h,padL:70,padR:20,padT:26,padB:46};
+
+  const fMin = 30, fMax = 300;
+  const lam_nm = state.lam_nm;
+
+  // compute sweep
+  const N = 240;
+  const fs = [];
+  const ws = [];
+  let wMin = Infinity, wMax = -Infinity;
+  for(let i=0;i<N;i++){
+    const f = lerp(fMin, fMax, i/(N-1));
+    const W0 = computeW0_mm(f, lam_nm);
+    fs.push(f);
+    ws.push(W0);
+    wMin = Math.min(wMin, W0);
+    wMax = Math.max(wMax, W0);
+  }
+
+  // show W0 in microns
+  const yMin = wMin*1000*0.95;
+  const yMax = wMax*1000*1.05;
+
+  const ax = drawAxes(
+    ctx, box, fMin, fMax, yMin, yMax,
+    "Focal length f (mm)",
+    "W0 (µm)",
+    "Beam-width scale W0 vs focal length"
+  );
+
+  // line
+  const pts = [];
+  for(let i=0;i<N;i++){
+    pts.push({x: ax.xToPx(fs[i]), y: ax.yToPy(ws[i]*1000)});
+  }
+  drawLine(ctx, pts, "rgba(89,224,197,0.90)", 2.25);
+
+  // marker at current f
+  const f = state.f_mm;
+  const W0 = computeW0_mm(f, lam_nm)*1000;
+  const px = ax.xToPx(f);
+  const py = ax.yToPy(W0);
+
+  ctx.fillStyle = "rgba(255,210,122,0.95)";
+  ctx.beginPath();
+  ctx.arc(px, py, 5.2, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(255,210,122,0.60)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(px, ax.plotY0);
+  ctx.lineTo(px, ax.plotY0+ax.plotH);
+  ctx.stroke();
+
+  // legend
+  ctx.fillStyle = "rgba(233,238,252,0.90)";
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  const lx = ax.plotX0 + 10, ly = ax.plotY0 + 24;
+  ctx.fillText("W0(f)=λ f /(2π)", lx+18, ly+4);
+  ctx.strokeStyle = "rgba(89,224,197,0.90)";
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx+14, ly); ctx.stroke();
+  ctx.fillStyle = "rgba(255,210,122,0.95)";
+  ctx.beginPath(); ctx.arc(lx+7, ly+18, 5.2, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = "rgba(233,238,252,0.90)";
+  ctx.fillText("Current f", lx+18, ly+22);
+}
+
+/* ========= UI updates ========= */
+function updateReadouts(){
+  const W0_mm = computeW0_mm(state.f_mm, state.lam_nm);
+  const W0_um = W0_mm * 1000;
+
+  document.getElementById('fReadout').textContent = `${state.f_mm.toFixed(0)} mm`;
+  document.getElementById('lamReadout').textContent = `${state.lam_nm.toFixed(0)} nm`;
+  document.getElementById('xRangeReadout').textContent = `±${state.xHalf_mm.toFixed(1)} mm`;
+
+  document.getElementById('w0Kpi').textContent = `${W0_um.toFixed(3)} µm  (=${(W0_mm*1e3).toFixed(3)} µm)`;
+  document.getElementById('mapKpi').textContent = `Ai(X/W0),  W0=λ f/(2π)`;
+}
+
+function redrawAll(){
+  updateReadouts();
+  drawSetup();
+  drawMain();
+  drawSweep();
+}
+
+/* ========= Copy buttons ========= */
+async function copyText(text){
+  try{
+    await navigator.clipboard.writeText(text);
+    return true;
+  }catch(e){
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try{
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      return true;
+    }catch(err){
+      document.body.removeChild(ta);
+      return false;
+    }
+  }
+}
+
+function hookCopyButtons(){
+  document.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button[data-copy],button[data-copy-text]');
+    if(!btn) return;
+    let text = "";
+    if(btn.dataset.copy){
+      const el = document.getElementById(btn.dataset.copy);
+      text = el ? el.textContent.trim() : "";
+    }else{
+      text = btn.dataset.copyText || "";
+    }
+    if(!text) return;
+    const ok = await copyText(text);
+    const old = btn.textContent;
+    btn.textContent = ok ? "Copied ✓" : "Copy failed";
+    setTimeout(()=>btn.textContent = old, 900);
+  });
+}
+
+/* ========= Init ========= */
+function init(){
+  // controls
+  const fSlider = document.getElementById('fSlider');
+  const lamSelect = document.getElementById('lamSelect');
+  const xRangeSlider = document.getElementById('xRangeSlider');
+
+  fSlider.value = String(state.f_mm);
+  lamSelect.value = String(state.lam_nm);
+  xRangeSlider.value = String(state.xHalf_mm);
+
+  fSlider.addEventListener('input', ()=>{
+    state.f_mm = parseFloat(fSlider.value);
+    redrawAll();
+  });
+  lamSelect.addEventListener('change', ()=>{
+    state.lam_nm = parseFloat(lamSelect.value);
+    redrawAll();
+  });
+  xRangeSlider.addEventListener('input', ()=>{
+    state.xHalf_mm = parseFloat(xRangeSlider.value);
+    redrawAll();
+  });
+
+  // resize
+  let raf = null;
+  window.addEventListener('resize', ()=>{
+    if(raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(()=>redrawAll());
+  });
+
+  hookCopyButtons();
+  redrawAll();
+}
+
+init();
+</script>
+</body>
+</html>

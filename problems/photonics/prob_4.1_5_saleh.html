@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Logarithmic Interconnection Map — Phase Transparency Design</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121a33;
+      --panel2:#0f1630;
+      --text:#e9ecf5;
+      --muted:#b8c0dd;
+      --faint:#7f89ad;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background: radial-gradient(1200px 700px at 10% 10%, rgba(125,211,252,.14), transparent 60%),
+                  radial-gradient(900px 600px at 90% 20%, rgba(167,139,250,.12), transparent 55%),
+                  radial-gradient(700px 500px at 50% 90%, rgba(52,211,153,.10), transparent 60%),
+                  var(--bg);
+      line-height:1.55;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding:28px 18px 10px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .title{
+      display:flex;
+      flex-wrap:wrap;
+      gap:14px;
+      align-items:flex-end;
+      justify-content:space-between;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(1.55rem, 2.6vw, 2.35rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:6px 0 0;
+      max-width:75ch;
+    }
+    .badgeRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .pill{
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      color:var(--muted);
+      font-size:.88rem;
+      backdrop-filter: blur(8px);
+    }
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding:18px 18px 80px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:18px;
+    }
+    @media (min-width: 980px){
+      main{
+        grid-template-columns: 320px 1fr;
+        align-items:start;
+      }
+    }
+    .toc{
+      position:sticky;
+      top:14px;
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding:14px 14px 10px;
+      overflow:hidden;
+    }
+    .toc h2{
+      margin:0 0 10px;
+      font-size:1.02rem;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .toc small{color:var(--faint); font-weight:500}
+    .toc nav a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      color:var(--muted);
+      border:1px solid transparent;
+      transition: .18s ease;
+      font-size:.95rem;
+    }
+    .toc nav a:hover{
+      background:rgba(125,211,252,.08);
+      border-color:rgba(125,211,252,.22);
+      color:var(--text);
+      text-decoration:none;
+      transform: translateX(1px);
+    }
+
+    .card{
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .cardHead{
+      padding:14px 16px 0;
+    }
+    .card .cardBody{
+      padding:14px 16px 16px;
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:14px;
+    }
+    @media (min-width: 980px){
+      .grid2{grid-template-columns: 1.05fr .95fr;}
+    }
+    .callout{
+      border-left: 4px solid rgba(125,211,252,.7);
+      background: rgba(125,211,252,.06);
+      padding:12px 12px;
+      border-radius:14px;
+      margin:10px 0 0;
+    }
+    .callout strong{color:var(--text)}
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:10px;
+      margin-top:10px;
+    }
+    .kpi .box{
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.12);
+      border-radius:14px;
+      padding:10px;
+    }
+    .kpi .box .lab{color:var(--faint); font-size:.85rem}
+    .kpi .box .val{font-family:var(--mono); font-size:.95rem; margin-top:4px}
+    h2,h3{
+      margin:0 0 10px;
+      letter-spacing:.2px;
+    }
+    h2{font-size:1.25rem}
+    h3{font-size:1.05rem; color:var(--text)}
+    p{margin:10px 0; color:var(--muted)}
+    ul{margin:10px 0 0 18px; color:var(--muted)}
+    li{margin:6px 0}
+    .eq{
+      margin:10px 0;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      position:relative;
+      overflow:hidden;
+    }
+    .eq pre{
+      margin:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-family:var(--mono);
+      color:var(--text);
+      font-size:.95rem;
+      line-height:1.45;
+    }
+    .copyBtn{
+      position:absolute;
+      right:10px;
+      top:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:7px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:.85rem;
+      transition:.15s ease;
+    }
+    .copyBtn:hover{transform: translateY(-1px); border-color: rgba(125,211,252,.35);}
+    .copyBtn:active{transform: translateY(0px);}
+    .muted{color:var(--faint)}
+    .divider{
+      height:1px;
+      background:var(--line);
+      margin:14px 0;
+    }
+    .vizWrap{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:14px;
+    }
+    @media (min-width: 980px){
+      .vizWrap{grid-template-columns: 1fr 1fr;}
+    }
+    .canvasCard{
+      padding:12px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.12);
+    }
+    .canvasTitle{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+      margin:0 0 8px;
+    }
+    .canvasTitle .t{font-weight:650; color:var(--text)}
+    .canvasTitle .s{color:var(--faint); font-size:.88rem}
+    canvas{
+      width:100%;
+      height:300px;
+      display:block;
+      border-radius:14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .controls{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (min-width:700px){
+      .controls{grid-template-columns: repeat(3, minmax(0,1fr));}
+    }
+    .ctrl{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:14px;
+      padding:10px;
+    }
+    .ctrl label{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      color:var(--muted);
+      font-size:.9rem;
+      margin-bottom:8px;
+    }
+    .ctrl .readout{font-family:var(--mono); color:var(--text); font-size:.92rem}
+    input[type="range"]{width:100%}
+    select{
+      width:100%;
+      padding:9px 10px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      outline:none;
+    }
+    .btnRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .btn{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      transition:.15s ease;
+      font-weight:650;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(167,139,250,.35);}
+    .btn:active{transform: translateY(0px);}
+    .boxedFinal{
+      border:1px solid rgba(52,211,153,.35);
+      background: rgba(52,211,153,.08);
+      border-radius:16px;
+      padding:12px 12px;
+      margin-top:10px;
+    }
+    .boxedFinal h3{margin:0 0 8px; color: var(--ok)}
+    .boxedFinal pre{margin:0; font-family:var(--mono); white-space:pre-wrap; color:var(--text)}
+    .printHint{
+      color:var(--faint);
+      font-size:.9rem;
+      margin-top:10px;
+    }
+    footer{
+      max-width:1200px;
+      margin:0 auto;
+      padding:0 18px 30px;
+      color:var(--faint);
+      font-size:.92rem;
+    }
+
+    @media print{
+      body{background:#fff; color:#000}
+      .card,.toc{box-shadow:none}
+      .toc{position:static}
+      .copyBtn{display:none}
+      canvas{border:1px solid #ccc}
+      a{color:#000; text-decoration:underline}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">
+      <div>
+        <h1>Logarithmic Interconnection Map: Designing the Phase Function φ(x)</h1>
+        <p class="subtitle">
+          A phase-only transparency <span class="muted">t(x,y)=exp[-j2πφ(x)]</span> is illuminated by a plane wave and followed by a lens.
+          We design <span class="muted">φ(x)</span> so that a ray at input coordinate <span class="muted">x</span> lands at <span class="muted">x′=ln(x)</span> in the focal plane.
+        </p>
+      </div>
+      <div class="badgeRow">
+        <div class="pill">Wavelength: λ = 1 μm</div>
+        <div class="pill">Focal length: f = 100 cm</div>
+        <div class="pill">Coordinates in mm</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Sticky TOC -->
+    <aside class="toc card" aria-label="Table of contents">
+      <div class="cardHead">
+        <h2>Contents <small>sticky</small></h2>
+      </div>
+      <div class="cardBody">
+        <nav>
+          <a href="#quick" data-scroll>Quick Summary</a>
+          <a href="#part1" data-scroll>Part 1 — Problem Analysis</a>
+          <a href="#part2" data-scroll>Part 2 — Strategy & Tips</a>
+          <a href="#part3" data-scroll>Part 3 — Full Solution</a>
+          <a href="#viz" data-scroll>Interactive Visualizations</a>
+          <a href="#sanity" data-scroll>Sanity Checks</a>
+        </nav>
+        <div class="divider"></div>
+        <div class="muted" style="font-size:.92rem;">
+          Tip: Use the slider to change <span class="muted">f</span> (and optional reference <span class="muted">x₀</span>) and watch all plots update.
+        </div>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <section class="card">
+      <div class="cardBody">
+
+        <!-- Quick Summary -->
+        <section id="quick">
+          <h2>Quick Summary</h2>
+          <ul>
+            <li>The phase mask produces a local deflection angle via the transverse phase gradient (a “blazed grating” idea).</li>
+            <li>Small-angle ray mapping with a lens: <span class="muted">x′ ≈ f θ</span>.</li>
+            <li>With total phase delay <span class="muted">Φ(x)=−2πφ(x)</span>, we use <span class="muted">sinθ = (λ/2π) dΦ/dx = −λ dφ/dx</span>.</li>
+            <li>Target mapping <span class="muted">x′ = ln(x/x₀)</span> gives <span class="muted">dφ/dx = − ln(x/x₀)/(fλ)</span>.</li>
+            <li>So (for <span class="muted">x&gt;0</span>): <span class="muted">φ(x)= −(x ln(x/x₀) − x)/(fλ) + C</span>.</li>
+            <li>If the lens is removed, add the lens quadratic phase into the mask: <span class="muted">φ → φ + x²/(2λf)</span>.</li>
+          </ul>
+          <div class="callout">
+            <strong>Important physical note:</strong>
+            A logarithm needs a dimensionless argument, so we write the mapping as
+            <span class="muted">x′ = ln(x/x₀)</span> where <span class="muted">x₀</span> is a reference length (choose <span class="muted">x₀ = 1 mm</span> unless specified).
+          </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- Part 1 -->
+        <section id="part1">
+          <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+          <h3>1) Restate the problem</h3>
+          <p>
+            We have a phase-only transparency whose complex amplitude transmittance is
+            <span class="muted">t(x,y)=exp[-j2πφ(x)]</span>. It is illuminated by a uniform plane wave of wavelength
+            <span class="muted">λ = 1 μm</span>. An adjacent thin lens with focal length <span class="muted">f = 100 cm</span> focuses the transmitted light.
+          </p>
+          <p>
+            We want to choose <span class="muted">φ(x)</span> such that a ray passing through the transparency at position <span class="muted">x</span>
+            is deflected and then focused to the point <span class="muted">x′ = ln(x)</span> (mm) in the focal plane, for all <span class="muted">x &gt; 0</span>.
+            Then: if the lens is removed, how must <span class="muted">φ(x)</span> be modified so the system performs the same mapping?
+          </p>
+
+          <h3>2) Given quantities</h3>
+          <ul>
+            <li>Plane wave illumination (uniform amplitude, normal incidence).</li>
+            <li>Wavelength: <span class="muted">λ = 1 μm = 0.001 mm</span>.</li>
+            <li>Lens focal length: <span class="muted">f = 100 cm = 1000 mm</span>.</li>
+            <li>Transmittance: <span class="muted">t(x)=exp[-j2πφ(x)]</span> (phase-only; amplitude ≈ 1).</li>
+            <li>Target ray mapping (focal plane coordinate): <span class="muted">x′ = ln(x)</span>, <span class="muted">x&gt;0</span>, coordinates in mm.</li>
+          </ul>
+
+          <h3>3) Unknowns</h3>
+          <ul>
+            <li>The phase function <span class="muted">φ(x)</span> (dimensionless, in “waves”).</li>
+            <li>The modified phase function when the lens is removed.</li>
+          </ul>
+
+          <h3>4) What must be found/proved</h3>
+          <ul>
+            <li>Derive <span class="muted">φ(x)</span> such that rays starting at <span class="muted">x</span> land at <span class="muted">x′ = ln(x)</span> in the focal plane of the lens.</li>
+            <li>Find how to modify the mask if the lens is removed while keeping the same mapping (i.e., embed the lens action into the mask).</li>
+          </ul>
+
+          <h3>5) Relevant physical principles and why they apply</h3>
+          <ul>
+            <li>
+              <strong>Phase gradient → transverse wavevector (ray deflection):</strong>
+              A spatially varying phase <span class="muted">Φ(x)</span> across a wavefront implies a local transverse component of the wavevector
+              <span class="muted">k<sub>x</sub> = dΦ/dx</span>. This corresponds to a propagation angle <span class="muted">θ</span>.
+              This is exactly how blazed gratings and phase ramps steer beams.
+            </li>
+            <li>
+              <strong>Lens focal plane mapping:</strong>
+              A ray entering a thin lens at angle <span class="muted">θ</span> crosses the focal plane at <span class="muted">x′ ≈ f tanθ</span>,
+              and under paraxial conditions <span class="muted">tanθ≈θ</span>. This turns angle into position.
+            </li>
+            <li>
+              <strong>Thin lens transmittance:</strong>
+              A lens can be represented by a quadratic phase factor. If the physical lens is removed, adding that quadratic phase into the mask
+              reproduces the lens effect (for the same observation distance).
+            </li>
+          </ul>
+
+          <h3>6) Possible approaches (compare briefly)</h3>
+          <ul>
+            <li>
+              <strong>Ray/gradient method (best here):</strong>
+              Use <span class="muted">k<sub>x</sub>=dΦ/dx</span> to find <span class="muted">θ(x)</span>, then enforce <span class="muted">x′=fθ=ln(x)</span>.
+              Fast, clean, and matches the “ray that hits x goes to x′” wording.
+            </li>
+            <li>
+              <strong>Stationary-phase/Fourier optics:</strong>
+              Model the field in the focal plane as a Fourier transform and use stationary phase to relate input coordinate to output coordinate.
+              More general but longer.
+            </li>
+            <li>
+              <strong>Eikonal/Hamiltonian optics:</strong>
+              Treat <span class="muted">Φ</span> as an eikonal and derive ray trajectories. Equivalent to the gradient method in 1D.
+            </li>
+          </ul>
+          <p>
+            <strong>Chosen approach:</strong> the ray/gradient method, because the problem explicitly speaks about “the ray that hits at x” and a thin lens focusing.
+          </p>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- Part 2 -->
+        <section id="part2">
+          <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+          <ol style="margin:10px 0 0 18px; color:var(--muted);">
+            <li>
+              <strong>Define the physical phase:</strong> set <span class="muted">Φ(x)=−2πφ(x)</span>.
+              <span class="muted">(tool: definition of transmittance)</span>
+            </li>
+            <li>
+              <strong>Relate phase slope to transverse wavevector:</strong> use <span class="muted">k<sub>x</sub>=dΦ/dx</span>.
+              <span class="muted">(principle: wavevector is phase gradient)</span>
+            </li>
+            <li>
+              <strong>Convert wavevector to angle:</strong> <span class="muted">sinθ = k<sub>x</sub>/k</span> with <span class="muted">k=2π/λ</span>.
+              <span class="muted">(principle: geometry of wavevector)</span>
+            </li>
+            <li>
+              <strong>Use paraxial lens mapping:</strong> <span class="muted">x′ ≈ f tanθ ≈ fθ</span>.
+              <span class="muted">(tool: small-angle approximation)</span>
+            </li>
+            <li>
+              <strong>Impose the target map:</strong> set <span class="muted">x′(x)=ln(x/x₀)</span>.
+              <span class="muted">(note: introduce reference length x₀)</span>
+            </li>
+            <li>
+              <strong>Solve for the needed slope:</strong> derive <span class="muted">dφ/dx</span> from the mapping.
+              <span class="muted">(tool: algebra)</span>
+            </li>
+            <li>
+              <strong>Integrate to get φ(x):</strong> integrate the slope; keep an arbitrary constant <span class="muted">C</span>.
+              <span class="muted">(tool: calculus)</span>
+            </li>
+            <li>
+              <strong>Lens removed case:</strong> add the thin-lens quadratic phase to the mask.
+              <span class="muted">(tool: thin-lens transmittance)</span>
+            </li>
+          </ol>
+
+          <h3>Common mistakes & quick tips</h3>
+          <ul>
+            <li><strong>Sign errors:</strong> remember <span class="muted">Φ = −2πφ</span> so derivatives pick up a minus sign.</li>
+            <li><strong>Units confusion:</strong> keep <span class="muted">λ</span> and <span class="muted">f</span> in the same length units as <span class="muted">x</span>, <span class="muted">x′</span> (here: mm).</li>
+            <li><strong>Log of a length:</strong> use <span class="muted">ln(x/x₀)</span>. Setting <span class="muted">x₀=1 mm</span> matches the book’s shorthand <span class="muted">ln(x)</span>.</li>
+            <li><strong>Paraxial validity:</strong> the design assumes <span class="muted">|θ|≪1</span>. If <span class="muted">ln(x/x₀)</span> is large, angles can become non-paraxial.</li>
+          </ul>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- Part 3 -->
+        <section id="part3">
+          <h2>PART 3 — Full Solution</h2>
+
+          <h3>Physical intuition</h3>
+          <p>
+            A phase-only mask does not absorb light; it reshapes the wavefront. Where the phase changes rapidly with <span class="muted">x</span>,
+            the wavefront tilts more strongly, giving the beam a larger transverse momentum. The lens converts that tilt (angle) into a position
+            in its focal plane. So: “choose phase slope → choose angle → choose focal-plane landing point.”
+          </p>
+
+          <h3>Step-by-step derivation</h3>
+
+          <p><strong>1) Write the physical phase delay Φ(x)</strong></p>
+          <div class="eq" id="eq1">
+            <button class="copyBtn" data-copy="#eq1 pre">Copy</button>
+            <pre>t(x) = exp[-j 2π φ(x)]  ⇒  Φ(x) = -2π φ(x)</pre>
+          </div>
+
+          <p><strong>2) Phase gradient gives transverse wavevector</strong></p>
+          <div class="eq" id="eq2">
+            <button class="copyBtn" data-copy="#eq2 pre">Copy</button>
+            <pre>k_x(x) = dΦ/dx</pre>
+          </div>
+
+          <p><strong>3) Convert wavevector to propagation angle θ</strong></p>
+          <p class="muted">
+            The magnitude of the wavevector is <span class="muted">k = 2π/λ</span>. Geometrically, <span class="muted">sinθ = k_x/k</span>.
+          </p>
+          <div class="eq" id="eq3">
+            <button class="copyBtn" data-copy="#eq3 pre">Copy</button>
+            <pre>sinθ(x) = k_x/k = (dΦ/dx) / (2π/λ) = (λ/2π) dΦ/dx</pre>
+          </div>
+
+          <p>
+            Substitute <span class="muted">Φ(x)=−2πφ(x)</span>:
+          </p>
+          <div class="eq" id="eq4">
+            <button class="copyBtn" data-copy="#eq4 pre">Copy</button>
+            <pre>sinθ(x) = (λ/2π) d(-2πφ)/dx = -λ dφ/dx</pre>
+          </div>
+
+          <p><strong>4) Paraxial approximation + focal-plane mapping</strong></p>
+          <p>
+            For small angles, <span class="muted">sinθ≈θ</span> and <span class="muted">tanθ≈θ</span>. A ray at angle <span class="muted">θ</span>
+            crosses the focal plane at:
+          </p>
+          <div class="eq" id="eq5">
+            <button class="copyBtn" data-copy="#eq5 pre">Copy</button>
+            <pre>x′(x) ≈ f tanθ(x) ≈ f θ(x)</pre>
+          </div>
+
+          <p>
+            Using <span class="muted">θ≈sinθ</span> and Eq. (4):
+          </p>
+          <div class="eq" id="eq6">
+            <button class="copyBtn" data-copy="#eq6 pre">Copy</button>
+            <pre>x′(x) ≈ f θ(x) ≈ f sinθ(x) = f[-λ dφ/dx] = -fλ dφ/dx</pre>
+          </div>
+
+          <p><strong>5) Impose the desired logarithmic map</strong></p>
+          <p>
+            To make the logarithm dimensionless, we write the physically meaningful target as:
+            <span class="muted">x′(x) = ln(x/x₀)</span>, with <span class="muted">x₀</span> a reference length (choose <span class="muted">x₀=1 mm</span> if not specified).
+          </p>
+          <div class="eq" id="eq7">
+            <button class="copyBtn" data-copy="#eq7 pre">Copy</button>
+            <pre>Target:  x′(x) = ln(x/x0),  x&gt;0</pre>
+          </div>
+
+          <p>
+            Combine with Eq. (6):
+          </p>
+          <div class="eq" id="eq8">
+            <button class="copyBtn" data-copy="#eq8 pre">Copy</button>
+            <pre>ln(x/x0) = -fλ dφ/dx  ⇒  dφ/dx = - ln(x/x0) / (fλ)</pre>
+          </div>
+
+          <p><strong>6) Integrate to obtain φ(x)</strong></p>
+          <p>
+            Use the standard integral <span class="muted">∫ ln(x/x₀) dx = x ln(x/x₀) - x</span> (valid for <span class="muted">x&gt;0</span>).
+          </p>
+          <div class="eq" id="eq9">
+            <button class="copyBtn" data-copy="#eq9 pre">Copy</button>
+            <pre>φ(x) = -(1/(fλ)) ∫ ln(x/x0) dx
+     = -(1/(fλ)) [ x ln(x/x0) - x ] + C,   x&gt;0</pre>
+          </div>
+
+          <div class="boxedFinal" id="finalBox">
+            <h3>Final result (with lens present)</h3>
+            <button class="copyBtn" style="top:12px; right:12px;" data-copy="#finalBox pre">Copy</button>
+            <pre>Let x0 be a reference length (e.g., x0 = 1 mm).
+Required phase function (x &gt; 0):
+
+φ(x) = - [ x ln(x/x0) - x ] / (f λ) + C
+
+where t(x) = exp[-j 2π φ(x)] and C is an arbitrary constant phase.</pre>
+          </div>
+
+          <h3>Lens removed: how to modify φ(x)</h3>
+          <p>
+            A thin lens of focal length <span class="muted">f</span> has (1D) transmittance
+            <span class="muted">t_L(x)=exp[-j π x²/(λ f)]</span>.
+            Since our mask uses the convention <span class="muted">exp[-j2πφ]</span>, the corresponding “φ-form” is:
+          </p>
+          <div class="eq" id="eq10">
+            <button class="copyBtn" data-copy="#eq10 pre">Copy</button>
+            <pre>exp[-j2π φ_L(x)] = exp[-j π x^2/(λ f)]  ⇒  φ_L(x) = x^2/(2 λ f)</pre>
+          </div>
+
+          <p>
+            Therefore, removing the physical lens but wanting the same focusing action means embedding the lens phase into the mask:
+          </p>
+          <div class="boxedFinal" id="finalBox2">
+            <h3>Final result (lens removed; equivalent phase mask)</h3>
+            <button class="copyBtn" style="top:12px; right:12px;" data-copy="#finalBox2 pre">Copy</button>
+            <pre>Use the combined phase function
+
+φ_total(x) = φ_map(x) + φ_L(x)
+
+= - [ x ln(x/x0) - x ] / (f λ) + C  +  x^2/(2 λ f),     x &gt; 0
+
+Then place the observation plane at distance f after the mask (same plane that was the focal plane).</pre>
+          </div>
+
+          <p class="printHint">
+            Note: The additive constant <span class="muted">C</span> does not affect ray directions or the mapping; it is a global phase shift.
+          </p>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- Visualizations -->
+        <section id="viz">
+          <h2>Interactive Visualizations</h2>
+          <p>
+            These plots use the same equations derived above. Change <span class="muted">f</span>, <span class="muted">λ</span>, or <span class="muted">x₀</span>
+            to see how the required phase slope, deflection angle, and mapping respond.
+            All quantities are computed in <strong>millimeters</strong>.
+          </p>
+
+          <div class="controls" aria-label="Interactive controls">
+            <div class="ctrl">
+              <label for="fSlider">
+                <span>Focal length <span class="muted">f</span> (mm)</span>
+                <span class="readout" id="fRead">1000</span>
+              </label>
+              <input id="fSlider" type="range" min="300" max="2500" value="1000" step="10"/>
+              <div class="muted" style="font-size:.85rem;margin-top:6px;">Example: 100 cm → 1000 mm</div>
+            </div>
+            <div class="ctrl">
+              <label for="lamSlider">
+                <span>Wavelength <span class="muted">λ</span> (mm)</span>
+                <span class="readout" id="lamRead">0.001</span>
+              </label>
+              <input id="lamSlider" type="range" min="0.0004" max="0.0020" value="0.0010" step="0.0001"/>
+              <div class="muted" style="font-size:.85rem;margin-top:6px;">1 μm = 0.001 mm</div>
+            </div>
+            <div class="ctrl">
+              <label for="x0Select">
+                <span>Reference <span class="muted">x₀</span> (mm)</span>
+                <span class="readout" id="x0Read">1</span>
+              </label>
+              <select id="x0Select">
+                <option value="0.2">0.2</option>
+                <option value="0.5">0.5</option>
+                <option value="1" selected>1</option>
+                <option value="2">2</option>
+                <option value="5">5</option>
+              </select>
+              <div class="muted" style="font-size:.85rem;margin-top:6px;">Makes ln(x/x₀) dimensionless</div>
+            </div>
+          </div>
+
+          <div class="btnRow">
+            <button class="btn" id="toggleLens">Mode: Lens Present</button>
+            <button class="btn" id="reset">Reset to Problem Values</button>
+          </div>
+
+          <div class="vizWrap" style="margin-top:14px;">
+            <div class="canvasCard">
+              <div class="canvasTitle">
+                <div class="t">Diagram: Phase mask + lens mapping</div>
+                <div class="s">geometry (not to scale)</div>
+              </div>
+              <canvas id="cDiagram" aria-label="Labeled optical setup diagram"></canvas>
+            </div>
+
+            <div class="canvasCard">
+              <div class="canvasTitle">
+                <div class="t">Main plot: Mapping x′(x)</div>
+                <div class="s">x′ = ln(x/x₀) (mm)</div>
+              </div>
+              <canvas id="cMap" aria-label="Main plot mapping x prime vs x"></canvas>
+            </div>
+
+            <div class="canvasCard">
+              <div class="canvasTitle">
+                <div class="t">Secondary plot: Required phase φ(x)</div>
+                <div class="s">dimensionless (waves)</div>
+              </div>
+              <canvas id="cPhi" aria-label="Secondary plot phase phi vs x"></canvas>
+            </div>
+
+            <div class="canvasCard">
+              <div class="canvasTitle">
+                <div class="t">Parameter view: Deflection angle θ(x)</div>
+                <div class="s">paraxial θ ≈ x′/f (rad)</div>
+              </div>
+              <canvas id="cTheta" aria-label="Plot deflection angle theta vs x"></canvas>
+            </div>
+          </div>
+
+          <div class="callout" style="margin-top:14px;">
+            <strong>How to read the plots:</strong>
+            The mapping plot is the target. The phase plot is what you must implement on the mask (plus a quadratic lens term if the lens is removed).
+            The angle plot indicates when the paraxial approximation may break down (large |θ|).
+          </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <!-- Sanity checks -->
+        <section id="sanity">
+          <h2>Sanity Checks</h2>
+
+          <h3>1) Units</h3>
+          <ul>
+            <li><span class="muted">x</span>, <span class="muted">x′</span>, <span class="muted">f</span>, <span class="muted">λ</span> are lengths (mm).</li>
+            <li><span class="muted">ln(x/x₀)</span> is dimensionless, but the problem defines <span class="muted">x′</span> in mm; here that means we interpret the numerical value of the log as “mm”. Practically: pick <span class="muted">x₀=1 mm</span> so the log’s numeric value directly becomes the mm coordinate scale.</li>
+            <li>From <span class="muted">x′ = -fλ dφ/dx</span>, since <span class="muted">fλ</span> has units mm², <span class="muted">dφ/dx</span> must have units 1/mm, so <span class="muted">φ</span> is dimensionless. ✔</li>
+          </ul>
+
+          <h3>2) Limiting cases</h3>
+          <ul>
+            <li>
+              As <span class="muted">x → x₀</span>, <span class="muted">ln(x/x₀) → 0</span>, so
+              <span class="muted">dφ/dx → 0</span> and the ray goes to <span class="muted">x′→0</span>. ✔
+            </li>
+            <li>
+              For <span class="muted">x &gt; x₀</span>, <span class="muted">ln(x/x₀)&gt;0</span> so <span class="muted">dφ/dx&lt;0</span>;
+              the phase decreases with x (a negative ramp), steering rays to positive <span class="muted">x′</span> given the sign convention. ✔
+            </li>
+            <li>
+              As <span class="muted">f</span> increases (keeping λ fixed), the required slope magnitude decreases:
+              long focal lengths need less steering for the same <span class="muted">x′</span>. ✔
+            </li>
+          </ul>
+
+          <h3>3) Physical interpretation</h3>
+          <ul>
+            <li>
+              The mask is a “coordinate transformer”: it assigns each input point <span class="muted">x</span> a distinct angle so that the lens maps it to <span class="muted">x′</span>.
+            </li>
+            <li>
+              Adding the quadratic lens term when removing the lens is a standard Fourier-optics trick: the mask becomes a combined “freeform lens + mapper.”
+            </li>
+          </ul>
+        </section>
+
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Built with vanilla HTML/CSS/JS. Canvas plots are computed live from the derived equations.
+  </footer>
+
+<script>
+(function(){
+  // Smooth scroll for TOC links
+  document.querySelectorAll('[data-scroll]').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const id = a.getAttribute('href');
+      const el = document.querySelector(id);
+      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+
+  // Copy buttons
+  function copyTextFromSelector(sel){
+    const node = document.querySelector(sel);
+    if(!node) return;
+    const text = node.innerText.trim();
+    navigator.clipboard.writeText(text).then(()=>{
+      toast("Copied ✓");
+    }).catch(()=>{
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand('copy'); toast("Copied ✓"); }catch(err){ toast("Copy failed"); }
+      document.body.removeChild(ta);
+    });
+  }
+  document.querySelectorAll('.copyBtn').forEach(btn=>{
+    const sel = btn.getAttribute('data-copy');
+    btn.addEventListener('click', ()=>copyTextFromSelector(sel));
+  });
+
+  // Tiny toast
+  let toastTimer = null;
+  function toast(msg){
+    let t = document.getElementById('toast');
+    if(!t){
+      t = document.createElement('div');
+      t.id = 'toast';
+      t.style.position='fixed';
+      t.style.left='50%';
+      t.style.bottom='18px';
+      t.style.transform='translateX(-50%)';
+      t.style.padding='10px 12px';
+      t.style.border='1px solid rgba(255,255,255,.18)';
+      t.style.borderRadius='14px';
+      t.style.background='rgba(0,0,0,.55)';
+      t.style.color='white';
+      t.style.backdropFilter='blur(10px)';
+      t.style.fontFamily='var(--sans)';
+      t.style.fontWeight='650';
+      t.style.zIndex='9999';
+      t.style.boxShadow='0 10px 30px rgba(0,0,0,.35)';
+      t.style.opacity='0';
+      t.style.transition='opacity .18s ease';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.opacity='1';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>{ t.style.opacity='0'; }, 1100);
+  }
+
+  // ========= Math model =========
+  // Mapping: x' = ln(x/x0)  (numeric value interpreted as mm)
+  // With lens: x' = -f*lambda*dphi/dx  (paraxial)
+  // => dphi/dx = -ln(x/x0)/(f*lambda)
+  // => phi_map(x) = -[ x ln(x/x0) - x ]/(f*lambda) + C
+  // If lens removed: phi_total = phi_map + x^2/(2*lambda*f)
+
+  const state = {
+    f: 1000,          // mm
+    lam: 0.001,       // mm
+    x0: 1,            // mm
+    lensPresent: true // toggles whether we plot phi_map or phi_total
+  };
+
+  // Controls
+  const fSlider = document.getElementById('fSlider');
+  const lamSlider = document.getElementById('lamSlider');
+  const x0Select = document.getElementById('x0Select');
+  const fRead = document.getElementById('fRead');
+  const lamRead = document.getElementById('lamRead');
+  const x0Read = document.getElementById('x0Read');
+  const toggleLens = document.getElementById('toggleLens');
+  const resetBtn = document.getElementById('reset');
+
+  function fmt(x, n=3){
+    if(!isFinite(x)) return "—";
+    const ax = Math.abs(x);
+    if(ax !== 0 && (ax < 0.001 || ax > 10000)) return x.toExponential(2);
+    return x.toFixed(n);
+  }
+  function updateReads(){
+    fRead.textContent = Math.round(state.f).toString();
+    lamRead.textContent = fmt(state.lam, 4);
+    x0Read.textContent = fmt(state.x0, 3);
+    toggleLens.textContent = state.lensPresent ? "Mode: Lens Present" : "Mode: Lens Removed (φ includes lens term)";
+  }
+
+  fSlider.addEventListener('input', ()=>{
+    state.f = parseFloat(fSlider.value);
+    updateReads(); renderAll();
+  });
+  lamSlider.addEventListener('input', ()=>{
+    state.lam = parseFloat(lamSlider.value);
+    updateReads(); renderAll();
+  });
+  x0Select.addEventListener('change', ()=>{
+    state.x0 = parseFloat(x0Select.value);
+    updateReads(); renderAll();
+  });
+  toggleLens.addEventListener('click', ()=>{
+    state.lensPresent = !state.lensPresent;
+    updateReads(); renderAll();
+  });
+  resetBtn.addEventListener('click', ()=>{
+    state.f = 1000;
+    state.lam = 0.001;
+    state.x0 = 1;
+    state.lensPresent = true;
+    fSlider.value = state.f;
+    lamSlider.value = state.lam;
+    x0Select.value = "1";
+    updateReads(); renderAll();
+    toast("Reset ✓");
+  });
+
+  updateReads();
+
+  // ========= Canvas plotting helpers =========
+  function setupCanvas(canvas){
+    const ctx = canvas.getContext('2d');
+    function resize(){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(260, rect.width);
+      const h = Math.max(220, rect.height);
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
+      return {w, h, dpr};
+    }
+    return {ctx, resize};
+  }
+
+  function drawAxes(ctx, box, xMin, xMax, yMin, yMax, xLabel, yLabel){
+    const {x, y, w, h, padL, padR, padT, padB} = box;
+    const px0 = x + padL, px1 = x + w - padR;
+    const py0 = y + padT, py1 = y + h - padB;
+
+    // Background
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,.10)';
+    ctx.fillRect(x, y, w, h);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,.08)';
+    ctx.lineWidth = 1;
+
+    const nTicks = 6;
+    for(let i=0;i<=nTicks;i++){
+      const tx = px0 + (px1-px0)*(i/nTicks);
+      ctx.beginPath(); ctx.moveTo(tx, py0); ctx.lineTo(tx, py1); ctx.stroke();
+
+      const ty = py1 - (py1-py0)*(i/nTicks);
+      ctx.beginPath(); ctx.moveTo(px0, ty); ctx.lineTo(px1, ty); ctx.stroke();
+    }
+
+    // Axes lines
+    ctx.strokeStyle = 'rgba(255,255,255,.20)';
+    ctx.beginPath(); ctx.moveTo(px0, py1); ctx.lineTo(px1, py1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px0, py0); ctx.lineTo(px0, py1); ctx.stroke();
+
+    // Ticks + labels
+    ctx.fillStyle = 'rgba(233,236,245,.90)';
+    ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    for(let i=0;i<=nTicks;i++){
+      const xv = xMin + (xMax-xMin)*(i/nTicks);
+      const tx = px0 + (px1-px0)*(i/nTicks);
+      ctx.beginPath();
+      ctx.moveTo(tx, py1);
+      ctx.lineTo(tx, py1+4);
+      ctx.strokeStyle='rgba(255,255,255,.25)';
+      ctx.stroke();
+      ctx.fillStyle='rgba(184,192,221,.95)';
+      ctx.fillText(trimNum(xv), tx, py1+6);
+    }
+
+    ctx.textAlign='right';
+    ctx.textBaseline='middle';
+    for(let i=0;i<=nTicks;i++){
+      const yv = yMin + (yMax-yMin)*(i/nTicks);
+      const ty = py1 - (py1-py0)*(i/nTicks);
+      ctx.beginPath();
+      ctx.moveTo(px0-4, ty);
+      ctx.lineTo(px0, ty);
+      ctx.strokeStyle='rgba(255,255,255,.25)';
+      ctx.stroke();
+      ctx.fillStyle='rgba(184,192,221,.95)';
+      ctx.fillText(trimNum(yv), px0-6, ty);
+    }
+
+    // Axis labels
+    ctx.fillStyle='rgba(233,236,245,.92)';
+    ctx.textAlign='center';
+    ctx.textBaseline='bottom';
+    ctx.fillText(xLabel, (px0+px1)/2, y + h - 6);
+
+    ctx.save();
+    ctx.translate(x+12, (py0+py1)/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign='center';
+    ctx.textBaseline='top';
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    ctx.restore();
+
+    return {px0, px1, py0, py1};
+  }
+
+  function trimNum(v){
+    const av = Math.abs(v);
+    if(av === 0) return "0";
+    if(av >= 1000) return v.toFixed(0);
+    if(av >= 100) return v.toFixed(0);
+    if(av >= 10) return v.toFixed(1);
+    if(av >= 1) return v.toFixed(2);
+    if(av >= 0.1) return v.toFixed(3);
+    return v.toExponential(1);
+  }
+
+  function toPix(xv, yv, axes, xMin, xMax, yMin, yMax){
+    const {px0, px1, py0, py1} = axes;
+    const X = px0 + (xv - xMin) * (px1 - px0) / (xMax - xMin);
+    const Y = py1 - (yv - yMin) * (py1 - py0) / (yMax - yMin);
+    return {X, Y};
+  }
+
+  function plotLine(ctx, axes, xs, ys, xMin, xMax, yMin, yMax, strokeStyle){
+    ctx.save();
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(let i=0;i<xs.length;i++){
+      const p = toPix(xs[i], ys[i], axes, xMin, xMax, yMin, yMax);
+      if(i===0) ctx.moveTo(p.X, p.Y); else ctx.lineTo(p.X, p.Y);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawLegend(ctx, box, items){
+    // items: [{label, color}]
+    const x = box.x + box.w - box.padR - 10;
+    let y = box.y + box.padT + 8;
+    ctx.save();
+    ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.textAlign='right';
+    ctx.textBaseline='middle';
+    items.forEach(it=>{
+      ctx.fillStyle = it.color;
+      ctx.fillRect(x-110, y-5, 14, 10);
+      ctx.fillStyle = 'rgba(233,236,245,.92)';
+      ctx.fillText(it.label, x, y);
+      y += 16;
+    });
+    ctx.restore();
+  }
+
+  // ========= Canvases =========
+  const cDiagram = document.getElementById('cDiagram');
+  const cMap = document.getElementById('cMap');
+  const cPhi = document.getElementById('cPhi');
+  const cTheta = document.getElementById('cTheta');
+
+  const D = setupCanvas(cDiagram);
+  const M = setupCanvas(cMap);
+  const P = setupCanvas(cPhi);
+  const T = setupCanvas(cTheta);
+
+  // ========= Model functions =========
+  function xPrime(x){
+    return Math.log(x / state.x0); // numeric value interpreted as mm
+  }
+  function dphi_dx(x){
+    return -xPrime(x) / (state.f * state.lam); // 1/mm
+  }
+  function phiMap(x){
+    // -(x ln(x/x0) - x)/(f*lam) + C ; choose C=0 for plotting
+    return - (x * xPrime(x) - x) / (state.f * state.lam);
+  }
+  function phiLens(x){
+    // x^2/(2*lam*f)
+    return (x*x) / (2 * state.lam * state.f);
+  }
+  function phiTotal(x){
+    return state.lensPresent ? phiMap(x) : (phiMap(x) + phiLens(x));
+  }
+  function thetaParaxial(x){
+    // x' ≈ f*theta => theta ≈ x'/f
+    return xPrime(x) / state.f; // rad
+  }
+
+  // ========= Rendering =========
+  function renderDiagram(){
+    const ctx = D.ctx;
+    const {w, h} = D.resize();
+    ctx.clearRect(0,0,w,h);
+
+    // drawing area
+    const margin = 14;
+    const x0 = margin, y0 = margin, W = w - 2*margin, H = h - 2*margin;
+
+    // axes-less schematic
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,.10)';
+    ctx.fillRect(x0, y0, W, H);
+
+    // Elements positions
+    const pxMask = x0 + W*0.33;
+    const pxLens = x0 + W*0.56;
+    const pxFocal = x0 + W*0.83;
+
+    const midY = y0 + H*0.55;
+
+    // Incident plane wave arrows
+    ctx.strokeStyle='rgba(125,211,252,.55)';
+    ctx.lineWidth=2;
+    for(let i=0;i<6;i++){
+      const yy = y0 + H*0.15 + i*(H*0.12);
+      ctx.beginPath();
+      ctx.moveTo(x0+12, yy);
+      ctx.lineTo(pxMask-20, yy);
+      ctx.stroke();
+      // arrow head
+      ctx.beginPath();
+      ctx.moveTo(pxMask-20, yy);
+      ctx.lineTo(pxMask-28, yy-5);
+      ctx.lineTo(pxMask-28, yy+5);
+      ctx.closePath();
+      ctx.fillStyle='rgba(125,211,252,.55)';
+      ctx.fill();
+    }
+
+    // Phase mask
+    ctx.strokeStyle='rgba(167,139,250,.75)';
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(pxMask, y0+H*0.12);
+    ctx.lineTo(pxMask, y0+H*0.88);
+    ctx.stroke();
+
+    // Lens
+    ctx.strokeStyle='rgba(52,211,153,.75)';
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(pxLens, y0+H*0.18);
+    ctx.lineTo(pxLens, y0+H*0.82);
+    ctx.stroke();
+
+    // Focal plane
+    ctx.strokeStyle='rgba(255,255,255,.25)';
+    ctx.setLineDash([5,4]);
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(pxFocal, y0+H*0.14);
+    ctx.lineTo(pxFocal, y0+H*0.86);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // A representative ray from input x to output x' = ln(x/x0)
+    const inY = midY - H*0.18;
+    const outY = midY - H*0.35;
+    ctx.strokeStyle='rgba(233,236,245,.85)';
+    ctx.lineWidth=2.2;
+    ctx.beginPath();
+    ctx.moveTo(pxMask, inY);
+    ctx.lineTo(pxLens, inY - H*0.12);
+    ctx.lineTo(pxFocal, outY);
+    ctx.stroke();
+
+    // Labels
+    ctx.fillStyle='rgba(233,236,245,.92)';
+    ctx.font='13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.textAlign='center';
+    ctx.textBaseline='top';
+    ctx.fillText('Phase mask t(x)=exp[-j2πφ(x)]', pxMask, y0+6);
+    ctx.fillText('Lens (f)', pxLens, y0+6);
+    ctx.fillText('Focal plane', pxFocal, y0+6);
+
+    ctx.textAlign='left';
+    ctx.textBaseline='middle';
+    ctx.fillStyle='rgba(184,192,221,.95)';
+    ctx.fillText('Input coordinate x', pxMask+8, inY);
+    ctx.fillText("Output coordinate x′", pxFocal+8, outY);
+
+    // Mapping note
+    ctx.fillStyle='rgba(125,211,252,.85)';
+    ctx.font='12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+    ctx.textAlign='left';
+    ctx.textBaseline='bottom';
+    ctx.fillText("Design goal: x′(x) = ln(x/x₀)", x0+10, y0+H-8);
+
+    ctx.restore();
+  }
+
+  function renderMap(){
+    const ctx = M.ctx;
+    const {w, h} = M.resize();
+    ctx.clearRect(0,0,w,h);
+
+    const box = {x:10,y:10,w:w-20,h:h-20,padL:52,padR:16,padT:18,padB:36};
+    const xMin = 0.2, xMax = 8.0; // example plotting range (mm), x>0
+    // compute y range from mapping
+    const ys = [];
+    const xs = [];
+    const N = 260;
+    for(let i=0;i<N;i++){
+      const x = xMin + (xMax-xMin)*i/(N-1);
+      xs.push(x);
+      ys.push(xPrime(x));
+    }
+    let yMin = Math.min(...ys), yMax = Math.max(...ys);
+    // pad a bit
+    const pad = 0.08*(yMax-yMin || 1);
+    yMin -= pad; yMax += pad;
+
+    const axes = drawAxes(ctx, box, xMin, xMax, yMin, yMax, "x (mm)", "x′ (mm)");
+    plotLine(ctx, axes, xs, ys, xMin, xMax, yMin, yMax, 'rgba(125,211,252,.95)');
+
+    // Reference line x = x0 (where x' = 0)
+    const x0 = state.x0;
+    if(x0>=xMin && x0<=xMax){
+      ctx.save();
+      ctx.strokeStyle='rgba(255,255,255,.22)';
+      ctx.lineWidth=2;
+      ctx.setLineDash([6,4]);
+      const p0 = toPix(x0, yMin, axes, xMin, xMax, yMin, yMax);
+      const p1 = toPix(x0, yMax, axes, xMin, xMax, yMin, yMax);
+      ctx.beginPath(); ctx.moveTo(p0.X,p0.Y); ctx.lineTo(p1.X,p1.Y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='rgba(184,192,221,.95)';
+      ctx.font='12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign='left';
+      ctx.textBaseline='top';
+      ctx.fillText('x = x₀ (x′=0)', p0.X+6, box.y+box.padT+6);
+      ctx.restore();
+    }
+
+    drawLegend(ctx, box, [{label:"x′ = ln(x/x₀)", color:'rgba(125,211,252,.95)'}]);
+  }
+
+  function renderPhi(){
+    const ctx = P.ctx;
+    const {w, h} = P.resize();
+    ctx.clearRect(0,0,w,h);
+
+    const box = {x:10,y:10,w:w-20,h:h-20,padL:60,padR:16,padT:18,padB:36};
+    const xMin = 0.2, xMax = 8.0;
+    const xs = [], ys = [];
+    const N = 260;
+    for(let i=0;i<N;i++){
+      const x = xMin + (xMax-xMin)*i/(N-1);
+      xs.push(x);
+      ys.push(phiTotal(x));
+    }
+    let yMin = Math.min(...ys), yMax = Math.max(...ys);
+    const pad = 0.10*(yMax-yMin || 1);
+    yMin -= pad; yMax += pad;
+
+    const axes = drawAxes(ctx, box, xMin, xMax, yMin, yMax, "x (mm)", "φ (waves)");
+    // Plot total
+    plotLine(ctx, axes, xs, ys, xMin, xMax, yMin, yMax,
+      state.lensPresent ? 'rgba(167,139,250,.95)' : 'rgba(52,211,153,.95)');
+
+    // Also show components when lens removed (optional)
+    if(!state.lensPresent){
+      const yMap = xs.map(phiMap);
+      const yLens = xs.map(phiLens);
+      plotLine(ctx, axes, xs, yMap, xMin, xMax, yMin, yMax, 'rgba(167,139,250,.65)');
+      plotLine(ctx, axes, xs, yLens, xMin, xMax, yMin, yMax, 'rgba(125,211,252,.65)');
+      drawLegend(ctx, box, [
+        {label:"φ_total", color:'rgba(52,211,153,.95)'},
+        {label:"φ_map", color:'rgba(167,139,250,.65)'},
+        {label:"φ_lens", color:'rgba(125,211,252,.65)'}
+      ]);
+    } else {
+      drawLegend(ctx, box, [
+        {label:"φ_map (lens present)", color:'rgba(167,139,250,.95)'}
+      ]);
+    }
+  }
+
+  function renderTheta(){
+    const ctx = T.ctx;
+    const {w, h} = T.resize();
+    ctx.clearRect(0,0,w,h);
+
+    const box = {x:10,y:10,w:w-20,h:h-20,padL:60,padR:16,padT:18,padB:36};
+    const xMin = 0.2, xMax = 8.0;
+    const xs = [], ys = [];
+    const N = 260;
+    for(let i=0;i<N;i++){
+      const x = xMin + (xMax-xMin)*i/(N-1);
+      xs.push(x);
+      ys.push(thetaParaxial(x)); // rad
+    }
+    let yMin = Math.min(...ys), yMax = Math.max(...ys);
+    const pad = 0.15*(yMax-yMin || 1);
+    yMin -= pad; yMax += pad;
+
+    const axes = drawAxes(ctx, box, xMin, xMax, yMin, yMax, "x (mm)", "θ (rad)");
+    plotLine(ctx, axes, xs, ys, xMin, xMax, yMin, yMax, 'rgba(251,191,36,.95)');
+
+    // Paraxial guideline: |θ| ~ 0.2 rad as a "getting large" marker
+    const thresh = 0.2;
+    if(thresh > yMin && thresh < yMax){
+      ctx.save();
+      ctx.strokeStyle='rgba(251,113,133,.30)';
+      ctx.lineWidth=2;
+      ctx.setLineDash([6,4]);
+      const p0 = toPix(xMin, thresh, axes, xMin, xMax, yMin, yMax);
+      const p1 = toPix(xMax, thresh, axes, xMin, xMax, yMin, yMax);
+      ctx.beginPath(); ctx.moveTo(p0.X,p0.Y); ctx.lineTo(p1.X,p1.Y); ctx.stroke();
+      const p2 = toPix(xMin, -thresh, axes, xMin, xMax, yMin, yMax);
+      const p3 = toPix(xMax, -thresh, axes, xMin, xMax, yMin, yMax);
+      ctx.beginPath(); ctx.moveTo(p2.X,p2.Y); ctx.lineTo(p3.X,p3.Y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='rgba(184,192,221,.95)';
+      ctx.font='12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign='left';
+      ctx.textBaseline='bottom';
+      const pp = toPix(xMin, thresh, axes, xMin, xMax, yMin, yMax);
+      ctx.fillText('≈ paraxial caution |θ| ~ 0.2 rad', pp.X+6, pp.Y-6);
+      ctx.restore();
+    }
+
+    drawLegend(ctx, box, [{label:"θ ≈ x′/f", color:'rgba(251,191,36,.95)'}]);
+  }
+
+  function renderAll(){
+    renderDiagram();
+    renderMap();
+    renderPhi();
+    renderTheta();
+  }
+
+  // Resize handling
+  let rAF = null;
+  window.addEventListener('resize', ()=>{
+    cancelAnimationFrame(rAF);
+    rAF = requestAnimationFrame(renderAll);
+  });
+
+  // Initial render
+  renderAll();
+
+})();
+</script>
+</body>
+</html>

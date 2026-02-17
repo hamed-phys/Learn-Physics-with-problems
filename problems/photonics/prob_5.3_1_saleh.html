@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Traveling Standing Wave — Full EM Solution (E, H, Power Flow, Plane-Wave Decomposition)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1733;
+      --panel2:#111c3f;
+      --text:#eaf0ff;
+      --muted:#b9c6ffcc;
+      --line:#2a3a77;
+      --accent:#7aa7ff;
+      --accent2:#9bffcf;
+      --warn:#ffd38a;
+      --ok:#b6ffb3;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 15% 5%, rgba(122,167,255,.20), transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, rgba(155,255,207,.12), transparent 55%),
+        radial-gradient(900px 700px at 40% 90%, rgba(255,211,138,.10), transparent 60%),
+        linear-gradient(180deg, #070a14, #0b1020 35%, #070a14);
+      line-height:1.55;
+    }
+
+    header{
+      padding:28px 18px 18px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .hero{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:22px 18px;
+      overflow:hidden;
+      position:relative;
+    }
+    .hero:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(700px 220px at 20% 10%, rgba(122,167,255,.18), transparent 70%),
+                  radial-gradient(600px 220px at 80% 30%, rgba(155,255,207,.12), transparent 70%);
+      pointer-events:none;
+      filter: blur(2px);
+      opacity:.9;
+    }
+    .hero > *{position:relative}
+    h1{
+      margin:0 0 6px;
+      font-weight:750;
+      letter-spacing:.2px;
+      font-size: clamp(1.25rem, 1.2rem + 1.4vw, 2.05rem);
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:0;
+      max-width: 80ch;
+      font-size: clamp(.95rem, .92rem + .25vw, 1.05rem);
+    }
+    .chips{
+      display:flex; flex-wrap:wrap; gap:10px;
+      margin-top:14px;
+    }
+    .chip{
+      font-size:.88rem;
+      padding:7px 10px;
+      background: rgba(122,167,255,.10);
+      border: 1px solid rgba(122,167,255,.22);
+      border-radius:999px;
+      color: #dbe7ff;
+      backdrop-filter: blur(6px);
+    }
+    .chip strong{color:#fff}
+
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding: 0 18px 34px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+
+    nav#toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:14px 14px 12px;
+    }
+    #toc h2{
+      margin:0 0 10px;
+      font-size: 1.02rem;
+      letter-spacing:.2px;
+    }
+    #toc a{
+      display:block;
+      text-decoration:none;
+      color: var(--muted);
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size:.94rem;
+    }
+    #toc a:hover{
+      background: rgba(122,167,255,.10);
+      border-color: rgba(122,167,255,.22);
+      color: #eaf0ff;
+      transform: translateX(2px);
+    }
+
+    .content{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      min-width:0;
+    }
+    section{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:18px;
+      overflow:hidden;
+    }
+    section h2{
+      margin:0 0 10px;
+      font-size: 1.2rem;
+      letter-spacing:.2px;
+    }
+    section h3{
+      margin:18px 0 8px;
+      font-size: 1.02rem;
+      color:#f2f6ff;
+    }
+    p{margin:10px 0; color:#eaf0ff}
+    ul{margin:10px 0 10px 18px; color:#eaf0ff}
+    li{margin:6px 0}
+    .muted{color:var(--muted)}
+    .equation{
+      font-family: var(--mono);
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding:12px 12px;
+      overflow:auto;
+      position:relative;
+    }
+    .eqrow{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .copybtn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      color:#071019;
+      background: linear-gradient(135deg, rgba(155,255,207,.95), rgba(122,167,255,.95));
+      padding:8px 10px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size:.85rem;
+      box-shadow: 0 10px 20px rgba(0,0,0,.25);
+      transition: transform .12s ease, filter .12s ease;
+      white-space:nowrap;
+    }
+    .copybtn:hover{transform: translateY(-1px); filter:brightness(1.03)}
+    .copybtn:active{transform: translateY(0px); filter:brightness(.98)}
+    .copyhint{
+      font-size:.84rem;
+      color:var(--muted);
+      margin-top:6px;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+      align-items:stretch;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.10));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding:14px;
+      min-width:0;
+    }
+    .card h3{margin-top:0}
+    .callout{
+      border-left: 4px solid rgba(122,167,255,.85);
+      padding-left:12px;
+      background: rgba(122,167,255,.08);
+    }
+    .callout.warn{border-left-color: rgba(255,211,138,.95); background: rgba(255,211,138,.08)}
+    .callout.ok{border-left-color: rgba(182,255,179,.95); background: rgba(182,255,179,.07)}
+    .boxed{
+      border:1px solid rgba(155,255,207,.35);
+      background: rgba(155,255,207,.08);
+      border-radius: 16px;
+      padding:14px;
+    }
+    .boxed strong{color:#ffffff}
+    code.inline{
+      font-family: var(--mono);
+      background: rgba(0,0,0,.20);
+      padding:2px 6px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.10);
+    }
+
+    figure{
+      margin:0;
+      border-radius: 16px;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+    figcaption{
+      padding:10px 12px;
+      color: var(--muted);
+      font-size:.92rem;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+    }
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:flex-end;
+      margin-top:10px;
+    }
+    .control{
+      flex: 1 1 220px;
+      min-width: 220px;
+      background: rgba(0,0,0,.16);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding:10px 10px 8px;
+    }
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size:.92rem;
+      color:#eaf0ff;
+      margin-bottom:6px;
+    }
+    .control .val{
+      color: var(--accent2);
+      font-family: var(--mono);
+      font-size:.92rem;
+      white-space:nowrap;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: #9bffcf;
+    }
+    .smallnote{font-size:.86rem; color:var(--muted); margin-top:6px}
+    .hr{
+      height:1px;
+      background: rgba(255,255,255,.10);
+      margin:14px 0;
+    }
+
+    footer{
+      max-width:1200px;
+      margin:0 auto;
+      padding: 0 18px 26px;
+      color: var(--muted);
+      font-size:.92rem;
+    }
+
+    /* subtle animation */
+    @media (prefers-reduced-motion: no-preference){
+      .hero{animation: floatIn .55s ease both}
+      section{animation: floatIn .55s ease both; animation-delay:.05s}
+      @keyframes floatIn{
+        from{transform: translateY(8px); opacity:.0}
+        to{transform: translateY(0); opacity:1}
+      }
+    }
+
+    /* responsive */
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr}
+      nav#toc{position:relative; top:auto}
+      canvas{height:300px}
+    }
+
+    /* print-friendly */
+    @media print{
+      body{background:#fff; color:#000}
+      header, main, footer{max-width: none}
+      nav#toc{display:none}
+      section, .hero{box-shadow:none; background:#fff; border:1px solid #ddd}
+      .equation{background:#fff; border:1px solid #ddd}
+      .copybtn{display:none}
+      canvas{display:none}
+      figure{display:none}
+      .chip{border:1px solid #ddd; background:#f6f6f6; color:#000}
+      .muted{color:#333}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hero">
+      <h1>Traveling Standing Wave in Free Space: β–λ₀ Relation, H-Field, Power Flow, and Plane-Wave Decomposition</h1>
+      <p class="subtitle">
+        We analyze the monochromatic field
+        <code class="inline">E(r) = E₀ sin(βy) e^{-jβz} x̂</code>
+        in free space, derive the consistent wave-number relation, compute <code class="inline">H(r)</code> from Maxwell’s equations,
+        find the time-averaged Poynting vector direction, and show it is a superposition of two TEM plane waves.
+      </p>
+      <div class="chips" aria-label="Quick summary chips">
+        <span class="chip"><strong>Key result:</strong> β = (2π/λ₀)/√2</span>
+        <span class="chip"><strong>H-field:</strong> H = (βE₀/ωμ₀)(sinβy ŷ − j cosβy ẑ)e^{-jβz}</span>
+        <span class="chip"><strong>Power flow:</strong> ⟨S⟩ ∥ +ẑ, magnitude ∝ sin²(βy)</span>
+        <span class="chip"><strong>Two plane waves:</strong> k = (0, ±β, β)</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <nav id="toc" aria-label="Table of contents">
+      <h2>Table of Contents</h2>
+      <a href="#viz">Interactive Visualizations</a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a href="#part2">PART 2 — Strategy & Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a href="#final">Final Answers (boxed)</a>
+    </nav>
+
+    <div class="content">
+      <section id="viz">
+        <h2>Interactive Visualizations</h2>
+        <p class="muted">
+          The plots use <strong>example values</strong> for visualization (you can change λ₀ and z-position).
+          All formulas in the solution remain symbolic.
+        </p>
+
+        <div class="controls" role="group" aria-label="Interactive controls">
+          <div class="control">
+            <label for="lambdaSlider">
+              <span>Free-space wavelength λ₀ (µm)</span>
+              <span class="val" id="lambdaVal">1.55</span>
+            </label>
+            <input id="lambdaSlider" type="range" min="0.5" max="3.0" step="0.01" value="1.55" />
+            <div class="smallnote">Changes β via β = (2π/λ₀)/√2 and updates all visuals.</div>
+          </div>
+
+          <div class="control">
+            <label for="zSlider">
+              <span>Observation position z (µm)</span>
+              <span class="val" id="zVal">0.00</span>
+            </label>
+            <input id="zSlider" type="range" min="0" max="10" step="0.02" value="0" />
+            <div class="smallnote">Updates the traveling phase factor e<sup>−jβz</sup> in the diagram + secondary plot.</div>
+          </div>
+
+          <div class="control">
+            <label for="e0Slider">
+              <span>Field amplitude E₀ (V/m)</span>
+              <span class="val" id="e0Val">1.00</span>
+            </label>
+            <input id="e0Slider" type="range" min="0.2" max="5.0" step="0.05" value="1.00" />
+            <div class="smallnote">Scales E, H, and ⟨S⟩ magnitudes (direction unchanged).</div>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:14px;">
+          <figure class="card" style="padding:0;">
+            <canvas id="canvasDiagram" aria-label="Diagram canvas"></canvas>
+            <figcaption>
+              <strong>Diagram:</strong> Traveling standing wave: standing in <em>y</em>, traveling in <em>z</em>, polarization along <em>x</em>.
+              Also shows the two plane-wave components (±y, +z).
+            </figcaption>
+          </figure>
+
+          <figure class="card" style="padding:0;">
+            <canvas id="canvasPlot1" aria-label="Main plot canvas"></canvas>
+            <figcaption>
+              <strong>Main plot:</strong> Transverse profiles vs y: |E(y)| and the time-averaged power-flow density ⟨S<sub>z</sub>(y)⟩ ∝ sin²(βy).
+            </figcaption>
+          </figure>
+        </div>
+
+        <figure style="margin-top:14px;">
+          <canvas id="canvasPlot2" aria-label="Secondary plot canvas"></canvas>
+          <figcaption>
+            <strong>Secondary plot:</strong> Instantaneous field sample at a fixed y (selectable internally as y = λ₀/4): E<sub>x</sub>(z, t=0) ∝ sin(βy) cos(βz).
+            Shows the traveling phase along z.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section id="part1">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+        <h3>Problem restatement (in plain words)</h3>
+        <p>
+          You are given the <em>phasor</em> (complex-amplitude) electric field of a monochromatic electromagnetic wave in free space:
+        </p>
+        <div class="equation">
+          <div class="eqrow">
+            <div>
+              <div><strong>Given:</strong> E(r) = E₀ sin(βy) e<sup>−jβz</sup> x̂</div>
+              <div class="copyhint">Convention: time dependence e<sup>+jωt</sup>. (So Maxwell gives ∇×E = −jωμ₀H.)</div>
+            </div>
+            <button class="copybtn" data-copy="E(r) = E0 sin(beta y) exp(-j beta z) x-hat">Copy</button>
+          </div>
+        </div>
+        <p>
+          (a) Relate the parameter β to the free-space wavelength λ₀.
+          (b) Find the magnetic field phasor H(r).
+          (c) Determine the direction of optical power flow (time-averaged Poynting vector).
+          (d) Show the field is the sum of two TEM plane waves and give their propagation directions.
+        </p>
+
+        <h3>Given quantities</h3>
+        <ul>
+          <li>Free-space wavelength: <code class="inline">λ₀</code></li>
+          <li>Electric-field amplitude: <code class="inline">E₀</code> (can be complex; for power we often assume real amplitude)</li>
+          <li>Field form: <code class="inline">sin(βy)</code> dependence (standing in y) and <code class="inline">e^{-jβz}</code> dependence (traveling in z)</li>
+          <li>Medium: free space (ε₀, μ₀, impedance η₀, wave number k₀ = 2π/λ₀)</li>
+        </ul>
+
+        <h3>Unknowns</h3>
+        <ul>
+          <li>(a) The relation between β and λ₀ (i.e., which spatial frequencies are allowed in free space)</li>
+          <li>(b) H(r) as a vector phasor field</li>
+          <li>(c) Direction (and qualitative distribution) of average power flow ⟨S⟩</li>
+          <li>(d) The two plane-wave wavevectors (directions of propagation)</li>
+        </ul>
+
+        <h3>What must be found/proved</h3>
+        <ul>
+          <li>Consistency with the free-space dispersion relation: |k| = k₀</li>
+          <li>H derived from Maxwell curl equations</li>
+          <li>⟨S⟩ direction from ⟨S⟩ = (1/2) Re(E × H*)</li>
+          <li>Plane-wave decomposition using sin(βy) as a superposition of exponentials</li>
+        </ul>
+
+        <h3>Relevant physical principles (and why they apply)</h3>
+        <ul>
+          <li>
+            <strong>Source-free Maxwell equations (phasor form):</strong>
+            In free space with no charges/currents, the fields satisfy
+            <code class="inline">∇×E = −jωμ₀H</code> and <code class="inline">∇×H = +jωε₀E</code>.
+            These directly connect E and H.
+          </li>
+          <li>
+            <strong>Wave equation / dispersion:</strong>
+            Any physical monochromatic field in homogeneous free space must satisfy
+            <code class="inline">∇²E + k₀²E = 0</code> with <code class="inline">k₀ = 2π/λ₀</code>.
+            This constrains spatial frequencies (here, β).
+          </li>
+          <li>
+            <strong>Poynting vector:</strong>
+            Optical power flow direction is given by the time-averaged Poynting vector
+            <code class="inline">⟨S⟩ = (1/2) Re(E × H*)</code>.
+          </li>
+        </ul>
+
+        <h3>Possible solution approaches (compare 2–3)</h3>
+        <div class="grid2">
+          <div class="card callout">
+            <h3>Approach A: Use dispersion via wave equation</h3>
+            <ul>
+              <li>Compute ∇²E from the given y and z dependence</li>
+              <li>Match to ∇²E + k₀²E = 0 → relation for β</li>
+              <li>Then use ∇×E to get H</li>
+            </ul>
+            <p class="muted">Fast and systematic; directly enforces free-space physics.</p>
+          </div>
+          <div class="card callout">
+            <h3>Approach B: Interpret as superposition of plane waves</h3>
+            <ul>
+              <li>Rewrite sin(βy)e^{-jβz} as two exponentials</li>
+              <li>Identify each plane wave’s k-vector (0, ±β, β)</li>
+              <li>Enforce |k| = k₀ → relation for β</li>
+              <li>Use plane-wave relations to find H</li>
+            </ul>
+            <p class="muted">Gives immediate physical interpretation (two beams crossing).</p>
+          </div>
+        </div>
+        <div class="card callout ok" style="margin-top:14px;">
+          <h3>Chosen approach</h3>
+          <p>
+            We’ll use a hybrid of <strong>Approach B + A</strong>:
+            plane-wave decomposition gives the cleanest intuition for (a) and (d),
+            while the curl equation <code class="inline">∇×E = −jωμ₀H</code> gives the most direct, general derivation of (b).
+            Then we compute ⟨S⟩ for (c).
+          </p>
+        </div>
+      </section>
+
+      <section id="part2">
+        <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+        <h3>Step-by-step plan (no algebra yet)</h3>
+        <ol>
+          <li>
+            <strong>Goal:</strong> Identify the effective wavevector components.
+            <br><span class="muted">Tool:</span> Rewrite <code class="inline">sin(βy)</code> as exponentials to reveal plane-wave factors.
+          </li>
+          <li>
+            <strong>Goal:</strong> Enforce free-space dispersion.
+            <br><span class="muted">Tool:</span> Use <code class="inline">|k| = k₀ = 2π/λ₀</code> (or equivalently the wave equation).
+          </li>
+          <li>
+            <strong>Goal:</strong> Compute H(r).
+            <br><span class="muted">Tool:</span> Use <code class="inline">∇×E = −jωμ₀H</code> and take the curl of the given E.
+          </li>
+          <li>
+            <strong>Goal:</strong> Determine optical power flow direction.
+            <br><span class="muted">Tool:</span> Compute <code class="inline">⟨S⟩ = (1/2)Re(E×H*)</code>; inspect components.
+          </li>
+          <li>
+            <strong>Goal:</strong> State the two TEM plane waves and their propagation directions.
+            <br><span class="muted">Tool:</span> Read k-vectors from each exponential term and normalize to get direction unit vectors.
+          </li>
+        </ol>
+
+        <h3>Common mistakes & quick tips</h3>
+        <div class="grid2">
+          <div class="card callout warn">
+            <h3>Common mistakes</h3>
+            <ul>
+              <li>Forgetting the phasor convention: using the wrong sign in <code class="inline">∇×E = −jωμH</code>.</li>
+              <li>Assuming β = k₀ without checking that the field varies in <em>both</em> y and z.</li>
+              <li>Mixing instantaneous and time-averaged power flow (reactive vs real power).</li>
+            </ul>
+          </div>
+          <div class="card callout ok">
+            <h3>Quick tips</h3>
+            <ul>
+              <li>Any factor <code class="inline">e^{-j(k_y y + k_z z)}</code> corresponds to k = (0, k_y, k_z).</li>
+              <li>Standing in y means two counterpropagating y-components are present.</li>
+              <li>When E is along x̂, only Hy and Hz matter for E×H*.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="part3">
+        <h2>PART 3 — Full Solution</h2>
+
+        <h3>Physical intuition first</h3>
+        <p>
+          The field amplitude is proportional to <code class="inline">sin(βy)</code>, so across the transverse direction y it forms
+          nodes and antinodes (a standing-wave pattern). Meanwhile, the factor <code class="inline">e^{-jβz}</code> indicates a traveling
+          phase variation along z, so the pattern is “carried” forward in the +z direction.
+        </p>
+        <p>
+          A standing pattern like <code class="inline">sin(βy)</code> is naturally produced by adding two plane waves with opposite transverse
+          components ±β in the y direction, while both share the same forward z component. That is exactly what we will show.
+        </p>
+
+        <div class="hr"></div>
+
+        <article>
+          <h3>(a) Relation between β and λ₀</h3>
+          <p>
+            Use the identity
+            <code class="inline">sin(βy) = (e^{jβy} − e^{−jβy})/(2j)</code>.
+            Then
+          </p>
+
+          <div class="equation">
+            <div class="eqrow">
+              <div>
+                E(r) = E₀ sin(βy) e<sup>−jβz</sup> x̂
+                <br>
+                = (E₀/2j) [ e<sup>−j(βz − βy)</sup> − e<sup>−j(βz + βy)</sup> ] x̂
+              </div>
+              <button class="copybtn" data-copy="E(r)= (E0/(2j)) [exp(-j(beta z - beta y)) - exp(-j(beta z + beta y))] x-hat">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            Each term has the plane-wave form <code class="inline">e^{-j(k·r)}</code>. Therefore the two wavevectors are:
+          </p>
+          <ul>
+            <li>Term 1: <code class="inline">βz − βy</code> ⇒ <code class="inline">k₁ = (0, −β, β)</code></li>
+            <li>Term 2: <code class="inline">βz + βy</code> ⇒ <code class="inline">k₂ = (0, +β, β)</code></li>
+          </ul>
+
+          <p>
+            In free space, any plane wave must satisfy the dispersion relation
+            <code class="inline">|k| = k₀</code>, where
+            <code class="inline">k₀ = 2π/λ₀ = ω√(μ₀ε₀)</code>.
+            For either wave,
+          </p>
+
+          <div class="equation">
+            <div class="eqrow">
+              <div>
+                |k| = √(k<sub>y</sub>² + k<sub>z</sub>²) = √(β² + β²) = β√2
+                <br>
+                Set β√2 = k₀ = 2π/λ₀  ⇒  <strong>β = (2π/λ₀)/√2</strong>
+              </div>
+              <button class="copybtn" data-copy="beta*sqrt(2) = k0 = 2*pi/lambda0  =>  beta = (2*pi/lambda0)/sqrt(2)">Copy</button>
+            </div>
+          </div>
+
+          <div class="card callout ok">
+            <strong>Interpretation:</strong> Because the field varies in <em>two</em> spatial directions (y and z) with the same spatial frequency β,
+            the total wavevector magnitude is larger by √2. Thus β cannot equal k₀; it must be k₀/√2.
+          </div>
+        </article>
+
+        <article>
+          <h3>(b) Magnetic-field complex amplitude H(r)</h3>
+          <p>
+            With phasor convention e<sup>+jωt</sup>, Maxwell’s curl equation is:
+          </p>
+          <div class="equation">
+            <div class="eqrow">
+              <div>∇×E = −jωμ₀ H  ⇒  H = (j/(ωμ₀)) (∇×E)</div>
+              <button class="copybtn" data-copy="curl(E) = -j*omega*mu0*H  =>  H = (j/(omega*mu0)) curl(E)">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            The given field has only an x-component:
+            <code class="inline">E = Ex x̂</code> with
+            <code class="inline">Ex = E₀ sin(βy) e^{-jβz}</code>.
+            The curl simplifies because Ey = Ez = 0:
+          </p>
+          <ul>
+            <li><code class="inline">(∇×E)_x = ∂Ez/∂y − ∂Ey/∂z = 0</code></li>
+            <li><code class="inline">(∇×E)_y = ∂Ex/∂z − ∂Ez/∂x = ∂Ex/∂z</code></li>
+            <li><code class="inline">(∇×E)_z = ∂Ey/∂x − ∂Ex/∂y = −∂Ex/∂y</code></li>
+          </ul>
+
+          <p><strong>Compute the needed derivatives:</strong></p>
+          <div class="equation">
+            <div class="eqrow">
+              <div>
+                ∂Ex/∂z = E₀ sin(βy) ∂/∂z (e<sup>−jβz</sup>) = (−jβ) E₀ sin(βy) e<sup>−jβz</sup>
+                <br>
+                ∂Ex/∂y = E₀ e<sup>−jβz</sup> ∂/∂y (sin(βy)) = β E₀ cos(βy) e<sup>−jβz</sup>
+              </div>
+              <button class="copybtn" data-copy="dEx/dz = -j*beta*E0*sin(beta y)*exp(-j beta z);  dEx/dy = beta*E0*cos(beta y)*exp(-j beta z)">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            Therefore
+          </p>
+          <div class="equation">
+            <div class="eqrow">
+              <div>
+                ∇×E = (∂Ex/∂z) ŷ − (∂Ex/∂y) ẑ
+                <br>
+                = [−jβ E₀ sin(βy) e<sup>−jβz</sup>] ŷ  + [−β E₀ cos(βy) e<sup>−jβz</sup>] ẑ
+              </div>
+              <button class="copybtn" data-copy="curl(E) = (-j*beta*E0*sin(beta y)*exp(-j beta z)) y-hat + (-beta*E0*cos(beta y)*exp(-j beta z)) z-hat">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            Multiply by <code class="inline">j/(ωμ₀)</code>:
+          </p>
+          <div class="equation">
+            <div class="eqrow">
+              <div>
+                H(r) = (j/(ωμ₀)) (∇×E)
+                <br>
+                = (βE₀/(ωμ₀)) e<sup>−jβz</sup> [ sin(βy) ŷ − j cos(βy) ẑ ]
+              </div>
+              <button class="copybtn" data-copy="H(r) = (beta*E0/(omega*mu0)) * exp(-j beta z) * ( sin(beta y) y-hat - j cos(beta y) z-hat )">Copy</button>
+            </div>
+          </div>
+
+          <p class="muted">
+            Optional rewrite using η₀:
+            since <code class="inline">k₀/(ωμ₀)=1/η₀</code>, we have
+            <code class="inline">β/(ωμ₀) = (β/k₀)(1/η₀) = (1/√2)(1/η₀)</code>.
+          </p>
+        </article>
+
+        <article>
+          <h3>(c) Direction of the flow of optical power</h3>
+          <p>
+            The time-averaged Poynting vector is
+          </p>
+          <div class="equation">
+            <div class="eqrow">
+              <div>⟨S⟩ = (1/2) Re( E × H* )</div>
+              <button class="copybtn" data-copy="<S> = (1/2) Re( E x H* )">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            Here <code class="inline">E = Ex x̂</code> and <code class="inline">H = Hy ŷ + Hz ẑ</code>. So
+          </p>
+          <div class="equation">
+            <div class="eqrow">
+              <div>
+                E × H* = Ex x̂ × (Hy* ŷ + Hz* ẑ)
+                <br>
+                = Ex [ Hy* (x̂×ŷ) + Hz* (x̂×ẑ) ]
+                <br>
+                = Ex [ Hy* ẑ − Hz* ŷ ]
+              </div>
+              <button class="copybtn" data-copy="E x H* = Ex*(Hy* z-hat - Hz* y-hat)">Copy</button>
+            </div>
+          </div>
+
+          <p><strong>Compute the z-component:</strong></p>
+          <ul>
+            <li>
+              <code class="inline">Ex = E₀ sin(βy) e^{-jβz}</code>
+            </li>
+            <li>
+              <code class="inline">Hy = (βE₀/(ωμ₀)) sin(βy) e^{-jβz}</code>
+              ⇒ <code class="inline">Hy* = (βE₀/(ωμ₀)) sin(βy) e^{+jβz}</code> (if E₀ is real)
+            </li>
+          </ul>
+
+          <div class="equation">
+            <div class="eqrow">
+              <div>
+                Ex Hy* = E₀ sin(βy) e<sup>−jβz</sup> · (βE₀/(ωμ₀)) sin(βy) e<sup>+jβz</sup>
+                <br>
+                = (βE₀²/(ωμ₀)) sin²(βy)  (purely real and ≥ 0)
+              </div>
+              <button class="copybtn" data-copy="Ex*Hy* = (beta*E0^2/(omega*mu0)) * sin^2(beta y)">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            Therefore,
+          </p>
+          <div class="boxed">
+            <div class="eqrow">
+              <div>
+                <strong>⟨S⟩ has a positive z-component:</strong>
+                <br>
+                ⟨S<sub>z</sub>⟩ = (1/2)(βE₀²/(ωμ₀)) sin²(βy)  &nbsp; (points along +ẑ)
+              </div>
+              <button class="copybtn" data-copy="<Sz> = (1/2)*(beta*E0^2/(omega*mu0))*sin^2(beta y)  (along +z)">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            The y-component involves <code class="inline">−Ex Hz*</code>.
+            From part (b), <code class="inline">Hz ∝ −j cos(βy)</code> is in quadrature (±90° phase),
+            making <code class="inline">Ex Hz*</code> purely imaginary, so its real part is zero:
+            <code class="inline">⟨S_y⟩ = 0</code>.
+          </p>
+
+          <div class="card callout">
+            <strong>Conclusion:</strong> The wave carries real (time-averaged) power forward in the <strong>+z direction</strong>,
+            with a transverse distribution proportional to <code class="inline">sin²(βy)</code>.
+            Any transverse energy exchange is reactive (oscillatory), not net transported on average.
+          </div>
+        </article>
+
+        <article>
+          <h3>(d) View as sum of two TEM plane waves; propagation directions</h3>
+          <p>
+            From part (a), we already wrote
+          </p>
+
+          <div class="equation">
+            <div class="eqrow">
+              <div>
+                E(r) = (E₀/2j) [ e<sup>−j(βz − βy)</sup> − e<sup>−j(βz + βy)</sup> ] x̂
+              </div>
+              <button class="copybtn" data-copy="E = (E0/(2j)) [exp(-j(beta z - beta y)) - exp(-j(beta z + beta y))] x-hat">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            So the two plane waves have wavevectors
+            <code class="inline">k₁ = (0, −β, β)</code> and
+            <code class="inline">k₂ = (0, +β, β)</code>.
+            Their propagation <em>directions</em> are the corresponding unit vectors:
+          </p>
+
+          <div class="equation">
+            <div class="eqrow">
+              <div>
+                k̂₁ = k₁/|k₁| = (0, −β, β)/(β√2) = (0, −1/√2, +1/√2)
+                <br>
+                k̂₂ = k₂/|k₂| = (0, +β, β)/(β√2) = (0, +1/√2, +1/√2)
+              </div>
+              <button class="copybtn" data-copy="khat1 = (0,-1/sqrt(2),+1/sqrt(2));  khat2 = (0,+1/sqrt(2),+1/sqrt(2))">Copy</button>
+            </div>
+          </div>
+
+          <div class="card callout ok">
+            <strong>Geometric picture:</strong> Two equal-magnitude plane waves propagate in the y–z plane, both tilted
+            <strong>45°</strong> toward +z, with opposite transverse components ±y. Their interference produces a standing pattern in y.
+          </div>
+        </article>
+
+        <div class="hr"></div>
+
+        <h3>Sanity checks</h3>
+        <div class="grid2">
+          <div class="card">
+            <h3>Units</h3>
+            <ul>
+              <li><code class="inline">β</code> has units of rad/m (spatial angular frequency), consistent with <code class="inline">2π/λ₀</code>.</li>
+              <li>In <code class="inline">H = (βE₀/(ωμ₀))(...)</code>, since <code class="inline">β/ω</code> has units s/m and <code class="inline">1/μ₀</code> gives A·s/(V·m),
+                overall units reduce to A/m (correct for H).</li>
+              <li>⟨S⟩ has units W/m².</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Limiting/consistency</h3>
+            <ul>
+              <li>If the field depended only on z as <code class="inline">e^{-jk₀z}</code>, then k would be (0,0,k₀). Here, adding y-variation forces k’s magnitude to remain k₀,
+                hence the reduced z-component and β = k₀/√2.</li>
+              <li>⟨S<sub>z</sub>⟩ ∝ sin²(βy) correctly vanishes at nodes of the standing wave (no E → no transported power there).</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="final">
+        <h2>Final Answers (boxed)</h2>
+
+        <div class="boxed">
+          <h3 style="margin-top:0;">(a) Relation between β and λ₀</h3>
+          <div class="equation">
+            <div class="eqrow">
+              <div><strong>β = k₀/√2 = (2π/λ₀)/√2</strong></div>
+              <button class="copybtn" data-copy="beta = (2*pi/lambda0)/sqrt(2) = k0/sqrt(2)">Copy</button>
+            </div>
+          </div>
+
+          <h3>(b) Magnetic-field phasor</h3>
+          <div class="equation">
+            <div class="eqrow">
+              <div>
+                <strong>H(r) = (βE₀/(ωμ₀)) e^{-jβz} [ sin(βy) ŷ − j cos(βy) ẑ ]</strong>
+              </div>
+              <button class="copybtn" data-copy="H(r) = (beta*E0/(omega*mu0)) * exp(-j beta z) * ( sin(beta y) y-hat - j cos(beta y) z-hat )">Copy</button>
+            </div>
+          </div>
+
+          <h3>(c) Direction of optical power flow</h3>
+          <div class="equation">
+            <div class="eqrow">
+              <div>
+                <strong>⟨S⟩ points along +ẑ</strong>, with
+                <br>
+                ⟨S<sub>z</sub>⟩ = (1/2)(βE₀²/(ωμ₀)) sin²(βy), and ⟨S<sub>y</sub>⟩ = 0.
+              </div>
+              <button class="copybtn" data-copy="<S> is along +z;  <Sz> = (1/2)*(beta*E0^2/(omega*mu0))*sin^2(beta y);  <Sy>=0">Copy</button>
+            </div>
+          </div>
+
+          <h3>(d) Two TEM plane waves and propagation directions</h3>
+          <div class="equation">
+            <div class="eqrow">
+              <div>
+                <strong>k₁ = (0, −β, β),  k₂ = (0, +β, β)</strong>
+                <br>
+                <strong>k̂₁ = (0, −1/√2, +1/√2),  k̂₂ = (0, +1/√2, +1/√2)</strong>
+              </div>
+              <button class="copybtn" data-copy="Plane waves: k1=(0,-beta,beta), k2=(0,+beta,beta); directions khat1=(0,-1/sqrt(2),+1/sqrt(2)), khat2=(0,+1/sqrt(2),+1/sqrt(2))">Copy</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="muted">
+      Notes: Visuals use example values in µm for convenience; the derivations are general. Phasor convention assumed e<sup>+jωt</sup>.
+    </div>
+  </footer>
+
+  <script>
+    // ---------- Utilities ----------
+    const TAU = Math.PI * 2;
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    function niceTicks(min, max, targetCount=6){
+      // Returns {ticks:[], step}
+      const span = max - min;
+      if (span <= 0) return {ticks:[min], step:1};
+      const raw = span / targetCount;
+      const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+      const frac = raw / pow;
+      let niceFrac = 1;
+      if (frac < 1.5) niceFrac = 1;
+      else if (frac < 3) niceFrac = 2;
+      else if (frac < 7) niceFrac = 5;
+      else niceFrac = 10;
+      const step = niceFrac * pow;
+      const start = Math.ceil(min/step)*step;
+      const ticks = [];
+      for (let t = start; t <= max + 1e-12; t += step) ticks.push(t);
+      return {ticks, step};
+    }
+
+    function formatSI(x, unit="", digits=3){
+      // compact formatting for plot tick labels
+      const ax = Math.abs(x);
+      if (ax === 0) return "0" + unit;
+      if (ax >= 1000 || ax < 0.01){
+        const exp = Math.floor(Math.log10(ax));
+        const mant = x / Math.pow(10, exp);
+        return mant.toFixed( (Math.abs(mant) < 10) ? digits-1 : digits-2 ) + "e" + exp + unit;
+      }
+      // normal
+      let s = x.toFixed(digits);
+      s = s.replace(/\.?0+$/,"");
+      return s + unit;
+    }
+
+    function setupHiDPI(canvas){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const w = Math.max(2, Math.floor(rect.width * dpr));
+      const h = Math.max(2, Math.floor(rect.height * dpr));
+      if (canvas.width !== w || canvas.height !== h){
+        canvas.width = w;
+        canvas.height = h;
+      }
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
+      return {ctx, w: rect.width, h: rect.height, dpr};
+    }
+
+    function drawPlot(ctx, W, H, opts){
+      // opts: {title, xLabel, yLabel, xMin,xMax,yMin,yMax, series:[{name, color?, data:[{x,y}]}], legend:boolean}
+      // No fixed colors requested; we will use minimal grayscale + accent strokes.
+      ctx.clearRect(0,0,W,H);
+
+      // background
+      ctx.fillStyle = "rgba(0,0,0,0.10)";
+      ctx.fillRect(0,0,W,H);
+
+      // margins
+      const m = {l:52, r:18, t:38, b:42};
+      const px0 = m.l, py0 = m.t;
+      const px1 = W - m.r, py1 = H - m.b;
+
+      // title
+      ctx.fillStyle = "rgba(234,240,255,0.95)";
+      ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(opts.title || "", m.l, 20);
+
+      // scales
+      const xMin = opts.xMin, xMax = opts.xMax, yMin = opts.yMin, yMax = opts.yMax;
+      const sx = (x)=> px0 + (x - xMin) * (px1 - px0) / (xMax - xMin);
+      const sy = (y)=> py1 - (y - yMin) * (py1 - py0) / (yMax - yMin);
+
+      // grid + ticks
+      const xt = niceTicks(xMin, xMax, 6);
+      const yt = niceTicks(yMin, yMax, 6);
+
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      ctx.fillStyle = "rgba(185,198,255,0.85)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+
+      // vertical gridlines + x ticks
+      for (const t of xt.ticks){
+        const x = sx(t);
+        ctx.beginPath();
+        ctx.moveTo(x, py0);
+        ctx.lineTo(x, py1);
+        ctx.stroke();
+        ctx.fillText(formatSI(t, "", 3), x-10, py1 + 18);
+        // tick mark
+        ctx.strokeStyle = "rgba(255,255,255,0.18)";
+        ctx.beginPath();
+        ctx.moveTo(x, py1);
+        ctx.lineTo(x, py1+5);
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      }
+
+      // horizontal gridlines + y ticks
+      for (const t of yt.ticks){
+        const y = sy(t);
+        ctx.beginPath();
+        ctx.moveTo(px0, y);
+        ctx.lineTo(px1, y);
+        ctx.stroke();
+        ctx.fillText(formatSI(t, "", 3), 6, y+4);
+        // tick mark
+        ctx.strokeStyle = "rgba(255,255,255,0.18)";
+        ctx.beginPath();
+        ctx.moveTo(px0-5, y);
+        ctx.lineTo(px0, y);
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      }
+
+      // axes
+      ctx.strokeStyle = "rgba(255,255,255,0.28)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(px0, py0);
+      ctx.lineTo(px0, py1);
+      ctx.lineTo(px1, py1);
+      ctx.stroke();
+
+      // labels
+      ctx.fillStyle = "rgba(234,240,255,0.92)";
+      ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(opts.xLabel || "", (px0+px1)/2 - 60, H - 12);
+
+      // y label rotated
+      ctx.save();
+      ctx.translate(14, (py0+py1)/2 + 50);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(opts.yLabel || "", 0, 0);
+      ctx.restore();
+
+      // draw series
+      const series = opts.series || [];
+      const palette = [
+        "rgba(155,255,207,0.95)",
+        "rgba(122,167,255,0.95)",
+        "rgba(255,211,138,0.95)",
+        "rgba(255,255,255,0.85)"
+      ];
+
+      series.forEach((s, idx)=>{
+        const col = s.color || palette[idx % palette.length];
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const data = s.data || [];
+        for (let i=0;i<data.length;i++){
+          const p = data[i];
+          const x = sx(p.x);
+          const y = sy(p.y);
+          if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+      });
+
+      // legend
+      if (opts.legend !== false && series.length){
+        const lx = px0 + 10;
+        let ly = py0 + 6;
+        ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        series.forEach((s, idx)=>{
+          const col = s.color || palette[idx % palette.length];
+          ctx.fillStyle = col;
+          ctx.fillRect(lx, ly+3, 14, 3);
+          ctx.fillStyle = "rgba(234,240,255,0.92)";
+          ctx.fillText(s.name || `series ${idx+1}`, lx+20, ly+9);
+          ly += 18;
+        });
+      }
+    }
+
+    function drawDiagram(ctx, W, H, state){
+      ctx.clearRect(0,0,W,H);
+      ctx.fillStyle = "rgba(0,0,0,0.10)";
+      ctx.fillRect(0,0,W,H);
+
+      // Coordinate frame in yz plane, with x polarization indicated out-of-plane.
+      const cx = W*0.50, cy = H*0.58;
+      const scale = Math.min(W,H)*0.30;
+
+      function arrow(x0,y0,x1,y1, strokeStyle="rgba(234,240,255,0.85)", lw=2){
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = lw;
+        ctx.beginPath();
+        ctx.moveTo(x0,y0);
+        ctx.lineTo(x1,y1);
+        ctx.stroke();
+        // head
+        const dx = x1-x0, dy = y1-y0;
+        const L = Math.hypot(dx,dy) || 1;
+        const ux = dx/L, uy = dy/L;
+        const ah = 10, aw = 6;
+        ctx.beginPath();
+        ctx.moveTo(x1,y1);
+        ctx.lineTo(x1 - ah*ux + aw*uy, y1 - ah*uy - aw*ux);
+        ctx.lineTo(x1 - ah*ux - aw*uy, y1 - ah*uy + aw*ux);
+        ctx.closePath();
+        ctx.fillStyle = strokeStyle;
+        ctx.fill();
+      }
+
+      // axes: z to the right, y up
+      arrow(cx - scale*1.05, cy, cx + scale*1.10, cy, "rgba(122,167,255,0.90)", 2);
+      arrow(cx, cy + scale*0.95, cx, cy - scale*1.10, "rgba(155,255,207,0.90)", 2);
+
+      // axis labels
+      ctx.fillStyle = "rgba(234,240,255,0.95)";
+      ctx.font = "700 13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("z", cx + scale*1.12, cy + 4);
+      ctx.fillText("y", cx - 8, cy - scale*1.14);
+
+      // x polarization (out of plane)
+      ctx.strokeStyle = "rgba(255,211,138,0.95)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx - scale*0.88, cy + scale*0.55, 10, 0, TAU);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx - scale*0.88, cy + scale*0.55);
+      ctx.lineTo(cx - scale*0.88, cy + scale*0.55);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,211,138,0.95)";
+      ctx.beginPath();
+      ctx.arc(cx - scale*0.88, cy + scale*0.55, 3, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = "rgba(234,240,255,0.9)";
+      ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("E ‖ x̂ (polarization)", cx - scale*0.83, cy + scale*0.55 + 4);
+
+      // draw standing wave envelope along y at a reference z (phase depends on z)
+      // We show amplitude vs y as a wavy line, and traveling phase annotation along z.
+      const beta = state.beta; // rad/um in our visualization units
+      const z = state.z;       // um
+      const phi = -beta*z;     // phase shift of exp(-j beta z)
+
+      // Envelope line: x_offset vs y
+      const yMin = -2.2*state.lambda0;
+      const yMax = +2.2*state.lambda0;
+      const n = 240;
+
+      const xBase = cx + scale*0.10; // line near center
+      const amp = scale*0.22;
+
+      // envelope background strip
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(xBase, cy + (yMin/yMax)*0); // dummy
+      // draw a vertical faint guide
+      ctx.beginPath();
+      ctx.moveTo(xBase, cy - scale*1.02);
+      ctx.lineTo(xBase, cy + scale*0.92);
+      ctx.stroke();
+
+      // standing wave curve (real part at t=0 -> cos(beta z) factor), but show amplitude as sin(beta y)
+      const cosbz = Math.cos(beta*z);
+      ctx.strokeStyle = "rgba(155,255,207,0.95)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i=0;i<n;i++){
+        const y = yMin + (yMax-yMin)*i/(n-1);
+        const yy = cy - (y/(yMax-yMin))*(scale*1.9); // map
+        const exNorm = Math.sin(beta*y) * cosbz; // instantaneous sample t=0
+        const xx = xBase + amp*exNorm;
+        if (i===0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+      }
+      ctx.stroke();
+
+      // annotate nodes/antinodes
+      ctx.fillStyle = "rgba(185,198,255,0.85)";
+      ctx.font = "600 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+      ctx.fillText("standing in y: sin(βy)", cx - scale*0.25, cy - scale*1.28);
+
+      // travel arrow along z
+      arrow(cx - scale*0.10, cy + scale*0.95, cx + scale*0.85, cy + scale*0.95, "rgba(122,167,255,0.90)", 2);
+      ctx.fillStyle = "rgba(234,240,255,0.92)";
+      ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("traveling phase: e^{-jβz}", cx + scale*0.05, cy + scale*0.95 - 10);
+
+      // show the two k directions (±y, +z) at 45°
+      const kLen = scale*0.55;
+      arrow(cx, cy, cx + kLen/Math.sqrt(2), cy - kLen/Math.sqrt(2), "rgba(122,167,255,0.95)", 2); // +y? note y up, so - is +y
+      arrow(cx, cy, cx + kLen/Math.sqrt(2), cy + kLen/Math.sqrt(2), "rgba(155,255,207,0.95)", 2); // -y direction
+      ctx.fillStyle = "rgba(234,240,255,0.9)";
+      ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("k̂₂ ∝ (+y,+z)", cx + kLen/Math.sqrt(2) + 6, cy - kLen/Math.sqrt(2) + 2);
+      ctx.fillText("k̂₁ ∝ (−y,+z)", cx + kLen/Math.sqrt(2) + 6, cy + kLen/Math.sqrt(2) + 2);
+
+      // small readout box
+      const boxW = 260, boxH = 74;
+      const bx = 14, by = 14;
+      ctx.fillStyle = "rgba(0,0,0,0.25)";
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(bx,by,boxW,boxH,14);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(234,240,255,0.94)";
+      ctx.font = "700 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+      ctx.fillText(`λ₀ = ${state.lambda0.toFixed(2)} µm`, bx+12, by+24);
+      ctx.fillText(`β = ${(state.beta).toFixed(3)} rad/µm`, bx+12, by+44);
+      ctx.fillText(`phase (−βz) = ${(phi).toFixed(2)} rad`, bx+12, by+64);
+    }
+
+    // Add roundRect support for older canvases
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r){
+        const rr = Math.min(r, w/2, h/2);
+        this.beginPath();
+        this.moveTo(x+rr, y);
+        this.arcTo(x+w, y, x+w, y+h, rr);
+        this.arcTo(x+w, y+h, x, y+h, rr);
+        this.arcTo(x, y+h, x, y, rr);
+        this.arcTo(x, y, x+w, y, rr);
+        this.closePath();
+        return this;
+      };
+    }
+
+    // ---------- State ----------
+    const state = {
+      lambda0: 1.55,   // um (example)
+      z: 0.0,          // um
+      E0: 1.0,         // V/m
+      beta: 0,         // rad/um (computed)
+      k0: 0,           // rad/um
+      // constants
+      mu0: 4e-7*Math.PI,      // H/m
+      eps0: 8.854187817e-12,  // F/m
+    };
+
+    function recompute(){
+      // Convert k0 = 2π/λ0 where λ0 in um => k0 in rad/um.
+      state.k0 = TAU / state.lambda0;
+      state.beta = state.k0 / Math.sqrt(2);
+    }
+
+    // ---------- Data generation ----------
+    function buildProfiles(){
+      // Use y in um; show a few wavelengths
+      const ySpan = 4.0 * state.lambda0;
+      const yMin = -0.5*ySpan;
+      const yMax = +0.5*ySpan;
+      const n = 600;
+
+      // For plot scaling we use:
+      // |E| = |E0 sin(beta y)| (phasor magnitude, independent of z)
+      // <Sz> = (1/2)(beta E0^2/(omega mu0)) sin^2(beta y)
+      // In plots we can show normalized <Sz> (proportional to sin^2) and/or absolute with an assumed frequency.
+      // We'll show:
+      //   series1: |E|/E0
+      //   series2: normalized <Sz>/Smax = sin^2(beta y)
+      const E = [];
+      const S = [];
+      for (let i=0;i<n;i++){
+        const y = yMin + (yMax-yMin)*i/(n-1);
+        const eNorm = Math.abs(Math.sin(state.beta*y));
+        const sNorm = Math.pow(Math.sin(state.beta*y),2);
+        E.push({x:y, y:eNorm});
+        S.push({x:y, y:sNorm});
+      }
+      return {yMin,yMax,E,S};
+    }
+
+    function buildZScan(){
+      // Secondary plot: instantaneous Ex(z,t=0) at fixed y = lambda0/4 (example), over z range
+      const y0 = state.lambda0/4;
+      const zMin = 0;
+      const zMax = 10;
+      const n = 600;
+
+      // Instantaneous: Re{ E0 sin(beta y0) e^{-j beta z} } at t=0 => E0 sin(beta y0) cos(beta z)
+      // We'll show normalized by E0.
+      const A = Math.sin(state.beta*y0);
+      const data = [];
+      for (let i=0;i<n;i++){
+        const z = zMin + (zMax-zMin)*i/(n-1);
+        data.push({x:z, y: A*Math.cos(state.beta*z)});
+      }
+      return {zMin,zMax, y0, data, A};
+    }
+
+    // ---------- Rendering ----------
+    const canv = {
+      diagram: document.getElementById("canvasDiagram"),
+      plot1: document.getElementById("canvasPlot1"),
+      plot2: document.getElementById("canvasPlot2"),
+    };
+
+    function renderAll(){
+      recompute();
+
+      // Diagram
+      {
+        const {ctx, w, h} = setupHiDPI(canv.diagram);
+        drawDiagram(ctx, w, h, state);
+      }
+
+      // Main plot
+      {
+        const prof = buildProfiles();
+        const {ctx, w, h} = setupHiDPI(canv.plot1);
+        drawPlot(ctx, w, h, {
+          title: "Transverse profiles at any z (phasor magnitude / normalized power)",
+          xLabel: "y (µm)",
+          yLabel: "Normalized amplitude (unitless)",
+          xMin: prof.yMin,
+          xMax: prof.yMax,
+          yMin: 0,
+          yMax: 1.05,
+          series: [
+            {name: "|E(y)| / E0", data: prof.E},
+            {name: "⟨Sz(y)⟩ / ⟨Sz⟩max = sin²(βy)", data: prof.S},
+          ],
+          legend: true
+        });
+      }
+
+      // Secondary plot
+      {
+        const zscan = buildZScan();
+        const {ctx, w, h} = setupHiDPI(canv.plot2);
+
+        // Include the chosen z (slider) as a vertical marker:
+        // We'll draw plot then overlay marker.
+        drawPlot(ctx, w, h, {
+          title: `Instantaneous sample along z at y = λ₀/4 = ${zscan.y0.toFixed(3)} µm (t = 0)`,
+          xLabel: "z (µm)",
+          yLabel: "Ex(z)/E0 (unitless)",
+          xMin: zscan.zMin,
+          xMax: zscan.zMax,
+          yMin: -1.05,
+          yMax: 1.05,
+          series: [
+            {name: "Ex(z)/E0 = sin(βy0) cos(βz)", data: zscan.data}
+          ],
+          legend: true
+        });
+
+        // Marker at current z
+        const m = {l:52, r:18, t:38, b:42};
+        const px0 = m.l, py0 = m.t;
+        const px1 = w - m.r, py1 = h - m.b;
+        const xMin = zscan.zMin, xMax = zscan.zMax;
+
+        const zx = clamp(state.z, xMin, xMax);
+        const xPix = px0 + (zx - xMin) * (px1 - px0) / (xMax - xMin);
+
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,255,255,0.55)";
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        ctx.moveTo(xPix, py0);
+        ctx.lineTo(xPix, py1);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(234,240,255,0.92)";
+        ctx.font = "700 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+        ctx.fillText(`z = ${state.z.toFixed(2)} µm`, xPix + 8, py0 + 14);
+        ctx.restore();
+      }
+
+      // Update readouts
+      document.getElementById("lambdaVal").textContent = state.lambda0.toFixed(2);
+      document.getElementById("zVal").textContent = state.z.toFixed(2);
+      document.getElementById("e0Val").textContent = state.E0.toFixed(2);
+    }
+
+    // ---------- Controls ----------
+    const lambdaSlider = document.getElementById("lambdaSlider");
+    const zSlider = document.getElementById("zSlider");
+    const e0Slider = document.getElementById("e0Slider");
+
+    lambdaSlider.addEventListener("input", ()=>{
+      state.lambda0 = parseFloat(lambdaSlider.value);
+      // keep z range somewhat meaningful as lambda changes
+      // (zSlider remains 0..10 µm; that's fine)
+      renderAll();
+    });
+
+    zSlider.addEventListener("input", ()=>{
+      state.z = parseFloat(zSlider.value);
+      renderAll();
+    });
+
+    e0Slider.addEventListener("input", ()=>{
+      state.E0 = parseFloat(e0Slider.value);
+      // E0 scales do not change normalized plots; still update diagram/labels consistently
+      renderAll();
+    });
+
+    // ---------- Copy buttons ----------
+    async function copyText(txt){
+      try{
+        await navigator.clipboard.writeText(txt);
+        return true;
+      }catch(e){
+        // fallback
+        const ta = document.createElement("textarea");
+        ta.value = txt;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.style.top = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        let ok = false;
+        try{ ok = document.execCommand("copy"); }catch(_e){ ok=false; }
+        document.body.removeChild(ta);
+        return ok;
+      }
+    }
+
+    document.addEventListener("click", async (ev)=>{
+      const btn = ev.target.closest(".copybtn");
+      if (!btn) return;
+      const txt = btn.getAttribute("data-copy") || "";
+      const ok = await copyText(txt);
+      const old = btn.textContent;
+      btn.textContent = ok ? "Copied!" : "Copy failed";
+      setTimeout(()=> btn.textContent = old, 900);
+    });
+
+    // ---------- Smooth scrolling for TOC ----------
+    document.querySelectorAll('#toc a').forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const id = a.getAttribute('href').slice(1);
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+
+    // ---------- Responsive re-render ----------
+    const ro = new ResizeObserver(()=> renderAll());
+    ro.observe(canv.diagram);
+    ro.observe(canv.plot1);
+    ro.observe(canv.plot2);
+
+    // initial
+    renderAll();
+  </script>
+</body>
+</html>

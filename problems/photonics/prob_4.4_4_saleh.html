@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Optical Correlation with a Spatial Filter (4f Correlator)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#111a33;
+      --card:#0f1730;
+      --text:#e9eefc;
+      --muted:#b9c3e6;
+      --line:rgba(255,255,255,.12);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 20% 10%, rgba(125,211,252,.12), transparent 60%),
+                  radial-gradient(1200px 700px at 80% 20%, rgba(167,139,250,.10), transparent 60%),
+                  radial-gradient(900px 600px at 50% 90%, rgba(52,211,153,.08), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    header{
+      padding:28px 18px 16px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+    }
+    .wrap{max-width:1160px; margin:0 auto;}
+    h1{
+      margin:0 0 6px;
+      font-size: clamp(1.45rem, 2.2vw, 2.1rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      max-width: 75ch;
+    }
+
+    main{
+      padding: 18px 18px 70px;
+    }
+
+    /* Layout */
+    .grid{
+      display:grid;
+      grid-template-columns: 290px 1fr;
+      gap: 16px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns: 1fr;}
+    }
+
+    /* Sticky TOC */
+    nav.toc{
+      position: sticky;
+      top: 12px;
+      padding: 14px;
+      background: rgba(17,26,51,.72);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    nav.toc h2{
+      margin: 0 0 10px;
+      font-size: .95rem;
+      color: var(--muted);
+      letter-spacing:.3px;
+    }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      margin: 6px 0;
+      text-decoration:none;
+      color: var(--text);
+      border-radius: 12px;
+      border:1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size: .95rem;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,.08);
+      border-color: rgba(125,211,252,.20);
+      transform: translateY(-1px);
+    }
+    .toc .mini{
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top:1px dashed var(--line);
+      color: var(--muted);
+      font-size: .86rem;
+    }
+
+    section{
+      scroll-margin-top: 18px;
+    }
+
+    .card{
+      background: rgba(15,23,48,.78);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 14px 16px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.045), transparent);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .card .hd h3{
+      margin:0;
+      font-size: 1.03rem;
+      letter-spacing:.2px;
+    }
+    .card .bd{ padding: 14px 16px; }
+    .muted{ color: var(--muted); }
+    .pill{
+      font-size: .78rem;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      color: var(--muted);
+      background: rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+
+    /* Callouts */
+    .callout{
+      border:1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      background: rgba(125,211,252,.06);
+      border-radius: 16px;
+      padding: 12px 12px 12px 14px;
+      margin: 12px 0;
+    }
+    .callout.warn{ border-left-color: var(--warn); background: rgba(251,191,36,.07); }
+    .callout.ok{ border-left-color: var(--ok); background: rgba(52,211,153,.07); }
+    .callout.bad{ border-left-color: var(--bad); background: rgba(251,113,133,.07); }
+
+    /* Equation blocks with copy button */
+    .eq{
+      position:relative;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      background: rgba(0,0,0,.22);
+      padding: 12px 12px 12px 12px;
+      margin: 12px 0;
+      overflow:auto;
+    }
+    .eq pre{
+      margin:0;
+      font-family: var(--mono);
+      font-size: .95rem;
+      color: #f2f6ff;
+      white-space: pre;
+    }
+    .copy-btn{
+      position:absolute;
+      top:10px; right:10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 7px 10px;
+      font-size: .78rem;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .copy-btn:hover{ transform: translateY(-1px); border-color: rgba(125,211,252,.35); background: rgba(125,211,252,.10); }
+    .copy-btn:active{ transform: translateY(0px); }
+    .copy-note{
+      font-size:.82rem; color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* Canvas area */
+    .viz-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 980px){
+      .viz-grid{ grid-template-columns: 1fr; }
+    }
+    figure{
+      margin:0;
+      padding: 12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.16);
+      border-radius: 16px;
+    }
+    figure figcaption{
+      margin-top:10px;
+      color: var(--muted);
+      font-size:.88rem;
+    }
+    canvas{
+      width: 100%;
+      height: 320px;
+      display:block;
+      border-radius: 12px;
+      background: rgba(5,8,18,.55);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 12px 16px;
+      align-items:center;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top:1px dashed var(--line);
+    }
+    .control{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      min-width: 260px;
+    }
+    .control label{
+      font-size:.92rem;
+      color: var(--muted);
+      min-width: 170px;
+    }
+    input[type="range"]{
+      width: 240px;
+      accent-color: var(--accent);
+    }
+    .readout{
+      font-family: var(--mono);
+      font-size: .9rem;
+      color: #eaf2ff;
+      opacity: .95;
+      min-width: 78px;
+      text-align:right;
+    }
+
+    /* Lists */
+    ul{ margin: 8px 0 8px 18px; }
+    li{ margin: 6px 0; }
+    .two-col{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 720px){
+      .two-col{ grid-template-columns: 1fr; }
+    }
+
+    .final{
+      border: 1px solid rgba(52,211,153,.35);
+      background: rgba(52,211,153,.08);
+      border-radius: 18px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+    .final h4{ margin: 0 0 8px; font-size: 1.02rem; }
+    .final .kicker{ color: var(--muted); margin: 0 0 10px; }
+
+    footer{
+      padding: 16px 18px 26px;
+      border-top:1px solid var(--line);
+      color: var(--muted);
+    }
+
+    /* Print friendly */
+    @media print{
+      body{ background:white; color:black; }
+      header, footer, nav.toc, .controls, .copy-btn{ display:none !important; }
+      .card, figure{ box-shadow:none; background:white; border:1px solid #ccc; }
+      canvas{ border:1px solid #ccc; }
+      .muted{ color:#333; }
+      .eq{ background:#fafafa; }
+      .final{ border-color:#2d7; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <h1>Optical Correlation: Implementing Correlation with a Spatial Filter (4f System)</h1>
+    <p class="subtitle">
+      We show how a Fourier-plane mask in a 4f optical processor performs the mathematical correlation between two
+      images <span class="muted">(real-valued functions)</span> and when the required complex transmittances can be purely real.
+    </p>
+  </div>
+</header>
+
+<main>
+  <div class="wrap grid">
+
+    <nav class="toc" aria-label="Table of contents">
+      <h2>Table of Contents</h2>
+      <a href="#quick" data-scroll>Quick Summary</a>
+      <a href="#part1" data-scroll>PART 1 — Problem Analysis</a>
+      <a href="#part2" data-scroll>PART 2 — Strategy &amp; Tips</a>
+      <a href="#part3" data-scroll>PART 3 — Full Solution</a>
+      <a href="#viz" data-scroll>Interactive Visualizations</a>
+      <div class="mini">
+        Tip: use the slider to see when the Fourier-plane filter must be complex (phase) vs. purely real (amplitude-only).
+      </div>
+    </nav>
+
+    <div class="content">
+
+      <!-- Quick Summary -->
+      <section id="quick" class="card">
+        <div class="hd">
+          <h3>Quick Summary</h3>
+          <span class="pill">core results</span>
+        </div>
+        <div class="bd">
+          <ul>
+            <li>Correlation (2D) is <span class="muted">shift-and-multiply, then integrate</span>:
+              \(g(\Delta x,\Delta y)=\iint f_1(x,y)\,f_2^*(x+\Delta x,y+\Delta y)\,dxdy\).</li>
+            <li>In the Fourier domain, correlation becomes a product:
+              \(G(f_x,f_y)=F_1(f_x,f_y)\,F_2^*(f_x,f_y)\).</li>
+            <li>A 4f system naturally forms \(F_1\) in the Fourier plane; placing a filter with
+              transmittance \(H=F_2^*\) yields correlation at the output plane.</li>
+            <li>If you can only fabricate <span class="muted">real amplitude masks</span>, you need \(H\) real:
+              that requires \(F_2\) to be real (zero Fourier phase), e.g. \(f_2\) real and even (centrosymmetric).</li>
+            <li>Generic images are not even-symmetric, so \(F_2\) is complex; practical correlators use
+              complex (amplitude+phase) filters, or encoding tricks (bias, phase-only filters, holograms).</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- PART 1 -->
+      <section id="part1" class="card" style="margin-top:16px;">
+        <div class="hd">
+          <h3>PART 1 — Problem Analysis (no solving yet)</h3>
+          <span class="pill">set-up</span>
+        </div>
+        <div class="bd">
+          <div class="callout">
+            <strong>Problem restatement (in my own words):</strong><br/>
+            We have two images represented by real-valued functions \(f_1(x,y)\) and \(f_2(x,y)\).
+            Show how an optical spatial filter (placed in the Fourier plane of a 4f system) can implement
+            the operation of <em>optical correlation</em> between them. Then determine when the masks/transparencies
+            used can have <em>real-valued</em> (purely amplitude) complex transmittance (i.e., zero phase).
+          </div>
+
+          <div class="two-col">
+            <div>
+              <h4 style="margin:6px 0 6px;">Given</h4>
+              <ul>
+                <li>Two images: \(f_1(x,y)\), \(f_2(x,y)\), stated to be real-valued.</li>
+                <li>We may use a spatial filter in the Fourier plane (i.e., a frequency-domain mask).</li>
+                <li>Standard Fourier-optics tools: lenses perform Fourier transforms (under paraxial/Fraunhofer conditions).</li>
+              </ul>
+            </div>
+            <div>
+              <h4 style="margin:6px 0 6px;">Unknowns / What we must show</h4>
+              <ul>
+                <li>How to design the optical system so the output field (or intensity) represents the correlation \(f_1 \star f_2\).</li>
+                <li>What spatial-filter transmittance \(H(f_x,f_y)\) is required.</li>
+                <li>Conditions under which the required complex transmittances are purely real (amplitude-only).</li>
+              </ul>
+            </div>
+          </div>
+
+          <h4 style="margin:10px 0 6px;">Relevant physical principles (and why they apply)</h4>
+          <ul>
+            <li><strong>Linear systems viewpoint:</strong> A coherent optical processor is (approximately) linear in complex field amplitude; correlation/convolution are linear integral operations.</li>
+            <li><strong>Fourier transform by a lens:</strong> In a 4f setup, the front focal plane field is Fourier-transformed to the back focal (Fourier) plane; this is exactly where “spatial frequencies” live.</li>
+            <li><strong>Multiplication in Fourier plane ↔ convolution/correlation in space:</strong> The Fourier domain converts integral shift operations into simple products, enabling correlation by a single mask.</li>
+          </ul>
+
+          <h4 style="margin:10px 0 6px;">Possible approaches (compare briefly)</h4>
+          <ul>
+            <li><strong>Approach A: Fourier-domain derivation (best here).</strong> Use the theorem:
+              correlation ↔ product with conjugate spectrum. Then map each step to the 4f optical system.</li>
+            <li><strong>Approach B: Impulse-response (system) derivation.</strong> Model the spatial filter as a transfer function \(H\) and derive output via inverse FT; more abstract but equivalent.</li>
+            <li><strong>Approach C: Holographic matched-filter viewpoint.</strong> Describe \(H\) as a recorded hologram encoding \(F_2^*\); very physical, but needs extra narrative about recording geometry.</li>
+          </ul>
+
+          <div class="callout ok">
+            <strong>Chosen approach:</strong> <em>Approach A</em> (Fourier-domain derivation), because the problem explicitly asks for a spatial filter implementation and correlation has a clean, standard Fourier relation.
+          </div>
+        </div>
+      </section>
+
+      <!-- PART 2 -->
+      <section id="part2" class="card" style="margin-top:16px;">
+        <div class="hd">
+          <h3>PART 2 — Strategy &amp; Tips (roadmap only)</h3>
+          <span class="pill">plan</span>
+        </div>
+        <div class="bd">
+          <ol style="margin:8px 0 8px 18px;">
+            <li><strong>Define the desired correlation</strong> \(g(\Delta x,\Delta y)\).<br/>
+              <span class="muted">Tool:</span> correlation integral definition.</li>
+            <li><strong>Take the Fourier transform</strong> of \(g\).<br/>
+              <span class="muted">Tool:</span> Fourier shift and conjugation properties.</li>
+            <li><strong>Show the key identity</strong> \(G = F_1 \, F_2^*\).<br/>
+              <span class="muted">Tool:</span> correlation theorem.</li>
+            <li><strong>Map to optics:</strong> first lens makes \(F_1\) in Fourier plane.<br/>
+              <span class="muted">Tool:</span> 4f Fourier-transform property.</li>
+            <li><strong>Choose spatial filter</strong> \(H = F_2^*\) (matched filter).<br/>
+              <span class="muted">Tool:</span> multiplication by mask transmittance.</li>
+            <li><strong>Second lens performs inverse FT</strong> to produce \(g(\Delta x,\Delta y)\) at output plane.<br/>
+              <span class="muted">Tool:</span> inverse Fourier transform by lens.</li>
+            <li><strong>Discuss realizability:</strong> when can \(H\) and transparencies be purely real (amplitude-only)?<br/>
+              <span class="muted">Tool:</span> conditions for real Fourier transforms (even symmetry / zero phase).</li>
+          </ol>
+
+          <div class="callout warn">
+            <strong>Common mistakes</strong>
+            <ul>
+              <li>Mixing up convolution vs. correlation (the conjugate is the giveaway).</li>
+              <li>Forgetting that “real-valued image” does <em>not</em> imply “real Fourier transform.” Generic real signals still have nonzero Fourier phase.</li>
+              <li>Assuming amplitude-only masks always suffice; most matched filters require complex (phase+amplitude) transmittance.</li>
+            </ul>
+          </div>
+
+          <div class="callout">
+            <strong>Quick tips</strong>
+            <ul>
+              <li>Even symmetry in space \(\Rightarrow\) real spectrum (for real functions).</li>
+              <li>If you can only fabricate real masks, consider <span class="muted">phase-only encoding</span> or holographic recording of complex filters.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- PART 3 -->
+      <section id="part3" class="card" style="margin-top:16px;">
+        <div class="hd">
+          <h3>PART 3 — Full Solution</h3>
+          <span class="pill">derivation</span>
+        </div>
+        <div class="bd">
+          <h4 style="margin:6px 0 6px;">Physical intuition</h4>
+          <p class="muted" style="margin-top:0;">
+            A 4f optical processor “opens up” the frequency domain in a real physical plane (the Fourier plane).
+            If we can multiply the spectrum of the first image by the conjugate spectrum of the second image,
+            then the inverse Fourier transform automatically produces the correlation—so the “hard” 2D sliding
+            comparison becomes one mask multiplication plus a lens.
+          </p>
+
+          <h4 style="margin:10px 0 6px;">1) Define correlation (what we want)</h4>
+          <p>
+            The (cross-)correlation of two 2D functions is defined as
+          </p>
+          <div class="eq" data-copy="eq1">
+            <button class="copy-btn" data-copy-btn="eq1">Copy</button>
+            <pre id="eq1">g(Δx,Δy) = ∬ f1(x,y) · f2*(x+Δx, y+Δy) dx dy</pre>
+            <div class="copy-note muted">Here * means complex conjugate. In this problem f1 and f2 are real, so f2* = f2, but we keep * to stay general and to match the optics.</div>
+          </div>
+
+          <h4 style="margin:10px 0 6px;">2) Fourier transform of the correlation (correlation theorem)</h4>
+          <p>
+            Let the 2D Fourier transform pair be
+            <span class="muted">(using spatial frequencies \(f_x,f_y\) in cycles per length)</span>:
+          </p>
+          <div class="eq" data-copy="eq2">
+            <button class="copy-btn" data-copy-btn="eq2">Copy</button>
+            <pre id="eq2">F(fx,fy) = ∬ f(x,y) · e^{-i 2π (fx x + fy y)} dx dy
+f(x,y) = ∬ F(fx,fy) · e^{+i 2π (fx x + fy y)} dfx dfy</pre>
+          </div>
+
+          <p>
+            A standard result (proved by substituting the definitions and using the shift property) is:
+          </p>
+          <div class="eq" data-copy="eq3">
+            <button class="copy-btn" data-copy-btn="eq3">Copy</button>
+            <pre id="eq3">G(fx,fy) = F1(fx,fy) · F2*(fx,fy)</pre>
+          </div>
+          <p class="muted">
+            This is the key identity: correlation in space ↔ product of one spectrum and the conjugate of the other in frequency.
+          </p>
+
+          <h4 style="margin:10px 0 6px;">3) Map each mathematical step onto a 4f optical system</h4>
+          <p>
+            Consider a coherent 4f processor (two lenses of focal length \(f\), separated by \(2f\)).
+          </p>
+          <ul>
+            <li><strong>Input plane:</strong> display the first image as a transparency with complex amplitude transmittance
+              \(t_1(x,y)\propto f_1(x,y)\) (often with a bias so transmittance stays nonnegative in practice).</li>
+            <li><strong>Fourier plane (between lenses):</strong> the field is proportional to the Fourier transform \(F_1(f_x,f_y)\).</li>
+            <li><strong>Spatial filter:</strong> place a mask with complex transmittance \(H(f_x,f_y)\) that multiplies the spectrum.</li>
+            <li><strong>Output plane:</strong> the second lens performs an inverse FT, yielding a field proportional to the inverse FT of \(F_1H\).</li>
+          </ul>
+
+          <p>
+            Therefore, if we choose
+          </p>
+          <div class="eq" data-copy="eq4">
+            <button class="copy-btn" data-copy-btn="eq4">Copy</button>
+            <pre id="eq4">H(fx,fy) = F2*(fx,fy)</pre>
+          </div>
+          <p>
+            then the spectrum after filtering is \(F_1F_2^*\), and the output field becomes
+          </p>
+          <div class="eq" data-copy="eq5">
+            <button class="copy-btn" data-copy-btn="eq5">Copy</button>
+            <pre id="eq5">u_out(Δx,Δy) ∝ ∬ F1(fx,fy) F2*(fx,fy) e^{+i2π(fx Δx + fy Δy)} dfx dfy
+          = g(Δx,Δy)</pre>
+          </div>
+
+          <div class="callout ok">
+            <strong>Interpretation:</strong> The output plane displays the correlation surface \(g(\Delta x,\Delta y)\).
+            Bright peaks occur where the shifted \(f_2\) best matches \(f_1\) (pattern recognition / matched filtering).
+          </div>
+
+          <h4 style="margin:10px 0 6px;">4) When can the “complex amplitude transmittances” be real-valued?</h4>
+          <p>
+            A “complex amplitude transmittance” is real-valued if it has <strong>zero phase</strong> everywhere:
+            it is a pure amplitude (possibly with sign). In practice, amplitude masks typically also require
+            <strong>nonnegative</strong> transmittance, but mathematically “real-valued” means “no imaginary part.”
+          </p>
+
+          <div class="two-col">
+            <div class="callout">
+              <strong>Input transparency for \(f_1\):</strong><br/>
+              If we directly set \(t_1(x,y)\propto f_1(x,y)\), then \(t_1\) is real whenever \(f_1\) is real.
+              <span class="muted">However</span>, if the transparency can only attenuate (no sign), you often encode
+              a real bipolar function using a bias: \(t_1 = t_0 + \alpha f_1\) with \(t_0\) large enough to keep \(t_1\ge 0\).
+            </div>
+            <div class="callout">
+              <strong>Fourier-plane filter for correlation:</strong><br/>
+              We require \(H(f_x,f_y)=F_2^*(f_x,f_y)\). Even if \(f_2\) is real, its spectrum typically has phase, so \(F_2\) is complex.
+              Thus \(H\) is generally complex (needs amplitude + phase modulation).
+            </div>
+          </div>
+
+          <p>
+            So the core question becomes: <strong>When is \(F_2(f_x,f_y)\) real?</strong>
+            A sufficient (and standard) condition is:
+          </p>
+
+          <div class="eq" data-copy="eq6">
+            <button class="copy-btn" data-copy-btn="eq6">Copy</button>
+            <pre id="eq6">If f2(x,y) is real and even (centrosymmetric), i.e.
+f2(x,y) = f2(-x,-y)  (or separately even in x and y),
+then F2(fx,fy) is real (and even), hence H = F2* = F2 is real.</pre>
+          </div>
+
+          <p class="muted">
+            Why? For a real function, the Fourier transform has Hermitian symmetry. If the function is also even, the sine (odd) part vanishes,
+            leaving a purely cosine transform → purely real spectrum (up to possible sign flips).
+          </p>
+
+          <div class="final">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+              <div>
+                <h4>Final Result (boxed)</h4>
+                <p class="kicker">How to do optical correlation + when masks can be real-only.</p>
+              </div>
+              <button class="copy-btn" data-copy-btn="finalAns" style="position:static;">Copy final answer</button>
+            </div>
+            <div class="eq" style="margin:0;" data-copy="finalAns">
+              <pre id="finalAns">Use a 4f optical processor:
+1) Put image f1(x,y) as the input transparency (field ∝ f1).
+2) In the Fourier plane the field is ∝ F1(fx,fy).
+3) Place a spatial filter with transmittance H(fx,fy) = F2*(fx,fy).
+4) The output plane field is u_out(Δx,Δy) ∝ ℱ^{-1}{F1·F2*} = g(Δx,Δy),
+   where g(Δx,Δy)= ∬ f1(x,y) f2*(x+Δx,y+Δy) dxdy is the correlation.
+
+The required masks/transparencies are purely real-valued (amplitude-only) when their needed phase is zero:
+- Input mask: real if f1 is real (often with bias to keep transmittance ≥ 0).
+- Correlation filter: real if F2(fx,fy) is real, e.g. if f2(x,y) is real and even (centrosymmetric), so F2 has zero Fourier phase.
+In general images are not even → F2 is complex → H must be complex (amplitude+phase), typically implemented via holographic/phase encoding.</pre>
+            </div>
+          </div>
+
+          <h4 style="margin:12px 0 6px;">Sanity checks</h4>
+          <ul>
+            <li><strong>Units:</strong> The correlation integral has units of \(f_1\cdot f_2 \cdot (\text{area})\). The optical system introduces scale factors (lens focal length, wavelength), but the <em>functional dependence</em> matches correlation.</li>
+            <li><strong>Limiting case:</strong> If \(f_2 = f_1\), then \(H = F_1^*\) and the output is an autocorrelation with a strong peak at \((0,0)\).</li>
+            <li><strong>Physical interpretation:</strong> A bright correlation peak indicates strong similarity between \(f_1\) and a shifted copy of \(f_2\). Optical processing does this “in parallel” over all shifts.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Visualizations -->
+      <section id="viz" class="card" style="margin-top:16px;">
+        <div class="hd">
+          <h3>Interactive Visualizations</h3>
+          <span class="pill">canvas + live update</span>
+        </div>
+        <div class="bd">
+          <p class="muted" style="margin-top:0;">
+            Demo model (example values): we use a simple analytic case so everything updates instantly.
+            Let the “template” image be a Gaussian. Let the second image be a Gaussian plus an <em>odd</em> component.
+            The slider controls how non-even \(f_2\) is; as it becomes non-even, its Fourier transform gains phase,
+            so the matched filter \(H=F_2^*\) becomes genuinely complex.
+          </p>
+
+          <div class="viz-grid">
+            <figure>
+              <canvas id="cSetup" aria-label="4f correlator diagram"></canvas>
+              <figcaption>
+                <strong>Diagram:</strong> 4f correlator. Input transparency encodes \(f_1\). Fourier-plane mask encodes \(H=F_2^*\).
+                Output plane shows correlation \(g(\Delta x,\Delta y)\).
+              </figcaption>
+            </figure>
+
+            <figure>
+              <canvas id="cCorr" aria-label="Correlation map"></canvas>
+              <figcaption>
+                <strong>Main plot:</strong> Correlation intensity map \(I(\Delta x,\Delta y)=|g(\Delta x,\Delta y)|^2\) for the demo images.
+                Axes are displacement (example units: mm).
+              </figcaption>
+            </figure>
+
+            <figure style="grid-column:1 / -1;">
+              <canvas id="cSpec" aria-label="Spectrum magnitude and phase"></canvas>
+              <figcaption>
+                <strong>Secondary plot:</strong> 1D slice of \(F_2\) vs spatial frequency \(f_x\):
+                magnitude and phase. When the phase is ~0 (or π), \(H=F_2^*\) can be realized as a real-valued amplitude mask.
+              </figcaption>
+
+              <div class="controls" role="group" aria-label="Interactive controls">
+                <div class="control">
+                  <label for="sEta">Odd-symmetry level in <span class="muted">f₂</span> (η)</label>
+                  <input id="sEta" type="range" min="0" max="1" step="0.01" value="0.00"/>
+                  <div class="readout" id="rEta">0.00</div>
+                </div>
+                <div class="control">
+                  <label for="sSigma">Gaussian width <span class="muted">σ</span> (mm)</label>
+                  <input id="sSigma" type="range" min="0.4" max="2.5" step="0.01" value="1.20"/>
+                  <div class="readout" id="rSigma">1.20</div>
+                </div>
+                <div class="control">
+                  <label class="muted">Mask type suggestion</label>
+                  <div class="readout" id="maskHint" style="min-width: 260px; text-align:left;">Amplitude-only OK (≈ real)</div>
+                </div>
+              </div>
+            </figure>
+          </div>
+
+          <div class="callout warn">
+            <strong>What to watch:</strong> As η increases from 0, the phase of \(F_2\) becomes nonzero for \(f_x\neq 0\),
+            meaning the ideal matched filter needs phase modulation (complex transmittance). This is the practical reason
+            optical correlators often use holographic or phase-only filter implementations.
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="muted">
+      Built with vanilla HTML/CSS/JS. Figures are analytic demo plots (example values) to illustrate the correlation theorem and realizability of real vs complex masks.
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ------------------------------
+   Smooth scrolling for TOC links
+--------------------------------*/
+document.querySelectorAll('[data-scroll]').forEach(a=>{
+  a.addEventListener('click', (e)=>{
+    e.preventDefault();
+    const id = a.getAttribute('href');
+    const el = document.querySelector(id);
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+});
+
+/* ------------------------------
+   Copy buttons
+--------------------------------*/
+function copyText(txt){
+  navigator.clipboard.writeText(txt).then(()=>{}, ()=>{});
+}
+document.querySelectorAll('[data-copy-btn]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const targetId = btn.getAttribute('data-copy-btn');
+    const pre = document.getElementById(targetId);
+    if(!pre) return;
+    copyText(pre.textContent.replace(/\u00A0/g,' '));
+    const old = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(()=>btn.textContent = old, 900);
+  });
+});
+
+/* ------------------------------
+   Canvas utilities
+--------------------------------*/
+function setupHiDPI(canvas){
+  const rect = canvas.getBoundingClientRect();
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const w = Math.max(2, Math.floor(rect.width * dpr));
+  const h = Math.max(2, Math.floor(rect.height * dpr));
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w;
+    canvas.height = h;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(dpr, dpr);
+  return {ctx, w: rect.width, h: rect.height, dpr};
+}
+
+function clear(ctx, w, h){
+  ctx.clearRect(0,0,w,h);
+}
+
+function drawPanelTitle(ctx, w, title){
+  ctx.save();
+  ctx.globalAlpha = 0.95;
+  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(title, 12, 20);
+  ctx.restore();
+}
+
+function drawAxes(ctx, x0, y0, x1, y1, opts){
+  // opts: {xlabel,ylabel,xmin,xmax,ymin,ymax, xticks, yticks}
+  const W = x1-x0, H = y1-y0;
+  // background
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.fillRect(x0,y0,W,H);
+
+  // gridlines
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
+  ctx.lineWidth = 1;
+  const xt = opts.xticks || 5;
+  const yt = opts.yticks || 5;
+  for(let i=0;i<=xt;i++){
+    const x = x0 + (i/xt)*W;
+    ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x,y1); ctx.stroke();
+  }
+  for(let j=0;j<=yt;j++){
+    const y = y0 + (j/yt)*H;
+    ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y); ctx.stroke();
+  }
+
+  // border
+  ctx.strokeStyle = "rgba(255,255,255,0.22)";
+  ctx.strokeRect(x0,y0,W,H);
+
+  // ticks + labels
+  ctx.fillStyle = "rgba(233,238,252,0.88)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+
+  // x tick labels
+  for(let i=0;i<=xt;i++){
+    const t = i/xt;
+    const val = opts.xmin + t*(opts.xmax - opts.xmin);
+    const x = x0 + t*W;
+    ctx.beginPath();
+    ctx.strokeStyle = "rgba(255,255,255,0.18)";
+    ctx.moveTo(x,y1); ctx.lineTo(x,y1+6); ctx.stroke();
+    const s = (Math.abs(val) < 1e-9) ? "0" : val.toFixed(2);
+    ctx.fillText(s, x-12, y1+18);
+  }
+  // y tick labels
+  for(let j=0;j<=yt;j++){
+    const t = j/yt;
+    const val = opts.ymax - t*(opts.ymax - opts.ymin);
+    const y = y0 + t*H;
+    ctx.beginPath();
+    ctx.strokeStyle = "rgba(255,255,255,0.18)";
+    ctx.moveTo(x0-6,y); ctx.lineTo(x0,y); ctx.stroke();
+    const s = (Math.abs(val) < 1e-9) ? "0" : val.toFixed(2);
+    ctx.fillText(s, x0-52, y+4);
+  }
+
+  // axis labels
+  ctx.fillStyle = "rgba(185,195,230,0.95)";
+  ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(opts.xlabel || "", x0 + W*0.5 - 40, y1 + 36);
+
+  ctx.save();
+  ctx.translate(x0 - 42, y0 + H*0.5 + 40);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(opts.ylabel || "", 0, 0);
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function mapToPlot(x, xmin, xmax, x0, x1){
+  return x0 + (x - xmin) * (x1-x0) / (xmax - xmin);
+}
+function mapToPlotY(y, ymin, ymax, y0, y1){
+  return y1 - (y - ymin) * (y1-y0) / (ymax - ymin);
+}
+
+/* ------------------------------
+   Demo model (analytic)
+--------------------------------
+We define a separable 2D case so correlation is fast:
+
+Let g(x) = exp(-x^2/(2σ^2)).
+Let f1(x,y) = g(x) g(y).
+Let f2(x,y) = [g(x) + η (x/σ) g(x)] g(y).   (real, but not even when η≠0)
+
+Then correlation g(Δx,Δy) = ∬ f1(x,y) f2(x+Δx, y+Δy) dx dy
+= CorrX(Δx) * CorrY(Δy),
+
+CorrY(Δy) = ∫ g(y) g(y+Δy) dy = A exp(-Δy^2/(4σ^2))
+CorrX(Δx) = ∫ g(x)[g(x+Δx) + η ((x+Δx)/σ) g(x+Δx)] dx
+          = A exp(-Δx^2/(4σ^2)) [1 + η (Δx/(2σ))]
+
+where A = sqrt(pi) σ.
+So intensity I = |g|^2 is real and easy.
+
+Spectrum (1D) of [g(x) + η (x/σ) g(x)]:
+G(k) = σ sqrt(2π) exp(-σ^2 k^2/2), with k = 2π fx.
+FT{x g(x)} = i dG/dk = -i σ^2 k G/??? -> for g above gives:
+FT{(x/σ)g} = -i σ k G
+=> F2(k) = G(k) [1 - i η σ k]
+Phase φ(k) = -atan(η σ k).
+--------------------------------*/
+function A_of_sigma(sigma){ return Math.sqrt(Math.PI)*sigma; }
+
+function corrIntensity(dx, dy, sigma, eta){
+  const A = A_of_sigma(sigma);
+  const expo = Math.exp(-(dx*dx + dy*dy)/(4*sigma*sigma));
+  const gx = A * Math.exp(-(dx*dx)/(4*sigma*sigma)) * (1 + eta * (dx/(2*sigma)));
+  const gy = A * Math.exp(-(dy*dy)/(4*sigma*sigma));
+  const g = gx * gy; // real
+  return g*g; // intensity
+}
+
+function F2_mag_phase(fx, sigma, eta){
+  // k = 2π fx
+  const k = 2*Math.PI*fx;
+  const G = sigma*Math.sqrt(2*Math.PI)*Math.exp(-0.5*(sigma*sigma*k*k));
+  // complex factor: (1 - i η σ k)
+  const re = 1;
+  const im = -eta * sigma * k;
+  const magFactor = Math.hypot(re, im);
+  const phase = Math.atan2(im, re); // radians (negative when eta>0, fx>0)
+  return {mag: G*magFactor, phase: phase};
+}
+
+/* ------------------------------
+   Drawing: setup diagram
+--------------------------------*/
+function drawSetup(canvas, sigma, eta){
+  const {ctx,w,h} = setupHiDPI(canvas);
+  clear(ctx, w, h);
+
+  drawPanelTitle(ctx, w, "4f Optical Correlator (VanderLugt style)");
+
+  const margin = {l:18, r:18, t:34, b:18};
+  const x0 = margin.l, x1 = w - margin.r;
+  const yMid = (margin.t + (h-margin.b))*0.55;
+
+  // Optical axis
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.35)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x0, yMid);
+  ctx.lineTo(x1, yMid);
+  ctx.stroke();
+
+  // Elements positions
+  const X_in = x0 + 60;
+  const X_L1 = x0 + (x1-x0)*0.32;
+  const X_F  = x0 + (x1-x0)*0.50;
+  const X_L2 = x0 + (x1-x0)*0.68;
+  const X_out= x1 - 60;
+
+  // Draw planes (input/output)
+  function drawPlane(x, label){
+    ctx.strokeStyle = "rgba(125,211,252,0.65)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, yMid-70);
+    ctx.lineTo(x, yMid+70);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(233,238,252,0.92)";
+    ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillText(label, x-46, yMid-78);
+  }
+
+  function drawLens(x, label){
+    ctx.strokeStyle = "rgba(167,139,250,0.70)";
+    ctx.lineWidth = 2.5;
+    // simple lens shape
+    ctx.beginPath();
+    ctx.moveTo(x, yMid-75);
+    ctx.quadraticCurveTo(x+14, yMid, x, yMid+75);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, yMid-75);
+    ctx.quadraticCurveTo(x-14, yMid, x, yMid+75);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(185,195,230,0.95)";
+    ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillText(label, x-18, yMid+92);
+  }
+
+  function drawFilter(x, label, needsPhase){
+    ctx.strokeStyle = needsPhase ? "rgba(251,113,133,0.80)" : "rgba(52,211,153,0.75)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6,6]);
+    ctx.beginPath();
+    ctx.moveTo(x, yMid-70);
+    ctx.lineTo(x, yMid+70);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = needsPhase ? "rgba(251,113,133,0.92)" : "rgba(52,211,153,0.92)";
+    ctx.font = "700 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillText(label, x-56, yMid-78);
+
+    ctx.fillStyle = "rgba(185,195,230,0.95)";
+    ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    const t = needsPhase ? "complex (amp+phase)" : "≈ real (amplitude-only)";
+    ctx.fillText(t, x-62, yMid-60);
+  }
+
+  // Rays (stylized)
+  ctx.strokeStyle = "rgba(255,255,255,0.25)";
+  ctx.lineWidth = 1.5;
+  for(let k=-2;k<=2;k++){
+    const y = yMid + k*12;
+    ctx.beginPath();
+    ctx.moveTo(X_in, y);
+    ctx.lineTo(X_L1, yMid + (y - yMid)*0.3);
+    ctx.lineTo(X_F, yMid);
+    ctx.lineTo(X_L2, yMid + (y - yMid)*0.3);
+    ctx.lineTo(X_out, y);
+    ctx.stroke();
+  }
+
+  drawPlane(X_in, "Input: t1(x,y) ∝ f1");
+  drawLens(X_L1, "Lens 1");
+  const needsPhase = (eta > 0.05);
+  drawFilter(X_F, "Fourier-plane filter: H = F2*", needsPhase);
+  drawLens(X_L2, "Lens 2");
+  drawPlane(X_out, "Output: g(Δx,Δy)");
+
+  // annotate f distances
+  ctx.fillStyle = "rgba(185,195,230,0.95)";
+  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+  ctx.fillText("f", (X_in+X_L1)/2 - 4, yMid+18);
+  ctx.fillText("f", (X_L1+X_F)/2 - 4, yMid+18);
+  ctx.fillText("f", (X_F+X_L2)/2 - 4, yMid+18);
+  ctx.fillText("f", (X_L2+X_out)/2 - 4, yMid+18);
+
+  // eta/sigma quick note
+  ctx.fillStyle = "rgba(233,238,252,0.85)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText(`Demo params: σ = ${sigma.toFixed(2)} mm, η = ${eta.toFixed(2)}`, 12, h-14);
+
+  ctx.restore();
+}
+
+/* ------------------------------
+   Drawing: correlation map (heat)
+--------------------------------*/
+function drawCorrelation(canvas, sigma, eta){
+  const {ctx,w,h} = setupHiDPI(canvas);
+  clear(ctx, w, h);
+  drawPanelTitle(ctx, w, "Correlation Intensity Map  I(Δx,Δy)=|g|²  (example)");
+
+  // plot box
+  const pad = {l:66, r:18, t:38, b:52};
+  const x0 = pad.l, y0 = pad.t, x1 = w - pad.r, y1 = h - pad.b;
+
+  // domain (mm)
+  const L = 6.0; // +/- mm
+  drawAxes(ctx, x0,y0,x1,y1, {
+    xlabel: "Δx (mm)", ylabel:"Δy (mm)",
+    xmin:-L, xmax:L, ymin:-L, ymax:L,
+    xticks:6, yticks:6
+  });
+
+  // heatmap grid
+  const Nx = 120, Ny = 90;
+  // compute max for normalization
+  let Imax = 0;
+  for(let j=0;j<Ny;j++){
+    const dy = -L + (j/(Ny-1))*2*L;
+    for(let i=0;i<Nx;i++){
+      const dx = -L + (i/(Nx-1))*2*L;
+      const I = corrIntensity(dx, dy, sigma, eta);
+      if(I > Imax) Imax = I;
+    }
+  }
+  Imax = Math.max(Imax, 1e-12);
+
+  // draw pixels
+  const W = x1-x0, H = y1-y0;
+  const cellW = W/Nx, cellH = H/Ny;
+  for(let j=0;j<Ny;j++){
+    const dy = -L + (j/(Ny-1))*2*L;
+    for(let i=0;i<Nx;i++){
+      const dx = -L + (i/(Nx-1))*2*L;
+      const I = corrIntensity(dx, dy, sigma, eta);
+      // gamma for contrast
+      const v = Math.pow(I/Imax, 0.35);
+      const a = 0.90;
+      // grayscale, but slightly tint by eta to show change without specifying "style colors" too strongly:
+      // keep simple grayscale to be safe.
+      const g = Math.floor(255 * (0.06 + 0.92*v));
+      ctx.fillStyle = `rgba(${g},${g},${g},${a})`;
+      const px = x0 + i*cellW;
+      const py = y0 + j*cellH;
+      ctx.fillRect(px, py, Math.ceil(cellW+0.2), Math.ceil(cellH+0.2));
+    }
+  }
+
+  // overlay: zero lines
+  ctx.save();
+  ctx.strokeStyle = "rgba(125,211,252,0.55)";
+  ctx.lineWidth = 1.5;
+  const xZero = mapToPlot(0, -L, L, x0, x1);
+  const yZero = mapToPlotY(0, -L, L, y0, y1);
+  ctx.beginPath(); ctx.moveTo(xZero, y0); ctx.lineTo(xZero, y1); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x0, yZero); ctx.lineTo(x1, yZero); ctx.stroke();
+  ctx.restore();
+
+  // label peak and "skew"
+  ctx.save();
+  ctx.fillStyle = "rgba(233,238,252,0.92)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("Peak near (0,0)", xZero + 8, yZero - 10);
+
+  // show asymmetry direction if eta>0
+  if(eta > 0.05){
+    ctx.fillStyle = "rgba(251,191,36,0.92)";
+    ctx.fillText("η>0 adds odd component → correlation becomes asymmetric in Δx", x0+6, y0+16);
+  } else {
+    ctx.fillStyle = "rgba(52,211,153,0.92)";
+    ctx.fillText("η≈0 (even template) → symmetric correlation; filter can be ≈ real", x0+6, y0+16);
+  }
+  ctx.restore();
+}
+
+/* ------------------------------
+   Drawing: spectrum magnitude + phase
+--------------------------------*/
+function drawSpectrum(canvas, sigma, eta){
+  const {ctx,w,h} = setupHiDPI(canvas);
+  clear(ctx, w, h);
+  drawPanelTitle(ctx, w, "Template Spectrum F₂(fx): Magnitude and Phase (1D slice, example)");
+
+  const pad = {l:72, r:18, t:40, b:54};
+  const x0 = pad.l, y0 = pad.t, x1 = w - pad.r, y1 = h - pad.b;
+  const W = x1-x0, H = y1-y0;
+
+  // We'll split plot area into two stacked bands (still one canvas): top magnitude, bottom phase
+  const gap = 14;
+  const Htop = (H - gap) * 0.58;
+  const Hbot = (H - gap) - Htop;
+
+  const top = {x0, y0, x1, y1: y0+Htop};
+  const bot = {x0, y0: y0+Htop+gap, x1, y1};
+
+  // domain fx (cycles/mm)
+  const fmax = 1.2;
+  // magnitude range: compute max
+  let magMax = 0;
+  const N = 400;
+  const mags = new Array(N);
+  const phs  = new Array(N);
+  for(let i=0;i<N;i++){
+    const fx = -fmax + (i/(N-1))*2*fmax;
+    const mp = F2_mag_phase(fx, sigma, eta);
+    mags[i]=mp.mag;
+    phs[i]=mp.phase;
+    magMax = Math.max(magMax, mp.mag);
+  }
+  magMax = Math.max(magMax, 1e-12);
+
+  // Magnitude axes
+  drawAxes(ctx, top.x0, top.y0, top.x1, top.y1, {
+    xlabel: "fx (cycles/mm)", ylabel:"|F₂| (arb.)",
+    xmin:-fmax, xmax:fmax, ymin:0, ymax:1,
+    xticks:6, yticks:4
+  });
+  // Phase axes (-pi..pi)
+  drawAxes(ctx, bot.x0, bot.y0, bot.x1, bot.y1, {
+    xlabel: "fx (cycles/mm)", ylabel:"∠F₂ (rad)",
+    xmin:-fmax, xmax:fmax, ymin:-Math.PI, ymax:Math.PI,
+    xticks:6, yticks:4
+  });
+
+  // Plot magnitude
+  ctx.save();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(233,238,252,0.92)";
+  ctx.beginPath();
+  for(let i=0;i<N;i++){
+    const fx = -fmax + (i/(N-1))*2*fmax;
+    const x = mapToPlot(fx, -fmax, fmax, top.x0, top.x1);
+    const y = mapToPlotY(mags[i]/magMax, 0, 1, top.y0, top.y1);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // Legend magnitude
+  ctx.fillStyle = "rgba(185,195,230,0.95)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("Magnitude |F₂| (normalized)", top.x0+8, top.y0+16);
+
+  // Plot phase
+  ctx.strokeStyle = "rgba(125,211,252,0.90)";
+  ctx.beginPath();
+  for(let i=0;i<N;i++){
+    const fx = -fmax + (i/(N-1))*2*fmax;
+    const x = mapToPlot(fx, -fmax, fmax, bot.x0, bot.x1);
+    const y = mapToPlotY(phs[i], -Math.PI, Math.PI, bot.y0, bot.y1);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // Phase zero line
+  ctx.strokeStyle = "rgba(255,255,255,0.25)";
+  ctx.lineWidth = 1.5;
+  const yZero = mapToPlotY(0, -Math.PI, Math.PI, bot.y0, bot.y1);
+  ctx.beginPath(); ctx.moveTo(bot.x0, yZero); ctx.lineTo(bot.x1, yZero); ctx.stroke();
+
+  ctx.fillStyle = "rgba(185,195,230,0.95)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.fillText("Phase ∠F₂ (0 ⇒ real spectrum ⇒ real H)", bot.x0+8, bot.y0+16);
+
+  // Small annotation about eta
+  const phaseAt = F2_mag_phase(0.6, sigma, eta).phase;
+  ctx.fillStyle = (Math.abs(phaseAt) < 0.12) ? "rgba(52,211,153,0.92)" : "rgba(251,113,133,0.92)";
+  ctx.font = "600 12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  const msg = (Math.abs(phaseAt) < 0.12)
+    ? "Near-zero phase: amplitude-only filter is a good approximation"
+    : "Nonzero phase: ideal matched filter needs phase (complex transmittance)";
+  ctx.fillText(msg, bot.x0+8, bot.y1-10);
+
+  ctx.restore();
+}
+
+/* ------------------------------
+   Control + render loop
+--------------------------------*/
+const cSetup = document.getElementById('cSetup');
+const cCorr  = document.getElementById('cCorr');
+const cSpec  = document.getElementById('cSpec');
+
+const sEta   = document.getElementById('sEta');
+const sSigma = document.getElementById('sSigma');
+const rEta   = document.getElementById('rEta');
+const rSigma = document.getElementById('rSigma');
+const maskHint = document.getElementById('maskHint');
+
+function updateHint(sigma, eta){
+  // Evaluate phase at representative spatial frequency
+  const ph = F2_mag_phase(0.6, sigma, eta).phase;
+  if(Math.abs(ph) < 0.12 && eta <= 0.10){
+    maskHint.textContent = "Amplitude-only OK (≈ real)";
+    maskHint.style.color = "rgba(52,211,153,0.92)";
+  } else {
+    maskHint.textContent = "Needs complex mask (phase)";
+    maskHint.style.color = "rgba(251,113,133,0.92)";
+  }
+}
+
+function renderAll(){
+  const eta = parseFloat(sEta.value);
+  const sigma = parseFloat(sSigma.value);
+  rEta.textContent = eta.toFixed(2);
+  rSigma.textContent = sigma.toFixed(2);
+
+  updateHint(sigma, eta);
+  drawSetup(cSetup, sigma, eta);
+  drawCorrelation(cCorr, sigma, eta);
+  drawSpectrum(cSpec, sigma, eta);
+}
+
+sEta.addEventListener('input', renderAll);
+sSigma.addEventListener('input', renderAll);
+
+window.addEventListener('resize', ()=>{
+  // re-render on resize to keep crisp/responsive
+  renderAll();
+});
+
+// initial
+renderAll();
+</script>
+</body>
+</html>

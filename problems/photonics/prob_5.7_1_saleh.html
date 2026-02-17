@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Group Velocity Dispersion from the Sellmeier Equation (n, N, and Dλ)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#121a33;
+      --card2:#0f1730;
+      --text:#e8ecff;
+      --muted:#b7c0ffcc;
+      --line:#2a3766;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 20% 0%, rgba(125,211,252,.14), transparent 55%),
+                  radial-gradient(1000px 700px at 90% 10%, rgba(167,139,250,.12), transparent 60%),
+                  linear-gradient(180deg, #070a16 0%, #0b1020 35%, #070a16 100%);
+      color:var(--text);
+      line-height:1.55;
+    }
+    header{
+      padding: 28px 18px 14px;
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+    .title{
+      display:grid;
+      gap:10px;
+      align-items:start;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(1.5rem, 2.3vw, 2.25rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:0;
+      max-width: 85ch;
+    }
+
+    main{
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 14px 18px 48px;
+      display:grid;
+      gap: 18px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 16px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      border: 1px solid rgba(167,139,250,.18);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 14px 16px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom: 1px solid rgba(125,211,252,.14);
+      background: linear-gradient(90deg, rgba(125,211,252,.09), rgba(167,139,250,.07));
+    }
+    .card .hd h2, .card .hd h3{
+      margin:0;
+      font-size: 1.05rem;
+      letter-spacing:.2px;
+    }
+    .card .bd{
+      padding: 14px 16px 16px;
+      color: var(--text);
+    }
+    .muted{color:var(--muted)}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(125,211,252,.25);
+      color: var(--text);
+      background: rgba(10, 18, 40, .55);
+      font-size:.9rem;
+      white-space:nowrap;
+    }
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap:10px;
+    }
+    @media (max-width: 640px){
+      .kpi{grid-template-columns:1fr}
+    }
+    .kpi .box{
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(10, 18, 40, .35);
+    }
+    .kpi .box .label{color:var(--muted); font-size:.9rem}
+    .kpi .box .value{font-family:var(--mono); font-size: 1.02rem; margin-top:6px}
+    .callout{
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(125,211,252,.22);
+      background: rgba(125,211,252,.06);
+    }
+    .warn{
+      border-color: rgba(251,191,36,.32);
+      background: rgba(251,191,36,.08);
+    }
+    .good{
+      border-color: rgba(52,211,153,.30);
+      background: rgba(52,211,153,.07);
+    }
+    code, pre{
+      font-family: var(--mono);
+    }
+    .eq{
+      font-family: var(--mono);
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.08);
+      padding: 10px 10px;
+      border-radius: 14px;
+      overflow:auto;
+      position:relative;
+    }
+    .eq .copyBtn{
+      position:absolute;
+      top: 8px;
+      right: 8px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      border: 1px solid rgba(125,211,252,.30);
+      background: rgba(10,18,40,.7);
+      color: var(--text);
+      cursor:pointer;
+      font-size:.85rem;
+      transition: transform .12s ease, background .12s ease;
+    }
+    .eq .copyBtn:hover{transform: translateY(-1px); background: rgba(10,18,40,.9)}
+    .eq .copyBtn:active{transform: translateY(0px) scale(.98)}
+    .eq small{color:var(--muted)}
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 860px){
+      .twoCol{grid-template-columns:1fr}
+    }
+
+    /* Sticky mini TOC */
+    .toc{
+      position: sticky;
+      top: 10px;
+      align-self:start;
+      padding: 12px 12px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(10, 18, 40, .65);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .toc h3{margin:0 0 8px; font-size:1rem}
+    .toc a{
+      display:block;
+      color: var(--muted);
+      text-decoration:none;
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+    }
+    .toc a:hover{
+      color: var(--text);
+      border-color: rgba(125,211,252,.22);
+      background: rgba(125,211,252,.06);
+    }
+
+    /* Visualization */
+    .vizWrap{
+      display:grid;
+      gap:12px;
+    }
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:end;
+    }
+    .ctrl{
+      display:grid;
+      gap:6px;
+      padding: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(10, 18, 40, .35);
+      min-width: 210px;
+    }
+    .ctrl label{font-size:.9rem; color: var(--muted)}
+    .ctrl select, .ctrl input[type="range"]{
+      width:100%;
+    }
+    .ctrl .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-family:var(--mono);
+      font-size:.9rem;
+      color: var(--text);
+    }
+    .btn{
+      border-radius: 14px;
+      padding: 10px 12px;
+      border: 1px solid rgba(125,211,252,.30);
+      background: rgba(10,18,40,.65);
+      color: var(--text);
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease;
+    }
+    .btn:hover{transform: translateY(-1px); background: rgba(10,18,40,.85)}
+    .btn:active{transform: translateY(0) scale(.99)}
+    .canvasCard{
+      padding: 12px 12px 14px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(10,18,40,.35);
+    }
+    .canvasTitle{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:10px;
+      margin: 2px 2px 10px;
+    }
+    .canvasTitle h4{margin:0; font-size: 1rem}
+    .canvasTitle .meta{color: var(--muted); font-size:.9rem}
+    canvas{
+      width:100%;
+      height: 320px;
+      display:block;
+      border-radius: 14px;
+      background: rgba(2,6,23,.55);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .foot{
+      padding: 14px 18px 32px;
+      max-width: 1120px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    /* subtle animation */
+    @media (prefers-reduced-motion: no-preference){
+      .card{animation: pop .5s ease both}
+      @keyframes pop{
+        from{transform: translateY(6px); opacity:0}
+        to{transform: translateY(0); opacity:1}
+      }
+    }
+
+    /* print-friendly */
+    @media print{
+      body{background:white; color:black}
+      .card, .toc, .canvasCard{box-shadow:none; background:white}
+      canvas{border:1px solid #ccc; background:white}
+      .eq{background:#f7f7f7}
+      .toc{display:none}
+      .btn, .copyBtn{display:none}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="title">
+    <h1>Group Velocity Dispersion in a Sellmeier Medium: Derive <span style="color:var(--accent)">N</span> and <span style="color:var(--accent2)">D<sub>λ</sub></span>, then Plot for Fused Silica and GaAs</h1>
+    <p class="subtitle">
+      We start from the Sellmeier form for <span class="muted">n(λ)</span>, derive the group index <span class="muted">N(λ)=c₀/v<sub>g</sub></span> and the dispersion parameter <span class="muted">D<sub>λ</sub> = (1/c₀) dN/dλ</span>, then compute curves over the wavelength ranges requested.
+      Interactive plots below let you switch material and adjust the plotted wavelength span.
+    </p>
+  </div>
+</header>
+
+<main>
+  <section class="grid">
+    <article class="card">
+      <div class="hd">
+        <h2>Quick Summary</h2>
+        <span class="pill">Sellmeier → n(λ) → N(λ) → D<sub>λ</sub>(λ)</span>
+      </div>
+      <div class="bd">
+        <ul style="margin:0; padding-left: 18px;">
+          <li><b>Sellmeier model</b>: <span class="muted">n²(λ) = 1 + Σ A<sub>i</sub> λ²/(λ² − λ<sub>i</sub>²)</span>.</li>
+          <li><b>Group index</b>: <span class="muted">N(λ) = n(λ) − λ (dn/dλ)</span> (equivalently <span class="muted">N = n + ω dn/dω</span>).</li>
+          <li><b>Dispersion parameter</b>: <span class="muted">D<sub>λ</sub>(λ) = (1/c₀) dN/dλ = −(λ/c₀) d²n/dλ²</span>.</li>
+          <li><b>What plots show</b>: for fused silica, <span class="muted">n</span> decreases with λ while <span class="muted">N</span> has a shallow minimum; <span class="muted">D<sub>λ</sub></span> crosses zero near the “zero-dispersion” wavelength (depends on model).</li>
+          <li><b>Comparison</b>: GaAs (stronger resonances) typically shows larger magnitude dispersion and different zero-crossing behavior in mid-IR.</li>
+        </ul>
+        <div class="callout warn" style="margin-top:12px;">
+          <b>Note about constants:</b> Your prompt references “Table 5.5-1 / Example 5.7-1”. Those numerical coefficients are not fully included in the screenshot,
+          so the plots below use standard published Sellmeier coefficients (clearly shown in the UI) and the GaAs coefficients exactly as stated in your problem text.
+          The derivations are general and apply to any Sellmeier coefficient set.
+        </div>
+      </div>
+    </article>
+
+    <aside class="toc card">
+      <div class="hd"><h3>Table of Contents</h3></div>
+      <div class="bd" style="padding: 10px 12px 12px;">
+        <a href="#part1">PART 1 — Problem Analysis</a>
+        <a href="#part2">PART 2 — Strategy &amp; Tips</a>
+        <a href="#part3">PART 3 — Full Solution</a>
+        <a href="#viz">Interactive Visualizations</a>
+        <a href="#compare">Silica vs GaAs: Comparison</a>
+        <a href="#refs">Notes &amp; References</a>
+      </div>
+    </aside>
+  </section>
+
+  <!-- PART 1 -->
+  <section id="part1" class="card">
+    <div class="hd"><h2>PART 1 — Problem Analysis (no solving yet)</h2></div>
+    <div class="bd">
+      <h3 style="margin-top:0">Restate the problem (in plain words)</h3>
+      <p class="muted">
+        A transparent material has a wavelength-dependent refractive index described by a Sellmeier equation.
+        (a) Derive formulas for the group index <b>N</b> and the group-velocity-dispersion parameter <b>D<sub>λ</sub></b>.
+        (b) Using fused silica Sellmeier coefficients, plot <b>n(λ)</b>, <b>N(λ)</b>, and <b>D<sub>λ</sub>(λ)</b> from 0.25–3.5 μm and check they match the textbook-style curves.
+        (c) Do the same for GaAs from 1.5–10.5 μm and compare dispersion behavior with fused silica.
+      </p>
+
+      <div class="twoCol">
+        <div class="callout">
+          <h4 style="margin:0 0 6px;">Given</h4>
+          <ul style="margin:0; padding-left:18px;">
+            <li>Sellmeier form for refractive index (in wavelength form):<br>
+              <span class="muted">n²(λ) = 1 + Σ A<sub>i</sub> λ² / (λ² − λ<sub>i</sub>²)</span>
+            </li>
+            <li>Fused silica: use standard Sellmeier coefficients (UI shows values).</li>
+            <li>GaAs: 3-term Sellmeier with resonance wavelengths at
+              <span class="muted">0 μm, 0.4082 μm, 37.17 μm</span> and weights
+              <span class="muted">3.5, 7.4969, 1.9347</span>.</li>
+            <li>Speed of light in vacuum: <span class="muted">c₀ ≈ 299,792,458 m/s</span>.</li>
+          </ul>
+        </div>
+
+        <div class="callout good">
+          <h4 style="margin:0 0 6px;">Unknowns / What to find</h4>
+          <ul style="margin:0; padding-left:18px;">
+            <li>Symbolic expressions for <span class="muted">N(λ)</span> and <span class="muted">D<sub>λ</sub>(λ)</span>.</li>
+            <li>Numerical curves for <span class="muted">n(λ)</span>, <span class="muted">N(λ)</span>, <span class="muted">D<sub>λ</sub>(λ)</span> over the stated wavelength ranges.</li>
+            <li>Physical comparison: normal vs anomalous dispersion regions and relative magnitudes.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Relevant physics and why it applies</h3>
+      <ul style="margin:0; padding-left:18px;">
+        <li><b>Phase velocity</b>: <span class="muted">v<sub>p</sub> = c₀/n</span>, set by the refractive index at that wavelength.</li>
+        <li><b>Group velocity</b>: <span class="muted">v<sub>g</sub> = dω/dk</span>. In a dispersive medium, <span class="muted">k(ω)=n(ω)ω/c₀</span>, so pulse envelopes travel at a different speed than phase fronts.</li>
+        <li><b>Group index</b>: defined by <span class="muted">N = c₀/v<sub>g</sub></span>. It depends on <span class="muted">dn/dλ</span> (or <span class="muted">dn/dω</span>).</li>
+        <li><b>Group velocity dispersion</b>: quantified by how group delay changes with wavelength. A common textbook parameter is
+          <span class="muted">D<sub>λ</sub> = d(1/v<sub>g</sub>)/dλ = (1/c₀)dN/dλ</span>,
+          which tells whether longer wavelengths arrive earlier (anomalous) or later (normal).
+        </li>
+      </ul>
+
+      <h3>Possible approaches (2–3) and which is best</h3>
+      <ol style="margin:0; padding-left:18px;">
+        <li><b>Differentiate in ω</b>: start with <span class="muted">N = n + ω dn/dω</span>, then convert ω ↔ λ. Clean if you like frequency-domain dispersion.</li>
+        <li><b>Differentiate directly in λ</b>: use <span class="muted">N = n − λ dn/dλ</span> and then <span class="muted">D<sub>λ</sub> = (1/c₀)dN/dλ</span>. This matches the Sellmeier form given in wavelength. <b>(Best here.)</b></li>
+        <li><b>Compute β(ω)</b> and derivatives</li>
+        : use <span class="muted">β = n(ω)ω/c₀</span>, then <span class="muted">β₂ = d²β/dω²</span> and relate to D. Great for fiber optics, but requires extra conversion steps.</li>
+      </ol>
+      <p class="muted" style="margin-top:8px;">
+        We will use approach (2) because the Sellmeier equation is already expressed as <span class="muted">n(λ)</span>, making derivatives straightforward and minimizing algebra.
+      </p>
+    </div>
+  </section>
+
+  <!-- PART 2 -->
+  <section id="part2" class="card">
+    <div class="hd"><h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2></div>
+    <div class="bd">
+      <ol style="margin:0; padding-left:18px;">
+        <li><b>Define the Sellmeier function</b><br>
+          Goal: write <span class="muted">S(λ)=n²(λ)</span> as a sum of simple rational terms.<br>
+          Tool: given Sellmeier equation.
+        </li>
+        <li><b>Compute S′(λ)</b><br>
+          Goal: get <span class="muted">d(n²)/dλ</span> analytically.<br>
+          Tool: quotient rule on each term.
+        </li>
+        <li><b>Convert to n′(λ)</b><br>
+          Goal: use <span class="muted">n = √S</span> so <span class="muted">n′ = S′/(2n)</span>.<br>
+          Tool: chain rule.
+        </li>
+        <li><b>Derive group index</b><br>
+          Goal: show <span class="muted">N(λ) = n − λ n′</span> and simplify using your S′ result.<br>
+          Tool: relation between ω and λ; definition of group velocity.
+        </li>
+        <li><b>Compute S″(λ) and n″(λ)</b><br>
+          Goal: obtain <span class="muted">n″</span> to express dispersion compactly.<br>
+          Tool: differentiate each Sellmeier term again; then use <span class="muted">n″ = S″/(2n) − (S′)²/(4n³)</span>.
+        </li>
+        <li><b>Derive D<sub>λ</sub></b><br>
+          Goal: show <span class="muted">D<sub>λ</sub>=(1/c₀)dN/dλ=−(λ/c₀)n″</span>.<br>
+          Tool: differentiate N.
+        </li>
+        <li><b>Numerical evaluation and plotting</b><br>
+          Goal: compute <span class="muted">n,N,D<sub>λ</sub></span> on a wavelength grid for silica and GaAs.<br>
+          Tool: simple JavaScript math + canvas plotting.
+        </li>
+      </ol>
+
+      <div class="callout warn" style="margin-top:12px;">
+        <b>Common mistakes</b>
+        <ul style="margin:8px 0 0; padding-left:18px;">
+          <li>Mixing units: Sellmeier coefficients often assume <b>λ in μm</b>. Keep it consistent everywhere.</li>
+          <li>Forgetting that <span class="muted">N = n − λ dn/dλ</span> (minus sign!).</li>
+          <li>Converting dispersion units incorrectly: <span class="muted">D</span> in <span class="muted">ps/(nm·km)</span> requires careful scaling.</li>
+          <li>Evaluating near resonance poles (where <span class="muted">λ² ≈ λ<sub>i</sub>²</span>) without checking numerical stability.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- PART 3 -->
+  <section id="part3" class="card">
+    <div class="hd"><h2>PART 3 — Full Solution</h2></div>
+    <div class="bd">
+      <h3 style="margin-top:0">Physical intuition</h3>
+      <p class="muted">
+        A short optical pulse can be viewed as a narrow band of frequencies (or wavelengths).
+        In a dispersive medium, each frequency sees a slightly different refractive index, so the phase velocity changes with frequency.
+        The pulse envelope travels at the <b>group velocity</b> <span class="muted">v<sub>g</sub></span>, and because <span class="muted">v<sub>g</sub></span> varies with wavelength,
+        different spectral components accumulate different delays—this is <b>group velocity dispersion</b> (GVD).
+      </p>
+
+      <h3>Step 1 — Start from the Sellmeier equation</h3>
+      <div class="eq" id="eq-sell">
+        <button class="copyBtn" data-copy="n^2(λ)=1+∑_{i} A_i λ^2/(λ^2-λ_i^2)">Copy</button>
+        <div>
+          <b>Sellmeier (wavelength form)</b><br>
+          <span>n²(λ) = 1 + Σ<sub>i</sub> A<sub>i</sub> · λ² / (λ² − λ<sub>i</sub>²)</span><br>
+          <small>Here λ is wavelength (we will use μm in the coefficient sets below), A<sub>i</sub> are weights, and λ<sub>i</sub> are resonance wavelengths.</small>
+        </div>
+      </div>
+
+      <p class="muted">
+        Define <span style="font-family:var(--mono)">S(λ) ≡ n²(λ)</span>. Then <span style="font-family:var(--mono)">n(λ)=√S(λ)</span>.
+      </p>
+
+      <h3>Step 2 — Differentiate S(λ)=n²(λ)</h3>
+      <p class="muted">
+        Consider a single Sellmeier term:
+        <span style="font-family:var(--mono)">T(λ)= A · λ²/(λ² − a²)</span> with <span style="font-family:var(--mono)">a = λ<sub>i</sub></span>.
+      </p>
+      <div class="eq" id="eq-dS">
+        <button class="copyBtn" data-copy="d/dλ [A λ^2/(λ^2-a^2)] = -2 A a^2 λ/(λ^2-a^2)^2">Copy</button>
+        <div>
+          Using the quotient rule:
+          <br>
+          d/dλ [A λ²/(λ² − a²)]
+          = A · (2λ(λ²−a²) − λ²(2λ)) / (λ²−a²)²
+          = −2A a² λ / (λ² − a²)².
+        </div>
+      </div>
+
+      <p class="muted">
+        Summing over all terms gives:
+      </p>
+      <div class="eq" id="eq-Sprime">
+        <button class="copyBtn" data-copy="S'(λ)=d(n^2)/dλ=∑_i [-2 A_i λ_i^2 λ/(λ^2-λ_i^2)^2]">Copy</button>
+        <div>
+          <b>First derivative</b><br>
+          S′(λ) = d(n²)/dλ = Σ<sub>i</sub> [ −2 A<sub>i</sub> λ<sub>i</sub>² λ / (λ² − λ<sub>i</sub>²)² ].
+        </div>
+      </div>
+
+      <h3>Step 3 — Convert to n′(λ)</h3>
+      <p class="muted">
+        Since <span style="font-family:var(--mono)">n=√S</span>, by the chain rule:
+        <span style="font-family:var(--mono)">n′(λ) = S′(λ)/(2n(λ))</span>.
+      </p>
+      <div class="eq" id="eq-nprime">
+        <button class="copyBtn" data-copy="dn/dλ = (1/(2n)) S'(λ) = ∑_i [ -A_i λ_i^2 λ/( n(λ^2-λ_i^2)^2 ) ]">Copy</button>
+        <div>
+          <b>Derivative of n</b><br>
+          dn/dλ = S′/(2n)
+          = Σ<sub>i</sub> \u2009\Big[ − A<sub>i</sub> λ<sub>i</sub>² λ / ( n(λ)\,(λ² − λ<sub>i</sub>²)² ) \Big].
+        </div>
+      </div>
+
+      <h3>Step 4 — Derive the group index N(λ)</h3>
+      <p class="muted">
+        Start with <span style="font-family:var(--mono)">k(ω)=n(ω)ω/c₀</span>. The group velocity is:
+        <span style="font-family:var(--mono)">v<sub>g</sub>=dω/dk = 1/(dk/dω)</span>.
+      </p>
+      <p class="muted">
+        Compute <span style="font-family:var(--mono)">dk/dω = (1/c₀)(n + ω dn/dω)</span>, hence
+        <span style="font-family:var(--mono)">v<sub>g</sub> = c₀/(n + ω dn/dω)</span>.
+        Define the group index <span style="font-family:var(--mono)">N ≡ c₀/v<sub>g</sub></span>, so:
+        <span style="font-family:var(--mono)">N = n + ω dn/dω</span>.
+      </p>
+      <p class="muted">
+        Convert to wavelength. Using <span style="font-family:var(--mono)">ω=2πc₀/λ</span>, we have
+        <span style="font-family:var(--mono)">dλ/dω = −λ/ω</span>, so
+        <span style="font-family:var(--mono)">dn/dω = (dn/dλ)(dλ/dω) = −(λ/ω) dn/dλ</span>.
+        Substitute:
+      </p>
+      <div class="eq" id="eq-N">
+        <button class="copyBtn" data-copy="N(λ)=n(λ) - λ dn/dλ = n(λ) + ∑_i [A_i λ_i^2 λ^2/( n(λ)(λ^2-λ_i^2)^2 )]">Copy</button>
+        <div>
+          <b>Group index</b><br>
+          N(λ) = n(λ) + ω dn/dω = n(λ) − λ dn/dλ.<br><br>
+          Using the Sellmeier derivative:
+          <br>
+          <span style="white-space:nowrap;">
+            N(λ) = n(λ) + Σ<sub>i</sub> \u2009 A<sub>i</sub> λ<sub>i</sub>² λ² / ( n(λ)\,(λ² − λ<sub>i</sub>²)² ).
+          </span>
+        </div>
+      </div>
+
+      <h3>Step 5 — Derive the dispersion parameter D<sub>λ</sub>(λ)</h3>
+      <p class="muted">
+        The group delay per unit length is
+        <span style="font-family:var(--mono)">τ<sub>g</sub>/L = 1/v<sub>g</sub> = N/c₀</span>.
+        A standard wavelength-domain dispersion parameter is:
+        <span style="font-family:var(--mono)">D<sub>λ</sub> ≡ d(τ<sub>g</sub>/L)/dλ = (1/c₀) dN/dλ</span>.
+      </p>
+      <p class="muted">
+        Since <span style="font-family:var(--mono)">N = n − λ n′</span>, differentiate:
+        <span style="font-family:var(--mono)">dN/dλ = n′ − (n′ + λ n″) = −λ n″</span>.
+      </p>
+      <div class="eq" id="eq-Dlambda">
+        <button class="copyBtn" data-copy="D_λ(λ)=(1/c0)dN/dλ = -(λ/c0) d^2n/dλ^2">Copy</button>
+        <div>
+          <b>Dispersion parameter</b><br>
+          D<sub>λ</sub>(λ) = (1/c₀)\u2009 dN/dλ = −(λ/c₀)\u2009 d²n/dλ².
+          <br>
+          <small>
+            If λ is in meters, D<sub>λ</sub> has units s/m². A common plotting unit is ps/(nm·km), obtained by multiplying by 10<sup>6</sup>.
+          </small>
+        </div>
+      </div>
+
+      <h3>Step 6 — Express n″(λ) in closed form for Sellmeier</h3>
+      <p class="muted">
+        We already have <span style="font-family:var(--mono)">S′(λ)</span>. Now differentiate one term again:
+      </p>
+      <div class="eq" id="eq-Sdd">
+        <button class="copyBtn" data-copy="S''(λ)=∑_i 2 A_i λ_i^2 (3λ^2+λ_i^2)/(λ^2-λ_i^2)^3">Copy</button>
+        <div>
+          <b>Second derivative of S(λ)=n²(λ)</b><br>
+          S″(λ) = Σ<sub>i</sub> 2 A<sub>i</sub> λ<sub>i</sub>² (3λ² + λ<sub>i</sub>²) / (λ² − λ<sub>i</sub>²)³.
+        </div>
+      </div>
+
+      <p class="muted">
+        With <span style="font-family:var(--mono)">n=√S</span>, differentiate <span style="font-family:var(--mono)">n′=S′/(2n)</span>:
+      </p>
+      <div class="eq" id="eq-n2">
+        <button class="copyBtn" data-copy="n''(λ)=S''/(2n) - (S'^2)/(4 n^3)">Copy</button>
+        <div>
+          <b>Second derivative of n</b><br>
+          d²n/dλ² = n″(λ) = S″(λ)/(2n(λ)) − (S′(λ))²/(4 n(λ)³).
+        </div>
+      </div>
+
+      <div class="callout good" style="margin-top:12px;">
+        <b>Final symbolic results (boxed)</b><br>
+        <div class="eq" id="eq-final" style="margin-top:10px;">
+          <button class="copyBtn" data-copy="N(λ)=n(λ)-λ dn/dλ;   D_λ(λ)=(1/c0)dN/dλ=-(λ/c0)d^2n/dλ^2 with n^2(λ)=1+∑ A_i λ^2/(λ^2-λ_i^2), dn/dλ = S'/(2n), n'' = S''/(2n) - (S'^2)/(4n^3), S'=-∑ 2A_i λ_i^2 λ/(λ^2-λ_i^2)^2, S''=∑ 2A_i λ_i^2(3λ^2+λ_i^2)/(λ^2-λ_i^2)^3">Copy</button>
+          <div>
+            <b style="color:var(--accent)">Group index:</b> N(λ)=n(λ)−λ dn/dλ<br>
+            <b style="color:var(--accent2)">Dispersion:</b> D<sub>λ</sub>(λ)=(1/c₀)dN/dλ=−(λ/c₀)d²n/dλ²<br><br>
+            with<br>
+            n²(λ)=1+Σ A<sub>i</sub> λ²/(λ²−λ<sub>i</sub>²),<br>
+            S′(λ)=−Σ 2A<sub>i</sub>λ<sub>i</sub>²λ/(λ²−λ<sub>i</sub>²)²,<br>
+            S″(λ)=Σ 2A<sub>i</sub>λ<sub>i</sub>²(3λ²+λ<sub>i</sub>²)/(λ²−λ<sub>i</sub>²)³,<br>
+            n′=S′/(2n),  n″=S″/(2n)−(S′)²/(4n³).
+          </div>
+        </div>
+      </div>
+
+      <h3>Sanity checks</h3>
+      <div class="twoCol">
+        <div class="callout">
+          <b>Units</b>
+          <ul style="margin:8px 0 0; padding-left:18px;">
+            <li><span class="muted">n</span> and <span class="muted">N</span> are dimensionless.</li>
+            <li>If λ is in meters, <span class="muted">dn/dλ</span> has units 1/m and <span class="muted">d²n/dλ²</span> has units 1/m².</li>
+            <li>Thus <span class="muted">D<sub>λ</sub>=-(λ/c₀)n″</span> has units (m)/(m/s)·(1/m²)= s/m², consistent with d(1/vg)/dλ.</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <b>Limiting / physical interpretation</b>
+          <ul style="margin:8px 0 0; padding-left:18px;">
+            <li>If the material were non-dispersive (<span class="muted">n</span> constant), then <span class="muted">dn/dλ=0</span> → <span class="muted">N=n</span> and <span class="muted">D<sub>λ</sub>=0</span>.</li>
+            <li>In normal dispersion regions (typical in visible for many glasses), <span class="muted">D<sub>λ</sub>&lt;0</span> in the sign convention used by many optics texts; the plots below show the sign directly.</li>
+            <li>The zero crossing of <span class="muted">D<sub>λ</sub></span> marks the “zero-dispersion wavelength” where group delay is locally least sensitive to wavelength.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VISUALIZATION -->
+  <section id="viz" class="card">
+    <div class="hd">
+      <h2>Interactive Visualizations</h2>
+      <span class="pill">Live plots update with controls</span>
+    </div>
+    <div class="bd">
+      <div class="vizWrap">
+        <div class="controls">
+          <div class="ctrl">
+            <label for="materialSel">Material (Sellmeier coefficients)</label>
+            <select id="materialSel">
+              <option value="silica">Fused Silica (standard 3-term Sellmeier)</option>
+              <option value="gaas">GaAs (3-term, per problem statement)</option>
+            </select>
+            <div class="row"><span>λ-range</span><span id="rangeLabel">—</span></div>
+          </div>
+
+          <div class="ctrl">
+            <label for="lambdaMax">Max wavelength shown (μm)</label>
+            <input id="lambdaMax" type="range" min="0" max="100" value="100" />
+            <div class="row"><span>λ<sub>max</sub></span><span id="lambdaMaxVal">—</span></div>
+          </div>
+
+          <div class="ctrl">
+            <label>Display options</label>
+            <div class="row" style="justify-content:flex-start; gap:12px;">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--text);">
+                <input id="showBeta2" type="checkbox" checked />
+                show β₂(λ) overlay
+              </label>
+            </div>
+            <button class="btn" id="resetBtn">Reset defaults</button>
+          </div>
+        </div>
+
+        <div class="canvasCard">
+          <div class="canvasTitle">
+            <h4>Diagram: Pulse propagation in a dispersive medium</h4>
+            <div class="meta">phase vs group velocity &amp; pulse broadening</div>
+          </div>
+          <canvas id="diagram"></canvas>
+        </div>
+
+        <div class="canvasCard">
+          <div class="canvasTitle">
+            <h4>Main plot: n(λ) and group index N(λ)</h4>
+            <div class="meta">dimensionless vs wavelength (μm)</div>
+          </div>
+          <canvas id="plot1"></canvas>
+        </div>
+
+        <div class="canvasCard">
+          <div class="canvasTitle">
+            <h4>Secondary plot: Dispersion D<sub>λ</sub>(λ) (and optional β₂)</h4>
+            <div class="meta">D<sub>λ</sub> in ps/(nm·km) vs wavelength (μm)</div>
+          </div>
+          <canvas id="plot2"></canvas>
+        </div>
+
+        <div class="card" style="border-radius: var(--radius); border: 1px solid rgba(255,255,255,.08); background: rgba(10,18,40,.35);">
+          <div class="hd"><h3>Numerical coefficient set used (matches plots)</h3><span class="pill">visible units: μm</span></div>
+          <div class="bd">
+            <div class="kpi">
+              <div class="box">
+                <div class="label">Sellmeier form</div>
+                <div class="value">n² = 1 + Σ Aᵢ λ²/(λ² − λᵢ²)</div>
+              </div>
+              <div class="box">
+                <div class="label">λ input units</div>
+                <div class="value">μm (internally converted for c₀ scaling)</div>
+              </div>
+              <div class="box">
+                <div class="label">D<sub>λ</sub> units (plot)</div>
+                <div class="value">ps/(nm·km) = (s/m²)×10⁶</div>
+              </div>
+            </div>
+            <pre id="coeffBox" class="eq" style="margin-top:12px; white-space:pre-wrap;"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison -->
+  <section id="compare" class="card">
+    <div class="hd"><h2>Silica vs GaAs: Compare &amp; Contrast</h2></div>
+    <div class="bd">
+      <div class="twoCol">
+        <div class="callout">
+          <b>Fused silica (SiO₂)</b>
+          <ul style="margin:8px 0 0; padding-left:18px;">
+            <li>Weak-to-moderate dispersion in visible/near-IR; widely used as a “low-loss, manageable dispersion” platform.</li>
+            <li><span class="muted">N(λ)</span> typically has a shallow minimum in the near-IR.</li>
+            <li><span class="muted">D<sub>λ</sub>(λ)</span> crosses zero near its well-known “zero-dispersion” region (model dependent).</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <b>GaAs</b>
+          <ul style="margin:8px 0 0; padding-left:18px;">
+            <li>Strong resonant contributions (notably in IR) can produce larger magnitude dispersion over mid-IR ranges.</li>
+            <li>The sign and magnitude of <span class="muted">D<sub>λ</sub></span> can differ strongly from silica for the same λ, affecting pulse broadening and phase matching.</li>
+            <li>Practical implication: GaAs-based mid-IR photonics often requires tighter dispersion engineering (waveguides, photonic crystals) than silica fibers.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout warn" style="margin-top:12px;">
+        <b>Interpreting the sign:</b> If <span class="muted">D<sub>λ</sub> &gt; 0</span>, then group delay increases with wavelength; if <span class="muted">D<sub>λ</sub> &lt; 0</span>, it decreases.
+        Textbooks sometimes label “normal/anomalous” with opposite sign conventions depending on whether they plot <span class="muted">D</span> or <span class="muted">β₂</span>.
+        The plots here explicitly show the computed sign for the chosen definition <span class="muted">D<sub>λ</sub> = (1/c₀) dN/dλ</span>.
+      </div>
+    </div>
+  </section>
+
+  <section id="refs" class="card">
+    <div class="hd"><h2>Notes &amp; References</h2></div>
+    <div class="bd">
+      <ul style="margin:0; padding-left:18px;">
+        <li class="muted">
+          <b>Fused silica coefficients</b> used here are the widely cited 3-term Sellmeier (often attributed to Malitson) with λ in μm:
+          A = [0.6961663, 0.4079426, 0.8974794], λᵢ = [0.0684043, 0.1162414, 9.896161] μm.
+        </li>
+        <li class="muted">
+          <b>GaAs coefficients</b> use the values stated in your prompt: resonance wavelengths 0, 0.4082, 37.17 μm and weights 3.5, 7.4969, 1.9347.
+          (The λᵢ=0 term is well-defined: it contributes a constant A to n² because λ²/(λ²−0)=1.)
+        </li>
+        <li class="muted">
+          If you paste in your textbook’s Table 5.5-1 coefficient sets, you can replace the numbers in the JS object <span style="font-family:var(--mono)">MATERIALS</span> below to reproduce the exact figures.
+        </li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  Built as a single self-contained HTML article (vanilla HTML/CSS/JS). Canvas plots are high-DPI aware and responsive.
+</footer>
+
+<script>
+/* =========================
+   Copy buttons for equations
+   ========================= */
+(function(){
+  function copyText(txt){
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.setAttribute('readonly','');
+    ta.style.position='fixed';
+    ta.style.left='-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+  }
+  document.querySelectorAll('.copyBtn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const txt = btn.getAttribute('data-copy') || '';
+      copyText(txt);
+      const old = btn.textContent;
+      btn.textContent = 'Copied ✓';
+      setTimeout(()=>btn.textContent=old, 900);
+    });
+  });
+})();
+
+/* =========================
+   Math: Sellmeier + derivatives
+   ========================= */
+const c0 = 299792458; // m/s
+
+// Coefficients: Sellmeier n^2 = 1 + sum A_i * λ^2 / (λ^2 - λ_i^2)
+// IMPORTANT: These coefficient sets assume λ is in μm.
+const MATERIALS = {
+  silica: {
+    name: "Fused Silica (standard 3-term)",
+    lambdaMin: 0.25,
+    lambdaMax: 3.5,
+    // Standard fused silica Sellmeier (λ in μm)
+    A: [0.6961663, 0.4079426, 0.8974794],
+    L: [0.0684043, 0.1162414, 9.896161]
+  },
+  gaas: {
+    name: "GaAs (per problem statement)",
+    lambdaMin: 1.5,
+    lambdaMax: 10.5,
+    A: [3.5, 7.4969, 1.9347],
+    L: [0.0, 0.4082, 37.17]
+  }
+};
+
+function sellmeierS(lambda_um, mat){
+  const lam2 = lambda_um*lambda_um;
+  let S = 1.0;
+  for(let i=0;i<mat.A.length;i++){
+    const A = mat.A[i];
+    const Li = mat.L[i];
+    const Li2 = Li*Li;
+    const denom = (lam2 - Li2);
+    // handle denom ~ 0: avoid blowup
+    const safeDenom = (Math.abs(denom) < 1e-12) ? (denom >= 0 ? 1e-12 : -1e-12) : denom;
+    S += A * lam2 / safeDenom;
+  }
+  return S;
+}
+
+function sellmeierSprime(lambda_um, mat){
+  // S'(λ) = Σ -2 A_i L_i^2 λ / (λ^2 - L_i^2)^2
+  const lam = lambda_um;
+  const lam2 = lam*lam;
+  let Sp = 0.0;
+  for(let i=0;i<mat.A.length;i++){
+    const A = mat.A[i];
+    const Li = mat.L[i];
+    const Li2 = Li*Li;
+    const denom = (lam2 - Li2);
+    const safe = (Math.abs(denom) < 1e-12) ? (denom >= 0 ? 1e-12 : -1e-12) : denom;
+    Sp += (-2.0) * A * Li2 * lam / (safe*safe);
+  }
+  return Sp;
+}
+
+function sellmeierSdd(lambda_um, mat){
+  // S''(λ) = Σ 2 A_i L_i^2 (3λ^2 + L_i^2) / (λ^2 - L_i^2)^3
+  const lam = lambda_um;
+  const lam2 = lam*lam;
+  let Sdd = 0.0;
+  for(let i=0;i<mat.A.length;i++){
+    const A = mat.A[i];
+    const Li = mat.L[i];
+    const Li2 = Li*Li;
+    const denom = (lam2 - Li2);
+    const safe = (Math.abs(denom) < 1e-12) ? (denom >= 0 ? 1e-12 : -1e-12) : denom;
+    Sdd += 2.0 * A * Li2 * (3.0*lam2 + Li2) / (safe*safe*safe);
+  }
+  return Sdd;
+}
+
+function n_and_derivs(lambda_um, mat){
+  // λ is in μm for the Sellmeier evaluation.
+  const S = sellmeierS(lambda_um, mat);
+  const n = Math.sqrt(Math.max(S, 1e-18));
+  const Sp = sellmeierSprime(lambda_um, mat);
+  const Sdd = sellmeierSdd(lambda_um, mat);
+
+  const n1 = Sp / (2.0*n);                       // dn/dλ (per μm)
+  const n2 = (Sdd/(2.0*n)) - (Sp*Sp)/(4.0*n*n*n); // d²n/dλ² (per μm²)
+
+  return {n, Sp, Sdd, n1, n2};
+}
+
+function groupIndex(lambda_um, mat){
+  const {n, n1} = n_and_derivs(lambda_um, mat);
+  // N = n - λ dn/dλ (λ in μm, dn/dλ per μm => dimensionless)
+  return n - lambda_um * n1;
+}
+
+function Dlambda_SI(lambda_um, mat){
+  // Dλ = (1/c0) dN/dλ = -(λ/c0) n''(λ)
+  // Careful: our n'' is per μm^2. Convert to per m^2 by (1 μm)^-2 = (1e-6 m)^-2 = 1e12.
+  const {n2} = n_and_derivs(lambda_um, mat);
+  const lambda_m = lambda_um * 1e-6;
+  const n2_per_m2 = n2 * 1e12; // (per μm^2) -> (per m^2)
+  return -(lambda_m / c0) * n2_per_m2; // s/m^2
+}
+
+function Dlambda_ps_nm_km(lambda_um, mat){
+  // ps/(nm·km) = (s/m^2) * 1e6
+  return Dlambda_SI(lambda_um, mat) * 1e6;
+}
+
+// Optional: β2(λ) from Dλ (common fiber relation):
+// D = -(2πc/λ^2) β2  OR  β2 = -(λ^2/(2πc)) D  , where D is in s/m^2 and λ in m.
+function beta2_SI(lambda_um, mat){
+  const D = Dlambda_SI(lambda_um, mat);
+  const lambda_m = lambda_um * 1e-6;
+  return -(lambda_m*lambda_m/(2*Math.PI*c0)) * D; // s^2/m
+}
+
+/* =========================
+   Canvas utilities (HiDPI + responsive)
+   ========================= */
+function fitCanvas(canvas, cssHeight){
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const rect = canvas.getBoundingClientRect();
+  const w = Math.max(10, Math.floor(rect.width));
+  const h = Math.max(10, Math.floor(cssHeight || rect.height));
+  canvas.width  = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx, w, h, dpr};
+}
+
+function niceTicks(min, max, count){
+  // simple "nice number" ticks
+  const span = max - min;
+  if(span <= 0) return [min];
+  const rawStep = span / Math.max(1, count);
+  const pow10 = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  let step = pow10;
+  const err = rawStep / pow10;
+  if(err >= 5) step = 5*pow10;
+  else if(err >= 2) step = 2*pow10;
+  else step = pow10;
+
+  const t0 = Math.ceil(min/step)*step;
+  const ticks = [];
+  for(let t = t0; t <= max + 1e-12; t += step) ticks.push(t);
+  return ticks;
+}
+
+function drawAxes(ctx, box, xMin, xMax, yMin, yMax, xLabel, yLabel, title){
+  const {x,y,w,h, padL, padR, padT, padB} = box;
+  // background
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle = 'rgba(2,6,23,.55)';
+  ctx.fillRect(0,0,w,h);
+
+  // title
+  ctx.fillStyle = 'rgba(232,236,255,.95)';
+  ctx.font = '600 14px ui-sans-serif, system-ui';
+  ctx.fillText(title, 14, 20);
+
+  // plot area
+  const px0 = padL, py0 = padT;
+  const pw = w - padL - padR;
+  const ph = h - padT - padB;
+
+  // grid + ticks
+  const xTicks = niceTicks(xMin, xMax, 8);
+  const yTicks = niceTicks(yMin, yMax, 6);
+
+  // gridlines
+  ctx.strokeStyle = 'rgba(255,255,255,.08)';
+  ctx.lineWidth = 1;
+
+  function xToPx(xv){ return px0 + (xv - xMin) * pw / (xMax - xMin); }
+  function yToPx(yv){ return py0 + ph - (yv - yMin) * ph / (yMax - yMin); }
+
+  xTicks.forEach(t=>{
+    const X = xToPx(t);
+    ctx.beginPath();
+    ctx.moveTo(X, py0);
+    ctx.lineTo(X, py0+ph);
+    ctx.stroke();
+  });
+  yTicks.forEach(t=>{
+    const Y = yToPx(t);
+    ctx.beginPath();
+    ctx.moveTo(px0, Y);
+    ctx.lineTo(px0+pw, Y);
+    ctx.stroke();
+  });
+
+  // axes
+  ctx.strokeStyle = 'rgba(255,255,255,.22)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(px0, py0);
+  ctx.lineTo(px0, py0+ph);
+  ctx.lineTo(px0+pw, py0+ph);
+  ctx.stroke();
+
+  // tick labels
+  ctx.fillStyle = 'rgba(183,192,255,.85)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono"';
+  xTicks.forEach(t=>{
+    const X = xToPx(t);
+    const s = (Math.abs(t) < 1e-6) ? '0' : (Math.round(t*1000)/1000).toString();
+    ctx.fillText(s, X-10, py0+ph+18);
+  });
+  yTicks.forEach(t=>{
+    const Y = yToPx(t);
+    const s = (Math.abs(t) < 1e-6) ? '0' : (Math.round(t*1000)/1000).toString();
+    ctx.fillText(s, 10, Y+4);
+  });
+
+  // axis labels
+  ctx.fillStyle = 'rgba(232,236,255,.90)';
+  ctx.font = '600 12px ui-sans-serif, system-ui';
+  ctx.fillText(xLabel, px0 + pw - 120, py0 + ph + 34);
+
+  // rotated y label
+  ctx.save();
+  ctx.translate(14, py0 + 10);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+
+  return {px0,py0,pw,ph, xToPx, yToPx};
+}
+
+function drawLine(ctx, map, xs, ys, strokeStyle, lineWidth){
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = lineWidth || 2;
+  ctx.beginPath();
+  for(let i=0;i<xs.length;i++){
+    const X = map.xToPx(xs[i]);
+    const Y = map.yToPx(ys[i]);
+    if(i===0) ctx.moveTo(X,Y);
+    else ctx.lineTo(X,Y);
+  }
+  ctx.stroke();
+}
+
+function drawLegend(ctx, items, x, y){
+  let yy = y;
+  ctx.font = '12px ui-sans-serif, system-ui';
+  items.forEach(it=>{
+    ctx.fillStyle = it.color;
+    ctx.fillRect(x, yy-10, 14, 4);
+    ctx.fillStyle = 'rgba(232,236,255,.9)';
+    ctx.fillText(it.label, x+20, yy-6);
+    yy += 18;
+  });
+}
+
+/* =========================
+   Draw diagram
+   ========================= */
+function drawDiagram(canvas, matName){
+  const {ctx,w,h} = fitCanvas(canvas, 320);
+  ctx.clearRect(0,0,w,h);
+
+  // background
+  ctx.fillStyle = 'rgba(2,6,23,.55)';
+  ctx.fillRect(0,0,w,h);
+
+  // medium slab
+  const slabX = w*0.08, slabY = h*0.22, slabW = w*0.84, slabH = h*0.56;
+  ctx.fillStyle = 'rgba(125,211,252,.08)';
+  ctx.strokeStyle = 'rgba(125,211,252,.35)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, slabX, slabY, slabW, slabH, 18);
+  ctx.fill();
+  ctx.stroke();
+
+  // input pulse (left)
+  const p0x = slabX + 20, midY = slabY + slabH*0.5;
+  drawGaussianPulse(ctx, p0x, midY, 55, 18, 1.0, 'rgba(232,236,255,.9)');
+
+  // output pulse (right, broadened)
+  const p1x = slabX + slabW - 85;
+  drawGaussianPulse(ctx, p1x, midY, 95, 20, 0.7, 'rgba(232,236,255,.85)');
+
+  // phase fronts (tilted lines)
+  ctx.strokeStyle = 'rgba(167,139,250,.35)';
+  ctx.lineWidth = 1.5;
+  for(let i=0;i<10;i++){
+    const x = slabX + 70 + i*(slabW-140)/9;
+    ctx.beginPath();
+    ctx.moveTo(x, slabY+14);
+    ctx.lineTo(x+22, slabY+slabH-14);
+    ctx.stroke();
+  }
+
+  // arrows: vp and vg
+  arrow(ctx, slabX+90, slabY+slabH-28, slabX+260, slabY+slabH-28, 'rgba(167,139,250,.9)', 2.5);
+  arrow(ctx, slabX+90, slabY+slabH-52, slabX+310, slabY+slabH-52, 'rgba(125,211,252,.95)', 2.8);
+
+  // labels
+  ctx.fillStyle = 'rgba(232,236,255,.92)';
+  ctx.font = '600 14px ui-sans-serif, system-ui';
+  ctx.fillText('Dispersive medium', slabX+16, slabY-10);
+
+  ctx.font = '12px ui-sans-serif, system-ui';
+  ctx.fillStyle = 'rgba(183,192,255,.9)';
+  ctx.fillText('phase fronts (vₚ)', slabX+16, slabY+18);
+
+  ctx.fillStyle = 'rgba(167,139,250,.95)';
+  ctx.fillText('vₚ = c₀/n', slabX+270, slabY+slabH-24);
+
+  ctx.fillStyle = 'rgba(125,211,252,.95)';
+  ctx.fillText('v_g = c₀/N', slabX+320, slabY+slabH-48);
+
+  ctx.fillStyle = 'rgba(183,192,255,.9)';
+  ctx.fillText('pulse broadening from GVD', slabX+slabW-250, slabY+slabH+20);
+
+  // material tag
+  ctx.fillStyle = 'rgba(10,18,40,.8)';
+  ctx.strokeStyle = 'rgba(255,255,255,.14)';
+  ctx.lineWidth = 1;
+  roundRect(ctx, w-290, 16, 274, 34, 12);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(232,236,255,.9)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas';
+  ctx.fillText('Material: ' + matName, w-276, 38);
+}
+
+function roundRect(ctx, x, y, w, h, r){
+  const rr = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr, y);
+  ctx.arcTo(x+w, y, x+w, y+h, rr);
+  ctx.arcTo(x+w, y+h, x, y+h, rr);
+  ctx.arcTo(x, y+h, x, y, rr);
+  ctx.arcTo(x, y, x+w, y, rr);
+  ctx.closePath();
+}
+
+function arrow(ctx, x0,y0,x1,y1,color,lw){
+  const head = 10;
+  const dx = x1-x0, dy=y1-y0;
+  const L = Math.hypot(dx,dy) || 1;
+  const ux=dx/L, uy=dy/L;
+  const hx = x1 - ux*head, hy = y1 - uy*head;
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw;
+  ctx.beginPath();
+  ctx.moveTo(x0,y0);
+  ctx.lineTo(x1,y1);
+  ctx.stroke();
+
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x1,y1);
+  ctx.lineTo(hx - uy*6, hy + ux*6);
+  ctx.lineTo(hx + uy*6, hy - ux*6);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawGaussianPulse(ctx, x, y, w, h, amp, color){
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  const N=80;
+  for(let i=0;i<=N;i++){
+    const t = (i/N)*2-1; // -1..1
+    const gx = x + (t*0.5+0.5)*w;
+    const gy = y - amp*h*Math.exp(-6*t*t);
+    if(i===0) ctx.moveTo(gx,gy);
+    else ctx.lineTo(gx,gy);
+  }
+  ctx.stroke();
+
+  // baseline
+  ctx.strokeStyle = 'rgba(183,192,255,.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x+w, y);
+  ctx.stroke();
+}
+
+/* =========================
+   Plotting data generation
+   ========================= */
+function generateCurves(matKey, lambdaMaxShown){
+  const mat = MATERIALS[matKey];
+  const lamMin = mat.lambdaMin;
+  const lamMax = Math.min(mat.lambdaMax, lambdaMaxShown);
+
+  const Npts = 600;
+  const xs = [];
+  const nVals = [];
+  const NVals = [];
+  const DVals = [];
+  const b2Vals = [];
+
+  for(let i=0;i<Npts;i++){
+    const lam = lamMin + (lamMax-lamMin)*(i/(Npts-1));
+    xs.push(lam);
+    const nd = n_and_derivs(lam, mat);
+    const n = nd.n;
+    const Nidx = n - lam*nd.n1;
+    const D = Dlambda_ps_nm_km(lam, mat);
+    const b2 = beta2_SI(lam, mat);
+    nVals.push(n);
+    NVals.push(Nidx);
+    DVals.push(D);
+    b2Vals.push(b2);
+  }
+
+  return {xs, nVals, NVals, DVals, b2Vals, lamMin, lamMax};
+}
+
+function minMax(arr){
+  let mn=Infinity, mx=-Infinity;
+  for(const v of arr){
+    if(!Number.isFinite(v)) continue;
+    mn = Math.min(mn,v);
+    mx = Math.max(mx,v);
+  }
+  if(!Number.isFinite(mn) || !Number.isFinite(mx)) return {mn:0,mx:1};
+  if(mn===mx){ mn-=1; mx+=1; }
+  return {mn,mx};
+}
+
+/* =========================
+   Plot 1: n and N
+   ========================= */
+function drawPlot1(canvas, curves, matName){
+  const {ctx,w,h} = fitCanvas(canvas, 320);
+
+  // determine y range from both curves
+  const mmN = minMax(curves.nVals.concat(curves.NVals));
+  const yPad = 0.02*(mmN.mx-mmN.mn);
+  const yMin = mmN.mn - yPad;
+  const yMax = mmN.mx + yPad;
+
+  const box = {x:0,y:0,w,h,padL:56,padR:16,padT:34,padB:44};
+  const map = drawAxes(
+    ctx, box,
+    curves.lamMin, curves.lamMax,
+    yMin, yMax,
+    "Wavelength λ (μm)",
+    "Index (dimensionless)",
+    "n(λ) and N(λ) — " + matName
+  );
+
+  // lines
+  drawLine(ctx, map, curves.xs, curves.nVals, 'rgba(232,236,255,.92)', 2.2);
+  drawLine(ctx, map, curves.xs, curves.NVals, 'rgba(125,211,252,.95)', 2.4);
+
+  // legend
+  drawLegend(ctx, [
+    {label:"n(λ)", color:'rgba(232,236,255,.92)'},
+    {label:"N(λ)", color:'rgba(125,211,252,.95)'}
+  ], w-120, 56);
+
+  // highlight minimum of N
+  let minIdx = 0;
+  for(let i=1;i<curves.NVals.length;i++){
+    if(curves.NVals[i] < curves.NVals[minIdx]) minIdx = i;
+  }
+  const x0 = curves.xs[minIdx];
+  const y0 = curves.NVals[minIdx];
+  ctx.strokeStyle = 'rgba(52,211,153,.8)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6,5]);
+  ctx.beginPath();
+  ctx.moveTo(map.xToPx(x0), map.py0);
+  ctx.lineTo(map.xToPx(x0), map.py0+map.ph);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(52,211,153,.95)';
+  ctx.beginPath();
+  ctx.arc(map.xToPx(x0), map.yToPx(y0), 4.5, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(183,192,255,.9)';
+  ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas';
+  ctx.fillText('min N at ~' + (Math.round(x0*1000)/1000) + ' μm', map.xToPx(x0)+8, map.yToPx(y0)-10);
+}
+
+/* =========================
+   Plot 2: Dλ and optional β2 overlay
+   ========================= */
+function drawPlot2(canvas, curves, matName, showBeta2){
+  const {ctx,w,h} = fitCanvas(canvas, 320);
+
+  const mmD = minMax(curves.DVals);
+  const yPad = 0.08*(mmD.mx-mmD.mn);
+  const yMin = mmD.mn - yPad;
+  const yMax = mmD.mx + yPad;
+
+  const box = {x:0,y:0,w,h,padL:70,padR:58,padT:34,padB:44};
+  const map = drawAxes(
+    ctx, box,
+    curves.lamMin, curves.lamMax,
+    yMin, yMax,
+    "Wavelength λ (μm)",
+    "Dλ (ps/(nm·km))",
+    "Dispersion Dλ(λ) — " + matName
+  );
+
+  // Dλ line
+  drawLine(ctx, map, curves.xs, curves.DVals, 'rgba(167,139,250,.95)', 2.5);
+
+  // zero crossing marker for D
+  let zIdx = -1;
+  for(let i=1;i<curves.DVals.length;i++){
+    if(curves.DVals[i-1] === 0) { zIdx = i-1; break; }
+    if(curves.DVals[i-1] * curves.DVals[i] < 0) { zIdx = i; break; }
+  }
+  if(zIdx>0){
+    const xz = curves.xs[zIdx];
+    ctx.strokeStyle = 'rgba(251,191,36,.85)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6,5]);
+    ctx.beginPath();
+    ctx.moveTo(map.xToPx(xz), map.py0);
+    ctx.lineTo(map.xToPx(xz), map.py0+map.ph);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(251,191,36,.95)';
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas';
+    ctx.fillText('Dλ≈0 near ' + (Math.round(xz*1000)/1000) + ' μm', map.xToPx(xz)+8, map.py0+16);
+  }
+
+  // Optional β2 overlay with a right axis (scaled to fit)
+  let legend = [{label:"Dλ", color:'rgba(167,139,250,.95)'}];
+
+  if(showBeta2){
+    const b2 = curves.b2Vals;
+    const mmB = minMax(b2);
+    // scale β2 to D-axis visually: map b2 -> y using linear transform
+    // y = a*b2 + b such that mmB.mn->yMin and mmB.mx->yMax
+    const a = (yMax - yMin) / (mmB.mx - mmB.mn);
+    const b = yMin - a*mmB.mn;
+
+    // draw β2 in the same plot coordinates using transformed y
+    const yTrans = b2.map(v => a*v + b);
+    drawLine(ctx, map, curves.xs, yTrans, 'rgba(125,211,252,.95)', 2.0);
+    legend.push({label:"β2 (scaled)", color:'rgba(125,211,252,.95)'});
+
+    // right axis labels for β2
+    const yTicks = niceTicks(yMin, yMax, 6);
+    ctx.fillStyle = 'rgba(183,192,255,.85)';
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas';
+    // draw right axis line
+    ctx.strokeStyle = 'rgba(255,255,255,.22)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(map.px0+map.pw, map.py0);
+    ctx.lineTo(map.px0+map.pw, map.py0+map.ph);
+    ctx.stroke();
+
+    yTicks.forEach(t=>{
+      // convert t on D scale back to β2 value
+      const b2val = (t - b)/a;
+      const s = formatSci(b2val, 2);
+      const Y = map.yToPx(t);
+      ctx.fillText(s, map.px0+map.pw+6, Y+4);
+    });
+    ctx.fillStyle = 'rgba(232,236,255,.90)';
+    ctx.font = '600 12px ui-sans-serif, system-ui';
+    ctx.fillText('β2 (s²/m)', map.px0+map.pw+6, map.py0-6);
+  }
+
+  drawLegend(ctx, legend, 76, 56);
+}
+
+function formatSci(x, sig){
+  if(!Number.isFinite(x)) return '—';
+  if(x===0) return '0';
+  const ax = Math.abs(x);
+  const exp = Math.floor(Math.log10(ax));
+  const mant = x / Math.pow(10, exp);
+  const m = (Math.round(mant * Math.pow(10, sig)) / Math.pow(10, sig)).toString();
+  return m + 'e' + exp.toString();
+}
+
+/* =========================
+   UI + orchestration
+   ========================= */
+const materialSel = document.getElementById('materialSel');
+const lambdaMaxSlider = document.getElementById('lambdaMax');
+const lambdaMaxVal = document.getElementById('lambdaMaxVal');
+const rangeLabel = document.getElementById('rangeLabel');
+const resetBtn = document.getElementById('resetBtn');
+const showBeta2 = document.getElementById('showBeta2');
+const coeffBox = document.getElementById('coeffBox');
+
+const canvDiagram = document.getElementById('diagram');
+const canv1 = document.getElementById('plot1');
+const canv2 = document.getElementById('plot2');
+
+function sliderToLambdaMax(matKey){
+  const mat = MATERIALS[matKey];
+  // slider 0..100 maps to lamMin..lamMax
+  const t = lambdaMaxSlider.value / 100;
+  return mat.lambdaMin + t*(mat.lambdaMax - mat.lambdaMin);
+}
+
+function updateCoeffBox(matKey){
+  const mat = MATERIALS[matKey];
+  let s = `Material: ${mat.name}\n\n`;
+  s += `Sellmeier form (λ in μm):\n`;
+  s += `n^2(λ) = 1 + Σ A_i λ^2/(λ^2 - λ_i^2)\n\n`;
+  s += `i    A_i           λ_i (μm)\n`;
+  s += `—    ————          ———————\n`;
+  for(let i=0;i<mat.A.length;i++){
+    const A = mat.A[i];
+    const L = mat.L[i];
+    s += `${(i+1).toString().padEnd(4)} ${A.toString().padEnd(13)} ${L}\n`;
+  }
+  s += `\nRange requested in problem:\nλ ∈ [${mat.lambdaMin}, ${mat.lambdaMax}] μm\n`;
+  coeffBox.textContent = s;
+}
+
+function updateAll(){
+  const matKey = materialSel.value;
+  const mat = MATERIALS[matKey];
+  const lamMaxShown = sliderToLambdaMax(matKey);
+
+  // update UI labels
+  const lamMaxRounded = Math.round(lamMaxShown*1000)/1000;
+  lambdaMaxVal.textContent = lamMaxRounded.toFixed(3);
+  rangeLabel.textContent = `${mat.lambdaMin}–${lamMaxRounded.toFixed(3)} μm`;
+
+  // regenerate curves
+  const curves = generateCurves(matKey, lamMaxShown);
+
+  // draw visuals
+  drawDiagram(canvDiagram, mat.name);
+  drawPlot1(canv1, curves, mat.name);
+  drawPlot2(canv2, curves, mat.name, showBeta2.checked);
+
+  // coefficients box
+  updateCoeffBox(matKey);
+}
+
+function resetDefaults(){
+  // default: show full range for each material
+  lambdaMaxSlider.value = 100;
+  showBeta2.checked = true;
+  updateAll();
+}
+
+// responsive redraw
+let resizeTimer = null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(updateAll, 80);
+});
+
+materialSel.addEventListener('change', ()=>{
+  // keep slider at full range when switching to avoid confusion
+  lambdaMaxSlider.value = 100;
+  updateAll();
+});
+lambdaMaxSlider.addEventListener('input', updateAll);
+showBeta2.addEventListener('change', updateAll);
+resetBtn.addEventListener('click', resetDefaults);
+
+// init
+resetDefaults();
+</script>
+</body>
+</html>

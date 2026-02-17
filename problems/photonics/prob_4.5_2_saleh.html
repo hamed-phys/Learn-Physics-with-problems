@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Optical Correlation via Holography — Derivation & Interactive Demo</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#111a33;
+      --card:#0f1730;
+      --text:#e9eeff;
+      --muted:#aeb9e6;
+      --line:rgba(255,255,255,.12);
+      --accent:#7aa2ff;
+      --accent2:#7dffcc;
+      --warn:#ffd37a;
+      --ok:#8dff7a;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+      --radius2:22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% -10%, rgba(122,162,255,.25), transparent 65%),
+        radial-gradient(900px 600px at 90% 0%, rgba(125,255,204,.18), transparent 60%),
+        radial-gradient(900px 900px at 60% 120%, rgba(255,211,122,.10), transparent 55%),
+        var(--bg);
+      line-height:1.55;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      position:relative;
+      padding:42px 18px 26px;
+      border-bottom:1px solid var(--line);
+      overflow:hidden;
+    }
+    header .wrap{max-width:1100px; margin:0 auto; display:grid; gap:14px}
+    .kicker{
+      display:inline-flex; gap:10px; align-items:center;
+      padding:8px 12px; border:1px solid var(--line); border-radius:999px;
+      width:fit-content; background:rgba(255,255,255,.04);
+      color:var(--muted); font-size:13px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.2) inset;
+    }
+    .kdot{width:10px;height:10px;border-radius:99px;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+    h1{margin:0; font-size: clamp(26px, 2.8vw, 40px); letter-spacing:.2px}
+    .sub{
+      color:var(--muted);
+      max-width:78ch;
+      font-size: 15.5px;
+    }
+
+    main{
+      max-width:1100px;
+      margin:0 auto;
+      padding:22px 18px 60px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:18px;
+    }
+
+    /* Sticky mini TOC */
+    .toc{
+      position:sticky;
+      top:10px;
+      z-index:10;
+      background: rgba(17,26,51,.75);
+      backdrop-filter: blur(10px);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      padding:12px 12px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      overflow:auto;
+    }
+    .toc strong{font-size:13px; color:var(--muted); white-space:nowrap}
+    .toc a{
+      display:inline-block;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid transparent;
+      white-space:nowrap;
+      font-size:13px;
+      color:var(--text);
+      background: rgba(255,255,255,.04);
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .toc a:hover{background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.12); transform: translateY(-1px)}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:16px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid2{grid-template-columns: 1fr}
+      .toc{top:0; border-radius:0; border-left:none; border-right:none}
+    }
+
+    section, article{
+      background: rgba(17,26,51,.45);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    section .inner, article .inner{padding:18px}
+    h2{
+      margin:0 0 10px 0;
+      font-size: 20px;
+      letter-spacing:.2px;
+    }
+    h3{
+      margin:14px 0 8px 0;
+      font-size:16px;
+      color: var(--text);
+    }
+    p{margin:10px 0; color: rgba(233,238,255,.92)}
+    ul{margin:8px 0 10px 20px; color: rgba(233,238,255,.92)}
+    li{margin:6px 0}
+    .muted{color:var(--muted)}
+    .card{
+      background: rgba(15,23,48,.65);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding:14px;
+    }
+    .callouts{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:12px;
+    }
+    @media (max-width: 900px){
+      .callouts{grid-template-columns: 1fr}
+    }
+    .callout-title{display:flex; gap:10px; align-items:center; font-weight:650}
+    .pill{
+      padding:4px 10px; border-radius:999px; font-size:12px;
+      border:1px solid var(--line);
+      color:var(--muted);
+      background:rgba(255,255,255,.03);
+      width:fit-content;
+    }
+    .badge{
+      font-family: var(--mono);
+      font-size:12px;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(122,162,255,.10);
+      color: rgba(233,238,255,.95);
+    }
+    .eqbox{
+      position:relative;
+      padding:12px 12px 12px;
+      border-radius: var(--radius);
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      overflow:auto;
+    }
+    .eqbox pre{
+      margin:0;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.45;
+      color: rgba(233,238,255,.96);
+      white-space: pre-wrap;
+    }
+    .copybar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      margin-top:10px;
+    }
+    button.copy{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding:8px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-size:13px;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    button.copy:hover{transform: translateY(-1px); background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.22)}
+    button.copy:active{transform: translateY(0px)}
+    .toast{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      background: rgba(17,26,51,.9);
+      border:1px solid rgba(255,255,255,.16);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      opacity:0;
+      transform: translateY(10px);
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events:none;
+      font-size:13px;
+      z-index:50;
+    }
+    .toast.show{opacity:1; transform: translateY(0px)}
+    .controls{
+      display:grid;
+      gap:10px;
+    }
+    .ctrlrow{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:6px;
+      padding:10px;
+      border-radius: var(--radius);
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+    }
+    .ctrlrow label{
+      font-size: 13px;
+      color: var(--muted);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+    }
+    .ctrlrow input[type="range"]{width:100%}
+    .ctrlrow select, .ctrlrow input[type="number"]{
+      width:100%;
+      padding:9px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      outline:none;
+    }
+    .inline{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .check{
+      display:flex; gap:10px; align-items:center; font-size:13px; color:var(--muted);
+    }
+
+    figure{margin:0}
+    .canvasWrap{
+      padding:12px;
+      border-top:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.10));
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+    }
+    .small canvas{height:260px}
+    .caption{
+      padding:10px 12px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .box{
+      border-left: 3px solid rgba(122,162,255,.65);
+      padding:10px 12px;
+      border-radius: 14px;
+      background: rgba(122,162,255,.08);
+      border-top:1px solid rgba(255,255,255,.10);
+      border-right:1px solid rgba(255,255,255,.10);
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    .final{
+      border-left-color: rgba(125,255,204,.65);
+      background: rgba(125,255,204,.08);
+    }
+    .warn{
+      border-left-color: rgba(255,211,122,.7);
+      background: rgba(255,211,122,.08);
+    }
+
+    footer{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px 18px 28px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Subtle motion (reduced when user prefers) */
+    @media (prefers-reduced-motion: no-preference){
+      .floatIn{
+        animation: floatIn .5s ease both;
+      }
+      @keyframes floatIn{
+        from{opacity:0; transform: translateY(10px)}
+        to{opacity:1; transform: translateY(0px)}
+      }
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:white; color:#111}
+      header, main, footer{max-width: none}
+      section, article, .toc{box-shadow:none; background:white; border:1px solid #ddd}
+      .toc{position:relative; top:auto}
+      button.copy{display:none}
+      canvas{display:none}
+      .canvasWrap{display:none}
+      a{color:#000; text-decoration:underline}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="kicker"><span class="kdot" aria-hidden="true"></span><span>Fourier optics • holography • correlation</span></div>
+      <h1>Optical Correlation via Holography</h1>
+      <p class="sub">
+        A lens performs Fourier transforms; recording intensity creates a hologram containing cross-terms.
+        When re-illuminated by a reference wave and Fourier transformed again, the output field contains
+        <em>auto-correlations</em> and <em>cross-correlations</em> of the two shifted transparencies.
+      </p>
+    </div>
+  </header>
+
+  <main>
+    <!-- Sticky TOC -->
+    <nav class="toc" aria-label="Mini table of contents">
+      <strong>On this page</strong>
+      <a href="#quick" data-scroll>Quick Summary</a>
+      <a href="#part1" data-scroll>Part 1</a>
+      <a href="#part2" data-scroll>Part 2</a>
+      <a href="#part3" data-scroll>Part 3</a>
+      <a href="#viz" data-scroll>Interactive Visualizations</a>
+    </nav>
+
+    <!-- Quick Summary -->
+    <section id="quick" class="floatIn">
+      <div class="inner">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li>The input transparency is a sum of two shifted objects: <span class="badge">f(x,y)=f₁(x−a,y)+f₂(x+a,y)</span>.</li>
+          <li>A Fourier-transform lens produces the spectrum:
+            <span class="badge">F(u,v)=F₁(u,v)e^{-i2πua}+F₂(u,v)e^{+i2πua}</span>.</li>
+          <li>The recorded hologram intensity includes cross-terms:
+            <span class="badge">I=|F₁|²+|F₂|²+F₁F₂*e^{-i4πua}+F₁*F₂e^{+i4πua}</span>.</li>
+          <li>After multiplying by a reference wave and Fourier transforming again, the output contains:
+            two autocorrelations at the origin and two cross-correlations shifted by <span class="badge">±2a</span>.</li>
+          <li>Thus the correlation of <span class="badge">f₁</span> and <span class="badge">f₂</span> is read from the shifted peaks (or images) at lateral positions proportional to <span class="badge">2a</span>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Two-column: Part 1 and a compact equation/copy panel -->
+    <div class="grid2">
+      <section id="part1" class="floatIn">
+        <div class="inner">
+          <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+          <h3>Problem restatement (in plain words)</h3>
+          <p>
+            You have an optical transparency whose <em>complex amplitude transmittance</em> is the sum of two objects,
+            one shifted left by <span class="badge">a</span> and one shifted right by <span class="badge">a</span>:
+            <span class="badge">f(x,y)=f₁(x−a,y)+f₂(x+a,y)</span>.
+            A lens forms the Fourier transform of this transparency, and the <em>intensity</em> in the Fourier plane is recorded
+            as a hologram. Later you illuminate that hologram with a reference wave and use another lens to Fourier transform
+            the reconstructed wave, producing an output function <span class="badge">g(x,y)</span>.
+            Derive <span class="badge">g(x,y)</span> in terms of <span class="badge">f₁</span> and <span class="badge">f₂</span>,
+            and explain how to extract their mutual correlation using this system.
+          </p>
+
+          <h3>Given</h3>
+          <ul>
+            <li>Input transmittance: <span class="badge">f(x,y)=f₁(x−a,y)+f₂(x+a,y)</span>.</li>
+            <li>A Fourier-transforming lens (Fraunhofer regime / 4f-style Fourier optics assumption).</li>
+            <li>Hologram records Fourier-plane intensity of the field: <span class="badge">I(u,v)=|F(u,v)|²</span>.</li>
+            <li>Hologram illuminated by a reference wave; reconstructed field is Fourier transformed to yield <span class="badge">g(x,y)</span>.</li>
+          </ul>
+
+          <h3>Unknowns</h3>
+          <ul>
+            <li>An explicit expression relating <span class="badge">g(x,y)</span> to <span class="badge">f₁(x,y)</span> and <span class="badge">f₂(x,y)</span>.</li>
+            <li>A clear method to determine the correlation between <span class="badge">f₁</span> and <span class="badge">f₂</span> from the output.</li>
+          </ul>
+
+          <h3>Relevant principles (and why they apply)</h3>
+          <ul>
+            <li><strong>Lens as Fourier transformer:</strong> In Fourier optics, the field in the back focal plane is proportional to the Fourier transform of the field in the front focal plane (up to scale and phase). This is exactly the system described.</li>
+            <li><strong>Shift theorem:</strong> Spatial shifts in <span class="badge">x</span> become linear phase factors in spatial frequency <span class="badge">u</span>. Needed because the objects are at <span class="badge">±a</span>.</li>
+            <li><strong>Interference / hologram recording:</strong> Recording intensity <span class="badge">|F|²</span> introduces cross-terms that encode products like <span class="badge">F₁F₂*</span>, which are the Fourier-domain signatures of correlation.</li>
+            <li><strong>Correlation theorem:</strong> The inverse Fourier transform of <span class="badge">F₁F₂*</span> is the cross-correlation <span class="badge">(f₁ ⋆ f₂)</span>. This is the key to extracting correlation optically.</li>
+          </ul>
+
+          <h3>Possible approaches</h3>
+          <ul>
+            <li><strong>(A) Fourier-domain algebra:</strong> Write <span class="badge">F(u,v)</span> using shift theorem, compute <span class="badge">|F|²</span>, multiply by reference, then Fourier transform again. Most direct and clean.</li>
+            <li><strong>(B) Convolution/correlation operator view:</strong> Recognize immediately that intensity contains terms whose inverse FT are correlations. Faster conceptually, but needs careful shift bookkeeping.</li>
+            <li><strong>(C) 4f system impulse response:</strong> Model each plane-to-plane propagation as a linear system and track operations. More general but longer than needed.</li>
+          </ul>
+
+          <p class="box">
+            <strong>Chosen approach:</strong> (A) Fourier-domain algebra — it keeps the physics transparent, explicitly shows where correlation terms appear,
+            and makes the spatial shifts (<span class="badge">±2a</span>) unambiguous.
+          </p>
+        </div>
+      </section>
+
+      <aside class="floatIn">
+        <article>
+          <div class="inner">
+            <h2>Key Equations (copy-ready)</h2>
+            <p class="muted">These are the “spine” of the derivation. Use the copy buttons for plain text.</p>
+
+            <div class="eqbox" id="eq-shift">
+<pre>f(x,y)=f1(x-a,y)+f2(x+a,y)
+
+F(u,v)=F1(u,v)·exp(-i2πu a) + F2(u,v)·exp(+i2πu a)</pre>
+            </div>
+            <div class="copybar">
+              <button class="copy" data-copy="#eq-shift" aria-label="Copy shift equations">Copy</button>
+              <span class="pill">Shift theorem</span>
+            </div>
+
+            <div style="height:12px"></div>
+
+            <div class="eqbox" id="eq-intensity">
+<pre>I(u,v)=|F|^2
+     = |F1|^2 + |F2|^2
+       + F1·F2*·exp(-i2πu·(2a)) + F1*·F2·exp(+i2πu·(2a))</pre>
+            </div>
+            <div class="copybar">
+              <button class="copy" data-copy="#eq-intensity" aria-label="Copy intensity equation">Copy</button>
+              <span class="pill">Hologram content</span>
+            </div>
+
+            <div style="height:12px"></div>
+
+            <div class="eqbox" id="eq-final">
+<pre>Define cross-correlation:
+(f1 ⋆ f2)(x,y)= ∬ f1(ξ,η) · f2*(ξ+x, η+y) dξ dη
+
+Then (up to a constant scale):
+g(x,y) ∝ (f1 ⋆ f1)(x,y) + (f2 ⋆ f2)(x,y)
+        + (f1 ⋆ f2)(x-2a,y) + (f2 ⋆ f1)(x+2a,y)</pre>
+            </div>
+            <div class="copybar">
+              <button class="copy" data-copy="#eq-final" aria-label="Copy final result">Copy Final</button>
+              <span class="pill">Correlation plane</span>
+            </div>
+
+            <p class="box final" style="margin-top:14px">
+              <strong>How to read correlation:</strong> the mutual correlation appears as the two <em>shifted</em> terms at
+              <span class="badge">x=±2a</span> (or, with off-axis reference, in separated diffraction orders).
+            </p>
+          </div>
+        </article>
+      </aside>
+    </div>
+
+    <!-- Part 2 -->
+    <section id="part2" class="floatIn">
+      <div class="inner">
+        <h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+
+        <div class="callouts">
+          <div class="card">
+            <div class="callout-title"><span class="badge">Step 1</span> <span>Fourier transform the input</span></div>
+            <p class="muted">Goal: express <span class="badge">F(u,v)</span> using the shift theorem.</p>
+            <div class="pill">Tool: shift property of FT</div>
+          </div>
+          <div class="card">
+            <div class="callout-title"><span class="badge">Step 2</span> <span>Compute hologram intensity</span></div>
+            <p class="muted">Goal: expand <span class="badge">I=|F|²</span> to expose cross-terms.</p>
+            <div class="pill">Tool: complex magnitude expansion</div>
+          </div>
+          <div class="card">
+            <div class="callout-title"><span class="badge">Step 3</span> <span>Reconstruction + 2nd FT</span></div>
+            <p class="muted">Goal: identify which inverse FT’s appear in the correlation plane.</p>
+            <div class="pill">Tool: correlation theorem</div>
+          </div>
+        </div>
+
+        <h3>Minimal step-by-step plan (5–10 steps)</h3>
+        <ol style="margin:8px 0 0 20px; color: rgba(233,238,255,.92)">
+          <li><strong>Write</strong> <span class="badge">F(u,v)</span> as a sum of shifted spectra using the shift theorem.</li>
+          <li><strong>Expand</strong> <span class="badge">I(u,v)=F(u,v)F*(u,v)</span> into four terms.</li>
+          <li><strong>Recognize</strong> that <span class="badge">|F₁|²</span> and <span class="badge">|F₂|²</span> inverse-transform to autocorrelations.</li>
+          <li><strong>Recognize</strong> that <span class="badge">F₁F₂*</span> inverse-transforms to the cross-correlation <span class="badge">f₁⋆f₂</span>.</li>
+          <li><strong>Use</strong> the shift property to convert the phase factors <span class="badge">exp(±i2πu·2a)</span> into spatial shifts <span class="badge">x→x∓2a</span>.</li>
+          <li><strong>Include</strong> the reference wave role conceptually: it enables reconstruction and, if off-axis, separates orders; the correlation content comes from the same product terms.</li>
+          <li><strong>State</strong> the final <span class="badge">g(x,y)</span> as a sum of auto- and cross-correlations.</li>
+          <li><strong>Explain</strong> how to read the cross-correlation from the shifted output peaks/images at <span class="badge">±2a</span>.</li>
+        </ol>
+
+        <h3>Common mistakes &amp; quick tips</h3>
+        <div class="box warn">
+          <ul>
+            <li><strong>Forgetting conjugation:</strong> cross-correlation uses <span class="badge">F₁F₂*</span>, not <span class="badge">F₁F₂</span>. That conjugate determines whether you get correlation vs convolution.</li>
+            <li><strong>Sign of the shift:</strong> <span class="badge">H(u)·e^{-i2πu x0}</span> ↔ <span class="badge">h(x-x0)</span>. Keep that mapping consistent.</li>
+            <li><strong>Lens scaling:</strong> A real lens introduces scale factors (<span class="badge">u=x_f/(λf)</span>) and phase curvature; for correlation identification, these are usually absorbed into constants and coordinate scaling.</li>
+            <li><strong>Reference wave details:</strong> Off-axis reference is often used to separate diffraction orders; the correlation structure comes from the same spectral products, just shifted in the output plane.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Part 3 -->
+    <section id="part3" class="floatIn">
+      <div class="inner">
+        <h2>PART 3 — Full Solution</h2>
+
+        <h3>Physical intuition first</h3>
+        <p>
+          The first lens converts the transparency into its spatial-frequency content. Because the transparency is a sum of two
+          shifted objects, the Fourier-plane field is a <em>sum</em> of their spectra with opposite linear phase ramps.
+          When you record intensity, you square that sum — producing not only the individual spectra intensities
+          (<span class="badge">|F₁|²</span>, <span class="badge">|F₂|²</span>) but also the interference products
+          (<span class="badge">F₁F₂*</span> and its conjugate). Those products are exactly what the correlation theorem
+          needs: the inverse Fourier transform of <span class="badge">F₁F₂*</span> is the cross-correlation <span class="badge">f₁⋆f₂</span>.
+          The extra phase factors from the original object shifts become <em>spatial shifts</em> in the correlation plane,
+          separating the correlation signals from the autocorrelation background.
+        </p>
+
+        <h3>Step-by-step derivation</h3>
+
+        <p><strong>1) Define the Fourier transform convention (spatial frequencies)</strong></p>
+        <div class="eqbox" id="eq-def">
+<pre>Let the 2D Fourier transform pair be:
+
+F(u,v) = ∬ f(x,y) · exp[-i2π(ux + vy)] dx dy
+f(x,y) = ∬ F(u,v) · exp[+i2π(ux + vy)] du dv</pre>
+        </div>
+        <div class="copybar">
+          <button class="copy" data-copy="#eq-def">Copy</button>
+          <span class="pill">Convention</span>
+        </div>
+
+        <p class="muted">
+          In an actual lens Fourier plane, <span class="badge">u</span> and <span class="badge">v</span> map to focal-plane coordinates via
+          <span class="badge">u = X/(λf)</span>, <span class="badge">v = Y/(λf)</span>. We keep <span class="badge">(u,v)</span> as the Fourier variables for clarity.
+        </p>
+
+        <p><strong>2) Fourier transform the shifted transparency</strong></p>
+        <p>
+          Given <span class="badge">f(x,y)=f₁(x−a,y)+f₂(x+a,y)</span>. By the shift theorem:
+        </p>
+        <div class="eqbox" id="eq-Fsum">
+<pre>FT{ f1(x-a,y) } = F1(u,v) · exp(-i2πu a)
+FT{ f2(x+a,y) } = F2(u,v) · exp(+i2πu a)
+
+Therefore:
+F(u,v) = F1(u,v)·exp(-i2πu a) + F2(u,v)·exp(+i2πu a)</pre>
+        </div>
+        <div class="copybar">
+          <button class="copy" data-copy="#eq-Fsum">Copy</button>
+          <span class="pill">Shift theorem applied</span>
+        </div>
+
+        <p><strong>3) Record the hologram intensity</strong></p>
+        <p>
+          The hologram records <span class="badge">I(u,v)=|F(u,v)|² = F(u,v)F*(u,v)</span>. Compute:
+        </p>
+        <div class="eqbox" id="eq-Iexpand">
+<pre>F*(u,v) = F1*(u,v)·exp(+i2πu a) + F2*(u,v)·exp(-i2πu a)
+
+I(u,v)=F·F*
+     = |F1|^2 + |F2|^2
+       + F1·F2*·exp(-i2πu·(2a))
+       + F1*·F2·exp(+i2πu·(2a))</pre>
+        </div>
+        <div class="copybar">
+          <button class="copy" data-copy="#eq-Iexpand">Copy</button>
+          <span class="pill">Interference terms</span>
+        </div>
+
+        <p class="muted">
+          The last two terms are complex conjugates of each other; they carry the mutual information between <span class="badge">f₁</span> and <span class="badge">f₂</span>.
+        </p>
+
+        <p><strong>4) Reconstruction with a reference wave</strong></p>
+        <p>
+          In holography, illuminating the recorded intensity transmittance with a reference wave <span class="badge">R(u,v)</span>
+          produces a reconstructed field proportional to:
+        </p>
+        <div class="eqbox" id="eq-recon">
+<pre>U_rec(u,v) ∝ I(u,v) · R(u,v)</pre>
+        </div>
+        <div class="copybar">
+          <button class="copy" data-copy="#eq-recon">Copy</button>
+          <span class="pill">Reconstruction</span>
+        </div>
+        <p>
+          If <span class="badge">R</span> is a plane wave (often slightly tilted in practice), it mostly acts to (i) enable a field reconstruction
+          and (ii) optionally separate diffraction orders by shifting them in the final plane. The correlation content comes from the factors in <span class="badge">I(u,v)</span>.
+        </p>
+
+        <p><strong>5) Second lens Fourier transforms to the output plane</strong></p>
+        <p>
+          The second lens produces (up to constant scale factors) the inverse Fourier transform of <span class="badge">U_rec(u,v)</span>.
+          For a simple plane reference <span class="badge">R(u,v)=R₀</span>, this is proportional to the inverse FT of <span class="badge">I(u,v)</span>.
+          Define the output function:
+        </p>
+        <div class="eqbox" id="eq-gdef">
+<pre>g(x,y) ∝ ∬ I(u,v) · exp[+i2π(ux+vy)] du dv  =  FT^{-1}{ I(u,v) }</pre>
+        </div>
+        <div class="copybar">
+          <button class="copy" data-copy="#eq-gdef">Copy</button>
+          <span class="pill">Output plane</span>
+        </div>
+
+        <p><strong>6) Use the correlation theorem term-by-term</strong></p>
+        <p>
+          First define the (cross-)correlation:
+        </p>
+        <div class="eqbox" id="eq-corrdef">
+<pre>(f1 ⋆ f2)(x,y) = ∬ f1(ξ,η) · f2*(ξ + x, η + y) dξ dη
+
+Correlation theorem:
+FT{ (f1 ⋆ f2)(x,y) } = F1(u,v) · F2*(u,v)</pre>
+        </div>
+        <div class="copybar">
+          <button class="copy" data-copy="#eq-corrdef">Copy</button>
+          <span class="pill">Correlation theorem</span>
+        </div>
+
+        <p>
+          Now take the inverse FT of each term in <span class="badge">I(u,v)</span>:
+        </p>
+        <ul>
+          <li>
+            <span class="badge">FT^{-1}{|F₁|²} = (f₁ ⋆ f₁)(x,y)</span> (autocorrelation of <span class="badge">f₁</span>).
+          </li>
+          <li>
+            <span class="badge">FT^{-1}{|F₂|²} = (f₂ ⋆ f₂)(x,y)</span> (autocorrelation of <span class="badge">f₂</span>).
+          </li>
+          <li>
+            <span class="badge">FT^{-1}{F₁F₂*} = (f₁ ⋆ f₂)(x,y)</span> (cross-correlation).
+          </li>
+          <li>
+            <span class="badge">FT^{-1}{F₁*F₂} = (f₂ ⋆ f₁)(x,y)</span> (the reverse cross-correlation).
+          </li>
+        </ul>
+
+        <p><strong>7) Convert the phase ramps into spatial shifts</strong></p>
+        <p>
+          Use the shift property of the inverse FT:
+        </p>
+        <div class="eqbox" id="eq-shiftprop">
+<pre>If G(u,v)=H(u,v)·exp[-i2πu x0], then g(x,y)=h(x-x0,y).
+
+Here exp[-i2πu(2a)] ⇒ x0 = 2a.</pre>
+        </div>
+        <div class="copybar">
+          <button class="copy" data-copy="#eq-shiftprop">Copy</button>
+          <span class="pill">Shift mapping</span>
+        </div>
+
+        <p>
+          Therefore:
+        </p>
+        <ul>
+          <li><span class="badge">FT^{-1}{F₁F₂*·exp[-i2πu(2a)]} = (f₁ ⋆ f₂)(x-2a, y)</span></li>
+          <li><span class="badge">FT^{-1}{F₁*F₂·exp[+i2πu(2a)]} = (f₂ ⋆ f₁)(x+2a, y)</span></li>
+        </ul>
+
+        <h3>Final expression for g(x,y)</h3>
+        <div class="box final">
+          <p style="margin:0 0 8px 0"><strong>Result (up to an overall proportionality constant and coordinate scaling):</strong></p>
+          <div class="eqbox" id="eq-finalboxed">
+<pre>g(x,y) ∝ (f1 ⋆ f1)(x,y) + (f2 ⋆ f2)(x,y)
+        + (f1 ⋆ f2)(x-2a,y) + (f2 ⋆ f1)(x+2a,y)</pre>
+          </div>
+          <div class="copybar">
+            <button class="copy" data-copy="#eq-finalboxed">Copy</button>
+            <span class="pill">Boxed final</span>
+          </div>
+        </div>
+
+        <h3>How to determine the correlation between f₁ and f₂</h3>
+        <p>
+          The mutual correlation <span class="badge">(f₁ ⋆ f₂)(x,y)</span> appears in <span class="badge">g(x,y)</span> as a copy shifted to the lateral position
+          <span class="badge">x = +2a</span> in the sense that the term is <span class="badge">(f₁ ⋆ f₂)(x-2a,y)</span>.
+          Similarly, <span class="badge">(f₂ ⋆ f₁)</span> appears shifted to <span class="badge">x=-2a</span> via <span class="badge">(f₂ ⋆ f₁)(x+2a,y)</span>.
+        </p>
+        <p class="box">
+          <strong>Practical readout:</strong> measure the intensity (or complex field, if available) in the output plane and examine the regions centered at
+          <span class="badge">x≈±2a</span>. Those regions contain the cross-correlation terms separated from the autocorrelations centered at the origin.
+          With an off-axis reference wave, the desired term can also be isolated in a separated diffraction order.
+        </p>
+
+        <h3>Sanity checks</h3>
+        <ul>
+          <li><strong>Units:</strong> If <span class="badge">x</span> is in mm and <span class="badge">u</span> in cycles/mm, the phase <span class="badge">2πux</span> is dimensionless. The shift <span class="badge">2a</span> has the same units as <span class="badge">x</span>.</li>
+          <li><strong>Limiting case a→0:</strong> The shifted correlation terms move to the origin and overlap the autocorrelation background (harder to separate).</li>
+          <li><strong>Limiting case f₂=0:</strong> Then <span class="badge">g(x,y) ∝ (f₁⋆f₁)(x,y)</span>, as expected: only an autocorrelation remains.</li>
+          <li><strong>Physical interpretation:</strong> The system converts spectral interference products into spatially separated correlation “images,” enabling optical pattern matching.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Visualizations -->
+    <section id="viz" class="floatIn">
+      <div class="inner">
+        <h2>Interactive Visualizations</h2>
+        <p class="muted">
+          The plots below use a 1D slice (along <span class="badge">x</span>) to visualize the same mathematics:
+          <span class="badge">g(x)=c11(x)+c22(x)+c12(x-2a)+c21(x+2a)</span>.
+          This mirrors the full 2D result but is easier to see in a single graph.
+          Values used here are <strong>example values</strong> for demonstration.
+        </p>
+
+        <div class="grid2">
+          <article>
+            <div class="inner">
+              <h3 style="margin-top:0">Controls (updates all canvases)</h3>
+              <div class="controls" aria-label="interactive controls">
+                <div class="ctrlrow">
+                  <label>
+                    Separation <span class="badge">a</span> (mm)
+                    <span id="aRead" class="badge">2.0</span>
+                  </label>
+                  <input id="aSlider" type="range" min="0" max="5" value="2" step="0.05" />
+                  <div class="muted" style="font-size:12.5px">Correlation terms shift by <span class="badge">±2a</span> in the output plane.</div>
+                </div>
+
+                <div class="ctrlrow">
+                  <label>Object shape (example)</label>
+                  <select id="shapeSel">
+                    <option value="gauss">Gaussian bumps</option>
+                    <option value="rect">Rectangular apertures</option>
+                    <option value="cos">Windowed cosine</option>
+                  </select>
+                </div>
+
+                <div class="ctrlrow">
+                  <label>
+                    Relative phase of <span class="badge">f₂</span> (radians)
+                    <span id="phiRead" class="badge">0.0</span>
+                  </label>
+                  <input id="phiSlider" type="range" min="-3.1416" max="3.1416" value="0" step="0.01" />
+                  <div class="check">
+                    <input id="complexToggle" type="checkbox" />
+                    <label for="complexToggle" style="margin:0; cursor:pointer">Enable complex object (phase affects cross-terms)</label>
+                  </div>
+                </div>
+
+                <div class="ctrlrow">
+                  <label>
+                    Sampling points <span class="badge">N</span>
+                  </label>
+                  <select id="nSel">
+                    <option value="256">256 (fast)</option>
+                    <option value="384">384 (clearer)</option>
+                    <option value="512">512 (crisp)</option>
+                  </select>
+                  <div class="muted" style="font-size:12.5px">Higher N improves smoothness but costs CPU.</div>
+                </div>
+
+                <div class="inline">
+                  <button class="copy" id="resetBtn" type="button">Reset demo</button>
+                  <span class="pill">Tip: increase a to separate peaks</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="canvasWrap small">
+              <canvas id="diagramCanvas" aria-label="Labeled optical setup diagram"></canvas>
+              <div class="caption">Diagram: Fourier lens → hologram (intensity) → reference illumination → second lens → correlation plane.</div>
+            </div>
+          </article>
+
+          <article>
+            <div class="inner">
+              <h3 style="margin-top:0">Main plot: Output g(x) (correlation plane)</h3>
+              <p class="muted" style="margin-top:0">
+                Watch how the cross-correlation terms move to <span class="badge">x≈±2a</span>. Autocorrelation stays near the origin.
+              </p>
+            </div>
+            <div class="canvasWrap">
+              <canvas id="mainPlot" aria-label="Main quantitative plot of g(x)"></canvas>
+              <div class="caption">Plot 1: <span class="badge">g(x)</span> vs <span class="badge">x</span> (mm). Includes grid, axes, and legend.</div>
+            </div>
+          </article>
+        </div>
+
+        <article style="margin-top:16px">
+          <div class="inner">
+            <h3 style="margin-top:0">Secondary plot: Input slice f(x) and the correlation components</h3>
+            <p class="muted" style="margin-top:0">
+              This panel shows (i) the input transparency slice <span class="badge">f(x)=f₁(x−a)+f₂(x+a)</span> and (ii) the components
+              <span class="badge">c11</span>, <span class="badge">c22</span>, <span class="badge">c12</span>, <span class="badge">c21</span>.
+              Together they form <span class="badge">g(x)</span>.
+            </p>
+          </div>
+          <div class="canvasWrap">
+            <canvas id="secondaryPlot" aria-label="Secondary plot of input and correlation components"></canvas>
+            <div class="caption">Plot 2: top legend toggles are informational; all curves update with the controls.</div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>
+      <strong>Note on proportionality:</strong> Real optical systems include constant scale factors (e.g., <span class="badge">1/(λf)</span>),
+      lens phase curvatures, and possibly off-axis reference shifts. These do not change the key result:
+      <em>the output contains separated auto- and cross-correlation terms</em>.
+    </div>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Copied.</div>
+
+  <script>
+    // ---------- Utilities ----------
+    const $ = (sel, root=document) => root.querySelector(sel);
+
+    function showToast(msg){
+      const t = $("#toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(showToast._tm);
+      showToast._tm = setTimeout(()=>t.classList.remove("show"), 1100);
+    }
+
+    function copyFromSelector(sel){
+      const el = $(sel);
+      if(!el) return;
+      const txt = el.innerText.replace(/\n{3,}/g,"\n\n").trim();
+      navigator.clipboard.writeText(txt).then(()=>showToast("Copied to clipboard."));
+    }
+
+    document.addEventListener("click", (e)=>{
+      const btn = e.target.closest("button.copy");
+      if(btn && btn.dataset.copy){
+        copyFromSelector(btn.dataset.copy);
+      }
+    });
+
+    // Smooth scroll for TOC
+    document.addEventListener("click",(e)=>{
+      const a = e.target.closest("a[data-scroll]");
+      if(!a) return;
+      e.preventDefault();
+      const id = a.getAttribute("href");
+      const target = $(id);
+      if(target) target.scrollIntoView({behavior:"smooth", block:"start"});
+    });
+
+    // ---------- Canvas plotting ----------
+    function setupCanvas(canvas){
+      const ctx = canvas.getContext("2d");
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.max(2, Math.floor(rect.width * dpr));
+        const h = Math.max(2, Math.floor(rect.height * dpr));
+        if(canvas.width !== w || canvas.height !== h){
+          canvas.width = w; canvas.height = h;
+        }
+        ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+      }
+      resize();
+      const ro = new ResizeObserver(resize);
+      ro.observe(canvas);
+      return {ctx, resize};
+    }
+
+    function niceStep(range, targetTicks=8){
+      const raw = range / targetTicks;
+      const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+      const n = raw / pow;
+      let step;
+      if(n < 1.5) step = 1;
+      else if(n < 3) step = 2;
+      else if(n < 7) step = 5;
+      else step = 10;
+      return step * pow;
+    }
+
+    function drawAxes(ctx, box, xMin, xMax, yMin, yMax, xLabel, yLabel, title){
+      const {x,y,w,h} = box;
+      // Background
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.20)";
+      ctx.fillRect(x,y,w,h);
+
+      // Title
+      ctx.fillStyle = "rgba(233,238,255,0.94)";
+      ctx.font = "600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(title, x+10, y+18);
+
+      // Plot area
+      const padL=52, padR=16, padT=28, padB=40;
+      const px = x + padL, py = y + padT;
+      const pw = w - padL - padR, ph = h - padT - padB;
+
+      // Grid + ticks
+      const xRange = xMax-xMin, yRange=yMax-yMin;
+      const xStep = niceStep(xRange, 7);
+      const yStep = niceStep(yRange, 6);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+
+      // Vertical grid
+      for(let xv = Math.ceil(xMin/xStep)*xStep; xv <= xMax+1e-12; xv += xStep){
+        const xx = px + (xv-xMin)/xRange * pw;
+        ctx.beginPath();
+        ctx.moveTo(xx, py);
+        ctx.lineTo(xx, py+ph);
+        ctx.stroke();
+      }
+      // Horizontal grid
+      for(let yv = Math.ceil(yMin/yStep)*yStep; yv <= yMax+1e-12; yv += yStep){
+        const yy = py+ph - (yv-yMin)/yRange * ph;
+        ctx.beginPath();
+        ctx.moveTo(px, yy);
+        ctx.lineTo(px+pw, yy);
+        ctx.stroke();
+      }
+
+      // Axes
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px, py+ph);
+      ctx.lineTo(px+pw, py+ph);
+      ctx.stroke();
+
+      // Tick labels
+      ctx.fillStyle = "rgba(233,238,255,0.72)";
+      ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+
+      // x labels
+      for(let xv = Math.ceil(xMin/xStep)*xStep; xv <= xMax+1e-12; xv += xStep){
+        const xx = px + (xv-xMin)/xRange * pw;
+        ctx.beginPath();
+        ctx.moveTo(xx, py+ph);
+        ctx.lineTo(xx, py+ph+5);
+        ctx.strokeStyle = "rgba(255,255,255,0.22)";
+        ctx.stroke();
+        const s = (Math.abs(xv) < 1e-9) ? "0" : xv.toFixed((xStep<1)?2:(xStep<2)?1:0);
+        ctx.fillText(s, xx-10, py+ph+18);
+      }
+
+      // y labels
+      for(let yv = Math.ceil(yMin/yStep)*yStep; yv <= yMax+1e-12; yv += yStep){
+        const yy = py+ph - (yv-yMin)/yRange * ph;
+        ctx.beginPath();
+        ctx.moveTo(px-5, yy);
+        ctx.lineTo(px, yy);
+        ctx.strokeStyle = "rgba(255,255,255,0.22)";
+        ctx.stroke();
+        const s = (Math.abs(yv) < 1e-9) ? "0" : yv.toFixed((yStep<1)?2:(yStep<2)?1:0);
+        ctx.fillText(s, px-44, yy+4);
+      }
+
+      // Axis labels
+      ctx.fillStyle = "rgba(233,238,255,0.82)";
+      ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText(xLabel, px+pw/2 - ctx.measureText(xLabel).width/2, py+ph+34);
+
+      // y label rotated
+      ctx.save();
+      ctx.translate(px-40, py+ph/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(yLabel, -ctx.measureText(yLabel).width/2, 0);
+      ctx.restore();
+
+      ctx.restore();
+
+      function xToPix(xv){ return px + (xv-xMin)/xRange * pw; }
+      function yToPix(yv){ return py+ph - (yv-yMin)/yRange * ph; }
+
+      return {plot:{x:px,y:py,w:pw,h:ph}, xToPix, yToPix};
+    }
+
+    function drawLine(ctx, map, xs, ys, strokeStyle, lineWidth=2){
+      ctx.save();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = lineWidth;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      for(let i=0;i<xs.length;i++){
+        const x = map.xToPix(xs[i]);
+        const y = map.yToPix(ys[i]);
+        if(i===0) ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLegend(ctx, box, items){
+      const x = box.x + 10, y = box.y + 28;
+      ctx.save();
+      ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      let cx=x, cy=y;
+      const pad=8, sw=18, rowH=18;
+      for(const it of items){
+        const label = it.label;
+        const w = sw + 6 + ctx.measureText(label).width + pad*2;
+        if(cx + w > box.x + box.w - 10){
+          cx = x; cy += rowH;
+        }
+        // chip background
+        ctx.fillStyle = "rgba(255,255,255,0.05)";
+        ctx.strokeStyle = "rgba(255,255,255,0.12)";
+        roundRect(ctx, cx, cy-12, w, 18, 9);
+        ctx.fill(); ctx.stroke();
+        // swatch
+        ctx.strokeStyle = it.color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx+pad, cy-3);
+        ctx.lineTo(cx+pad+sw, cy-3);
+        ctx.stroke();
+        // label
+        ctx.fillStyle = "rgba(233,238,255,0.86)";
+        ctx.fillText(label, cx+pad+sw+6, cy+1);
+        cx += w + 8;
+      }
+      ctx.restore();
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    // ---------- Math demo model (1D slice) ----------
+    // We simulate g(x) = c11(x)+c22(x)+c12(x-2a)+c21(x+2a)
+    // where c12(x) = ∫ f1(ξ) f2*(ξ + x) dξ (discrete sum).
+
+    function linspace(min, max, n){
+      const arr = new Array(n);
+      const step = (max-min)/(n-1);
+      for(let i=0;i<n;i++) arr[i]=min+i*step;
+      return arr;
+    }
+
+    function complex(re, im){ return {re, im}; }
+    function cAdd(a,b){ return {re:a.re+b.re, im:a.im+b.im}; }
+    function cMul(a,b){ return {re:a.re*b.re - a.im*b.im, im:a.re*b.im + a.im*b.re}; }
+    function cConj(a){ return {re:a.re, im:-a.im}; }
+    function cAbs2(a){ return a.re*a.re + a.im*a.im; }
+
+    function makeShape(shape, x, w){
+      // real-valued base profile centered at 0
+      if(shape==="gauss"){
+        const s = w;
+        return Math.exp(-(x*x)/(2*s*s));
+      }
+      if(shape==="rect"){
+        return (Math.abs(x) <= w) ? 1 : 0;
+      }
+      // windowed cosine
+      const L = w*3;
+      if(Math.abs(x)>L) return 0;
+      return 0.5*(1+Math.cos(Math.PI*x/L));
+    }
+
+    function shiftSample(xArr, fArr, shift){
+      // sample f(x-shift) via linear interpolation on uniform grid
+      const n = xArr.length;
+      const dx = xArr[1]-xArr[0];
+      const x0 = xArr[0];
+      const out = new Array(n);
+      for(let i=0;i<n;i++){
+        const x = xArr[i] - shift;
+        const t = (x - x0)/dx;
+        const j = Math.floor(t);
+        const a = t - j;
+        if(j < 0 || j >= n-1){
+          out[i] = complex(0,0);
+        }else{
+          const f0 = fArr[j], f1 = fArr[j+1];
+          out[i] = complex(
+            f0.re*(1-a) + f1.re*a,
+            f0.im*(1-a) + f1.im*a
+          );
+        }
+      }
+      return out;
+    }
+
+    function correlate(xArr, fA, fB){
+      // cAB(x_k) = sum_j fA(x_j) * conj(fB(x_j + x_k)) dx
+      // Implement by shifting B by (-x_k) and dot.
+      const n = xArr.length;
+      const dx = xArr[1]-xArr[0];
+      const out = new Array(n).fill(0).map(()=>complex(0,0));
+      for(let k=0;k<n;k++){
+        const shift = xArr[k]; // x_k
+        // Need samples of fB(x + shift) => shift argument by +shift
+        // We will interpolate fB at (x + shift): that's equivalent to shifting fB left by (-shift).
+        const fBshift = shiftSample(xArr, fB, -shift); // gives fB(x+shift)
+        let acc = complex(0,0);
+        for(let j=0;j<n;j++){
+          acc = cAdd(acc, cMul(fA[j], cConj(fBshift[j])));
+        }
+        out[k] = complex(acc.re*dx, acc.im*dx);
+      }
+      return out;
+    }
+
+    // ---------- Canvases ----------
+    const diag = setupCanvas($("#diagramCanvas"));
+    const mainC = setupCanvas($("#mainPlot"));
+    const secC  = setupCanvas($("#secondaryPlot"));
+
+    // ---------- State ----------
+    const state = {
+      a: 2.0,         // mm
+      phi: 0.0,       // rad
+      complexOn: false,
+      shape: "gauss",
+      N: 256,
+      xMin: -10, xMax: 10 // mm display range
+    };
+
+    // ---------- Rendering: diagram ----------
+    function drawDiagram(){
+      const canvas = $("#diagramCanvas");
+      const ctx = diag.ctx;
+      const rect = canvas.getBoundingClientRect();
+      const W = rect.width, H = rect.height;
+
+      ctx.clearRect(0,0,W,H);
+
+      // Background gradient wash
+      const g = ctx.createLinearGradient(0,0, W, H);
+      g.addColorStop(0, "rgba(122,162,255,0.10)");
+      g.addColorStop(1, "rgba(125,255,204,0.07)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+
+      // Helper drawing
+      function box(x,y,w,h,label,sub){
+        ctx.save();
+        ctx.fillStyle="rgba(255,255,255,0.06)";
+        ctx.strokeStyle="rgba(255,255,255,0.18)";
+        ctx.lineWidth=1;
+        roundRect(ctx,x,y,w,h,14);
+        ctx.fill(); ctx.stroke();
+        ctx.fillStyle="rgba(233,238,255,0.92)";
+        ctx.font="700 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.fillText(label, x+10, y+20);
+        ctx.fillStyle="rgba(233,238,255,0.70)";
+        ctx.font="12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.fillText(sub, x+10, y+38);
+        ctx.restore();
+      }
+      function arrow(x1,y1,x2,y2){
+        ctx.save();
+        ctx.strokeStyle="rgba(233,238,255,0.65)";
+        ctx.lineWidth=1.6;
+        ctx.beginPath();
+        ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+        ctx.stroke();
+        const ang = Math.atan2(y2-y1, x2-x1);
+        const ah=8;
+        ctx.beginPath();
+        ctx.moveTo(x2,y2);
+        ctx.lineTo(x2-ah*Math.cos(ang-Math.PI/7), y2-ah*Math.sin(ang-Math.PI/7));
+        ctx.lineTo(x2-ah*Math.cos(ang+Math.PI/7), y2-ah*Math.sin(ang+Math.PI/7));
+        ctx.closePath();
+        ctx.fillStyle="rgba(233,238,255,0.65)";
+        ctx.fill();
+        ctx.restore();
+      }
+      function lens(x,y){
+        ctx.save();
+        ctx.strokeStyle="rgba(125,255,204,0.65)";
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.moveTo(x, y-40);
+        ctx.quadraticCurveTo(x+10, y, x, y+40);
+        ctx.moveTo(x, y-40);
+        ctx.quadraticCurveTo(x-10, y, x, y+40);
+        ctx.stroke();
+        ctx.fillStyle="rgba(125,255,204,0.12)";
+        ctx.fillRect(x-4, y-42, 8, 84);
+        ctx.restore();
+      }
+
+      const margin=16;
+      const yMid = H*0.52;
+      const x0 = margin+10;
+
+      // Planes
+      box(x0, yMid-55, 170, 70, "Input plane", "f(x,y)=f₁(x−a)+f₂(x+a)");
+      lens(x0+210, yMid-20);
+      box(x0+240, yMid-55, 190, 70, "Fourier plane", "F(u,v) in back focal plane");
+      box(x0+470, yMid-55, 170, 70, "Hologram", "records I(u,v)=|F|²");
+      // Reference
+      box(x0+470, yMid+35, 170, 56, "Reference wave", "plane wave illuminates hologram");
+      lens(x0+700, yMid-20);
+      box(x0+730, yMid-55, 210, 70, "Output plane", "g(x,y): correlations appear");
+
+      // Rays/arrows
+      arrow(x0+170, yMid-20, x0+205, yMid-20);
+      arrow(x0+225, yMid-20, x0+240, yMid-20);
+      arrow(x0+430, yMid-20, x0+470, yMid-20);
+      arrow(x0+640, yMid-20, x0+690, yMid-20);
+      arrow(x0+710, yMid-20, x0+730, yMid-20);
+
+      // Reference arrow
+      arrow(x0+555, yMid+35, x0+555, yMid+12);
+      ctx.save();
+      ctx.fillStyle="rgba(255,211,122,0.85)";
+      ctx.font="600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("Multiply by R(u,v)", x0+500, yMid+8);
+      ctx.restore();
+
+      // Annotation: ±2a separation
+      ctx.save();
+      ctx.strokeStyle="rgba(122,162,255,0.55)";
+      ctx.setLineDash([5,5]);
+      ctx.lineWidth=1.5;
+      const ox = x0+760, oy = yMid+35;
+      ctx.beginPath();
+      ctx.moveTo(ox, oy); ctx.lineTo(ox+160, oy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle="rgba(233,238,255,0.78)";
+      ctx.font="600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("cross-correlation at x≈±2a", ox+6, oy-8);
+      ctx.restore();
+    }
+
+    // ---------- Data synthesis ----------
+    function buildSignals(){
+      const N = state.N;
+      const xs = linspace(state.xMin, state.xMax, N);
+
+      // Example object widths (mm) — chosen for demo (not from problem).
+      const w1 = 1.0;
+      const w2 = 1.1;
+
+      // Base centered profiles
+      const f1c = xs.map(x => complex(makeShape(state.shape, x, w1), 0));
+      // f2 can be complex if enabled: amplitude profile * exp(i phi)
+      const amp2 = xs.map(x => makeShape(state.shape, x, w2));
+      const cph = Math.cos(state.phi), sph = Math.sin(state.phi);
+      const f2c = xs.map((x,i)=>{
+        const a = amp2[i];
+        if(state.complexOn) return complex(a*cph, a*sph);
+        return complex(a, 0);
+      });
+
+      // Shifted in the input plane: f1(x-a) and f2(x+a)
+      const f1s = shiftSample(xs, f1c, state.a);    // f1(x-a)
+      const f2s = shiftSample(xs, f2c, -state.a);   // f2(x+a) = base(x + a) => shift by -a in shiftSample
+      const f = f1s.map((z,i)=>cAdd(z, f2s[i]));
+
+      // Correlations
+      const c11 = correlate(xs, f1c, f1c);
+      const c22 = correlate(xs, f2c, f2c);
+      const c12 = correlate(xs, f1c, f2c);
+      const c21 = correlate(xs, f2c, f1c);
+
+      // Build g(x) = c11 + c22 + c12(x-2a) + c21(x+2a)
+      const c12shift = shiftSample(xs, c12, 2*state.a);   // c12(x-2a) -> shift by +2a in sampling
+      const c21shift = shiftSample(xs, c21, -2*state.a);  // c21(x+2a) -> shift by -2a
+      const g = new Array(N);
+      for(let i=0;i<N;i++){
+        g[i] = cAdd(cAdd(c11[i], c22[i]), cAdd(c12shift[i], c21shift[i]));
+      }
+
+      // Return real parts for plotting (imag parts shown implicitly via phase effect)
+      const fRe = f.map(z=>z.re);
+      const gRe = g.map(z=>z.re);
+      const c11Re = c11.map(z=>z.re);
+      const c22Re = c22.map(z=>z.re);
+      const c12Re = c12.map(z=>z.re);
+      const c21Re = c21.map(z=>z.re);
+      const c12sRe = c12shift.map(z=>z.re);
+      const c21sRe = c21shift.map(z=>z.re);
+
+      // For scaling the plots
+      function minMax(arr){
+        let mn=Infinity, mx=-Infinity;
+        for(const v of arr){ if(v<mn) mn=v; if(v>mx) mx=v; }
+        if(!isFinite(mn) || !isFinite(mx)) return {mn:0,mx:1};
+        if(Math.abs(mx-mn) < 1e-12){ mx=mn+1; }
+        return {mn, mx};
+      }
+
+      const gMM = minMax(gRe);
+      const fMM = minMax(fRe);
+
+      // Components plot range includes both input and correlations, so widen
+      const all = gRe.concat(fRe, c11Re, c22Re, c12sRe, c21sRe);
+      const allMM = minMax(all);
+
+      return {
+        xs,
+        fRe, fMM,
+        gRe, gMM,
+        comps: {c11Re, c22Re, c12Re, c21Re, c12sRe, c21sRe},
+        allMM
+      };
+    }
+
+    // ---------- Plot rendering ----------
+    function renderMain(data){
+      const canvas = $("#mainPlot");
+      const ctx = mainC.ctx;
+      const rect = canvas.getBoundingClientRect();
+      const W = rect.width, H = rect.height;
+
+      ctx.clearRect(0,0,W,H);
+
+      // Determine y range with padding
+      const yMin = data.gMM.mn, yMax = data.gMM.mx;
+      const pad = 0.12*(yMax-yMin);
+      const ymin = yMin - pad, ymax = yMax + pad;
+
+      const map = drawAxes(
+        ctx,
+        {x:0,y:0,w:W,h:H},
+        state.xMin, state.xMax,
+        ymin, ymax,
+        "x (mm)",
+        "g(x) (arb. units)",
+        "Correlation-plane output g(x)"
+      );
+
+      // Draw g(x)
+      drawLine(ctx, map, data.xs, data.gRe, "rgba(125,255,204,0.95)", 2.5);
+
+      // Reference lines at ±2a and 0
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.lineWidth = 1.2;
+      const x0 = map.xToPix(0);
+      ctx.beginPath(); ctx.moveTo(x0, map.plot.y); ctx.lineTo(x0, map.plot.y+map.plot.h); ctx.stroke();
+
+      ctx.strokeStyle = "rgba(122,162,255,0.45)";
+      ctx.setLineDash([5,5]);
+      const xp = map.xToPix(2*state.a);
+      const xm = map.xToPix(-2*state.a);
+      ctx.beginPath(); ctx.moveTo(xp, map.plot.y); ctx.lineTo(xp, map.plot.y+map.plot.h); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xm, map.plot.y); ctx.lineTo(xm, map.plot.y+map.plot.h); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(233,238,255,0.80)";
+      ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("+2a", xp+6, map.plot.y+14);
+      ctx.fillText("−2a", xm+6, map.plot.y+14);
+      ctx.restore();
+
+      drawLegend(ctx, {x:0,y:0,w:W,h:H}, [
+        {label:"g(x) = c11 + c22 + shifted cross-terms", color:"rgba(125,255,204,0.95)"}
+      ]);
+    }
+
+    function renderSecondary(data){
+      const canvas = $("#secondaryPlot");
+      const ctx = secC.ctx;
+      const rect = canvas.getBoundingClientRect();
+      const W = rect.width, H = rect.height;
+
+      ctx.clearRect(0,0,W,H);
+
+      const yMin = data.allMM.mn, yMax = data.allMM.mx;
+      const pad = 0.10*(yMax-yMin);
+      const ymin = yMin - pad, ymax = yMax + pad;
+
+      const map = drawAxes(
+        ctx,
+        {x:0,y:0,w:W,h:H},
+        state.xMin, state.xMax,
+        ymin, ymax,
+        "x (mm)",
+        "Amplitude / correlation (arb.)",
+        "Input slice and correlation components (1D demo)"
+      );
+
+      // Colors
+      const colF   = "rgba(255,211,122,0.95)";
+      const col11  = "rgba(122,162,255,0.90)";
+      const col22  = "rgba(122,162,255,0.55)";
+      const col12s = "rgba(125,255,204,0.85)";
+      const col21s = "rgba(125,255,204,0.55)";
+
+      // Draw curves
+      drawLine(ctx, map, data.xs, data.fRe, colF, 2.2);
+      drawLine(ctx, map, data.xs, data.comps.c11Re, col11, 2.0);
+      drawLine(ctx, map, data.xs, data.comps.c22Re, col22, 2.0);
+      drawLine(ctx, map, data.xs, data.comps.c12sRe, col12s, 2.0);
+      drawLine(ctx, map, data.xs, data.comps.c21sRe, col21s, 2.0);
+
+      // Mark object positions ±a
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,211,122,0.35)";
+      ctx.setLineDash([4,5]);
+      ctx.lineWidth = 1.2;
+      const xp = map.xToPix(state.a);
+      const xm = map.xToPix(-state.a);
+      ctx.beginPath(); ctx.moveTo(xp, map.plot.y); ctx.lineTo(xp, map.plot.y+map.plot.h); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xm, map.plot.y); ctx.lineTo(xm, map.plot.y+map.plot.h); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(233,238,255,0.78)";
+      ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("+a", xp+6, map.plot.y+14);
+      ctx.fillText("−a", xm+6, map.plot.y+14);
+      ctx.restore();
+
+      drawLegend(ctx, {x:0,y:0,w:W,h:H}, [
+        {label:"f(x)=f1(x−a)+f2(x+a)", color:colF},
+        {label:"c11(x)=f1⋆f1", color:col11},
+        {label:"c22(x)=f2⋆f2", color:col22},
+        {label:"c12(x−2a)=shifted (f1⋆f2)", color:col12s},
+        {label:"c21(x+2a)=shifted (f2⋆f1)", color:col21s},
+      ]);
+    }
+
+    // ---------- Update loop ----------
+    function updateAll(){
+      $("#aRead").textContent = state.a.toFixed(2);
+      $("#phiRead").textContent = state.phi.toFixed(2);
+
+      drawDiagram();
+      const data = buildSignals();
+      renderMain(data);
+      renderSecondary(data);
+    }
+
+    // ---------- Wire controls ----------
+    $("#aSlider").addEventListener("input", (e)=>{
+      state.a = parseFloat(e.target.value);
+      updateAll();
+    });
+    $("#phiSlider").addEventListener("input", (e)=>{
+      state.phi = parseFloat(e.target.value);
+      updateAll();
+    });
+    $("#complexToggle").addEventListener("change", (e)=>{
+      state.complexOn = !!e.target.checked;
+      updateAll();
+    });
+    $("#shapeSel").addEventListener("change", (e)=>{
+      state.shape = e.target.value;
+      updateAll();
+    });
+    $("#nSel").addEventListener("change", (e)=>{
+      state.N = parseInt(e.target.value, 10);
+      updateAll();
+    });
+
+    $("#resetBtn").addEventListener("click", ()=>{
+      state.a = 2.0;
+      state.phi = 0.0;
+      state.complexOn = false;
+      state.shape = "gauss";
+      state.N = 256;
+      $("#aSlider").value = state.a;
+      $("#phiSlider").value = state.phi;
+      $("#complexToggle").checked = state.complexOn;
+      $("#shapeSel").value = state.shape;
+      $("#nSel").value = state.N;
+      updateAll();
+      showToast("Demo reset.");
+    });
+
+    // Initial render
+    updateAll();
+
+    // Keep crisp if DPR changes (e.g., browser zoom)
+    window.addEventListener("resize", ()=>{
+      diag.resize(); mainC.resize(); secC.resize();
+      updateAll();
+    });
+  </script>
+</body>
+</html>

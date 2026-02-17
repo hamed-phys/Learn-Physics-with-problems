@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Derivation of Fresnel Reflection (TE) and How to Handle Beams</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1620;
+      --card:#121c28;
+      --ink:#e7eef8;
+      --muted:#a9b7c7;
+      --line:rgba(231,238,248,.12);
+      --accent:#66d9ff;
+      --accent2:#a78bfa;
+      --good:#7ee787;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at 15% 5%, rgba(102,217,255,.10), transparent 55%),
+        radial-gradient(1000px 500px at 80% 10%, rgba(167,139,250,.10), transparent 55%),
+        radial-gradient(900px 450px at 50% 90%, rgba(126,231,135,.08), transparent 60%),
+        var(--bg);
+      line-height:1.55;
+    }
+    a{color:var(--accent)}
+    header{
+      padding: 34px 18px 18px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(18,28,40,.72), transparent);
+    }
+    .wrap{max-width: 1100px; margin: 0 auto; padding: 0 10px;}
+    .top{
+      display:grid;
+      grid-template-columns: 1.4fr .6fr;
+      gap: 14px;
+      align-items: start;
+    }
+    h1{
+      margin: 0 0 8px;
+      font-size: clamp(1.4rem, 2.2vw, 2.1rem);
+      letter-spacing: .2px;
+    }
+    .sub{
+      color:var(--muted);
+      margin:0;
+      max-width: 80ch;
+    }
+    .badgeRow{display:flex; flex-wrap:wrap; gap:8px; margin-top: 12px;}
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px;
+      background: rgba(231,238,248,.06);
+      border:1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .badge i{
+      width:8px; height:8px; border-radius:50%;
+      display:inline-block;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(102,217,255,.12);
+    }
+
+    /* Sticky TOC */
+    .toc{
+      position: sticky;
+      top: 12px;
+      align-self: start;
+      padding: 12px;
+      border-radius: var(--radius);
+      background: rgba(18,28,40,.62);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .toc h2{
+      margin:0 0 10px;
+      font-size: .95rem;
+      color: var(--muted);
+      letter-spacing:.3px;
+      text-transform: uppercase;
+    }
+    .toc a{
+      display:block;
+      padding: 6px 8px;
+      border-radius: 10px;
+      text-decoration:none;
+      color: var(--ink);
+      border:1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size: .95rem;
+    }
+    .toc a:hover{
+      background: rgba(102,217,255,.08);
+      border-color: rgba(102,217,255,.22);
+      transform: translateX(2px);
+    }
+
+    main{padding: 18px 18px 42px;}
+    section{margin-top: 18px;}
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    @media (min-width: 980px){
+      .grid{ grid-template-columns: 1.1fr .9fr; }
+    }
+    .card{
+      background: rgba(18,28,40,.70);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      overflow:hidden;
+    }
+    .card h3{
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      letter-spacing:.2px;
+    }
+    .muted{color:var(--muted)}
+    .callouts{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 860px){
+      .callouts{grid-template-columns: 1fr 1fr;}
+    }
+    .callout{
+      border-radius: var(--radius);
+      padding: 14px;
+      border: 1px solid var(--line);
+      background: rgba(15,22,32,.55);
+    }
+    .callout strong{display:block; margin-bottom: 6px}
+    .callout.assumptions{border-left: 4px solid var(--warn)}
+    .callout.keyeq{border-left: 4px solid var(--accent)}
+    .callout.mistakes{border-left: 4px solid var(--bad)}
+    .callout.final{border-left: 4px solid var(--good)}
+    .klist{margin: 8px 0 0 18px}
+    .klist li{margin: 6px 0}
+    code, pre{
+      font-family: var(--mono);
+      font-size: .95rem;
+    }
+    pre{
+      margin: 10px 0 0;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(10,14,20,.75);
+      overflow:auto;
+      position: relative;
+    }
+    .eqRow{
+      display:flex; gap:10px; align-items: stretch; flex-wrap:wrap;
+      margin-top: 10px;
+    }
+    .copyBtn{
+      cursor:pointer;
+      border:1px solid var(--line);
+      background: rgba(231,238,248,.06);
+      color: var(--ink);
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight:600;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+    }
+    .copyBtn:hover{
+      transform: translateY(-1px);
+      background: rgba(102,217,255,.10);
+      border-color: rgba(102,217,255,.25);
+    }
+    .copyBtn:active{transform: translateY(0px) scale(.99)}
+    .copyBtn small{color:var(--muted); font-weight:500}
+    .pill{
+      display:inline-flex; gap:8px; align-items:center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(231,238,248,.05);
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (min-width: 860px){
+      .controls{grid-template-columns: 1fr 1fr 1fr;}
+    }
+    .control{
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(15,22,32,.50);
+    }
+    .control label{
+      display:flex; justify-content:space-between; gap:10px;
+      color: var(--muted);
+      font-size: .9rem;
+      margin-bottom: 8px;
+    }
+    .control input[type="range"]{width:100%}
+    .control select{
+      width:100%;
+      padding:10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(10,14,20,.7);
+      color: var(--ink);
+      outline: none;
+    }
+    .numBox{
+      margin-top: 10px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    @media (min-width: 720px){
+      .numBox{grid-template-columns: 1fr 1fr;}
+    }
+    .metric{
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(10,14,20,.65);
+    }
+    .metric .k{color: var(--muted); font-size:.9rem}
+    .metric .v{font-size: 1.25rem; font-weight: 750; margin-top: 2px}
+    .metric .s{color: var(--muted); font-family: var(--mono); font-size:.9rem; margin-top: 6px; word-break: break-word;}
+    figure{margin:0}
+    canvas{
+      width:100%;
+      height: 320px;
+      display:block;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(10,14,20,.55);
+    }
+    .canvasTall{height: 360px;}
+    .cap{
+      color: var(--muted);
+      font-size: .92rem;
+      margin-top: 8px;
+    }
+    .hr{
+      height:1px;
+      background: var(--line);
+      margin: 14px 0;
+    }
+    .step{
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(15,22,32,.45);
+      margin: 10px 0;
+    }
+    .step strong{display:block; margin-bottom: 6px}
+    .miniQ{
+      border-radius: var(--radius);
+      border:1px solid var(--line);
+      background: rgba(10,14,20,.55);
+      padding: 12px 14px;
+      margin-top: 10px;
+    }
+    .miniQ li{margin: 8px 0}
+    .footer{
+      color: var(--muted);
+      padding: 18px 0 0;
+      border-top:1px solid var(--line);
+      margin-top: 18px;
+      font-size: .95rem;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff; color:#000}
+      header, .toc {position: static; box-shadow:none; background:none}
+      .card, .callout, pre, canvas{box-shadow:none; backdrop-filter:none}
+      canvas{border:1px solid #999}
+      .copyBtn{display:none}
+      a{color:#000; text-decoration:underline}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap top">
+    <div>
+      <h1>6.2-2 — Derivation of Fresnel Reflection (TE): from Boundary Conditions to Fresnel Equations</h1>
+      <p class="sub">
+        We derive the <span class="pill">reflection equation</span> (impedance form) used to obtain the TE Fresnel coefficient,
+        then discuss how to compute reflection when the incident field is a <span class="pill">beam</span> rather than a single plane wave.
+      </p>
+      <div class="badgeRow">
+        <span class="badge"><i></i> Electromagnetic boundary conditions</span>
+        <span class="badge"><i></i> Plane-wave decomposition</span>
+        <span class="badge"><i></i> Fresnel reflection & transmission</span>
+      </div>
+    </div>
+
+    <nav class="toc" aria-label="Table of contents">
+      <h2>Contents</h2>
+      <a href="#qs">Quick Summary</a>
+      <a href="#p0">PART 0 — Concept Primer</a>
+      <a href="#p1">PART 1 — Problem Analysis</a>
+      <a href="#p2">PART 2 — Strategy & Tips</a>
+      <a href="#p3">PART 3 — Full Solution</a>
+      <a href="#p4">PART 4 — Deeper Understanding</a>
+      <a href="#p5">PART 5 — Visualization Guide</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Quick Summary -->
+  <section id="qs" class="card">
+    <h3>Quick Summary</h3>
+    <ul class="klist">
+      <li><b>Topic:</b> Reflection/transmission at a planar interface and the <b>Fresnel coefficients</b> for TE polarization.</li>
+      <li><b>Key physics idea:</b> Enforce <b>continuity of tangential</b> electric and magnetic fields at the boundary.</li>
+      <li><b>Governing laws:</b> Maxwell equations + plane-wave relations <code>H = (1/η) (k̂ × E)</code> and Snell’s law.</li>
+      <li><b>Main derived result (impedance form):</b> <code>r_TE = (η2 cosθ1 − η1 cosθ2)/(η2 cosθ1 + η1 cosθ2)</code> (equivalent to the “sec” form).</li>
+      <li><b>Fresnel TE (nonmagnetic dielectrics):</b> using <code>η ∝ 1/n</code>, <code>r_TE = (n1 cosθ1 − n2 cosθ2)/(n1 cosθ1 + n2 cosθ2)</code>.</li>
+      <li><b>Beam instead of plane wave:</b> Decompose the beam into plane-wave components (angular spectrum), apply <code>r(θ)</code> to each, then recombine (integrate) to get the reflected beam.</li>
+      <li><b>Plots below:</b> show how <code>|r|</code>, phase, and power reflectance <code>R=|r|^2</code> vary with incidence angle and refractive-index ratio.</li>
+    </ul>
+  </section>
+
+  <!-- PART 0 -->
+  <section id="p0" class="card">
+    <h3>PART 0 — Concept Primer (Theory Before Solving)</h3>
+
+    <div class="callouts">
+      <div class="callout keyeq">
+        <strong>Core definitions (symbols & units)</strong>
+        <ul class="klist">
+          <li><code>n</code> (dimensionless): refractive index; for nonmagnetic dielectrics <code>n = sqrt(εr)</code>.</li>
+          <li><code>η</code> (ohms, Ω): intrinsic impedance <code>η = sqrt(μ/ε)</code>; for nonmagnetic lossless dielectrics <code>η = η0/n</code>.</li>
+          <li><code>θ1, θ2</code> (radians or degrees): incidence & transmission angles measured from the surface normal.</li>
+          <li><code>r, t</code> (dimensionless): complex amplitude reflection & transmission coefficients (field ratios).</li>
+          <li><code>R, T</code> (dimensionless): power (intensity) reflectance & transmittance (energy fractions).</li>
+        </ul>
+      </div>
+
+      <div class="callout assumptions">
+        <strong>Physical meaning (what these quantities represent)</strong>
+        <ul class="klist">
+          <li><code>r</code> tells you how much of the incident <b>field amplitude</b> comes back (including phase shift).</li>
+          <li><code>R=|r|^2</code> tells you the fraction of <b>power</b> reflected <em>only</em> when the incident and reflected waves are in the same medium.</li>
+          <li><code>T</code> is not simply <code>|t|^2</code>; it includes a geometry/impedance factor so that energy is conserved across media.</li>
+          <li>TE (s-polarization): electric field is <b>perpendicular</b> to the plane of incidence.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <article>
+      <h3 style="margin-top:0">Key laws and validity</h3>
+      <ul class="klist">
+        <li><b>Boundary conditions</b> (from Maxwell): at an interface without free surface current/charge,
+          <b>tangential</b> components satisfy <code>E_t</code> continuous and <code>H_t</code> continuous.</li>
+        <li><b>Plane-wave field relation:</b> for a uniform plane wave in a homogeneous medium,
+          <code>H = (1/η) (k̂ × E)</code> and <code>E ⟂ H ⟂ k̂</code>.</li>
+        <li><b>Phase matching along the interface:</b> tangential wavevector component is conserved:
+          <code>k1 sinθ1 = k2 sinθ2</code>, which is Snell’s law <code>n1 sinθ1 = n2 sinθ2</code> (lossless, isotropic).</li>
+      </ul>
+
+      <div class="callout mistakes" style="margin-top:12px">
+        <strong>What to watch for (pitfalls)</strong>
+        <ul class="klist">
+          <li>Mixing up <b>TE vs TM</b> definitions (which field component is continuous matters!).</li>
+          <li>For power: forgetting that <code>T</code> needs a factor like <code>(n2 cosθ2)/(n1 cosθ1)</code>.</li>
+          <li>Using Fresnel <code>r(θ)</code> for a beam without decomposing it into angles (a beam contains many angles).</li>
+          <li>Ignoring total internal reflection: for <code>n1&gt;n2</code>, beyond the critical angle <code>θc</code>, <code>r</code> has unit magnitude and a nontrivial phase.</li>
+        </ul>
+      </div>
+
+      <div class="miniQ">
+        <strong>Mini intuition examples</strong>
+        <ul class="klist">
+          <li><b>Normal incidence</b> (<code>θ1=0</code>): the interface acts like a simple impedance mismatch; reflection depends only on <code>η1, η2</code> (or <code>n1, n2</code>).</li>
+          <li><b>Grazing incidence</b> (<code>θ1→90°</code>): for most dielectrics, reflectance increases (especially for TE).</li>
+        </ul>
+      </div>
+    </article>
+  </section>
+
+  <!-- PART 1 -->
+  <section id="p1" class="card">
+    <h3>PART 1 — Problem Analysis (No solving yet)</h3>
+
+    <div class="grid">
+      <div class="card" style="padding:14px">
+        <h3 style="margin-top:0">Restate the problem</h3>
+        <p class="muted">
+          Derive the TE reflection relation (the “reflection equation” in impedance form, equivalent to Eq. (6.2-6)),
+          then use it to obtain the TE Fresnel reflection coefficient for nonmagnetic dielectrics (Eq. (6.2-8)).
+          Finally, explain how you would compute the reflection coefficient if the incident field were a <b>beam</b> rather than a single plane wave.
+        </p>
+
+        <h3>Given</h3>
+        <ul class="klist">
+          <li>Two homogeneous media with impedances <code>η1</code>, <code>η2</code> (possibly complex in general).</li>
+          <li>Incident angle <code>θ1</code> and transmitted angle <code>θ2</code> (linked by Snell/phase matching).</li>
+          <li>TE polarization (electric field perpendicular to plane of incidence).</li>
+        </ul>
+
+        <h3>Unknowns / targets</h3>
+        <ul class="klist">
+          <li>Derive <code>r_TE</code> in impedance form (the reflection equation).</li>
+          <li>Convert to the Fresnel form in refractive indices for lossless nonmagnetic dielectrics.</li>
+          <li>Method for a beam: how to compute reflected field / effective coefficient.</li>
+        </ul>
+      </div>
+
+      <div class="card" style="padding:14px">
+        <h3 style="margin-top:0">Why these principles apply</h3>
+        <ul class="klist">
+          <li><b>Maxwell boundary conditions</b> apply because the interface is planar and we assume no free surface currents/charges.</li>
+          <li><b>Plane-wave relations</b> apply to each plane-wave component in a homogeneous medium.</li>
+          <li><b>Snell’s law</b> emerges from matching the phase along the boundary (tangential <code>k</code> continuity).</li>
+        </ul>
+
+        <div class="callout assumptions" style="margin-top:10px">
+          <strong>Assumptions (explicit)</strong>
+          <ul class="klist">
+            <li>Planar interface at <code>z=0</code>; medium 1 for <code>z&lt;0</code>, medium 2 for <code>z&gt;0</code>.</li>
+            <li>Time-harmonic fields <code>exp(-iωt)</code>.</li>
+            <li>Linear, homogeneous, isotropic media (standard Fresnel setting).</li>
+            <li>No surface charge/current at the interface (so tangential <code>E</code> and <code>H</code> are continuous).</li>
+          </ul>
+        </div>
+
+        <h3 style="margin-top:14px">Possible approaches (compare)</h3>
+        <ul class="klist">
+          <li><b>Boundary-condition method (best):</b> write incident/reflected/transmitted fields and solve 2 equations → <code>r,t</code>.</li>
+          <li><b>Impedance matching viewpoint:</b> compute an effective “seen” impedance for oblique incidence and use 1D reflection formula.</li>
+          <li><b>Energy-flux method:</b> derive amplitude ratios indirectly from Poynting vector + phase matching (usually longer for amplitudes).</li>
+        </ul>
+        <p class="muted">
+          We choose the <b>boundary-condition method</b> because it is direct, general (works even when <code>η</code> is complex),
+          and clearly shows where the angle factors come from.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PART 2 -->
+  <section id="p2" class="card">
+    <h3>PART 2 — Strategy & Tips (Roadmap only)</h3>
+
+    <div class="step">
+      <strong>Step 1 — Set geometry & polarization</strong>
+      <div class="muted">Goal: choose coordinates so “TE” is unambiguous.</div>
+      <div class="muted">Tool: define plane of incidence as x–z plane; TE means <code>E ∥ ŷ</code>.</div>
+      <div class="muted">Meaning: TE fields have <code>E</code> purely tangential to the interface.</div>
+    </div>
+
+    <div class="step">
+      <strong>Step 2 — Write plane-wave fields in each region</strong>
+      <div class="muted">Goal: express incident, reflected, transmitted waves with correct propagation directions.</div>
+      <div class="muted">Tool: use unit wavevector <code>k̂</code> with angles <code>θ1, θ2</code>.</div>
+      <div class="muted">Meaning: reflection flips the normal component of <code>k</code>.</div>
+    </div>
+
+    <div class="step">
+      <strong>Step 3 — Relate H to E using η</strong>
+      <div class="muted">Goal: obtain the tangential <code>H</code> component needed for boundary conditions.</div>
+      <div class="muted">Tool: <code>H = (1/η)(k̂ × E)</code>.</div>
+      <div class="muted">Meaning: oblique incidence introduces <code>cosθ</code> factors in tangential components.</div>
+    </div>
+
+    <div class="step">
+      <strong>Step 4 — Apply boundary conditions at z=0</strong>
+      <div class="muted">Goal: write two linear equations linking the field amplitudes.</div>
+      <div class="muted">Tool: continuity of tangential <code>E_y</code> and tangential <code>H_x</code> (for TE).</div>
+      <div class="muted">Meaning: the interface cannot create jumps in tangential fields without surface sources.</div>
+    </div>
+
+    <div class="step">
+      <strong>Step 5 — Solve for r = Er/Ei and simplify</strong>
+      <div class="muted">Goal: isolate <code>r_TE</code> and show equivalence of “sec” and “cos” forms.</div>
+      <div class="muted">Tool: simple algebra; optionally multiply numerator/denominator by <code>cosθ1 cosθ2</code>.</div>
+      <div class="muted">Meaning: amplitude reflection depends on impedance mismatch and incidence geometry.</div>
+    </div>
+
+    <div class="step">
+      <strong>Step 6 — Convert to Fresnel index form for nonmagnetic dielectrics</strong>
+      <div class="muted">Goal: replace <code>η = η0/n</code> to obtain Eq. (6.2-8) style expression.</div>
+      <div class="muted">Meaning: for common dielectrics, everything is governed by refractive indices.</div>
+    </div>
+
+    <div class="callout mistakes" style="margin-top:12px">
+      <strong>Common mistakes & quick tips</strong>
+      <ul class="klist">
+        <li><b>Sign errors</b> in <code>H</code>: compute <code>k̂ × E</code> carefully for incident vs reflected directions.</li>
+        <li>Use the correct tangential component: for TE with <code>E∥ŷ</code>, the matching condition uses <code>H_x</code> (tangential).</li>
+        <li>For beams: do not try to plug “beam angle” into Fresnel; use <b>angular spectrum</b> (superposition of plane waves).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PART 3 -->
+  <section id="p3" class="card">
+    <h3>PART 3 — Full Solution (Detailed + Teaching)</h3>
+
+    <article>
+      <h3 style="margin-top:0">Qualitative expectation (before math)</h3>
+      <p class="muted">
+        Reflection occurs because the boundary imposes constraints on the fields. If the “wave impedance seen by the tangential fields”
+        differs across the interface, the incident wave cannot satisfy both tangential-field continuities with transmission alone,
+        so a reflected wave is required. At normal incidence this reduces to pure impedance mismatch; at oblique incidence the
+        tangential magnetic field picks up angle factors, producing the familiar <code>cosθ</code> dependence in Fresnel formulas.
+      </p>
+
+      <div class="callout assumptions">
+        <strong>Setup (geometry & conventions)</strong>
+        <ul class="klist">
+          <li>Interface is the plane <code>z=0</code>. Medium 1 occupies <code>z&lt;0</code>; medium 2 occupies <code>z&gt;0</code>.</li>
+          <li>Plane of incidence is the <code>x–z</code> plane.</li>
+          <li>Time dependence is suppressed with convention <code>exp(-iωt)</code>.</li>
+          <li><b>TE polarization:</b> electric field is perpendicular to plane of incidence, so <code>E ∥ ŷ</code>.</li>
+        </ul>
+      </div>
+
+      <div class="hr"></div>
+
+      <h3>Step 1 — Write the plane-wave fields</h3>
+      <p>
+        Let the incident wave in medium 1 propagate toward <code>+z</code> with angle <code>θ1</code> from the normal.
+        The unit propagation directions are:
+      </p>
+      <pre id="eq-khat" data-copy="Incident: k̂i = sinθ1 x̂ + cosθ1 ẑ
+Reflected: k̂r = sinθ1 x̂ − cosθ1 ẑ
+Transmitted: k̂t = sinθ2 x̂ + cosθ2 ẑ">
+Incident: k̂i = sinθ1 x̂ + cosθ1 ẑ
+Reflected: k̂r = sinθ1 x̂ − cosθ1 ẑ
+Transmitted: k̂t = sinθ2 x̂ + cosθ2 ẑ</pre>
+      <div class="eqRow">
+        <button class="copyBtn" data-copy-from="eq-khat">Copy directions <small>plain text</small></button>
+      </div>
+
+      <p>
+        For TE, choose the electric field polarization <code>E ∥ ŷ</code>. Write the complex field amplitudes at the interface as:
+      </p>
+      <pre id="eq-E" data-copy="Ei = ŷ Ei0 e^{i(k1x x + k1z z)}
+Er = ŷ Er0 e^{i(k1x x − k1z z)}
+Et = ŷ Et0 e^{i(k2x x + k2z z)}">
+Ei = ŷ Ei0 e^{i(k1x x + k1z z)}
+Er = ŷ Er0 e^{i(k1x x − k1z z)}
+Et = ŷ Et0 e^{i(k2x x + k2z z)}</pre>
+      <p class="muted">
+        (We suppressed <code>e^{-iωt}</code> everywhere. The reflected wave has the normal component reversed.)
+      </p>
+
+      <div class="hr"></div>
+
+      <h3>Step 2 — Use plane-wave relation to get H</h3>
+      <p>
+        In a homogeneous medium, the magnetic field is related to the electric field by
+        <code>H = (1/η)(k̂ × E)</code>.
+        With <code>E = ŷ E0</code>, compute the cross product for each wave.
+      </p>
+
+      <p><b>Incident wave:</b> <code>k̂i × ŷ = (sinθ1 x̂ + cosθ1 ẑ) × ŷ</code>.</p>
+      <p class="muted">
+        Use right-hand rules: <code>x̂×ŷ = ẑ</code> and <code>ẑ×ŷ = −x̂</code>.
+      </p>
+      <pre id="eq-Hi" data-copy="Hi = (Ei0/η1)[ sinθ1 ẑ − cosθ1 x̂ ] e^{i(k1x x + k1z z)}
+⇒ (Hi)_tangent = (Hi)_x = −(Ei0/η1) cosθ1 e^{i(...)}">
+Hi = (Ei0/η1)[ sinθ1 ẑ − cosθ1 x̂ ] e^{i(k1x x + k1z z)}
+⇒ (Hi)_tangent = (Hi)_x = −(Ei0/η1) cosθ1 e^{i(...)} </pre>
+
+      <p><b>Reflected wave:</b> <code>k̂r = sinθ1 x̂ − cosθ1 ẑ</code>.</p>
+      <pre id="eq-Hr" data-copy="Hr = (Er0/η1)[ sinθ1 ẑ + cosθ1 x̂ ] e^{i(k1x x − k1z z)}
+⇒ (Hr)_x = +(Er0/η1) cosθ1 e^{i(...)}">
+Hr = (Er0/η1)[ sinθ1 ẑ + cosθ1 x̂ ] e^{i(k1x x − k1z z)}
+⇒ (Hr)_x = +(Er0/η1) cosθ1 e^{i(...)} </pre>
+
+      <p><b>Transmitted wave:</b> in medium 2 with impedance <code>η2</code> and angle <code>θ2</code>.</p>
+      <pre id="eq-Ht" data-copy="Ht = (Et0/η2)[ sinθ2 ẑ − cosθ2 x̂ ] e^{i(k2x x + k2z z)}
+⇒ (Ht)_x = −(Et0/η2) cosθ2 e^{i(...)}">
+Ht = (Et0/η2)[ sinθ2 ẑ − cosθ2 x̂ ] e^{i(k2x x + k2z z)}
+⇒ (Ht)_x = −(Et0/η2) cosθ2 e^{i(...)} </pre>
+
+      <div class="callout keyeq" style="margin-top:12px">
+        <strong>Key observation</strong>
+        <div class="muted">
+          For TE with <code>E ∥ ŷ</code>, the tangential electric field is simply <code>E_y</code>.
+          The relevant magnetic tangential component is <code>H_x</code>, which contains the factor <code>cosθ</code>.
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <h3>Step 3 — Apply boundary conditions at the interface</h3>
+      <p>
+        At <code>z=0</code>, with no surface current/charge:
+      </p>
+      <ul class="klist">
+        <li><b>Tangential E continuous:</b> <code>(Ei)_y + (Er)_y = (Et)_y</code>.</li>
+        <li><b>Tangential H continuous:</b> <code>(Hi)_x + (Hr)_x = (Ht)_x</code>.</li>
+      </ul>
+
+      <p>
+        Since each field shares the same tangential phase factor <code>e^{ikx x}</code> at the boundary (phase matching),
+        we can equate their <b>complex amplitudes</b>:
+      </p>
+      <pre id="eq-BC" data-copy="(1) Ei0 + Er0 = Et0
+(2) −(Ei0/η1)cosθ1 + (Er0/η1)cosθ1 = −(Et0/η2)cosθ2">
+(1) Ei0 + Er0 = Et0
+(2) −(Ei0/η1)cosθ1 + (Er0/η1)cosθ1 = −(Et0/η2)cosθ2</pre>
+
+      <p class="muted">
+        Equation (2) comes from the <code>x</code>-components derived above.
+      </p>
+
+      <div class="hr"></div>
+
+      <h3>Step 4 — Solve for the TE amplitude reflection coefficient</h3>
+      <p>
+        Define the reflection coefficient <code>r_TE = Er0/Ei0</code> and transmission coefficient <code>t_TE = Et0/Ei0</code>.
+        From (1): <code>t_TE = 1 + r_TE</code>.
+      </p>
+
+      <p>
+        Rewrite (2) dividing by <code>Ei0</code>:
+      </p>
+      <pre id="eq-alg1" data-copy="(cosθ1/η1)(1 − r_TE) = (cosθ2/η2)(1 + r_TE)">
+(cosθ1/η1)(1 − r_TE) = (cosθ2/η2)(1 + r_TE)</pre>
+
+      <p>
+        Solve for <code>r_TE</code>:
+      </p>
+      <pre id="eq-alg2" data-copy="(cosθ1/η1) − (cosθ1/η1) r_TE = (cosθ2/η2) + (cosθ2/η2) r_TE
+⇒ r_TE [ (cosθ1/η1) + (cosθ2/η2) ] = (cosθ1/η1) − (cosθ2/η2)
+⇒ r_TE = [ (cosθ1/η1) − (cosθ2/η2) ] / [ (cosθ1/η1) + (cosθ2/η2) ]">
+(cosθ1/η1) − (cosθ1/η1) r_TE = (cosθ2/η2) + (cosθ2/η2) r_TE
+⇒ r_TE [ (cosθ1/η1) + (cosθ2/η2) ] = (cosθ1/η1) − (cosθ2/η2)
+⇒ r_TE = [ (cosθ1/η1) − (cosθ2/η2) ] / [ (cosθ1/η1) + (cosθ2/η2) ]</pre>
+
+      <p>
+        Multiply numerator and denominator by <code>η1η2</code> to obtain the common impedance form:
+      </p>
+      <pre id="eq-rTE" data-copy="r_TE = (η2 cosθ1 − η1 cosθ2) / (η2 cosθ1 + η1 cosθ2)">
+r_TE = (η2 cosθ1 − η1 cosθ2) / (η2 cosθ1 + η1 cosθ2)</pre>
+
+      <p>
+        This is equivalent to the “secant” form (like Eq. (6.2-6) in your screenshot):
+        multiply numerator and denominator by <code>secθ1 secθ2</code> (or equivalently divide by <code>cosθ1 cosθ2</code>) to get:
+      </p>
+      <pre id="eq-sec" data-copy="r_TE = (η2 secθ2 − η1 secθ1) / (η2 secθ2 + η1 secθ1)">
+r_TE = (η2 secθ2 − η1 secθ1) / (η2 secθ2 + η1 secθ1)</pre>
+
+      <div class="eqRow">
+        <button class="copyBtn" data-copy-from="eq-rTE">Copy r_TE (impedance) <small>plain text</small></button>
+        <button class="copyBtn" data-copy-from="eq-sec">Copy “sec” form <small>plain text</small></button>
+      </div>
+
+      <div class="callout final" style="margin-top:12px">
+        <strong>Final (amplitude) results for TE</strong>
+        <pre id="eq-final" data-copy="Amplitude (TE):
+r_TE = (η2 cosθ1 − η1 cosθ2) / (η2 cosθ1 + η1 cosθ2)
+t_TE = 1 + r_TE
+
+Snell / phase-matching:
+n1 sinθ1 = n2 sinθ2 (lossless dielectrics)
+
+Fresnel TE for nonmagnetic dielectrics (η = η0/n):
+r_TE = (n1 cosθ1 − n2 cosθ2) / (n1 cosθ1 + n2 cosθ2)">
+Amplitude (TE):
+r_TE = (η2 cosθ1 − η1 cosθ2) / (η2 cosθ1 + η1 cosθ2)
+t_TE = 1 + r_TE
+
+Snell / phase-matching:
+n1 sinθ1 = n2 sinθ2 (lossless dielectrics)
+
+Fresnel TE for nonmagnetic dielectrics (η = η0/n):
+r_TE = (n1 cosθ1 − n2 cosθ2) / (n1 cosθ1 + n2 cosθ2)</pre>
+        <div class="eqRow">
+          <button class="copyBtn" data-copy-from="eq-final">Copy final answer <small>plain text</small></button>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <h3>Sanity checks</h3>
+      <ul class="klist">
+        <li><b>Units:</b> <code>r_TE</code> is a ratio of field amplitudes → dimensionless.</li>
+        <li><b>Normal incidence:</b> <code>θ1=θ2=0</code> gives <code>r = (η2−η1)/(η2+η1)</code>, the standard 1D result.</li>
+        <li><b>Index form:</b> for nonmagnetic dielectrics, <code>η=η0/n</code> makes reflection depend on <code>n1,n2</code> as expected.</li>
+        <li><b>Total internal reflection:</b> if <code>n1 &gt; n2</code> and <code>θ1 &gt; θc</code>, then <code>cosθ2</code> becomes imaginary →
+          <code>|r|=1</code> but <code>arg(r)</code> varies with angle (phase shift).</li>
+      </ul>
+
+      <div class="hr"></div>
+
+      <h3>What if the incident light is a <em>beam</em> rather than a plane wave?</h3>
+      <p>
+        A finite beam is not a single propagation direction; it contains a distribution of transverse wavevectors (angles).
+        The clean way to handle this is the <b>angular spectrum (plane-wave) decomposition</b>:
+      </p>
+      <pre id="eq-beam" data-copy="Angular spectrum method (conceptual):
+1) Represent incident beam at the interface z=0 as a superposition of plane waves:
+   E_inc(x,y,0) = ∬ A(kx,ky) e^{i(kx x + ky y)} dkx dky
+
+2) Each plane-wave component has an incidence angle set by kx,ky and reflects with Fresnel r_TE(kx,ky):
+   A_ref(kx,ky) = r_TE(kx,ky) · A(kx,ky)
+
+3) Reconstruct reflected beam:
+   E_ref(x,y,0) = ∬ A_ref(kx,ky) e^{i(kx x + ky y)} dkx dky">
+Angular spectrum method (conceptual):
+1) Represent incident beam at the interface z=0 as a superposition of plane waves:
+   E_inc(x,y,0) = ∬ A(kx,ky) e^{i(kx x + ky y)} dkx dky
+
+2) Each plane-wave component has an incidence angle set by kx,ky and reflects with Fresnel r_TE(kx,ky):
+   A_ref(kx,ky) = r_TE(kx,ky) · A(kx,ky)
+
+3) Reconstruct reflected beam:
+   E_ref(x,y,0) = ∬ A_ref(kx,ky) e^{i(kx x + ky y)} dkx dky</pre>
+      <div class="eqRow">
+        <button class="copyBtn" data-copy-from="eq-beam">Copy beam method <small>plain text</small></button>
+      </div>
+
+      <p class="muted">
+        In practice, for a paraxial Gaussian beam, most energy is near a central angle. You can often approximate
+        <code>r_TE(θ)</code> by a Taylor expansion around that angle to predict small beam shifts and distortions
+        (e.g., Goos–Hänchen shift under total internal reflection). But the fundamental idea remains:
+        <b>decompose → multiply by r(θ) → recombine</b>.
+      </p>
+    </article>
+  </section>
+
+  <!-- Interactive Visualizations -->
+  <section class="card">
+    <h3>Interactive Visualizations</h3>
+    <p class="muted">
+      These plots use <b>example values</b> for exploration. The derived formulas above remain symbolic and general.
+      Use the controls to change refractive indices, polarization, and the highlighted incidence angle.
+    </p>
+
+    <div class="controls" aria-label="Interactive controls">
+      <div class="control">
+        <label>
+          <span>Medium 1 index <code>n1</code> (example)</span>
+          <span id="n1Val" class="pill">1.00</span>
+        </label>
+        <input id="n1" type="range" min="1.00" max="2.20" step="0.01" value="1.00" />
+      </div>
+      <div class="control">
+        <label>
+          <span>Medium 2 index <code>n2</code> (example)</span>
+          <span id="n2Val" class="pill">1.50</span>
+        </label>
+        <input id="n2" type="range" min="1.00" max="2.60" step="0.01" value="1.50" />
+      </div>
+      <div class="control">
+        <label>
+          <span>Highlight angle <code>θ1</code></span>
+          <span id="thVal" class="pill">35.0°</span>
+        </label>
+        <input id="th" type="range" min="0" max="85" step="0.1" value="35.0" />
+        <div style="margin-top:8px">
+          <label class="muted" style="display:block; margin-bottom:6px">Polarization (for plots)</label>
+          <select id="pol">
+            <option value="TE" selected>TE (s): E ⟂ plane of incidence</option>
+            <option value="TM">TM (p): E ∥ plane of incidence (compare)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="numBox" aria-label="Computed values at highlighted angle">
+      <div class="metric">
+        <div class="k">Amplitude reflection <code>r(θ1)</code></div>
+        <div class="v" id="rVal">—</div>
+        <div class="s" id="rStr">—</div>
+      </div>
+      <div class="metric">
+        <div class="k">Power fractions <code>R</code> and <code>T</code> (lossless model)</div>
+        <div class="v" id="RTVal">—</div>
+        <div class="s" id="RTStr">—</div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:12px">
+      <figure class="card" style="padding:14px">
+        <h3 style="margin-top:0">Diagram: TE incidence at an interface</h3>
+        <canvas id="cDiagram" class="canvasTall" aria-label="Interface diagram"></canvas>
+        <div class="cap">Shows incident, reflected, transmitted rays and TE field direction (E out of the incidence plane).</div>
+      </figure>
+
+      <figure class="card" style="padding:14px">
+        <h3 style="margin-top:0">Plot 1: Magnitudes |r| and |t| vs θ1</h3>
+        <canvas id="cMag" class="canvasTall" aria-label="Magnitude plot"></canvas>
+        <div class="cap">Amplitude magnitudes. A vertical marker shows the highlighted angle.</div>
+      </figure>
+    </div>
+
+    <div class="grid" style="margin-top:12px">
+      <figure class="card" style="padding:14px">
+        <h3 style="margin-top:0">Plot 2: Power reflectance R and transmittance T vs θ1</h3>
+        <canvas id="cPow" class="canvasTall" aria-label="Power plot"></canvas>
+        <div class="cap">Uses energy-flux factor so that (for lossless dielectrics) R + T ≈ 1 below critical angle.</div>
+      </figure>
+
+      <figure class="card" style="padding:14px">
+        <h3 style="margin-top:0">Plot 3: Phase of r (degrees) vs θ1</h3>
+        <canvas id="cPhase" class="canvasTall" aria-label="Phase plot"></canvas>
+        <div class="cap">Under total internal reflection, |r|→1 and the phase changes rapidly with angle.</div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- PART 4 -->
+  <section id="p4" class="card">
+    <h3>PART 4 — Deeper Understanding (Theory Around the Result)</h3>
+
+    <h3 style="margin-top:0">Re-interpreting the final formula</h3>
+    <p>
+      The TE amplitude reflection coefficient
+      <code>r_TE = (η2 cosθ1 − η1 cosθ2)/(η2 cosθ1 + η1 cosθ2)</code>
+      can be read as a <b>1D impedance mismatch</b> if you define an “effective” oblique-incidence impedance:
+      <code>Z_TE(θ) = η / cosθ</code>. Then
+      <code>r = (Z2 − Z1)/(Z2 + Z1)</code> with <code>Z_TE(θ)</code>.
+      That is exactly why some forms use <code>secθ</code>.
+    </p>
+
+    <div class="callout keyeq">
+      <strong>Angle dependence: what controls reflection?</strong>
+      <ul class="klist">
+        <li><b>Impedance/index mismatch:</b> bigger mismatch → larger |r|.</li>
+        <li><b>Geometry factors:</b> TE has <code>Z_TE ∝ 1/cosθ</code>, so as θ→90° the effective mismatch tends to grow.</li>
+        <li><b>Total internal reflection (n1&gt;n2):</b> transmitted angle becomes complex → reflection becomes nearly perfect in magnitude.</li>
+      </ul>
+    </div>
+
+    <h3>How parameter changes show up (connect to plots)</h3>
+    <ul class="klist">
+      <li>Increasing <code>n2</code> (with fixed <code>n1</code>) usually reduces reflection for small angles if it improves matching; but at larger angles behavior depends strongly on polarization.</li>
+      <li>If <code>n1 &gt; n2</code>, there is a <b>critical angle</b> beyond which <code>R=1</code> and only the <b>phase</b> changes (see Plot 3).</li>
+    </ul>
+
+    <h3>Alternative derivation idea (brief)</h3>
+    <p class="muted">
+      Instead of explicitly computing <code>H</code> via cross products, you can define an oblique-incidence “wave impedance”
+      (for TE: <code>Z_TE = η / cosθ</code>; for TM: <code>Z_TM = η cosθ</code>) and plug into the familiar 1D reflection formula.
+      This gives the same Fresnel expressions with less vector algebra—but you must know (or derive once) those effective impedances.
+    </p>
+
+    <h3>Concept checks (with answers)</h3>
+    <ul class="miniQ">
+      <li><b>Q:</b> Why do Fresnel coefficients depend on angle?<br><b>A:</b> Because the tangential components of <code>H</code> (and/or <code>E</code>) depend on geometry via <code>cosθ</code>, and boundary conditions involve tangential fields.</li>
+      <li><b>Q:</b> Is <code>T = |t|^2</code>?<br><b>A:</b> Not in general. For power, you need a factor like <code>(n2 cosθ2)/(n1 cosθ1)</code> (lossless dielectrics) times <code>|t|^2</code>.</li>
+      <li><b>Q:</b> What happens past the critical angle when <code>n1&gt;n2</code>?<br><b>A:</b> The transmitted wave becomes evanescent; <code>|r|=1</code> but <code>arg(r)</code> varies with angle (phase shift).</li>
+      <li><b>Q:</b> How do you reflect a beam?<br><b>A:</b> Decompose into plane waves (angular spectrum), apply <code>r(θ)</code> to each component, and recombine.</li>
+    </ul>
+  </section>
+
+  <!-- PART 5 -->
+  <section id="p5" class="card">
+    <h3>PART 5 — Visualization Guide (How to Read the Plots)</h3>
+    <ul class="klist">
+      <li><b>Diagram canvas:</b> shows the interface, normal, and rays at the highlighted angle <code>θ1</code>. TE is indicated by an <code>E</code> arrow out of the incidence plane.</li>
+      <li><b>Plot 1 (|r| and |t|):</b> amplitude magnitudes vs incidence angle. The vertical marker is your chosen <code>θ1</code>.</li>
+      <li><b>Plot 2 (R and T):</b> power fractions computed using the energy-flux factor so that (for lossless dielectrics, below critical angle) <code>R+T≈1</code>.</li>
+      <li><b>Plot 3 (phase of r):</b> phase of the complex reflection coefficient in degrees; rapid variation often appears near/above critical angle.</li>
+      <li><b>Controls:</b>
+        <ul class="klist">
+          <li><code>n1</code> and <code>n2</code> sliders change the media, updating all curves and the computed values box.</li>
+          <li><code>θ1</code> slider moves the vertical marker and updates the diagram rays and numerical readout.</li>
+          <li>Polarization select lets you compare TE (the focus of this problem) with TM to build intuition.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <div class="footer">
+      Tip: If you set <code>n1 &gt; n2</code> and push <code>θ1</code> above the critical angle, watch Plot 2 approach <code>R→1</code> while Plot 3 continues to change.
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  // ---------- Utilities ----------
+  const $ = (id)=>document.getElementById(id);
+
+  function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  function niceTicks(min, max, targetCount){
+    const span = max - min;
+    if(span <= 0) return {min, max, step: 1};
+    const rawStep = span / targetCount;
+    const pow10 = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const candidates = [1,2,5,10].map(m=>m*pow10);
+    let step = candidates[0];
+    for(const c of candidates){
+      if(Math.abs(c - rawStep) < Math.abs(step - rawStep)) step = c;
+    }
+    const niceMin = Math.floor(min/step)*step;
+    const niceMax = Math.ceil(max/step)*step;
+    return {min:niceMin, max:niceMax, step};
+  }
+
+  function formatComplex(re, im){
+    const a = (Math.abs(re) < 1e-12) ? 0 : re;
+    const b = (Math.abs(im) < 1e-12) ? 0 : im;
+    const sgn = (b >= 0) ? "+" : "−";
+    const magIm = Math.abs(b);
+    return `${a.toFixed(4)} ${sgn} ${magIm.toFixed(4)} i`;
+  }
+  function cabs(re,im){ return Math.hypot(re,im); }
+  function cargDeg(re,im){
+    let ang = Math.atan2(im, re) * 180/Math.PI;
+    // Map to (-180,180]
+    if(ang <= -180) ang += 360;
+    if(ang > 180) ang -= 360;
+    return ang;
+  }
+
+  // ---------- Fresnel / Snell (lossless dielectrics) ----------
+  // Returns cos(theta2). If TIR occurs, returns complex cosθ2 = i*alpha (pure imaginary) encoded as {re,im}.
+  function cosTheta2Complex(n1, n2, theta1){
+    const s1 = Math.sin(theta1);
+    const s2 = (n1/n2) * s1;
+    if(s2 <= 1){
+      return {re: Math.sqrt(1 - s2*s2), im: 0};
+    }else{
+      // Total internal reflection: cosθ2 = i*sqrt(s2^2 - 1)
+      return {re: 0, im: Math.sqrt(s2*s2 - 1)};
+    }
+  }
+
+  // TE (s): r = (n1 cosθ1 - n2 cosθ2)/(n1 cosθ1 + n2 cosθ2)
+  // TM (p): r = (n2 cosθ1 - n1 cosθ2)/(n2 cosθ1 + n1 cosθ2)
+  // For TIR, cosθ2 is complex. We'll do complex arithmetic.
+  function fresnel_r(n1, n2, theta1, pol){
+    const c1 = Math.cos(theta1);
+    const c2 = cosTheta2Complex(n1,n2,theta1);
+    let numRe, numIm, denRe, denIm;
+
+    if(pol === "TE"){
+      // num = n1 c1 - n2 c2
+      numRe = n1*c1 - n2*c2.re;
+      numIm = - n2*c2.im;
+      denRe = n1*c1 + n2*c2.re;
+      denIm = + n2*c2.im;
+    }else{
+      // TM: num = n2 c1 - n1 c2
+      numRe = n2*c1 - n1*c2.re;
+      numIm = - n1*c2.im;
+      denRe = n2*c1 + n1*c2.re;
+      denIm = + n1*c2.im;
+    }
+
+    // r = num/den (complex division)
+    const den2 = denRe*denRe + denIm*denIm;
+    const rRe = (numRe*denRe + numIm*denIm)/den2;
+    const rIm = (numIm*denRe - numRe*denIm)/den2;
+    return {re:rRe, im:rIm, c2};
+  }
+
+  // t amplitude (for E-field) for TE/TM:
+  // TE: t = 2 n1 cosθ1 / (n1 cosθ1 + n2 cosθ2)
+  // TM: t = 2 n1 cosθ1 / (n2 cosθ1 + n1 cosθ2)
+  // Using complex cosθ2 for TIR yields complex t; power transmittance becomes 0 in strict TIR.
+  function fresnel_t(n1, n2, theta1, pol){
+    const c1 = Math.cos(theta1);
+    const c2 = cosTheta2Complex(n1,n2,theta1);
+
+    let denRe, denIm;
+    if(pol === "TE"){
+      denRe = n1*c1 + n2*c2.re;
+      denIm = n2*c2.im;
+    }else{
+      denRe = n2*c1 + n1*c2.re;
+      denIm = n1*c2.im;
+    }
+    const numRe = 2*n1*c1;
+    const numIm = 0;
+
+    const den2 = denRe*denRe + denIm*denIm;
+    const tRe = (numRe*denRe + numIm*denIm)/den2;
+    const tIm = (numIm*denRe - numRe*denIm)/den2;
+    return {re:tRe, im:tIm, c2};
+  }
+
+  // Power coefficients for lossless isotropic dielectrics:
+  // R = |r|^2
+  // T = (n2 cosθ2)/(n1 cosθ1) * |t|^2  (only meaningful when cosθ2 is real; under TIR, T=0)
+  function powerRT(n1,n2,theta1,pol){
+    const r = fresnel_r(n1,n2,theta1,pol);
+    const t = fresnel_t(n1,n2,theta1,pol);
+    const R = cabs(r.re,r.im)**2;
+
+    // If TIR, c2 is imaginary => no transmitted power flux (ideal lossless)
+    if(Math.abs(r.c2.im) > 1e-12){
+      return {R:1, T:0};
+    }
+    const c1 = Math.cos(theta1);
+    const c2 = r.c2.re;
+    const T = (n2*c2)/(n1*c1) * (cabs(t.re,t.im)**2);
+    return {R, T};
+  }
+
+  // ---------- Canvas plotting ----------
+  function fitCanvas(canvas){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(2, Math.floor(rect.width * dpr));
+    const h = Math.max(2, Math.floor(rect.height * dpr));
+    if(canvas.width !== w || canvas.height !== h){
+      canvas.width = w; canvas.height = h;
+    }
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+    return {ctx, wCss: rect.width, hCss: rect.height, dpr};
+  }
+
+  function drawAxes(ctx, W, H, opts){
+    const pad = opts.pad || {l:52, r:18, t:28, b:44};
+    const xMin=opts.xMin, xMax=opts.xMax, yMin=opts.yMin, yMax=opts.yMax;
+    const title=opts.title || "";
+    const xLabel=opts.xLabel || "";
+    const yLabel=opts.yLabel || "";
+    const grid=true;
+
+    // Background
+    ctx.clearRect(0,0,W,H);
+    ctx.save();
+    ctx.fillStyle = "rgba(10,14,20,0.35)";
+    ctx.fillRect(0,0,W,H);
+
+    // Title
+    ctx.fillStyle = "rgba(231,238,248,0.92)";
+    ctx.font = "600 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.fillText(title, pad.l, pad.t - 10);
+
+    const plotX0 = pad.l, plotY0 = pad.t, plotW = W - pad.l - pad.r, plotH = H - pad.t - pad.b;
+
+    // Axis rectangle
+    ctx.strokeStyle = "rgba(231,238,248,0.18)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(plotX0, plotY0, plotW, plotH);
+
+    // Ticks
+    const xt = niceTicks(xMin, xMax, 6);
+    const yt = niceTicks(yMin, yMax, 6);
+
+    ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace";
+    ctx.fillStyle = "rgba(169,183,199,0.95)";
+    ctx.strokeStyle = "rgba(231,238,248,0.10)";
+
+    // Grid + x ticks
+    for(let x=xt.min; x<=xt.max+1e-12; x+=xt.step){
+      const tx = (x - xMin) / (xMax - xMin);
+      const px = plotX0 + tx*plotW;
+      if(grid){
+        ctx.beginPath();
+        ctx.moveTo(px, plotY0);
+        ctx.lineTo(px, plotY0 + plotH);
+        ctx.stroke();
+      }
+      // tick label
+      ctx.fillText((Math.abs(x) < 1e-9 ? 0 : x).toFixed(0), px-8, plotY0+plotH+18);
+      // tick mark
+      ctx.strokeStyle = "rgba(231,238,248,0.18)";
+      ctx.beginPath();
+      ctx.moveTo(px, plotY0+plotH);
+      ctx.lineTo(px, plotY0+plotH+6);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(231,238,248,0.10)";
+    }
+
+    // Grid + y ticks
+    for(let y=yt.min; y<=yt.max+1e-12; y+=yt.step){
+      const ty = (y - yMin) / (yMax - yMin);
+      const py = plotY0 + plotH - ty*plotH;
+      if(grid){
+        ctx.beginPath();
+        ctx.moveTo(plotX0, py);
+        ctx.lineTo(plotX0 + plotW, py);
+        ctx.stroke();
+      }
+      ctx.fillText((Math.abs(y) < 1e-9 ? 0 : y).toFixed(2), 6, py+4);
+      ctx.strokeStyle = "rgba(231,238,248,0.18)";
+      ctx.beginPath();
+      ctx.moveTo(plotX0-6, py);
+      ctx.lineTo(plotX0, py);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(231,238,248,0.10)";
+    }
+
+    // Labels
+    ctx.fillStyle = "rgba(169,183,199,0.95)";
+    ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.fillText(xLabel, plotX0 + plotW - ctx.measureText(xLabel).width, H - 14);
+
+    // y label rotated
+    ctx.save();
+    ctx.translate(14, plotY0 + plotH/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    ctx.restore();
+
+    function xMap(x){ return plotX0 + (x - xMin) / (xMax - xMin) * plotW; }
+    function yMap(y){ return plotY0 + plotH - (y - yMin) / (yMax - yMin) * plotH; }
+
+    return {pad, plotX0, plotY0, plotW, plotH, xMap, yMap};
+  }
+
+  function drawLine(ctx, pts, strokeStyle, lineWidth){
+    ctx.save();
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = lineWidth || 2;
+    ctx.beginPath();
+    for(let i=0;i<pts.length;i++){
+      const p=pts[i];
+      if(i===0) ctx.moveTo(p.x,p.y);
+      else ctx.lineTo(p.x,p.y);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawLegend(ctx, W, y, items){
+    // items: [{name, color}]
+    ctx.save();
+    ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    let x = 56;
+    for(const it of items){
+      ctx.fillStyle = it.color;
+      ctx.fillRect(x, y-9, 14, 6);
+      x += 18;
+      ctx.fillStyle = "rgba(231,238,248,0.88)";
+      ctx.fillText(it.name, x, y-4);
+      x += ctx.measureText(it.name).width + 18;
+    }
+    ctx.restore();
+  }
+
+  function drawVMarker(ctx, x, y0, y1){
+    ctx.save();
+    ctx.strokeStyle = "rgba(251,191,36,0.85)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6,6]);
+    ctx.beginPath();
+    ctx.moveTo(x, y0);
+    ctx.lineTo(x, y1);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  // ---------- Diagram drawing ----------
+  function drawDiagram(canvas, n1, n2, theta1Deg, pol){
+    const {ctx, wCss:W, hCss:H} = fitCanvas(canvas);
+
+    // Helpers
+    const cx = W*0.52;
+    const cy = H*0.55;
+    const left = 18, right = W-18, top = 18, bottom = H-18;
+
+    // Background
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = "rgba(10,14,20,0.35)";
+    ctx.fillRect(0,0,W,H);
+
+    // Interface line (horizontal)
+    const yInt = H*0.55;
+    ctx.strokeStyle = "rgba(231,238,248,0.25)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(left, yInt);
+    ctx.lineTo(right, yInt);
+    ctx.stroke();
+
+    // Medium labels
+    ctx.fillStyle = "rgba(231,238,248,0.9)";
+    ctx.font = "600 13px ui-sans-serif, system-ui";
+    ctx.fillText(`Medium 1 (n1=${n1.toFixed(2)})`, left+6, yInt-12);
+    ctx.fillText(`Medium 2 (n2=${n2.toFixed(2)})`, left+6, yInt+22);
+
+    // Normal
+    ctx.strokeStyle = "rgba(231,238,248,0.22)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, yInt-120);
+    ctx.lineTo(cx, yInt+120);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(169,183,199,0.95)";
+    ctx.font = "12px ui-monospace, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace";
+    ctx.fillText("normal", cx+8, yInt-98);
+
+    // Angles
+    const theta1 = theta1Deg*Math.PI/180;
+    // Snell (use real theta2 for drawing; clamp if TIR)
+    const s2 = (n1/n2)*Math.sin(theta1);
+    let theta2 = 0;
+    let tir = false;
+    if(s2 <= 1){
+      theta2 = Math.asin(s2);
+    }else{
+      tir = true;
+      theta2 = Math.PI/2 - 0.12; // draw nearly grazing along interface in medium 2 (evanescent)
+    }
+
+    // Ray lengths
+    const L = 150;
+    const origin = {x: cx, y: yInt};
+
+    // Incident ray endpoint (coming from upper-left toward origin)
+    const incEnd = {x: origin.x - L*Math.sin(theta1), y: origin.y - L*Math.cos(theta1)};
+    const refEnd = {x: origin.x - L*Math.sin(theta1), y: origin.y + L*Math.cos(theta1)}; // reflected goes upward? Wait reflected in medium1 is upward: y decreases.
+    // Correct: reflected goes into medium 1 (above interface), so y decreases
+    const refEnd2 = {x: origin.x - L*Math.sin(theta1), y: origin.y - (-L*Math.cos(theta1))}; // confusion
+    // Let's compute directly: reflected direction in x-z plane; in screen, y corresponds to z (down positive). Incident toward +z => down. Reflected toward -z => up.
+    const refEndUp = {x: origin.x - L*Math.sin(theta1), y: origin.y + (-L*Math.cos(theta1))}; // up: negative down => y - Lcos
+    // That becomes origin.y - L*cos(theta1)
+    const refEndFinal = {x: origin.x - L*Math.sin(theta1), y: origin.y - L*Math.cos(theta1)}; // same as incident; not right
+    // Let's set screen y positive downward. Incident direction: +z => downward component +cosθ. Reflected: -z => upward component -cosθ.
+    const incStart = {x: origin.x - L*Math.sin(theta1), y: origin.y - L*Math.cos(theta1)}; // start point above-left
+    const refStart = origin;
+    const refEndPoint = {x: origin.x - L*Math.sin(theta1), y: origin.y + (-1)*(-L*Math.cos(theta1))}; // wrong
+    // compute end by adding direction vector: d_r = (-sinθ, -cosθ) in (x,y) for reflected? x points right; but our ray drawn to left; use direction to left: -sinθ. y for reflected is -cosθ (up).
+    const refEndP = {x: origin.x + (-L*Math.sin(theta1)), y: origin.y + (-L*Math.cos(theta1))}; // up-left
+    // transmitted direction to right? in x positive (to right) depends; let's draw transmitted to right-down with +sinθ2
+    const transEnd = {x: origin.x + L*Math.sin(theta2), y: origin.y + L*Math.cos(theta2)};
+
+    // Draw arrow function
+    function arrow(from, to, color){
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      const ang = Math.atan2(to.y-from.y, to.x-from.x);
+      const ah = 10;
+      ctx.beginPath();
+      ctx.moveTo(to.x, to.y);
+      ctx.lineTo(to.x - ah*Math.cos(ang-0.5), to.y - ah*Math.sin(ang-0.5));
+      ctx.lineTo(to.x - ah*Math.cos(ang+0.5), to.y - ah*Math.sin(ang+0.5));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    arrow(incStart, origin, "rgba(102,217,255,0.95)");     // incident
+    arrow(origin, refEndP, "rgba(167,139,250,0.95)");      // reflected
+    arrow(origin, transEnd, tir ? "rgba(251,113,133,0.75)" : "rgba(126,231,135,0.95)"); // transmitted or evanescent hint
+
+    // Labels
+    ctx.fillStyle = "rgba(231,238,248,0.9)";
+    ctx.font = "600 13px ui-sans-serif, system-ui";
+    ctx.fillText("incident", incStart.x+8, incStart.y+16);
+    ctx.fillText("reflected", refEndP.x+8, refEndP.y+16);
+    ctx.fillText(tir ? "evanescent" : "transmitted", transEnd.x-70, transEnd.y-10);
+
+    // Angle arcs
+    function arcAngle(theta, side){
+      // Draw arc from normal to ray in medium1 (above interface)
+      const R = 38;
+      ctx.save();
+      ctx.strokeStyle = "rgba(251,191,36,0.9)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      // Normal is upward direction (0 angle), ray is tilted left for incident/reflected. We'll just draw from -PI/2 to -PI/2 + theta
+      const start = -Math.PI/2;
+      const end = start + (side==="down"? theta : -theta);
+      ctx.arc(origin.x, origin.y, R, start, start + theta, false);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Draw θ1 arc on incident side (above interface)
+    ctx.save();
+    ctx.strokeStyle = "rgba(251,191,36,0.9)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const R1 = 34;
+    // Normal upwards is angle -90deg. Incident ray points toward origin from incStart: direction is (sinθ1, cosθ1) in screen; its angle is atan2(cosθ1, sinθ1).
+    // We'll just draw a simple arc between normal (up) and the incident direction at the origin pointing opposite to incident path (from origin to incStart).
+    const angNormal = -Math.PI/2;
+    const angIncFromOrigin = Math.atan2(incStart.y-origin.y, incStart.x-origin.x); // from origin to start (up-left)
+    // Ensure arc direction reasonable
+    ctx.arc(origin.x, origin.y, R1, angNormal, angIncFromOrigin, true);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(231,238,248,0.9)";
+    ctx.font = "12px ui-monospace, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace";
+    ctx.fillText("θ1", origin.x - 42, origin.y - 30);
+    ctx.restore();
+
+    // θ2 arc (below interface)
+    ctx.save();
+    ctx.strokeStyle = "rgba(251,191,36,0.9)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const R2 = 34;
+    const angNormalDown = Math.PI/2; // downward
+    const angTrans = Math.atan2(transEnd.y-origin.y, transEnd.x-origin.x);
+    ctx.arc(origin.x, origin.y, R2, angNormalDown, angTrans, false);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(231,238,248,0.9)";
+    ctx.font = "12px ui-monospace, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace";
+    ctx.fillText("θ2", origin.x + 22, origin.y + 46);
+    ctx.restore();
+
+    // TE indicator (E out of plane): draw a dot-in-circle / arrow
+    const ex = W*0.86, ey = H*0.22;
+    ctx.save();
+    ctx.strokeStyle = "rgba(102,217,255,0.9)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(ex, ey, 16, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(102,217,255,0.9)";
+    ctx.beginPath();
+    ctx.arc(ex, ey, 4, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(231,238,248,0.9)";
+    ctx.font = "600 12px ui-sans-serif, system-ui";
+    ctx.fillText(pol==="TE" ? "TE: E ⊙ (out of plane)" : "TM: E in plane", ex-74, ey+34);
+    ctx.restore();
+
+    // Critical angle note
+    if(n1>n2){
+      const thc = Math.asin(n2/n1)*180/Math.PI;
+      ctx.save();
+      ctx.fillStyle = "rgba(169,183,199,0.95)";
+      ctx.font = "12px ui-sans-serif, system-ui";
+      ctx.fillText(`critical θc ≈ ${thc.toFixed(1)}°`, left+6, top+16);
+      if(theta1Deg > thc) {
+        ctx.fillStyle = "rgba(251,113,133,0.9)";
+        ctx.fillText(`TIR regime (θ1>θc)`, left+6, top+34);
+      }
+      ctx.restore();
+    }
+  }
+
+  // ---------- Plotting data ----------
+  function computeCurves(n1,n2,pol){
+    const xs = [];
+    const rMag = [];
+    const tMag = [];
+    const R = [];
+    const T = [];
+    const phase = [];
+    const xMax = 85;
+    const N = 361;
+
+    for(let i=0;i<=N;i++){
+      const thDeg = xMax*i/N;
+      const th = thDeg*Math.PI/180;
+      xs.push(thDeg);
+
+      const r = fresnel_r(n1,n2,th,pol);
+      const t = fresnel_t(n1,n2,th,pol);
+      rMag.push(cabs(r.re,r.im));
+      tMag.push(cabs(t.re,t.im));
+      const rt = powerRT(n1,n2,th,pol);
+      R.push(rt.R);
+      T.push(rt.T);
+      phase.push(cargDeg(r.re,r.im));
+    }
+    return {xs, rMag, tMag, R, T, phase};
+  }
+
+  function drawMagPlot(canvas, curves, thetaMark){
+    const {ctx, wCss:W, hCss:H} = fitCanvas(canvas);
+    const yMin = 0, yMax = 1.05;
+    const axes = drawAxes(ctx,W,H,{
+      xMin:0, xMax:85,
+      yMin, yMax,
+      title:"Amplitude magnitudes",
+      xLabel:"Incidence angle θ1 (deg)",
+      yLabel:"|r| , |t| (dimensionless)",
+      pad:{l:56,r:16,t:30,b:46}
+    });
+
+    const ptsR = curves.xs.map((x,i)=>({x: axes.xMap(x), y: axes.yMap(curves.rMag[i])}));
+    const ptsT = curves.xs.map((x,i)=>({x: axes.xMap(x), y: axes.yMap(curves.tMag[i])}));
+
+    drawLine(ctx, ptsR, "rgba(102,217,255,0.95)", 2.5);
+    drawLine(ctx, ptsT, "rgba(126,231,135,0.95)", 2.5);
+
+    // Marker
+    const xm = axes.xMap(thetaMark);
+    drawVMarker(ctx, xm, axes.plotY0, axes.plotY0 + axes.plotH);
+
+    // Legend
+    drawLegend(ctx, W, 54, [
+      {name:"|r|", color:"rgba(102,217,255,0.95)"},
+      {name:"|t|", color:"rgba(126,231,135,0.95)"}
+    ]);
+  }
+
+  function drawPowPlot(canvas, curves, thetaMark){
+    const {ctx, wCss:W, hCss:H} = fitCanvas(canvas);
+    const yMin = 0, yMax = 1.05;
+    const axes = drawAxes(ctx,W,H,{
+      xMin:0, xMax:85,
+      yMin, yMax,
+      title:"Power fractions (lossless model)",
+      xLabel:"Incidence angle θ1 (deg)",
+      yLabel:"R, T (dimensionless)",
+      pad:{l:56,r:16,t:30,b:46}
+    });
+
+    const ptsR = curves.xs.map((x,i)=>({x: axes.xMap(x), y: axes.yMap(curves.R[i])}));
+    const ptsT = curves.xs.map((x,i)=>({x: axes.xMap(x), y: axes.yMap(curves.T[i])}));
+
+    drawLine(ctx, ptsR, "rgba(167,139,250,0.95)", 2.5);
+    drawLine(ctx, ptsT, "rgba(251,191,36,0.95)", 2.5);
+
+    const xm = axes.xMap(thetaMark);
+    drawVMarker(ctx, xm, axes.plotY0, axes.plotY0 + axes.plotH);
+
+    drawLegend(ctx, W, 54, [
+      {name:"R=|r|²", color:"rgba(167,139,250,0.95)"},
+      {name:"T", color:"rgba(251,191,36,0.95)"}
+    ]);
+  }
+
+  function drawPhasePlot(canvas, curves, thetaMark){
+    const {ctx, wCss:W, hCss:H} = fitCanvas(canvas);
+    const yMin = -180, yMax = 180;
+    const axes = drawAxes(ctx,W,H,{
+      xMin:0, xMax:85,
+      yMin, yMax,
+      title:"Reflection phase",
+      xLabel:"Incidence angle θ1 (deg)",
+      yLabel:"arg(r) (deg)",
+      pad:{l:56,r:16,t:30,b:46}
+    });
+
+    const pts = curves.xs.map((x,i)=>({x: axes.xMap(x), y: axes.yMap(curves.phase[i])}));
+    drawLine(ctx, pts, "rgba(102,217,255,0.95)", 2.5);
+
+    const xm = axes.xMap(thetaMark);
+    drawVMarker(ctx, xm, axes.plotY0, axes.plotY0 + axes.plotH);
+
+    drawLegend(ctx, W, 54, [
+      {name:"phase(r)", color:"rgba(102,217,255,0.95)"}
+    ]);
+  }
+
+  // ---------- UI + Update ----------
+  const state = {
+    n1: parseFloat($("n1").value),
+    n2: parseFloat($("n2").value),
+    thDeg: parseFloat($("th").value),
+    pol: $("pol").value
+  };
+
+  function updateLabels(){
+    $("n1Val").textContent = state.n1.toFixed(2);
+    $("n2Val").textContent = state.n2.toFixed(2);
+    $("thVal").textContent = `${state.thDeg.toFixed(1)}°`;
+  }
+
+  function updateNumbers(){
+    const th = state.thDeg*Math.PI/180;
+    const r = fresnel_r(state.n1,state.n2,th,state.pol);
+    const rt = powerRT(state.n1,state.n2,th,state.pol);
+
+    const mag = cabs(r.re,r.im);
+    const ph = cargDeg(r.re,r.im);
+
+    $("rVal").textContent = `${mag.toFixed(4)} ∠ ${ph.toFixed(1)}°`;
+    $("rStr").textContent = `r = ${formatComplex(r.re,r.im)}`;
+
+    const sum = rt.R + rt.T;
+    $("RTVal").textContent = `R=${rt.R.toFixed(4)}  |  T=${rt.T.toFixed(4)}`;
+    $("RTStr").textContent = `R+T = ${sum.toFixed(4)}  (ideal lossless: ≈1 below critical angle; T=0 under TIR)`;
+  }
+
+  let curvesCache = null;
+
+  function renderAll(){
+    updateLabels();
+    curvesCache = computeCurves(state.n1,state.n2,state.pol);
+
+    drawDiagram($("cDiagram"), state.n1, state.n2, state.thDeg, state.pol);
+    drawMagPlot($("cMag"), curvesCache, state.thDeg);
+    drawPowPlot($("cPow"), curvesCache, state.thDeg);
+    drawPhasePlot($("cPhase"), curvesCache, state.thDeg);
+
+    updateNumbers();
+  }
+
+  function wireControls(){
+    $("n1").addEventListener("input", (e)=>{ state.n1 = parseFloat(e.target.value); renderAll(); });
+    $("n2").addEventListener("input", (e)=>{ state.n2 = parseFloat(e.target.value); renderAll(); });
+    $("th").addEventListener("input", (e)=>{ state.thDeg = parseFloat(e.target.value); renderAll(); });
+    $("pol").addEventListener("change", (e)=>{ state.pol = e.target.value; renderAll(); });
+
+    // Copy buttons
+    document.querySelectorAll(".copyBtn").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const from = btn.getAttribute("data-copy-from");
+        let txt = "";
+        if(from){
+          const el = $(from);
+          txt = (el && el.getAttribute("data-copy")) ? el.getAttribute("data-copy") : (el ? el.innerText : "");
+        }else{
+          txt = btn.getAttribute("data-copy") || "";
+        }
+        if(!txt) return;
+        try{
+          await navigator.clipboard.writeText(txt);
+          const old = btn.innerHTML;
+          btn.innerHTML = `Copied ✓ <small>clipboard</small>`;
+          setTimeout(()=>btn.innerHTML = old, 900);
+        }catch(err){
+          // Fallback
+          const ta = document.createElement("textarea");
+          ta.value = txt;
+          document.body.appendChild(ta);
+          ta.select();
+          try{ document.execCommand("copy"); }catch(e){}
+          document.body.removeChild(ta);
+          const old = btn.innerHTML;
+          btn.innerHTML = `Copied ✓ <small>fallback</small>`;
+          setTimeout(()=>btn.innerHTML = old, 900);
+        }
+      });
+    });
+
+    // Smooth scroll for TOC
+    document.querySelectorAll('.toc a').forEach(a=>{
+      a.addEventListener('click', (ev)=>{
+        ev.preventDefault();
+        const id = a.getAttribute('href').slice(1);
+        const el = document.getElementById(id);
+        if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+
+    // Resize handling
+    let raf = null;
+    window.addEventListener("resize", ()=>{
+      if(raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(()=>renderAll());
+    });
+  }
+
+  // Init
+  wireControls();
+  renderAll();
+})();
+</script>
+</body>
+</html>

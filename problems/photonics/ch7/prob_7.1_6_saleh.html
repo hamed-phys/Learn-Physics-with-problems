@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fabry–Perot Etalon: Length and Finesse from Measured Transmission Peaks</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --panel:#111a2a;
+      --panel2:#0f1524;
+      --text:#e9eef7;
+      --muted:#a9b4c7;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --border:rgba(255,255,255,.10);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(900px 500px at 20% 10%, rgba(125,211,252,.12), transparent 60%),
+        radial-gradient(900px 500px at 80% 20%, rgba(167,139,250,.10), transparent 60%),
+        radial-gradient(900px 700px at 40% 90%, rgba(52,211,153,.07), transparent 60%),
+        var(--bg);
+      line-height:1.55;
+    }
+    a{color:var(--accent)}
+    header{
+      padding:34px 20px 22px;
+      border-bottom:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(17,26,42,.9), rgba(11,15,23,.65));
+      position:relative;
+      overflow:hidden;
+    }
+    header::after{
+      content:"";
+      position:absolute; inset:-30px -30px auto auto;
+      width:240px; height:240px;
+      background: radial-gradient(circle at 30% 30%, rgba(125,211,252,.18), transparent 60%);
+      filter: blur(0px);
+      transform: rotate(18deg);
+      pointer-events:none;
+    }
+    .wrap{
+      max-width:1200px;
+      margin:0 auto;
+      padding:0 18px;
+    }
+    .title{
+      display:flex; gap:16px; align-items:flex-start; justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(1.4rem, 2.2vw, 2.1rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:8px 0 0;
+      color:var(--muted);
+      max-width:80ch;
+    }
+
+    main{
+      padding:22px 0 44px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+
+    aside.toc{
+      position:sticky;
+      top:14px;
+      background: linear-gradient(180deg, rgba(17,26,42,.92), rgba(15,21,36,.86));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:14px 12px;
+      backdrop-filter: blur(8px);
+    }
+    .toc h2{
+      font-size: .95rem;
+      margin: 2px 8px 10px;
+      color: var(--text);
+      display:flex; align-items:center; gap:10px;
+    }
+    .toc h2 .dot{
+      width:10px; height:10px; border-radius:999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 20px rgba(125,211,252,.25);
+    }
+    .toc nav a{
+      display:block;
+      padding:8px 10px;
+      margin:4px 4px;
+      border-radius:12px;
+      text-decoration:none;
+      color: var(--muted);
+      border:1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size:.95rem;
+    }
+    .toc nav a:hover{
+      background: rgba(125,211,252,.08);
+      border-color: rgba(125,211,252,.18);
+      color: var(--text);
+      transform: translateX(2px);
+    }
+
+    article{
+      background: linear-gradient(180deg, rgba(17,26,42,.78), rgba(15,21,36,.70));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 6px;
+      backdrop-filter: blur(10px);
+    }
+
+    section{
+      padding: 6px 0 18px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      margin-top: 16px;
+    }
+    section:first-of-type{border-top:none; margin-top:0}
+    section h2{
+      margin: 4px 0 8px;
+      font-size: 1.22rem;
+      letter-spacing:.2px;
+    }
+    section h3{
+      margin: 14px 0 8px;
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+    p{margin: 8px 0; color: rgba(233,238,247,.94)}
+    ul{margin: 8px 0 8px 18px; color: rgba(233,238,247,.94)}
+    li{margin: 6px 0}
+    .muted{color:var(--muted)}
+    .kicker{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      font-size:.9rem;
+      color:var(--muted);
+      margin: 2px 0 10px;
+    }
+    .pill{
+      display:inline-block;
+      padding:3px 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      font-size: .85rem;
+      color: var(--text);
+      white-space:nowrap;
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+      margin: 10px 0 6px;
+    }
+    .card{
+      grid-column: span 12;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      background: rgba(0,0,0,.18);
+      padding: 12px 12px 10px;
+    }
+    .card strong{color: var(--text)}
+    .card .tag{
+      display:inline-flex; align-items:center; gap:8px;
+      font-weight:700;
+    }
+    .tag .chip{
+      width:10px; height:10px; border-radius:999px;
+      background: rgba(125,211,252,.7);
+    }
+    .assumptions .tag .chip{background: rgba(52,211,153,.75)}
+    .mistakes .tag .chip{background: rgba(251,191,36,.85)}
+    .final .tag .chip{background: rgba(167,139,250,.75)}
+    .keyeq .tag .chip{background: rgba(125,211,252,.75)}
+
+    .eqblock{
+      position:relative;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 12px 12px 10px;
+      overflow:hidden;
+    }
+    pre{
+      margin: 0;
+      font-family: var(--mono);
+      font-size: .95rem;
+      color: rgba(233,238,247,.96);
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height:1.5;
+    }
+    code{font-family: var(--mono)}
+    .copybtn{
+      position:absolute;
+      top:10px; right:10px;
+      border:none;
+      background: rgba(125,211,252,.14);
+      color: var(--text);
+      border: 1px solid rgba(125,211,252,.22);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: .85rem;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease;
+    }
+    .copybtn:hover{transform: translateY(-1px); background: rgba(125,211,252,.20)}
+    .copybtn:active{transform: translateY(0px)}
+    .copystate{
+      margin-left:8px; color: var(--muted); font-size:.85rem;
+    }
+
+    .viz{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .viz .panel{
+      grid-column: span 12;
+      padding: 12px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+    .panel h3{
+      margin: 2px 0 10px;
+      font-size: 1.0rem;
+      color: var(--text);
+    }
+    canvas{
+      width:100%;
+      height: 320px;
+      display:block;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(9,12,18,.70), rgba(8,10,16,.65));
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .controls{
+      display:flex;
+      gap: 12px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top:10px;
+      padding: 10px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+    }
+    .control{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width: 240px;
+      flex: 1 1 240px;
+    }
+    .control label{
+      color: var(--muted);
+      font-size:.92rem;
+      display:flex; align-items:baseline; justify-content:space-between;
+      gap:10px;
+    }
+    .control input[type="range"]{width:100%}
+    .readouts{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 10px;
+      margin-top:10px;
+    }
+    .readout{
+      grid-column: span 6;
+      padding: 10px 10px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+    }
+    .readout .k{color: var(--muted); font-size:.86rem}
+    .readout .v{font-size:1.02rem; margin-top:4px}
+    .readout .v code{font-size:.98rem}
+    .hint{color: var(--muted); font-size:.92rem}
+
+    footer{
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: .92rem;
+      padding: 14px 0 2px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .hr{
+      height:1px; background: rgba(255,255,255,.08);
+      margin: 12px 0;
+    }
+
+    @media (min-width: 900px){
+      .cards .card{grid-column: span 6}
+      .viz .panel:nth-child(1){grid-column: span 5}
+      .viz .panel:nth-child(2){grid-column: span 7}
+      .viz .panel:nth-child(3){grid-column: span 12}
+      canvas.small{height: 320px}
+      canvas.medium{height: 320px}
+      canvas.wide{height: 280px}
+      .readout{grid-column: span 3}
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns: 1fr}
+      aside.toc{position:relative; top:auto}
+    }
+
+    /* Subtle entrance */
+    @keyframes rise {
+      from { transform: translateY(8px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    article, aside.toc { animation: rise .35s ease both; }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff; color:#000}
+      header, aside.toc{display:none}
+      article{box-shadow:none; border:1px solid #ddd; background:#fff}
+      .copybtn{display:none}
+      canvas{border:1px solid #ddd; background:#fff}
+      .card, .eqblock, .panel{background:#fff}
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <div class="title">
+      <div>
+        <h1>Transmittance of a Fabry–Perot Etalon: Finding Cavity Length and Finesse from Measured Peaks</h1>
+        <p class="subtitle">
+          You measured periodic transmission peaks versus optical frequency. From the peak spacing (FSR) and peak width (FWHM),
+          we extract the resonator length and finesse, then connect them to mirror reflectance with the classic Airy model.
+        </p>
+        <div class="kicker">
+          <span class="pill">Topic: Interference & Resonators</span>
+          <span class="pill">Key outputs: <strong>Length</strong> & <strong>Finesse</strong></span>
+          <span class="pill">Interactive spectra + parameter sweep</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="grid">
+
+      <aside class="toc" aria-label="Table of contents">
+        <h2><span class="dot"></span>Contents</h2>
+        <nav>
+          <a href="#quick-summary">Quick Summary</a>
+          <a href="#part0">PART 0 — Concept Primer</a>
+          <a href="#part1">PART 1 — Problem Analysis</a>
+          <a href="#part2">PART 2 — Strategy & Tips</a>
+          <a href="#part3">PART 3 — Full Solution</a>
+          <a href="#part4">PART 4 — Deeper Understanding</a>
+          <a href="#part5">PART 5 — Visualization Guide</a>
+        </nav>
+        <div class="hr"></div>
+        <p class="hint">
+          Tip: Use the reflectance slider in the visualization section to see how mirror quality changes the linewidth and spectral peaks.
+        </p>
+      </aside>
+
+      <article>
+        <!-- Quick Summary -->
+        <section id="quick-summary">
+          <h2>Quick Summary</h2>
+          <ul>
+            <li><strong>What this is about:</strong> A symmetric Fabry–Perot etalon shows transmission peaks versus frequency; their <em>spacing</em> and <em>width</em> encode the cavity geometry and losses.</li>
+            <li><strong>Key physics idea:</strong> Constructive interference occurs when the round-trip phase is an integer multiple of <code>2π</code>, creating resonances separated by the <em>free spectral range</em> (FSR).</li>
+            <li><strong>Governing relations:</strong> <code>FSR = c/(2 n L)</code> and <code>Finesse 𝓕 = FSR / FWHM</code> (for narrow resonances).</li>
+            <li><strong>Given measurements:</strong> Peak period (FSR) <code>150 MHz</code>, peak width (FWHM) <code>5 MHz</code>, and <code>n = 1</code> (gas-filled cavity).</li>
+            <li><strong>What you compute:</strong> Cavity length <code>L</code> and finesse <code>𝓕</code> (numeric results).</li>
+            <li><strong>Optional deeper link:</strong> For a lossless symmetric cavity, finesse connects to mirror reflectance via <code>𝓕 ≈ π √R / (1 − R)</code>.</li>
+            <li><strong>Final results (numeric):</strong> <code>L ≈ 1.00 m</code> and <code>𝓕 = 30</code>.</li>
+          </ul>
+        </section>
+
+        <!-- PART 0 -->
+        <section id="part0">
+          <h2>PART 0 — Concept Primer (THEORY BEFORE SOLVING)</h2>
+
+          <h3>Core definitions (symbols & units)</h3>
+          <ul>
+            <li><strong>Fabry–Perot etalon:</strong> two parallel partially reflecting mirrors forming an optical resonator (cavity).</li>
+            <li><strong>Cavity length</strong> <code>L</code> (meters): separation between the mirrors.</li>
+            <li><strong>Refractive index</strong> <code>n</code> (dimensionless): sets phase velocity <code>v = c/n</code> inside the cavity.</li>
+            <li><strong>Free Spectral Range (FSR)</strong> <code>Δν_FSR</code> (Hz): frequency spacing between adjacent resonances.</li>
+            <li><strong>Full Width at Half Maximum (FWHM)</strong> <code>δν</code> (Hz): linewidth of a resonance peak in the transmission spectrum.</li>
+            <li><strong>Finesse</strong> <code>𝓕</code> (dimensionless): sharpness of resonances, defined as <code>𝓕 = Δν_FSR / δν</code>.</li>
+            <li><strong>Mirror reflectance</strong> <code>R</code> (dimensionless): fraction of intensity reflected by each mirror (symmetric cavity → same <code>R</code> for both).</li>
+          </ul>
+
+          <h3>Physical meaning of key quantities</h3>
+          <ul>
+            <li><strong>FSR</strong> tells you the <em>round-trip time</em> of the cavity: a shorter cavity → resonances are more widely spaced in frequency.</li>
+            <li><strong>Linewidth (FWHM)</strong> tells you how quickly the cavity “forgets” energy (loss per round trip): higher losses → broader peaks.</li>
+            <li><strong>Finesse</strong> is essentially “how many resolvable fringes fit inside one FSR.” Higher finesse → taller, narrower peaks.</li>
+          </ul>
+
+          <div class="cards">
+            <div class="card assumptions">
+              <div class="tag"><span class="chip"></span><strong>Assumptions used in standard etalon theory</strong></div>
+              <ul>
+                <li>Mirrors are parallel; single spatial mode approximation (or on-axis plane-wave component).</li>
+                <li>Steady-state monochromatic excitation while sweeping frequency slowly.</li>
+                <li>Linear optics; no nonlinear index changes; no gain medium.</li>
+                <li>For the “mirror-loss only” part: negligible absorption/scattering in the gas and substrates.</li>
+              </ul>
+            </div>
+
+            <div class="card keyeq">
+              <div class="tag"><span class="chip"></span><strong>Key equations (Airy-resonator summary)</strong></div>
+              <div class="eqblock" style="margin-top:10px">
+                <button class="copybtn" data-copy-target="#eq_key">Copy</button>
+                <pre id="eq_key">FSR:        Δν_FSR = c / (2 n L)
+
+Finesse:    𝓕 = Δν_FSR / δν   (δν = FWHM)
+
+Lossless symmetric cavity (approx):
+           𝓕 ≈ π √R / (1 − R)
+
+Airy transmission vs detuning Δν:
+           T(Δν) = 1 / (1 + ℱ_Airy sin²(π Δν / Δν_FSR))
+where      ℱ_Airy = 4R / (1 − R)²</pre>
+              </div>
+            </div>
+          </div>
+
+          <h3>Key laws/principles and when they are valid</h3>
+          <ul>
+            <li><strong>Resonance condition (constructive interference):</strong> round-trip phase <code>φ = 2 k n L</code> must satisfy <code>φ = 2π m</code>, where <code>m</code> is an integer and <code>k = 2π/λ</code>.</li>
+            <li><strong>Frequency spacing:</strong> Adjacent modes differ by one integer in <code>m</code>, giving a constant spacing in frequency (FSR) for a fixed <code>L</code> and <code>n</code>.</li>
+            <li><strong>Linewidth ↔ loss:</strong> Peak width is set by how many round trips the light effectively makes before decaying; mirror reflectance strongly controls this.</li>
+          </ul>
+
+          <h3>Mini intuition examples (conceptual)</h3>
+          <ul>
+            <li><strong>If you double the cavity length</strong> (<code>L → 2L</code>), the round-trip time doubles, so resonance peaks occur twice as often in frequency: <code>FSR → FSR/2</code>.</li>
+            <li><strong>If you increase reflectance</strong> (<code>R</code> closer to 1), photons bounce more times, so peaks narrow (smaller FWHM) and finesse increases.</li>
+          </ul>
+
+          <div class="card mistakes">
+            <div class="tag"><span class="chip"></span><strong>What to watch for (pitfalls)</strong></div>
+            <ul>
+              <li><strong>Confusing FSR with FWHM:</strong> FSR is peak-to-peak spacing; FWHM is the width of one peak.</li>
+              <li><strong>Using the wrong factor of 2:</strong> Fabry–Perot uses a <em>round trip</em> of <code>2L</code>, so <code>FSR = c/(2nL)</code>, not <code>c/(nL)</code>.</li>
+              <li><strong>Mixing air-index assumptions:</strong> Here the problem states <code>n = 1</code> (gas), so use that directly.</li>
+              <li><strong>Reflectance formula is approximate:</strong> <code>𝓕 ≈ π√R/(1−R)</code> assumes symmetric, lossless mirrors and narrow resonance regime.</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- PART 1 -->
+        <section id="part1">
+          <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+          <h3>Restate the problem (in plain words)</h3>
+          <p>
+            A symmetric Fabry–Perot etalon is illuminated by a tunable monochromatic source, and its transmission is recorded versus frequency.
+            The transmission has periodic resonant peaks separated by <code>150 MHz</code>, and each peak has a measured linewidth (FWHM) of <code>5 MHz</code>.
+            The medium inside is a gas with <code>n = 1</code>. Find the cavity length <code>L</code> and the finesse <code>𝓕</code>.
+          </p>
+
+          <h3>Given quantities</h3>
+          <ul>
+            <li>Peak spacing (period): <code>Δν_FSR = 150 MHz = 150×10⁶ Hz</code></li>
+            <li>Peak width (FWHM): <code>δν = 5 MHz = 5×10⁶ Hz</code></li>
+            <li>Refractive index: <code>n = 1</code></li>
+            <li>Speed of light: <code>c ≈ 2.99792458×10⁸ m/s</code></li>
+          </ul>
+
+          <h3>Unknowns</h3>
+          <ul>
+            <li>Cavity length <code>L</code> (m)</li>
+            <li>Finesse <code>𝓕</code> (dimensionless)</li>
+          </ul>
+
+          <h3>What must be found</h3>
+          <ul>
+            <li>A numeric value for <code>L</code> using the measured FSR.</li>
+            <li>A numeric value for <code>𝓕</code> using the ratio of FSR to FWHM.</li>
+          </ul>
+
+          <h3>Relevant physics principles (and why they apply)</h3>
+          <ul>
+            <li><strong>Standing-wave resonance in a two-mirror cavity:</strong> The periodic peaks are the cavity’s longitudinal modes; their spacing is set by the round-trip phase condition.</li>
+            <li><strong>Fourier/time viewpoint:</strong> The frequency spacing corresponds to the inverse of the round-trip time, so it directly determines <code>L</code>.</li>
+            <li><strong>Loss/linewidth relationship:</strong> The peak width reflects how selective the cavity is in frequency; finesse summarizes that selectivity.</li>
+          </ul>
+          <p class="muted">
+            We do <em>not</em> need detailed field distributions, diffraction, or polarization physics here because the measurements already provide the two key spectral observables (spacing and width) that map directly to <code>L</code> and <code>𝓕</code>.
+          </p>
+
+          <div class="card assumptions">
+            <div class="tag"><span class="chip"></span><strong>Explicit assumptions</strong></div>
+            <ul>
+              <li>Peaks correspond to adjacent longitudinal resonances of the same cavity (no mode hops between different families).</li>
+              <li>Frequency sweep is slow compared to cavity buildup time (steady-state transmission applies).</li>
+              <li>Refractive index is uniform and effectively constant over the small tuning range of interest.</li>
+              <li>“Only loss is associated with mirrors” applies only if we later connect finesse to mirror reflectance (optional extension).</li>
+            </ul>
+          </div>
+
+          <h3>Possible approaches (compare briefly)</h3>
+          <ul>
+            <li><strong>FSR + finesse definition (best here):</strong> Use <code>Δν_FSR = c/(2nL)</code> and <code>𝓕 = Δν_FSR/δν</code>. <em>Pros:</em> direct, minimal algebra, uses exactly what’s measured. <em>Cons:</em> doesn’t by itself give mirror reflectance unless you add a model.</li>
+            <li><strong>Airy function fit:</strong> Fit transmission spectrum to the Airy formula to extract <code>R</code>, then infer finesse and linewidth. <em>Pros:</em> more complete spectral model. <em>Cons:</em> overkill since FSR and FWHM are already provided.</li>
+            <li><strong>Time-domain ringdown:</strong> Use linewidth ↔ decay time, then infer loss and reflectance. <em>Pros:</em> physical insight into lifetime. <em>Cons:</em> requires additional mapping and data not explicitly given.</li>
+          </ul>
+
+          <p><strong>Chosen approach:</strong> Use the <em>FSR and finesse definitions</em> because they map one-to-one to the two requested unknowns with the least assumptions.</p>
+        </section>
+
+        <!-- PART 2 -->
+        <section id="part2">
+          <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+          <ol>
+            <li>
+              <strong>Goal:</strong> Convert the measured “period of peaks” into the FSR.<br>
+              <span class="muted">Tool:</span> Unit conversion (MHz → Hz).<br>
+              <span class="muted">Meaning:</span> FSR is the fundamental mode spacing of the cavity.
+            </li>
+            <li>
+              <strong>Goal:</strong> Use FSR to solve for the cavity length <code>L</code>.<br>
+              <span class="muted">Equation:</span> <code>Δν_FSR = c/(2 n L)</code>.<br>
+              <span class="muted">Meaning:</span> The cavity length sets the round-trip phase periodicity in frequency.
+            </li>
+            <li>
+              <strong>Goal:</strong> Compute finesse from spacing and width.<br>
+              <span class="muted">Equation:</span> <code>𝓕 = Δν_FSR / δν</code> (with <code>δν = FWHM</code>).<br>
+              <span class="muted">Meaning:</span> Finesse counts how “many linewidths” fit into one FSR.
+            </li>
+            <li>
+              <strong>Optional goal:</strong> If only mirror losses exist, estimate mirror reflectance <code>R</code> from <code>𝓕</code>.<br>
+              <span class="muted">Equation:</span> <code>𝓕 ≈ π √R / (1 − R)</code> (symmetric, lossless).<br>
+              <span class="muted">Meaning:</span> Higher reflectance → more bounces → sharper resonances.
+            </li>
+            <li>
+              <strong>Sanity checks:</strong> Verify units for <code>L</code> (meters), check that increasing <code>L</code> would decrease FSR, and that <code>𝓕</code> is dimensionless.
+            </li>
+          </ol>
+
+          <div class="card mistakes">
+            <div class="tag"><span class="chip"></span><strong>Common mistakes + quick tips</strong></div>
+            <ul>
+              <li><strong>Tip:</strong> Always write FSR and FWHM in the same units before taking a ratio.</li>
+              <li><strong>Mistake:</strong> Forgetting <code>2nL</code> in the denominator for FSR. Remember: one “cycle” is a <em>round trip</em>.</li>
+              <li><strong>Tip:</strong> A finesse of 30 means the linewidth is ~1/30 of the FSR—narrow but not ultra-high finesse.</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- PART 3 -->
+        <section id="part3">
+          <h2>PART 3 — Full Solution (DETAILED + TEACHING)</h2>
+
+          <h3>Physical intuition before calculation</h3>
+          <p>
+            A Fabry–Perot cavity resonates when the light “fits” an integer number of half-wavelengths between mirrors.
+            If you sweep the laser frequency upward, you repeatedly hit these resonance conditions at regularly spaced frequencies.
+            The spacing is bigger for shorter cavities (because the phase changes faster with frequency).
+            Meanwhile, the width of each resonance depends on how many times light bounces before leaking out—better mirrors give narrower peaks.
+          </p>
+
+          <h3>Step 1: Interpret the measured period as the FSR</h3>
+          <p>
+            The problem states that the transmittance versus frequency exhibits periodic peaks of period <code>150 MHz</code>.
+            In an etalon, the spacing between adjacent transmission resonances is the <strong>free spectral range</strong>:
+            <code>Δν_FSR = 150 MHz</code>.
+          </p>
+
+          <h3>Step 2: Use the Fabry–Perot FSR formula to find the length</h3>
+          <p>
+            For a cavity of physical length <code>L</code> filled with index <code>n</code>, the round-trip optical path length is <code>2nL</code>.
+            Adjacent longitudinal modes correspond to adding one full round-trip phase of <code>2π</code>, which gives the standard result:
+          </p>
+
+          <div class="eqblock">
+            <button class="copybtn" data-copy-target="#eq_fsr">Copy</button>
+            <pre id="eq_fsr">Δν_FSR = c / (2 n L)</pre>
+          </div>
+
+          <p>
+            Solve this for <code>L</code>:
+          </p>
+
+          <div class="eqblock">
+            <button class="copybtn" data-copy-target="#eq_L">Copy</button>
+            <pre id="eq_L">L = c / (2 n Δν_FSR)</pre>
+          </div>
+
+          <p>Now substitute the given values (<code>n = 1</code>, <code>Δν_FSR = 150×10⁶ Hz</code>):</p>
+
+          <div class="eqblock">
+            <pre>Compute denominator carefully:
+2 n Δν_FSR = 2 × 1 × 150×10^6  = 300×10^6  Hz
+
+Then:
+L = (2.99792458×10^8 m/s) / (300×10^6 s^-1)
+  = (2.99792458/3.00) m
+  ≈ 0.999308 m</pre>
+          </div>
+
+          <p>
+            So the cavity length is essentially <strong>one meter</strong> (to the precision implied by the measured MHz values).
+          </p>
+
+          <h3>Step 3: Compute the finesse from peak spacing and linewidth</h3>
+          <p>
+            The finesse <code>𝓕</code> is defined as the ratio of the free spectral range to the full width at half maximum:
+          </p>
+
+          <div class="eqblock">
+            <button class="copybtn" data-copy-target="#eq_finesse">Copy</button>
+            <pre id="eq_finesse">𝓕 = Δν_FSR / δν   (δν = FWHM)</pre>
+          </div>
+
+          <p>Insert the measurements:</p>
+
+          <div class="eqblock">
+            <pre>𝓕 = (150 MHz) / (5 MHz) = 150/5 = 30</pre>
+          </div>
+
+          <div class="cards">
+            <div class="card final">
+              <div class="tag"><span class="chip"></span><strong>Final Answer (boxed)</strong></div>
+              <div class="eqblock" style="margin-top:10px">
+                <button class="copybtn" data-copy-target="#final_answer">Copy</button>
+                <pre id="final_answer">Given Δν_FSR = 150 MHz, δν = 5 MHz, n = 1:
+
+L = c / (2 n Δν_FSR) ≈ 0.9993 m ≈ 1.00 m
+𝓕 = Δν_FSR / δν = 30</pre>
+              </div>
+              <p class="muted" style="margin-top:10px">
+                (Optional extension, mirror-loss-only, symmetric): this finesse corresponds to mirror reflectance of about <code>R ≈ 0.901</code>.
+              </p>
+            </div>
+          </div>
+
+          <h3>Sanity checks</h3>
+          <ul>
+            <li><strong>Units:</strong> <code>c</code> is m/s, <code>Δν_FSR</code> is 1/s, so <code>L</code> is meters ✔</li>
+            <li><strong>Scaling:</strong> If <code>L</code> were larger, <code>Δν_FSR</code> should be smaller (more closely spaced peaks). Our 1 m cavity gives an FSR of ~150 MHz, a sensible RF-scale spacing ✔</li>
+            <li><strong>Dimensionless finesse:</strong> Ratio of two frequencies → dimensionless ✔</li>
+            <li><strong>Physical meaning:</strong> <code>𝓕 = 30</code> means each resonance is about 30× narrower than the spacing to the next resonance, so peaks are clearly separated ✔</li>
+          </ul>
+
+          <p>
+            Connection to the plots below: the spectrum canvas shows resonant peaks spaced by the chosen FSR; the linewidth changes when you change mirror reflectance (through finesse),
+            while the length (from the measured FSR) stays fixed at ~1 m in this problem.
+          </p>
+        </section>
+
+        <!-- PART 4 -->
+        <section id="part4">
+          <h2>PART 4 — Deeper Understanding (THEORY AROUND THE RESULT)</h2>
+
+          <h3>Re-interpreting the final formulas</h3>
+          <ul>
+            <li><code>L = c/(2nΔν_FSR)</code>: the cavity is basically a <em>time-delay interferometer</em>. The round-trip time is <code>τ_rt = 2nL/c</code>, and <code>Δν_FSR = 1/τ_rt</code>.</li>
+            <li><code>𝓕 = Δν_FSR/δν</code>: finesse is a “quality” measure in the frequency domain—how selective the cavity is.</li>
+          </ul>
+
+          <h3>How changing parameters affects outcomes</h3>
+          <ul>
+            <li><strong>Increase length <code>L</code>:</strong> FSR decreases, peaks get closer in frequency. (In plots: spacing shrinks.)</li>
+            <li><strong>Increase index <code>n</code>:</strong> same effect as increasing <code>L</code>, because optical path length <code>nL</code> increases.</li>
+            <li><strong>Increase mirror reflectance <code>R</code>:</strong> finesse rises, linewidth falls, peaks get narrower (and the cavity becomes more frequency-selective).</li>
+          </ul>
+
+          <h3>Alternative derivation idea (brief)</h3>
+          <p>
+            Instead of starting with FSR, you can derive the cavity mode condition from the round-trip phase:
+            <code>φ(ν) = (4π n L / c) ν</code>. Adjacent resonances satisfy <code>φ(ν+m) − φ(ν) = 2π</code>, which immediately yields
+            <code>Δν_FSR = c/(2nL)</code>.
+          </p>
+
+          <h3>Concept check (quick self-test)</h3>
+          <ul>
+            <li><strong>Q:</strong> If the measured FSR were <code>300 MHz</code> (double), what happens to <code>L</code>? <strong>A:</strong> <code>L</code> halves (since <code>L ∝ 1/FSR</code>).</li>
+            <li><strong>Q:</strong> If the FWHM shrinks from <code>5 MHz</code> to <code>3 MHz</code> with the same FSR, what happens to finesse? <strong>A:</strong> It increases from 30 to 50.</li>
+            <li><strong>Q:</strong> Why does higher <code>R</code> narrow the peaks? <strong>A:</strong> Light makes more effective round trips, increasing the cavity’s phase discrimination vs frequency.</li>
+            <li><strong>Q:</strong> Can two different cavities have the same finesse? <strong>A:</strong> Yes—finesse depends on losses (e.g., mirror reflectance), not directly on length.</li>
+          </ul>
+        </section>
+
+        <!-- Visualization -->
+        <section id="part5">
+          <h2>PART 5 — Visualization Guide (HOW TO READ THE PLOTS)</h2>
+
+          <div class="viz">
+            <div class="panel">
+              <h3>Diagram — Fabry–Perot etalon geometry</h3>
+              <canvas id="cDiagram" class="small" aria-label="Fabry-Perot diagram"></canvas>
+              <p class="hint">Shows two mirrors separated by <code>L</code>, with incident and transmitted beams. Mirror reflectance <code>R</code> controls loss → linewidth.</p>
+            </div>
+
+            <div class="panel">
+              <h3>Main Plot — Transmission spectrum (Airy peaks)</h3>
+              <canvas id="cMain" class="medium" aria-label="Transmission vs frequency"></canvas>
+              <p class="hint">Peaks are separated by the FSR; their width shrinks as finesse increases. Detuning is shown relative to a resonance.</p>
+            </div>
+
+            <div class="panel">
+              <h3>Secondary Plot — Linewidth (FWHM) vs mirror reflectance</h3>
+              <canvas id="cSweep" class="wide" aria-label="Linewidth vs reflectance"></canvas>
+
+              <div class="controls" role="group" aria-label="Interactive controls">
+                <div class="control">
+                  <label for="rSlider">
+                    Mirror reflectance (symmetric): <span><code id="rLabel">0.9006</code></span>
+                  </label>
+                  <input id="rSlider" type="range" min="0.50" max="0.99" step="0.0001" value="0.9006" />
+                  <div class="hint">This control updates <em>all</em> canvases live: diagram annotation, transmission peaks, and linewidth curve marker.</div>
+                </div>
+                <div class="control" style="min-width:260px">
+                  <label>
+                    Measured case:
+                    <span class="pill">FSR = 150 MHz</span>
+                    <span class="pill">FWHM = 5 MHz</span>
+                  </label>
+                  <button id="snapBtn" class="copybtn" style="position:static; align-self:flex-start;">
+                    Snap to measured finesse
+                  </button>
+                  <span class="hint">Sets <code>R</code> to the value that produces <code>𝓕 = 30</code> for an ideal lossless symmetric cavity.</span>
+                </div>
+              </div>
+
+              <div class="readouts" aria-label="Computed readouts">
+                <div class="readout">
+                  <div class="k">Cavity length from measured FSR</div>
+                  <div class="v"><code id="Lout">0.9993 m</code></div>
+                </div>
+                <div class="readout">
+                  <div class="k">Finesse from measured data</div>
+                  <div class="v"><code id="FmeasOut">30</code></div>
+                </div>
+                <div class="readout">
+                  <div class="k">Finesse from current R (ideal model)</div>
+                  <div class="v"><code id="Fout">30.00</code></div>
+                </div>
+                <div class="readout">
+                  <div class="k">Predicted FWHM from current R (FSR fixed)</div>
+                  <div class="v"><code id="dnuOut">5.00 MHz</code></div>
+                </div>
+              </div>
+
+              <div class="cards" style="margin-top:12px">
+                <div class="card keyeq">
+                  <div class="tag"><span class="chip"></span><strong>Copy-ready: relationships used in the plots</strong></div>
+                  <div class="eqblock" style="margin-top:10px">
+                    <button class="copybtn" data-copy-target="#eq_plot">Copy</button>
+                    <pre id="eq_plot">Given fixed FSR, changing mirror reflectance R changes finesse and linewidth:
+
+𝓕(R) ≈ π √R / (1 − R)      (symmetric, lossless)
+
+δν(R) = Δν_FSR / 𝓕(R)
+
+Transmission (normalized, symmetric lossless):
+T(Δν) = 1 / (1 + (4R/(1−R)^2) * sin^2(π Δν / Δν_FSR))</pre>
+                  </div>
+                </div>
+                <div class="card mistakes">
+                  <div class="tag"><span class="chip"></span><strong>How to read the controls</strong></div>
+                  <ul>
+                    <li>The slider changes <code>R</code> only; the measured <code>FSR</code> remains fixed (because it sets <code>L</code>).</li>
+                    <li>As <code>R</code> increases, the secondary plot marker moves toward smaller linewidth; the main spectrum peaks narrow.</li>
+                  </ul>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <h3>What each canvas shows</h3>
+          <ul>
+            <li><strong>Diagram:</strong> Two mirrors separated by <code>L</code>; annotations show the current <code>R</code> and computed finesse/linewidth from the ideal model.</li>
+            <li><strong>Main plot:</strong> Normalized transmission <code>T(Δν)</code> vs frequency detuning <code>Δν</code> (MHz). The peak spacing equals FSR.</li>
+            <li><strong>Secondary plot:</strong> Predicted linewidth <code>δν(R)</code> vs reflectance, with a marker showing the current slider value.</li>
+          </ul>
+
+          <h3>Interactive control behavior (what should change and why)</h3>
+          <ul>
+            <li><strong>Slider changes:</strong> mirror reflectance <code>R</code>.</li>
+            <li><strong>Main plot response:</strong> higher <code>R</code> → narrower resonances (because finesse rises).</li>
+            <li><strong>Secondary plot response:</strong> marker shifts along <code>δν(R)</code>; linewidth decreases as <code>R → 1</code>.</li>
+            <li><strong>Diagram response:</strong> updated annotation values (<code>𝓕</code>, <code>δν</code>) reinforce the physical connection.</li>
+          </ul>
+
+          <footer>
+            Built with vanilla HTML/CSS/JS. Equations are provided in copyable plain text blocks (no MathJax).
+          </footer>
+        </section>
+
+      </article>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ========= Utilities ========= */
+function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+function fmt(x, n=4){ return Number(x).toFixed(n); }
+function fmt3(x){ return Number(x).toFixed(3); }
+
+function copyTextFrom(el){
+  const txt = (typeof el === "string") ? el : (el?.innerText ?? "");
+  return navigator.clipboard.writeText(txt);
+}
+function wireCopyButtons(){
+  document.querySelectorAll(".copybtn[data-copy-target]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const sel = btn.getAttribute("data-copy-target");
+      const el = document.querySelector(sel);
+      try{
+        await copyTextFrom(el);
+        const old = btn.textContent;
+        btn.textContent = "Copied!";
+        setTimeout(()=>btn.textContent=old, 900);
+      }catch(e){
+        const old = btn.textContent;
+        btn.textContent = "Copy failed";
+        setTimeout(()=>btn.textContent=old, 900);
+      }
+    });
+  });
+}
+
+/* ========= Physics Model =========
+   - Measured constants (from problem)
+   - Slider controls mirror reflectance R (ideal symmetric cavity)
+   - FSR fixed -> length fixed
+*/
+const c = 299792458;          // m/s
+const n = 1;                  // gas, given
+const FSR = 150e6;            // Hz
+const FWHM_meas = 5e6;        // Hz
+const F_meas = FSR / FWHM_meas;
+const L = c / (2*n*FSR);
+
+/* Ideal symmetric, lossless finesse vs reflectance */
+function finesseFromR(R){
+  // 𝓕 ≈ π √R / (1 − R)
+  return Math.PI * Math.sqrt(R) / (1 - R);
+}
+function airyCoefficient(R){
+  // ℱ_Airy = 4R / (1-R)^2
+  const d = (1 - R);
+  return 4*R/(d*d);
+}
+function transmission(R, dnu){
+  // T(Δν) = 1 / (1 + ℱ_Airy sin²(π Δν / FSR))
+  const Fa = airyCoefficient(R);
+  const s = Math.sin(Math.PI * (dnu/FSR));
+  return 1 / (1 + Fa * s*s);
+}
+function linewidthFromR(R){
+  const F = finesseFromR(R);
+  return FSR / F; // Hz
+}
+
+/* Solve for R that matches a target finesse (simple bisection) */
+function reflectanceForFinesse(Ftarget){
+  let lo = 0.01, hi = 0.999999;
+  for(let i=0;i<90;i++){
+    const mid = 0.5*(lo+hi);
+    const Fm = finesseFromR(mid);
+    if(Fm < Ftarget) lo = mid; else hi = mid;
+  }
+  return 0.5*(lo+hi);
+}
+const R_meas = reflectanceForFinesse(F_meas);
+
+/* ========= Canvas Rendering (HiDPI) ========= */
+function setupCanvas(canvas){
+  const ctx = canvas.getContext("2d");
+  function resize(){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width  = Math.max(1, Math.floor(rect.width  * dpr));
+    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+    ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+    return {w: rect.width, h: rect.height, dpr};
+  }
+  return {ctx, resize};
+}
+
+function drawAxes(ctx, x0,y0,w,h, opts){
+  const {
+    xMin, xMax, yMin, yMax,
+    xLabel, yLabel, title,
+    xTicks=6, yTicks=5
+  } = opts;
+
+  // background
+  ctx.save();
+  ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+
+  // in CSS pixels because of setTransform
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillStyle = "rgba(233,238,247,.92)";
+  ctx.textAlign = "left";
+  ctx.fillText(title, x0, y0-10);
+
+  // grid
+  ctx.strokeStyle = "rgba(255,255,255,.08)";
+  ctx.lineWidth = 1;
+
+  for(let i=0;i<=xTicks;i++){
+    const x = x0 + (w*i/xTicks);
+    ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x,y0+h); ctx.stroke();
+  }
+  for(let j=0;j<=yTicks;j++){
+    const y = y0 + (h*j/yTicks);
+    ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x0+w,y); ctx.stroke();
+  }
+
+  // axes border
+  ctx.strokeStyle = "rgba(255,255,255,.18)";
+  ctx.strokeRect(x0,y0,w,h);
+
+  // ticks + labels
+  ctx.fillStyle = "rgba(169,180,199,.92)";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+
+  for(let i=0;i<=xTicks;i++){
+    const t = xMin + (xMax-xMin)*i/xTicks;
+    const x = x0 + w*i/xTicks;
+    ctx.fillText(formatTick(t), x, y0+h+6);
+  }
+  ctx.save();
+  ctx.translate(x0+w/2, y0+h+30);
+  ctx.fillStyle = "rgba(169,180,199,.95)";
+  ctx.fillText(xLabel, 0, 0);
+  ctx.restore();
+
+  // y ticks
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  for(let j=0;j<=yTicks;j++){
+    const t = yMax - (yMax-yMin)*j/yTicks;
+    const y = y0 + h*j/yTicks;
+    ctx.fillText(formatTick(t), x0-6, y);
+  }
+  // y label (rotated)
+  ctx.save();
+  ctx.translate(x0-42, y0+h/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "rgba(169,180,199,.95)";
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+
+  ctx.restore();
+
+  function formatTick(v){
+    // keep reasonable formatting for MHz and for small decimals
+    const av = Math.abs(v);
+    if(av >= 1000) return v.toFixed(0);
+    if(av >= 100) return v.toFixed(0);
+    if(av >= 10) return v.toFixed(1);
+    if(av >= 1) return v.toFixed(2);
+    return v.toFixed(3);
+  }
+}
+
+function plotLine(ctx, x0,y0,w,h, xMin,xMax,yMin,yMax, pts, style){
+  const {stroke="rgba(125,211,252,.95)", width=2} = style || {};
+  ctx.save();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  for(let i=0;i<pts.length;i++){
+    const px = x0 + (pts[i].x - xMin) * (w/(xMax-xMin));
+    const py = y0 + (yMax - pts[i].y) * (h/(yMax-yMin));
+    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawLegend(ctx, x, y, items){
+  ctx.save();
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  const pad = 10, lh = 18;
+  const w = 240;
+  const h = pad*2 + lh*items.length;
+  ctx.fillStyle = "rgba(0,0,0,.35)";
+  ctx.strokeStyle = "rgba(255,255,255,.12)";
+  roundRect(ctx, x, y, w, h, 12);
+  ctx.fill();
+  ctx.stroke();
+  for(let i=0;i<items.length;i++){
+    const it = items[i];
+    const yy = y + pad + i*lh + 5;
+    ctx.fillStyle = it.color;
+    ctx.fillRect(x+pad, yy-7, 18, 3);
+    ctx.fillStyle = "rgba(233,238,247,.92)";
+    ctx.fillText(it.label, x+pad+26, yy);
+  }
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r){
+  const rr = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);
+  ctx.arcTo(x+w,y, x+w,y+h, rr);
+  ctx.arcTo(x+w,y+h, x,y+h, rr);
+  ctx.arcTo(x,y+h, x,y, rr);
+  ctx.arcTo(x,y, x+w,y, rr);
+  ctx.closePath();
+}
+
+/* ========= Draw: Diagram ========= */
+function drawDiagram(ctx, W, H, R){
+  ctx.clearRect(0,0,W,H);
+
+  // title
+  ctx.save();
+  ctx.fillStyle = "rgba(233,238,247,.92)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText("Fabry–Perot etalon (symmetric mirrors)", 14, 18);
+  ctx.restore();
+
+  const margin = 18;
+  const xL = margin + 35;
+  const xR = W - margin - 35;
+  const y0 = 0.52*H;
+
+  // beam line
+  ctx.strokeStyle = "rgba(125,211,252,.55)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(margin, y0);
+  ctx.lineTo(W - margin, y0);
+  ctx.stroke();
+
+  // mirrors
+  ctx.save();
+  ctx.strokeStyle = "rgba(233,238,247,.65)";
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(xL, y0-70); ctx.lineTo(xL, y0+70); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(xR, y0-70); ctx.lineTo(xR, y0+70); ctx.stroke();
+
+  // reflectance shading
+  const glow = clamp((R - 0.5)/0.49, 0, 1);
+  ctx.strokeStyle = `rgba(167,139,250,${0.18 + 0.35*glow})`;
+  ctx.lineWidth = 10;
+  ctx.beginPath(); ctx.moveTo(xL, y0-62); ctx.lineTo(xL, y0+62); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(xR, y0-62); ctx.lineTo(xR, y0+62); ctx.stroke();
+  ctx.restore();
+
+  // cavity length arrow
+  ctx.save();
+  ctx.strokeStyle = "rgba(52,211,153,.80)";
+  ctx.lineWidth = 2;
+  const ay = y0 + 92;
+  ctx.beginPath();
+  ctx.moveTo(xL+6, ay);
+  ctx.lineTo(xR-6, ay);
+  ctx.stroke();
+  // arrowheads
+  ctx.beginPath();
+  ctx.moveTo(xL+6, ay); ctx.lineTo(xL+16, ay-6); ctx.lineTo(xL+16, ay+6); ctx.closePath();
+  ctx.fillStyle = "rgba(52,211,153,.80)";
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(xR-6, ay); ctx.lineTo(xR-16, ay-6); ctx.lineTo(xR-16, ay+6); ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "rgba(233,238,247,.90)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(`L ≈ ${fmt(L,4)} m  (from FSR=150 MHz, n=1)`, (xL+xR)/2, ay+16);
+  ctx.restore();
+
+  // labels for beams
+  ctx.save();
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillStyle = "rgba(169,180,199,.95)";
+  ctx.fillText("incident", margin+2, y0-10);
+  ctx.fillText("transmitted", W - margin - 86, y0-10);
+  ctx.restore();
+
+  // annotate R, finesse, linewidth
+  const F = finesseFromR(R);
+  const dnu = linewidthFromR(R)/1e6;
+
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,.35)";
+  ctx.strokeStyle = "rgba(255,255,255,.12)";
+  roundRect(ctx, 14, 26, 270, 86, 14);
+  ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle = "rgba(233,238,247,.92)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillText(`R (slider) = ${fmt(R,4)}`, 26, 50);
+  ctx.fillText(`Ideal finesse 𝓕(R) ≈ ${fmt(F,2)}`, 26, 70);
+  ctx.fillText(`Predicted FWHM δν = FSR/𝓕 ≈ ${fmt(dnu,2)} MHz`, 26, 90);
+  ctx.restore();
+}
+
+/* ========= Draw: Main spectrum ========= */
+function drawMainSpectrum(ctx, W, H, R){
+  const padL=58, padR=18, padT=28, padB=46;
+  const x0=padL, y0=padT, w=W-padL-padR, h=H-padT-padB;
+
+  // detuning range: show ±2.5 FSR around a resonance
+  const span = 2.5*FSR;
+  const xMin = -span/1e6; // MHz
+  const xMax =  span/1e6;
+
+  // compute curve
+  const N = 1400;
+  let pts = [];
+  let yMin = 0, yMax = 1.05;
+  for(let i=0;i<N;i++){
+    const xMHz = xMin + (xMax-xMin)*i/(N-1);
+    const dnu = xMHz*1e6;
+    const T = transmission(R, dnu);
+    pts.push({x:xMHz, y:T});
+  }
+
+  drawAxes(ctx, x0,y0,w,h, {
+    xMin, xMax, yMin, yMax,
+    xLabel: "Frequency detuning Δν (MHz)",
+    yLabel: "Normalized transmission T (a.u.)",
+    title: "Transmission spectrum (Airy function)"
+  });
+
+  plotLine(ctx, x0,y0,w,h, xMin,xMax,yMin,yMax, pts, {stroke:"rgba(125,211,252,.95)", width:2});
+
+  // Mark FWHM visually at central peak (approx using ideal linewidth)
+  const F = finesseFromR(R);
+  const dnuFWHM = (FSR/F)/1e6; // MHz
+  // half-maximum line
+  ctx.save();
+  ctx.strokeStyle = "rgba(251,191,36,.60)";
+  ctx.setLineDash([6,6]);
+  const yHalf = 0.5;
+  const pyHalf = y0 + (yMax - yHalf) * (h/(yMax-yMin));
+  ctx.beginPath();
+  ctx.moveTo(x0, pyHalf); ctx.lineTo(x0+w, pyHalf); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // show +/- dnu/2 marker
+  const x1 = -dnuFWHM/2, x2 = dnuFWHM/2;
+  const px1 = x0 + (x1-xMin)*(w/(xMax-xMin));
+  const px2 = x0 + (x2-xMin)*(w/(xMax-xMin));
+  ctx.strokeStyle = "rgba(251,191,36,.85)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(px1, pyHalf); ctx.lineTo(px2, pyHalf); ctx.stroke();
+
+  ctx.fillStyle = "rgba(233,238,247,.92)";
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.textAlign = "left";
+  ctx.fillText(`FWHM ≈ ${fmt(dnuFWHM,2)} MHz (ideal model)`, x0+10, pyHalf-10);
+  ctx.restore();
+
+  drawLegend(ctx, x0+w-260, y0+10, [
+    {label:"T(Δν) Airy model (normalized)", color:"rgba(125,211,252,.95)"},
+    {label:"Half-maximum & FWHM guide", color:"rgba(251,191,36,.85)"}
+  ]);
+}
+
+/* ========= Draw: Sweep linewidth vs R ========= */
+function drawSweep(ctx, W, H, R){
+  const padL=62, padR=18, padT=28, padB=46;
+  const x0=padL, y0=padT, w=W-padL-padR, h=H-padT-padB;
+
+  const xMin = 0.50, xMax = 0.99; // R
+  // compute y range in MHz
+  const dMin = linewidthFromR(xMax)/1e6;
+  const dMax = linewidthFromR(xMin)/1e6;
+  const yMin = 0;
+  const yMax = Math.max(8, dMax*1.05);
+
+  drawAxes(ctx, x0,y0,w,h, {
+    xMin, xMax, yMin, yMax,
+    xLabel: "Mirror reflectance R (dimensionless)",
+    yLabel: "Predicted linewidth δν (MHz)",
+    title: "Linewidth vs reflectance (FSR fixed at 150 MHz)"
+  });
+
+  // curve
+  const N=600;
+  let pts=[];
+  for(let i=0;i<N;i++){
+    const r = xMin + (xMax-xMin)*i/(N-1);
+    const d = linewidthFromR(r)/1e6;
+    pts.push({x:r, y:d});
+  }
+  plotLine(ctx, x0,y0,w,h, xMin,xMax,yMin,yMax, pts, {stroke:"rgba(167,139,250,.95)", width:2});
+
+  // marker at current R
+  const dCur = linewidthFromR(R)/1e6;
+  const px = x0 + (R-xMin)*(w/(xMax-xMin));
+  const py = y0 + (yMax - dCur)*(h/(yMax-yMin));
+  ctx.save();
+  ctx.fillStyle = "rgba(52,211,153,.95)";
+  ctx.strokeStyle = "rgba(52,211,153,.95)";
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(px,py,5,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(px, y0+h); ctx.lineTo(px, py); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x0, py); ctx.lineTo(px, py); ctx.stroke();
+
+  // measured marker
+  const dMeas = FWHM_meas/1e6;
+  const pxm = x0 + (R_meas-xMin)*(w/(xMax-xMin));
+  const pym = y0 + (yMax - dMeas)*(h/(yMax-yMin));
+  ctx.fillStyle = "rgba(125,211,252,.95)";
+  ctx.beginPath(); ctx.arc(pxm,pym,5,0,Math.PI*2); ctx.fill();
+
+  // labels
+  ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.fillStyle = "rgba(233,238,247,.92)";
+  ctx.textAlign = "left";
+  ctx.fillText(`current: δν ≈ ${fmt(dCur,2)} MHz`, clamp(px+10, x0+10, x0+w-160), clamp(py-10, y0+14, y0+h-8));
+  ctx.fillText(`measured target: 5.00 MHz`, clamp(pxm+10, x0+10, x0+w-180), clamp(pym+18, y0+16, y0+h-10));
+  ctx.restore();
+
+  drawLegend(ctx, x0+w-278, y0+10, [
+    {label:"δν(R) = FSR / 𝓕(R)", color:"rgba(167,139,250,.95)"},
+    {label:"current slider point", color:"rgba(52,211,153,.95)"},
+    {label:"measured case (𝓕=30)", color:"rgba(125,211,252,.95)"}
+  ]);
+}
+
+/* ========= Orchestrate render ========= */
+const canv = {
+  diagram: setupCanvas(document.getElementById("cDiagram")),
+  main: setupCanvas(document.getElementById("cMain")),
+  sweep: setupCanvas(document.getElementById("cSweep")),
+};
+
+function renderAll(R){
+  // resize each first for responsiveness
+  const rd = canv.diagram.resize();
+  const rm = canv.main.resize();
+  const rs = canv.sweep.resize();
+
+  drawDiagram(canv.diagram.ctx, rd.w, rd.h, R);
+  drawMainSpectrum(canv.main.ctx, rm.w, rm.h, R);
+  drawSweep(canv.sweep.ctx, rs.w, rs.h, R);
+
+  // update labels/readouts
+  document.getElementById("rLabel").textContent = fmt(R,4);
+  document.getElementById("Lout").textContent = `${fmt(L,4)} m`;
+  document.getElementById("FmeasOut").textContent = `${fmt(F_meas,0)}`;
+  const F = finesseFromR(R);
+  const dnu = linewidthFromR(R)/1e6;
+  document.getElementById("Fout").textContent = `${fmt(F,2)}`;
+  document.getElementById("dnuOut").textContent = `${fmt(dnu,2)} MHz`;
+}
+
+/* ========= UI Wiring ========= */
+wireCopyButtons();
+
+const rSlider = document.getElementById("rSlider");
+function currentR(){ return parseFloat(rSlider.value); }
+
+rSlider.addEventListener("input", ()=>{
+  renderAll(currentR());
+});
+
+document.getElementById("snapBtn").addEventListener("click", ()=>{
+  rSlider.value = String(R_meas);
+  renderAll(currentR());
+});
+
+// initial
+rSlider.value = String(R_meas);
+renderAll(currentR());
+
+window.addEventListener("resize", ()=> renderAll(currentR()));
+</script>
+</body>
+</html>

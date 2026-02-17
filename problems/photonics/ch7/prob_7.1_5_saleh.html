@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Quarter-Wave Film: Angular Dependence of Reflectance (AR Coating)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#101a33;
+      --ink:#e9eefc;
+      --muted:#b9c3e6;
+      --line:rgba(233,238,252,.12);
+      --accent:#7aa7ff;
+      --accent2:#7dffcf;
+      --warn:#ffcc66;
+      --good:#7dff7d;
+      --bad:#ff7d9c;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans";
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 700px at 12% 18%, rgba(122,167,255,.15), transparent 60%),
+        radial-gradient(900px 600px at 88% 30%, rgba(125,255,207,.10), transparent 55%),
+        radial-gradient(900px 700px at 55% 105%, rgba(255,125,156,.08), transparent 55%),
+        linear-gradient(180deg, #070a14 0%, #0b1020 70%, #060816 100%);
+      line-height:1.55;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding:32px 18px 18px;
+      border-bottom:1px solid var(--line);
+      position:relative;
+      overflow:hidden;
+    }
+    header::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(700px 200px at 15% 10%, rgba(122,167,255,.18), transparent 60%);
+      filter: blur(2px);
+      pointer-events:none;
+    }
+    .wrap{max-width:1100px; margin:0 auto; position:relative}
+    .title{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(1.35rem, 2.7vw, 2.1rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin-top:8px;
+      color:var(--muted);
+      max-width:78ch;
+      font-size:1rem;
+    }
+
+    /* Layout with sticky mini TOC */
+    main{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px 18px 70px;
+      display:grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns:1fr}
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(16,26,51,.96), rgba(16,26,51,.80));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+      animation: fadeUp .45s ease-out both;
+    }
+    @keyframes fadeUp{
+      from{transform:translateY(8px); opacity:.0}
+      to{transform:translateY(0); opacity:1}
+    }
+    .card > .hd{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      background: linear-gradient(90deg, rgba(122,167,255,.12), transparent 55%);
+    }
+    .card > .bd{padding:16px}
+    .badge{
+      font-size:.78rem;
+      color:rgba(233,238,252,.88);
+      background:rgba(122,167,255,.14);
+      border:1px solid rgba(122,167,255,.22);
+      padding:6px 10px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+    .mini{
+      color:var(--muted);
+      font-size:.95rem;
+    }
+
+    /* Sticky TOC */
+    .toc{
+      position:sticky;
+      top:14px;
+      padding:14px 14px 10px;
+    }
+    .toc h2{
+      margin:0 0 10px;
+      font-size:1rem;
+    }
+    .toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      color:rgba(233,238,252,.92);
+      border:1px solid transparent;
+    }
+    .toc a:hover{
+      background:rgba(233,238,252,.06);
+      border-color:rgba(233,238,252,.10);
+      text-decoration:none;
+    }
+    .toc .hint{
+      color:var(--muted);
+      font-size:.85rem;
+      margin-top:10px;
+    }
+
+    /* Lists + callouts */
+    ul{margin:10px 0 0 18px}
+    li{margin:6px 0}
+    .callouts{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:12px;
+      margin-top:12px;
+    }
+    .callout{
+      grid-column: span 12;
+      border-radius:16px;
+      border:1px solid var(--line);
+      padding:12px 12px 12px;
+      background:rgba(233,238,252,.04);
+      position:relative;
+      overflow:hidden;
+    }
+    .callout::before{
+      content:"";
+      position:absolute;
+      left:-40px; top:-40px;
+      width:140px; height:140px;
+      background: radial-gradient(circle, rgba(122,167,255,.18), transparent 60%);
+      filter: blur(2px);
+      pointer-events:none;
+    }
+    .callout h3{margin:0 0 6px; font-size:1rem}
+    .callout p{margin:0; color:var(--muted)}
+    .callout.k{background:rgba(122,167,255,.08); border-color:rgba(122,167,255,.18)}
+    .callout.w{background:rgba(255,204,102,.08); border-color:rgba(255,204,102,.18)}
+    .callout.g{background:rgba(125,255,125,.08); border-color:rgba(125,255,125,.18)}
+    .callout.b{background:rgba(255,125,156,.08); border-color:rgba(255,125,156,.18)}
+    @media (min-width: 900px){
+      .callout.k,.callout.w,.callout.g{grid-column: span 4}
+      .callout.b{grid-column: span 12}
+    }
+
+    /* Equation blocks with copy button */
+    .eq{
+      margin:12px 0;
+      border-radius:16px;
+      border:1px solid var(--line);
+      overflow:hidden;
+      background: rgba(0,0,0,.22);
+    }
+    .eq .bar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(90deg, rgba(125,255,207,.10), transparent 60%);
+      gap:10px;
+    }
+    .eq .bar strong{font-size:.95rem}
+    .btn{
+      appearance:none;
+      background:rgba(233,238,252,.08);
+      border:1px solid rgba(233,238,252,.14);
+      color:rgba(233,238,252,.92);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:600;
+      transition: transform .08s ease, background .2s ease;
+    }
+    .btn:hover{background:rgba(233,238,252,.12)}
+    .btn:active{transform: translateY(1px)}
+    pre{
+      margin:0;
+      padding:12px;
+      font-family:var(--mono);
+      font-size:.92rem;
+      white-space:pre-wrap;
+      word-break:break-word;
+      color:rgba(233,238,252,.92);
+    }
+    .twoCol{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+    @media (min-width: 980px){
+      .twoCol{grid-template-columns:1fr 1fr}
+    }
+
+    /* Visualization area */
+    .vizGrid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    .canvasWrap{
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+      background: rgba(0,0,0,.18);
+    }
+    canvas{display:block; width:100%; height:340px;}
+    .canvasSmall canvas{height:300px;}
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+      margin-top:10px;
+    }
+    .control{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      background:rgba(233,238,252,.04);
+    }
+    .control label{
+      display:flex; justify-content:space-between; align-items:baseline;
+      gap:12px;
+      font-weight:650;
+    }
+    .control .val{font-family:var(--mono); color:rgba(233,238,252,.92)}
+    input[type="range"]{width:100%}
+    .row{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:8px;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+    .pill{
+      font-family:var(--mono);
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(233,238,252,.14);
+      background:rgba(233,238,252,.06);
+      color:rgba(233,238,252,.92);
+    }
+
+    /* Section headers */
+    section{scroll-margin-top:16px}
+    h2{
+      margin:0 0 10px;
+      font-size:1.25rem;
+      letter-spacing:.15px;
+    }
+    h3{margin:14px 0 6px; font-size:1.05rem}
+    p{margin:8px 0; color:rgba(233,238,252,.92)}
+    .muted{color:var(--muted)}
+    .hr{
+      height:1px; background:var(--line);
+      margin:14px 0;
+    }
+    footer{
+      border-top:1px solid var(--line);
+      padding:22px 18px;
+      color:var(--muted);
+    }
+
+    /* Print */
+    @media print{
+      body{background:white; color:black}
+      .card{box-shadow:none; border-color:#ccc}
+      header, footer{border-color:#ddd}
+      .toc{display:none}
+      .btn{display:none}
+      canvas{display:none}
+      .canvasWrap{display:none}
+      a{color:black; text-decoration:underline}
+      .badge{border-color:#bbb; background:#eee; color:#111}
+      .callout{background:#f6f6f6}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="title">
+        <div>
+          <h1>Quarter-Wave Film (AR Coating): Angular Dependence of Reflectance</h1>
+          <div class="subtitle">
+            We derive the reflectance <span class="pill">R(θ)</span> of a single dielectric quarter-wave antireflection coating
+            when the incidence angle changes. We keep the result <b>symbolic</b>, and use example numbers only for the interactive plots.
+          </div>
+        </div>
+        <div class="badge">Thin-film optics • Fresnel • s/p polarization</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left: article -->
+    <article class="card">
+      <div class="hd">
+        <strong>Learning Article</strong>
+        <span class="mini">Single layer AR coating between <span class="pill">n₁ → n₂ → n₃</span></span>
+      </div>
+      <div class="bd">
+
+        <!-- Quick Summary -->
+        <section id="quick">
+          <h2>Quick Summary</h2>
+          <ul>
+            <li><b>What this is:</b> A single thin dielectric film (index <span class="pill">n₂</span>, thickness <span class="pill">d</span>) between incident medium <span class="pill">n₁</span> and substrate <span class="pill">n₃</span>.</li>
+            <li><b>Key physics idea:</b> Two reflected waves (from the top and bottom film interfaces) interfere with a phase set by the <b>round-trip phase</b> inside the film.</li>
+            <li><b>Governing building blocks:</b> Fresnel reflection coefficients <span class="pill">rᵢⱼ^{s,p}</span>, Snell’s law, and the thin-film phase <span class="pill">δ</span>.</li>
+            <li><b>Core formula:</b> For one layer, the net amplitude reflection coefficient is
+              <span class="pill">r = (r₁₂ + r₂₃ e^{2iδ}) / (1 + r₁₂ r₂₃ e^{2iδ})</span>
+              (separately for s and p).</li>
+            <li><b>Quarter-wave design at normal incidence:</b> choose <span class="pill">d = λ₀/(4n₂)</span> and <span class="pill">n₂ = √(n₁n₃)</span> → <b>R(0)=0</b> at wavelength <span class="pill">λ₀</span>.</li>
+            <li><b>What changes with angle:</b> s and p polarizations get different Fresnel coefficients, and the film phase becomes
+              <span class="pill">δ(θ₁)= (2π/λ) n₂ d cosθ₂</span> with <span class="pill">θ₂</span> from Snell’s law.</li>
+            <li><b>Final result type:</b> <b>symbolic reflectance</b> <span class="pill">R_s(θ₁), R_p(θ₁)</span> for any angle (and any wavelength), plus plotted examples.</li>
+          </ul>
+        </section>
+
+        <div class="hr"></div>
+
+        <!-- Part 0: Concept Primer -->
+        <section id="primer">
+          <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+          <h3>0.1 Core definitions (symbols + units)</h3>
+          <ul>
+            <li><span class="pill">n₁, n₂, n₃</span> — refractive indices (dimensionless) of incident medium, film, substrate.</li>
+            <li><span class="pill">d</span> — physical thickness of film (m).</li>
+            <li><span class="pill">λ</span> — free-space wavelength (m); <span class="pill">λ₀</span> is the design wavelength.</li>
+            <li><span class="pill">θ₁, θ₂, θ₃</span> — propagation angles in each medium measured from the normal (rad or °).</li>
+            <li><span class="pill">rᵢⱼ^{s,p}</span> — Fresnel amplitude reflection coefficient from medium i to j (dimensionless, complex in general).</li>
+            <li><span class="pill">R^{s,p}</span> — reflectance = reflected power fraction (dimensionless): <span class="pill">R = |r|²</span>.</li>
+            <li><span class="pill">δ</span> — single-pass phase thickness inside the film (rad).</li>
+          </ul>
+
+          <h3>0.2 Physical meaning</h3>
+          <p>
+            An AR coating works because reflection from the <b>top</b> surface and reflection from the <b>bottom</b> surface
+            can have comparable amplitude but opposite phase, so they cancel. At oblique incidence, both the <b>amplitudes</b>
+            (Fresnel coefficients) and the <b>phase delay</b> (path length through the film) change.
+          </p>
+
+          <h3>0.3 Key laws and when they are valid</h3>
+          <div class="callouts">
+            <div class="callout k">
+              <h3>Fresnel equations</h3>
+              <p>Valid for linear, homogeneous, isotropic media; planar interfaces; monochromatic plane waves.</p>
+            </div>
+            <div class="callout k">
+              <h3>Snell’s law</h3>
+              <p>Phase matching at interfaces: <span class="pill">n₁ sinθ₁ = n₂ sinθ₂ = n₃ sinθ₃</span>.</p>
+            </div>
+            <div class="callout k">
+              <h3>Thin-film interference</h3>
+              <p>Superposition of multiple reflected beams; exact for plane waves; uses coherent phase <span class="pill">δ</span>.</p>
+            </div>
+          </div>
+
+          <h3>0.4 Common models/approximations</h3>
+          <ul>
+            <li><b>Lossless dielectrics:</b> take indices real. (If absorption exists, n is complex and the same framework still works.)</li>
+            <li><b>Single-layer exact formula:</b> we do <i>not</i> truncate to two beams; the closed form already sums all internal bounces.</li>
+            <li><b>Quarter-wave at design:</b> <span class="pill">d = λ₀/(4n₂)</span> is chosen for <b>normal incidence</b>; at angle, it is no longer exactly quarter-wave because of <span class="pill">cosθ₂</span>.</li>
+          </ul>
+
+          <h3>0.5 Mini intuition examples</h3>
+          <ul>
+            <li><b>Normal incidence:</b> If the film makes the bottom reflection pick up an extra π phase (half-wave round trip), and the interface amplitudes match, cancellation can be perfect.</li>
+            <li><b>Oblique incidence:</b> The optical path through the film shortens by <span class="pill">cosθ₂</span>, shifting the interference condition and typically increasing reflectance away from θ=0.</li>
+          </ul>
+
+          <div class="callouts">
+            <div class="callout w">
+              <h3>What to watch for</h3>
+              <p>
+                (1) s and p polarization behave differently at oblique incidence. (2) The “quarter-wave” condition uses <span class="pill">θ₂</span>, not <span class="pill">θ₁</span>.
+                (3) Don’t confuse wavelength in vacuum <span class="pill">λ</span> with wavelength in the film <span class="pill">λ/n₂</span>.
+              </p>
+            </div>
+            <div class="callout b">
+              <h3>Typical misconception</h3>
+              <p>
+                “Quarter-wave means δ=π/2 for all angles.” Not true when <span class="pill">d</span> is fixed: δ becomes <span class="pill">δ(θ₁)= (π/2)·(cosθ₂)·(λ₀/λ)</span> for a design thickness.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <div class="hr"></div>
+
+        <!-- Part 1: Problem Analysis -->
+        <section id="analysis">
+          <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+          <h3>1.1 Restate the problem (in plain words)</h3>
+          <p>
+            A single dielectric thin film (index <span class="pill">n₂</span>, thickness <span class="pill">d</span>) is placed between
+            medium 1 (<span class="pill">n₁</span>) and medium 3 (<span class="pill">n₃</span>) as a quarter-wave AR coating.
+            Using the quarter-wave design described in Exercise 7.1-1, derive the <b>reflectance as a function of incident angle</b> <span class="pill">θ₁</span>.
+          </p>
+
+          <h3>1.2 Given, unknowns, target</h3>
+          <ul>
+            <li><b>Given:</b> <span class="pill">n₁, n₂, n₃</span>, film thickness <span class="pill">d</span> (often specifically <span class="pill">d = λ₀/(4n₂)</span>), and wavelength <span class="pill">λ</span>.</li>
+            <li><b>Unknowns:</b> net reflectance <span class="pill">R(θ₁)</span> (generally <span class="pill">R_s</span> and <span class="pill">R_p</span>).</li>
+            <li><b>Must find:</b> an explicit formula for <span class="pill">R(θ₁)</span> using Fresnel + thin-film interference.</li>
+          </ul>
+
+          <h3>1.3 Which principles apply (and why)</h3>
+          <ul>
+            <li><b>Fresnel coefficients:</b> reflection depends on angle and polarization at each interface, so they are essential.</li>
+            <li><b>Snell’s law:</b> needed to relate internal angle <span class="pill">θ₂</span> (which sets the phase) to the external incidence angle <span class="pill">θ₁</span>.</li>
+            <li><b>Thin-film multiple reflection:</b> internal bouncing modifies the net reflected amplitude; for a single layer it has a compact closed form.</li>
+          </ul>
+          <p class="muted">
+            We do <i>not</i> need geometric optics or ray-tracing approximations; nor do we need a full transfer-matrix derivation if we accept the standard single-layer result.
+          </p>
+
+          <div class="callout k">
+            <h3>Assumptions</h3>
+            <p>
+              Planar interfaces, monochromatic plane wave, coherent interference, isotropic non-magnetic media (μ≈μ₀), and (for simplicity)
+              lossless dielectrics (real n). The same formulas extend to complex n if absorption exists.
+            </p>
+          </div>
+
+          <h3>1.4 Possible approaches (compare)</h3>
+          <ul>
+            <li><b>(A) Fresnel + “single-layer formula”</b>: Use the known closed form <span class="pill">r = (r₁₂ + r₂₃ e^{2iδ})/(1 + r₁₂ r₂₃ e^{2iδ})</span>. <b>Fast</b>, clean, exact for one layer.</li>
+            <li><b>(B) Transfer-matrix method</b>: Write the characteristic matrix of the film and compute the input admittance. <b>General</b> (many layers), slightly longer.</li>
+            <li><b>(C) Two-beam interference approximation</b>: Keep only first two reflected beams. <b>Intuitive</b> but not exact; not necessary here.</li>
+          </ul>
+
+          <p><b>Chosen approach:</b> (A) is best for a single layer: it stays exact and makes the angular dependence very transparent via <span class="pill">rᵢⱼ^{s,p}(θ)</span> and <span class="pill">δ(θ)</span>.</p>
+        </section>
+
+        <div class="hr"></div>
+
+        <!-- Part 2: Strategy & Tips -->
+        <section id="strategy">
+          <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+          <ol>
+            <li><b>Relate angles:</b> Use Snell’s law to express <span class="pill">θ₂(θ₁)</span> and <span class="pill">θ₃(θ₁)</span>.
+              <span class="muted">Meaning: determines internal propagation and phase.</span></li>
+            <li><b>Write Fresnel r at each interface:</b> Compute <span class="pill">r₁₂^{s,p}(θ₁,θ₂)</span> and <span class="pill">r₂₃^{s,p}(θ₂,θ₃)</span>.
+              <span class="muted">Meaning: sets amplitude and phase of each partial reflection.</span></li>
+            <li><b>Compute film phase thickness:</b> <span class="pill">δ = (2π/λ) n₂ d cosθ₂</span>.
+              <span class="muted">Meaning: phase gained in one pass through the film.</span></li>
+            <li><b>Combine reflections exactly:</b> Use the single-layer formula
+              <span class="pill">r = (r₁₂ + r₂₃ e^{2iδ})/(1 + r₁₂ r₂₃ e^{2iδ})</span>.
+              <span class="muted">Meaning: sums all internal bounces coherently.</span></li>
+            <li><b>Convert to reflectance:</b> <span class="pill">R = |r|²</span> (do it for s and p).
+              <span class="muted">Meaning: power fraction reflected.</span></li>
+            <li><b>Insert quarter-wave design (optional):</b> If <span class="pill">d = λ₀/(4n₂)</span>, simplify δ.
+              <span class="muted">Meaning: shows explicitly how “quarter-wave” drifts with angle.</span></li>
+            <li><b>Sanity checks:</b> Verify <span class="pill">R(0)=0</span> at <span class="pill">λ=λ₀</span> when <span class="pill">n₂=√(n₁n₃)</span>, and explore limits.
+              <span class="muted">Meaning: confirms correctness and interpretation.</span></li>
+          </ol>
+
+          <div class="callout w">
+            <h3>Common mistakes (quick tips)</h3>
+            <p>
+              Use <span class="pill">cosθ₂</span> (inside the film) in δ, not <span class="pill">cosθ₁</span>. Keep s and p separate.
+              Don’t assume the AR condition stays perfect at oblique incidence—polarization and phase both change.
+            </p>
+          </div>
+        </section>
+
+        <div class="hr"></div>
+
+        <!-- Part 3: Full Solution -->
+        <section id="solution">
+          <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+          <h3>3.1 Qualitative expectation (before math)</h3>
+          <p>
+            At normal incidence and at the design wavelength <span class="pill">λ₀</span>, the coating can be tuned so the two dominant
+            reflections cancel perfectly → <span class="pill">R(0)=0</span>.
+            When the incidence angle increases:
+          </p>
+          <ul>
+            <li>The effective optical thickness becomes <span class="pill">n₂ d cosθ₂</span>, so the phase condition shifts.</li>
+            <li>s and p Fresnel coefficients become different, so the amplitude-matching condition shifts differently for each polarization.</li>
+          </ul>
+          <p class="muted">So we expect reflectance to rise with angle and split into different curves for s and p.</p>
+
+          <h3>3.2 Geometry: relate angles with Snell’s law</h3>
+          <p>
+            Let <span class="pill">θ₁</span> be the incidence angle in medium 1. Then
+          </p>
+          <div class="eq" id="eq-snell">
+            <div class="bar">
+              <strong>Snell’s law</strong>
+              <button class="btn" data-copy="#snellText">Copy</button>
+            </div>
+            <pre id="snellText">n1 sin(theta1) = n2 sin(theta2) = n3 sin(theta3)</pre>
+          </div>
+          <p>
+            Thus,
+            <span class="pill">sinθ₂ = (n₁/n₂) sinθ₁</span>, and
+            <span class="pill">sinθ₃ = (n₁/n₃) sinθ₁</span>.
+            The cosines follow from <span class="pill">cosθ = √(1 - sin²θ)</span> (use the physical branch with nonnegative real part).
+          </p>
+
+          <h3>3.3 Fresnel reflection coefficients at each interface</h3>
+          <p>
+            For an interface i→j with angles <span class="pill">θᵢ</span> and <span class="pill">θⱼ</span>, the Fresnel amplitude reflection coefficients are:
+          </p>
+
+          <div class="twoCol">
+            <div class="eq" id="eq-fresnel-s">
+              <div class="bar">
+                <strong>Fresnel (s polarization)</strong>
+                <button class="btn" data-copy="#fresnelSText">Copy</button>
+              </div>
+              <pre id="fresnelSText">r_ij^s = (n_i cos(theta_i) - n_j cos(theta_j)) / (n_i cos(theta_i) + n_j cos(theta_j))</pre>
+            </div>
+            <div class="eq" id="eq-fresnel-p">
+              <div class="bar">
+                <strong>Fresnel (p polarization)</strong>
+                <button class="btn" data-copy="#fresnelPText">Copy</button>
+              </div>
+              <pre id="fresnelPText">r_ij^p = (n_j cos(theta_i) - n_i cos(theta_j)) / (n_j cos(theta_i) + n_i cos(theta_j))</pre>
+            </div>
+          </div>
+
+          <p>
+            We will use these twice:
+            <span class="pill">r₁₂^{s,p}</span> at the top boundary, and <span class="pill">r₂₃^{s,p}</span> at the bottom boundary.
+            (All angle dependence is implicitly through <span class="pill">θ₁, θ₂, θ₃</span>.)
+          </p>
+
+          <h3>3.4 Phase thickness of the film</h3>
+          <p>
+            In the film (index <span class="pill">n₂</span>), the normal component of the wavevector is
+            <span class="pill">k_{z,2} = (2π/λ) n₂ cosθ₂</span>.
+            A single pass through thickness <span class="pill">d</span> accumulates phase
+          </p>
+
+          <div class="eq" id="eq-delta">
+            <div class="bar">
+              <strong>Film phase thickness</strong>
+              <button class="btn" data-copy="#deltaText">Copy</button>
+            </div>
+            <pre id="deltaText">delta(theta1) = (2π/λ) * n2 * d * cos(theta2)</pre>
+          </div>
+
+          <p class="muted">
+            Why this matters: the extra phase makes the second interface reflection either add or cancel with the first.
+          </p>
+
+          <h3>3.5 Exact net reflection coefficient of a single layer</h3>
+          <p>
+            For one film between two semi-infinite media, the exact amplitude reflection coefficient is:
+          </p>
+
+          <div class="eq" id="eq-singlelayer">
+            <div class="bar">
+              <strong>Single-layer reflection (exact)</strong>
+              <button class="btn" data-copy="#singleLayerText">Copy</button>
+            </div>
+            <pre id="singleLayerText">r^(s,p)(theta1) = ( r12^(s,p) + r23^(s,p) * exp(2 i delta) ) / ( 1 + r12^(s,p) * r23^(s,p) * exp(2 i delta) )</pre>
+          </div>
+
+          <p>
+            This expression is the coherent sum of an infinite series of internal reflections. The denominator is what makes it exact:
+            it accounts for multiple round trips inside the film.
+          </p>
+
+          <h3>3.6 Reflectance as a function of incidence angle</h3>
+          <p>
+            The reflectance (power fraction) for each polarization is
+            <span class="pill">R_s(θ₁)=|r^s(θ₁)|²</span> and <span class="pill">R_p(θ₁)=|r^p(θ₁)|²</span>.
+          </p>
+
+          <div class="eq" id="eq-final">
+            <div class="bar">
+              <strong>Final Answer (Angular Reflectance)</strong>
+              <button class="btn" data-copy="#finalText">Copy</button>
+            </div>
+            <pre id="finalText">Given theta1:
+1) Use Snell: n1 sinθ1 = n2 sinθ2 = n3 sinθ3.
+2) Fresnel:
+   r12^s = (n1 cosθ1 - n2 cosθ2)/(n1 cosθ1 + n2 cosθ2)
+   r23^s = (n2 cosθ2 - n3 cosθ3)/(n2 cosθ2 + n3 cosθ3)
+   r12^p = (n2 cosθ1 - n1 cosθ2)/(n2 cosθ1 + n1 cosθ2)
+   r23^p = (n3 cosθ2 - n2 cosθ3)/(n3 cosθ2 + n2 cosθ3)
+3) Film phase: δ(θ1) = (2π/λ) n2 d cosθ2.
+4) Net reflection:
+   r^(s,p)(θ1) = ( r12^(s,p) + r23^(s,p) e^{2 i δ} ) / ( 1 + r12^(s,p) r23^(s,p) e^{2 i δ} )
+5) Reflectance:
+   R_s(θ1)=|r^s(θ1)|^2,   R_p(θ1)=|r^p(θ1)|^2.</pre>
+          </div>
+
+          <h3>3.7 Insert the quarter-wave design from Exercise 7.1-1 (optional but illuminating)</h3>
+          <p>
+            In Exercise 7.1-1, the quarter-wave AR coating at normal incidence uses:
+            <span class="pill">d = λ₀/(4n₂)</span> and <span class="pill">n₂ = √(n₁ n₃)</span>.
+            If we keep <span class="pill">d</span> fixed at that value but allow angle and wavelength to vary, then
+          </p>
+
+          <div class="eq" id="eq-delta-qw">
+            <div class="bar">
+              <strong>Phase for a design quarter-wave thickness</strong>
+              <button class="btn" data-copy="#deltaQWText">Copy</button>
+            </div>
+            <pre id="deltaQWText">If d = λ0/(4 n2), then:
+delta(theta1) = (2π/λ) * n2 * (λ0/(4 n2)) * cosθ2 = (π/2) * (λ0/λ) * cosθ2</pre>
+          </div>
+
+          <p>
+            At normal incidence (<span class="pill">θ₂=0</span>) and at the design wavelength (<span class="pill">λ=λ₀</span>),
+            we get <span class="pill">δ = π/2</span> so the round trip phase is <span class="pill">2δ = π</span>, flipping the sign of the bottom reflection.
+            With <span class="pill">n₂ = √(n₁ n₃)</span>, the magnitudes match and cancellation is exact.
+          </p>
+
+          <h3>3.8 Sanity checks</h3>
+          <ul>
+            <li><b>Units:</b> Fresnel coefficients are dimensionless; δ is radians; reflectance is dimensionless. ✔</li>
+            <li><b>Normal incidence check:</b> if <span class="pill">λ=λ₀</span>, <span class="pill">θ₁=0</span>, and <span class="pill">n₂=√(n₁n₃)</span>, the formula gives <span class="pill">R=0</span>. ✔</li>
+            <li><b>Limiting case d→0:</b> then δ→0 and the film disappears; net r reduces toward the direct interface behavior (with some care because n₂ still exists, but physically the coating vanishes). ✔</li>
+            <li><b>Angle trend:</b> as θ increases, δ decreases by <span class="pill">cosθ₂</span> and s/p Fresnel differ → AR degrades and polarization split emerges. ✔</li>
+          </ul>
+
+          <p class="muted">
+            Connection to the plots below: the diagram shows the angles and the two interfaces; the main plot shows <span class="pill">R_s(θ₁)</span> and <span class="pill">R_p(θ₁)</span>;
+            the secondary plot shows how the same coating behaves as the wavelength moves away from <span class="pill">λ₀</span>.
+          </p>
+        </section>
+
+        <div class="hr"></div>
+
+        <!-- Part 4: Deeper Understanding -->
+        <section id="deeper">
+          <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+          <h3>4.1 Re-interpreting the formula</h3>
+          <ul>
+            <li><b>Interface terms <span class="pill">r₁₂, r₂₃</span>:</b> set the “weights” of the two main reflections and depend strongly on angle and polarization.</li>
+            <li><b>Phase term <span class="pill">e^{2iδ}</span>:</b> sets constructive/destructive interference. For a fixed physical thickness, δ drops with angle through <span class="pill">cosθ₂</span>.</li>
+            <li><b>Denominator <span class="pill">1 + r₁₂ r₂₃ e^{2iδ}</span>:</b> accounts for multiple internal round trips (Fabry–Pérot-like enhancement/suppression).</li>
+          </ul>
+
+          <h3>4.2 Parameter effects (link to interactive plots)</h3>
+          <ul>
+            <li><b>Increase incidence angle:</b> typically increases reflectance and splits s vs p curves.</li>
+            <li><b>Change wavelength ratio <span class="pill">λ/λ₀</span>:</b> shifts δ by <span class="pill">λ₀/λ</span>, moving the coating off its design condition; reflectance rises and can oscillate.</li>
+            <li><b>Index contrast:</b> the ideal <span class="pill">n₂=√(n₁n₃)</span> is exact only at normal incidence; off-angle, the “best” effective index differs for s and p.</li>
+          </ul>
+
+          <h3>4.3 Alternative derivation idea (brief)</h3>
+          <p>
+            Using the transfer-matrix method, you can compute the input optical admittance seen looking into the film.
+            Then the net r is the same as reflection from an equivalent boundary:
+            <span class="pill">r = (Y_in − Y₁)/(Y_in + Y₁)</span>,
+            where the admittances differ for s and p (because boundary conditions differ). For a single layer, this collapses to the same closed form used above.
+          </p>
+
+          <h3>4.4 Concept checks (self-test)</h3>
+          <ul>
+            <li><b>Q:</b> Why does “quarter-wave” change with angle? <b>A:</b> The optical thickness becomes <span class="pill">n₂ d cosθ₂</span>, so δ scales with <span class="pill">cosθ₂</span>.</li>
+            <li><b>Q:</b> Why do s and p differ? <b>A:</b> Their boundary conditions swap which field component is continuous, producing different Fresnel coefficients.</li>
+            <li><b>Q:</b> If the coating is perfect at θ=0, is it perfect at θ≠0? <b>A:</b> Generally no; both amplitude matching and phase matching drift.</li>
+            <li><b>Q:</b> What does the denominator in r represent? <b>A:</b> Multiple internal reflections (an infinite geometric series) inside the film.</li>
+          </ul>
+        </section>
+
+        <div class="hr"></div>
+
+        <!-- Part 5: Visualization Guide -->
+        <section id="vizguide">
+          <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+
+          <h3>5.1 Diagram canvas</h3>
+          <p>
+            Shows the three media (<span class="pill">n₁</span>, <span class="pill">n₂</span>, <span class="pill">n₃</span>), the film thickness <span class="pill">d</span>,
+            and the angles <span class="pill">θ₁</span>, <span class="pill">θ₂</span>, <span class="pill">θ₃</span> defined from the surface normal.
+          </p>
+
+          <h3>5.2 Main plot canvas</h3>
+          <p>
+            Plots <span class="pill">R_s(θ₁)</span> and <span class="pill">R_p(θ₁)</span> versus incidence angle <span class="pill">θ₁</span> for the current wavelength ratio
+            <span class="pill">λ/λ₀</span>. A vertical cursor marks the selected angle used in the secondary plot.
+          </p>
+
+          <h3>5.3 Secondary plot canvas</h3>
+          <p>
+            Plots <span class="pill">R_s</span> and <span class="pill">R_p</span> versus wavelength ratio <span class="pill">λ/λ₀</span> at a fixed incidence angle (set by the angle slider).
+            A vertical cursor marks the current wavelength ratio used in the main plot.
+          </p>
+
+          <h3>5.4 Interactive controls</h3>
+          <ul>
+            <li><b>Wavelength ratio slider:</b> changes <span class="pill">λ/λ₀</span> → updates the phase <span class="pill">δ</span> and therefore both plots.</li>
+            <li><b>Angle slider:</b> chooses a specific <span class="pill">θ₁</span> for the secondary plot and moves the cursor on the main plot.</li>
+          </ul>
+          <p class="muted">Example values are labeled in the control panel; the symbolic formulas above remain general.</p>
+        </section>
+
+      </div>
+    </article>
+
+    <!-- Right: sticky TOC + Visualizations -->
+    <aside class="card">
+      <div class="hd">
+        <strong>Mini Table of Contents</strong>
+        <span class="badge">Sticky</span>
+      </div>
+      <div class="bd toc">
+        <a href="#quick">Quick Summary</a>
+        <a href="#primer">PART 0 — Concept Primer</a>
+        <a href="#analysis">PART 1 — Problem Analysis</a>
+        <a href="#strategy">PART 2 — Strategy & Tips</a>
+        <a href="#solution">PART 3 — Full Solution</a>
+        <a href="#deeper">PART 4 — Deeper Understanding</a>
+        <a href="#vizguide">PART 5 — Visualization Guide</a>
+
+        <div class="hr"></div>
+
+        <div class="vizGrid">
+          <div class="canvasWrap">
+            <canvas id="cDiagram" aria-label="AR coating diagram"></canvas>
+          </div>
+          <div class="canvasWrap">
+            <canvas id="cMain" aria-label="Main plot: reflectance vs angle"></canvas>
+          </div>
+          <div class="canvasWrap canvasSmall">
+            <canvas id="cSweep" aria-label="Secondary plot: reflectance vs wavelength ratio"></canvas>
+          </div>
+
+          <div class="controls">
+            <div class="control">
+              <label for="lambdaRatio">
+                Wavelength ratio <span class="pill">λ/λ₀</span>
+                <span class="val" id="lambdaRatioVal">1.00</span>
+              </label>
+              <input id="lambdaRatio" type="range" min="0.70" max="1.30" value="1.00" step="0.005" />
+              <div class="row">
+                <span class="muted">Phase factor:</span>
+                <span class="pill" id="phaseHint">δ = (π/2)·(λ₀/λ)·cosθ₂</span>
+              </div>
+            </div>
+
+            <div class="control">
+              <label for="thetaPick">
+                Angle for sweep <span class="pill">θ₁</span> (deg)
+                <span class="val" id="thetaPickVal">30.0</span>
+              </label>
+              <input id="thetaPick" type="range" min="0" max="80" value="30" step="0.5" />
+              <div class="row">
+                <span class="muted">Example indices:</span>
+                <span class="pill" id="idxHint">n₁=1.00, n₂=1.225, n₃=1.50</span>
+              </div>
+              <div class="row">
+                <span class="muted">Design thickness:</span>
+                <span class="pill">d = λ₀/(4n₂)</span>
+              </div>
+              <div class="row">
+                <span class="muted">Readout at cursor:</span>
+                <span class="pill" id="readout">R_s=…, R_p=…</span>
+              </div>
+            </div>
+
+            <button class="btn" id="resetBtn" title="Reset sliders to design point">Reset to design point</button>
+
+            <div class="hint">
+              Tip: move <b>λ/λ₀</b> away from 1 to see the coating detune; increase <b>θ₁</b> to see s/p split.
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div><b>Note:</b> Plots use example values for visualization only. The derived formulas are general for any <span class="pill">n₁,n₂,n₃,d,λ</span>.</div>
+    </div>
+  </footer>
+
+  <script>
+    // ---------- Copy buttons ----------
+    (function(){
+      function copyTextFrom(el){
+        const txt = (typeof el === "string") ? el : (el.textContent || "");
+        if (!navigator.clipboard) {
+          // fallback
+          const ta = document.createElement("textarea");
+          ta.value = txt;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          return Promise.resolve();
+        }
+        return navigator.clipboard.writeText(txt);
+      }
+      document.querySelectorAll("[data-copy]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const sel = btn.getAttribute("data-copy");
+          const el = document.querySelector(sel);
+          if(!el) return;
+          copyTextFrom(el).then(()=>{
+            const old = btn.textContent;
+            btn.textContent = "Copied ✓";
+            setTimeout(()=>btn.textContent = old, 900);
+          }).catch(()=>{
+            const old = btn.textContent;
+            btn.textContent = "Copy failed";
+            setTimeout(()=>btn.textContent = old, 900);
+          });
+        });
+      });
+    })();
+
+    // ---------- Complex arithmetic ----------
+    function C(re, im){ return {re, im}; }
+    function cAdd(a,b){ return C(a.re+b.re, a.im+b.im); }
+    function cSub(a,b){ return C(a.re-b.re, a.im-b.im); }
+    function cMul(a,b){ return C(a.re*b.re - a.im*b.im, a.re*b.im + a.im*b.re); }
+    function cDiv(a,b){
+      const d = b.re*b.re + b.im*b.im;
+      return C((a.re*b.re + a.im*b.im)/d, (a.im*b.re - a.re*b.im)/d);
+    }
+    function cAbs2(a){ return a.re*a.re + a.im*a.im; }
+    function cExpI(phi){ return C(Math.cos(phi), Math.sin(phi)); }
+
+    // principal sqrt for potentially negative due to numerical issues (keeps nonnegative real part)
+    function safeCosFromSin(s){
+      const x = 1 - s*s;
+      if (x >= 0) return C(Math.sqrt(x), 0);
+      // if total internal reflection region, cos is imaginary: cos = i*sqrt(s^2-1)
+      return C(0, Math.sqrt(-x));
+    }
+
+    // ---------- Fresnel coefficients (non-magnetic) ----------
+    // r_s = (n_i cosθ_i - n_j cosθ_j)/(n_i cosθ_i + n_j cosθ_j)
+    // r_p = (n_j cosθ_i - n_i cosθ_j)/(n_j cosθ_i + n_i cosθ_j)
+    function fresnel_rs(ni, nj, cosi, cosj){
+      // cosi/cosj may be complex (C)
+      const a = cSub(C(ni*cosi.re, ni*cosi.im), C(nj*cosj.re, nj*cosj.im));
+      const b = cAdd(C(ni*cosi.re, ni*cosi.im), C(nj*cosj.re, nj*cosj.im));
+      return cDiv(a,b);
+    }
+    function fresnel_rp(ni, nj, cosi, cosj){
+      const a = cSub(C(nj*cosi.re, nj*cosi.im), C(ni*cosj.re, ni*cosj.im));
+      const b = cAdd(C(nj*cosi.re, nj*cosi.im), C(ni*cosj.re, ni*cosj.im));
+      return cDiv(a,b);
+    }
+
+    // single-layer net reflection: r = (r12 + r23 e^{2iδ})/(1 + r12 r23 e^{2iδ})
+    function singleLayer_r(r12, r23, delta){
+      const e = cExpI(2*delta);
+      const num = cAdd(r12, cMul(r23, e));
+      const den = cAdd(C(1,0), cMul(cMul(r12, r23), e));
+      return cDiv(num, den);
+    }
+
+    // ---------- Problem parameters (example for plots) ----------
+    // Use ideal AR at normal incidence: n2 = sqrt(n1*n3) (example)
+    const params = {
+      n1: 1.00,
+      n3: 1.50,
+      // n2 chosen as sqrt(n1*n3) for example visualization
+      get n2(){ return Math.sqrt(this.n1*this.n3); },
+      // thickness d = λ0/(4 n2) (design). We never need absolute λ0 for normalized plots.
+    };
+
+    // ---------- State / controls ----------
+    const elLam = document.getElementById("lambdaRatio");
+    const elLamVal = document.getElementById("lambdaRatioVal");
+    const elTheta = document.getElementById("thetaPick");
+    const elThetaVal = document.getElementById("thetaPickVal");
+    const elReadout = document.getElementById("readout");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const state = {
+      lambdaRatio: parseFloat(elLam.value),   // λ/λ0
+      thetaPickDeg: parseFloat(elTheta.value) // degrees
+    };
+
+    function updateControlLabels(){
+      elLamVal.textContent = state.lambdaRatio.toFixed(3);
+      elThetaVal.textContent = state.thetaPickDeg.toFixed(1);
+      document.getElementById("idxHint").textContent =
+        `n₁=${params.n1.toFixed(2)}, n₂=${params.n2.toFixed(3)}, n₃=${params.n3.toFixed(2)}`;
+    }
+
+    // ---------- Physics computations ----------
+    function anglesFromTheta1(theta1, n1, n2, n3){
+      const s1 = Math.sin(theta1);
+      const s2 = (n1/n2)*s1;
+      const s3 = (n1/n3)*s1;
+      const cos1 = safeCosFromSin(s1);
+      const cos2 = safeCosFromSin(s2);
+      const cos3 = safeCosFromSin(s3);
+      return {s1, s2, s3, cos1, cos2, cos3};
+    }
+
+    // delta for design thickness d = λ0/(4n2):
+    // delta = (2π/λ) n2 d cosθ2 = (2π/λ) * n2 * (λ0/(4n2)) * cosθ2 = (π/2)*(λ0/λ)*cosθ2 = (π/2)*(1/(λ/λ0))*cosθ2
+    function deltaDesign(theta1, lambdaRatio, n1, n2, n3){
+      const {cos2} = anglesFromTheta1(theta1, n1, n2, n3);
+      // if cos2 is complex (TIR), delta becomes complex; keep real part for phase and ignore attenuation? Better: allow complex.
+      // Here we keep delta as real when cos2 real; if complex, use its real part as 0 and handle via exp(-2 Im(delta)) via complex delta would be needed.
+      // For typical AR (n1 < n2 < n3) and angles <=80°, cos2 is real; so this is fine.
+      const cos2r = cos2.re; // assume real regime
+      return 0.5*Math.PI * (1.0/lambdaRatio) * cos2r;
+    }
+
+    function reflectanceSP(theta1, lambdaRatio, n1, n2, n3){
+      const ang = anglesFromTheta1(theta1, n1, n2, n3);
+      const delta = deltaDesign(theta1, lambdaRatio, n1, n2, n3);
+
+      // r12 and r23 for s
+      const r12s = fresnel_rs(n1, n2, ang.cos1, ang.cos2);
+      const r23s = fresnel_rs(n2, n3, ang.cos2, ang.cos3);
+      const rs = singleLayer_r(r12s, r23s, delta);
+
+      // p
+      const r12p = fresnel_rp(n1, n2, ang.cos1, ang.cos2);
+      const r23p = fresnel_rp(n2, n3, ang.cos2, ang.cos3);
+      const rp = singleLayer_r(r12p, r23p, delta);
+
+      return {Rs: cAbs2(rs), Rp: cAbs2(rp), rs, rp, delta, ang};
+    }
+
+    // ---------- Canvas helpers ----------
+    function setupCanvas(canvas){
+      const ctx = canvas.getContext("2d");
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = Math.max(2, Math.floor(rect.width * dpr));
+        canvas.height = Math.max(2, Math.floor(rect.height * dpr));
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+      }
+      resize();
+      return {ctx, resize};
+    }
+
+    function roundRect(ctx, x,y,w,h,r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w,y, x+w,y+h, rr);
+      ctx.arcTo(x+w,y+h, x,y+h, rr);
+      ctx.arcTo(x,y+h, x,y, rr);
+      ctx.arcTo(x,y, x+w,y, rr);
+      ctx.closePath();
+    }
+
+    function drawGrid(ctx, x0,y0,w,h, xTicks, yTicks){
+      ctx.save();
+      ctx.strokeStyle = "rgba(233,238,252,0.10)";
+      ctx.lineWidth = 1;
+      // vertical grid
+      for(let i=0;i<=xTicks;i++){
+        const x = x0 + w*(i/xTicks);
+        ctx.beginPath(); ctx.moveTo(x,y0); ctx.lineTo(x,y0+h); ctx.stroke();
+      }
+      // horizontal grid
+      for(let j=0;j<=yTicks;j++){
+        const y = y0 + h*(j/yTicks);
+        ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x0+w,y); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawAxes(ctx, x0,y0,w,h, xlabel, ylabel, xTickLabels, yTickLabels){
+      ctx.save();
+      ctx.strokeStyle = "rgba(233,238,252,0.35)";
+      ctx.lineWidth = 1.2;
+      // border
+      ctx.beginPath();
+      ctx.rect(x0,y0,w,h);
+      ctx.stroke();
+
+      // ticks + labels
+      ctx.fillStyle = "rgba(233,238,252,0.85)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+
+      // x tick labels
+      for(const t of xTickLabels){
+        const x = x0 + w*t.pos;
+        ctx.beginPath(); ctx.moveTo(x, y0+h); ctx.lineTo(x, y0+h+5); ctx.stroke();
+        ctx.fillText(t.text, x-10, y0+h+18);
+      }
+      // y tick labels
+      for(const t of yTickLabels){
+        const y = y0 + h*(1-t.pos);
+        ctx.beginPath(); ctx.moveTo(x0-5, y); ctx.lineTo(x0, y); ctx.stroke();
+        ctx.fillText(t.text, x0-38, y+4);
+      }
+
+      // axis labels
+      ctx.fillStyle = "rgba(233,238,252,0.92)";
+      ctx.font = "13px system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial";
+      ctx.fillText(xlabel, x0 + w/2 - ctx.measureText(xlabel).width/2, y0+h+38);
+
+      ctx.save();
+      ctx.translate(x0-58, y0 + h/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(ylabel, -ctx.measureText(ylabel).width/2, 0);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function plotLine(ctx, x0,y0,w,h, xs, ys, yMin, yMax, strokeStyle){
+      ctx.save();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      for(let i=0;i<xs.length;i++){
+        const xn = (xs[i]-xs[0])/(xs[xs.length-1]-xs[0] || 1);
+        const yn = (ys[i]-yMin)/(yMax-yMin || 1);
+        const x = x0 + w*xn;
+        const y = y0 + h*(1-yn);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLegend(ctx, items, x, y){
+      ctx.save();
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial";
+      ctx.fillStyle = "rgba(233,238,252,0.92)";
+      let yy = y;
+      for(const it of items){
+        ctx.fillStyle = it.color;
+        ctx.fillRect(x, yy-9, 18, 3);
+        ctx.fillStyle = "rgba(233,238,252,0.92)";
+        ctx.fillText(it.label, x+26, yy-4);
+        yy += 18;
+      }
+      ctx.restore();
+    }
+
+    // ---------- Draw: Diagram ----------
+    const cDiagram = setupCanvas(document.getElementById("cDiagram"));
+    const cMain = setupCanvas(document.getElementById("cMain"));
+    const cSweep = setupCanvas(document.getElementById("cSweep"));
+
+    function drawDiagram(){
+      const ctx = cDiagram.ctx;
+      const W = ctx.canvas.width / (window.devicePixelRatio||1);
+      const H = ctx.canvas.height / (window.devicePixelRatio||1);
+      ctx.clearRect(0,0,W,H);
+
+      // panel background
+      roundRect(ctx, 12, 12, W-24, H-24, 16);
+      ctx.fillStyle = "rgba(0,0,0,0.18)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(233,238,252,0.14)";
+      ctx.stroke();
+
+      // Title
+      ctx.fillStyle = "rgba(233,238,252,0.92)";
+      ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial";
+      ctx.fillText("Diagram — Single-Layer AR Coating Geometry", 20, 34);
+
+      // Layers
+      const xL = 55, x1 = 0.46*W, x2 = 0.55*W, xR = W-55;
+      const yTop = 70, yBot = H-55;
+
+      // draw three regions
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "rgba(122,167,255,0.10)"; ctx.fillRect(xL, yTop, x1-xL, yBot-yTop);
+      ctx.fillStyle = "rgba(125,255,207,0.10)"; ctx.fillRect(x1, yTop, x2-x1, yBot-yTop);
+      ctx.fillStyle = "rgba(255,204,102,0.08)"; ctx.fillRect(x2, yTop, xR-x2, yBot-yTop);
+      ctx.restore();
+
+      // boundaries
+      ctx.strokeStyle = "rgba(233,238,252,0.28)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(x1,yTop); ctx.lineTo(x1,yBot); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2,yTop); ctx.lineTo(x2,yBot); ctx.stroke();
+
+      // labels n1 n2 n3
+      ctx.fillStyle = "rgba(233,238,252,0.92)";
+      ctx.font = "13px " + getComputedStyle(document.body).fontFamily;
+      ctx.fillText(`n₁`, xL+10, yTop+20);
+      ctx.fillText(`n₂`, x1+10, yTop+20);
+      ctx.fillText(`n₃`, x2+10, yTop+20);
+
+      // thickness d arrow
+      ctx.strokeStyle = "rgba(125,255,207,0.85)";
+      ctx.fillStyle = "rgba(125,255,207,0.95)";
+      ctx.lineWidth = 1.6;
+      const yD = yBot-22;
+      ctx.beginPath(); ctx.moveTo(x1+6, yD); ctx.lineTo(x2-6, yD); ctx.stroke();
+      // arrowheads
+      ctx.beginPath(); ctx.moveTo(x1+6, yD); ctx.lineTo(x1+14, yD-5); ctx.lineTo(x1+14, yD+5); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x2-6, yD); ctx.lineTo(x2-14, yD-5); ctx.lineTo(x2-14, yD+5); ctx.closePath(); ctx.fill();
+      ctx.fillText("d", (x1+x2)/2 - 4, yD-10);
+
+      // Rays: incident, reflected, transmitted (angles)
+      const theta1 = state.thetaPickDeg*Math.PI/180;
+      const n1 = params.n1, n2 = params.n2, n3 = params.n3;
+      const ang = anglesFromTheta1(theta1, n1, n2, n3);
+      const theta2 = Math.asin(Math.min(0.999999, Math.max(-0.999999, ang.s2)));
+      const theta3 = Math.asin(Math.min(0.999999, Math.max(-0.999999, ang.s3)));
+
+      const origin = {x:x1, y:(yTop+yBot)/2};
+      // normal
+      ctx.strokeStyle = "rgba(233,238,252,0.22)";
+      ctx.setLineDash([6,6]);
+      ctx.beginPath(); ctx.moveTo(origin.x, yTop+10); ctx.lineTo(origin.x, yBot-10); ctx.stroke();
+      ctx.setLineDash([]);
+
+      function ray(x0,y0, angleFromNormal, len, color){
+        // angleFromNormal measured from normal (vertical line). We draw in x-y with +x right, +y down.
+        // Convert: direction makes angle with normal; normal direction is upward (-y). We'll use vector components:
+        const dx = Math.sin(angleFromNormal);
+        const dy = -Math.cos(angleFromNormal);
+        const x1 = x0 + len*dx;
+        const y1 = y0 + len*dy;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.3;
+        ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+        // arrowhead
+        const ah = 8;
+        const phi = Math.atan2(y1-y0, x1-x0);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x1,y1);
+        ctx.lineTo(x1 - ah*Math.cos(phi-0.35), y1 - ah*Math.sin(phi-0.35));
+        ctx.lineTo(x1 - ah*Math.cos(phi+0.35), y1 - ah*Math.sin(phi+0.35));
+        ctx.closePath(); ctx.fill();
+        return {x:x1,y:y1};
+      }
+
+      // incident ray from left region to interface
+      const pIn = ray(origin.x-150, origin.y+80, theta1, 190, "rgba(122,167,255,0.95)");
+      // reflected ray
+      ray(origin.x, origin.y, -theta1, 120, "rgba(255,125,156,0.95)");
+      // transmitted into film
+      ray(origin.x, origin.y, theta2, 120, "rgba(125,255,207,0.95)");
+      // transmitted into substrate from second interface (approx)
+      ray(x2, origin.y + (x2-origin.x)*Math.tan(theta2), theta3, 130, "rgba(255,204,102,0.95)");
+
+      // Angle arcs labels
+      function angleArc(xc,yc, theta, r, label, color){
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        // arc from normal (0) to theta
+        const start = -Math.PI/2;
+        const end = start + theta;
+        ctx.arc(xc, yc, r, start, end, theta<0);
+        ctx.stroke();
+        // label
+        ctx.fillStyle = "rgba(233,238,252,0.92)";
+        ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+        const lx = xc + (r+12)*Math.cos((start+end)/2);
+        const ly = yc + (r+12)*Math.sin((start+end)/2);
+        ctx.fillText(label, lx-10, ly+4);
+      }
+      angleArc(origin.x, origin.y, theta1, 28, "θ₁", "rgba(122,167,255,0.85)");
+      angleArc(origin.x, origin.y, theta2, 46, "θ₂", "rgba(125,255,207,0.85)");
+      angleArc(x2, origin.y + (x2-origin.x)*Math.tan(theta2), theta3, 32, "θ₃", "rgba(255,204,102,0.85)");
+
+      // caption info
+      ctx.fillStyle = "rgba(233,238,252,0.80)";
+      ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+      ctx.fillText(`Selected θ₁ = ${state.thetaPickDeg.toFixed(1)}° (for sweep plot cursor)`, 20, H-26);
+    }
+
+    // ---------- Draw: Main plot R vs theta1 ----------
+    function drawMainPlot(){
+      const ctx = cMain.ctx;
+      const W = ctx.canvas.width / (window.devicePixelRatio||1);
+      const H = ctx.canvas.height / (window.devicePixelRatio||1);
+      ctx.clearRect(0,0,W,H);
+
+      roundRect(ctx, 12, 12, W-24, H-24, 16);
+      ctx.fillStyle = "rgba(0,0,0,0.18)"; ctx.fill();
+      ctx.strokeStyle = "rgba(233,238,252,0.14)"; ctx.stroke();
+
+      // Title
+      ctx.fillStyle = "rgba(233,238,252,0.92)";
+      ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial";
+      ctx.fillText("Main Plot — Reflectance vs Incidence Angle", 20, 34);
+
+      const x0=68, y0=56, w=W-92, h=H-110;
+
+      drawGrid(ctx, x0,y0,w,h, 8, 6);
+
+      // compute curves
+      const thetas = [];
+      const Rs = [];
+      const Rp = [];
+      const maxDeg = 80;
+      const n1=params.n1, n2=params.n2, n3=params.n3;
+      for(let deg=0; deg<=maxDeg; deg+=1){
+        const th = deg*Math.PI/180;
+        const out = reflectanceSP(th, state.lambdaRatio, n1, n2, n3);
+        thetas.push(deg);
+        Rs.push(out.Rs);
+        Rp.push(out.Rp);
+      }
+
+      // y range
+      const yMin = 0;
+      const yMax = Math.min(1, Math.max(0.08, Math.max(...Rs, ...Rp)*1.15));
+
+      // axes labels/ticks
+      const xTicks = [];
+      for(let i=0;i<=8;i++){
+        const deg = i*10;
+        xTicks.push({pos: deg/maxDeg, text: String(deg)});
+      }
+      const yTicks = [];
+      for(let j=0;j<=6;j++){
+        const v = yMin + (yMax-yMin)*(j/6);
+        yTicks.push({pos: v/(yMax||1), text: (v).toFixed(2)});
+      }
+
+      drawAxes(ctx, x0,y0,w,h, "Incidence angle θ₁ (deg)", "Reflectance R (unitless)", xTicks, yTicks);
+
+      // plot curves
+      plotLine(ctx, x0,y0,w,h, thetas, Rs, yMin, yMax, "rgba(122,167,255,0.95)");
+      plotLine(ctx, x0,y0,w,h, thetas, Rp, yMin, yMax, "rgba(125,255,207,0.95)");
+
+      // legend
+      drawLegend(ctx, [
+        {label:"R_s (s-pol)", color:"rgba(122,167,255,0.95)"},
+        {label:"R_p (p-pol)", color:"rgba(125,255,207,0.95)"}
+      ], x0+10, y0+18);
+
+      // cursor line at thetaPick
+      const xCursor = x0 + w*(state.thetaPickDeg/maxDeg);
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,204,102,0.85)";
+      ctx.lineWidth = 1.6;
+      ctx.setLineDash([5,6]);
+      ctx.beginPath(); ctx.moveTo(xCursor, y0); ctx.lineTo(xCursor, y0+h); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // annotate lambdaRatio
+      ctx.fillStyle = "rgba(233,238,252,0.80)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+      ctx.fillText(`λ/λ₀ = ${state.lambdaRatio.toFixed(3)} (example)`, x0, y0+h+58);
+    }
+
+    // ---------- Draw: Secondary plot sweep vs lambdaRatio ----------
+    function drawSweepPlot(){
+      const ctx = cSweep.ctx;
+      const W = ctx.canvas.width / (window.devicePixelRatio||1);
+      const H = ctx.canvas.height / (window.devicePixelRatio||1);
+      ctx.clearRect(0,0,W,H);
+
+      roundRect(ctx, 12, 12, W-24, H-24, 16);
+      ctx.fillStyle = "rgba(0,0,0,0.18)"; ctx.fill();
+      ctx.strokeStyle = "rgba(233,238,252,0.14)"; ctx.stroke();
+
+      ctx.fillStyle = "rgba(233,238,252,0.92)";
+      ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial";
+      ctx.fillText("Secondary Plot — Reflectance vs Wavelength Ratio", 20, 34);
+
+      const x0=68, y0=56, w=W-92, h=H-110;
+      drawGrid(ctx, x0,y0,w,h, 8, 6);
+
+      const th = state.thetaPickDeg*Math.PI/180;
+      const n1=params.n1, n2=params.n2, n3=params.n3;
+
+      const xs = [];
+      const Rs = [];
+      const Rp = [];
+      const xMin = 0.70, xMax = 1.30;
+      const N = 160;
+      for(let i=0;i<=N;i++){
+        const lr = xMin + (xMax-xMin)*(i/N);
+        const out = reflectanceSP(th, lr, n1, n2, n3);
+        xs.push(lr);
+        Rs.push(out.Rs);
+        Rp.push(out.Rp);
+      }
+
+      const yMin = 0;
+      const yMax = Math.min(1, Math.max(0.08, Math.max(...Rs, ...Rp)*1.15));
+
+      // ticks
+      const xTicks = [];
+      for(let i=0;i<=6;i++){
+        const v = xMin + (xMax-xMin)*(i/6);
+        xTicks.push({pos:(v-xMin)/(xMax-xMin), text:v.toFixed(2)});
+      }
+      const yTicks = [];
+      for(let j=0;j<=6;j++){
+        const v = yMin + (yMax-yMin)*(j/6);
+        yTicks.push({pos: v/(yMax||1), text: v.toFixed(2)});
+      }
+
+      drawAxes(ctx, x0,y0,w,h, "Wavelength ratio λ/λ₀ (unitless)", "Reflectance R (unitless)", xTicks, yTicks);
+
+      // plot
+      plotLine(ctx, x0,y0,w,h, xs, Rs, yMin, yMax, "rgba(122,167,255,0.95)");
+      plotLine(ctx, x0,y0,w,h, xs, Rp, yMin, yMax, "rgba(125,255,207,0.95)");
+
+      drawLegend(ctx, [
+        {label:"R_s (s-pol)", color:"rgba(122,167,255,0.95)"},
+        {label:"R_p (p-pol)", color:"rgba(125,255,207,0.95)"}
+      ], x0+10, y0+18);
+
+      // cursor at current lambdaRatio
+      const xCursor = x0 + w*((state.lambdaRatio-xMin)/(xMax-xMin));
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,204,102,0.85)";
+      ctx.lineWidth = 1.6;
+      ctx.setLineDash([5,6]);
+      ctx.beginPath(); ctx.moveTo(xCursor, y0); ctx.lineTo(xCursor, y0+h); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // annotate theta
+      ctx.fillStyle = "rgba(233,238,252,0.80)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+      ctx.fillText(`θ₁ = ${state.thetaPickDeg.toFixed(1)}° (example)`, x0, y0+h+58);
+    }
+
+    function updateReadout(){
+      const th = state.thetaPickDeg*Math.PI/180;
+      const out = reflectanceSP(th, state.lambdaRatio, params.n1, params.n2, params.n3);
+      elReadout.textContent = `R_s=${out.Rs.toFixed(4)}, R_p=${out.Rp.toFixed(4)}   (δ=${out.delta.toFixed(3)} rad)`;
+    }
+
+    function renderAll(){
+      updateControlLabels();
+      drawDiagram();
+      drawMainPlot();
+      drawSweepPlot();
+      updateReadout();
+    }
+
+    // ---------- Events ----------
+    elLam.addEventListener("input", ()=>{
+      state.lambdaRatio = parseFloat(elLam.value);
+      renderAll();
+    });
+    elTheta.addEventListener("input", ()=>{
+      state.thetaPickDeg = parseFloat(elTheta.value);
+      renderAll();
+    });
+    resetBtn.addEventListener("click", ()=>{
+      state.lambdaRatio = 1.00;
+      state.thetaPickDeg = 30.0;
+      elLam.value = state.lambdaRatio.toFixed(2);
+      elTheta.value = state.thetaPickDeg.toFixed(1);
+      renderAll();
+    });
+
+    // Resize handling
+    function onResize(){
+      cDiagram.resize();
+      cMain.resize();
+      cSweep.resize();
+      renderAll();
+    }
+    window.addEventListener("resize", ()=>{
+      // small debounce
+      clearTimeout(window.__rz);
+      window.__rz = setTimeout(onResize, 80);
+    });
+
+    // Initial
+    renderAll();
+  </script>
+</body>
+</html>

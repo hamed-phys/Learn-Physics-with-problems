@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Ring Aperture Imaging: Transfer Function and Ray-Optics Impulse Response</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --card:#121a2a;
+      --card2:#0f1626;
+      --text:#e8eefc;
+      --muted:#a9b6d6;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 16px 40px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 600px at 10% 0%, rgba(125,211,252,.10), transparent 60%),
+        radial-gradient(900px 500px at 90% 10%, rgba(167,139,250,.10), transparent 55%),
+        radial-gradient(700px 450px at 50% 110%, rgba(52,211,153,.08), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding:34px 18px 10px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .hero{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    .titleCard{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:22px 22px 18px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    .titleCard:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(600px 200px at 20% 0%, rgba(125,211,252,.18), transparent 65%),
+        radial-gradient(600px 240px at 90% 30%, rgba(167,139,250,.16), transparent 60%);
+      pointer-events:none;
+      filter:blur(0.5px);
+      opacity:.9;
+    }
+    .titleCard > *{position:relative}
+    h1{
+      margin:0 0 10px;
+      font-size: clamp(22px, 2.5vw, 34px);
+      letter-spacing:.2px;
+      line-height:1.15;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      max-width:70ch;
+    }
+    .quick{
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px 18px 16px;
+      box-shadow:var(--shadow);
+    }
+    .quick h2{
+      margin:0 0 10px;
+      font-size:16px;
+      letter-spacing:.3px;
+      color:#dbe7ff;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .badge{
+      font-size:12px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--muted);
+    }
+    .quick ul{
+      margin:0;
+      padding-left:18px;
+      color:#d6e1ff;
+    }
+    .quick li{margin:6px 0}
+    main{
+      max-width:1200px;
+      margin:0 auto;
+      padding:10px 18px 60px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    nav.toc{
+      position:sticky;
+      top:12px;
+      align-self:start;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px 14px 10px;
+      box-shadow:var(--shadow);
+      max-height: calc(100vh - 24px);
+      overflow:auto;
+    }
+    nav.toc h3{
+      margin:0 0 10px;
+      font-size:13px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      color:#cfe0ff;
+    }
+    .toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      color:#d7e2ff;
+      border:1px solid transparent;
+      transition: all .18s ease;
+      font-size:14px;
+    }
+    .toc a:hover{
+      background:rgba(125,211,252,.08);
+      border-color:rgba(125,211,252,.18);
+      text-decoration:none;
+      transform:translateY(-1px);
+    }
+    .toc .sub{
+      margin-left:8px;
+      border-left:1px dashed rgba(255,255,255,.10);
+      padding-left:8px;
+    }
+    article.content{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+    section.card{
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px 18px 14px;
+      box-shadow:var(--shadow);
+    }
+    section.card h2{
+      margin:0 0 10px;
+      font-size:18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      color:#e8f2ff;
+    }
+    .kicker small{
+      color:var(--muted);
+      font-weight:500;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    p{margin:10px 0; color:#dbe7ff}
+    .muted{color:var(--muted)}
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    .callout{
+      background:linear-gradient(180deg, rgba(125,211,252,.10), rgba(125,211,252,.03));
+      border:1px solid rgba(125,211,252,.22);
+      border-radius:16px;
+      padding:12px 12px 10px;
+    }
+    .callout h3{margin:0 0 8px; font-size:15px}
+    .callout ul{margin:0; padding-left:18px; color:#dbe7ff}
+    .callout li{margin:6px 0}
+    .equation{
+      background:linear-gradient(180deg, rgba(167,139,250,.10), rgba(167,139,250,.03));
+      border:1px solid rgba(167,139,250,.22);
+      border-radius:16px;
+      padding:12px;
+      overflow:auto;
+      position:relative;
+    }
+    pre.eq{
+      margin:0;
+      font-family:var(--mono);
+      font-size:13px;
+      color:#f0f3ff;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .copyRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    button.copyBtn{
+      appearance:none;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:13px;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    button.copyBtn:hover{
+      transform:translateY(-1px);
+      background:rgba(255,255,255,.06);
+      border-color:rgba(125,211,252,.25);
+    }
+    .box{
+      border:1px solid rgba(52,211,153,.25);
+      background:linear-gradient(180deg, rgba(52,211,153,.10), rgba(52,211,153,.03));
+      border-radius:16px;
+      padding:14px 14px 12px;
+    }
+    .box h3{margin:0 0 8px; font-size:15px; color:#dcffe8}
+    .box .big{
+      font-family:var(--mono);
+      font-size:13px;
+      margin:0;
+      color:#eafff2;
+      white-space:pre-wrap;
+    }
+
+    figure.viz{
+      margin:0;
+      padding:0;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    .vizGrid{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:14px;
+      align-items:start;
+    }
+    .canvasCard{
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:12px;
+      overflow:hidden;
+    }
+    .canvasTitle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .canvasTitle h3{
+      margin:0;
+      font-size:15px;
+      color:#e6efff;
+    }
+    .controls{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .controlRow{
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+    }
+    .controlRow label{
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+      font-size:13px;
+      color:#dbe7ff;
+      margin-bottom:8px;
+    }
+    .controlRow input[type="range"]{
+      width:100%;
+    }
+    .readout{
+      font-family:var(--mono);
+      font-size:12px;
+      color:#f0f6ff;
+      opacity:.95;
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      border-radius:14px;
+      background:rgba(7,10,17,.55);
+      border:1px solid rgba(255,255,255,.06);
+    }
+    .small canvas{height:260px}
+    .foot{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .hr{
+      height:1px;
+      background:var(--line);
+      margin:14px 0;
+    }
+
+    footer{
+      max-width:1200px;
+      margin:0 auto;
+      padding:10px 18px 40px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    /* subtle motion */
+    @media (prefers-reduced-motion: no-preference){
+      .titleCard, .quick, nav.toc, section.card { animation: fadeInUp .35s ease both; }
+      section.card:nth-child(2){animation-delay:.03s}
+      section.card:nth-child(3){animation-delay:.06s}
+      section.card:nth-child(4){animation-delay:.09s}
+      section.card:nth-child(5){animation-delay:.12s}
+      @keyframes fadeInUp{
+        from{opacity:0; transform: translateY(8px)}
+        to{opacity:1; transform: translateY(0)}
+      }
+    }
+
+    /* responsive */
+    @media (max-width: 980px){
+      .hero{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr}
+      nav.toc{position:relative; top:auto}
+      .vizGrid{grid-template-columns:1fr}
+      canvas{height:300px}
+      .small canvas{height:240px}
+      .twoCol{grid-template-columns:1fr}
+    }
+
+    /* print */
+    @media print{
+      :root{ --bg:#fff; --text:#111; --muted:#333; --card:#fff; --card2:#fff; --line:#ccc; }
+      body{background:#fff}
+      nav.toc, .controls, .copyRow, button.copyBtn{display:none !important}
+      section.card, .titleCard, .quick{box-shadow:none}
+      canvas{border:1px solid #aaa; background:#fff}
+      a{color:#000; text-decoration:underline}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="hero">
+    <div class="titleCard">
+      <h1>Ring Aperture Imaging (M = 1): Coherent Transfer Function and Ray-Optics Impulse Response</h1>
+      <p class="subtitle">
+        We analyze a single-lens imaging system with an <b>annular (ring) pupil</b>, derive the system’s <b>transfer function</b>
+        when focused, then move the image plane closer and use <b>geometrical (ray) optics</b> to obtain the <b>impulse response</b>.
+      </p>
+    </div>
+    <aside class="quick">
+      <h2><span>Quick Summary</span> <span class="badge">Key results</span></h2>
+      <ul>
+        <li>Focused (coherent) transfer function is a <b>radial band-pass</b>: it passes spatial frequencies between two radii.</li>
+        <li>For a ring pupil with radii <span class="muted">a</span> to <span class="muted">b</span>, the passband radii are
+          <b>ν<sub>a</sub> = a/(λf)</b> and <b>ν<sub>b</sub> = b/(λf)</b>.</li>
+        <li>With <b>a = 5 mm</b>, <b>b = 6 mm</b>, <b>λ = 1 μm</b>, <b>f = 1 m</b>:
+          <b>ν<sub>a</sub> = 5 cycles/mm</b>, <b>ν<sub>b</sub> = 6 cycles/mm</b>.</li>
+        <li>Defocus (image plane at d<sub>2</sub> ≠ s′) produces a <b>ring-shaped blur</b> whose radii scale by
+          <b>t = |1 − d<sub>2</sub>/s′|</b>.</li>
+        <li>Ray-optics PSF for an on-axis point is <b>uniform over an annulus</b> between radii
+          <b>a′ = t a</b> and <b>b′ = t b</b>.</li>
+      </ul>
+    </aside>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+    <nav class="toc" aria-label="Table of contents">
+      <h3>Contents</h3>
+      <a href="#viz">Interactive Visuals</a>
+      <a href="#part1">PART 1 — Problem Analysis</a>
+      <a class="sub" href="#part1-rewrite">Rewrite & givens</a>
+      <a class="sub" href="#part1-principles">Principles</a>
+      <a class="sub" href="#part1-approaches">Approaches</a>
+      <a href="#part2">PART 2 — Strategy & Tips</a>
+      <a href="#part3">PART 3 — Full Solution</a>
+      <a class="sub" href="#part3-a">Part (a): Transfer function</a>
+      <a class="sub" href="#part3-b">Part (b): Ray-optics impulse response</a>
+      <a class="sub" href="#part3-checks">Sanity checks</a>
+    </nav>
+
+    <article class="content">
+      <section class="card" id="viz">
+        <h2>
+          <span class="kicker"><span>Interactive Visuals</span> <small>canvas • live updates</small></span>
+          <span class="badge">Change d₂ to see defocus</span>
+        </h2>
+
+        <div class="vizGrid">
+          <figure class="viz">
+            <div class="canvasCard">
+              <div class="canvasTitle">
+                <h3>Diagram: Lens + Ring Aperture + Defocused Image Plane</h3>
+                <span class="badge">Geometry</span>
+              </div>
+              <canvas id="cnvDiagram" aria-label="System diagram"></canvas>
+              <div class="foot">Shows object plane at d₁, lens with annular aperture (a…b), paraxial focus plane at s′, and image plane at d₂.</div>
+            </div>
+
+            <div class="canvasCard small">
+              <div class="canvasTitle">
+                <h3>Secondary Plot: Ray-Optics PSF Cross-Section h(x,0)</h3>
+                <span class="badge">space (mm)</span>
+              </div>
+              <canvas id="cnvPSF" aria-label="PSF plot"></canvas>
+              <div class="foot">For defocus, the point spread becomes a uniform annulus: nonzero for |x| ∈ [a′, b′].</div>
+            </div>
+          </figure>
+
+          <div class="controls">
+            <div class="controlRow">
+              <label for="d2Range">
+                <span><b>Image-plane distance</b> d₂ (from lens)</span>
+                <span class="readout" id="d2Readout">0.25 m</span>
+              </label>
+              <input id="d2Range" type="range" min="0.10" max="2.20" step="0.01" value="0.25"/>
+              <div class="muted" style="font-size:13px;margin-top:8px">
+                d₁ is fixed by part (a) (<span class="readout" id="d1Readout">2.00 m</span>), so changing d₂ changes the defocus blur size and the defocus transfer curve.
+              </div>
+            </div>
+
+            <div class="controlRow">
+              <label>
+                <span><b>Key computed quantities</b></span>
+                <span class="badge">updates live</span>
+              </label>
+              <div class="muted" style="font-size:13px;line-height:1.6">
+                Focus distance from lens for d₁: <span class="readout" id="spReadout">2.00 m</span><br/>
+                Defocus scaling: <span class="readout" id="tReadout">0.875</span><br/>
+                Blur radii: <span class="readout" id="apReadout">4.375 mm</span> to <span class="readout" id="bpReadout">5.250 mm</span><br/>
+                Focused passband: <span class="readout" id="vaReadout">5.00 cyc/mm</span> to <span class="readout" id="vbReadout">6.00 cyc/mm</span>
+              </div>
+            </div>
+
+            <div class="controlRow">
+              <label for="toggleDefocus">
+                <span><b>Main Plot options</b></span>
+                <span class="readout" id="plotModeReadout">Show in-focus + defocus</span>
+              </label>
+              <button class="copyBtn" id="toggleDefocus" type="button">Toggle defocus curve</button>
+              <div class="muted" style="font-size:13px;margin-top:8px">
+                The in-focus curve is the <b>coherent transfer function</b> from part (a). The defocus curve is the <b>Fourier transform of the ray-optics PSF</b> (a useful “geometric” transfer measure).
+              </div>
+            </div>
+
+            <div class="canvasCard">
+              <div class="canvasTitle">
+                <h3>Main Plot: Transfer vs Spatial Frequency (cross-section along v<sub>x</sub>)</h3>
+                <span class="badge">frequency (cyc/mm)</span>
+              </div>
+              <canvas id="cnvTF" aria-label="Transfer function plot"></canvas>
+              <div class="foot">
+                Solid step = focused coherent transfer H(vx,0). Smooth curve = |FT{h(x,y)}|(vx,0) from ray-optics PSF (depends on d₂).
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="part1">
+        <h2><span class="kicker"><span>PART 1 — Problem Analysis</span> <small>no solving yet</small></span></h2>
+
+        <h3 id="part1-rewrite" style="margin:10px 0 6px;font-size:16px">Rewrite the problem (in plain words)</h3>
+        <p>
+          A single thin lens forms an image with magnification <b>M = 1</b> and focal length <b>f = 100 cm</b>.
+          The lens aperture (pupil) is not a full disk but a <b>ring</b>:
+          light passes only for pupil radii between <b>a = 5 mm</b> and <b>b = 6 mm</b>.
+        </p>
+        <p>
+          <b>(a)</b> When the system is in focus, find the system’s <b>transfer function</b> <b>H(νx, νy)</b> and sketch the cross-section <b>H(νx, 0)</b>, using <b>λ = 1 μm</b>.
+          <br/>
+          <b>(b)</b> Move the image plane closer to the lens so its distance becomes <b>d₂ = 25 cm</b>, while keeping the object distance <b>d₁</b> as in (a). Using <b>ray optics</b>, find the <b>impulse response</b> <b>h(x,y)</b> and sketch <b>h(x,0)</b>.
+        </p>
+
+        <div class="twoCol">
+          <div class="callout">
+            <h3>Given quantities</h3>
+            <ul>
+              <li>Focal length: <b>f = 100 cm = 1.00 m</b></li>
+              <li>Magnification: <b>M = 1</b> (magnitude)</li>
+              <li>Pupil (ring): <b>a = 5 mm</b>, <b>b = 6 mm</b></li>
+              <li>Wavelength: <b>λ = 1 μm</b></li>
+              <li>Defocused image distance (part b): <b>d₂ = 25 cm = 0.25 m</b></li>
+            </ul>
+          </div>
+          <div class="callout">
+            <h3>Unknowns / what to find</h3>
+            <ul>
+              <li>(a) Transfer function <b>H(νx,νy)</b> and sketch <b>H(νx,0)</b></li>
+              <li>(b) Ray-optics impulse response <b>h(x,y)</b> and sketch <b>h(x,0)</b></li>
+              <li>Use the correct scaling between pupil coordinates and spatial frequencies</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 id="part1-principles" style="margin:14px 0 6px;font-size:16px">Relevant principles (and why they apply)</h3>
+        <p>
+          This is a standard <b>Fourier optics</b> imaging problem. For a <b>focused, shift-invariant coherent imaging system</b>,
+          the system’s transfer function is directly related to the <b>pupil function</b> (aperture transmission),
+          with a scale factor set by <b>λf</b>.
+          The ring aperture therefore makes the system a <b>band-pass spatial-frequency filter</b>.
+        </p>
+        <p>
+          When the image plane is moved away from the ideal focus, the wave-optics PSF becomes complicated (defocus phase).
+          But the problem explicitly asks for a <b>ray-optics approximation</b>, where a point object produces a
+          <b>geometric blur</b> equal to the projection of the aperture at the chosen image plane.
+          Because the aperture is an annulus, the blur is also an <b>annulus</b>.
+        </p>
+
+        <h3 id="part1-approaches" style="margin:14px 0 6px;font-size:16px">Possible approaches (compare briefly)</h3>
+        <div class="twoCol">
+          <div class="callout">
+            <h3>Approach A: Coherent Fourier optics (best for part a)</h3>
+            <ul>
+              <li>Use: <b>H(νx,νy) = P(λfνx, λfνy)</b></li>
+              <li>Immediate radial band-pass result for ring pupil</li>
+              <li>Fast, exact (for the coherent model)</li>
+            </ul>
+          </div>
+          <div class="callout">
+            <h3>Approach B: Incoherent OTF (autocorrelation of pupil)</h3>
+            <ul>
+              <li>Would require computing the normalized autocorrelation of an annulus</li>
+              <li>More algebra; not what is usually asked when the prompt says “transfer function” in this focused-lens context</li>
+            </ul>
+          </div>
+        </div>
+        <div class="callout" style="margin-top:14px">
+          <h3>Approach C: Ray optics for defocus (best for part b)</h3>
+          <ul>
+            <li>Find the ideal image distance <b>s′</b> from thin-lens equation</li>
+            <li>At an intermediate plane <b>d₂</b>, the ray bundle cross-section scales linearly</li>
+            <li>Gives a simple, physical PSF: <b>uniform annulus</b></li>
+          </ul>
+        </div>
+
+        <p class="muted">
+          We will use <b>Approach A</b> for (a) and <b>Approach C</b> for (b), because they match the problem’s wording and give clean, interpretable results.
+        </p>
+      </section>
+
+      <section class="card" id="part2">
+        <h2><span class="kicker"><span>PART 2 — Strategy & Tips</span> <small>roadmap only</small></span></h2>
+
+        <div class="callout">
+          <h3>Minimal plan (5–10 steps)</h3>
+          <ul>
+            <li><b>Step 1 (Geometry):</b> Use <b>M = |d₂/d₁| = 1</b> and the thin-lens equation to find <b>d₁</b> and the focused image distance <b>s′</b>.</li>
+            <li><b>Step 2 (Scaling):</b> Recall coherent imaging scaling: pupil-plane coordinates map to spatial frequency via <b>(x,y) = (λfνx, λfνy)</b>.</li>
+            <li><b>Step 3 (Part a):</b> Substitute the ring pupil condition to get <b>H(νx,νy)</b> and extract the 1D cross-section <b>H(νx,0)</b>.</li>
+            <li><b>Step 4 (Part b):</b> Use ray geometry: rays from pupil point at radius ρ meet the axis at z = s′, so at plane z = d₂ the radius is <b>ρ′ = ρ|1 − d₂/s′|</b>.</li>
+            <li><b>Step 5 (PSF):</b> Convert annulus radii <b>a,b</b> to blur radii <b>a′, b′</b>; write <b>h(x,y)</b> as uniform over that annulus (normalize by area).</li>
+            <li><b>Step 6 (Sketch):</b> For <b>h(x,0)</b>, note it is nonzero for <b>|x| ∈ [a′, b′]</b>.</li>
+            <li><b>Step 7 (Checks):</b> Verify units, limiting cases (d₂ → s′ gives a delta-like blur), and physical interpretation.</li>
+          </ul>
+        </div>
+
+        <div class="twoCol">
+          <div class="callout">
+            <h3>Common mistakes</h3>
+            <ul>
+              <li>Forgetting the <b>λf</b> scaling between pupil radius and spatial frequency.</li>
+              <li>Mixing units: mm vs m, cycles/mm vs cycles/m.</li>
+              <li>Using the focused image distance <b>s′</b> incorrectly (it is set by d₁ and f, not by the moved d₂).</li>
+              <li>Not normalizing the ray-optics PSF by its annulus area.</li>
+            </ul>
+          </div>
+          <div class="callout">
+            <h3>Quick tips</h3>
+            <ul>
+              <li>Compute passband radii as <b>ν = r/(λf)</b> (radial frequency).</li>
+              <li>For <b>M = 1</b>, you almost always have <b>d₁ = d₂</b> in the focused case.</li>
+              <li>Defocus blur scales linearly with distance from the focus: <b>t = |1 − d₂/s′|</b>.</li>
+              <li>Sketches: ring pupil → ring blur; ring pupil in frequency → ring passband.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="part3">
+        <h2><span class="kicker"><span>PART 3 — Full Solution</span> <small>step-by-step</small></span></h2>
+
+        <h3 style="margin:10px 0 6px;font-size:16px">Physical intuition (before equations)</h3>
+        <p>
+          A circular pupil limits the <i>range</i> of angles (spatial frequencies) that can pass through the lens.
+          A <b>ring pupil</b> blocks both the very small angles (low spatial frequencies) and the very large angles (very high spatial frequencies),
+          so the system behaves like a <b>band-pass filter</b> in spatial frequency: it prefers “mid-scale” detail.
+        </p>
+        <p>
+          If we move the detector (image plane) <b>away from the focus</b>, rays from a point do not converge to a point.
+          Instead, the detector intercepts a cross-section of the converging cone of rays. Because the pupil is a ring,
+          the cross-section is also a ring: the point becomes a <b>ring-shaped blur</b>.
+        </p>
+
+        <div class="hr"></div>
+
+        <h3 id="part3-a" style="margin:10px 0 6px;font-size:16px">Part (a): Focused transfer function H(νx,νy)</h3>
+
+        <p><b>Step 1: Find object and image distances in the focused M = 1 case.</b></p>
+        <p>
+          For a thin lens, the transverse magnification (magnitude) is
+        </p>
+        <div class="equation">
+          <pre class="eq">|M| = d2 / d1</pre>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy="|M| = d2/d1">Copy</button>
+          </div>
+        </div>
+        <p>
+          Given <b>|M| = 1</b>, we have <b>d₁ = d₂</b> (in the focused configuration). Use the thin lens equation:
+        </p>
+        <div class="equation">
+          <pre class="eq">1/f = 1/d1 + 1/d2</pre>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy="1/f = 1/d1 + 1/d2">Copy</button>
+          </div>
+        </div>
+        <p>
+          With <b>d₁ = d₂</b>, this becomes:
+        </p>
+        <div class="equation">
+          <pre class="eq">1/f = 2/d1  ⇒  d1 = 2f  and  d2 = 2f</pre>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy="1/f = 2/d1  ⇒  d1 = 2f  and  d2 = 2f">Copy</button>
+          </div>
+        </div>
+        <p>
+          Since <b>f = 100 cm = 1.00 m</b>, the focused distances are:
+          <b>d₁ = d₂ = 2.00 m</b>.
+        </p>
+
+        <p><b>Step 2: Use coherent imaging theory to relate H to the pupil.</b></p>
+        <p>
+          For a focused, shift-invariant <b>coherent</b> imaging system, the <b>coherent transfer function</b> is the pupil function
+          expressed in spatial-frequency coordinates:
+        </p>
+        <div class="equation">
+          <pre class="eq">H(νx, νy) = P( x = λ f νx,  y = λ f νy )</pre>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy="H(νx, νy) = P( x = λ f νx,  y = λ f νy )">Copy</button>
+          </div>
+        </div>
+
+        <p><b>Step 3: Substitute the ring pupil condition.</b></p>
+        <p>
+          The pupil is
+          <span style="font-family:var(--mono)">P(x,y)=1</span> if <span style="font-family:var(--mono)">a ≤ √(x²+y²) ≤ b</span>, else 0.
+          Let <b>ρ = √(x²+y²)</b> and <b>ν = √(νx²+νy²)</b>.
+          Under the mapping <b>x = λfνx</b>, <b>y = λfνy</b>, we get:
+          <b>ρ = λ f ν</b>.
+        </p>
+
+        <div class="box">
+          <h3>Focused transfer function (answer for part a)</h3>
+          <p class="big" id="finalA">
+H(νx,νy) = 1   if   a ≤ λ f √(νx²+νy²) ≤ b
+         = 0   otherwise.
+
+Equivalently (radial form):
+H(ν) = 1 for νa ≤ ν ≤ νb, and 0 otherwise,
+where νa = a/(λ f),  νb = b/(λ f).
+          </p>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy="H(νx,νy)=1 if a ≤ λ f √(νx²+νy²) ≤ b; 0 otherwise.  νa=a/(λ f), νb=b/(λ f).">Copy final (a)</button>
+          </div>
+        </div>
+
+        <p><b>Step 4: Compute the numeric passband radii.</b></p>
+        <p>
+          Convert units: <b>a = 5 mm = 5×10⁻³ m</b>, <b>b = 6 mm = 6×10⁻³ m</b>,
+          <b>λ = 1 μm = 1×10⁻⁶ m</b>, <b>f = 1 m</b>.
+        </p>
+        <div class="equation">
+          <pre class="eq">νa = a/(λ f) = (5×10⁻³)/(1×10⁻⁶·1) = 5×10³ cycles/m = 5 cycles/mm
+νb = b/(λ f) = (6×10⁻³)/(1×10⁻⁶·1) = 6×10³ cycles/m = 6 cycles/mm</pre>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy="νa=5 cycles/mm, νb=6 cycles/mm (for a=5 mm, b=6 mm, λ=1 μm, f=1 m).">Copy numeric passband</button>
+          </div>
+        </div>
+
+        <p><b>Cross-section sketch H(νx,0):</b> along νy = 0, the radial condition becomes <b>ν = |νx|</b>, so:</p>
+        <div class="equation">
+          <pre class="eq">H(νx,0) = 1  for  νa ≤ |νx| ≤ νb
+        = 0  otherwise</pre>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy="H(νx,0)=1 for νa ≤ |νx| ≤ νb; 0 otherwise.">Copy</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3 id="part3-b" style="margin:10px 0 6px;font-size:16px">Part (b): Ray-optics impulse response h(x,y) for d₂ = 25 cm</h3>
+
+        <p><b>Step 1: Keep d₁ from part (a) and find the focused image distance s′.</b></p>
+        <p>
+          From part (a), <b>d₁ = 2f = 2.00 m</b>. The thin lens equation gives the paraxial focus plane (true image plane) at distance <b>s′</b>:
+        </p>
+        <div class="equation">
+          <pre class="eq">1/f = 1/d1 + 1/s'
+⇒ 1/1 = 1/2 + 1/s'
+⇒ 1/s' = 1 - 0.5 = 0.5
+⇒ s' = 2.00 m</pre>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy="With d1=2 m and f=1 m: 1/f=1/d1+1/s' ⇒ s'=2 m.">Copy</button>
+          </div>
+        </div>
+
+        <p><b>Step 2: Ray geometry to map pupil radius to blur radius at plane d₂.</b></p>
+        <p>
+          Consider an on-axis object point. A ray passing through the lens at transverse radius <b>ρ</b> (in the pupil)
+          is refracted so that it passes through the focus at <b>(r=0, z=s′)</b>. In paraxial geometry, that ray is a straight line from
+          <b>(r=ρ, z=0)</b> to <b>(r=0, z=s′)</b>.
+        </p>
+        <p>
+          By linear interpolation, at an intermediate plane <b>z=d₂</b>, the ray’s transverse radius is:
+        </p>
+        <div class="equation">
+          <pre class="eq">ρ' = ρ · |1 - d2/s'|</pre>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy="ρ' = ρ · |1 - d2/s'|">Copy</button>
+          </div>
+        </div>
+
+        <p><b>Step 3: Apply to the annular pupil (a ≤ ρ ≤ b).</b></p>
+        <p>
+          All rays come from pupil radii between <b>a</b> and <b>b</b>, so the blur at the plane z=d₂ is an annulus between:
+        </p>
+        <div class="equation">
+          <pre class="eq">a' = a · t,     b' = b · t,   where   t = |1 - d2/s'|</pre>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy="a'=a·t, b'=b·t, with t=|1-d2/s'|.">Copy</button>
+          </div>
+        </div>
+
+        <p><b>Numerical values for d₂ = 0.25 m:</b></p>
+        <p>
+          Here <b>s′ = 2.00 m</b> and <b>d₂ = 0.25 m</b>, so
+          <b>t = |1 − 0.25/2| = 0.875</b>.
+          Thus:
+          <b>a′ = 0.875×5 mm = 4.375 mm</b>,
+          <b>b′ = 0.875×6 mm = 5.25 mm</b>.
+        </p>
+
+        <p><b>Step 4: Write the ray-optics impulse response h(x,y).</b></p>
+        <p>
+          In geometrical optics with a uniformly transmitting pupil, the intensity in the blur is taken as uniform over the accessible ray bundle cross-section.
+          Therefore <b>h(x,y)</b> is constant inside the annulus and zero outside. Normalize so that
+          <b>∬ h(x,y) dx dy = 1</b>.
+          The annulus area is <b>A = π(b′² − a′²)</b>.
+        </p>
+
+        <div class="box">
+          <h3>Ray-optics impulse response (answer for part b)</h3>
+          <p class="big" id="finalB">
+Let r = √(x² + y²), t = |1 − d2/s'|, a' = a t, b' = b t.
+
+h(x,y) = 1 / [π(b'² − a'²)]   for  a' ≤ r ≤ b'
+       = 0                   otherwise.
+
+For the required cross-section:
+h(x,0) = 1 / [π(b'² − a'²)]  for  a' ≤ |x| ≤ b', else 0.
+          </p>
+          <div class="copyRow">
+            <button class="copyBtn" data-copy="h(x,y)=1/[π(b'^2-a'^2)] for a'≤√(x^2+y^2)≤b', else 0; with t=|1-d2/s'|, a'=a t, b'=b t.">Copy final (b)</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3 id="part3-checks" style="margin:10px 0 6px;font-size:16px">Sanity checks</h3>
+
+        <div class="twoCol">
+          <div class="callout">
+            <h3>Units</h3>
+            <ul>
+              <li>Part (a): ν has units of <b>cycles/length</b>. Since ν = r/(λf), and r,λ,f are lengths, units check out.</li>
+              <li>Part (b): h(x,y) has units of <b>1/area</b> so that its integral over area is 1.</li>
+            </ul>
+          </div>
+          <div class="callout">
+            <h3>Limiting cases</h3>
+            <ul>
+              <li>If <b>d₂ → s′</b>, then <b>t → 0</b> and the blur shrinks toward a point (ray-optics “delta”).</li>
+              <li>If <b>d₂ → 0</b> (detector at the lens), then <b>t → 1</b> and the blur matches the pupil annulus.</li>
+              <li>In part (a), increasing <b>b</b> increases ν<sub>b</sub>, so finer detail is passed.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout" style="margin-top:14px">
+          <h3>Physical interpretation</h3>
+          <ul>
+            <li><b>Focused ring pupil:</b> removes low spatial frequencies → edge/texture emphasizing behavior (band-pass).</li>
+            <li><b>Defocus with ring pupil:</b> a point becomes a ring → characteristic “donut” blur (common in annular-aperture systems).</li>
+          </ul>
+        </div>
+      </section>
+    </article>
+  </div>
+</main>
+
+<footer>
+  <div class="hr"></div>
+  <div>
+    Built as a self-contained HTML article with interactive canvases (no external libraries). Use the d₂ slider to explore how defocus changes the ray-optics PSF and its Fourier-domain behavior.
+  </div>
+</footer>
+
+<script>
+/* =========================
+   Utilities: copy buttons
+========================= */
+(function(){
+  function toast(msg){
+    const t=document.createElement('div');
+    t.textContent=msg;
+    t.style.position='fixed';
+    t.style.left='50%';
+    t.style.bottom='18px';
+    t.style.transform='translateX(-50%)';
+    t.style.padding='10px 12px';
+    t.style.borderRadius='12px';
+    t.style.border='1px solid rgba(255,255,255,.18)';
+    t.style.background='rgba(10,14,22,.86)';
+    t.style.color='white';
+    t.style.fontSize='13px';
+    t.style.zIndex='9999';
+    t.style.boxShadow='0 14px 30px rgba(0,0,0,.35)';
+    t.style.backdropFilter='blur(6px)';
+    document.body.appendChild(t);
+    setTimeout(()=>{ t.style.transition='opacity .25s ease'; t.style.opacity='0'; }, 900);
+    setTimeout(()=>{ t.remove(); }, 1250);
+  }
+  document.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button.copyBtn');
+    if(!btn) return;
+    const text = btn.getAttribute('data-copy');
+    if(!text) return;
+    try{
+      await navigator.clipboard.writeText(text);
+      toast('Copied ✓');
+    }catch(err){
+      // fallback
+      const ta=document.createElement('textarea');
+      ta.value=text;
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand('copy'); toast('Copied ✓'); }catch(_){ toast('Copy failed'); }
+      ta.remove();
+    }
+  });
+})();
+
+/* =========================
+   Math helpers
+========================= */
+function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+
+/* Bessel J1 approximation (Cephes-like) + small-x series for stability */
+function besselJ1(x){
+  const ax = Math.abs(x);
+  if(ax < 1e-6) return x/2; // J1(x) ~ x/2
+  // For moderate x, use rational approximations
+  if(ax < 8.0){
+    const y = x*x;
+    const num = x*(72362614232.0 + y*(-7895059235.0 + y*(242396853.1 +
+              y*(-2972611.439 + y*(15704.48260 + y*(-30.16036606))))));
+    const den = 144725228442.0 + y*(2300535178.0 + y*(18583304.74 +
+              y*(99447.43394 + y*(376.9991397 + y*1.0))));
+    return num/den;
+  }else{
+    // asymptotic form
+    const z = 8.0/ax;
+    const y = z*z;
+    const xx = ax - 2.356194491; // 3π/4
+    const p = 1.0 + y*(0.183105e-2 + y*(-0.3516396496e-4 + y*(0.2457520174e-5 + y*(-0.240337019e-6))));
+    const q = 0.04687499995 + y*(-0.2002690873e-3 + y*(0.8449199096e-5 + y*(-0.88228987e-6 + y*0.105787412e-6)));
+    const ans = Math.sqrt(0.636619772/ax) * (Math.cos(xx)*p - z*Math.sin(xx)*q);
+    return x < 0 ? -ans : ans;
+  }
+}
+
+/* =========================
+   Problem constants
+========================= */
+const params = {
+  f: 1.00,          // m
+  lambda: 1e-6,     // m
+  a: 5e-3,          // m
+  b: 6e-3,          // m
+  M: 1.0,
+  d2: 0.25          // m (interactive)
+};
+
+// Focused distances from part (a): d1 = d2 = 2f, and s' computed from lens equation.
+function computeFocusedDistances(){
+  const d1 = 2*params.f;
+  const sp = 1.0 / (1.0/params.f - 1.0/d1); // s' from 1/f = 1/d1 + 1/s'
+  return { d1, sp };
+}
+
+function computePassband(){
+  const va = params.a / (params.lambda*params.f); // cycles/m
+  const vb = params.b / (params.lambda*params.f);
+  return { va, vb };
+}
+
+function computeDefocusScale(){
+  const { sp } = computeFocusedDistances();
+  const t = Math.abs(1 - params.d2/sp);
+  const ap = params.a * t;
+  const bp = params.b * t;
+  return { t, ap, bp, sp };
+}
+
+/* =========================
+   Canvas framework: HiDPI + axes
+========================= */
+function setupCanvas(canvas){
+  const ctx = canvas.getContext('2d');
+  function resize(){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.max(2, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(2, Math.floor(rect.height * dpr));
+    ctx.setTransform(dpr,0,0,dpr,0,0); // work in CSS pixels
+  }
+  resize();
+  return { ctx, resize };
+}
+
+function drawGridAxes(ctx, w, h, plot, opts){
+  const {
+    xMin, xMax, yMin, yMax,
+    xLabel, yLabel, title,
+    xTicks=6, yTicks=5,
+    showLegend=false, legend=[]
+  } = opts;
+
+  // background
+  ctx.clearRect(0,0,w,h);
+
+  // card-like inner area
+  const padL = 56, padR = 18, padT = 36, padB = 44;
+  const ix0 = padL, iy0 = padT, ix1 = w - padR, iy1 = h - padB;
+  const iw = ix1 - ix0, ih = iy1 - iy0;
+
+  // title
+  ctx.save();
+  ctx.fillStyle = 'rgba(232,238,252,.95)';
+  ctx.font = '600 13px ui-sans-serif, system-ui';
+  ctx.fillText(title, ix0, 18);
+  ctx.restore();
+
+  // grid
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,.08)';
+  ctx.lineWidth = 1;
+
+  for(let i=0;i<=xTicks;i++){
+    const x = ix0 + (iw*i/xTicks);
+    ctx.beginPath(); ctx.moveTo(x, iy0); ctx.lineTo(x, iy1); ctx.stroke();
+  }
+  for(let j=0;j<=yTicks;j++){
+    const y = iy0 + (ih*j/yTicks);
+    ctx.beginPath(); ctx.moveTo(ix0, y); ctx.lineTo(ix1, y); ctx.stroke();
+  }
+  ctx.restore();
+
+  // axes box
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,.14)';
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(ix0, iy0, iw, ih);
+  ctx.restore();
+
+  // tick labels
+  ctx.save();
+  ctx.fillStyle = 'rgba(169,182,214,.95)';
+  ctx.font = '12px ui-monospace, Menlo, Consolas, monospace';
+
+  function fmt(v){
+    const av = Math.abs(v);
+    if(av >= 1000 || av === 0) return v.toFixed(0);
+    if(av >= 10) return v.toFixed(1);
+    return v.toFixed(2);
+  }
+
+  for(let i=0;i<=xTicks;i++){
+    const vx = xMin + (xMax-xMin)*(i/xTicks);
+    const x = ix0 + (iw*i/xTicks);
+    ctx.fillText(fmt(vx), x-10, iy1+18);
+  }
+  for(let j=0;j<=yTicks;j++){
+    const vy = yMax - (yMax-yMin)*(j/yTicks);
+    const y = iy0 + (ih*j/yTicks);
+    ctx.fillText(fmt(vy), 8, y+4);
+  }
+  ctx.restore();
+
+  // axis labels
+  ctx.save();
+  ctx.fillStyle = 'rgba(219,231,255,.95)';
+  ctx.font = '600 12px ui-sans-serif, system-ui';
+  ctx.fillText(xLabel, ix0 + iw*0.55, h-12);
+
+  ctx.translate(14, iy0 + ih*0.55);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+
+  // legend
+  if(showLegend && legend.length){
+    ctx.save();
+    const lx = ix0 + 8, ly = iy0 + 8;
+    let y = ly;
+    ctx.font = '12px ui-sans-serif, system-ui';
+    for(const item of legend){
+      ctx.fillStyle = item.color;
+      ctx.fillRect(lx, y-8, 10, 10);
+      ctx.fillStyle = 'rgba(232,238,252,.92)';
+      ctx.fillText(item.label, lx+14, y);
+      y += 16;
+    }
+    ctx.restore();
+  }
+
+  // mapping functions
+  function X(x){ return ix0 + (x - xMin) * iw / (xMax - xMin); }
+  function Y(y){ return iy0 + (yMax - y) * ih / (yMax - yMin); }
+
+  plot({X,Y, ix0,iy0,ix1,iy1, iw,ih});
+}
+
+/* =========================
+   Plots
+========================= */
+const cnvDiagram = setupCanvas(document.getElementById('cnvDiagram'));
+const cnvTF = setupCanvas(document.getElementById('cnvTF'));
+const cnvPSF = setupCanvas(document.getElementById('cnvPSF'));
+
+let showDefocusCurve = true;
+
+function drawDiagram(){
+  const canvas = document.getElementById('cnvDiagram');
+  const ctx = cnvDiagram.ctx;
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width, h = rect.height;
+
+  ctx.clearRect(0,0,w,h);
+
+  // coordinates in "meters" mapped to screen
+  const { d1, sp } = computeFocusedDistances();
+  const zMin = -0.2*d1, zMax = Math.max(sp, params.d2) * 1.15;
+  const pad = 18;
+
+  function Xz(z){
+    return pad + (z - zMin) * (w-2*pad) / (zMax - zMin);
+  }
+  function Yr(y){
+    return h*0.55 - y*(h*0.28); // y is "normalized"
+  }
+
+  // axis line
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,.18)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(Xz(zMin), Yr(0));
+  ctx.lineTo(Xz(zMax), Yr(0));
+  ctx.stroke();
+  ctx.restore();
+
+  // object plane at z = -d1
+  const zObj = -d1;
+  ctx.save();
+  ctx.strokeStyle='rgba(125,211,252,.35)';
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(Xz(zObj), Yr(0.55));
+  ctx.lineTo(Xz(zObj), Yr(-0.55));
+  ctx.stroke();
+  ctx.fillStyle='rgba(219,231,255,.95)';
+  ctx.font='600 12px ui-sans-serif, system-ui';
+  ctx.fillText('Object plane (z = -d₁)', Xz(zObj)-64, Yr(0.70));
+  ctx.restore();
+
+  // lens plane at z=0
+  ctx.save();
+  ctx.strokeStyle='rgba(167,139,250,.40)';
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(Xz(0), Yr(0.7));
+  ctx.lineTo(Xz(0), Yr(-0.7));
+  ctx.stroke();
+  ctx.fillStyle='rgba(232,238,252,.95)';
+  ctx.font='600 12px ui-sans-serif, system-ui';
+  ctx.fillText('Lens + ring aperture', Xz(0)-54, Yr(0.82));
+  ctx.restore();
+
+  // focus plane at z = s'
+  ctx.save();
+  ctx.strokeStyle='rgba(52,211,153,.40)';
+  ctx.lineWidth=2;
+  ctx.setLineDash([6,5]);
+  ctx.beginPath();
+  ctx.moveTo(Xz(sp), Yr(0.7));
+  ctx.lineTo(Xz(sp), Yr(-0.7));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(220,255,232,.95)';
+  ctx.font='600 12px ui-sans-serif, system-ui';
+  ctx.fillText('Focus plane (z = s′)', Xz(sp)-48, Yr(-0.78));
+  ctx.restore();
+
+  // image plane at z = d2
+  ctx.save();
+  ctx.strokeStyle='rgba(251,191,36,.45)';
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(Xz(params.d2), Yr(0.7));
+  ctx.lineTo(Xz(params.d2), Yr(-0.7));
+  ctx.stroke();
+  ctx.fillStyle='rgba(255,241,199,.95)';
+  ctx.font='600 12px ui-sans-serif, system-ui';
+  ctx.fillText('Image plane (z = d₂)', Xz(params.d2)-52, Yr(0.92));
+  ctx.restore();
+
+  // Rays from annulus edges (a and b) for an on-axis point
+  const { t } = computeDefocusScale();
+  const aNorm = 0.42; // just for drawing
+  const bNorm = 0.62;
+  // lines from lens at y=aNorm and y=bNorm to focus at y=0
+  function drawRay(y0, color){
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(Xz(0), Yr(y0));
+    ctx.lineTo(Xz(sp), Yr(0));
+    ctx.stroke();
+    // mark intersection at image plane
+    const yAt = y0*(1 - params.d2/sp);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(Xz(params.d2), Yr(yAt), 4, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+  drawRay(+aNorm, 'rgba(125,211,252,.65)');
+  drawRay(+bNorm, 'rgba(125,211,252,.65)');
+  drawRay(-aNorm, 'rgba(125,211,252,.45)');
+  drawRay(-bNorm, 'rgba(125,211,252,.45)');
+
+  // dimension arrows
+  function dimLine(z0,z1, y, label, color){
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth=1.4;
+    ctx.beginPath();
+    ctx.moveTo(Xz(z0), Yr(y));
+    ctx.lineTo(Xz(z1), Yr(y));
+    ctx.stroke();
+    // arrowheads
+    const ah=6;
+    ctx.beginPath();
+    ctx.moveTo(Xz(z0), Yr(y));
+    ctx.lineTo(Xz(z0)+ah, Yr(y)-ah/2);
+    ctx.lineTo(Xz(z0)+ah, Yr(y)+ah/2);
+    ctx.closePath(); ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(Xz(z1), Yr(y));
+    ctx.lineTo(Xz(z1)-ah, Yr(y)-ah/2);
+    ctx.lineTo(Xz(z1)-ah, Yr(y)+ah/2);
+    ctx.closePath(); ctx.fill();
+
+    ctx.font='12px ui-monospace, Menlo, Consolas, monospace';
+    ctx.fillText(label, (Xz(z0)+Xz(z1))/2 - 28, Yr(y)-8);
+    ctx.restore();
+  }
+  dimLine(zObj, 0, -0.90, 'd₁', 'rgba(125,211,252,.75)');
+  dimLine(0, params.d2, +0.96, 'd₂', 'rgba(251,191,36,.85)');
+  dimLine(0, sp, -0.98, 's′', 'rgba(52,211,153,.85)');
+
+  // annotation for blur scaling
+  const { ap, bp } = computeDefocusScale();
+  ctx.save();
+  ctx.fillStyle='rgba(232,238,252,.92)';
+  ctx.font='12px ui-monospace, Menlo, Consolas, monospace';
+  const info = `t = |1 − d₂/s′| = ${t.toFixed(3)}  ⇒  a′=${(ap*1e3).toFixed(3)} mm, b′=${(bp*1e3).toFixed(3)} mm`;
+  ctx.fillText(info, pad, h-14);
+  ctx.restore();
+}
+
+function coherentStepH(vx, va, vb){
+  const av = Math.abs(vx);
+  return (av >= va && av <= vb) ? 1 : 0;
+}
+
+// Fourier transform magnitude of uniform annulus PSF (radial), evaluated along vy=0 so ν=|vx|
+// h(r)=1/[π(b'^2-a'^2)] for a'≤r≤b'. Its 2D FT (normalized to 1 at ν=0):
+// H(ν)= 2/(b'^2-a'^2) * [ b' J1(2πν b')/(2πν) - a' J1(2πν a')/(2πν) ]
+function annulusFTmag(nu, ap, bp){
+  const denom = (bp*bp - ap*ap);
+  if(denom <= 0) return 0;
+  if(Math.abs(nu) < 1e-12) return 1; // DC gain
+  const k = 2*Math.PI*nu; // (rad/m) but nu is cycles/m, so 2πν has units rad/m
+  const termB = bp * besselJ1(k*bp) / (k);
+  const termA = ap * besselJ1(k*ap) / (k);
+  const H = (2/denom) * (termB - termA);
+  return Math.abs(H);
+}
+
+function drawTransferPlot(){
+  const canvas = document.getElementById('cnvTF');
+  const ctx = cnvTF.ctx;
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width, h = rect.height;
+
+  const { va, vb } = computePassband(); // cycles/m
+  // Plot in cycles/mm for readability
+  const vaMM = va/1000, vbMM = vb/1000;
+
+  // choose x-range around passband
+  const xMax = Math.max(10, vbMM*1.6);
+  const xMin = -xMax;
+  const yMin = -0.05, yMax = 1.10;
+
+  const { ap, bp } = computeDefocusScale();
+
+  drawGridAxes(ctx, w, h, ({X,Y, ix0,iy0,ix1,iy1})=>{
+    // curves
+    const N = 1200;
+
+    // in-focus coherent step (ring bandpass)
+    ctx.save();
+    ctx.strokeStyle='rgba(167,139,250,.95)';
+    ctx.lineWidth=2.4;
+    ctx.beginPath();
+    for(let i=0;i<=N;i++){
+      const vx = xMin + (xMax-xMin)*i/N; // cycles/mm
+      const val = coherentStepH(vx, vaMM, vbMM);
+      const px = X(vx), py = Y(val);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // defocus curve: |FT{h}| along vx, computed in cycles/m internally
+    if(showDefocusCurve){
+      ctx.save();
+      ctx.strokeStyle='rgba(125,211,252,.95)';
+      ctx.lineWidth=2.2;
+      ctx.beginPath();
+      for(let i=0;i<=N;i++){
+        const vxMM = xMin + (xMax-xMin)*i/N; // cycles/mm
+        const nu = Math.abs(vxMM)*1000; // cycles/m
+        const val = annulusFTmag(nu, ap, bp);
+        const px = X(vxMM), py = Y(val);
+        if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // highlight passband edges
+    ctx.save();
+    ctx.strokeStyle='rgba(255,255,255,.25)';
+    ctx.setLineDash([5,5]);
+    ctx.lineWidth=1.2;
+    const x1=X(vaMM), x2=X(vbMM), x3=X(-vaMM), x4=X(-vbMM);
+    ctx.beginPath(); ctx.moveTo(x1,iy0); ctx.lineTo(x1,iy1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x2,iy0); ctx.lineTo(x2,iy1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x3,iy0); ctx.lineTo(x3,iy1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x4,iy0); ctx.lineTo(x4,iy1); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+  },{
+    xMin, xMax, yMin, yMax,
+    title: 'Cross-section along νy = 0',
+    xLabel: 'νx (cycles/mm)',
+    yLabel: 'Transfer (a.u.)',
+    xTicks: 8,
+    yTicks: 6,
+    showLegend: true,
+    legend: [
+      {label:'Focused coherent H(νx,0)', color:'rgba(167,139,250,.95)'},
+      {label: showDefocusCurve ? '|FT{ray-PSF}| (depends on d₂)' : '(defocus curve hidden)', color:'rgba(125,211,252,.95)'}
+    ]
+  });
+}
+
+function drawPSFPlot(){
+  const canvas = document.getElementById('cnvPSF');
+  const ctx = cnvPSF.ctx;
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width, h = rect.height;
+
+  const { ap, bp } = computeDefocusScale();
+  const apMM = ap*1e3, bpMM = bp*1e3;
+
+  const xMax = Math.max(8, bpMM*1.6);
+  const xMin = -xMax;
+
+  // PSF height is constant on annulus; to make plot readable, scale y to max
+  const area = Math.PI*(bpMM*bpMM - apMM*apMM); // in mm^2 (since radii in mm)
+  const h0 = area > 0 ? 1/area : 0; // 1/mm^2 (relative)
+  const yMax = h0*1.25;
+  const yMin = -yMax*0.06;
+
+  drawGridAxes(ctx, w, h, ({X,Y, ix0,iy0,ix1,iy1})=>{
+    const N = 1400;
+    ctx.save();
+    ctx.strokeStyle='rgba(52,211,153,.95)';
+    ctx.lineWidth=2.3;
+    ctx.beginPath();
+    for(let i=0;i<=N;i++){
+      const x = xMin + (xMax-xMin)*i/N; // mm
+      const ax = Math.abs(x);
+      const val = (ax >= apMM && ax <= bpMM) ? h0 : 0;
+      const px = X(x), py = Y(val);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // markers for ±a' and ±b'
+    ctx.save();
+    ctx.strokeStyle='rgba(255,255,255,.25)';
+    ctx.setLineDash([5,5]);
+    ctx.lineWidth=1.2;
+    for(const m of [apMM, bpMM, -apMM, -bpMM]){
+      const xx = X(m);
+      ctx.beginPath(); ctx.moveTo(xx,iy0); ctx.lineTo(xx,iy1); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.restore();
+  },{
+    xMin, xMax, yMin, yMax,
+    title: 'h(x,0) from ray optics (uniform annulus)',
+    xLabel: 'x (mm)',
+    yLabel: 'h (1/mm², normalized)',
+    xTicks: 8,
+    yTicks: 5,
+    showLegend: true,
+    legend: [
+      {label:`Nonzero for |x|∈[a′,b′]=[${apMM.toFixed(3)}, ${bpMM.toFixed(3)}] mm`, color:'rgba(52,211,153,.95)'}
+    ]
+  });
+}
+
+/* =========================
+   UI + live readouts
+========================= */
+function updateReadouts(){
+  const { d1, sp } = computeFocusedDistances();
+  const { t, ap, bp } = computeDefocusScale();
+  const { va, vb } = computePassband();
+
+  document.getElementById('d2Readout').textContent = `${params.d2.toFixed(2)} m`;
+  document.getElementById('d1Readout').textContent = `${d1.toFixed(2)} m`;
+  document.getElementById('spReadout').textContent = `${sp.toFixed(2)} m`;
+  document.getElementById('tReadout').textContent = `${t.toFixed(3)}`;
+  document.getElementById('apReadout').textContent = `${(ap*1e3).toFixed(3)} mm`;
+  document.getElementById('bpReadout').textContent = `${(bp*1e3).toFixed(3)} mm`;
+
+  document.getElementById('vaReadout').textContent = `${(va/1000).toFixed(2)} cyc/mm`;
+  document.getElementById('vbReadout').textContent = `${(vb/1000).toFixed(2)} cyc/mm`;
+
+  document.getElementById('plotModeReadout').textContent = showDefocusCurve ? 'Show in-focus + defocus' : 'Show in-focus only';
+}
+
+function renderAll(){
+  // resize (responsive)
+  cnvDiagram.resize();
+  cnvTF.resize();
+  cnvPSF.resize();
+  updateReadouts();
+  drawDiagram();
+  drawTransferPlot();
+  drawPSFPlot();
+}
+
+/* =========================
+   Event wiring
+========================= */
+document.getElementById('d2Range').addEventListener('input', (e)=>{
+  params.d2 = parseFloat(e.target.value);
+  renderAll();
+});
+
+document.getElementById('toggleDefocus').addEventListener('click', ()=>{
+  showDefocusCurve = !showDefocusCurve;
+  renderAll();
+});
+
+// re-render on resize
+let resizeTimer=null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(renderAll, 80);
+});
+
+// initial render
+renderAll();
+</script>
+</body>
+</html>

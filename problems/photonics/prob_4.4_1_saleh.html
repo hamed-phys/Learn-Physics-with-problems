@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Blurring a Sinusoidal Grating by a Square PSF — Image Profile and Contrast</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --panel:#101827;
+      --panel2:#0f1a2c;
+      --text:#e8eefc;
+      --muted:#b9c4dd;
+      --faint:#7f8aa6;
+      --line:rgba(255,255,255,.10);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --radius:18px;
+      --radius2:14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1000px 700px at 15% 10%, rgba(125,211,252,.18), transparent 60%),
+        radial-gradient(900px 700px at 80% 30%, rgba(167,139,250,.18), transparent 55%),
+        radial-gradient(1200px 900px at 60% 95%, rgba(52,211,153,.10), transparent 60%),
+        var(--bg);
+      line-height:1.55;
+    }
+    header{
+      padding:28px 18px 10px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    .title{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(1.25rem, 2.3vw, 2.1rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin-top:8px;
+      color:var(--muted);
+      max-width:74ch;
+    }
+    .shell{
+      max-width:1200px;
+      margin:0 auto;
+      padding:14px 18px 60px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    nav{
+      position:sticky;
+      top:14px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .navHead{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .navHead strong{
+      font-size:.95rem;
+      letter-spacing:.2px;
+    }
+    .pill{
+      font-size:.75rem;
+      padding:4px 8px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:var(--muted);
+      background:rgba(0,0,0,.15);
+      white-space:nowrap;
+    }
+    .toc{
+      padding:10px 12px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .toc a{
+      color:var(--muted);
+      text-decoration:none;
+      font-size:.92rem;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .toc a:hover{
+      background:rgba(125,211,252,.10);
+      border-color:rgba(125,211,252,.25);
+      transform: translateY(-1px);
+      color:var(--text);
+    }
+
+    main{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .cardHeader h2{
+      margin:0;
+      font-size:1.05rem;
+      letter-spacing:.2px;
+    }
+    .cardBody{ padding:14px 16px 16px; }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:14px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: repeat(3,1fr);
+      gap:12px;
+    }
+    .callout{
+      background:linear-gradient(180deg, rgba(125,211,252,.11), rgba(125,211,252,.06));
+      border:1px solid rgba(125,211,252,.20);
+      border-radius:var(--radius2);
+      padding:12px 12px 10px;
+    }
+    .callout h3{
+      margin:0 0 6px;
+      font-size:.95rem;
+    }
+    .callout ul{
+      margin:8px 0 0 18px;
+      color:var(--muted);
+    }
+    .muted{ color:var(--muted); }
+    .faint{ color:var(--faint); }
+
+    .eqWrap{
+      display:grid;
+      gap:10px;
+    }
+    .eq{
+      position:relative;
+      background:rgba(0,0,0,.25);
+      border:1px solid var(--line);
+      border-radius:var(--radius2);
+      padding:12px 12px 12px 12px;
+      overflow:auto;
+      font-family:var(--mono);
+      font-size:.92rem;
+      line-height:1.45;
+      white-space:pre;
+    }
+    .copyBtn{
+      position:absolute;
+      top:10px;
+      right:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:7px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:.82rem;
+      transition:transform .15s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+    }
+    .copyBtn:hover{
+      transform: translateY(-1px);
+      background:rgba(125,211,252,.12);
+      border-color:rgba(125,211,252,.30);
+    }
+    .copyBtn:active{ transform: translateY(0px) scale(.98); }
+
+    figure{
+      margin:0;
+      padding:0;
+    }
+    .canvasPanel{
+      background:rgba(0,0,0,.18);
+      border:1px solid var(--line);
+      border-radius:var(--radius2);
+      overflow:hidden;
+      padding:10px;
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      border-radius:12px;
+      background:rgba(10,14,22,.55);
+    }
+    .canvasTall canvas{ height:360px; }
+    .canvasShort canvas{ height:280px; }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:flex-end;
+      justify-content:space-between;
+    }
+    .control{
+      flex: 1 1 220px;
+      min-width: 220px;
+      background:rgba(0,0,0,.16);
+      border:1px solid var(--line);
+      border-radius:var(--radius2);
+      padding:10px 10px 8px;
+    }
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size:.9rem;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+    .control input[type="range"]{ width:100%; }
+    .readout{
+      font-family:var(--mono);
+      color:var(--text);
+      font-size:.86rem;
+      padding-left:8px;
+      white-space:nowrap;
+    }
+
+    .hr{
+      height:1px;
+      background:var(--line);
+      margin:12px 0;
+    }
+
+    .steps{
+      display:grid;
+      gap:10px;
+      margin:0;
+      padding-left:18px;
+      color:var(--muted);
+    }
+
+    .badgeRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:8px;
+    }
+    .badge{
+      font-family:var(--mono);
+      font-size:.82rem;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.16);
+      color:var(--muted);
+    }
+    .highlight{
+      border:1px solid rgba(52,211,153,.25);
+      background:linear-gradient(180deg, rgba(52,211,153,.13), rgba(52,211,153,.06));
+    }
+    .box{
+      border:1px solid rgba(167,139,250,.25);
+      background:linear-gradient(180deg, rgba(167,139,250,.16), rgba(167,139,250,.06));
+      border-radius:var(--radius2);
+      padding:12px;
+    }
+    .box strong{ color:var(--text); }
+    .kicker{
+      font-size:.86rem;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:var(--faint);
+      margin:0 0 8px;
+    }
+
+    footer{
+      max-width:1200px;
+      margin:0 auto;
+      padding:0 18px 30px;
+      color:var(--faint);
+      font-size:.92rem;
+    }
+
+    @media (max-width: 980px){
+      .shell{ grid-template-columns: 1fr; }
+      nav{ position:relative; top:auto; }
+      canvas{ height:300px; }
+      .grid2{ grid-template-columns: 1fr; }
+      .grid3{ grid-template-columns: 1fr; }
+    }
+
+    @media print{
+      body{ background:#fff; color:#000; }
+      nav{ display:none; }
+      .card, .callout, .canvasPanel, .control, .eq, .box{
+        box-shadow:none !important;
+        background:#fff !important;
+        border:1px solid #ddd !important;
+      }
+      .copyBtn{ display:none; }
+      .shell{ max-width:100%; padding:0; }
+      header{ padding:0; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="title">
+      <div>
+        <h1>Blurring a Sinusoidal Grating by a Square PSF: Image Profile <span class="faint">g(x,0)</span> and Contrast</h1>
+        <p class="subtitle">
+          We model a defocused single-lens imaging system as a shift-invariant blur with a <em>square</em> impulse response.
+          The image is the convolution of the object with this PSF, which reduces the grating’s modulation by a sinc-like factor.
+        </p>
+      </div>
+      <div class="pill">Vanilla HTML • Canvas plots • Live controls</div>
+    </div>
+  </header>
+
+  <div class="shell">
+    <nav aria-label="Table of contents">
+      <div class="navHead">
+        <strong>Mini Table of Contents</strong>
+        <span class="pill" id="tocStatus">Ready</span>
+      </div>
+      <div class="toc">
+        <a href="#quick">Quick Summary</a>
+        <a href="#viz">Interactive Visualizations</a>
+        <a href="#part1">PART 1 — Problem Analysis</a>
+        <a href="#part2">PART 2 — Strategy &amp; Tips</a>
+        <a href="#part3">PART 3 — Full Solution</a>
+        <a href="#final">Final Results (Copy)</a>
+      </div>
+    </nav>
+
+    <main>
+      <!-- Quick Summary -->
+      <section class="card" id="quick">
+        <div class="cardHeader">
+          <h2>Quick Summary</h2>
+          <span class="pill">Key takeaways</span>
+        </div>
+        <div class="cardBody">
+          <div class="grid3">
+            <div class="callout">
+              <h3>Model</h3>
+              <ul>
+                <li>Object: <span class="muted">f(x,y)=cos²(2πx/a)</span> (independent of <span class="muted">y</span>).</li>
+                <li>PSF: <span class="muted">h(x,y)=1</span> inside a square of width <span class="muted">D</span>, zero elsewhere.</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <h3>Image profile</h3>
+              <ul>
+                <li>Image is a convolution: <span class="muted">g = f * h</span>.</li>
+                <li>Along <span class="muted">y=0</span>, the blur reduces to a 1D box average in <span class="muted">x</span>.</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <h3>Contrast</h3>
+              <ul>
+                <li><span class="muted">g(x,0)</span> stays sinusoidal (DC + cosine).</li>
+                <li>Contrast becomes a sinc-like function of the ratio <span class="muted">D/a</span>.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="box">
+            <p class="kicker">Result in one line</p>
+            <p style="margin:0;color:var(--muted)">
+              With a physically natural <em>normalized</em> square PSF (unit area), the image is
+              <span class="muted">g(x,0)= 1/2 + (a/(4πD)) sin(2πD/a) · cos(4πx/a)</span>,
+              and the Michelson-type contrast
+              <span class="muted">C = |(a/(2πD)) sin(2πD/a)| = | sin(2πr)/(2πr) |</span> with <span class="muted">r=D/a</span>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Visualizations -->
+      <section class="card" id="viz">
+        <div class="cardHeader">
+          <h2>Interactive Visualizations</h2>
+          <span class="pill">Slider updates all canvases</span>
+        </div>
+        <div class="cardBody">
+          <div class="controls" aria-label="Interactive controls">
+            <div class="control">
+              <label>
+                Ratio <span class="muted">r = D/a</span>
+                <span class="readout" id="rReadout">0.40</span>
+              </label>
+              <input id="rSlider" type="range" min="0.02" max="2.50" step="0.01" value="0.40" />
+              <div class="faint" style="margin-top:6px">Controls blur size relative to grating period.</div>
+            </div>
+
+            <div class="control">
+              <label>
+                Example period <span class="muted">a</span> (mm)
+                <span class="readout" id="aReadout">1.00</span>
+              </label>
+              <input id="aSlider" type="range" min="0.20" max="3.00" step="0.01" value="1.00" />
+              <div class="faint" style="margin-top:6px">For plotting only (final derivation stays symbolic).</div>
+            </div>
+
+            <div class="control">
+              <label>
+                Plot span in <span class="muted">x</span> (periods)
+                <span class="readout" id="spanReadout">2.0</span>
+              </label>
+              <input id="spanSlider" type="range" min="0.5" max="6.0" step="0.1" value="2.0" />
+              <div class="faint" style="margin-top:6px">How many periods are shown in the main plot.</div>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="grid2">
+            <figure class="canvasPanel canvasShort">
+              <canvas id="cDiagram" aria-label="Diagram canvas"></canvas>
+              <figcaption class="muted" style="margin-top:8px">
+                <strong>Diagram:</strong> the object grating is blurred by averaging over a square window of width <span class="muted">D</span>.
+              </figcaption>
+            </figure>
+
+            <figure class="canvasPanel canvasShort">
+              <canvas id="cMain" aria-label="Main plot canvas"></canvas>
+              <figcaption class="muted" style="margin-top:8px">
+                <strong>Main plot:</strong> image profile <span class="muted">g(x,0)</span> (normalized PSF) vs <span class="muted">x</span>.
+              </figcaption>
+            </figure>
+          </div>
+
+          <div style="margin-top:14px">
+            <figure class="canvasPanel canvasTall">
+              <canvas id="cSecondary" aria-label="Secondary plot canvas"></canvas>
+              <figcaption class="muted" style="margin-top:8px">
+                <strong>Secondary plot:</strong> contrast <span class="muted">C(r)=|sin(2πr)/(2πr)|</span> vs blur ratio <span class="muted">r=D/a</span> (dot = current slider).
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- PART 1 -->
+      <section class="card" id="part1">
+        <div class="cardHeader">
+          <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+          <span class="pill">Understand → choose method</span>
+        </div>
+        <div class="cardBody">
+          <h3 style="margin-top:0">Restate the problem</h3>
+          <p class="muted">
+            We have an object with intensity (or transmittance) <span class="muted">f(x,y)=cos²(2πx/a)</span>, i.e. a 1D grating along <span class="muted">x</span>.
+            The imaging system is defocused and is modeled as a linear shift-invariant blur whose impulse response
+            <span class="muted">h(x,y)</span> is uniform (value 1) inside a square of width <span class="muted">D</span> and zero outside.
+            We must find the resulting image cross-section <span class="muted">g(x,0)</span> and the image contrast
+            <span class="muted">C=(g_max-g_min)/(g_max+g_min)</span>, expressed in terms of the ratio <span class="muted">D/a</span>.
+          </p>
+
+          <div class="grid2">
+            <div>
+              <h3>Given</h3>
+              <ul class="muted">
+                <li>Object: <span class="muted">f(x,y)=cos²(2πx/a)</span></li>
+                <li>Blur kernel (PSF): <span class="muted">h(x,y)=1</span> inside a square of width <span class="muted">D</span></li>
+                <li><span class="muted">h=0</span> outside the square</li>
+                <li>We want the image along <span class="muted">y=0</span></li>
+                <li>Contrast definition: <span class="muted">C=(max-min)/(max+min)</span> using extrema of <span class="muted">g(x,0)</span></li>
+              </ul>
+            </div>
+            <div>
+              <h3>Unknowns / required results</h3>
+              <ul class="muted">
+                <li>Closed-form expression for <span class="muted">g(x,0)</span> (as a function of <span class="muted">x</span>, <span class="muted">a</span>, <span class="muted">D</span>)</li>
+                <li>Expression for contrast <span class="muted">C</span> purely in terms of <span class="muted">D/a</span></li>
+              </ul>
+
+              <div class="badgeRow">
+                <span class="badge">Key ratio: r = D/a</span>
+                <span class="badge">Grating harmonic: cos(4πx/a)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <h3>Relevant physical principles (and why they apply)</h3>
+          <ul class="muted">
+            <li><strong>Linear shift-invariant imaging:</strong> a defocused (blurred) system is modeled as convolution: <span class="muted">g = f * h</span>. This is the standard model when the PSF does not depend on position.</li>
+            <li><strong>Separable effect due to 1D object:</strong> because <span class="muted">f</span> does not depend on <span class="muted">y</span>, the 2D convolution simplifies: the <span class="muted">y</span>-integration contributes only a constant factor, leaving a 1D average in <span class="muted">x</span>.</li>
+            <li><strong>Fourier viewpoint (optional):</strong> convolution in space multiplies spectra. A square PSF corresponds to a sinc-like transfer function, which attenuates the grating’s harmonic.</li>
+          </ul>
+
+          <h3>Possible approaches (compare)</h3>
+          <ol class="muted">
+            <li><strong>Direct convolution integral (best here):</strong> compute <span class="muted">g(x,0)=∬ f(x-ξ,y-η)h(ξ,η)dξdη</span> and use trig identities. Short and explicit.</li>
+            <li><strong>Fourier transform / OTF method:</strong> expand <span class="muted">cos²</span> into DC + cosine, then multiply by the PSF transfer function evaluated at the grating frequency. Elegant and general, but needs careful normalization.</li>
+            <li><strong>Geometric averaging:</strong> interpret the PSF as a local averaging window; derive amplitude reduction as an average of a cosine over a segment. Similar to approach 1, but less formal in 2D.</li>
+          </ol>
+
+          <div class="box">
+            <strong>Chosen approach:</strong>
+            <span class="muted">
+              We will do the direct convolution. It is the most transparent, avoids ambiguity about Fourier conventions,
+              and makes the dependence on <span class="muted">D/a</span> fall out cleanly.
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- PART 2 -->
+      <section class="card" id="part2">
+        <div class="cardHeader">
+          <h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+          <span class="pill">Plan before algebra</span>
+        </div>
+        <div class="cardBody">
+          <ol class="steps">
+            <li>
+              <strong>Write the imaging model:</strong> set <span class="muted">g(x,y) = ∬ f(x-ξ, y-η) h(ξ,η) dξ dη</span> (convolution).
+            </li>
+            <li>
+              <strong>Choose coordinates for the square PSF:</strong> represent the support as <span class="muted">ξ,η ∈ [-D/2, D/2]</span>.
+            </li>
+            <li>
+              <strong>Use that the object is 1D:</strong> since <span class="muted">f(x,y)=f(x)</span>, the <span class="muted">η</span>-integral becomes a constant factor.
+            </li>
+            <li>
+              <strong>Reduce to a 1D integral in x:</strong> <span class="muted">g(x,0) ∝ ∫_{-D/2}^{D/2} cos²(2π(x-ξ)/a) dξ</span>.
+            </li>
+            <li>
+              <strong>Convert cos² to DC + cosine:</strong> apply <span class="muted">cos²u = (1 + cos 2u)/2</span>.
+            </li>
+            <li>
+              <strong>Integrate the cosine term:</strong> use <span class="muted">∫ cos(k(x-ξ)) dξ</span> → sine difference identity.
+            </li>
+            <li>
+              <strong>Extract max/min:</strong> the result will be <span class="muted">g(x,0)=const + A cos(4πx/a)</span>, so extrema are <span class="muted">const ± |A|</span>.
+            </li>
+            <li>
+              <strong>Compute contrast:</strong> plug extrema into <span class="muted">(max-min)/(max+min)</span> and express in <span class="muted">r=D/a</span>.
+            </li>
+          </ol>
+
+          <div class="hr"></div>
+
+          <h3>Common mistakes &amp; quick tips</h3>
+          <ul class="muted">
+            <li><strong>Forgetting normalization:</strong> if you use <span class="muted">h=1</span> over the square, the convolution scales by area. Contrast is unaffected by any positive scaling, but the absolute level of <span class="muted">g</span> changes.</li>
+            <li><strong>Missing the correct harmonic:</strong> <span class="muted">cos²(2πx/a)</span> contains a cosine at <span class="muted">4πx/a</span> (twice the spatial frequency).</li>
+            <li><strong>Sign confusion in the integral:</strong> use a sine-difference identity (or evaluate carefully) to get a cosine term multiplied by <span class="muted">sin(2πD/a)</span>.</li>
+            <li><strong>Contrast definition:</strong> this problem defines it as <span class="muted">(max-min)/(max+min)</span> (Michelson-like). Don’t mix with visibility definitions that use mean intensity differently.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- PART 3 -->
+      <section class="card" id="part3">
+        <div class="cardHeader">
+          <h2>PART 3 — Full Solution</h2>
+          <span class="pill">Derivation + checks</span>
+        </div>
+        <div class="cardBody">
+          <h3 style="margin-top:0">Physical intuition</h3>
+          <p class="muted">
+            A uniform square PSF acts like a <em>local average</em> of the object over a square neighborhood.
+            Averaging a rapidly varying grating over a window reduces its modulation: if the blur window spans many oscillations,
+            bright and dark regions mix and the image approaches a constant (low contrast). If the blur window is very small compared
+            to the period, the image remains close to the original.
+          </p>
+
+          <div class="hr"></div>
+
+          <h3>Step 1 — Write the convolution model</h3>
+          <div class="eqWrap">
+            <div class="eq" id="eq1">g(x,y) = ∬ f(x-ξ, y-η) h(ξ,η) dξ dη
+(2D convolution for a shift-invariant imaging system)</div>
+          </div>
+
+          <p class="muted">
+            The PSF is
+            <span class="muted">h(ξ,η)=1</span> for <span class="muted">|ξ|≤D/2</span> and <span class="muted">|η|≤D/2</span>, and zero elsewhere.
+            So the integral is only over the square support.
+          </p>
+
+          <h3>Step 2 — Specialize to g(x,0) and use that f is independent of y</h3>
+          <p class="muted">
+            Given <span class="muted">f(x,y)=cos²(2πx/a)</span>, we have <span class="muted">f(x-ξ,0-η)=cos²(2π(x-ξ)/a)</span>,
+            which does not depend on <span class="muted">η</span>.
+          </p>
+
+          <div class="eqWrap">
+            <div class="eq" id="eq2">g(x,0) = ∫_{-D/2}^{D/2} ∫_{-D/2}^{D/2} cos²(2π(x-ξ)/a) dη dξ
+     = (∫_{-D/2}^{D/2} dη) · ∫_{-D/2}^{D/2} cos²(2π(x-ξ)/a) dξ
+     = D · ∫_{-D/2}^{D/2} cos²(2π(x-ξ)/a) dξ</div>
+          </div>
+
+          <p class="muted">
+            This is the <em>unnormalized</em> form corresponding directly to <span class="muted">h=1</span> in the square.
+            In many imaging contexts one uses a <em>normalized PSF</em> (unit area) so that a constant object stays constant:
+            <span class="muted">h_N = h / D²</span>.
+            That would simply divide <span class="muted">g</span> by <span class="muted">D²</span> (i.e. by <span class="muted">D</span> here after the η-integral),
+            leaving contrast unchanged. Below we present the normalized profile because it has a clean physical interpretation.
+          </p>
+
+          <h3>Step 3 — Use a normalized PSF (unit area) to get the image profile</h3>
+          <p class="muted">
+            Define <span class="muted">h_N(ξ,η)=1/D²</span> inside the same square, zero outside.
+            Then
+            <span class="muted">g_N(x,0)= ∬ f(x-ξ, -η) h_N(ξ,η) dξ dη = (1/D)∫_{-D/2}^{D/2} cos²(2π(x-ξ)/a) dξ</span>.
+          </p>
+
+          <div class="eqWrap">
+            <div class="eq" id="eq3">g(x,0) (normalized) = (1/D) ∫_{-D/2}^{D/2} cos²(2π(x-ξ)/a) dξ</div>
+          </div>
+
+          <h3>Step 4 — Convert cos² to DC + cosine</h3>
+          <p class="muted">
+            Use the identity <span class="muted">cos²u = (1 + cos(2u))/2</span>. Here, <span class="muted">u = 2π(x-ξ)/a</span>, so
+            <span class="muted">2u = 4π(x-ξ)/a</span>.
+          </p>
+
+          <div class="eqWrap">
+            <div class="eq" id="eq4">cos²(2π(x-ξ)/a) = 1/2 + (1/2) cos(4π(x-ξ)/a)</div>
+          </div>
+
+          <h3>Step 5 — Evaluate the integral explicitly</h3>
+          <p class="muted">
+            Substitute into the integral:
+          </p>
+
+          <div class="eqWrap">
+            <div class="eq" id="eq5">g(x,0) = (1/D) ∫_{-D/2}^{D/2} [1/2 + (1/2)cos(4π(x-ξ)/a)] dξ
+       = (1/D)[ (D/2) + (1/2) ∫_{-D/2}^{D/2} cos(4π(x-ξ)/a) dξ ]</div>
+          </div>
+
+          <p class="muted">
+            Let <span class="muted">k = 4π/a</span>. Then the cosine integral is:
+          </p>
+
+          <div class="eqWrap">
+            <div class="eq" id="eq6">I = ∫_{-D/2}^{D/2} cos(k(x-ξ)) dξ
+  Let u = k(x-ξ) ⇒ du = -k dξ ⇒ dξ = -du/k
+  When ξ = -D/2: u = k(x + D/2)
+  When ξ = +D/2: u = k(x - D/2)
+
+  I = ∫_{u=k(x+D/2)}^{u=k(x-D/2)} cos(u) (-du/k)
+    = (1/k) ∫_{k(x-D/2)}^{k(x+D/2)} cos(u) du
+    = (1/k) [sin(u)]_{k(x-D/2)}^{k(x+D/2)}
+    = (1/k)[ sin(k(x+D/2)) - sin(k(x-D/2)) ]</div>
+          </div>
+
+          <p class="muted">
+            Use the sine difference identity:
+            <span class="muted">sin(A)-sin(B)=2 cos((A+B)/2) sin((A-B)/2)</span>.
+            Here, <span class="muted">A=k(x+D/2)</span>, <span class="muted">B=k(x-D/2)</span>, so
+            <span class="muted">(A+B)/2 = kx</span> and <span class="muted">(A-B)/2 = kD/2</span>.
+          </p>
+
+          <div class="eqWrap">
+            <div class="eq" id="eq7">I = (1/k) · 2 cos(kx) sin(kD/2)
+  = (2/k) cos(kx) sin(kD/2)</div>
+          </div>
+
+          <p class="muted">
+            Substitute back into <span class="muted">g(x,0)</span>:
+          </p>
+
+          <div class="eqWrap">
+            <div class="eq" id="eq8">g(x,0) = (1/D)[ D/2 + (1/2)·(2/k) cos(kx) sin(kD/2) ]
+       = 1/2 + (1/(Dk)) sin(kD/2) cos(kx)</div>
+          </div>
+
+          <p class="muted">
+            Now replace <span class="muted">k=4π/a</span>. Then <span class="muted">kD/2 = 2πD/a</span> and <span class="muted">cos(kx)=cos(4πx/a)</span>.
+          </p>
+
+          <div class="eqWrap">
+            <div class="eq" id="eq9">g(x,0) = 1/2 + (a/(4πD)) sin(2πD/a) · cos(4πx/a)</div>
+          </div>
+
+          <div class="box">
+            <p class="kicker">Image profile (normalized PSF)</p>
+            <p style="margin:0" class="muted">
+              <strong>g(x,0) = 1/2 + A · cos(4πx/a)</strong>,
+              where <strong>A = (a/(4πD)) sin(2πD/a)</strong>.
+            </p>
+          </div>
+
+          <h3>Step 6 — Compute max/min and contrast</h3>
+          <p class="muted">
+            Since <span class="muted">cos(4πx/a)</span> ranges from <span class="muted">-1</span> to <span class="muted">+1</span>,
+            the maximum and minimum of <span class="muted">g(x,0)</span> are:
+          </p>
+
+          <div class="eqWrap">
+            <div class="eq" id="eq10">g_max = 1/2 + |A|
+g_min = 1/2 - |A|</div>
+          </div>
+
+          <p class="muted">
+            Plug into the given contrast definition:
+          </p>
+
+          <div class="eqWrap">
+            <div class="eq" id="eq11">C = (g_max - g_min)/(g_max + g_min)
+  = [ (1/2+|A|) - (1/2-|A|) ] / [ (1/2+|A|) + (1/2-|A|) ]
+  = (2|A|) / (1)
+  = 2|A|</div>
+          </div>
+
+          <p class="muted">
+            Therefore:
+          </p>
+
+          <div class="eqWrap">
+            <div class="eq" id="eq12">C = 2 · | (a/(4πD)) sin(2πD/a) |
+  = | (a/(2πD)) sin(2πD/a) |</div>
+          </div>
+
+          <p class="muted">
+            Express in terms of the ratio <span class="muted">r = D/a</span>:
+          </p>
+
+          <div class="eqWrap">
+            <div class="eq" id="eq13">Let r = D/a  ⇒  D = r a
+C(r) = | (a/(2π r a)) sin(2π r a / a) |
+     = | sin(2πr) / (2πr) |</div>
+          </div>
+
+          <div class="box highlight">
+            <p class="kicker">Contrast vs blur ratio</p>
+            <p style="margin:0" class="muted">
+              <strong>C(r) = | sin(2πr) / (2πr) |</strong>, with <strong>r = D/a</strong>.
+            </p>
+          </div>
+
+          <div class="hr"></div>
+
+          <h3>Sanity checks</h3>
+          <ul class="muted">
+            <li><strong>Units:</strong> <span class="muted">g</span> is dimensionless if <span class="muted">f</span> is dimensionless and the PSF is normalized. The amplitude factor <span class="muted">A</span> is dimensionless because <span class="muted">a/D</span> is dimensionless.</li>
+            <li><strong>Limit D → 0:</strong> use <span class="muted">sin(2πD/a) ≈ 2πD/a</span> ⇒ <span class="muted">A → 1/2</span>, so <span class="muted">g(x,0) → 1/2 + (1/2)cos(4πx/a) = cos²(2πx/a)</span> (no blur). Contrast <span class="muted">C → 1</span>.</li>
+            <li><strong>Large blur D ≫ a:</strong> the factor <span class="muted">sin(2πD/a)/(D)</span> tends to zero in magnitude, so <span class="muted">A → 0</span>. Then <span class="muted">g(x,0) → 1/2</span> (flat image), and <span class="muted">C → 0</span>.</li>
+            <li><strong>Zeros of contrast:</strong> when <span class="muted">D/a = r = n</span> (integer), <span class="muted">sin(2πr)=0</span> ⇒ <span class="muted">C=0</span>. Averaging over an integer number of periods cancels the modulation exactly.</li>
+          </ul>
+
+          <p class="muted">
+            <strong>Note on unnormalized PSF:</strong> If you strictly keep <span class="muted">h=1</span> in the square (no normalization),
+            then <span class="muted">g</span> is multiplied by a constant factor (proportional to <span class="muted">D²</span>).
+            The contrast formula above is unchanged because the contrast ratio cancels any positive scaling.
+          </p>
+        </div>
+      </section>
+
+      <!-- Final Results + copy buttons -->
+      <section class="card" id="final">
+        <div class="cardHeader">
+          <h2>Final Results (Copy)</h2>
+          <span class="pill">Copy plain text</span>
+        </div>
+        <div class="cardBody">
+          <p class="muted" style="margin-top:0">
+            The following are the final symbolic expressions consistent with the plots above (normalized PSF).
+          </p>
+
+          <div class="eqWrap">
+            <div class="eq" id="finalEq1">g(x,0) = 1/2 + (a/(4πD)) sin(2πD/a) · cos(4πx/a)</div>
+            <div class="eq" id="finalEq2">Contrast:  C = (g_max - g_min)/(g_max + g_min) = | (a/(2πD)) sin(2πD/a) |
+Equivalently, with r = D/a:  C(r) = | sin(2πr) / (2πr) |</div>
+          </div>
+
+          <div class="muted" style="margin-top:10px">
+            Tip: Contrast is maximal (≈1) for very small blur <span class="muted">D/a</span>, and it goes to zero at integer <span class="muted">D/a</span>.
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    Built for thesis/notes use: no external libraries, printable layout, and interactive canvases for intuition.
+  </footer>
+
+  <script>
+    // ---------- Utility: copy buttons on every .eq ----------
+    (function attachCopyButtons(){
+      const eqs = document.querySelectorAll('.eq');
+      eqs.forEach((el)=>{
+        const btn = document.createElement('button');
+        btn.className = 'copyBtn';
+        btn.type = 'button';
+        btn.textContent = 'Copy';
+        btn.addEventListener('click', async ()=>{
+          const text = el.textContent.replace(/\n+$/,'');
+          try{
+            await navigator.clipboard.writeText(text);
+            btn.textContent = 'Copied ✓';
+            setTimeout(()=>btn.textContent='Copy', 900);
+          }catch(e){
+            btn.textContent = 'Copy failed';
+            setTimeout(()=>btn.textContent='Copy', 900);
+          }
+        });
+        el.appendChild(btn);
+      });
+    })();
+
+    // ---------- Math helpers ----------
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    function sinc2pi(r){
+      // returns sin(2πr)/(2πr) with limiting value 1 at r=0
+      const x = 2*Math.PI*r;
+      if (Math.abs(x) < 1e-8) return 1;
+      return Math.sin(x)/x;
+    }
+    function contrastFromR(r){ return Math.abs(sinc2pi(r)); } // |sin(2πr)/(2πr)|
+    function amplitudeA(a, D){
+      // A = (a/(4πD)) sin(2πD/a), with limit A->1/2 as D->0
+      const r = D/a;
+      const x = 2*Math.PI*r;
+      if (Math.abs(x) < 1e-8) return 0.5;
+      return (a/(4*Math.PI*D)) * Math.sin(2*Math.PI*D/a);
+    }
+    function gNorm(x, a, D){
+      // g(x,0) normalized PSF
+      const A = amplitudeA(a,D);
+      return 0.5 + A*Math.cos(4*Math.PI*x/a);
+    }
+
+    // ---------- Canvas plotting framework (high-DPI, responsive) ----------
+    function setupCanvas(canvas){
+      const ctx = canvas.getContext('2d');
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.max(2, Math.floor(rect.width * dpr));
+        const h = Math.max(2, Math.floor(rect.height * dpr));
+        if(canvas.width !== w || canvas.height !== h){
+          canvas.width = w; canvas.height = h;
+        }
+        ctx.setTransform(dpr,0,0,dpr,0,0); // work in CSS pixels
+      }
+      return {canvas, ctx, resize};
+    }
+
+    function drawPanelBackground(ctx, w, h){
+      // soft grid background
+      ctx.clearRect(0,0,w,h);
+      // background is set via CSS; add subtle vignette
+      const g = ctx.createRadialGradient(w*0.3,h*0.2,10,w*0.5,h*0.5, Math.max(w,h)*0.8);
+      g.addColorStop(0,'rgba(125,211,252,0.08)');
+      g.addColorStop(1,'rgba(0,0,0,0.00)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,w,h);
+    }
+
+    function drawAxes(ctx, box, xMin, xMax, yMin, yMax, xLabel, yLabel, title){
+      const {x,y,w,h} = box;
+
+      // frame
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x,y,w,h);
+
+      // title
+      ctx.fillStyle = 'rgba(232,238,252,0.92)';
+      ctx.font = '600 14px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText(title, x+10, y+18);
+
+      // grid lines
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+      ctx.lineWidth = 1;
+
+      const nx = 6, ny = 5;
+      for(let i=1;i<nx;i++){
+        const xx = x + (i/nx)*w;
+        ctx.beginPath(); ctx.moveTo(xx,y); ctx.lineTo(xx,y+h); ctx.stroke();
+      }
+      for(let j=1;j<ny;j++){
+        const yy = y + (j/ny)*h;
+        ctx.beginPath(); ctx.moveTo(x,yy); ctx.lineTo(x+w,yy); ctx.stroke();
+      }
+
+      // ticks + labels
+      ctx.fillStyle = 'rgba(185,196,221,0.95)';
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+
+      // x ticks
+      for(let i=0;i<=nx;i++){
+        const t = i/nx;
+        const xv = xMin + t*(xMax-xMin);
+        const xx = x + t*w;
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+        ctx.beginPath(); ctx.moveTo(xx, y+h); ctx.lineTo(xx, y+h+6); ctx.stroke();
+        const s = formatTick(xv);
+        const tw = ctx.measureText(s).width;
+        ctx.fillText(s, xx - tw/2, y+h+18);
+      }
+      // y ticks
+      for(let j=0;j<=ny;j++){
+        const t = j/ny;
+        const yv = yMax - t*(yMax-yMin);
+        const yy = y + t*h;
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+        ctx.beginPath(); ctx.moveTo(x-6, yy); ctx.lineTo(x, yy); ctx.stroke();
+        const s = formatTick(yv);
+        const tw = ctx.measureText(s).width;
+        ctx.fillText(s, x - 10 - tw, yy + 4);
+      }
+
+      // axis labels
+      ctx.fillStyle = 'rgba(185,196,221,0.98)';
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText(xLabel, x + w - ctx.measureText(xLabel).width, y+h+34);
+
+      // y label rotated
+      ctx.save();
+      ctx.translate(x-44, y + h/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(yLabel, -ctx.measureText(yLabel).width/2, 0);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function formatTick(v){
+      // compact tick formatting
+      const av = Math.abs(v);
+      if(av >= 10) return v.toFixed(0);
+      if(av >= 1) return v.toFixed(2);
+      return v.toFixed(3);
+    }
+
+    function toScreenX(xVal, xMin, xMax, box){
+      return box.x + (xVal - xMin)/(xMax-xMin)*box.w;
+    }
+    function toScreenY(yVal, yMin, yMax, box){
+      return box.y + (yMax - yVal)/(yMax-yMin)*box.h;
+    }
+
+    function drawLine(ctx, pts, strokeStyle, lineWidth){
+      ctx.save();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = lineWidth;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      for(let i=0;i<pts.length;i++){
+        const p = pts[i];
+        if(i===0) ctx.moveTo(p[0],p[1]);
+        else ctx.lineTo(p[0],p[1]);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ---------- Canvases ----------
+    const diagram = setupCanvas(document.getElementById('cDiagram'));
+    const mainPlot = setupCanvas(document.getElementById('cMain'));
+    const secPlot = setupCanvas(document.getElementById('cSecondary'));
+
+    // ---------- Controls ----------
+    const rSlider = document.getElementById('rSlider');
+    const aSlider = document.getElementById('aSlider');
+    const spanSlider = document.getElementById('spanSlider');
+    const rReadout = document.getElementById('rReadout');
+    const aReadout = document.getElementById('aReadout');
+    const spanReadout = document.getElementById('spanReadout');
+    const tocStatus = document.getElementById('tocStatus');
+
+    function getParams(){
+      const r = parseFloat(rSlider.value);
+      const a_mm = parseFloat(aSlider.value);
+      const spanPeriods = parseFloat(spanSlider.value);
+      const a = a_mm * 1e-3; // meters for internal; but we'll label mm in plots
+      const D = r * a;
+      return {r, a, D, a_mm, spanPeriods};
+    }
+
+    function updateReadouts(){
+      const {r,a_mm,spanPeriods} = getParams();
+      rReadout.textContent = r.toFixed(2);
+      aReadout.textContent = a_mm.toFixed(2);
+      spanReadout.textContent = spanPeriods.toFixed(1);
+    }
+
+    // ---------- Draw: Diagram ----------
+    function drawDiagram(){
+      diagram.resize();
+      const ctx = diagram.ctx;
+      const rect = diagram.canvas.getBoundingClientRect();
+      const W = rect.width, H = rect.height;
+
+      drawPanelBackground(ctx, W, H);
+
+      // Layout
+      const pad = 14;
+      const mid = Math.floor(W*0.52);
+      const left = {x:pad, y:pad+8, w:mid-pad*1.3, h:H-pad*2-12};
+      const right = {x:mid+6, y:pad+8, w:W-mid-pad-6, h:H-pad*2-12};
+
+      // Left: grating (object)
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+      ctx.strokeRect(left.x,left.y,left.w,left.h);
+
+      ctx.fillStyle = 'rgba(232,238,252,0.92)';
+      ctx.font = '600 13px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText('Object f(x)=cos²(2πx/a)', left.x+10, left.y+18);
+
+      // draw sinusoidal grating as stripes
+      const {r, a_mm} = getParams();
+      const cycles = 2.5;
+      const aPx = left.w / cycles; // show ~2.5 periods
+      for(let i=0;i<left.w;i++){
+        const x = i/ aPx * 2*Math.PI;
+        const val = 0.5 + 0.5*Math.cos(2*x); // cos² -> (1+cos2)/2; use cos(2x)
+        const c = Math.floor(20 + val*180);
+        ctx.fillStyle = `rgb(${c},${c+12},${c+28})`;
+        ctx.fillRect(left.x+i, left.y+32, 1, left.h-60);
+      }
+      // axis arrow x
+      ctx.strokeStyle = 'rgba(185,196,221,0.85)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(left.x+10, left.y+left.h-18);
+      ctx.lineTo(left.x+left.w-18, left.y+left.h-18);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(left.x+left.w-18, left.y+left.h-18);
+      ctx.lineTo(left.x+left.w-26, left.y+left.h-22);
+      ctx.lineTo(left.x+left.w-26, left.y+left.h-14);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(185,196,221,0.85)';
+      ctx.fill();
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      ctx.fillText('x', left.x+left.w-12, left.y+left.h-12);
+
+      // Right: PSF square + averaging idea
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(right.x,right.y,right.w,right.h);
+      ctx.fillStyle = 'rgba(232,238,252,0.92)';
+      ctx.font = '600 13px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText('PSF h(x,y): uniform square', right.x+10, right.y+18);
+
+      // draw square window over a faint field
+      const boxSize = clamp(right.w*0.45, 70, right.w*0.65);
+      const cx = right.x + right.w*0.52;
+      const cy = right.y + right.h*0.56;
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.fillRect(right.x+10, right.y+32, right.w-20, right.h-54);
+
+      ctx.fillStyle = 'rgba(125,211,252,0.12)';
+      ctx.strokeStyle = 'rgba(125,211,252,0.55)';
+      ctx.lineWidth = 2;
+      ctx.fillRect(cx-boxSize/2, cy-boxSize/2, boxSize, boxSize);
+      ctx.strokeRect(cx-boxSize/2, cy-boxSize/2, boxSize, boxSize);
+
+      // labels D and D/a
+      ctx.fillStyle = 'rgba(185,196,221,0.95)';
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      ctx.fillText(`width = D`, cx-boxSize/2, cy-boxSize/2 - 8);
+      ctx.fillText(`ratio r=D/a = ${r.toFixed(2)}`, right.x+10, right.y+right.h-18);
+
+      // connector arrow between panels
+      ctx.strokeStyle = 'rgba(167,139,250,0.75)';
+      ctx.lineWidth = 2;
+      const ax0 = left.x+left.w+6, ay0 = left.y+left.h*0.52;
+      const ax1 = right.x-8, ay1 = right.y+right.h*0.52;
+      ctx.beginPath();
+      ctx.moveTo(ax0, ay0);
+      ctx.lineTo(ax1, ay1);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(167,139,250,0.75)';
+      ctx.beginPath();
+      ctx.moveTo(ax1, ay1);
+      ctx.lineTo(ax1-10, ay1-6);
+      ctx.lineTo(ax1-10, ay1+6);
+      ctx.closePath();
+      ctx.fill();
+
+      // blur note
+      ctx.fillStyle = 'rgba(185,196,221,0.92)';
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText('Convolution = local averaging over square support', left.x+10, left.y+28);
+
+      ctx.restore();
+    }
+
+    // ---------- Draw: Main plot g(x,0) ----------
+    function drawMain(){
+      mainPlot.resize();
+      const ctx = mainPlot.ctx;
+      const rect = mainPlot.canvas.getBoundingClientRect();
+      const W = rect.width, H = rect.height;
+
+      drawPanelBackground(ctx, W, H);
+
+      const {r, a_mm, spanPeriods} = getParams();
+      const a = a_mm; // use mm for axis here
+      const D = r*a;  // mm
+      const A = (Math.abs(2*Math.PI*r) < 1e-8) ? 0.5 : (1/(4*Math.PI*r))*Math.sin(2*Math.PI*r); // since A=(a/(4πD))sin(2πD/a) = (1/(4πr))sin(2πr)
+      const gMax = 0.5 + Math.abs(A);
+      const gMin = 0.5 - Math.abs(A);
+
+      const xMin = -0.5*spanPeriods*a;
+      const xMax =  0.5*spanPeriods*a;
+      const yMin = 0.0;
+      const yMax = 1.0;
+
+      const box = {x:54, y:30, w:W-70, h:H-78};
+
+      drawAxes(ctx, box, xMin, xMax, yMin, yMax, 'x (mm)', 'g(x,0) (normalized)', 'Image profile after blur');
+
+      // compute points
+      const N = 900;
+      const pts = [];
+      for(let i=0;i<N;i++){
+        const t = i/(N-1);
+        const x = xMin + t*(xMax-xMin);
+        const g = 0.5 + A*Math.cos(4*Math.PI*x/a); // x and a in mm (unit cancels)
+        pts.push([toScreenX(x,xMin,xMax,box), toScreenY(g,yMin,yMax,box)]);
+      }
+
+      // draw mean line at 0.5
+      const yMean = toScreenY(0.5, yMin,yMax,box);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.setLineDash([6,6]);
+      ctx.beginPath();
+      ctx.moveTo(box.x, yMean);
+      ctx.lineTo(box.x+box.w, yMean);
+      ctx.stroke();
+      ctx.restore();
+
+      // draw max/min lines
+      ctx.save();
+      ctx.strokeStyle = 'rgba(52,211,153,0.25)';
+      ctx.setLineDash([4,5]);
+      const y1 = toScreenY(gMax,yMin,yMax,box);
+      const y2 = toScreenY(gMin,yMin,yMax,box);
+      ctx.beginPath(); ctx.moveTo(box.x, y1); ctx.lineTo(box.x+box.w, y1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(box.x, y2); ctx.lineTo(box.x+box.w, y2); ctx.stroke();
+      ctx.restore();
+
+      // plot curve
+      drawLine(ctx, pts, 'rgba(125,211,252,0.95)', 2.3);
+
+      // legend / annotation
+      const C = contrastFromR(r);
+      ctx.save();
+      ctx.fillStyle = 'rgba(232,238,252,0.92)';
+      ctx.font = '600 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      ctx.fillText(`r=D/a=${r.toFixed(2)}   A=${A.toFixed(3)}   C=${C.toFixed(3)}`, box.x+10, box.y+box.h+48);
+      ctx.fillStyle = 'rgba(185,196,221,0.92)';
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText(`Example: a=${a.toFixed(2)} mm, D=${D.toFixed(2)} mm`, box.x+10, box.y+box.h+32);
+      ctx.restore();
+    }
+
+    // ---------- Draw: Secondary plot Contrast vs r ----------
+    function drawSecondary(){
+      secPlot.resize();
+      const ctx = secPlot.ctx;
+      const rect = secPlot.canvas.getBoundingClientRect();
+      const W = rect.width, H = rect.height;
+
+      drawPanelBackground(ctx, W, H);
+
+      const {r} = getParams();
+      const xMin = 0.0;
+      const xMax = 2.5;
+      const yMin = 0.0;
+      const yMax = 1.02;
+
+      const box = {x:60, y:34, w:W-86, h:H-86};
+      drawAxes(ctx, box, xMin, xMax, yMin, yMax, 'r = D/a (dimensionless)', 'Contrast C', 'Contrast vs blur ratio');
+
+      // curve
+      const N = 1200;
+      const pts = [];
+      for(let i=0;i<N;i++){
+        const t = i/(N-1);
+        const rr = xMin + t*(xMax-xMin);
+        const C = contrastFromR(rr);
+        pts.push([toScreenX(rr,xMin,xMax,box), toScreenY(C,yMin,yMax,box)]);
+      }
+      drawLine(ctx, pts, 'rgba(167,139,250,0.95)', 2.3);
+
+      // mark current r
+      const Cnow = contrastFromR(r);
+      const sx = toScreenX(r,xMin,xMax,box);
+      const sy = toScreenY(Cnow,yMin,yMax,box);
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.20)';
+      ctx.beginPath(); ctx.arc(sx, sy, 9, 0, Math.PI*2); ctx.fill();
+
+      ctx.fillStyle = 'rgba(52,211,153,0.95)';
+      ctx.beginPath(); ctx.arc(sx, sy, 5.5, 0, Math.PI*2); ctx.fill();
+
+      // vertical guide
+      ctx.strokeStyle = 'rgba(52,211,153,0.25)';
+      ctx.setLineDash([5,6]);
+      ctx.beginPath();
+      ctx.moveTo(sx, box.y);
+      ctx.lineTo(sx, box.y+box.h);
+      ctx.stroke();
+      ctx.restore();
+
+      // annotation text + formula
+      ctx.save();
+      ctx.fillStyle = 'rgba(185,196,221,0.96)';
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+      ctx.fillText('Theory: C(r) = | sin(2πr)/(2πr) |', box.x+10, box.y+box.h+32);
+
+      ctx.fillStyle = 'rgba(232,238,252,0.94)';
+      ctx.font = '600 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      ctx.fillText(`Current: r=${r.toFixed(2)},  C=${Cnow.toFixed(3)}`, box.x+10, box.y+box.h+50);
+      ctx.restore();
+    }
+
+    // ---------- Main render ----------
+    function renderAll(){
+      updateReadouts();
+      drawDiagram();
+      drawMain();
+      drawSecondary();
+      tocStatus.textContent = 'Updated';
+      clearTimeout(renderAll._t);
+      renderAll._t = setTimeout(()=>tocStatus.textContent='Ready', 700);
+    }
+
+    // Event listeners
+    [rSlider, aSlider, spanSlider].forEach(el=>{
+      el.addEventListener('input', renderAll);
+      el.addEventListener('change', renderAll);
+    });
+    window.addEventListener('resize', renderAll);
+
+    // Initial render
+    renderAll();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Image of a Phase Object — Convolution with h(x,y)=rect(x)δ(y)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#101a33;
+      --card2:#0f1730;
+      --text:#e9eefc;
+      --muted:#b7c2e6;
+      --faint:#7f8bb8;
+      --accent:#7aa2ff;
+      --accent2:#6ef3c5;
+      --warn:#ffcf6e;
+      --danger:#ff6e8a;
+      --ok:#7cff8a;
+      --border: rgba(255,255,255,.10);
+      --shadow: 0 14px 38px rgba(0,0,0,.32);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(900px 520px at 18% 6%, rgba(122,162,255,.25), transparent 60%),
+        radial-gradient(900px 520px at 82% 22%, rgba(110,243,197,.15), transparent 60%),
+        linear-gradient(180deg, #070a14, var(--bg));
+      line-height:1.55;
+    }
+
+    header{
+      padding: 26px 18px 10px;
+      position:relative;
+      overflow:hidden;
+    }
+    .wrap{max-width:1100px;margin:0 auto;}
+    .title{
+      display:grid;
+      gap:10px;
+      align-items:start;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(1.45rem, 2.4vw, 2.25rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      color:var(--muted);
+      max-width: 80ch;
+      font-size: 1.02rem;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:16px;
+      padding: 16px 18px 40px;
+    }
+
+    @media (min-width: 980px){
+      .grid{
+        grid-template-columns: 290px 1fr;
+        gap:18px;
+        align-items:start;
+      }
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: linear-gradient(180deg, rgba(16,26,51,.90), rgba(16,26,51,.78));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      backdrop-filter: blur(8px);
+    }
+    nav.toc h2{
+      margin:0 0 8px;
+      font-size: .95rem;
+      color: var(--muted);
+      letter-spacing:.4px;
+      text-transform: uppercase;
+    }
+    nav.toc a{
+      display:block;
+      color: var(--text);
+      text-decoration:none;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size: .98rem;
+    }
+    nav.toc a:hover{
+      background: rgba(122,162,255,.10);
+      border-color: rgba(122,162,255,.28);
+      transform: translateY(-1px);
+    }
+    nav.toc .mini{
+      color: var(--faint);
+      font-size: .90rem;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(255,255,255,.14);
+    }
+
+    main{
+      display:grid;
+      gap:16px;
+      min-width: 0;
+    }
+
+    section, article{
+      background: linear-gradient(180deg, rgba(16,26,51,.86), rgba(15,23,48,.78));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 16px 18px;
+      backdrop-filter: blur(10px);
+      min-width: 0;
+    }
+
+    .kicker{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing:.3px;
+      margin: 0 0 8px;
+      text-transform: uppercase;
+      font-size: .86rem;
+    }
+    .pill{
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(110,243,197,.12);
+      border: 1px solid rgba(110,243,197,.22);
+      color: var(--accent2);
+      font-weight:700;
+      font-size:.78rem;
+    }
+
+    h2{
+      margin: 0 0 8px;
+      font-size: 1.25rem;
+    }
+    h3{
+      margin: 14px 0 8px;
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+    p{margin: 8px 0}
+    ul{margin:8px 0 8px 18px}
+    li{margin:6px 0;color:var(--text)}
+    .muted{color:var(--muted)}
+    .faint{color:var(--faint)}
+    .note{
+      border-left: 4px solid rgba(122,162,255,.65);
+      padding: 10px 12px;
+      background: rgba(122,162,255,.08);
+      border-radius: 12px;
+      margin: 10px 0;
+    }
+    .warn{
+      border-left-color: rgba(255,207,110,.75);
+      background: rgba(255,207,110,.10);
+    }
+    .ok{
+      border-left-color: rgba(124,255,138,.65);
+      background: rgba(124,255,138,.08);
+    }
+
+    .two-col{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    @media (min-width: 900px){
+      .two-col{grid-template-columns: 1.05fr .95fr;}
+    }
+
+    .eq{
+      position:relative;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 12px 12px 12px;
+      overflow:hidden;
+      margin: 10px 0;
+    }
+    .eq pre{
+      margin:0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: var(--mono);
+      font-size: .95rem;
+      color: #f1f6ff;
+    }
+    .copy-btn{
+      position:absolute;
+      top: 10px;
+      right: 10px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 7px 10px;
+      font-weight: 650;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+      font-size:.86rem;
+    }
+    .copy-btn:hover{
+      transform: translateY(-1px);
+      background: rgba(122,162,255,.14);
+      border-color: rgba(122,162,255,.34);
+    }
+    .copy-btn:active{transform: translateY(0px) scale(.99)}
+    .copied{
+      background: rgba(110,243,197,.16)!important;
+      border-color: rgba(110,243,197,.36)!important;
+      color: var(--accent2)!important;
+    }
+
+    .viz{
+      display:grid;
+      gap:14px;
+    }
+    .viz-row{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      align-items:stretch;
+    }
+    @media (min-width: 960px){
+      .viz-row{grid-template-columns: 1fr 1fr;}
+    }
+    figure{
+      margin:0;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 12px;
+      overflow:hidden;
+    }
+    figcaption{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+    canvas{
+      width:100%;
+      height: 280px;
+      display:block;
+      border-radius: 14px;
+      background: rgba(8,10,16,.68);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .small canvas{height: 240px;}
+    .controls{
+      display:grid;
+      gap:10px;
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .control{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+    }
+    .control label{
+      color: var(--muted);
+      font-weight: 650;
+    }
+    input[type="range"]{
+      width:100%;
+      accent-color: var(--accent);
+    }
+    .value{
+      font-family: var(--mono);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      min-width: 88px;
+      text-align:center;
+    }
+    .btnrow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .ghost{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 10px 12px;
+      cursor:pointer;
+      font-weight: 700;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .ghost:hover{
+      transform: translateY(-1px);
+      background: rgba(122,162,255,.12);
+      border-color: rgba(122,162,255,.30);
+    }
+
+    .box{
+      border: 1px solid rgba(110,243,197,.26);
+      background: rgba(110,243,197,.08);
+      border-radius: 16px;
+      padding: 12px;
+      margin: 10px 0;
+    }
+    .box h3{margin-top:0}
+    .final{
+      border: 1px solid rgba(124,255,138,.30);
+      background: rgba(124,255,138,.08);
+    }
+    .final .pill{background: rgba(124,255,138,.12); border-color: rgba(124,255,138,.24); color: var(--ok)}
+    .hr{
+      height:1px;
+      background: rgba(255,255,255,.10);
+      margin: 14px 0;
+    }
+
+    footer{
+      padding: 18px;
+      color: var(--faint);
+      text-align:center;
+      font-size: .95rem;
+    }
+
+    /* subtle entrance */
+    .fade-in{
+      animation: fadeUp .5s ease both;
+    }
+    @keyframes fadeUp{
+      from{opacity:0; transform: translateY(8px)}
+      to{opacity:1; transform: translateY(0)}
+    }
+
+    /* print-friendly */
+    @media print{
+      body{background:white;color:black}
+      nav.toc{display:none}
+      section, article{box-shadow:none; background:white; border: 1px solid #ddd}
+      canvas{border:1px solid #bbb; background:white}
+      .copy-btn, .ghost{display:none}
+      .pill{border:1px solid #999; color:black; background:#f3f3f3}
+      .note{background:#f6f6f6}
+    }
+  </style>
+</head>
+<body>
+  <header class="wrap fade-in">
+    <div class="title">
+      <h1>4.4-2 — Image of a Phase Object: Why a Pure Phase Step Can Produce Non-Uniform Output Intensity</h1>
+      <div class="subtitle">
+        We model an imaging system as a <span class="muted">linear shift-invariant</span> system with impulse response
+        <span class="muted"><b>h(x,y)=rect(x)δ(y)</b></span>. The input field is a unit-magnitude phase step:
+        <span class="muted">+π/2 for x&gt;0</span> and <span class="muted">−π/2 for x≤0</span>.
+        We compute the output field <b>g(x,y)</b> by convolution and then sketch <b>|g(x,y)|²</b>.
+      </div>
+    </div>
+  </header>
+
+  <div class="grid wrap">
+    <nav class="toc fade-in" aria-label="Table of contents">
+      <h2>Contents</h2>
+      <a href="#quick" data-scroll>Quick Summary</a>
+      <a href="#part1" data-scroll>Part 1 — Problem Analysis</a>
+      <a href="#part2" data-scroll>Part 2 — Strategy &amp; Tips</a>
+      <a href="#part3" data-scroll>Part 3 — Full Solution</a>
+      <a href="#viz" data-scroll>Interactive Visualizations</a>
+      <div class="mini">
+        Tip: use the slider to change the effective blur/window width <b>W</b> and watch the transition region change.
+      </div>
+    </nav>
+
+    <main class="fade-in">
+      <section id="quick">
+        <div class="kicker"><span class="pill">Quick Summary</span></div>
+        <ul>
+          <li>The input field is a <b>pure phase object</b>: <span class="muted">|f(x,y)|² = 1</span> everywhere.</li>
+          <li>The system performs a 1D convolution in <b>x</b> only: <span class="muted">g(x,y)=∫ f(ξ,y) rect(x−ξ) dξ</span>.</li>
+          <li>Because the phase jumps at <b>x=0</b>, the convolution window can include both phases, causing <b>partial cancellation</b>.</li>
+          <li>For the given <span class="muted">rect(x)</span> (unit width), the output intensity is
+            <span class="muted">|g|² = 1</span> far from the edge but becomes <span class="muted">|g|² = 4x²</span> in <span class="muted">|x|&lt;1/2</span>.</li>
+          <li>Thus <b>|g|² is not uniform</b> even though <b>|f|² is uniform</b>.</li>
+        </ul>
+      </section>
+
+      <article id="part1">
+        <div class="kicker"><span class="pill">Part 1</span> Problem Analysis (no solving yet)</div>
+
+        <h2>Restatement</h2>
+        <p>
+          An imaging system is modeled by an impulse response
+          <span class="muted"><b>h(x,y)=rect(x)δ(y)</b></span>.
+          The input optical field is
+        </p>
+
+        <div class="eq" data-copy="eq-input">
+          <button class="copy-btn" data-copy-btn="eq-input">Copy</button>
+          <pre id="eq-input">f(x,y) = exp(jπ/2)  for x &gt; 0
+       = exp(−jπ/2) for x ≤ 0</pre>
+        </div>
+
+        <p>
+          You must determine the output field <b>g(x,y)</b> and sketch the output intensity <b>|g(x,y)|²</b>.
+          Finally, verify that even though <b>|f(x,y)|² = 1</b>, the output intensity is <b>not</b> uniform.
+        </p>
+
+        <h3>Given</h3>
+        <ul>
+          <li>Impulse response: <span class="muted">h(x,y)=rect(x)δ(y)</span> (rect is the unit-width rectangle).</li>
+          <li>Input field: phase step, <span class="muted">+π/2</span> on the right, <span class="muted">−π/2</span> on the left.</li>
+          <li>By definition: <span class="muted">rect(u)=1 for |u|≤1/2, and 0 otherwise</span>.</li>
+        </ul>
+
+        <h3>Unknowns</h3>
+        <ul>
+          <li>The output field <span class="muted">g(x,y)</span>.</li>
+          <li>The output intensity distribution <span class="muted">|g(x,y)|²</span> and a sketch/shape description.</li>
+        </ul>
+
+        <h3>What must be found / proved</h3>
+        <ul>
+          <li>Compute <span class="muted">g = f * h</span> (2D convolution).</li>
+          <li>Compute <span class="muted">|g|²</span> and show it is non-uniform even though <span class="muted">|f|²=1</span>.</li>
+        </ul>
+
+        <h3>Relevant principles (and why they apply)</h3>
+        <ul>
+          <li><b>Linear shift-invariant imaging</b>: output equals convolution of input with impulse response.</li>
+          <li><b>Dirac delta property</b>: δ(y) collapses the y-integral, so the system blurs only along x.</li>
+          <li><b>Interference from complex fields</b>: intensity depends on the magnitude of the summed complex amplitudes, not the sum of intensities. A phase step can therefore create cancellations when averaged.</li>
+        </ul>
+
+        <h3>Possible approaches</h3>
+        <ol>
+          <li><b>Direct convolution in x</b>: use δ(y) to reduce to a 1D integral over a rectangular window, then evaluate piecewise (best for clarity).</li>
+          <li><b>Fourier domain</b>: multiply spectra F·H and inverse transform; workable but heavier algebra for a simple rect kernel.</li>
+          <li><b>Geometric “window overlap” method</b>: interpret g(x) as difference of overlap lengths of the window with the two half-planes (fast, intuitive, and leads to piecewise result).</li>
+        </ol>
+
+        <div class="note ok">
+          <b>Chosen approach:</b> Direct convolution + window-overlap interpretation.
+          It is the shortest path to a correct piecewise expression for <span class="muted">g(x)</span> and <span class="muted">|g(x)|²</span>,
+          and it makes the “phase cancellation” mechanism immediately visible.
+        </div>
+      </article>
+
+      <article id="part2">
+        <div class="kicker"><span class="pill">Part 2</span> Strategy &amp; Tips (roadmap only)</div>
+
+        <h2>Step-by-step plan (no algebra yet)</h2>
+        <ol>
+          <li>
+            <b>Rewrite the input field in simple constants</b><br/>
+            <span class="muted">Goal:</span> recognize exp(±jπ/2) as ±j.<br/>
+            <span class="muted">Tool:</span> Euler relation.
+          </li>
+          <li>
+            <b>Write the convolution integral</b><br/>
+            <span class="muted">Goal:</span> express g(x,y)=∬ f(ξ,η) h(x−ξ,y−η) dξ dη.<br/>
+            <span class="muted">Tool:</span> LSI system definition.
+          </li>
+          <li>
+            <b>Use the δ(y−η) term</b><br/>
+            <span class="muted">Goal:</span> collapse the η-integral and show g is independent of y.<br/>
+            <span class="muted">Tool:</span> ∫ f(η) δ(y−η) dη = f(y).
+          </li>
+          <li>
+            <b>Interpret rect(x−ξ) as a sliding window</b><br/>
+            <span class="muted">Goal:</span> replace rect with an integral over a finite interval in ξ.<br/>
+            <span class="muted">Tool:</span> rect(u)=1 on |u|≤1/2.
+          </li>
+          <li>
+            <b>Evaluate the integral piecewise</b><br/>
+            <span class="muted">Goal:</span> consider the window entirely left, entirely right, or straddling x=0.<br/>
+            <span class="muted">Tool:</span> overlap lengths of the window with each half-plane.
+          </li>
+          <li>
+            <b>Compute intensity</b><br/>
+            <span class="muted">Goal:</span> |g|² from the complex result; interpret the dip as cancellation.<br/>
+            <span class="muted">Tool:</span> magnitude squared of a complex number.
+          </li>
+          <li>
+            <b>Sanity checks</b><br/>
+            <span class="muted">Goal:</span> verify far from the edge the output equals the input (up to system scaling), and confirm non-uniformity near x=0.
+          </li>
+        </ol>
+
+        <h3>Common mistakes &amp; quick tips</h3>
+        <ul>
+          <li><b>Mistake:</b> averaging intensities instead of complex fields. <span class="muted">Always convolve fields, then square magnitude.</span></li>
+          <li><b>Mistake:</b> forgetting δ(y) makes the system 1D. <span class="muted">g will not depend on y here.</span></li>
+          <li><b>Tip:</b> treat rect as a “box” window and compute how much of that box lies on each side of x=0.</li>
+          <li><b>Tip:</b> endpoints like x=±1/2 do not affect integrals (single points have zero measure), so the piecewise curve is continuous.</li>
+        </ul>
+      </article>
+
+      <article id="part3">
+        <div class="kicker"><span class="pill">Part 3</span> Full Solution</div>
+
+        <h2>Physical intuition first</h2>
+        <p>
+          The input has <b>uniform intensity</b> but a <b>phase jump</b> at <b>x=0</b>.
+          The system’s impulse response <span class="muted">rect(x)δ(y)</span> means:
+          it collects (adds) the complex field over a finite <b>x-window</b> while leaving y untouched.
+        </p>
+        <p>
+          If the window lies entirely on one side of the phase step, all contributions have the same phase, so they add coherently.
+          If the window straddles the step, half the contributions have phase <span class="muted">+π/2</span> and half have <span class="muted">−π/2</span>,
+          which are <b>opposites</b> in the complex plane (j and −j). They can partially (or fully) cancel, reducing the magnitude and thus the intensity.
+        </p>
+
+        <div class="hr"></div>
+
+        <h2>1) Simplify the input field</h2>
+        <p>Use <span class="muted">exp(jπ/2)=j</span> and <span class="muted">exp(−jπ/2)=−j</span>. Therefore,</p>
+
+        <div class="eq" data-copy="eq-f">
+          <button class="copy-btn" data-copy-btn="eq-f">Copy</button>
+          <pre id="eq-f">f(x,y) =  j   for x &gt; 0
+       = −j   for x ≤ 0</pre>
+        </div>
+
+        <p class="muted">
+          Input intensity: |f(x,y)|² = |±j|² = 1 everywhere (uniform).
+        </p>
+
+        <div class="hr"></div>
+
+        <h2>2) Write the convolution for the output field</h2>
+        <p>For an LSI system,</p>
+
+        <div class="eq" data-copy="eq-conv">
+          <button class="copy-btn" data-copy-btn="eq-conv">Copy</button>
+          <pre id="eq-conv">g(x,y) = ∬ f(ξ,η) h(x−ξ, y−η) dξ dη</pre>
+        </div>
+
+        <p>Insert <span class="muted">h(x,y)=rect(x)δ(y)</span>:</p>
+
+        <div class="eq" data-copy="eq-insert">
+          <button class="copy-btn" data-copy-btn="eq-insert">Copy</button>
+          <pre id="eq-insert">g(x,y) = ∬ f(ξ,η) rect(x−ξ) δ(y−η) dξ dη</pre>
+        </div>
+
+        <h3>Use the delta function</h3>
+        <p>
+          The δ(y−η) collapses the η-integral:
+          <span class="muted">∫ f(ξ,η) δ(y−η) dη = f(ξ,y)</span>.
+          Hence,
+        </p>
+
+        <div class="eq" data-copy="eq-1d">
+          <button class="copy-btn" data-copy-btn="eq-1d">Copy</button>
+          <pre id="eq-1d">g(x,y) = ∫ f(ξ,y) rect(x−ξ) dξ</pre>
+        </div>
+
+        <p class="note">
+          Since <span class="muted">f</span> does not actually depend on y, the output is also <b>independent of y</b>:
+          <span class="muted">g(x,y) = g(x)</span>.
+        </p>
+
+        <div class="hr"></div>
+
+        <h2>3) Interpret rect(x−ξ) as an integral over a window</h2>
+        <p>
+          By definition, <span class="muted">rect(u)=1</span> for <span class="muted">|u|≤1/2</span> and 0 otherwise.
+          So <span class="muted">rect(x−ξ)=1</span> when <span class="muted">|x−ξ|≤1/2</span>, i.e.
+          when <span class="muted">ξ ∈ [x−1/2, x+1/2]</span>.
+        </p>
+
+        <div class="eq" data-copy="eq-window">
+          <button class="copy-btn" data-copy-btn="eq-window">Copy</button>
+          <pre id="eq-window">g(x) = ∫_{x−1/2}^{x+1/2} f(ξ) dξ</pre>
+        </div>
+
+        <p class="muted">
+          This is a “box-window sum” (a local average up to scaling): the system adds the complex field in a 1-unit neighborhood of x.
+        </p>
+
+        <div class="hr"></div>
+
+        <h2>4) Evaluate g(x) piecewise (window overlap with the phase step)</h2>
+        <p>
+          Over the window <span class="muted">[x−1/2, x+1/2]</span>, the field is <span class="muted">j</span> on the portion where <span class="muted">ξ&gt;0</span>
+          and <span class="muted">−j</span> on the portion where <span class="muted">ξ≤0</span>.
+        </p>
+
+        <p>
+          Let <span class="muted">L+</span> be the length of the window lying in <span class="muted">ξ&gt;0</span>.
+          Then the remaining length is <span class="muted">1−L+</span> (the window width is 1).
+          Therefore,
+        </p>
+
+        <div class="eq" data-copy="eq-Lplus">
+          <button class="copy-btn" data-copy-btn="eq-Lplus">Copy</button>
+          <pre id="eq-Lplus">g(x) = j·L+  + (−j)·(1−L+) = j(2L+ − 1)</pre>
+        </div>
+
+        <h3>Case A: window entirely on the left</h3>
+        <p>
+          If <span class="muted">x+1/2 ≤ 0</span> (i.e. <span class="muted">x ≤ −1/2</span>), then <span class="muted">L+=0</span> and
+        </p>
+        <div class="eq" data-copy="eq-left">
+          <button class="copy-btn" data-copy-btn="eq-left">Copy</button>
+          <pre id="eq-left">g(x) = −j   for x ≤ −1/2</pre>
+        </div>
+
+        <h3>Case B: window entirely on the right</h3>
+        <p>
+          If <span class="muted">x−1/2 &gt; 0</span> (i.e. <span class="muted">x &gt; 1/2</span>), then <span class="muted">L+=1</span> and
+        </p>
+        <div class="eq" data-copy="eq-right">
+          <button class="copy-btn" data-copy-btn="eq-right">Copy</button>
+          <pre id="eq-right">g(x) =  j   for x &gt; 1/2</pre>
+        </div>
+
+        <h3>Case C: window straddles the phase step</h3>
+        <p>
+          If <span class="muted">x−1/2 ≤ 0 &lt; x+1/2</span>, then <span class="muted">−1/2 &lt; x &lt; 1/2</span>.
+          The positive part of the window runs from 0 to <span class="muted">x+1/2</span>, so
+          <span class="muted">L+ = x+1/2</span>.
+          Plugging into <span class="muted">g(x)=j(2L+−1)</span> gives
+        </p>
+
+        <div class="eq" data-copy="eq-middle">
+          <button class="copy-btn" data-copy-btn="eq-middle">Copy</button>
+          <pre id="eq-middle">g(x) = j(2(x+1/2) − 1) = j(2x)   for −1/2 &lt; x &lt; 1/2</pre>
+        </div>
+
+        <div class="box final">
+          <div class="kicker"><span class="pill">Final field</span></div>
+          <div class="eq" data-copy="eq-final-field">
+            <button class="copy-btn" data-copy-btn="eq-final-field">Copy</button>
+            <pre id="eq-final-field">g(x,y) = g(x) (independent of y), where
+
+g(x) = −j         for x ≤ −1/2
+     =  j·(2x)    for −1/2 &lt; x &lt; 1/2
+     =  j         for x ≥  1/2</pre>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <h2>5) Output intensity |g(x,y)|²</h2>
+        <p>
+          Since <span class="muted">g(x)</span> is purely imaginary in all regions, its magnitude is just the absolute value of its coefficient.
+        </p>
+
+        <div class="box final">
+          <div class="kicker"><span class="pill">Final intensity</span></div>
+          <div class="eq" data-copy="eq-final-intensity">
+            <button class="copy-btn" data-copy-btn="eq-final-intensity">Copy</button>
+            <pre id="eq-final-intensity">|g(x,y)|^2 = |g(x)|^2 (independent of y), with
+
+|g(x)|^2 = 1            for x ≤ −1/2
+         = (2x)^2 = 4x^2 for −1/2 &lt; x &lt; 1/2
+         = 1            for x ≥  1/2</pre>
+          </div>
+        </div>
+
+        <p class="note ok">
+          <b>Verification:</b> The input intensity is uniform (<span class="muted">|f|²=1</span>), yet the output intensity dips to
+          <span class="muted">|g(0)|²=0</span> and rises quadratically to 1 at <span class="muted">x=±1/2</span>.
+          This non-uniformity is caused by <b>destructive interference</b> of the complex field contributions within the rect window.
+        </p>
+
+        <h2>Sanity checks</h2>
+        <ul>
+          <li><b>Units:</b> Here x is a normalized coordinate; rect is dimensionless. The result is consistent (intensity is dimensionless in normalized units).</li>
+          <li><b>Limiting cases:</b> Far from the edge (|x|≫1/2), the window sees only one phase, so <span class="muted">g=±j</span> and <span class="muted">|g|²=1</span>.</li>
+          <li><b>Physical interpretation:</b> The system performs local coherent summation (blur) of the field. A phase step converts into intensity variation because coherence makes phases matter.</li>
+        </ul>
+      </article>
+
+      <section id="viz">
+        <div class="kicker"><span class="pill">Interactive</span> Visualizations</div>
+
+        <div class="two-col">
+          <div>
+            <h2>Controls</h2>
+            <p class="muted">
+              The problem’s kernel is <span class="muted"><b>rect(x)</b></span> (unit width).
+              For exploration, we use a normalized width parameter <b>W</b> and define an equivalent “box average” kernel:
+              <span class="muted">h_W(x,y) = (1/W) rect(x/W) δ(y)</span>.
+              When <span class="muted">W=1</span>, it matches the original shape but keeps the far-from-edge intensity at 1 for any W.
+            </p>
+
+            <div class="eq" data-copy="eq-hw">
+              <button class="copy-btn" data-copy-btn="eq-hw">Copy</button>
+              <pre id="eq-hw">h_W(x,y) = (1/W) rect(x/W) δ(y)
+
+g_W(x) = (1/W) ∫_{x−W/2}^{x+W/2} f(ξ) dξ
+
+For the phase step:
+g_W(x) = −j                 for x ≤ −W/2
+       = j·(2x/W)           for −W/2 &lt; x &lt; W/2
+       =  j                 for x ≥  W/2
+
+|g_W(x)|^2 = 1              for |x| ≥ W/2
+          = (2x/W)^2        for |x| &lt; W/2</pre>
+            </div>
+
+            <div class="controls" role="group" aria-label="Interactive controls">
+              <div class="control">
+                <label for="W">Window width W (example parameter)</label>
+                <div class="value" id="Wval">1.00</div>
+              </div>
+              <input id="W" type="range" min="0.20" max="2.00" step="0.01" value="1.00" />
+              <div class="btnrow">
+                <button class="ghost" id="resetBtn" type="button">Reset (W=1)</button>
+                <button class="ghost" id="toggleMarkers" type="button">Toggle markers (±W/2)</button>
+              </div>
+              <div class="note warn">
+                <b>Reminder:</b> The slider is for visualization only. The symbolic answer for the given problem is the W=1 case.
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h2>What you should see</h2>
+            <ul>
+              <li><b>Diagram:</b> phase step at x=0 and a sliding window of width W.</li>
+              <li><b>Main plot:</b> output intensity <span class="muted">|g_W(x)|²</span> vs x (unitless).</li>
+              <li><b>Secondary plot:</b> compare <span class="muted">|f|²</span> (flat at 1) with <span class="muted">|g_W|²</span>.</li>
+            </ul>
+            <div class="note ok">
+              When the window overlaps both sides of x=0, equal and opposite phasors (j and −j) partially cancel. At x=0 the overlap is symmetric, so cancellation is complete and intensity becomes 0.
+            </div>
+          </div>
+        </div>
+
+        <div class="viz">
+          <div class="viz-row">
+            <figure class="small">
+              <canvas id="diagram" aria-label="Diagram canvas"></canvas>
+              <figcaption>
+                Labeled setup: a phase step object and the rect-window convolution along x (y is untouched due to δ(y)).
+              </figcaption>
+            </figure>
+
+            <figure>
+              <canvas id="plotMain" aria-label="Main plot canvas"></canvas>
+              <figcaption>
+                Main quantitative result: output intensity <b>|g<sub>W</sub>(x)|²</b>. For the given problem, set <b>W=1</b>.
+              </figcaption>
+            </figure>
+          </div>
+
+          <div class="viz-row">
+            <figure>
+              <canvas id="plotSecondary" aria-label="Secondary plot canvas"></canvas>
+              <figcaption>
+                Secondary plot: <b>input intensity</b> (flat at 1) versus <b>output intensity</b> (non-uniform near the phase edge).
+              </figcaption>
+            </figure>
+
+            <figure class="small">
+              <canvas id="plotField" aria-label="Field plot canvas"></canvas>
+              <figcaption>
+                Output field (imaginary part): <b>Im{g<sub>W</sub>(x)}</b>. This is linear in the transition region and saturates to ±1.
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <footer class="wrap">
+        Built with vanilla HTML/CSS/JS — print-friendly, interactive, and self-contained.
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // ---------------------------
+    // Smooth scroll for TOC
+    // ---------------------------
+    document.querySelectorAll('[data-scroll]').forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const id = a.getAttribute('href');
+        const el = document.querySelector(id);
+        if(!el) return;
+        el.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    });
+
+    // ---------------------------
+    // Copy buttons
+    // ---------------------------
+    function copyTextFrom(id, btn){
+      const el = document.getElementById(id);
+      const text = el ? el.innerText : '';
+      navigator.clipboard.writeText(text).then(()=>{
+        btn.classList.add('copied');
+        const old = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent = old; }, 900);
+      }).catch(()=> {
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch(err){}
+        document.body.removeChild(ta);
+        btn.classList.add('copied');
+        const old = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(()=>{ btn.classList.remove('copied'); btn.textContent = old; }, 900);
+      });
+    }
+
+    document.querySelectorAll('[data-copy-btn]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.getAttribute('data-copy-btn');
+        copyTextFrom(id, btn);
+      });
+    });
+
+    // ---------------------------
+    // Math helpers (phase step field)
+    // f(x) = j for x>0, -j for x<=0
+    // Normalized kernel h_W = (1/W) rect(x/W) δ(y) -> box average in x
+    // g_W(x) = -j for x <= -W/2
+    //        = j*(2x/W) for |x|<W/2
+    //        = j for x >= W/2
+    // intensity: 1 outside, (2x/W)^2 inside
+    // ---------------------------
+    function gImag(x, W){
+      const half = W/2;
+      if (x <= -half) return -1;
+      if (x >=  half) return  1;
+      return (2*x/W); // linear between -1 and 1
+    }
+    function intensity(x, W){
+      const gi = gImag(x, W);
+      return gi*gi; // since purely imaginary and normalized
+    }
+
+    // ---------------------------
+    // Canvas plotting utilities
+    // ---------------------------
+    function setupCanvas(canvas){
+      const ctx = canvas.getContext('2d');
+      function resize(){
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = Math.max(2, Math.floor(rect.width * dpr));
+        canvas.height = Math.max(2, Math.floor(rect.height * dpr));
+        ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+      }
+      resize();
+      return {ctx, resize};
+    }
+
+    function clear(ctx, w, h){
+      ctx.clearRect(0,0,w,h);
+      // subtle background glow
+      const g = ctx.createLinearGradient(0,0,w,h);
+      g.addColorStop(0, 'rgba(122,162,255,0.06)');
+      g.addColorStop(1, 'rgba(110,243,197,0.04)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,w,h);
+    }
+
+    function drawAxes(ctx, box, xMin, xMax, yMin, yMax, opts){
+      const {x, y, w, h} = box;
+      const padL = opts.padL ?? 50;
+      const padR = opts.padR ?? 16;
+      const padT = opts.padT ?? 28;
+      const padB = opts.padB ?? 44;
+
+      const px0 = x + padL, px1 = x + w - padR;
+      const py0 = y + padT, py1 = y + h - padB;
+
+      const plot = {px0, px1, py0, py1};
+
+      // frame
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px0, py0, px1-px0, py1-py0);
+
+      // grid + ticks
+      const nX = opts.nX ?? 9;
+      const nY = opts.nY ?? 7;
+
+      ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+      ctx.fillStyle = 'rgba(233,238,252,0.88)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+
+      for(let i=0;i<nX;i++){
+        const t = i/(nX-1);
+        const px = px0 + t*(px1-px0);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.beginPath();
+        ctx.moveTo(px, py0);
+        ctx.lineTo(px, py1);
+        ctx.stroke();
+
+        const xv = xMin + t*(xMax-xMin);
+        ctx.fillStyle = 'rgba(183,194,230,0.90)';
+        ctx.fillText(formatNum(xv), px, py1 + 8);
+      }
+
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for(let j=0;j<nY;j++){
+        const t = j/(nY-1);
+        const py = py1 - t*(py1-py0);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.beginPath();
+        ctx.moveTo(px0, py);
+        ctx.lineTo(px1, py);
+        ctx.stroke();
+
+        const yv = yMin + t*(yMax-yMin);
+        ctx.fillStyle = 'rgba(183,194,230,0.90)';
+        ctx.fillText(formatNum(yv), px0 - 8, py);
+      }
+
+      // titles
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = 'rgba(233,238,252,0.95)';
+      ctx.font = '600 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText(opts.title ?? '', x + 12, y + 10);
+
+      ctx.fillStyle = 'rgba(183,194,230,0.92)';
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText(opts.subtitle ?? '', x + 12, y + 30);
+
+      // axis labels
+      ctx.fillStyle = 'rgba(233,238,252,0.90)';
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      // x label
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(opts.xLabel ?? 'x', (px0+px1)/2, y + h - 8);
+
+      // y label (rotated)
+      ctx.save();
+      ctx.translate(x + 14, (py0+py1)/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(opts.yLabel ?? 'y', 0, 0);
+      ctx.restore();
+
+      ctx.restore();
+
+      function x2p(xv){ return px0 + (xv - xMin) * (px1 - px0) / (xMax - xMin); }
+      function y2p(yv){ return py1 - (yv - yMin) * (py1 - py0) / (yMax - yMin); }
+
+      return {plot, x2p, y2p};
+    }
+
+    function formatNum(v){
+      const av = Math.abs(v);
+      if (av >= 10) return v.toFixed(0);
+      if (av >= 1) return v.toFixed(2);
+      if (av >= 0.1) return v.toFixed(2);
+      return v.toFixed(3);
+    }
+
+    function drawCurve(ctx, map, xs, ys, strokeStyle){
+      ctx.save();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for(let i=0;i<xs.length;i++){
+        const px = map.x2p(xs[i]);
+        const py = map.y2p(ys[i]);
+        if(i===0) ctx.moveTo(px,py);
+        else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawLegend(ctx, x, y, items){
+      ctx.save();
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      const pad = 10;
+      const lineH = 18;
+      const w = 260;
+      const h = pad*2 + items.length*lineH;
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      roundRect(ctx, x, y, w, h, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      for(let i=0;i<items.length;i++){
+        const iy = y + pad + i*lineH + 2;
+        ctx.strokeStyle = items[i].color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x+12, iy+7);
+        ctx.lineTo(x+32, iy+7);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(233,238,252,0.92)';
+        ctx.fillText(items[i].label, x+40, iy);
+      }
+      ctx.restore();
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.moveTo(x+rr, y);
+      ctx.arcTo(x+w, y, x+w, y+h, rr);
+      ctx.arcTo(x+w, y+h, x, y+h, rr);
+      ctx.arcTo(x, y+h, x, y, rr);
+      ctx.arcTo(x, y, x+w, y, rr);
+      ctx.closePath();
+    }
+
+    function drawVLine(ctx, map, xv, yMin, yMax, style, label){
+      const px = map.x2p(xv);
+      ctx.save();
+      ctx.strokeStyle = style;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6,4]);
+      ctx.beginPath();
+      ctx.moveTo(px, map.y2p(yMin));
+      ctx.lineTo(px, map.y2p(yMax));
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if(label){
+        ctx.fillStyle = 'rgba(233,238,252,0.90)';
+        ctx.font = '12px var(--mono)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(label, px, map.y2p(yMax) + 6);
+      }
+      ctx.restore();
+    }
+
+    // ---------------------------
+    // Diagram drawing
+    // ---------------------------
+    function drawDiagram(canvas, ctx, W, showMarkers){
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      clear(ctx, w, h);
+
+      // Coordinate mapping for diagram
+      const margin = 18;
+      const midY = h*0.52;
+      const x0 = margin, x1 = w - margin;
+      const axisY = midY;
+
+      // Axes
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x0, axisY);
+      ctx.lineTo(x1, axisY);
+      ctx.stroke();
+
+      // ticks + labels
+      ctx.fillStyle = 'rgba(183,194,230,0.90)';
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const nTicks = 9;
+      for(let i=0;i<nTicks;i++){
+        const t = i/(nTicks-1);
+        const px = x0 + t*(x1-x0);
+        ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+        ctx.beginPath();
+        ctx.moveTo(px, axisY-6);
+        ctx.lineTo(px, axisY+6);
+        ctx.stroke();
+        const xv = -2 + 4*t;
+        ctx.fillText(formatNum(xv), px, axisY+10);
+      }
+
+      // Phase step at x=0 (center)
+      const pxZero = x0 + (0 - (-2))*(x1-x0)/4;
+      ctx.strokeStyle = 'rgba(122,162,255,0.9)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pxZero, axisY-90);
+      ctx.lineTo(pxZero, axisY+24);
+      ctx.stroke();
+
+      // Label step
+      ctx.fillStyle = 'rgba(233,238,252,0.95)';
+      ctx.font = '600 13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText('phase step at x = 0', pxZero + 8, axisY - 88);
+
+      // Left/Right phase labels
+      ctx.fillStyle = 'rgba(183,194,230,0.95)';
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.fillText('x ≤ 0 : f = −j  (phase −π/2)', x0 + 4, axisY - 64);
+      ctx.textAlign = 'right';
+      ctx.fillText('x > 0 : f = +j  (phase +π/2)', x1 - 4, axisY - 64);
+
+      // Sliding window illustration centered at x = x_c (pick a demo center that moves with W to show meaning)
+      const xC = 0.35; // fixed center for diagram (in x-units)
+      const half = W/2;
+      const pxL = x0 + ((xC - half) - (-2))*(x1-x0)/4;
+      const pxR = x0 + ((xC + half) - (-2))*(x1-x0)/4;
+
+      // Window rectangle
+      ctx.fillStyle = 'rgba(110,243,197,0.10)';
+      ctx.strokeStyle = 'rgba(110,243,197,0.55)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      roundRect(ctx, pxL, axisY - 28, pxR - pxL, 56, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      // Window label
+      ctx.fillStyle = 'rgba(233,238,252,0.92)';
+      ctx.font = '600 13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('rect-window (width W)', (pxL+pxR)/2, axisY - 32);
+
+      // Explain cancellation region
+      ctx.fillStyle = 'rgba(255,207,110,0.10)';
+      ctx.strokeStyle = 'rgba(255,207,110,0.65)';
+      ctx.lineWidth = 1.5;
+      const cancelL = x0 + ((-half) - (-2))*(x1-x0)/4;
+      const cancelR = x0 + (( half) - (-2))*(x1-x0)/4;
+      ctx.beginPath();
+      roundRect(ctx, cancelL, axisY + 38, cancelR - cancelL, 28, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(233,238,252,0.9)';
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('transition where window overlaps both phases', (cancelL+cancelR)/2, axisY + 52);
+
+      // Optional markers at ±W/2
+      if(showMarkers){
+        ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+        ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        ctx.moveTo(cancelL, axisY-90); ctx.lineTo(cancelL, axisY+70);
+        ctx.moveTo(cancelR, axisY-90); ctx.lineTo(cancelR, axisY+70);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(183,194,230,0.92)';
+        ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('−W/2', cancelL, axisY+72);
+        ctx.fillText('+W/2', cancelR, axisY+72);
+      }
+
+      // Title
+      ctx.fillStyle = 'rgba(233,238,252,0.95)';
+      ctx.font = '700 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText('Setup diagram (1D blur in x; y unchanged by δ(y))', x0, 10);
+
+      ctx.restore();
+    }
+
+    // ---------------------------
+    // Plot drawing
+    // ---------------------------
+    function linspace(a,b,n){
+      const xs = new Array(n);
+      const step = (b-a)/(n-1);
+      for(let i=0;i<n;i++) xs[i] = a + i*step;
+      return xs;
+    }
+
+    function drawMainPlot(canvas, ctx, W, showMarkers){
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      clear(ctx, w, h);
+
+      const xMin = -2, xMax = 2;
+      const yMin = 0, yMax = 1.15;
+
+      const map = drawAxes(ctx, {x:0,y:0,w:w,h:h}, xMin, xMax, yMin, yMax, {
+        title: 'Output intensity |g_W(x)|²',
+        subtitle: 'Normalized so intensity → 1 far from the phase edge (W is a demo width).',
+        xLabel: 'x (normalized coordinate)',
+        yLabel: '|g_W(x)|² (unitless)',
+        nX: 9, nY: 7
+      });
+
+      const xs = linspace(xMin, xMax, 700);
+      const ys = xs.map(x=> intensity(x, W));
+
+      // Curve
+      drawCurve(ctx, map, xs, ys, 'rgba(110,243,197,0.95)');
+
+      // Markers at ±W/2 and 0
+      if(showMarkers){
+        drawVLine(ctx, map, -W/2, yMin, yMax, 'rgba(255,255,255,0.28)', 'x=−W/2');
+        drawVLine(ctx, map,  0,   yMin, yMax, 'rgba(122,162,255,0.55)', 'x=0');
+        drawVLine(ctx, map,  W/2, yMin, yMax, 'rgba(255,255,255,0.28)', 'x=+W/2');
+      }
+
+      // Legend
+      drawLegend(ctx, map.plot.px0 + 10, map.plot.py0 + 10, [
+        {label:'|g_W(x)|²', color:'rgba(110,243,197,0.95)'}
+      ]);
+
+      // Annotate minimum at x=0
+      ctx.save();
+      ctx.fillStyle = 'rgba(233,238,252,0.92)';
+      ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      const px0 = map.x2p(0), py0 = map.y2p(0);
+      ctx.beginPath();
+      ctx.arc(px0, py0, 3.5, 0, 2*Math.PI);
+      ctx.fill();
+      ctx.fillText('|g_W(0)|² = 0 (complete cancellation)', px0 + 10, py0 + 8);
+      ctx.restore();
+    }
+
+    function drawSecondaryPlot(canvas, ctx, W, showMarkers){
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      clear(ctx, w, h);
+
+      const xMin = -2, xMax = 2;
+      const yMin = 0, yMax = 1.15;
+
+      const map = drawAxes(ctx, {x:0,y:0,w:w,h:h}, xMin, xMax, yMin, yMax, {
+        title: 'Input intensity vs Output intensity',
+        subtitle: 'Input is uniform (|f|² = 1), output is non-uniform near x=0.',
+        xLabel: 'x (normalized coordinate)',
+        yLabel: 'Intensity (unitless)',
+        nX: 9, nY: 7
+      });
+
+      const xs = linspace(xMin, xMax, 700);
+      const yOut = xs.map(x=> intensity(x, W));
+      const yIn  = xs.map(_=> 1);
+
+      drawCurve(ctx, map, xs, yIn,  'rgba(122,162,255,0.85)');
+      drawCurve(ctx, map, xs, yOut, 'rgba(255,207,110,0.95)');
+
+      if(showMarkers){
+        drawVLine(ctx, map, 0, yMin, yMax, 'rgba(122,162,255,0.55)', 'x=0');
+      }
+
+      drawLegend(ctx, map.plot.px0 + 10, map.plot.py0 + 10, [
+        {label:'|f(x)|² = 1', color:'rgba(122,162,255,0.85)'},
+        {label:'|g_W(x)|²',   color:'rgba(255,207,110,0.95)'}
+      ]);
+    }
+
+    function drawFieldPlot(canvas, ctx, W, showMarkers){
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      clear(ctx, w, h);
+
+      const xMin = -2, xMax = 2;
+      const yMin = -1.15, yMax = 1.15;
+
+      const map = drawAxes(ctx, {x:0,y:0,w:w,h:h}, xMin, xMax, yMin, yMax, {
+        title: 'Output field (imaginary part)',
+        subtitle: 'Im{g_W(x)} = −1 (left), +1 (right), linear between in |x|<W/2.',
+        xLabel: 'x (normalized coordinate)',
+        yLabel: 'Im{g_W(x)} (unitless)',
+        nX: 9, nY: 7
+      });
+
+      const xs = linspace(xMin, xMax, 700);
+      const ys = xs.map(x=> gImag(x, W));
+
+      drawCurve(ctx, map, xs, ys, 'rgba(255,110,138,0.92)');
+
+      // zero axis
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(map.plot.px0, map.y2p(0));
+      ctx.lineTo(map.plot.px1, map.y2p(0));
+      ctx.stroke();
+      ctx.restore();
+
+      if(showMarkers){
+        drawVLine(ctx, map, -W/2, yMin, yMax, 'rgba(255,255,255,0.24)', '−W/2');
+        drawVLine(ctx, map,  W/2, yMin, yMax, 'rgba(255,255,255,0.24)', '+W/2');
+        drawVLine(ctx, map,  0,   yMin, yMax, 'rgba(122,162,255,0.55)', '0');
+      }
+
+      drawLegend(ctx, map.plot.px0 + 10, map.plot.py0 + 10, [
+        {label:'Im{g_W(x)}', color:'rgba(255,110,138,0.92)'}
+      ]);
+    }
+
+    // ---------------------------
+    // Wiring + responsive redraw
+    // ---------------------------
+    const diagramCanvas = document.getElementById('diagram');
+    const mainCanvas = document.getElementById('plotMain');
+    const secCanvas = document.getElementById('plotSecondary');
+    const fieldCanvas = document.getElementById('plotField');
+
+    const diagram = setupCanvas(diagramCanvas);
+    const main = setupCanvas(mainCanvas);
+    const secondary = setupCanvas(secCanvas);
+    const field = setupCanvas(fieldCanvas);
+
+    const sliderW = document.getElementById('W');
+    const Wval = document.getElementById('Wval');
+    const resetBtn = document.getElementById('resetBtn');
+    const toggleMarkersBtn = document.getElementById('toggleMarkers');
+
+    let showMarkers = true;
+
+    function redraw(){
+      const W = parseFloat(sliderW.value);
+      Wval.textContent = W.toFixed(2);
+
+      // resize in case layout changed
+      diagram.resize(); main.resize(); secondary.resize(); field.resize();
+
+      drawDiagram(diagramCanvas, diagram.ctx, W, showMarkers);
+      drawMainPlot(mainCanvas, main.ctx, W, showMarkers);
+      drawSecondaryPlot(secCanvas, secondary.ctx, W, showMarkers);
+      drawFieldPlot(fieldCanvas, field.ctx, W, showMarkers);
+    }
+
+    sliderW.addEventListener('input', redraw);
+    resetBtn.addEventListener('click', ()=>{
+      sliderW.value = "1.00";
+      redraw();
+    });
+    toggleMarkersBtn.addEventListener('click', ()=>{
+      showMarkers = !showMarkers;
+      redraw();
+    });
+
+    window.addEventListener('resize', ()=>{
+      // debounce-ish
+      clearTimeout(window.__rz);
+      window.__rz = setTimeout(redraw, 80);
+    });
+
+    // Initial draw
+    redraw();
+  </script>
+</body>
+</html>
