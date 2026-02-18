@@ -2,64 +2,1140 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>22.2-6 — Tolerance to Phase Mismatching</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Tolerance to Phase Mismatching (Helmholtz Source Integral + Born Approx.)</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1730;
+      --card:#101b36;
+      --ink:#e9eefc;
+      --muted:#b8c3e6;
+      --faint:#7f8bb8;
+      --accent:#7dd3fc;
+      --accent2:#a7f3d0;
+      --warn:#fbbf24;
+      --danger:#fb7185;
+      --ok:#34d399;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --radius2:14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 700px at 25% 10%, rgba(125,211,252,.14), transparent 55%),
+        radial-gradient(900px 600px at 85% 0%, rgba(167,243,208,.12), transparent 55%),
+        radial-gradient(900px 700px at 70% 90%, rgba(251,191,36,.10), transparent 55%),
+        linear-gradient(180deg, #070a14, var(--bg));
+      color:var(--ink);
+      line-height:1.55;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+    header{
+      position:relative;
+      padding:42px 18px 22px;
+      border-bottom:1px solid var(--line);
+      overflow:hidden;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+    header .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1.3fr .9fr;
+      gap:18px;
+      align-items:start;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
-      color: var(--muted);
+    h1{
+      font-size: clamp(24px, 2.6vw, 40px);
+      margin:0 0 10px;
+      letter-spacing:.2px;
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .subtitle{
+      color:var(--muted);
+      margin:0;
+      max-width:72ch;
+      font-size: 15.5px;
+    }
+    .meta{
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding:14px 14px 12px;
+      box-shadow: var(--shadow);
+    }
+    .meta .tagrow{
+      display:flex; flex-wrap:wrap; gap:8px;
+      margin:0 0 10px;
+    }
+    .tag{
+      font-size:12px;
+      color:rgba(255,255,255,.86);
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      padding:6px 10px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+    .dot{width:7px;height:7px;border-radius:99px;background:var(--accent);display:inline-block;box-shadow:0 0 0 3px rgba(125,211,252,.12)}
+    .meta ul{margin:0; padding-left:18px; color:var(--muted)}
+    .meta li{margin:6px 0}
+    main{
+      max-width:1100px;
+      margin:0 auto;
+      padding:20px 18px 56px;
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap:18px;
+    }
+    nav#toc{
+      position:sticky;
+      top:14px;
+      align-self:start;
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding:14px;
+      box-shadow: var(--shadow);
+    }
+    nav#toc h2{
+      font-size:14px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      margin:0 0 10px;
+      color:rgba(255,255,255,.86);
+    }
+    .toclinks{display:flex; flex-direction:column; gap:8px}
+    .toclinks a{
+      color:var(--muted);
+      text-decoration:none;
+      border:1px solid transparent;
+      padding:8px 10px;
+      border-radius: 12px;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .toclinks a:hover{
+      background:rgba(125,211,252,.08);
+      border-color:rgba(125,211,252,.22);
+      transform: translateY(-1px);
+      color:rgba(255,255,255,.92);
+    }
+    .content{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      min-width:0;
+    }
+    section, article{
+      background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding:18px 18px 16px;
+      box-shadow: var(--shadow);
+    }
+    h2{
+      margin:0 0 10px;
+      font-size: 20px;
+    }
+    h3{
+      margin:14px 0 8px;
+      font-size: 16px;
+      color: rgba(255,255,255,.92);
+    }
+    p{margin:10px 0; color: rgba(255,255,255,.90)}
+    .muted{color:var(--muted)}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .card{
+      background:rgba(0,0,0,.16);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      padding:12px 12px 10px;
+    }
+    .callout{
+      border-left: 4px solid var(--accent);
+      background:rgba(125,211,252,.08);
+      padding:12px 12px 10px;
+      border-radius: var(--radius2);
+      border:1px solid rgba(125,211,252,.20);
+    }
+    .callout.warn{border-left-color: var(--warn); background:rgba(251,191,36,.08); border-color:rgba(251,191,36,.22)}
+    .callout.danger{border-left-color: var(--danger); background:rgba(251,113,133,.08); border-color:rgba(251,113,133,.22)}
+    .callout.ok{border-left-color: var(--ok); background:rgba(52,211,153,.08); border-color:rgba(52,211,153,.22)}
+    .eq{
+      position:relative;
+      background:rgba(0,0,0,.22);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      padding:12px 12px 10px;
+      overflow:hidden;
+    }
+    .eq pre{
+      margin:0;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: rgba(255,255,255,.92);
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.45;
+    }
+    .copybtn{
+      position:absolute;
+      top:10px;
+      right:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.06);
+      color:rgba(255,255,255,.90);
+      border-radius: 999px;
+      padding:7px 10px;
+      font-size:12px;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .copybtn:hover{
+      transform: translateY(-1px);
+      background:rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.25);
+    }
+    .copybtn:active{transform: translateY(0px) scale(.99)}
+    .copytoast{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform: translateX(-50%);
+      background:rgba(0,0,0,.78);
+      border:1px solid rgba(255,255,255,.16);
+      color:rgba(255,255,255,.92);
+      padding:10px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      box-shadow: var(--shadow);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .16s ease, transform .16s ease;
+    }
+    .copytoast.show{opacity:1; transform: translateX(-50%) translateY(-2px)}
+    details{
+      background:rgba(0,0,0,.14);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      padding:10px 12px;
+      margin-top:10px;
+    }
+    details summary{
+      cursor:pointer;
+      color:rgba(255,255,255,.90);
+      font-weight:650;
+    }
+    details p{color:var(--muted)}
+    figure{
+      margin:12px 0 6px;
+      padding:12px;
+      border-radius: var(--radius2);
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+    }
+    figcaption{
+      color:var(--muted);
+      font-size:13px;
+      margin-top:10px;
+    }
+    canvas{width:100%; height:auto; display:block;}
+    .backtop{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin-top:10px;
+      text-decoration:none;
+      color:rgba(255,255,255,.88);
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      padding:8px 10px;
+      border-radius: 999px;
+      width:fit-content;
+      transition: transform .12s ease, background .12s ease;
+    }
+    .backtop:hover{transform: translateY(-1px); background:rgba(167,243,208,.10)}
+    footer{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px 18px 34px;
+      color:var(--faint);
+    }
+    .hr{
+      height:1px;
+      background: var(--line);
+      margin: 12px 0;
+    }
+    .kpi{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      border-radius:999px;
+      padding:7px 10px;
+      color:rgba(255,255,255,.86);
+      font-size:12px;
+    }
+    @media (max-width: 980px){
+      header .wrap{grid-template-columns: 1fr}
+      main{grid-template-columns: 1fr}
+      nav#toc{position:relative; top:0}
+    }
+    @media print{
+      body{background:#fff; color:#000}
+      header, nav#toc, .copybtn, .copytoast, .backtop{display:none !important}
+      main{display:block; max-width:100%; padding:0}
+      section, article{box-shadow:none; border:1px solid #ddd; background:#fff; border-radius:0; page-break-inside:avoid}
+      h2, h3{color:#000}
+      p, li, figcaption{color:#111}
+      .eq{background:#f6f6f6}
+      .eq pre{color:#000}
+      .callout{border-color:#bbb; background:#f8f8f8}
+      a{color:#000; text-decoration:none}
     }
   </style>
 </head>
-<body>
-  <header>
-    <div class="box">
-      <h1>22.2-6 — Tolerance to Phase Mismatching</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch22/prob_22_2_6.html</code></p>
-    </div>
-  </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+<body>
+<header id="top">
+  <div class="wrap">
+    <div>
+      <h1>Tolerance to Phase Mismatching</h1>
+      <p class="subtitle">
+        How a finite source volume enforces <em>phase matching</em>: the emitted/scattered field is essentially the
+        Fourier transform of the source. For a large crystal/interaction region, even tiny wavevector mismatch
+        collapses the output via a sinc-shaped “acceptance” function.
+      </p>
+      <div class="kpi">
+        <span class="pill">Topic: nonlinear optics / scattering</span>
+        <span class="pill">Tools: Helmholtz Green’s function + far-field + Born approximation</span>
+        <span class="pill">Key shape: sinc (phase-matching bandwidth ∝ 1/L)</span>
+      </div>
     </div>
-  </main>
+
+    <aside class="meta" aria-label="Quick Summary">
+      <div class="tagrow">
+        <span class="tag"><span class="dot"></span>Symbolic derivation</span>
+        <span class="tag"><span class="dot" style="background:var(--accent2)"></span>Physical intuition</span>
+      </div>
+      <ul>
+        <li><strong>What this is about:</strong> why large sources/crystals emit only when wavevectors match.</li>
+        <li><strong>Key physics idea:</strong> far-field ∝ spatial Fourier transform of the source at Δk.</li>
+        <li><strong>Governing equation:</strong> (∇² + k₀²)E = −S and its Green’s-function solution.</li>
+        <li><strong>Result type:</strong> closed-form sinc products for a cubic volume; yields an “acceptance” width.</li>
+        <li><strong>Meaning:</strong> maximum output at Δk = 0 (phase matching), first zero at |Δk| ≈ 2π/L.</li>
+      </ul>
+    </aside>
+  </div>
+</header>
+
+<main>
+  <nav id="toc" aria-label="Table of Contents">
+    <h2>Contents</h2>
+    <div class="toclinks">
+      <a href="#quick">Quick Summary</a>
+      <a href="#primer">PART 0 — Concept Primer</a>
+      <a href="#analysis">PART 1 — Problem Analysis</a>
+      <a href="#strategy">PART 2 — Strategy &amp; Tips</a>
+      <a href="#solution">PART 3 — Full Solution</a>
+      <a href="#deeper">PART 4 — Deeper Understanding</a>
+      <a href="#plotguide">PART 5 — Optional Plot Guide</a>
+    </div>
+  </nav>
+
+  <div class="content">
+    <section id="quick">
+      <h2>Quick Summary</h2>
+      <ul class="muted">
+        <li><strong>Goal (a):</strong> Evaluate the far-field from a harmonic source inside a cube of side <code>L</code> and show it peaks sharply when <code>k₀ r̂ = k_s</code>.</li>
+        <li><strong>Goal (b):</strong> Use (a) + first Born approximation to get the generated/scattered field in a χ<sup>(2)</sup> medium driven by two incident waves (<code>k₁</code>, <code>k₂</code>), derive <code>k₃ = k₁ + k₂</code>, and find the smallest |Δk| giving zero output.</li>
+        <li><strong>Big idea:</strong> The far-field amplitude is proportional to <em>∫ source(r′) e^{+j k_out·r′} d³r′</em>, i.e., the spatial Fourier transform of the source.</li>
+        <li><strong>Finite-size effect:</strong> A cube produces <em>products of sinc functions</em>; for large <code>L</code>, sinc lobes become extremely narrow → strong phase-matching selectivity.</li>
+        <li><strong>Key acceptance scale:</strong> first null occurs when one mismatch component satisfies <code>|Δk_i| L / 2 = π</code> → <code>|Δk_i| = 2π/L</code>.</li>
+        <li><strong>Physical meaning:</strong> The medium adds contributions from many points; if the phase slips by ~π across the volume, destructive interference cancels the radiation.</li>
+      </ul>
+      <a class="backtop" href="#top" aria-label="Back to top">↑ Back to top</a>
+    </section>
+
+    <article id="primer">
+      <h2>PART 0 — Concept Primer (theory before solving)</h2>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Core definitions (symbols + SI units)</h3>
+          <ul class="muted">
+            <li><code>E(r)</code>: complex scalar electric field (V/m) at observation point <code>r</code>.</li>
+            <li><code>S(r)</code>: source term in Helmholtz equation (units depend on normalization; treat as “driving strength”).</li>
+            <li><code>k₀</code>: wavenumber in the surrounding medium, <code>k₀ = 2π/λ₀</code> (rad/m).</li>
+            <li><code>r̂</code>: unit vector pointing toward the observer (dimensionless).</li>
+            <li><code>k_s</code>: “spatial frequency” (wavevector) of the source pattern (rad/m).</li>
+            <li><code>Δk</code>: wavevector mismatch (rad/m), typically <code>Δk = k_out − k_source</code>.</li>
+            <li><code>χ^(2)</code>: second-order nonlinear susceptibility (SI: m/V in common conventions).</li>
+            <li><code>P^(2)</code>: nonlinear polarization at the generated frequency (C/m²).</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Physical meaning (intuition)</h3>
+          <p class="muted">
+            Any extended source is a collection of tiny radiators. In the far field, you add their contributions with
+            phase factors. If the relative phase stays aligned across the volume, contributions add (big output).
+            If phase drifts, contributions cancel (small or zero output).
+          </p>
+          <p class="muted">
+            Mathematically, that “phase bookkeeping” is a Fourier transform: the far field selects the component of the
+            source whose spatial oscillation matches the outgoing plane wave.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <h3>Key laws/principles + validity</h3>
+        <ul class="muted">
+          <li><strong>Helmholtz equation with a source:</strong> <code>(∇² + k₀²)E = −S</code> for monochromatic steady-state fields.</li>
+          <li><strong>Green’s function solution:</strong> expresses <code>E(r)</code> as a volume integral over the source.</li>
+          <li><strong>Far-field (Fraunhofer) approximation:</strong> valid when observation distance <code>r</code> is much larger than source size (<code>r ≫ L</code>), so <code>r′ ≪ r</code>.</li>
+          <li><strong>First Born approximation:</strong> scattered/generated field is computed using the <em>incident</em> field inside the source region (weak scattering / weak conversion).</li>
+        </ul>
+      </div>
+
+      <details>
+        <summary>Common models/approximations used here (and why)</summary>
+        <p>
+          <strong>Scalar field model:</strong> keeps the math focused on phase matching rather than polarization vectors.
+          In many optics textbooks, phase-matching selectivity is captured accurately by a scalar envelope factor.
+        </p>
+        <p>
+          <strong>Uniform cube of side L:</strong> makes the Fourier transform analytic, producing clean sinc functions
+          that directly quantify “tolerance”.
+        </p>
+        <p>
+          <strong>Plane-wave incident fields:</strong> typical for deriving nonlinear mixing conditions. The generated
+          polarization carries the sum of incident wavevectors.
+        </p>
+      </details>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Mini intuition examples (minimal algebra)</h3>
+          <ul class="muted">
+            <li><strong>Two-point source:</strong> if two emitters are π out of phase, they cancel in that direction.</li>
+            <li><strong>Long crystal:</strong> if phase slips by 2π over the length, later contributions “undo” earlier ones → oscillatory build-up.</li>
+            <li><strong>Bigger L:</strong> narrower allowed mismatch: the more points you sum coherently, the stricter the phase alignment must be.</li>
+          </ul>
+        </div>
+        <div class="callout warn">
+          <h3>What to watch for (pitfalls)</h3>
+          <ul class="muted">
+            <li><strong>Sign conventions:</strong> whether fields are written as <code>e^{+j(k·r−ωt)}</code> or <code>e^{−j(k·r−ωt)}</code>. Phase-matching is the same physical condition: the exponent must be stationary across the volume.</li>
+            <li><strong>Vector vs scalar mismatch:</strong> true condition is vector equality; “smallest |Δk| for zero” depends on geometry (which component carries mismatch).</li>
+            <li><strong>Far field vs near field:</strong> the simple Fourier-transform picture is a far-field statement.</li>
+          </ul>
+        </div>
+      </div>
+
+      <a class="backtop" href="#top">↑ Back to top</a>
+    </article>
+
+    <article id="analysis">
+      <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <h3>Restating the problem (in plain words)</h3>
+      <p class="muted">
+        (a) Start from the Green’s-function solution to the driven Helmholtz equation. In the far field,
+        show that a spatially harmonic source confined to a cube behaves like a “plane-wave radiator” only when
+        the outgoing wavevector matches the source’s wavevector. For large cube size (<code>L ≫ λ₀</code>),
+        quantify how sharply the output drops when the matching is not met.
+      </p>
+      <p class="muted">
+        (b) Treat second-order nonlinear wave mixing as a scattering problem in the first Born approximation.
+        If the incident field is a sum of two plane waves with wavevectors <code>k₁</code> and <code>k₂</code>,
+        determine the generated/scattered field at the sum frequency and derive the phase-matching condition
+        <code>k₃ = k₁ + k₂</code>. Then find the smallest nonzero mismatch magnitude where the field vanishes.
+      </p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Given</h3>
+          <ul class="muted">
+            <li>Helmholtz + source: <code>(∇² + k₀²)E = −S</code> and its integral solution.</li>
+            <li>Far-field approximation: <code>|r − r′| ≈ r − r̂·r′</code> for <code>r′ ≪ r</code>.</li>
+            <li>Source volume: cube of side <code>L</code> (centered at origin).</li>
+            <li>Harmonic source: <code>S(r′) = exp(−j k_s · r′)</code>.</li>
+            <li>Nonlinear case: incident field is sum of two plane waves with <code>k₁</code>, <code>k₂</code>.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Unknowns / must show</h3>
+          <ul class="muted">
+            <li>(a) Condition for maximum emission and the functional dependence on mismatch.</li>
+            <li>(b) Generated wavevector relation and the first “zero-output” mismatch magnitude.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <h3>Relevant principles (and why they apply)</h3>
+        <ul class="muted">
+          <li><strong>Green’s-function radiation integral:</strong> converts a differential equation into a coherent sum of contributions from the source volume.</li>
+          <li><strong>Fraunhofer expansion:</strong> reduces the kernel to a plane-wave factor, revealing a Fourier transform in <code>k</code>-space.</li>
+          <li><strong>Born approximation:</strong> in weak nonlinear conversion, the driving polarization is computed from the incident waves (no strong depletion/back-action).</li>
+        </ul>
+      </div>
+
+      <h3>Assumptions (explicit)</h3>
+      <div class="callout ok">
+        <ul class="muted">
+          <li>Monochromatic steady-state fields; time dependence suppressed in phasor form.</li>
+          <li>Observation in the far field: <code>r ≫ L</code>.</li>
+          <li>Uniform source region (sharp cube aperture).</li>
+          <li>Weak generation/scattering so first Born approximation is valid (for part b).</li>
+          <li>Scalar treatment: polarization-vector factors omitted because the question targets phase matching/tolerance.</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (compare)</h3>
+      <div class="grid2">
+        <div class="card">
+          <h3>Approach A: Fourier-transform view (best)</h3>
+          <p class="muted">
+            Directly evaluate the far-field integral for a cube → product of sinc functions. Cleanest path to “tolerance”.
+          </p>
+          <ul class="muted">
+            <li><strong>Pros:</strong> analytic, shows acceptance bandwidth ~ 1/L immediately.</li>
+            <li><strong>Cons:</strong> requires comfort with vector mismatch and separable integrals.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Approach B: 1D coherence length analogy</h3>
+          <p class="muted">
+            Reduce to a single propagation axis and derive <code>sinc(Δk L/2)</code> from integrating <code>e^{jΔk z}</code>.
+          </p>
+          <ul class="muted">
+            <li><strong>Pros:</strong> very intuitive for collinear mixing.</li>
+            <li><strong>Cons:</strong> hides the full 3D angular selectivity of (a).</li>
+          </ul>
+        </div>
+      </div>
+      <p class="muted">
+        We will use <strong>Approach A</strong> because the cube geometry in (a) naturally produces the full 3D sinc
+        structure, and (b) then becomes a direct substitution with <code>Δk = k₃ − k₁ − k₂</code>.
+      </p>
+
+      <a class="backtop" href="#top">↑ Back to top</a>
+    </article>
+
+    <article id="strategy">
+      <h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+
+      <ol class="muted">
+        <li><strong>Start</strong> from the Green’s-function solution for Helmholtz and write the far-field form.</li>
+        <li><strong>Identify</strong> the phase factor: <code>exp(+j k₀ r̂ · r′)</code> in the integral kernel.</li>
+        <li><strong>Insert</strong> the harmonic source <code>S(r′)=exp(−j k_s·r′)</code> and combine exponents.</li>
+        <li><strong>Define mismatch</strong> <code>Δk ≡ k₀ r̂ − k_s</code> and reduce the problem to <code>∫_V exp(j Δk·r′) d³r′</code>.</li>
+        <li><strong>Evaluate</strong> the cube integral by separating x/y/z → product of 1D integrals → sinc factors.</li>
+        <li><strong>Maximize</strong> the amplitude: show it peaks at <code>Δk=0</code> i.e. <code>k₀ r̂ = k_s</code>, and becomes narrow when <code>L ≫ λ₀</code>.</li>
+        <li><strong>For χ(2)</strong>, write the nonlinear polarization at ω₃ proportional to the product of the two incident plane waves.</li>
+        <li><strong>Read off</strong> the polarization wavevector <code>k_p = k₁ + k₂</code> and apply the same far-field integral → sinc acceptance in <code>Δk = k₃ − (k₁ + k₂)</code>.</li>
+        <li><strong>Find first zero</strong> of sinc: smallest nonzero mismatch component satisfying <code>|Δk_i|L/2 = π</code> → <code>|Δk| = 2π/L</code> (in the minimal case).</li>
+      </ol>
+
+      <div class="callout danger">
+        <h3>Common mistakes</h3>
+        <ul class="muted">
+          <li><strong>Forgetting the vector nature:</strong> phase matching is <code>k₃</code> equals the vector sum, not just magnitudes.</li>
+          <li><strong>Mixing conventions:</strong> a sign flip in the exponent changes Δk’s sign, but not where the maxima/zeros occur (they depend on |Δk|).</li>
+          <li><strong>Using “first zero” incorrectly:</strong> for a cube, the integral vanishes when any one sinc factor hits zero (not necessarily when |Δk| is large).</li>
+        </ul>
+      </div>
+
+      <a class="backtop" href="#top">↑ Back to top</a>
+    </article>
+
+    <article id="solution">
+      <h2>PART 3 — Full Solution (detailed + teaching)</h2>
+
+      <h3>What we expect before calculating</h3>
+      <p class="muted">
+        Because the source occupies many wavelengths when <code>L ≫ λ₀</code>, the field radiated from different points
+        will interfere strongly. If the outgoing plane-wave phase matches the source’s internal phase progression,
+        all points add coherently and we get a strong beam (plane-wave-like emission). If not, the phase drifts across
+        the cube and cancels the radiation—so the output should drop quickly with mismatch.
+      </p>
+
+      <div class="hr"></div>
+
+      <h3>(a) Far-field from a harmonic source in a cube</h3>
+
+      <p class="muted">
+        The driven Helmholtz equation
+        <code>(∇² + k₀²)E = −S</code>
+        has the Green’s-function solution (given):
+      </p>
+
+      <div class="eq" data-copy="eq1">
+        <button class="copybtn" data-copy-btn="eq1">Copy</button>
+        <pre id="eq1">E(r) = ∫_V S(r') * exp(−j k0 |r − r'|) / (4π |r − r'|) d^3r'</pre>
+      </div>
+
+      <p class="muted">
+        In the far field (<code>r ≫ r′</code> for all <code>r′</code> inside the source), use the standard expansion:
+      </p>
+
+      <div class="eq" data-copy="eq2">
+        <button class="copybtn" data-copy-btn="eq2">Copy</button>
+        <pre id="eq2">|r − r'| ≈ r − r̂ · r'   and   1/|r − r'| ≈ 1/r</pre>
+      </div>
+
+      <p class="muted">
+        Substitute into the kernel:
+        <code>exp(−j k₀ |r − r′|) ≈ exp(−j k₀ r) * exp(+j k₀ r̂·r′)</code>.
+        Therefore,
+      </p>
+
+      <div class="eq" data-copy="eq3">
+        <button class="copybtn" data-copy-btn="eq3">Copy</button>
+        <pre id="eq3">E(r) ≈ [exp(−j k0 r)/(4π r)] ∫_V S(r') exp(+j k0 r̂ · r') d^3r'</pre>
+      </div>
+
+      <p class="muted">
+        Now insert the harmonic source inside the cube:
+        <code>S(r′) = exp(−j k_s · r′)</code>.
+        Combine the exponentials:
+      </p>
+
+      <div class="eq" data-copy="eq4">
+        <button class="copybtn" data-copy-btn="eq4">Copy</button>
+        <pre id="eq4">E(r) ≈ [exp(−j k0 r)/(4π r)] ∫_V exp{ j (k0 r̂ − ks) · r' } d^3r'
+Define mismatch: Δk ≡ k0 r̂ − ks</pre>
+      </div>
+
+      <p class="muted">
+        So the entire direction-dependence is controlled by the Fourier integral
+        <code>∫_V exp(j Δk·r′) d³r′</code>.
+        Let the cube be centered at the origin, side length <code>L</code>, so
+        <code>x′,y′,z′ ∈ [−L/2, +L/2]</code>.
+        Because the cube is separable, the integral factors:
+      </p>
+
+      <div class="eq" data-copy="eq5">
+        <button class="copybtn" data-copy-btn="eq5">Copy</button>
+        <pre id="eq5">∫_V exp(j Δk·r') d^3r'
+= ∫_{−L/2}^{L/2} exp(j Δkx x') dx'
+  ∫_{−L/2}^{L/2} exp(j Δky y') dy'
+  ∫_{−L/2}^{L/2} exp(j Δkz z') dz'</pre>
+      </div>
+
+      <p class="muted">
+        Evaluate one of the 1D integrals (all are identical in form). For any component Δk<sub>x</sub>:
+      </p>
+
+      <div class="eq" data-copy="eq6">
+        <button class="copybtn" data-copy-btn="eq6">Copy</button>
+        <pre id="eq6">∫_{−L/2}^{L/2} exp(j Δkx x') dx'
+= [exp(j Δkx x')/(j Δkx)]_{−L/2}^{L/2}
+= (2 sin(Δkx L/2))/Δkx
+= L * sinc(Δkx L/2)
+
+where sinc(u) ≡ sin(u)/u</pre>
+      </div>
+
+      <p class="muted">
+        Therefore the cube integral is a product of three sinc factors:
+      </p>
+
+      <div class="eq" data-copy="eq7">
+        <button class="copybtn" data-copy-btn="eq7">Copy</button>
+        <pre id="eq7">∫_V exp(j Δk·r') d^3r' = L^3 * sinc(Δkx L/2) * sinc(Δky L/2) * sinc(Δkz L/2)</pre>
+      </div>
+
+      <p class="muted">
+        Substituting back gives the far-field amplitude:
+      </p>
+
+      <div class="eq" data-copy="eq8">
+        <button class="copybtn" data-copy-btn="eq8">Copy</button>
+        <pre id="eq8">E(r) ≈ [exp(−j k0 r)/(4π r)] L^3 Π_{i=x,y,z} sinc(Δki L/2)
+with Δk = k0 r̂ − ks</pre>
+      </div>
+
+      <div class="callout ok">
+        <h3>Conclusion for (a): maximum and sharp decrease</h3>
+        <p class="muted">
+          The product of sinc functions is maximized at <strong>Δk = 0</strong>, i.e.
+          <strong><code>k₀ r̂ = k_s</code></strong>.
+          This means the emission is strongest in the direction where the outgoing plane-wave wavevector
+          matches the source’s internal spatial oscillation.
+        </p>
+        <p class="muted">
+          When <code>L ≫ λ₀</code>, the sinc factors become extremely narrow because their argument includes <code>L</code>.
+          The first null in any component occurs at <code>|Δk_i| L/2 = π</code>, so the “tolerance scale” is
+          <code>|Δk_i| ≲ 2π/L</code>. Larger L ⇒ smaller acceptable mismatch ⇒ sharp decrease when not matched.
+        </p>
+      </div>
+
+      <details>
+        <summary>Sanity checks for (a)</summary>
+        <p><strong>Units:</strong> Δk has units rad/m, so Δk·r′ is dimensionless; sinc arguments are dimensionless; the cube integral scales as volume ~ L³ when Δk → 0.</p>
+        <p><strong>Limiting case Δk → 0:</strong> sinc(0)=1, so <code>E ∝ L³</code> (coherent addition over the entire volume).</p>
+        <p><strong>Large mismatch:</strong> sinc oscillates and decays ~ 1/Δk, so amplitude falls rapidly (destructive interference).</p>
+      </details>
+
+      <div class="hr"></div>
+
+      <h3>(b) χ(2) mixing as scattering (first Born approximation)</h3>
+
+      <p class="muted">
+        In a second-order nonlinear medium, the generated polarization at the sum frequency
+        <code>ω₃ = ω₁ + ω₂</code> is (schematically)
+        <code>P^(2)(r, ω₃) ∝ χ^(2) E(r, ω₁) E(r, ω₂)</code>.
+        Under the first Born approximation, we use the <em>incident</em> fields inside the medium.
+      </p>
+
+      <p class="muted">
+        Let the incident field be the sum of two plane waves (phasors):
+      </p>
+
+      <div class="eq" data-copy="eq9">
+        <button class="copybtn" data-copy-btn="eq9">Copy</button>
+        <pre id="eq9">E_inc(r) = E1 exp(−j k1·r) + E2 exp(−j k2·r)</pre>
+      </div>
+
+      <p class="muted">
+        The nonlinear polarization component oscillating at <code>ω₃</code> comes from the product of the two terms
+        at <code>ω₁</code> and <code>ω₂</code>:
+      </p>
+
+      <div class="eq" data-copy="eq10">
+        <button class="copybtn" data-copy-btn="eq10">Copy</button>
+        <pre id="eq10">P^(2)(r, ω3) ∝ χ^(2) E1 E2 exp[−j (k1 + k2) · r]</pre>
+      </div>
+
+      <p class="muted">
+        This polarization acts like a <em>source</em> for the Helmholtz equation at <code>ω₃</code> with wavenumber <code>k₃</code>
+        (magnitude <code>|k₃| = n(ω₃) ω₃/c</code> in the medium). Abstractly, we can write a driven Helmholtz form:
+      </p>
+
+      <div class="eq" data-copy="eq11">
+        <button class="copybtn" data-copy-btn="eq11">Copy</button>
+        <pre id="eq11">(∇² + k3^2) E3(r) = −S3(r)
+with S3(r) ∝ P^(2)(r, ω3) ∝ exp[−j (k1 + k2)·r]</pre>
+      </div>
+
+      <p class="muted">
+        Now apply the result of part (a) with the replacement:
+        <code>k₀ → k₃</code> (outgoing/generated wave at ω₃) and <code>k_s → (k₁ + k₂)</code> (the source’s spatial wavevector).
+        The far-field in direction <code>r̂</code> is:
+      </p>
+
+      <div class="eq" data-copy="eq12">
+        <button class="copybtn" data-copy-btn="eq12">Copy</button>
+        <pre id="eq12">E3(r) ≈ [exp(−j k3 r)/(4π r)] C L^3 Π_i sinc(Δki L/2)
+
+Δk ≡ k3 r̂ − (k1 + k2)
+C ∝ χ^(2) E1 E2   (constant prefactor)</pre>
+      </div>
+
+      <div class="callout ok">
+        <h3>Phase-matching condition</h3>
+        <p class="muted">
+          The emitted/generated field is maximized when <strong>Δk = 0</strong>.
+          In vector form this is:
+        </p>
+        <div class="eq" data-copy="eq13">
+          <button class="copybtn" data-copy-btn="eq13">Copy</button>
+          <pre id="eq13">k3 r̂ = k1 + k2</pre>
+        </div>
+        <p class="muted">
+          In the usual collinear “generated plane wave” interpretation, we identify the generated propagation direction
+          so that <code>k3</code> itself is the wavevector of the generated wave. Then the condition becomes the familiar
+          <strong><code>k3 = k1 + k2</code></strong>.
+        </p>
+      </div>
+
+      <h3>Smallest mismatch magnitude where the scattered field vanishes</h3>
+      <p class="muted">
+        For a cube, the amplitude is proportional to the product <code>Π_i sinc(Δk_i L/2)</code>.
+        The total amplitude becomes zero as soon as <em>any one</em> factor hits a zero:
+        <code>sin(Δk_i L/2) = 0</code> with <code>Δk_i ≠ 0</code>.
+      </p>
+
+      <div class="eq" data-copy="eq14">
+        <button class="copybtn" data-copy-btn="eq14">Copy</button>
+        <pre id="eq14">sinc(u) = 0  when  u = ±π, ±2π, ...
+So the first (smallest nonzero) zero occurs at  Δk_i L/2 = ±π  ⇒  |Δk_i| = 2π/L</pre>
+      </div>
+
+      <p class="muted">
+        The question asks for the <em>smallest magnitude</em> of the vector mismatch <code>Δk = k3 − k1 − k2</code> at which
+        the scattered field vanishes. The smallest possible |Δk| that can make the product zero occurs when the mismatch
+        lies entirely along one axis (or one principal component of the cube aperture), e.g.:
+        <code>Δk = (2π/L) x̂</code>, so that only one sinc factor hits its first zero while the others remain at sinc(0)=1.
+        Hence:
+      </p>
+
+      <div class="eq" data-copy="finalAnswer">
+        <button class="copybtn" data-copy-btn="finalAnswer">Copy final</button>
+        <pre id="finalAnswer">FINAL RESULTS
+
+(a) Far-field from a cubic source of side L with S(r') = exp(−j ks·r'):
+
+E(r) ≈ [exp(−j k0 r)/(4π r)] L^3 Π_{i=x,y,z} sinc( (Δk_i L)/2 ),
+Δk ≡ k0 r̂ − ks.
+
+Maximum emission when  k0 r̂ = ks  (phase matching / stationary phase).
+Tolerance scale set by first null: |Δk_i| ≈ 2π/L (for any component).
+
+(b) χ(2) mixing with incident waves k1 and k2 produces a polarization source
+P^(2) ∝ exp[−j (k1 + k2)·r], so the generated field at ω3 is maximized when
+
+k3 = k1 + k2   (vector phase matching).
+
+The scattered/generated field first vanishes at the smallest nonzero mismatch magnitude
+
+|Δk|min = 2π/L
+
+achieved when one component satisfies |Δk_i| = 2π/L and the others are zero.</pre>
+      </div>
+
+      <details>
+        <summary>Sanity checks for (b)</summary>
+        <p><strong>Vector direction:</strong> the condition <code>k3 = k1 + k2</code> enforces both momentum conservation (in a homogeneous medium) and coherent build-up.</p>
+        <p><strong>“Coherence length” connection:</strong> the first zero at <code>|Δk| = 2π/L</code> corresponds to a phase slip of 2π across the interaction length scale L, producing net cancellation.</p>
+        <p><strong>Scaling with size:</strong> doubling L halves the mismatch bandwidth—large crystals are more selective.</p>
+      </details>
+
+      <a class="backtop" href="#top">↑ Back to top</a>
+    </article>
+
+    <article id="deeper">
+      <h2>PART 4 — Deeper Understanding (theory around the result)</h2>
+
+      <h3>Re-interpreting the final formula</h3>
+      <p class="muted">
+        The factor <code>Π_i sinc(Δk_i L/2)</code> is a <strong>phase-matching (acceptance) function</strong>.
+        It tells you how much of the source’s spatial spectrum overlaps the outgoing wavevector.
+      </p>
+      <ul class="muted">
+        <li><strong>Prefactor <code>L³</code>:</strong> coherent volume scaling when perfectly matched (all points add in phase).</li>
+        <li><strong>Mismatch vector Δk:</strong> measures how rapidly phase winds across the source; larger Δk means faster sign changes and more cancellation.</li>
+        <li><strong>Each component:</strong> the cube independently enforces “tolerance” in x, y, z directions (angular selectivity emerges because changing r̂ changes Δk components).</li>
+      </ul>
+
+      <div class="callout">
+        <h3>Parameter dependence (qualitative)</h3>
+        <ul class="muted">
+          <li>Increase <code>L</code> → peak narrows; acceptance in Δk shrinks like <code>~ 1/L</code>.</li>
+          <li>Increase wavelength (decrease k) at fixed L → the condition <code>L ≫ λ</code> becomes weaker → less extreme selectivity.</li>
+          <li>Change observation direction r̂ → changes Δk = k_out r̂ − k_source → beam points where Δk ≈ 0.</li>
+        </ul>
+      </div>
+
+      <details>
+        <summary>Alternative derivation idea (brief but meaningful)</summary>
+        <p>
+          In the collinear 1D limit (interaction along z only), the generated amplitude is proportional to
+          <code>∫_0^L exp(j Δk z) dz</code> which directly yields <code>L sinc(Δk L/2) exp(jΔk L/2)</code>.
+          The 3D cube result is simply the product of three such 1D “aperture transforms”.
+        </p>
+      </details>
+
+      <h3>Concept check (self-test)</h3>
+      <ul class="muted">
+        <li><strong>Q:</strong> Why does perfect phase matching scale like <code>L³</code> here? <strong>A:</strong> Because every point in the cube contributes in phase, so the integral equals the volume.</li>
+        <li><strong>Q:</strong> What sets the mismatch bandwidth? <strong>A:</strong> The first zero of the sinc: phase slip of ~π from center to edge (or 2π across full length) gives cancellation → Δk ~ 2π/L.</li>
+        <li><strong>Q:</strong> In χ(2) mixing, where does <code>k₁ + k₂</code> come from? <strong>A:</strong> From multiplying two plane-wave factors: <code>e^{−j k1·r} e^{−j k2·r} = e^{−j (k1+k2)·r}</code>.</li>
+        <li><strong>Q:</strong> If the crystal is twice as long, what happens to tolerance? <strong>A:</strong> It halves: acceptable |Δk| becomes ~ (2π)/(2L) = π/L.</li>
+      </ul>
+
+      <a class="backtop" href="#top">↑ Back to top</a>
+    </article>
+
+    <article id="plotguide">
+      <h2>PART 5 — Optional Plot Guide</h2>
+
+      <p class="muted">
+        A plot is useful here because “tolerance” is fundamentally about how output drops with mismatch.
+        The most common measure is <strong>normalized intensity</strong> proportional to <code>sinc²(Δk L/2)</code>
+        (shown below in a 1D collinear slice).
+      </p>
+
+      <figure>
+        <canvas id="plot" width="980" height="520" aria-label="Plot of sinc squared acceptance versus mismatch"></canvas>
+        <figcaption>
+          <strong>Figure:</strong> Example acceptance curve (1D slice): normalized intensity
+          <code>I/I_max = sinc²(Δk L/2)</code> versus the dimensionless mismatch
+          <code>m = Δk / (2π/L)</code>. The first zeros occur at <code>m = ±1</code>.
+          (This figure is illustrative; the final answers above remain symbolic.)
+        </figcaption>
+      </figure>
+
+      <div class="callout warn">
+        <h3>How to read this plot</h3>
+        <ul class="muted">
+          <li><strong>x-axis:</strong> <code>m = Δk / (2π/L)</code> (dimensionless mismatch, first null at |m|=1).</li>
+          <li><strong>y-axis:</strong> <code>I/I_max</code> (dimensionless; 1 at perfect phase matching).</li>
+          <li><strong>Feature to notice:</strong> narrowing is controlled by L; in 3D, the full response is a product across components.</li>
+        </ul>
+      </div>
+
+      <a class="backtop" href="#top">↑ Back to top</a>
+    </article>
+  </div>
+</main>
+
+<footer>
+  <div class="hr"></div>
+  <p>
+    Built as a self-contained learning article: Helmholtz Green’s-function radiation integral → far-field Fourier transform →
+    sinc acceptance → phase matching and mismatch tolerance (including χ(2) Born-approx mixing).
+  </p>
+</footer>
+
+<div class="copytoast" id="toast" role="status" aria-live="polite">Copied.</div>
+
+<script>
+(function(){
+  const toast = document.getElementById('toast');
+
+  function showToast(msg){
+    toast.textContent = msg || "Copied.";
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>toast.classList.remove('show'), 1100);
+  }
+
+  async function copyText(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      showToast("Copied to clipboard");
+    }catch(e){
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      ta.style.top = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try{
+        document.execCommand('copy');
+        showToast("Copied to clipboard");
+      }catch(err){
+        showToast("Copy failed");
+      }
+      document.body.removeChild(ta);
+    }
+  }
+
+  document.addEventListener('click', (ev)=>{
+    const btn = ev.target.closest('[data-copy-btn]');
+    if(!btn) return;
+    const id = btn.getAttribute('data-copy-btn');
+    const el = document.getElementById(id);
+    if(!el) return;
+    copyText(el.innerText.trim());
+  });
+
+  // ---------- Plot: sinc^2 acceptance ----------
+  const canvas = document.getElementById('plot');
+  const ctx = canvas.getContext('2d');
+
+  function dprFix(c){
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const rect = c.getBoundingClientRect();
+    const w = Math.max(320, rect.width);
+    const h = Math.max(260, Math.min(540, rect.width*0.55));
+    c.style.height = h + "px";
+    c.width = Math.round(w * dpr);
+    c.height = Math.round(h * dpr);
+    return {dpr, w, h};
+  }
+
+  function line(x1,y1,x2,y2){
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.stroke();
+  }
+
+  function text(s,x,y,align,baseline){
+    ctx.textAlign = align || 'left';
+    ctx.textBaseline = baseline || 'alphabetic';
+    ctx.fillText(s,x,y);
+  }
+
+  function sinc(u){
+    if(Math.abs(u) < 1e-7) return 1;
+    return Math.sin(u)/u;
+  }
+
+  function draw(){
+    const {dpr,w,h} = dprFix(canvas);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    // background
+    ctx.clearRect(0,0,w,h);
+
+    // margins
+    const M = {l:62, r:16, t:40, b:54};
+    const W = w - M.l - M.r;
+    const H = h - M.t - M.b;
+
+    // axes ranges (dimensionless)
+    const xmin = -3, xmax = 3;
+    const ymin = 0, ymax = 1.05;
+
+    function X(x){ return M.l + (x - xmin) * W/(xmax-xmin); }
+    function Y(y){ return M.t + (ymax - y) * H/(ymax-ymin); }
+
+    // grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.lineWidth = 1;
+
+    // vertical ticks
+    for(let x=-3; x<=3.0001; x+=0.5){
+      const xx = X(x);
+      line(xx, M.t, xx, M.t+H);
+    }
+    // horizontal ticks
+    for(let y=0; y<=1.0001; y+=0.1){
+      const yy = Y(y);
+      line(M.l, yy, M.l+W, yy);
+    }
+
+    // axes
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.lineWidth = 1.25;
+    line(M.l, M.t+H, M.l+W, M.t+H);
+    line(M.l, M.t, M.l, M.t+H);
+
+    // ticks + labels
+    ctx.fillStyle = 'rgba(255,255,255,0.90)';
+    ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+
+    // x ticks at integers
+    for(let x=-3; x<=3; x++){
+      const xx = X(x);
+      line(xx, M.t+H, xx, M.t+H+6);
+      text(String(x), xx, M.t+H+18, 'center', 'top');
+    }
+    // y ticks at 0, 0.5, 1.0
+    [0,0.5,1.0].forEach(y=>{
+      const yy = Y(y);
+      line(M.l-6, yy, M.l, yy);
+      text(String(y.toFixed(1)), M.l-10, yy, 'right', 'middle');
+    });
+
+    // title
+    ctx.font = '600 14px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    text('Phase-matching acceptance (1D slice):  I/Imax = sinc²(Δk L/2)', M.l, 18, 'left', 'top');
+
+    // axis labels
+    ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+    ctx.fillStyle = 'rgba(255,255,255,0.86)';
+    text('m = Δk / (2π/L)   (dimensionless mismatch)', M.l + W/2, M.t+H+40, 'center', 'top');
+
+    ctx.save();
+    ctx.translate(18, M.t + H/2);
+    ctx.rotate(-Math.PI/2);
+    text('Normalized intensity  I/Imax', 0, 0, 'center', 'top');
+    ctx.restore();
+
+    // curve
+    ctx.strokeStyle = 'rgba(125,211,252,0.95)';
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    const N = 900;
+    for(let i=0;i<=N;i++){
+      const x = xmin + (xmax-xmin)*i/N; // x = m
+      // m = Δk /(2π/L) => Δk = m*(2π/L)
+      // u = Δk L/2 = m*(2π/L)*L/2 = m*π
+      const u = x * Math.PI;
+      const y = Math.pow(sinc(u),2);
+      const xx = X(x), yy = Y(y);
+      if(i===0) ctx.moveTo(xx,yy); else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+
+    // highlight first zeros at m=±1
+    ctx.setLineDash([6,6]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1.2;
+    line(X(-1), M.t, X(-1), M.t+H);
+    line(X(1), M.t, X(1), M.t+H);
+    ctx.setLineDash([]);
+
+    // legend
+    const lx = M.l + 10, ly = M.t + 10;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 1;
+    const bw = 260, bh = 46;
+    ctx.beginPath();
+    ctx.roundRect(lx, ly, bw, bh, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(125,211,252,0.95)';
+    ctx.lineWidth = 3;
+    line(lx+14, ly+16, lx+54, ly+16);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.90)';
+    ctx.font = '12px ' + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+    text('I/Imax = sinc²(mπ)', lx+64, ly+16, 'left', 'middle');
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+    ctx.lineWidth = 1.3;
+    ctx.setLineDash([6,6]);
+    line(lx+14, ly+32, lx+54, ly+32);
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,255,255,0.86)';
+    text('First zeros at m = ±1  ⇔  |Δk| = 2π/L', lx+64, ly+32, 'left', 'middle');
+  }
+
+  // Polyfill for roundRect if needed
+  if(!CanvasRenderingContext2D.prototype.roundRect){
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r){
+      const rr = Array.isArray(r) ? r : [r,r,r,r];
+      const [r1,r2,r3,r4] = rr.map(v=>Math.min(v, w/2, h/2));
+      this.beginPath();
+      this.moveTo(x+r1, y);
+      this.arcTo(x+w, y, x+w, y+h, r2);
+      this.arcTo(x+w, y+h, x, y+h, r3);
+      this.arcTo(x, y+h, x, y, r4);
+      this.arcTo(x, y, x+w, y, r1);
+      this.closePath();
+      return this;
+    };
+  }
+
+  let raf = null;
+  function requestDraw(){
+    if(raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', requestDraw, {passive:true});
+  requestDraw();
+})();
+</script>
 </body>
 </html>

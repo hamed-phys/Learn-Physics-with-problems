@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#07102a" />
+  <title>Fermat Lab — Ellipse Contours, Curvature, and Stationary Time</title>
+  <style>
+    :root{
+      /* user-controlled tile size (square side in px) */
+      --tileSize: 360px;
+    }
+
+    /* === 3 tiles horizontally (Geometry + Plot + Plot) === */
+    .stage{
+      height: 100%;
+      display:flex;
+      flex-direction: column;
+      gap: var(--gap);
+      min-height: 0;
+    }
+
+    /* the row that holds the 3 square windows */
+    .tileRow{
+      flex: 1 1 auto;
+      min-height: 0;
+
+      display:grid;
+      gap: var(--gap);
+
+      /* 3 across */
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items:start;
+    }
+
+    /* each tile card should NOT stretch its canvas; keep it square */
+    .tileRow .canvasCard{
+      min-height: 0;
+    }
+
+    /* square container that you can size */
+    .tileRow .canvasFill{
+      width: min(var(--tileSize), 100%);  /* controlled by slider but never overflow card */
+      aspect-ratio: 1 / 1;               /* square */
+      position: relative;
+      margin: 0 auto;                    /* center square in the card */
+      flex: 0 0 auto;
+    }
+
+    .tileRow canvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+    }
+
+    /* make the cards look consistent when the square doesn't fill all space */
+    .tileRow .miniNote{
+      flex: 0 0 auto;
+    }
+
+    /* responsive: on medium screens, go 2 + 1 */
+    @media (max-width: 1100px){
+      .tileRow{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    /* responsive: on phones, stack */
+    @media (max-width: 720px){
+      .tileRow{
+        grid-template-columns: 1fr;
+      }
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+
+    /* IMPORTANT: dashboard mode (no page scroll) */
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1100px 700px at 18% 12%, rgba(230, 240, 230, 0.16), transparent 55%),
+        radial-gradient(900px 650px at 86% 24%, rgba(223, 220, 230, 0.14), transparent 80%),
+        radial-gradient(800px 600px at 60% 92%, rgba(223, 233, 229, 0.1), transparent 60%),
+        linear-gradient(180deg, #000211, #dddee2 55%, #01030e);
+      overflow: hidden; /* <- key */
+    }
+
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      padding: max(15px, env(safe-area-inset-top)) 10px 15px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(360deg, rgba(255, 253, 253, 0.55), rgba(5, 0, 0, 0.12));
+      backdrop-filter: blur(10px);
+    }
+    .topbar .row{
+      max-width: 1200px;
+      margin: 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .brand{
+      display:flex;
+      align-items:baseline;
+      gap: 10px;
+      min-width: 0;
+    }
+    .brand h1{
+      font-size: 1.05rem;
+      letter-spacing: -.01em;
+      margin:0;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .brand .tag{
+      font-size: .86rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      max-width: 52vw;
+    }
+
+    .btn{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 900;
+      font-size: .92rem;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+      touch-action: manipulation;
+    }
+    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.24); }
+    .btn:active{ transform: translateY(0); }
+    .btn.primary{ border-color: rgba(125,211,252,.35); background: rgba(125,211,252,.12); }
+    .btn.warn{ border-color: rgba(251,191,36,.35); background: rgba(251,191,36,.10); }
+    .btn.good{ border-color: rgba(52,211,153,.35); background: rgba(52,211,153,.10); }
+
+    /* ======= DASHBOARD LAYOUT ======= */
+    .wrap{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--gap) 12px 12px;
+
+      height: calc(100vh - var(--topbarH)); /* <- key */
+      display:grid;
+      grid-template-columns: 420px 1fr;
+      gap: var(--gap);
+      align-items: stretch;
+    }
+    @media (max-width: 980px){
+      .wrap{
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+    }
+
+    .card{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      min-height: 0; /* allow children to size inside grid */
+    }
+    .card .head{
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background: linear-gradient(180deg, rgba(125,211,252,.10), transparent);
+    }
+    .card .head h2{
+      margin:0;
+      font-size: .98rem;
+      font-weight: 900;
+      letter-spacing: -.01em;
+    }
+    .card .body{
+      padding: 12px 14px 14px;
+      min-height: 0;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      font-size: .86rem;
+      backdrop-filter: blur(10px);
+      white-space: nowrap;
+    }
+    .mono{ font-family: var(--mono); }
+
+    .hint{
+      color: var(--muted);
+      font-size: .92rem;
+      line-height: 1.5;
+    }
+    .hint strong{ color: var(--text); }
+
+    /* Left sidebar ALWAYS visible + internal scroll */
+    .panelCol{
+      height: 100%;
+      display:flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .panelCol .body{
+      overflow: auto; /* <- key */
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .grid2{ display:grid; grid-template-columns: 1fr; gap: 10px; }
+
+    .control{
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      padding: 10px 10px;
+    }
+    .control label{
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: .92rem;
+      margin-bottom: 7px;
+      align-items: baseline;
+    }
+    .control input[type="range"]{ width:100%; }
+    .control select{
+      width:100%;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight: 900;
+      outline:none;
+      font-size: .95rem;
+    }
+
+    .cols{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 520px){
+      .cols{ grid-template-columns: 1fr; }
+    }
+
+    .readouts{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .readouts .pill{
+      background: rgba(0,0,0,.20);
+      font-size: .84rem;
+    }
+
+    /* Right side: ALWAYS show geometry + both plots in SAME VIEW */
+    .stage{
+      display:grid;
+      grid-template-rows: auto auto;   /* no forced stretching */
+      justify-items: center;           /* center squares */
+      gap: var(--gap);
+    }
+
+
+    /* Geometry card fills its grid row */
+    .canvasCard{
+      display:flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .canvasCard .body{ padding: 0; }
+
+    .canvasBar{
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      align-items:center;
+      justify-content:space-between;
+      background: radial-gradient(700px 400px at 40% 10%, rgba(125,211,252,.08), transparent 60%);
+      flex: 0 0 auto;
+    }
+    .canvasBar .left{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap:wrap;
+    }
+    .canvasBar .right{
+      display:flex;
+      gap: 8px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    /* Canvas fills remaining space inside card */
+    /* --- SQUARE CANVAS SYSTEM --- */
+
+    .canvasFill{
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;   /* <-- makes it square */
+      flex: 0 0 auto;        /* no stretching */
+    }
+
+    canvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+      background: rgba(0,0,0,.16);
+      touch-action:none;
+    }
+
+
+
+    /* Plots area: two plots always visible */
+    .plotStack{
+      display:grid;
+      grid-template-columns: 1fr 1fr;  /* <-- horizontal side-by-side */
+      grid-template-rows: auto;
+      gap: var(--gap);
+      align-items:start;
+    }
+    .plotStack .canvasCard{
+      display:flex;
+      flex-direction: column;
+    }
+
+    .plotStack .canvasFill{
+      margin: 0 auto; /* centers the square */
+      max-width: 100%;
+    }
+
+
+
+    .miniNote{
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: .9rem;
+      border-top: 1px solid var(--line);
+      background: rgba(0,0,0,.14);
+      flex: 0 0 auto;
+    }
+
+    /* Mobile: still show sidebar (controls) and stage; controls will take row 1 and stage row 2 */
+    @media (max-width: 980px){
+      .stage{ grid-template-rows: 1fr 1fr; } /* keep everything visible */
+      .brand .tag{ max-width: 62vw; }
+    }
+    @media (max-width: 720px){
+      .plotStack{
+        grid-template-columns: 1fr; /* back to vertical on phone */
+      }
+    }
+
+
+    @media (prefers-reduced-motion: reduce){
+      *{ scroll-behavior:auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar" id="topbar">
+    <div class="row">
+      <div class="brand">
+        <h1>Fermat Lab</h1>
+        <div class="tag">Ellipse contours • curvature test • max/min/inflection</div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+        <button class="btn primary" id="btnReset">Reset</button>
+        <button class="btn" id="btnHelp">How to use</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap" id="app">
+    <!-- Controls: ALWAYS visible sidebar -->
+    <div class="card panelCol" id="panel">
+      <div class="head">
+        <h2>Controls</h2>
+        <span class="pill">Drag: <span class="mono">A</span>, <span class="mono">B</span>, <span class="mono">P</span></span>
+      </div>
+      <div class="body">
+        <div class="hint">
+          <strong>Big idea:</strong> <span class="mono">L(Q)=|AQ|+|QB|</span>.  
+          The ellipse through <span class="mono">P</span> is a <strong>level set</strong> of <span class="mono">L</span>.  
+          A mirror tangent at <span class="mono">P</span> makes <span class="mono">dL/ds=0</span>.  
+          Then curvature decides <strong>max/min</strong>, or crossing gives <strong>inflection</strong>.
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="grid2">
+          <div class="control">
+            <label>
+              <span>Mirror type</span>
+              <span class="pill" id="modePill">inscribed → max</span>
+            </label>
+            <select id="mode">
+              <option value="inscribed">Inscribed tangent mirror (inside contour) → MAX time</option>
+              <option value="circumscribed">Circumscribed tangent mirror (outside contour) → MIN time</option>
+              <option value="crossing">Crossing tangent mirror → INFLECTION</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label>
+              <span>Mirror curvature ratio</span>
+              <span class="pill"><span class="mono">κM/κE</span> = <span class="mono" id="kRatioOut">1.40</span></span>
+            </label>
+            <input id="kRatio" type="range" min="0.35" max="2.50" step="0.01" value="1.40" />
+            <div class="hint" style="margin-top:6px; font-size:.88rem;">
+              <span class="mono">κE</span> is ellipse curvature at <span class="mono">P</span>.  
+              Staying inside contour → <strong>maximum</strong>; staying outside → <strong>minimum</strong>.
+            </div>
+          </div>
+
+          <div class="control" id="crossCtl">
+            <label>
+              <span>Crossing strength</span>
+              <span class="pill"><span class="mono">m</span> = <span class="mono" id="mOut">1.20</span></span>
+            </label>
+            <input id="m" type="range" min="0.10" max="4.00" step="0.01" value="1.20" />
+            <div class="hint" style="margin-top:6px; font-size:.88rem;">
+              Adds cubic normal displacement so mirror <strong>switches sides</strong> while tangent at <span class="mono">P</span>.
+            </div>
+          </div>
+
+          <div class="cols">
+            <div class="control">
+              <label>
+                <span>Show level-set ellipses</span>
+                <span class="pill"><span class="mono" id="lvlOut">on</span></span>
+              </label>
+              <input id="showLevels" type="range" min="0" max="1" step="1" value="1" />
+            </div>
+
+            <div class="control">
+              <label>
+                <span>Wavefront animation</span>
+                <span class="pill"><span class="mono" id="wfOut">off</span></span>
+              </label>
+              <input id="wavefront" type="range" min="0" max="1" step="1" value="0" />
+            </div>
+          </div>
+
+          <div class="control">
+            <label>
+              <span>Plot window around P</span>
+              <span class="pill"><span class="mono">sMax</span> = <span class="mono" id="sMaxOut">2.40</span></span>
+            </label>
+            <input id="sMax" type="range" min="1.20" max="6.00" step="0.01" value="2.40" />
+          </div>
+        </div>
+
+        <div class="readouts" id="readouts"></div>
+
+        <div style="height:10px"></div>
+
+        <div class="hint">
+          <strong>Touch tip:</strong> drag slowly; points “snap” when close.  
+          <strong>P</strong> is constrained to the ellipse.
+        </div>
+      </div>
+    </div>
+
+    <!-- Stage: geometry + plots always together -->
+    <div class="stage">
+      <div class="card canvasCard">
+        <div class="canvasBar">
+          <div class="left">
+            <span class="pill">Geometry</span>
+            <span class="pill">OPL: <span class="mono" id="LpOut">0</span></span>
+            <span class="pill">Type: <span class="mono" id="classOut">—</span></span>
+          </div>
+          <div class="right">
+            <button class="btn good" id="btnSnap">Snap P to bottom</button>
+            <button class="btn" id="btnCenter">Center view</button>
+          </div>
+        </div>
+        <div class="canvasFill">
+          <canvas id="cvGeo" aria-label="Geometry canvas"></canvas>
+        </div>
+        <div class="miniNote">
+          Solid: mirror • Dotted: ellipse contour through <span class="mono">P</span> • Cyan: other <span class="mono">L</span>-contours • Orange: ray via <span class="mono">P</span> • Dashed: nearby rays
+        </div>
+      </div>
+
+      <div class="plotStack">
+        <div class="card canvasCard">
+          <div class="canvasBar">
+            <div class="left">
+              <span class="pill">Plot</span>
+              <span class="pill"><span class="mono">L(s)</span></span>
+              <span class="pill"><span class="mono">dL/ds|0</span> = <span class="mono" id="d1Out">0</span></span>
+              <span class="pill"><span class="mono">d²L/ds²|0</span> = <span class="mono" id="d2Out">0</span></span>
+            </div>
+            <div class="right">
+              <span class="pill">Stationary at tangency</span>
+            </div>
+          </div>
+          <div class="canvasFill">
+            <canvas id="cvL" aria-label="L(s) plot"></canvas>
+          </div>
+          <div class="miniNote">
+            Non-crossing: sign of <span class="mono">d²L/ds²</span> gives max/min. Crossing: <span class="mono">ΔL</span> flips sign → inflection.
+          </div>
+        </div>
+
+        <div class="card canvasCard">
+          <div class="canvasBar">
+            <div class="left">
+              <span class="pill">Plot</span>
+              <span class="pill"><span class="mono">ΔL(s)=L(s)-L(0)</span></span>
+              <span class="pill">sign: <span class="mono" id="signOut">—</span></span>
+            </div>
+            <div class="right">
+              <span class="pill">Max: ΔL&lt;0 • Min: ΔL&gt;0</span>
+            </div>
+          </div>
+          <div class="canvasFill">
+            <canvas id="cvD" aria-label="Delta plot"></canvas>
+          </div>
+          <div class="miniNote">
+            In crossing mode, <span class="mono">ΔL</span> becomes positive on one side and negative on the other → <strong>inflection</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help modal -->
+  <div id="modal" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; padding:14px; z-index:50;">
+    <div style="position:absolute; inset:0; background: rgba(0,0,0,.55); backdrop-filter: blur(8px);"></div>
+    <div class="card" style="position:relative; max-width: 880px; width: 100%;">
+      <div class="head">
+        <h2>How to use</h2>
+        <button class="btn" id="btnClose">Close</button>
+      </div>
+      <div class="body">
+        <div class="hint">
+          <ol style="margin: 8px 0 0 18px;">
+            <li><strong>Drag A and B</strong> to set the two foci.</li>
+            <li><strong>Drag P</strong> (orange point). It stays <strong>on the ellipse</strong> (a contour of constant <span class="mono">L</span>).</li>
+            <li>Select mirror type: inscribed→max, circumscribed→min, crossing→inflection.</li>
+            <li>Look at plots: <span class="mono">L(s)</span> shows stationarity, <span class="mono">ΔL(s)</span> shows max/min/inflection.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ======== Topbar height → CSS variable (makes dashboard height correct) ======== */
+(function(){
+  const tb = document.getElementById("topbar");
+  function updateTopbarH(){
+    const h = tb ? tb.getBoundingClientRect().height : 64;
+    document.documentElement.style.setProperty("--topbarH", Math.round(h) + "px");
+  }
+  window.addEventListener("resize", updateTopbarH, {passive:true});
+  updateTopbarH();
+})();
+
+/* ============================================================
+   Fermat Lab — simulation logic (same physics, updated canvas sizing)
+============================================================ */
+
+const clamp = (x,a,b)=>Math.max(a, Math.min(b,x));
+const lerp = (a,b,t)=>a+(b-a)*t;
+const hypot = (x,y)=>Math.hypot(x,y);
+
+function setupCanvas(canvas){
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const rect = canvas.getBoundingClientRect();
+  const cssW = rect.width;
+  const cssH = rect.height;
+  canvas.width = Math.max(1, Math.round(cssW * dpr));
+  canvas.height = Math.max(1, Math.round(cssH * dpr));
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx,w:cssW,h:cssH,dpr};
+}
+
+function dist(p,q){ return Math.hypot(p.x-q.x, p.y-q.y); }
+
+function niceTicks(min,max,nt=6){
+  const span = (max-min) || 1;
+  const raw = span/nt;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw/mag;
+  let step;
+  if(norm<1.5) step=1;
+  else if(norm<3) step=2;
+  else if(norm<7) step=5;
+  else step=10;
+  step *= mag;
+  const t0 = Math.ceil(min/step)*step;
+  const ticks=[];
+  for(let v=t0; v<=max+1e-12; v+=step) ticks.push(v);
+  return ticks;
+}
+
+function drawAxes(ctx, w, h, xlim, ylim, opts){
+  const padL = opts.padL ?? 56;
+  const padR = opts.padR ?? 16;
+  const padT = opts.padT ?? 16;
+  const padB = opts.padB ?? 42;
+
+  const gx0 = padL;
+  const gy0 = padT;
+  const gw = w - padL - padR;
+  const gh = h - padT - padB;
+
+  const X = x => gx0 + (x-xlim[0])/(xlim[1]-xlim[0]) * gw;
+  const Y = y => gy0 + (1-(y-ylim[0])/(ylim[1]-ylim[0])) * gh;
+
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,0.12)";
+  ctx.fillRect(0,0,w,h);
+  ctx.restore();
+
+  const xt = niceTicks(xlim[0], xlim[1], 7);
+  const yt = niceTicks(ylim[0], ylim[1], 6);
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
+  ctx.lineWidth = 1;
+  for(const v of xt){
+    const x = X(v);
+    ctx.beginPath(); ctx.moveTo(x, gy0); ctx.lineTo(x, gy0+gh); ctx.stroke();
+  }
+  for(const v of yt){
+    const y = Y(v);
+    ctx.beginPath(); ctx.moveTo(gx0, y); ctx.lineTo(gx0+gw, y); ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.28)";
+  ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(gx0, gy0+gh); ctx.lineTo(gx0+gw, gy0+gh); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(gx0, gy0); ctx.lineTo(gx0, gy0+gh); ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = "rgba(234,240,255,0.85)";
+  ctx.font = "12px ui-monospace, Menlo, Consolas, monospace";
+  ctx.strokeStyle = "rgba(255,255,255,0.22)";
+  for(const v of xt){
+    const x = X(v);
+    ctx.beginPath(); ctx.moveTo(x, gy0+gh); ctx.lineTo(x, gy0+gh+6); ctx.stroke();
+    ctx.textAlign="center"; ctx.textBaseline="top";
+    ctx.fillText((Math.round(v*100)/100).toString(), x, gy0+gh+8);
+  }
+  for(const v of yt){
+    const y = Y(v);
+    ctx.beginPath(); ctx.moveTo(gx0-6, y); ctx.lineTo(gx0, y); ctx.stroke();
+    ctx.textAlign="right"; ctx.textBaseline="middle";
+    ctx.fillText((Math.round(v*100)/100).toString(), gx0-8, y);
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = "rgba(234,240,255,0.92)";
+  ctx.font = "900 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  if(opts.title){
+    ctx.textAlign="left"; ctx.textBaseline="top";
+    ctx.fillText(opts.title, 10, 10);
+  }
+  ctx.fillStyle = "rgba(170,182,221,0.95)";
+  ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto";
+  if(opts.xlabel){
+    ctx.textAlign="center"; ctx.textBaseline="top";
+    ctx.fillText(opts.xlabel, gx0+gw/2, h-18);
+  }
+  if(opts.ylabel){
+    ctx.save();
+    ctx.translate(16, gy0+gh/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.textAlign="center"; ctx.textBaseline="top";
+    ctx.fillText(opts.ylabel, 0, 0);
+    ctx.restore();
+  }
+  ctx.restore();
+
+  return {X,Y,gx0,gy0,gw,gh};
+}
+
+const S = {
+  A: {x:-3, y:0},
+  B: {x: 3, y:0},
+  a: 5,
+  thetaP: -Math.PI/2,
+  get c(){ return dist(this.A, this.B)/2; },
+  get center(){ return {x:(this.A.x+this.B.x)/2, y:(this.A.y+this.B.y)/2}; },
+
+  mode: "inscribed",
+  kRatio: 1.40,
+  m: 1.20,
+  showLevels: true,
+  wavefront: false,
+  sMax: 2.40,
+
+  view: { cx: 0, cy: 0, scale: 70 },
+
+  dragging: null,
+  pointerId: null,
+  tAnim: 0
+};
+
+function recomputeEllipse(){
+  const C = S.center;
+  const c = S.c;
+
+  S.a = Math.max(S.a, c + 0.25);
+  const b0 = Math.sqrt(Math.max(0, S.a*S.a - c*c)) || 0.2;
+
+  const Pguess = { x: C.x + S.a*Math.cos(S.thetaP), y: C.y + b0*Math.sin(S.thetaP) };
+  const Lp = dist(S.A, Pguess) + dist(Pguess, S.B);
+  const aLevel = Math.max(Lp/2, c + 0.25);
+  S.a = aLevel;
+
+  const b = Math.sqrt(Math.max(0, S.a*S.a - c*c)) || 0.2;
+  const P = { x: C.x + S.a*Math.cos(S.thetaP), y: C.y + b*Math.sin(S.thetaP) };
+  return {C, a:S.a, b, c, P, Lp: dist(S.A,P)+dist(P,S.B)};
+}
+
+function ellipsePoint(theta, C, a, b){
+  return { x: C.x + a*Math.cos(theta), y: C.y + b*Math.sin(theta) };
+}
+
+function ellipseCurvature(theta, a, b){
+  const s = Math.sin(theta), c = Math.cos(theta);
+  const denom = Math.pow((a*a*s*s + b*b*c*c), 1.5);
+  if(denom < 1e-9) return 0;
+  return (a*b)/denom;
+}
+
+function ellipseTangent(theta, a, b){
+  const tx = -a*Math.sin(theta);
+  const ty =  b*Math.cos(theta);
+  const L = Math.hypot(tx,ty) || 1;
+  return {x: tx/L, y: ty/L};
+}
+function rot90(v){ return {x:-v.y, y:v.x}; }
+
+function Lof(Q){
+  return dist(S.A,Q) + dist(Q,S.B);
+}
+
+function buildMirror(theta, C, a, b){
+  const P = ellipsePoint(theta, C, a, b);
+  const tHat = ellipseTangent(theta, a, b);
+
+  let nGuess = {x: C.x - P.x, y: C.y - P.y};
+  const nLen = Math.hypot(nGuess.x, nGuess.y) || 1;
+  nGuess = {x: nGuess.x/nLen, y: nGuess.y/nLen};
+
+  let nHat = rot90(tHat);
+  if(nHat.x*nGuess.x + nHat.y*nGuess.y < 0) nHat = {x:-nHat.x, y:-nHat.y};
+
+  const kE = ellipseCurvature(theta, a, b);
+  const kM = S.kRatio * kE;
+
+  const N = 301;
+  const sMax = S.sMax;
+  const pts = new Array(N);
+
+  if(S.mode === "inscribed" || S.mode === "circumscribed"){
+    const sign = (S.mode === "inscribed") ? +1 : -1;
+    const R = (Math.abs(kM) < 1e-6) ? 1e6 : (1/Math.abs(kM));
+    const kSigned = sign * Math.abs(kM);
+    const centerCircle = { x: P.x + (1/kSigned)*nHat.x, y: P.y + (1/kSigned)*nHat.y };
+
+    const u = {x: -nHat.x, y: -nHat.y};
+    const v = tHat;
+
+    const phiSpan = clamp(sMax / R, 0.15, 1.2);
+    for(let i=0;i<N;i++){
+      const q = i/(N-1);
+      const phi = lerp(-phiSpan, +phiSpan, q);
+      const x = centerCircle.x + R*(Math.cos(phi)*u.x + Math.sin(phi)*v.x);
+      const y = centerCircle.y + R*(Math.cos(phi)*u.y + Math.sin(phi)*v.y);
+      const s = R*phi;
+      pts[i] = {x,y,s};
+    }
+  } else {
+    const m = S.m;
+    for(let i=0;i<N;i++){
+      const q = i/(N-1);
+      const s = lerp(-sMax, +sMax, q);
+      const normalDisp = (kM*s*s)/2 + (m*s*s*s)/6;
+      const x = P.x + s*tHat.x + normalDisp*nHat.x;
+      const y = P.y + s*tHat.y + normalDisp*nHat.y;
+      pts[i] = {x,y,s};
+    }
+  }
+
+  return {P, tHat, nHat, kE, kM, pts, C, a, b};
+}
+
+function worldBounds(geo){
+  const pts = [];
+  pts.push(S.A, S.B, geo.P);
+  for(const p of geo.pts) pts.push(p);
+  for(let i=0;i<120;i++){
+    const th = (i/120)*Math.PI*2;
+    pts.push( ellipsePoint(th, geo.C, geo.a, geo.b) );
+  }
+  let xmin=Infinity, xmax=-Infinity, ymin=Infinity, ymax=-Infinity;
+  for(const p of pts){
+    xmin = Math.min(xmin, p.x); xmax = Math.max(xmax, p.x);
+    ymin = Math.min(ymin, p.y); ymax = Math.max(ymax, p.y);
+  }
+  const pad = 0.9;
+  return {xmin:xmin-pad, xmax:xmax+pad, ymin:ymin-pad, ymax:ymax+pad};
+}
+
+function setViewToBounds(bounds, canvasW, canvasH){
+  const w = bounds.xmax - bounds.xmin;
+  const h = bounds.ymax - bounds.ymin;
+  const scale = Math.min((canvasW-40)/w, (canvasH-40)/h);
+  S.view.scale = clamp(scale, 25, 250);
+  S.view.cx = (bounds.xmin + bounds.xmax)/2;
+  S.view.cy = (bounds.ymin + bounds.ymax)/2;
+}
+
+function W2S(x,y, w,h){
+  const s = S.view.scale;
+  return { x: w/2 + (x - S.view.cx)*s, y: h/2 - (y - S.view.cy)*s };
+}
+function S2W(x,y, w,h){
+  const s = S.view.scale;
+  return { x: (x - w/2)/s + S.view.cx, y: (h/2 - y)/s + S.view.cy };
+}
+
+function drawGeometry(canvas, geo){
+  const {ctx,w,h} = setupCanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+
+  const gg = ctx.createLinearGradient(0,0,0,h);
+  gg.addColorStop(0, "rgba(255,255,255,0.03)");
+  gg.addColorStop(1, "rgba(0,0,0,0.00)");
+  ctx.fillStyle = gg;
+  ctx.fillRect(0,0,w,h);
+
+  const bounds = worldBounds(geo);
+  if(!drawGeometry._init){
+    setViewToBounds(bounds, w, h);
+    drawGeometry._init = true;
+  }
+
+  ctx.save();
+  ctx.strokeStyle="rgba(255,255,255,0.06)";
+  ctx.lineWidth=1;
+  for(let i=0;i<=10;i++){
+    const x = lerp(0,w,i/10);
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+  }
+  for(let j=0;j<=8;j++){
+    const y = lerp(0,h,j/8);
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+  }
+  ctx.restore();
+
+  const L0 = Lof(geo.P);
+
+  if(S.showLevels){
+    const rings = 6;
+    for(let k=-rings;k<=rings;k++){
+      if(k===0) continue;
+      const Lk = L0 + k*0.65;
+      if(Lk <= 2*S.c + 0.05) continue;
+      const ak = Lk/2;
+      const ck = S.c;
+      const bk = Math.sqrt(Math.max(0, ak*ak - ck*ck));
+      ctx.save();
+      ctx.setLineDash([6,6]);
+      ctx.strokeStyle = "rgba(125,211,252,0.20)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      const N=220;
+      for(let i=0;i<=N;i++){
+        const th = (i/N)*Math.PI*2;
+        const p = ellipsePoint(th, geo.C, ak, bk);
+        const s = W2S(p.x,p.y,w,h);
+        if(i===0) ctx.moveTo(s.x,s.y); else ctx.lineTo(s.x,s.y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  if(S.wavefront){
+    const t = S.tAnim;
+    const Lw = L0 + (Math.sin(t)*0.5 + 0.5)*5.0;
+    const aw = Math.max(Lw/2, S.c+0.25);
+    const bw = Math.sqrt(Math.max(0, aw*aw - S.c*S.c));
+    ctx.save();
+    ctx.setLineDash([]);
+    ctx.strokeStyle="rgba(52,211,153,0.35)";
+    ctx.lineWidth=2.2;
+    ctx.beginPath();
+    const N=240;
+    for(let i=0;i<=N;i++){
+      const th=(i/N)*Math.PI*2;
+      const p=ellipsePoint(th, geo.C, aw, bw);
+      const s=W2S(p.x,p.y,w,h);
+      if(i===0) ctx.moveTo(s.x,s.y); else ctx.lineTo(s.x,s.y);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.setLineDash([5,5]);
+  ctx.strokeStyle="rgba(125,211,252,0.75)";
+  ctx.lineWidth=2.2;
+  ctx.beginPath();
+  const N=260;
+  for(let i=0;i<=N;i++){
+    const th=(i/N)*Math.PI*2;
+    const p=ellipsePoint(th, geo.C, geo.a, geo.b);
+    const s=W2S(p.x,p.y,w,h);
+    if(i===0) ctx.moveTo(s.x,s.y); else ctx.lineTo(s.x,s.y);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle="rgba(167,139,250,0.88)";
+  ctx.lineWidth=3.2;
+  ctx.beginPath();
+  for(let i=0;i<geo.pts.length;i++){
+    const p=geo.pts[i];
+    const s=W2S(p.x,p.y,w,h);
+    if(i===0) ctx.moveTo(s.x,s.y); else ctx.lineTo(s.x,s.y);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  const mid = Math.floor(geo.pts.length/2);
+  const Qm = geo.pts[Math.max(0, mid-60)];
+  const Qp = geo.pts[Math.min(geo.pts.length-1, mid+60)];
+
+  const drawPath = (p1,p2,p3, stroke, lw, dash)=>{
+    ctx.save();
+    ctx.strokeStyle=stroke;
+    ctx.lineWidth=lw;
+    if(dash) ctx.setLineDash(dash); else ctx.setLineDash([]);
+    const s1=W2S(p1.x,p1.y,w,h), s2=W2S(p2.x,p2.y,w,h), s3=W2S(p3.x,p3.y,w,h);
+    ctx.beginPath();
+    ctx.moveTo(s1.x,s1.y);
+    ctx.lineTo(s2.x,s2.y);
+    ctx.lineTo(s3.x,s3.y);
+    ctx.stroke();
+    ctx.restore();
+  };
+  drawPath(S.A, geo.P, S.B, "rgba(251,191,36,0.95)", 2.8, null);
+  drawPath(S.A, Qm, S.B, "rgba(125,211,252,0.55)", 2.0, [7,6]);
+  drawPath(S.A, Qp, S.B, "rgba(125,211,252,0.55)", 2.0, [7,6]);
+
+  function drawPoint(p, label, color){
+    const s=W2S(p.x,p.y,w,h);
+    ctx.save();
+    ctx.fillStyle=color;
+    ctx.beginPath(); ctx.arc(s.x, s.y, 6.0, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle="rgba(0,0,0,0.45)";
+    ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle="rgba(234,240,255,0.92)";
+    ctx.font="900 13px ui-monospace, Menlo, Consolas, monospace";
+    ctx.textAlign="left"; ctx.textBaseline="middle";
+    ctx.fillText(label, s.x+9, s.y-1);
+    ctx.restore();
+  }
+  drawPoint(S.A, "A", "rgba(52,211,153,0.95)");
+  drawPoint(S.B, "B", "rgba(52,211,153,0.95)");
+  drawPoint(geo.P, "P", "rgba(251,191,36,0.95)");
+  drawPoint(Qm, "Q", "rgba(125,211,252,0.95)");
+  drawPoint(Qp, "Q′","rgba(125,211,252,0.95)");
+}
+
+function computeSeries(geo){
+  const pts = geo.pts;
+  const sArr = pts.map(p=>p.s);
+  const LArr = pts.map(p=>Lof(p));
+  const mid = Math.floor(pts.length/2);
+  const L0 = LArr[mid];
+  const dArr = LArr.map(v=>v-L0);
+
+  const i = mid;
+  const i1 = Math.max(2, Math.min(pts.length-3, i));
+  const s1 = sArr[i1-1], s2 = sArr[i1], s3 = sArr[i1+1];
+  const y1=LArr[i1-1], y2=LArr[i1], y3=LArr[i1+1];
+
+  let d1=0, d2=0;
+  if(Math.abs((s2-s1)*(s3-s2)*(s3-s1)) > 1e-12){
+    d1 =
+      y1*(s2-s3)/((s1-s2)*(s1-s3)) +
+      y2*(2*s2 - s1 - s3)/((s2-s1)*(s2-s3)) +
+      y3*(s2-s1)/((s3-s1)*(s3-s2));
+
+    d2 = 2*(
+      y1/((s1-s2)*(s1-s3)) +
+      y2/((s2-s1)*(s2-s3)) +
+      y3/((s3-s1)*(s3-s2))
+    );
+  }
+
+  const window = 18;
+  const left = dArr.slice(mid-window, mid).filter(v=>isFinite(v));
+  const right= dArr.slice(mid+1, mid+1+window).filter(v=>isFinite(v));
+  const leftHasPos = left.some(v=>v> 1e-4);
+  const leftHasNeg = left.some(v=>v<-1e-4);
+  const rightHasPos= right.some(v=>v> 1e-4);
+  const rightHasNeg= right.some(v=>v<-1e-4);
+
+  let signPattern = "—";
+  if((leftHasPos || rightHasPos) && (leftHasNeg || rightHasNeg)){
+    signPattern = "mixed (crossing)";
+  }else if(leftHasNeg || rightHasNeg){
+    signPattern = "ΔL mostly < 0";
+  }else if(leftHasPos || rightHasPos){
+    signPattern = "ΔL mostly > 0";
+  }else{
+    signPattern = "near 0 flat";
+  }
+
+  return {pts,sArr,LArr,L0,dArr,d1,d2,signPattern};
+}
+
+function classify(geo, series){
+  const mid = Math.floor(series.pts.length/2);
+  const left = series.dArr.slice(mid-18, mid);
+  const right= series.dArr.slice(mid+1, mid+1+18);
+  const leftNeg = left.some(v=>v<-1e-4);
+  const leftPos = left.some(v=>v> 1e-4);
+  const rightNeg= right.some(v=>v<-1e-4);
+  const rightPos= right.some(v=>v> 1e-4);
+  const mixed = (leftNeg||rightNeg) && (leftPos||rightPos);
+
+  let cls="—";
+  if(S.mode==="crossing" || mixed){
+    cls = "inflection (ΔL changes sign)";
+  }else{
+    if((leftNeg||rightNeg) && !(leftPos||rightPos)) cls = "maximum (neighbors smaller L)";
+    else if((leftPos||rightPos) && !(leftNeg||rightNeg)) cls = "minimum (neighbors larger L)";
+    else{
+      if(series.d2 < -1e-6) cls = "maximum (by d²L/ds² < 0)";
+      else if(series.d2 > 1e-6) cls = "minimum (by d²L/ds² > 0)";
+      else cls = "flat / ambiguous";
+    }
+  }
+  return cls;
+}
+
+const el = id => document.getElementById(id);
+
+function updateUI(geo, series, cls){
+  el("kRatioOut").textContent = S.kRatio.toFixed(2);
+  el("mOut").textContent = S.m.toFixed(2);
+  el("sMaxOut").textContent = S.sMax.toFixed(2);
+  el("lvlOut").textContent = S.showLevels ? "on" : "off";
+  el("wfOut").textContent = S.wavefront ? "on" : "off";
+
+  const modePill = el("modePill");
+  if(S.mode==="inscribed") modePill.textContent = "inscribed → max";
+  else if(S.mode==="circumscribed") modePill.textContent = "circumscribed → min";
+  else modePill.textContent = "crossing → inflection";
+
+  el("LpOut").textContent = Lof(geo.P).toFixed(4);
+  el("classOut").textContent = cls;
+
+  el("d1Out").textContent = (Math.abs(series.d1) < 1e-6 ? "≈0" : series.d1.toExponential(2));
+  el("d2Out").textContent = (Math.abs(series.d2) < 1e-6 ? "≈0" : series.d2.toExponential(2));
+  el("signOut").textContent = series.signPattern;
+
+  const read = [
+    {t:`A=(${S.A.x.toFixed(2)}, ${S.A.y.toFixed(2)})`},
+    {t:`B=(${S.B.x.toFixed(2)}, ${S.B.y.toFixed(2)})`},
+    {t:`P=(${geo.P.x.toFixed(2)}, ${geo.P.y.toFixed(2)})`},
+    {t:`c=|AB|/2=${S.c.toFixed(3)}`},
+    {t:`L(P)=${Lof(geo.P).toFixed(4)} ⇒ a=L/2=${(Lof(geo.P)/2).toFixed(4)}`},
+    {t:`b=√(a²-c²)=${geo.b.toFixed(4)}`},
+    {t:`κE(P)=${geo.kE.toFixed(6)}`},
+    {t:`κM(P)=${geo.kM.toFixed(6)}`}
+  ];
+  const box = el("readouts");
+  box.innerHTML = "";
+  for(const r of read){
+    const span = document.createElement("span");
+    span.className = "pill mono";
+    span.textContent = r.t;
+    box.appendChild(span);
+  }
+
+  el("crossCtl").style.display = (S.mode==="crossing") ? "block" : "none";
+}
+
+/* Plots */
+function drawPlotL(canvas, series){
+  const {ctx,w,h} = setupCanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+
+  const smin = Math.min(...series.sArr);
+  const smax = Math.max(...series.sArr);
+  let Lmin = Math.min(...series.LArr);
+  let Lmax = Math.max(...series.LArr);
+  const pad = 0.08*(Lmax-Lmin || 1);
+  Lmin -= pad; Lmax += pad;
+
+  const ax = drawAxes(ctx, w, h, [smin,smax], [Lmin,Lmax], {
+    title: "L(s) = |A r(s)| + |r(s) B|",
+    xlabel: "s",
+    ylabel: "L(s)"
+  });
+
+  ctx.save();
+  ctx.strokeStyle="rgba(125,211,252,0.90)";
+  ctx.lineWidth=2.6;
+  ctx.beginPath();
+  for(let i=0;i<series.pts.length;i++){
+    const x=ax.X(series.sArr[i]);
+    const y=ax.Y(series.LArr[i]);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPlotD(canvas, series){
+  const {ctx,w,h} = setupCanvas(canvas);
+  ctx.clearRect(0,0,w,h);
+
+  const smin = Math.min(...series.sArr);
+  const smax = Math.max(...series.sArr);
+  let dmin = Math.min(...series.dArr);
+  let dmax = Math.max(...series.dArr);
+  const pad = 0.14*(dmax-dmin || 1);
+  dmin -= pad; dmax += pad;
+
+  const ax = drawAxes(ctx, w, h, [smin,smax], [dmin,dmax], {
+    title: "ΔL(s) = L(s) − L(0)",
+    xlabel: "s",
+    ylabel: "ΔL(s)"
+  });
+
+  ctx.save();
+  ctx.strokeStyle="rgba(167,139,250,0.92)";
+  ctx.lineWidth=2.6;
+  ctx.beginPath();
+  for(let i=0;i<series.pts.length;i++){
+    const x=ax.X(series.sArr[i]);
+    const y=ax.Y(series.dArr[i]);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* Interaction */
+const cvGeo = el("cvGeo");
+function hitTest(world, geo){
+  const r = 0.20;
+  if(dist(world, geo.P) < r) return "P";
+  if(dist(world, S.A) < r) return "A";
+  if(dist(world, S.B) < r) return "B";
+  return null;
+}
+
+function updatePFromWorld(world, geo){
+  const C = geo.C, a = geo.a, b = geo.b;
+  let bestTh = S.thetaP;
+  let bestD = Infinity;
+
+  const M = 120;
+  for(let i=0;i<M;i++){
+    const th = -Math.PI + (2*Math.PI)*(i/(M-1));
+    const p = ellipsePoint(th, C, a, b);
+    const d = dist(p, world);
+    if(d < bestD){ bestD=d; bestTh=th; }
+  }
+
+  let th = bestTh;
+  let step = 0.15;
+  for(let it=0; it<18; it++){
+    const p0 = ellipsePoint(th, C, a, b);
+    const pL = ellipsePoint(th-step, C, a, b);
+    const pR = ellipsePoint(th+step, C, a, b);
+    const d0 = dist(p0, world);
+    const dL = dist(pL, world);
+    const dR = dist(pR, world);
+    if(dL < d0){ th = th-step; }
+    else if(dR < d0){ th = th+step; }
+    else step *= 0.6;
+  }
+  S.thetaP = th;
+}
+
+function computeGeo(){
+  const {C,a,b} = recomputeEllipse();
+  const geo = buildMirror(S.thetaP, C, a, b);
+  geo.P = ellipsePoint(S.thetaP, C, a, b);
+  return geo;
+}
+
+function attachPointer(canvas){
+  canvas.addEventListener("pointerdown", (e)=>{
+    canvas.setPointerCapture(e.pointerId);
+    S.pointerId = e.pointerId;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const geo = computeGeo();
+    const world = S2W(x,y, rect.width, rect.height);
+    const hit = hitTest(world, geo);
+    if(hit){
+      S.dragging = hit;
+      e.preventDefault();
+    } else {
+      S.dragging = "pan";
+      S._pan0 = {x,y, cx:S.view.cx, cy:S.view.cy};
+      e.preventDefault();
+    }
+  }, {passive:false});
+
+  canvas.addEventListener("pointermove", (e)=>{
+    if(S.pointerId !== e.pointerId) return;
+    if(!S.dragging) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const world = S2W(x,y, rect.width, rect.height);
+
+    const geo = computeGeo();
+
+    if(S.dragging === "A"){
+      S.A.x = world.x; S.A.y = world.y;
+    } else if(S.dragging === "B"){
+      S.B.x = world.x; S.B.y = world.y;
+    } else if(S.dragging === "P"){
+      updatePFromWorld(world, geo);
+    } else if(S.dragging === "pan"){
+      const dx = (x - S._pan0.x)/S.view.scale;
+      const dy = (y - S._pan0.y)/S.view.scale;
+      S.view.cx = S._pan0.cx - dx;
+      S.view.cy = S._pan0.cy + dy;
+    }
+
+    e.preventDefault();
+  }, {passive:false});
+
+  canvas.addEventListener("pointerup", (e)=>{
+    if(S.pointerId === e.pointerId){
+      S.dragging = null;
+      S.pointerId = null;
+    }
+  });
+
+  canvas.addEventListener("wheel", (e)=>{
+    const delta = Math.sign(e.deltaY);
+    const factor = (delta>0) ? 0.92 : 1.08;
+    S.view.scale = clamp(S.view.scale*factor, 18, 360);
+    e.preventDefault();
+  }, {passive:false});
+}
+
+/* Controls */
+function initControls(){
+  el("mode").addEventListener("change", ()=>{ S.mode = el("mode").value; });
+  el("kRatio").addEventListener("input", ()=>{ S.kRatio = parseFloat(el("kRatio").value); });
+  el("m").addEventListener("input", ()=>{ S.m = parseFloat(el("m").value); });
+  el("showLevels").addEventListener("input", ()=>{ S.showLevels = parseInt(el("showLevels").value,10) === 1; });
+  el("wavefront").addEventListener("input", ()=>{ S.wavefront = parseInt(el("wavefront").value,10) === 1; });
+  el("sMax").addEventListener("input", ()=>{ S.sMax = parseFloat(el("sMax").value); });
+
+  el("btnReset").addEventListener("click", ()=>{
+    S.A = {x:-3, y:0};
+    S.B = {x: 3, y:0};
+    S.thetaP = -Math.PI/2;
+    S.mode = "inscribed";
+    S.kRatio = 1.40;
+    S.m = 1.20;
+    S.showLevels = true;
+    S.wavefront = false;
+    S.sMax = 2.40;
+
+    el("mode").value = "inscribed";
+    el("kRatio").value = S.kRatio.toFixed(2);
+    el("m").value = S.m.toFixed(2);
+    el("showLevels").value = 1;
+    el("wavefront").value = 0;
+    el("sMax").value = S.sMax.toFixed(2);
+
+    drawGeometry._init = false;
+  });
+
+  el("btnSnap").addEventListener("click", ()=>{ S.thetaP = -Math.PI/2; });
+
+  el("btnCenter").addEventListener("click", ()=>{
+    const geo = computeGeo();
+    const rect = cvGeo.getBoundingClientRect();
+    setViewToBounds(worldBounds(geo), rect.width, rect.height);
+  });
+
+  el("btnHelp").addEventListener("click", ()=>{ el("modal").style.display = "flex"; });
+  el("btnClose").addEventListener("click", ()=>{ el("modal").style.display = "none"; });
+  el("modal").addEventListener("click", (e)=>{ if(e.target === el("modal")) el("modal").style.display = "none"; });
+
+  el("mode").value = S.mode;
+  el("kRatio").value = S.kRatio.toFixed(2);
+  el("m").value = S.m.toFixed(2);
+  el("showLevels").value = S.showLevels ? 1 : 0;
+  el("wavefront").value = S.wavefront ? 1 : 0;
+  el("sMax").value = S.sMax.toFixed(2);
+}
+
+/* Render loop */
+const cvL = el("cvL");
+const cvD = el("cvD");
+
+function render(){
+  const geo = computeGeo();
+  const series = computeSeries(geo);
+  const cls = classify(geo, series);
+
+  updateUI(geo, series, cls);
+
+  drawGeometry(cvGeo, geo);
+  drawPlotL(cvL, series);
+  drawPlotD(cvD, series);
+
+  S.tAnim += (S.wavefront ? 0.045 : 0.010);
+  requestAnimationFrame(render);
+}
+
+attachPointer(cvGeo);
+initControls();
+render();
+</script>
+</body>
+</html>

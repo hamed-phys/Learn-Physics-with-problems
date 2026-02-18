@@ -2,64 +2,1313 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>23.2-2 — Bragg-Grating Chirp Filter</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bragg-Grating Chirp Filter Design (Gaussian Pulse @ 300 THz)</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b1020;
+      --card:#0f1733;
+      --ink:#eaf0ff;
+      --muted:#b8c4ff;
+      --soft:#97a6ff;
+      --line:rgba(255,255,255,.12);
+      --accent:#7cf0d6;
+      --accent2:#ffd36e;
+      --danger:#ff6b7a;
+      --ok:#77ff9a;
+      --shadow: 0 16px 40px rgba(0,0,0,.38);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background: radial-gradient(1200px 700px at 20% -10%, rgba(124,240,214,.20), transparent 60%),
+                  radial-gradient(900px 500px at 110% 10%, rgba(255,211,110,.16), transparent 60%),
+                  linear-gradient(180deg, #070a14 0%, #0b1020 30%, #070a14 100%);
+      line-height:1.6;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+
+    header{
+      padding: clamp(18px, 3vw, 34px) 18px 16px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), transparent 60%);
+      position:relative;
+      overflow:hidden;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+    header::after{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(700px 300px at 30% 20%, rgba(124,240,214,.18), transparent 65%),
+        radial-gradient(700px 300px at 70% 0%, rgba(255,211,110,.14), transparent 60%);
+      filter: blur(0px);
+      pointer-events:none;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
+    header .wrap{
+      max-width:1180px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:18px;
+      align-items:end;
+      position:relative;
+      z-index:1;
+    }
+    h1{
+      margin:0;
+      font-weight:800;
+      letter-spacing:.2px;
+      font-size: clamp(22px, 3.2vw, 40px);
+      line-height:1.12;
+    }
+    .subtitle{
+      margin:.55rem 0 0;
+      color:var(--muted);
+      max-width:70ch;
+      font-size: clamp(14px, 1.55vw, 16px);
+    }
+
+    .meta{
+      justify-self:end;
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      max-width:420px;
+    }
+    .meta b{ color:var(--ink); }
+    .meta .row{
+      display:flex; gap:10px; justify-content:space-between; align-items:baseline;
+      border-bottom:1px dashed rgba(255,255,255,.12);
+      padding:6px 0;
+    }
+    .meta .row:last-child{ border-bottom:none; }
+    .tag{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(124,240,214,.12);
+      border:1px solid rgba(124,240,214,.25);
+      color: var(--ink);
+      font-weight:700;
+      font-size:12px;
+      letter-spacing:.2px;
+      white-space:nowrap;
+    }
+
+    main{
+      max-width:1180px;
+      margin:0 auto;
+      padding: 18px 18px 60px;
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap: 18px;
+      align-items:start;
+    }
+
+    nav#toc{
+      position: sticky;
+      top: 12px;
+      align-self:start;
+      background: rgba(255,255,255,.05);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px 12px 10px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      max-height: calc(100vh - 24px);
+      overflow:auto;
+    }
+    nav#toc h2{
+      margin: 4px 6px 10px;
+      font-size: 13px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      color: var(--soft);
+    }
+    nav#toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      color: var(--ink);
+      text-decoration:none;
+      border:1px solid transparent;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+      font-size: 14px;
+      line-height:1.25;
+    }
+    nav#toc a:hover{
+      background: rgba(124,240,214,.10);
+      border-color: rgba(124,240,214,.22);
+      transform: translateY(-1px);
+    }
+    nav#toc .mini{
+      font-size: 12px;
       color: var(--muted);
+      padding: 8px 10px 6px;
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+
+    article{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
     }
+
+    section{
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: clamp(14px, 2.2vw, 20px);
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    section::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: radial-gradient(900px 220px at 20% 0%, rgba(124,240,214,.08), transparent 60%);
+      pointer-events:none;
+    }
+    section > *{ position:relative; z-index:1; }
+
+    h2{
+      margin:0 0 8px;
+      font-size: clamp(18px, 2.2vw, 24px);
+      line-height:1.2;
+    }
+    h3{
+      margin: 14px 0 8px;
+      font-size: clamp(16px, 1.8vw, 20px);
+      line-height:1.25;
+      color: var(--ink);
+    }
+    p{ margin: 8px 0; color: rgba(234,240,255,.92); }
+    ul,ol{ margin: 8px 0 8px 1.15rem; color: rgba(234,240,255,.92); }
+    li{ margin: 6px 0; }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      main{ grid-template-columns: 1fr; }
+      nav#toc{ position:relative; top:auto; }
+      header .wrap{ grid-template-columns:1fr; }
+      .meta{ justify-self:start; width:100%; }
+      .grid2{ grid-template-columns:1fr; }
+    }
+
+    .callout{
+      border-radius: 16px;
+      padding: 12px 12px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      margin: 10px 0;
+    }
+    .callout .title{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      font-weight:800;
+      letter-spacing:.2px;
+      margin-bottom: 6px;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(124,240,214,.12);
+      flex:0 0 auto;
+    }
+    .dot.warn{ background: var(--accent2); box-shadow: 0 0 0 6px rgba(255,211,110,.14); }
+    .dot.danger{ background: var(--danger); box-shadow: 0 0 0 6px rgba(255,107,122,.14); }
+    .dot.ok{ background: var(--ok); box-shadow: 0 0 0 6px rgba(119,255,154,.14); }
+
+    .eq{
+      margin: 10px 0;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      overflow:hidden;
+    }
+    .eq .bar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 10px 10px;
+      background: rgba(0,0,0,.22);
+      border-bottom:1px solid rgba(255,255,255,.12);
+    }
+    .eq .bar b{
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing:.14em;
+      text-transform:uppercase;
+    }
+    pre{
+      margin:0;
+      padding: 12px 12px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height:1.45;
+      color: rgba(234,240,255,.95);
+      overflow:auto;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    button.copy{
+      appearance:none;
+      border:1px solid rgba(124,240,214,.30);
+      background: rgba(124,240,214,.12);
+      color: var(--ink);
+      padding: 7px 10px;
+      border-radius: 12px;
+      font-weight:800;
+      font-size: 12px;
+      letter-spacing:.2px;
+      cursor:pointer;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      flex:0 0 auto;
+    }
+    button.copy:hover{
+      transform: translateY(-1px);
+      background: rgba(124,240,214,.18);
+      border-color: rgba(124,240,214,.45);
+    }
+    button.copy:active{ transform: translateY(0px) scale(.99); }
+    .copystatus{
+      font-size:12px;
+      color: var(--muted);
+      margin-left: 8px;
+      min-height: 1em;
+    }
+
+    details{
+      border: 1px dashed rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      border-radius: 16px;
+      padding: 10px 12px;
+      margin: 10px 0;
+    }
+    summary{
+      cursor:pointer;
+      font-weight:900;
+      color: rgba(234,240,255,.96);
+      outline:none;
+    }
+    summary::marker{ color: var(--accent); }
+    .backtop{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: var(--ink);
+      text-decoration:none;
+      font-weight:800;
+      width: fit-content;
+      margin-top: 10px;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .backtop:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.08);
+      border-color: rgba(124,240,214,.24);
+    }
+
+    figure{
+      margin: 10px 0 2px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      overflow:hidden;
+    }
+    figure figcaption{
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+    canvas{
+      width:100%;
+      height:auto;
+      display:block;
+    }
+
+    .kpi{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .kpi .box{
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      padding: 10px 10px;
+      min-height: 86px;
+    }
+    .kpi .box .label{
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      margin-bottom:6px;
+    }
+    .kpi .box .value{
+      font-weight:900;
+      font-size: 18px;
+      line-height:1.2;
+    }
+    .kpi .box .note{
+      color: rgba(234,240,255,.82);
+      font-size: 12.5px;
+      margin-top: 6px;
+    }
+    @media (max-width:720px){
+      .kpi{ grid-template-columns:1fr; }
+    }
+
+    footer{
+      max-width:1180px;
+      margin: 0 auto;
+      padding: 10px 18px 30px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{ background:#fff; color:#000; }
+      header, nav#toc{ position:static; box-shadow:none; background:none; border:none; }
+      main{ grid-template-columns: 1fr; }
+      section{ box-shadow:none; border:1px solid #bbb; background:#fff; break-inside:avoid; }
+      .eq, .callout, details, figure{ break-inside:avoid; }
+      button.copy, .copystatus{ display:none !important; }
+      a{ color:#000; text-decoration:none; }
+    }
+
+    /* Subtle micro-animations */
+    @keyframes pop {
+      from { transform: translateY(2px); opacity:.7; }
+      to   { transform: translateY(0px); opacity:1; }
+    }
+    section{ animation: pop .35s ease both; }
   </style>
 </head>
 <body>
+  <a id="top"></a>
   <header>
-    <div class="box">
-      <h1>23.2-2 — Bragg-Grating Chirp Filter</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch23/prob_23_2_2.html</code></p>
+    <div class="wrap">
+      <div>
+        <div class="tag">Photonics • Chirped Fiber Bragg Gratings • Dispersion Engineering</div>
+        <h1>Bragg-Grating Chirp Filter Design for a 0.44 ps Gaussian Pulse (ν<sub>0</sub>=300 THz)</h1>
+        <p class="subtitle">
+          We design a linearly chirped Bragg grating so that (i) it imparts a specified quadratic spectral phase
+          (chirp coefficient <b>b</b>) and (ii) its local Bragg condition spans the entire pulse spectrum so all components reflect.
+        </p>
+      </div>
+      <div class="meta">
+        <div class="row"><span>Given</span><b>ν<sub>0</sub>=300 THz (λ<sub>0</sub>=1 μm)</b></div>
+        <div class="row"><span>Pulse width</span><b>τ<sub>FWHM</sub>=0.44 ps</b></div>
+        <div class="row"><span>Filter chirp</span><b>b=(2 ps)<sup>2</sup>=4 ps²</b></div>
+        <div class="row"><span>Goal</span><b>Grating length + min/max pitch</b></div>
+      </div>
     </div>
   </header>
 
   <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
-    </div>
+    <nav id="toc" aria-label="Table of contents">
+      <h2>Contents</h2>
+      <div class="mini">Tap to jump. Copy buttons are inside equation boxes.</div>
+      <a href="#quick">Quick Summary</a>
+      <a href="#primer">PART 0 — Concept Primer</a>
+      <a href="#industry">PART 0B — Industry & Applied Physics Perspective</a>
+      <a href="#analysis">PART 1 — Problem Analysis</a>
+      <a href="#strategy">PART 2 — Strategy & Tips</a>
+      <a href="#solution">PART 3 — Full Solution</a>
+      <a href="#deeper">PART 4 — Deeper Understanding</a>
+      <a href="#plotguide">PART 5 — Optional Plot Guide</a>
+    </nav>
+
+    <article>
+
+      <section id="quick">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li><b>What this is about:</b> designing a <b>linearly chirped Bragg grating</b> that reflects a short Gaussian pulse and imposes a target <b>quadratic spectral phase</b>.</li>
+          <li><b>Key physics idea:</b> in a chirped grating, <b>different wavelengths reflect at different depths</b> → a <b>wavelength-dependent delay</b> (dispersion / chirp).</li>
+          <li><b>Pulse spectrum:</b> a transform-limited Gaussian with intensity FWHM obeys <b>Δν<sub>FWHM</sub> τ<sub>FWHM</sub> ≈ 0.44</b>.</li>
+          <li><b>Filter model:</b> chirp coefficient <b>b</b> is the group-delay slope: <b>b = dτ/dω = d²φ/dω²</b> (units s²).</li>
+          <li><b>Length result:</b> the required delay swing is <b>Δτ ≈ |b| Δω</b>, which maps to grating length via round-trip delay <b>τ ≈ 2n<sub>g</sub>z/c</b>.</li>
+          <li><b>Pitch range:</b> the grating period must cover the wavelength span that must be reflected: <b>Λ = λ/(2n<sub>eff</sub>)</b>, so <b>Λ<sub>min,max</sub> = λ<sub>min,max</sub>/(2n<sub>eff</sub>)</b>.</li>
+          <li><b>Numeric outcome (recommended “all components” ≈ ±3σ):</b> bandwidth ≈ <b>2.55 THz</b> (covers ≈99.7% spectral power), giving <b>L ≈ 6.6 mm</b>, and <b>Λ ≈ 343.36–346.29 nm</b> (assuming n<sub>eff</sub>≈n<sub>g</sub>≈1.45).</li>
+          <li><b>Physical meaning:</b> the grating reflects the entire pulse spectrum and adds a controlled linear group-delay vs frequency, i.e. a designed chirp.</li>
+        </ul>
+
+        <div class="callout">
+          <div class="title"><span class="dot warn"></span>About “all spectral components”</div>
+          <p>
+            A Gaussian spectrum is never strictly zero. In engineering design, “all components” means reflecting a bandwidth that contains essentially all pulse energy.
+            Here we provide:
+            <b>(i) the minimum FWHM-based design</b> and <b>(ii) a recommended ±3σ design</b> (~99.7% power), which is common in industrial specs.
+          </p>
+        </div>
+
+        <a class="backtop" href="#top" aria-label="Back to top">↑ Back to top</a>
+      </section>
+
+      <section id="primer">
+        <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+        <h3>0.1 Core definitions (symbols + SI units)</h3>
+        <ul>
+          <li><b>ν</b> — optical frequency (Hz). <b>ω = 2πν</b> — angular frequency (rad/s).</li>
+          <li><b>λ</b> — free-space wavelength (m), related by <b>λ = c/ν</b> (c≈3×10⁸ m/s).</li>
+          <li><b>τ<sub>FWHM</sub></b> — intensity full width at half maximum of the pulse (s).</li>
+          <li><b>Δν</b>, <b>Δω</b> — spectral width (Hz or rad/s); usually quoted at FWHM.</li>
+          <li><b>Λ</b> — Bragg grating period (m).</li>
+          <li><b>n<sub>eff</sub></b> — effective index of the guided mode (dimensionless).</li>
+          <li><b>n<sub>g</sub></b> — group index (dimensionless), determines group velocity v<sub>g</sub>=c/n<sub>g</sub>.</li>
+          <li><b>φ(ω)</b> — spectral phase of the reflected field (rad).</li>
+          <li><b>τ(ω)=dφ/dω</b> — group delay (s).</li>
+          <li><b>b = dτ/dω = d²φ/dω²</b> — chirp / dispersion coefficient (s²).</li>
+        </ul>
+
+        <h3>0.2 Physical meaning (intuition)</h3>
+        <p>
+          A <b>fiber Bragg grating (FBG)</b> is a periodic index modulation in a waveguide.
+          Light whose wavelength satisfies the <b>Bragg condition</b> is reflected strongly.
+          If the grating period <b>Λ changes with position</b> (a <b>chirped</b> grating),
+          then different wavelengths satisfy Bragg resonance at different depths <b>z(λ)</b>.
+          The reflection point therefore varies with wavelength, producing a wavelength-dependent round-trip delay:
+          <b>shorter wavelengths may reflect near the front</b>, longer wavelengths deeper (or vice versa).
+          That is exactly how a chirped grating acts as a <b>dispersion / chirp filter</b>.
+        </p>
+
+        <h3>0.3 Key laws/principles + validity conditions</h3>
+        <div class="callout">
+          <div class="title"><span class="dot"></span>Bragg condition (local resonance)</div>
+          <p style="margin:6px 0 0;">
+            Local Bragg wavelength:
+            <b>λ<sub>B</sub>(z) = 2 n<sub>eff</sub> Λ(z)</b>.
+            Reflection occurs for wavelengths near λ<sub>B</sub>.
+          </p>
+        </div>
+
+        <div class="callout">
+          <div class="title"><span class="dot"></span>Group delay from reflection depth</div>
+          <p style="margin:6px 0 0;">
+            If wavelength λ reflects at depth z(λ), the round-trip propagation time is approximately:
+            <b>τ(λ) ≈ 2 n<sub>g</sub> z(λ) / c</b>.
+          </p>
+        </div>
+
+        <p>
+          These relations assume: (i) weak-to-moderate coupling so the reflection is localized near the Bragg point,
+          (ii) a linear chirp (Λ varies approximately linearly with z),
+          (iii) negligible higher-order dispersion across the bandwidth (good for small fractional bandwidths),
+          and (iv) n<sub>eff</sub> and n<sub>g</sub> are roughly constant across the small wavelength span.
+        </p>
+
+        <h3>0.4 Common models/approximations (why we use them)</h3>
+        <ul>
+          <li><b>Transform-limited Gaussian pulse model:</b> gives a simple, reliable link between time width and spectral width.</li>
+          <li><b>Linear group delay vs frequency:</b> a chirped grating designed as a “chirp filter” aims for <b>τ(ω)</b> approximately linear in ω over the passband.</li>
+          <li><b>Constant indices:</b> n<sub>eff</sub>, n<sub>g</sub> treated constant because Δλ/λ is small (few nm over ~1000 nm).</li>
+        </ul>
+
+        <h3>0.5 Mini intuition examples (minimal algebra)</h3>
+        <ul>
+          <li><b>No chirp (uniform Λ):</b> all wavelengths reflect in the same region → nearly constant delay (little dispersion).</li>
+          <li><b>Positive chirp (Λ increases with z):</b> longer λ reflect deeper → longer delay for redder components → linear τ(λ) slope.</li>
+          <li><b>Wider spectrum:</b> to reflect it all, Λ(z) must span a wider range → larger chirp or longer grating (or both).</li>
+        </ul>
+
+        <h3>0.6 What to watch for (pitfalls)</h3>
+        <div class="callout">
+          <div class="title"><span class="dot danger"></span>Common pitfalls & sign conventions</div>
+          <ul style="margin:6px 0 0 1.15rem;">
+            <li><b>Gaussian never ends:</b> decide an energy coverage (e.g., FWHM vs ±3σ) and state it.</li>
+            <li><b>Mixing ν and ω:</b> b multiplies <b>Δω</b>, not Δν. Always convert: Δω=2πΔν.</li>
+            <li><b>Using phase vs group delay incorrectly:</b> τ=dφ/dω, b=dτ/dω=d²φ/dω².</li>
+            <li><b>Index confusion:</b> Bragg condition uses <b>n<sub>eff</sub></b>, delay uses <b>n<sub>g</sub></b>.</li>
+            <li><b>Wavelength vs frequency spans:</b> Δλ and Δν are inversely related; for small spans use linearization carefully.</li>
+          </ul>
+        </div>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="industry">
+        <h2>PART 0B — Industry & Applied Physics Perspective</h2>
+
+        <h3>Why chirped Bragg gratings matter in real systems</h3>
+        <p>
+          Chirped Bragg gratings are a workhorse for <b>dispersion engineering</b>: shaping optical pulses by controlling group delay versus wavelength.
+          In industrial engineering terms, they are “passive, compact, low-power signal conditioners” that trade complexity in electronics/DSP
+          for carefully manufactured photonic structures.
+        </p>
+
+        <h3>Where this appears in industry (concrete application areas)</h3>
+        <ul>
+          <li><b>High-speed fiber-optic communications:</b> dispersion compensation and pulse shaping in testbeds, metro links, specialty modules.</li>
+          <li><b>Ultrafast lasers & chirped-pulse amplification (CPA):</b> stretching/compressing pulses to manage peak power and avoid damage.</li>
+          <li><b>Fiber sensors and interrogators:</b> chirped gratings used as wavelength-to-time mapping elements for fast readout.</li>
+          <li><b>Microwave photonics:</b> true time delay lines for phased arrays and RF filtering using optical delay vs wavelength.</li>
+        </ul>
+
+        <h3>Why engineers care (performance, reliability, manufacturability)</h3>
+        <ul>
+          <li><b>Performance:</b> required group-delay slope (dispersion) and reflection bandwidth determine whether the pulse is correctly chirped and not spectrally clipped.</li>
+          <li><b>Reliability:</b> thermal drift and strain shift the Bragg wavelength; packaging and athermal designs matter.</li>
+          <li><b>Cost & yield:</b> tighter chirp and bandwidth specs require better phase masks/UV control, raising cost and reducing yield.</li>
+          <li><b>Insertion loss & ripple:</b> apodization and index modulation profiles are engineered to reduce sidelobes and group-delay ripple.</li>
+        </ul>
+
+        <h3>Typical measurement/validation methods</h3>
+        <ul>
+          <li><b>Optical spectrum analyzer (OSA):</b> verifies reflection spectrum and bandwidth.</li>
+          <li><b>Optical vector analyzer / OFDR / phase-retrieval:</b> measures <b>group delay vs wavelength</b>.</li>
+          <li><b>Time-domain pulse tests:</b> autocorrelation/FROG/SPIDER (lab) or high-speed sampling (industry) to confirm pulse stretching/chirp.</li>
+        </ul>
+
+        <h3>Design trade-offs and constraints</h3>
+        <ul>
+          <li><b>Bandwidth vs length:</b> for fixed b, broader bandwidth implies larger delay swing → longer grating.</li>
+          <li><b>Chirp rate vs fabrication:</b> very steep chirp (large dΛ/dz) may be harder to write accurately and can increase ripple.</li>
+          <li><b>Index non-uniformity:</b> n<sub>eff</sub>, n<sub>g</sub> vary slightly with wavelength and temperature; high-precision designs include these.</li>
+          <li><b>Non-ideal reflection localization:</b> strong coupling spreads the reflection region; industrial designs model this with coupled-mode theory and optimize apodization.</li>
+        </ul>
+
+        <details>
+          <summary>From lab to product: how the ideal model is adapted</summary>
+          <p>
+            The “local Bragg point reflection” model gives fast sizing (length and pitch range).
+            A production design typically adds: measured dispersion of the fiber, temperature coefficients,
+            apodization to suppress sidelobes, and full coupled-mode simulations to control group-delay ripple.
+            Manufacturing then closes the loop using OSA + group-delay metrology, adjusting UV dose and mask motion.
+          </p>
+        </details>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="analysis">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+        <h3>1.1 Restate the problem (in plain words)</h3>
+        <p>
+          We have a transform-limited Gaussian pulse centered at <b>ν<sub>0</sub>=300 THz</b> (λ<sub>0</sub>=1 μm) with
+          intensity FWHM <b>τ<sub>FWHM</sub>=0.44 ps</b>. We must design a <b>chirped Bragg grating filter</b> that provides
+          a chirp (dispersion) coefficient <b>b=(2 ps)²</b>.
+          We must find:
+          <b>(i) the required grating dimensions (length)</b> and
+          <b>(ii) the maximum and minimum grating pitch (period)</b> so that <b>all relevant spectral components</b> of the pulse are reflected.
+        </p>
+
+        <div class="grid2">
+          <div class="callout">
+            <div class="title"><span class="dot"></span>Given</div>
+            <ul style="margin:6px 0 0 1.15rem;">
+              <li>ν<sub>0</sub> = 300 THz</li>
+              <li>λ<sub>0</sub> = 1 μm (given equivalence)</li>
+              <li>τ<sub>FWHM</sub> = 0.44 ps</li>
+              <li>b = (2 ps)² = 4 ps²</li>
+            </ul>
+          </div>
+          <div class="callout">
+            <div class="title"><span class="dot ok"></span>Unknowns to design</div>
+            <ul style="margin:6px 0 0 1.15rem;">
+              <li>Grating length L</li>
+              <li>Λ<sub>min</sub>, Λ<sub>max</sub> (period range)</li>
+              <li>(Optionally) chirp rate dΛ/dz and/or dλ<sub>B</sub>/dz</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>1.2 Relevant principles (and why)</h3>
+        <ul>
+          <li><b>Gaussian time–bandwidth relation</b> to obtain pulse spectral width Δν (needed for reflection bandwidth).</li>
+          <li><b>Chirp filter definition</b> using b = dτ/dω, linking required delay swing across bandwidth to grating length.</li>
+          <li><b>Bragg condition</b> λ<sub>B</sub>(z)=2n<sub>eff</sub>Λ(z) to map wavelength span into period span.</li>
+        </ul>
+
+        <p>
+          We do <b>not</b> need detailed coupled-mode reflectivity calculations (index modulation, apodization, sidelobes) because the problem asks for
+          <b>dimensions and pitch limits</b> ensuring reflection coverage—not the exact reflection coefficient or ripple.
+        </p>
+
+        <div class="callout">
+          <div class="title"><span class="dot warn"></span>Assumptions (explicit)</div>
+          <ul style="margin:6px 0 0 1.15rem;">
+            <li>Linearly chirped grating: Λ(z) varies approximately linearly over length L.</li>
+            <li>Small fractional bandwidth: n<sub>eff</sub> and n<sub>g</sub> treated constant across the pulse spectrum.</li>
+            <li>Reflection occurs near the local Bragg point; group delay dominated by round-trip propagation to that point.</li>
+            <li>Use silica-fiber-like indices for numeric sizing: <b>n<sub>eff</sub> ≈ n<sub>g</sub> ≈ 1.45</b> (typical near 1 μm).</li>
+          </ul>
+        </div>
+
+        <h3>1.3 Possible approaches (compare 2–3)</h3>
+        <ol>
+          <li>
+            <b>Fast design (local Bragg point + delay mapping)</b>:
+            derive τ(ω) from reflection depth, set slope to b, use bandwidth to get L and pitch limits.
+            <br><span style="color:var(--muted);">Pros: simple, transparent, matches what the question asks. Cons: ignores ripple/strong-coupling effects.</span>
+          </li>
+          <li>
+            <b>Full coupled-mode theory</b>:
+            compute reflection spectrum and phase vs ω for a chirped grating, then fit b.
+            <br><span style="color:var(--muted);">Pros: high fidelity. Cons: heavy math; not required for “dimensions + pitch range.”</span>
+          </li>
+          <li>
+            <b>Empirical design rules</b>:
+            use typical CFBG datasheet slopes and map to needed b and bandwidth.
+            <br><span style="color:var(--muted);">Pros: industry-aligned. Cons: depends on vendor/process; less general and less instructive.</span>
+          </li>
+        </ol>
+
+        <p><b>Chosen approach:</b> (1) Fast design mapping, because it directly connects the given b and pulse bandwidth to the requested design parameters.</p>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="strategy">
+        <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+        <ol>
+          <li><b>Compute spectral width</b> Δν of the transform-limited Gaussian using Δν<sub>FWHM</sub> τ<sub>FWHM</sub>≈0.44.</li>
+          <li><b>Pick a “reflect all components” bandwidth criterion</b> (FWHM minimum, ±3σ recommended) → Δν<sub>req</sub>.</li>
+          <li><b>Convert to angular bandwidth</b>: Δω<sub>req</sub>=2πΔν<sub>req</sub>.</li>
+          <li><b>Relate chirp coefficient to delay swing</b>: Δτ ≈ |b| Δω<sub>req</sub> (since b=dτ/dω and τ is linear in ω).</li>
+          <li><b>Map delay swing to grating length</b> using τ ≈ 2n<sub>g</sub>z/c ⇒ L ≈ (c/2n<sub>g</sub>)Δτ.</li>
+          <li><b>Convert bandwidth to wavelength span</b> near λ<sub>0</sub> using small-signal relation Δλ ≈ (λ<sub>0</sub><sup>2</sup>/c)Δν.</li>
+          <li><b>Compute pitch limits</b> from Λ=λ/(2n<sub>eff</sub>): Λ<sub>min,max</sub>=λ<sub>min,max</sub>/(2n<sub>eff</sub>).</li>
+          <li><b>(Optional) Compute chirp rate</b> dΛ/dz=(Λ<sub>max</sub>−Λ<sub>min</sub>)/L for manufacturability insight.</li>
+          <li><b>Sanity checks</b>: units (s², meters), small-bandwidth approximations, and reasonableness of mm-scale length.</li>
+        </ol>
+
+        <div class="callout">
+          <div class="title"><span class="dot danger"></span>Common mistakes (quick tips)</div>
+          <ul style="margin:6px 0 0 1.15rem;">
+            <li>Forgetting Δω=2πΔν when using b (b multiplies angular frequency).</li>
+            <li>Using n<sub>eff</sub> for delay (should be n<sub>g</sub>).</li>
+            <li>Mixing “reflect bandwidth” with “grating reflection strength” (different design knobs).</li>
+            <li>Assuming “all spectral components” means infinite bandwidth; instead state a coverage criterion (e.g., ±3σ).</li>
+          </ul>
+        </div>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="solution">
+        <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+        <h3>3.1 Qualitative expectation (before calculating)</h3>
+        <p>
+          A 0.44 ps pulse is very short, so its spectrum is broad (order of THz). A chirp coefficient b=4 ps² is moderate;
+          across a THz-scale bandwidth it produces a delay swing of tens of ps. Converting tens of ps into optical round-trip propagation
+          suggests a physical length of only a few millimeters—consistent with typical chirped FBG devices.
+        </p>
+
+        <h3>3.2 Step 1: Pulse spectral width (Gaussian time–bandwidth)</h3>
+        <p>
+          For a transform-limited Gaussian pulse, the intensity FWHM time–bandwidth product is approximately:
+        </p>
+
+        <div class="eq" data-copy>
+          <div class="bar">
+            <b>Key equation — Gaussian TBP</b>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="copy" type="button">Copy</button>
+              <span class="copystatus" aria-live="polite"></span>
+            </div>
+          </div>
+          <pre>Δν_FWHM · τ_FWHM ≈ 0.44  (transform-limited Gaussian, intensity FWHM)</pre>
+        </div>
+
+        <p>
+          With τ<sub>FWHM</sub>=0.44 ps:
+          <b>Δν<sub>FWHM</sub> ≈ 0.44 / 0.44 ps = 1/ps = 1 THz</b>.
+        </p>
+
+        <details>
+          <summary>Why 0.44?</summary>
+          <p>
+            For a Gaussian intensity profile I(t) ∝ exp(−t²/τ₀²), one can derive
+            Δν<sub>FWHM</sub> τ<sub>FWHM</sub>=0.44 when both widths are measured at half-maximum of intensity.
+            This is a standard ultrafast optics result used for quick, reliable sizing.
+          </p>
+        </details>
+
+        <h3>3.3 Step 2: Decide “reflect all components” bandwidth</h3>
+        <p>
+          Since a Gaussian never becomes exactly zero, we choose a practical coverage.
+          Two common specifications:
+        </p>
+        <ul>
+          <li><b>Minimum:</b> reflect at least the FWHM bandwidth → Δν<sub>req</sub>=Δν<sub>FWHM</sub>=1 THz.</li>
+          <li><b>Recommended (≈99.7% power):</b> reflect ±3σ of the spectral intensity. For a Gaussian,
+            the full ±3σ width is <b>Δν<sub>±3σ</sub> ≈ 2.55 Δν<sub>FWHM</sub></b>. Therefore:
+            <b>Δν<sub>req</sub> ≈ 2.55 THz</b>.
+          </li>
+        </ul>
+
+        <div class="callout">
+          <div class="title"><span class="dot warn"></span>Engineering choice used for the main numeric design</div>
+          <p style="margin:6px 0 0;">
+            We will carry the design using <b>Δν<sub>req</sub>=2.55 THz</b> (±3σ coverage). We will also report the FWHM-only numbers as a minimum.
+          </p>
+        </div>
+
+        <h3>3.4 Step 3: Convert to angular bandwidth</h3>
+        <div class="eq" data-copy>
+          <div class="bar">
+            <b>Key equation — Frequency conversion</b>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="copy" type="button">Copy</button>
+              <span class="copystatus" aria-live="polite"></span>
+            </div>
+          </div>
+          <pre>Δω = 2π Δν</pre>
+        </div>
+
+        <p>
+          For Δν<sub>req</sub>=2.55 THz:
+          Δω<sub>req</sub> = 2π(2.55×10¹²) ≈ <b>1.60×10¹³ rad/s</b>.
+        </p>
+
+        <h3>3.5 Step 4: Use the chirp coefficient to get required delay swing</h3>
+        <p>
+          The chirp coefficient <b>b</b> is defined as the slope of group delay versus angular frequency:
+        </p>
+
+        <div class="eq" data-copy>
+          <div class="bar">
+            <b>Key equation — Chirp coefficient</b>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="copy" type="button">Copy</button>
+              <span class="copystatus" aria-live="polite"></span>
+            </div>
+          </div>
+          <pre>τ(ω) = dφ/dω
+b = dτ/dω = d²φ/dω²   (units: s²)</pre>
+        </div>
+
+        <p>
+          If τ(ω) is approximately linear over the reflection band, then over a bandwidth Δω the total delay swing is:
+        </p>
+
+        <div class="eq" data-copy>
+          <div class="bar">
+            <b>Key equation — Delay swing across band</b>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="copy" type="button">Copy</button>
+              <span class="copystatus" aria-live="polite"></span>
+            </div>
+          </div>
+          <pre>Δτ ≈ |b| · Δω</pre>
+        </div>
+
+        <p>
+          Here b=(2 ps)²=4 ps² = 4×10⁻²⁴ s². Thus:
+          Δτ ≈ (4×10⁻²⁴)(1.60×10¹³) ≈ 6.4×10⁻¹¹ s = <b>64 ps</b>.
+        </p>
+
+        <h3>3.6 Step 5: Map delay swing to grating length</h3>
+        <p>
+          In the “local Bragg point” picture, a spectral component reflecting at depth z experiences roughly:
+        </p>
+
+        <div class="eq" data-copy>
+          <div class="bar">
+            <b>Key equation — Round-trip delay to depth z</b>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="copy" type="button">Copy</button>
+              <span class="copystatus" aria-live="polite"></span>
+            </div>
+          </div>
+          <pre>τ(λ) ≈ 2 n_g z(λ) / c</pre>
+        </div>
+
+        <p>
+          Therefore a delay swing Δτ corresponds to a depth swing Δz = L approximately:
+        </p>
+
+        <div class="eq" data-copy>
+          <div class="bar">
+            <b>Key equation — Length from delay swing</b>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="copy" type="button">Copy</button>
+              <span class="copystatus" aria-live="polite"></span>
+            </div>
+          </div>
+          <pre>L ≈ (c / (2 n_g)) · Δτ</pre>
+        </div>
+
+        <p>
+          Using n<sub>g</sub>≈1.45 (typical silica fiber near 1 μm):
+          L ≈ (3×10⁸ / (2×1.45)) (64×10⁻¹²) ≈ <b>6.6×10⁻³ m = 6.6 mm</b>.
+        </p>
+
+        <details>
+          <summary>Minimum (FWHM-only) length</summary>
+          <p>
+            If you only require Δν<sub>req</sub>=1 THz, then Δω=2π×10¹² and Δτ≈|b|Δω≈25 ps,
+            giving L≈(c/(2n<sub>g</sub>))Δτ≈2.6 mm.
+          </p>
+        </details>
+
+        <h3>3.7 Step 6: Convert frequency bandwidth to wavelength span</h3>
+        <p>
+          Around a central wavelength λ<sub>0</sub>, for small spans we can linearize:
+          ν = c/λ ⇒ dν = −(c/λ²) dλ ⇒ |dλ| ≈ (λ²/c) |dν|.
+          So:
+        </p>
+
+        <div class="eq" data-copy>
+          <div class="bar">
+            <b>Key equation — Small-span ν↔λ conversion</b>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="copy" type="button">Copy</button>
+              <span class="copystatus" aria-live="polite"></span>
+            </div>
+          </div>
+          <pre>Δλ ≈ (λ0² / c) · Δν   (valid for small fractional bandwidth)</pre>
+        </div>
+
+        <p>
+          With λ<sub>0</sub>=1 μm and Δν<sub>req</sub>=2.55 THz:
+          Δλ ≈ ( (1×10⁻⁶)² / (3×10⁸) ) (2.55×10¹²)
+          ≈ 8.5×10⁻⁹ m = <b>8.5 nm</b>.
+        </p>
+
+        <p>
+          Hence:
+          λ<sub>min</sub> = λ<sub>0</sub> − Δλ/2 ≈ 1000 nm − 4.25 nm = <b>995.75 nm</b><br>
+          λ<sub>max</sub> = λ<sub>0</sub> + Δλ/2 ≈ 1000 nm + 4.25 nm = <b>1004.25 nm</b>.
+        </p>
+
+        <h3>3.8 Step 7: Bragg condition → pitch limits</h3>
+        <p>
+          The grating must reflect wavelengths across [λ<sub>min</sub>, λ<sub>max</sub>], which means its local Bragg wavelength
+          must sweep the same range. Using:
+        </p>
+
+        <div class="eq" data-copy>
+          <div class="bar">
+            <b>Key equation — Bragg wavelength & period</b>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="copy" type="button">Copy</button>
+              <span class="copystatus" aria-live="polite"></span>
+            </div>
+          </div>
+          <pre>λB(z) = 2 n_eff Λ(z)
+⇒ Λ = λB / (2 n_eff)</pre>
+        </div>
+
+        <p>
+          Taking n<sub>eff</sub>≈1.45, we obtain:
+        </p>
+
+        <div class="kpi" role="group" aria-label="Key numeric results">
+          <div class="box">
+            <div class="label">Center period</div>
+            <div class="value">Λ<sub>0</sub> ≈ 344.83 nm</div>
+            <div class="note">Λ<sub>0</sub> = λ<sub>0</sub>/(2n<sub>eff</sub>)</div>
+          </div>
+          <div class="box">
+            <div class="label">Minimum period</div>
+            <div class="value">Λ<sub>min</sub> ≈ 343.36 nm</div>
+            <div class="note">from λ<sub>min</sub>=995.75 nm</div>
+          </div>
+          <div class="box">
+            <div class="label">Maximum period</div>
+            <div class="value">Λ<sub>max</sub> ≈ 346.29 nm</div>
+            <div class="note">from λ<sub>max</sub>=1004.25 nm</div>
+          </div>
+        </div>
+
+        <details>
+          <summary>(Optional) Chirp rate for manufacturability</summary>
+          <p>
+            The required linear chirp rate is approximately:
+            dΛ/dz ≈ (Λ<sub>max</sub>−Λ<sub>min</sub>)/L ≈ (2.93 nm)/(6.6 mm) ≈ <b>0.44 nm/mm</b>.
+            The corresponding Bragg-wavelength chirp is dλ<sub>B</sub>/dz = 2n<sub>eff</sub>dΛ/dz ≈ <b>1.28 nm/mm</b>.
+          </p>
+        </details>
+
+        <h3>3.9 Final answer (boxed) + sanity checks</h3>
+        <div class="eq" data-copy id="finalAnswer">
+          <div class="bar">
+            <b>Final Answer — Dimensions & pitch limits (plain text)</b>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="copy" type="button">Copy</button>
+              <span class="copystatus" aria-live="polite"></span>
+            </div>
+          </div>
+          <pre>Given: ν0 = 300 THz (λ0 = 1 μm), τFWHM = 0.44 ps, b = (2 ps)^2 = 4 ps^2.
+
+Gaussian spectral width:
+ΔνFWHM ≈ 0.44/τFWHM = 1 THz.
+
+“Reflect all components” (recommended): choose ±3σ coverage → Δνreq ≈ 2.55 ΔνFWHM ≈ 2.55 THz,
+so Δωreq = 2πΔνreq ≈ 1.60×10^13 rad/s.
+
+Delay swing from chirp coefficient:
+Δτ ≈ |b|Δωreq ≈ (4×10^-24)(1.60×10^13) ≈ 64 ps.
+
+Grating length (using τ ≈ 2ng z / c, with ng ≈ 1.45):
+L ≈ (c/(2ng)) Δτ ≈ 6.6 mm.
+
+Wavelength span to be reflected (small-span conversion, λ0 = 1 μm):
+Δλ ≈ (λ0^2/c)Δνreq ≈ 8.5 nm ⇒ λmin ≈ 995.75 nm, λmax ≈ 1004.25 nm.
+
+Pitch limits from Bragg condition λB = 2 neff Λ (with neff ≈ 1.45):
+Λmin = λmin/(2neff) ≈ 343.36 nm,
+Λmax = λmax/(2neff) ≈ 346.29 nm.
+
+Minimum (FWHM-only) design (if allowed): L ≈ 2.6 mm and Λ ≈ 344.25–345.40 nm (neff≈ng≈1.45).</pre>
+        </div>
+
+        <div class="callout">
+          <div class="title"><span class="dot ok"></span>Sanity checks</div>
+          <ul style="margin:6px 0 0 1.15rem;">
+            <li><b>Units:</b> b (s²) × Δω (rad/s) → Δτ (s). Then L = (m/s)×s → meters. Good.</li>
+            <li><b>Order of magnitude:</b> tens of ps delay corresponds to mm-scale length at v≈c/1.45. Reasonable for CFBGs.</li>
+            <li><b>Small-span validity:</b> Δλ/λ≈8.5/1000≈0.85% → linearization is safe.</li>
+            <li><b>Physical interpretation:</b> the grating’s Bragg condition sweeps across the spectrum, so each spectral slice reflects at a different depth, producing the desired dispersion.</li>
+          </ul>
+        </div>
+
+        <h3>3.10 Optional single plot (static): group delay vs frequency</h3>
+        <p>
+          A chirp filter with coefficient b has approximately linear group delay τ(ν) across its design band.
+          The plot below uses the <b>recommended ±3σ bandwidth</b> as the example band and shows the linear delay swing.
+        </p>
+
+        <figure aria-label="Static plot of group delay versus frequency">
+          <canvas id="plot" width="980" height="460"></canvas>
+          <figcaption>
+            Static plot (example band): group delay τ(ν) is approximately linear with slope dτ/dω=b.
+            The highlighted band corresponds to Δν<sub>req</sub>=2.55 THz around ν<sub>0</sub>=300 THz (example values used only for visualization).
+          </figcaption>
+        </figure>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="deeper">
+        <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+        <h3>4.1 Re-interpret the final formula</h3>
+        <p>
+          The design has two coupled requirements:
+        </p>
+        <ul>
+          <li><b>Dispersion requirement (from b):</b> a larger |b| means a larger delay swing per unit bandwidth, so (for a fixed bandwidth)
+            the grating must provide a larger Δτ and thus tends to require a longer physical extent or different mapping.</li>
+          <li><b>Bandwidth requirement (from pulse spectrum):</b> a shorter pulse (smaller τ<sub>FWHM</sub>) increases Δν, which increases Δω and therefore increases Δτ=|b|Δω and L.</li>
+          <li><b>Pitch requirement:</b> the wavelength band directly sets Λ<sub>min</sub> and Λ<sub>max</sub> through Λ=λ/(2n<sub>eff</sub>). Wider spectrum → wider pitch sweep.</li>
+        </ul>
+
+        <h3>4.2 Parameter dependence (qualitative)</h3>
+        <ul>
+          <li>If <b>τ<sub>FWHM</sub> decreases</b> (shorter pulse) → Δν increases → need <b>larger pitch span</b> and <b>longer grating</b>.</li>
+          <li>If <b>|b| increases</b> (more dispersion/chirp) → Δτ increases for the same Δω → need <b>longer grating</b>.</li>
+          <li>If <b>n<sub>g</sub> increases</b> → for the same Δτ, length L decreases (because light travels slower, so less length gives same delay).</li>
+          <li>If <b>n<sub>eff</sub> increases</b> → the same λ maps to a smaller Λ (period scales as 1/n<sub>eff</sub>).</li>
+        </ul>
+
+        <h3>4.3 Alternative derivation idea (brief but meaningful)</h3>
+        <p>
+          Instead of starting with Δτ=|b|Δω, you can derive the required chirp rate directly:
+          combine τ(λ)≈2n<sub>g</sub>z/c with z(λ)= (λ−λ<sub>min</sub>)/(dλ<sub>B</sub>/dz), then compute:
+          b = dτ/dω = (2n<sub>g</sub>/c) (dz/dλ)(dλ/dω).
+          This yields a direct relation between b and the Bragg chirp dλ<sub>B</sub>/dz, which is useful for fabrication planning.
+        </p>
+
+        <details>
+          <summary>Direct relation between b and chirp rate (optional)</summary>
+          <p>
+            Using ω=2πc/λ ⇒ dλ/dω = −λ²/(2πc), and dz/dλ = 1/(dλ<sub>B</sub>/dz), we get (magnitudes):
+            |b| ≈ (2n<sub>g</sub>/c) · (1/(dλ<sub>B</sub>/dz)) · (λ0²/(2πc))
+            ⇒ dλ<sub>B</sub>/dz ≈ (n<sub>g</sub> λ0²)/(π c² |b|).
+            Then dΛ/dz = (1/(2n<sub>eff</sub>)) dλ<sub>B</sub>/dz.
+          </p>
+        </details>
+
+        <h3>4.4 Concept check (self-test)</h3>
+        <ul>
+          <li><b>Q:</b> Why does a chirped grating create dispersion? <b>A:</b> Different wavelengths reflect at different depths, so they acquire different round-trip delays.</li>
+          <li><b>Q:</b> Why must we convert Δν to Δω when using b? <b>A:</b> b is defined with respect to ω: b=dτ/dω.</li>
+          <li><b>Q:</b> If the pulse width halves, what happens to the required reflection bandwidth? <b>A:</b> It roughly doubles (for transform-limited Gaussian pulses).</li>
+          <li><b>Q:</b> What sets Λ<sub>min</sub> and Λ<sub>max</sub>? <b>A:</b> The wavelength span that must be reflected via λ<sub>B</sub>=2n<sub>eff</sub>Λ.</li>
+          <li><b>Q:</b> Why is “±3σ” a reasonable engineering definition of “all components”? <b>A:</b> It captures ~99.7% of the power while keeping specs finite and manufacturable.</li>
+        </ul>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="plotguide">
+        <h2>PART 5 — Optional Plot Guide</h2>
+
+        <p>
+          <b>What the plot shows:</b> a linear group delay τ(ν) across the design bandwidth. The <b>slope</b> is set by b (via dτ/dω=b),
+          and the total <b>vertical span</b> across the highlighted band is Δτ≈|b|Δω.
+        </p>
+        <ul>
+          <li><b>x-axis:</b> frequency offset (ν−ν<sub>0</sub>) in THz.</li>
+          <li><b>y-axis:</b> group delay offset (τ−τ(ν<sub>0</sub>)) in ps.</li>
+          <li><b>Example values:</b> the band shown is Δν<sub>req</sub>=2.55 THz (±3σ) around ν<sub>0</sub>=300 THz; b=4 ps² (given).</li>
+          <li><b>Features to notice:</b> straight line (linear delay), and the highlighted region indicates the reflection band that must be covered by the grating’s pitch sweep.</li>
+        </ul>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+    </article>
   </main>
+
+  <footer>
+    <p>
+      Notes: Numeric sizing used typical silica-fiber indices n<sub>eff</sub>≈n<sub>g</sub>≈1.45 near 1 μm. In production, use measured indices vs wavelength and temperature,
+      and validate group delay & reflection bandwidth with spectral and phase metrology.
+    </p>
+  </footer>
+
+  <script>
+    // Copy buttons for equation boxes
+    (function(){
+      function setStatus(el, msg){
+        if(!el) return;
+        el.textContent = msg;
+        el.style.opacity = "1";
+        clearTimeout(el._t);
+        el._t = setTimeout(()=>{ el.style.opacity = "0.8"; el.textContent = ""; }, 1400);
+      }
+
+      document.querySelectorAll('.eq[data-copy]').forEach(box=>{
+        const btn = box.querySelector('button.copy');
+        const pre = box.querySelector('pre');
+        const status = box.querySelector('.copystatus');
+        if(!btn || !pre) return;
+        btn.addEventListener('click', async ()=>{
+          try{
+            await navigator.clipboard.writeText(pre.textContent.trim());
+            setStatus(status, "Copied ✓");
+          }catch(e){
+            // Fallback for older browsers
+            const ta = document.createElement('textarea');
+            ta.value = pre.textContent.trim();
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.focus(); ta.select();
+            try{
+              document.execCommand('copy');
+              setStatus(status, "Copied ✓");
+            }catch(err){
+              setStatus(status, "Copy failed");
+            }
+            document.body.removeChild(ta);
+          }
+        });
+      });
+    })();
+
+    // Single static plot on canvas: group delay vs frequency offset, with highlighted band
+    (function(){
+      const canvas = document.getElementById('plot');
+      if(!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      // Example values for plotting (matches the recommended design band)
+      const b_ps2 = 4.0;                 // ps^2
+      const dnu_req_THz = 2.55;          // THz (full width)
+      // Relationship: Δτ = b * Δω = b*(2πΔν). For plotting offset:
+      // τ(Δν) = b * 2π * Δν   (if τ is referenced to τ(0)), with b in ps^2, Δν in THz -> τ in ps because:
+      // ps^2 * (rad/ps) = ps (since 1 THz = 1/ps and 2π carries rad).
+      function tau_ps(dnu_THz){ return b_ps2 * 2*Math.PI * dnu_THz; }
+
+      function draw(){
+        const dpr = window.devicePixelRatio || 1;
+        const cssW = canvas.clientWidth || 980;
+        const cssH = Math.max(340, Math.round(cssW*0.46));
+        canvas.style.height = cssH + "px";
+        canvas.width = Math.round(cssW * dpr);
+        canvas.height = Math.round(cssH * dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+
+        const w = cssW, h = cssH;
+        ctx.clearRect(0,0,w,h);
+
+        // Layout
+        const padL = 70, padR = 22, padT = 44, padB = 56;
+        const x0 = padL, x1 = w - padR, y0 = padT, y1 = h - padB;
+
+        // Axes range: show a bit wider than band
+        const xMin = -1.7, xMax =  1.7; // THz offset
+        const yMin = tau_ps(xMin), yMax = tau_ps(xMax);
+
+        const X = (x)=> x0 + (x - xMin) * (x1 - x0) / (xMax - xMin);
+        const Y = (y)=> y1 - (y - yMin) * (y1 - y0) / (yMax - yMin);
+
+        // Background panel
+        ctx.fillStyle = "rgba(0,0,0,0.20)";
+        roundRect(ctx, x0-10, y0-10, (x1-x0)+20, (y1-y0)+20, 14);
+        ctx.fill();
+
+        // Grid
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgba(255,255,255,0.10)";
+        const xTicks = 7; // -1.5 to +1.5 step 0.5
+        for(let i=0;i<=xTicks;i++){
+          const xv = -1.5 + i*(3.0/xTicks);
+          const xx = X(xv);
+          ctx.beginPath(); ctx.moveTo(xx,y0); ctx.lineTo(xx,y1); ctx.stroke();
+        }
+        const yTicks = 8;
+        for(let i=0;i<=yTicks;i++){
+          const yv = yMin + i*( (yMax-yMin)/yTicks );
+          const yy = Y(yv);
+          ctx.beginPath(); ctx.moveTo(x0,yy); ctx.lineTo(x1,yy); ctx.stroke();
+        }
+
+        // Highlight the required reflection band
+        const halfBand = dnu_req_THz/2;
+        ctx.fillStyle = "rgba(124,240,214,0.10)";
+        const bx0 = X(-halfBand), bx1 = X(+halfBand);
+        ctx.fillRect(bx0, y0, bx1-bx0, y1-y0);
+        ctx.strokeStyle = "rgba(124,240,214,0.35)";
+        ctx.strokeRect(bx0, y0, bx1-bx0, y1-y0);
+
+        // Axes
+        ctx.strokeStyle = "rgba(255,255,255,0.55)";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(x0,y1); ctx.lineTo(x1,y1); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x0,y1); ctx.stroke();
+
+        // Plot line τ = b*2π*Δν
+        ctx.lineWidth = 2.2;
+        ctx.strokeStyle = "rgba(255,211,110,0.90)";
+        ctx.beginPath();
+        const n = 200;
+        for(let i=0;i<=n;i++){
+          const x = xMin + i*(xMax-xMin)/n;
+          const y = tau_ps(x);
+          const xx = X(x), yy = Y(y);
+          if(i===0) ctx.moveTo(xx,yy);
+          else ctx.lineTo(xx,yy);
+        }
+        ctx.stroke();
+
+        // Labels & title
+        ctx.fillStyle = "rgba(234,240,255,0.95)";
+        ctx.font = "800 15px " + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillText("Group delay of a chirp filter:  τ(Δν) = b·2π·Δν  (example band)", x0, 10);
+
+        // Axis labels
+        ctx.fillStyle = "rgba(234,240,255,0.90)";
+        ctx.font = "700 13px " + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillText("Frequency offset  Δν = ν − ν₀  (THz)", (x0+x1)/2, h-38);
+
+        ctx.save();
+        ctx.translate(20, (y0+y1)/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillText("Group delay offset  Δτ = τ − τ(ν₀)  (ps)", 0, 0);
+        ctx.restore();
+
+        // Tick labels
+        ctx.fillStyle = "rgba(234,240,255,0.84)";
+        ctx.font = "600 12px " + getComputedStyle(document.documentElement).getPropertyValue('--mono');
+        ctx.textBaseline = "top";
+        ctx.textAlign = "center";
+        for(let i=0;i<=xTicks;i++){
+          const xv = -1.5 + i*(3.0/xTicks);
+          const xx = X(xv);
+          ctx.beginPath();
+          ctx.strokeStyle="rgba(255,255,255,0.55)";
+          ctx.lineWidth=1;
+          ctx.moveTo(xx,y1); ctx.lineTo(xx,y1+6); ctx.stroke();
+          ctx.fillText(xv.toFixed(1), xx, y1+10);
+        }
+
+        // y ticks (show in ps)
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        for(let i=0;i<=yTicks;i++){
+          const yv = yMin + i*((yMax-yMin)/yTicks);
+          const yy = Y(yv);
+          ctx.beginPath();
+          ctx.strokeStyle="rgba(255,255,255,0.55)";
+          ctx.lineWidth=1;
+          ctx.moveTo(x0-6,yy); ctx.lineTo(x0,yy); ctx.stroke();
+          ctx.fillText(yv.toFixed(0), x0-10, yy);
+        }
+
+        // Legend
+        const lx = x1-260, ly = y0+10, lw=246, lh=70;
+        ctx.fillStyle = "rgba(0,0,0,0.25)";
+        roundRect(ctx,lx,ly,lw,lh,14); ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.12)";
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(234,240,255,0.92)";
+        ctx.font = "800 12px " + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+        ctx.textAlign="left"; ctx.textBaseline="top";
+        ctx.fillText("Legend (example values)", lx+12, ly+10);
+
+        ctx.strokeStyle = "rgba(255,211,110,0.90)";
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(lx+14, ly+34); ctx.lineTo(lx+54, ly+34); ctx.stroke();
+        ctx.fillStyle = "rgba(234,240,255,0.88)";
+        ctx.font = "700 12px " + getComputedStyle(document.documentElement).getPropertyValue('--sans');
+        ctx.fillText("τ(Δν) line (b = 4 ps²)", lx+62, ly+26);
+
+        ctx.fillStyle = "rgba(124,240,214,0.14)";
+        ctx.fillRect(lx+14, ly+50, 40, 14);
+        ctx.strokeStyle = "rgba(124,240,214,0.45)";
+        ctx.strokeRect(lx+14, ly+50, 40, 14);
+        ctx.fillStyle = "rgba(234,240,255,0.88)";
+        ctx.fillText("Required reflection band (Δν = 2.55 THz)", lx+62, ly+46);
+      }
+
+      function roundRect(ctx,x,y,w,h,r){
+        const rr = Math.min(r, w/2, h/2);
+        ctx.beginPath();
+        ctx.moveTo(x+rr,y);
+        ctx.arcTo(x+w,y,x+w,y+h,rr);
+        ctx.arcTo(x+w,y+h,x,y+h,rr);
+        ctx.arcTo(x,y+h,x,y,rr);
+        ctx.arcTo(x,y,x+w,y,rr);
+        ctx.closePath();
+      }
+
+      window.addEventListener('resize', draw, {passive:true});
+      draw();
+    })();
+  </script>
 </body>
 </html>

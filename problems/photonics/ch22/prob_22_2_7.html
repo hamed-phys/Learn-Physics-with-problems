@@ -2,64 +2,1019 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>22.2-7 — Backward SHG with QPM</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Backward Second-Harmonic Generation with Quasi-Phase Matching (QPM)</title>
   <style>
-    :root {
-      --bg: #050608;
+    :root{
+      --bg: #0b0d12;
       --card: rgba(255,255,255,0.06);
+      --card2: rgba(255,255,255,0.09);
       --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+      --muted: rgba(255,255,255,0.70);
+      --faint: rgba(255,255,255,0.55);
+      --line: rgba(255,255,255,0.14);
+      --accent: #7dd3fc;
+      --accent2: #a78bfa;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --shadow: 0 16px 40px rgba(0,0,0,0.45);
+      --radius: 18px;
+      --radius2: 14px;
+      --maxw: 1100px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f6f7fb;
+        --card: rgba(10,16,30,0.05);
+        --card2: rgba(10,16,30,0.08);
+        --text: rgba(10,16,30,0.92);
+        --muted: rgba(10,16,30,0.70);
+        --faint: rgba(10,16,30,0.55);
+        --line: rgba(10,16,30,0.14);
+        --shadow: 0 16px 40px rgba(10,16,30,0.12);
+      }
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 15% 10%, rgba(125,211,252,0.18), transparent 55%),
+                  radial-gradient(900px 550px at 85% 15%, rgba(167,139,250,0.16), transparent 60%),
+                  radial-gradient(900px 600px at 35% 90%, rgba(52,211,153,0.10), transparent 55%),
                   var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+      color:var(--text);
+      line-height:1.55;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+
+    a{color:inherit; text-decoration:none}
+    a:hover{opacity:0.92}
+
+    header{
+      position:relative;
+      padding: 44px 18px 24px;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+    .wrap{max-width:var(--maxw); margin:0 auto;}
+    .hero{
+      background: linear-gradient(135deg, rgba(125,211,252,0.14), rgba(167,139,250,0.10));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 26px 22px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
+    .hero:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(520px 220px at 12% 12%, rgba(125,211,252,0.18), transparent 60%),
+                  radial-gradient(560px 260px at 90% 10%, rgba(167,139,250,0.16), transparent 60%);
+      pointer-events:none;
+      filter: blur(0.2px);
+    }
+    .hero > *{position:relative}
+    h1{
+      margin:0 0 8px;
+      font-size: clamp(1.65rem, 2.2vw + 1rem, 2.45rem);
+      letter-spacing:-0.02em;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size: 1.02rem;
+      max-width: 70ch;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 300px 1fr;
+      gap: 18px;
+      align-items:start;
+      margin: 18px auto 46px;
+      padding: 0 18px;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns: 1fr; }
+    }
+
+    nav.toc{
+      position:sticky;
+      top: 14px;
+      align-self:start;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .tocHead{
+      padding: 14px 14px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    }
+    .tocTitle{
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      font-size: 0.98rem;
+    }
+    .pill{
+      font-size: 0.78rem;
       color: var(--muted);
+      padding: 5px 10px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      white-space:nowrap;
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .tocLinks{
+      padding: 10px 10px 12px;
+      display:grid;
+      gap: 6px;
+    }
+    .tocLinks a{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 9px 10px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      color: var(--muted);
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
+    }
+    .tocLinks a:hover{
+      background: rgba(255,255,255,0.05);
+      border-color: var(--line);
+      transform: translateY(-1px);
+      color: var(--text);
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: rgba(125,211,252,0.9);
+      box-shadow: 0 0 0 4px rgba(125,211,252,0.14);
+      flex:0 0 auto;
+    }
+
+    main{
+      display:grid;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    section, article{
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+      overflow:hidden;
+    }
+
+    h2{
+      margin: 0 0 10px;
+      font-size: 1.35rem;
+      letter-spacing: -0.01em;
+    }
+    h3{
+      margin: 14px 0 8px;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+    p{margin: 8px 0; color: var(--text)}
+    .muted{color: var(--muted)}
+    .small{font-size: 0.95rem; color: var(--muted)}
+    ul{margin: 10px 0 0 20px}
+    li{margin: 7px 0; color: var(--text)}
+
+    .callouts{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    @media (max-width: 860px){
+      .callouts{grid-template-columns:1fr}
+    }
+    .callout{
+      border-radius: var(--radius2);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.035);
+      padding: 12px 12px 10px;
+      position:relative;
+      overflow:hidden;
+    }
+    .callout:before{
+      content:"";
+      position:absolute; inset:-1px -1px auto -1px;
+      height: 4px;
+      background: linear-gradient(90deg, rgba(125,211,252,0.9), rgba(167,139,250,0.9));
+      opacity: 0.85;
+    }
+    .callout h4{
+      margin: 6px 0 6px;
+      font-size: 0.98rem;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      padding: 5px 10px;
+      border-radius: 999px;
+    }
+    .tag .miniDot{width:8px;height:8px;border-radius:50%}
+    .miniDot.good{background: rgba(52,211,153,0.95); box-shadow: 0 0 0 4px rgba(52,211,153,0.16)}
+    .miniDot.warn{background: rgba(251,191,36,0.95); box-shadow: 0 0 0 4px rgba(251,191,36,0.18)}
+    .miniDot.bad{background: rgba(251,113,133,0.95); box-shadow: 0 0 0 4px rgba(251,113,133,0.16)}
+
+    .eq{
+      margin: 10px 0;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.18);
+      padding: 12px;
+      overflow:auto;
+      position:relative;
+    }
+    @media (prefers-color-scheme: light){
+      .eq{background: rgba(10,16,30,0.06)}
+    }
+    .eq pre{
+      margin:0;
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .eqTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .eqLabel{
+      font-size: 0.85rem;
+      color: var(--muted);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .eqLabel .bolt{
+      width: 10px;height: 10px;border-radius:2px;
+      background: linear-gradient(135deg, rgba(125,211,252,0.95), rgba(167,139,250,0.95));
+      box-shadow: 0 0 0 4px rgba(125,211,252,0.12);
+    }
+    .copyBtn{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      font-weight: 650;
+      font-size: 0.86rem;
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .copyBtn:hover{transform: translateY(-1px); background: rgba(255,255,255,0.05)}
+    .copyBtn:active{transform: translateY(0px)}
+    .copyBtn[aria-live="polite"]{position:relative}
+    .copyToast{
+      position:absolute;
+      right: 10px;
+      top: -10px;
+      transform: translateY(-100%);
+      background: rgba(0,0,0,0.75);
+      color: rgba(255,255,255,0.92);
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 6px 8px;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+    @media (prefers-color-scheme: light){
+      .copyToast{
+        background: rgba(10,16,30,0.85);
+        border-color: rgba(255,255,255,0.18);
+      }
+    }
+    .copyToast.show{
+      opacity:1;
+      transform: translateY(-108%);
+    }
+
+    details{
+      border-radius: var(--radius2);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      padding: 10px 12px;
+      margin: 10px 0;
+    }
+    summary{
+      cursor:pointer;
+      font-weight: 750;
+      color: var(--text);
+      list-style:none;
+    }
+    summary::-webkit-details-marker{display:none}
+    summary:before{
+      content:"▸";
+      display:inline-block;
+      margin-right: 10px;
+      color: var(--muted);
+      transform: translateY(-1px);
+      transition: transform 160ms ease;
+    }
+    details[open] summary:before{transform: rotate(90deg) translateX(1px)}
+    .backTop{
+      display:flex;
+      justify-content:flex-end;
+      margin-top: 10px;
+    }
+    .backTop a{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      transition: transform 140ms ease, background 140ms ease;
+      font-weight: 650;
+      font-size: 0.9rem;
+    }
+    .backTop a:hover{transform: translateY(-1px); background: rgba(255,255,255,0.05); color: var(--text)}
+    footer{
+      padding: 0 18px 44px;
+    }
+    .foot{
+      max-width:var(--maxw);
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 0.92rem;
+      padding-top: 14px;
+    }
+
+    /* Subtle micro-animation for section reveal */
+    @media (prefers-reduced-motion: no-preference){
+      section, article, nav.toc, .hero{
+        animation: rise 420ms ease both;
+      }
+      section:nth-of-type(1){animation-delay: 30ms}
+      section:nth-of-type(2){animation-delay: 60ms}
+      section:nth-of-type(3){animation-delay: 90ms}
+      section:nth-of-type(4){animation-delay: 120ms}
+      section:nth-of-type(5){animation-delay: 150ms}
+      article{animation-delay: 180ms}
+      @keyframes rise{
+        from{transform: translateY(6px); opacity:0.001}
+        to{transform: translateY(0); opacity:1}
+      }
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff; color:#000}
+      nav.toc{display:none}
+      .grid{grid-template-columns: 1fr}
+      section, article, .hero{
+        box-shadow:none;
+        border: 1px solid #bbb;
+        background:#fff;
+      }
+      .copyBtn{display:none}
+      a{color:#000; text-decoration:underline}
+      details{border: 1px solid #bbb}
+      .eq{background:#f6f6f6}
+      .pageBreak{break-before: page}
     }
   </style>
 </head>
+
 <body>
+  <a id="top"></a>
   <header>
-    <div class="box">
-      <h1>22.2-7 — Backward SHG with QPM</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch22/prob_22_2_7.html</code></p>
+    <div class="wrap">
+      <div class="hero">
+        <h1>Backward Second-Harmonic Generation with QPM (Periodically Poled Crystal)</h1>
+        <p class="subtitle">
+          How a χ<sup>(2)</sup> grating can supply (or remove) momentum so that the <em>second harmonic</em> is generated
+          in the <em>opposite</em> direction to the fundamental, and how to compute the required poling period.
+        </p>
+      </div>
     </div>
   </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+  <div class="grid">
+    <nav class="toc" aria-label="Table of Contents">
+      <div class="tocHead">
+        <div class="tocTitle">Table of Contents</div>
+        <div class="pill">sticky</div>
+      </div>
+      <div class="tocLinks">
+        <a href="#quick"><span class="dot"></span><span>Quick Summary</span></a>
+        <a href="#primer"><span class="dot"></span><span>PART 0 — Concept Primer</span></a>
+        <a href="#analysis"><span class="dot"></span><span>PART 1 — Problem Analysis</span></a>
+        <a href="#strategy"><span class="dot"></span><span>PART 2 — Strategy &amp; Tips</span></a>
+        <a href="#solution"><span class="dot"></span><span>PART 3 — Full Solution</span></a>
+        <a href="#deeper"><span class="dot"></span><span>PART 4 — Deeper Understanding</span></a>
+        <a href="#plot"><span class="dot"></span><span>PART 5 — Plot Guide / Note</span></a>
+      </div>
+    </nav>
+
+    <main>
+      <section id="quick">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li><strong>What this is about:</strong> second-harmonic generation (SHG) in a <em>periodically poled</em> χ<sup>(2)</sup> crystal where the generated SH wave propagates <em>backward</em> (opposite the pump).</li>
+          <li><strong>Key physics idea:</strong> the periodic sign-flip of χ<sup>(2)</sup> provides a spatial “grating” wavevector <span class="muted">K</span> that can compensate phase mismatch (quasi-phase matching, QPM).</li>
+          <li><strong>Momentum bookkeeping:</strong> for waves along <span class="muted">z</span>, phase matching is a <em>vector</em> condition: <span class="muted">k</span><sub>2ω</sub> − 2<span class="muted">k</span><sub>ω</sub> + <span class="muted">K</span> = 0 (signs matter for direction).</li>
+          <li><strong>Backward SHG twist:</strong> if the SH travels in −z, then <span class="muted">k</span><sub>2ω</sub> is <em>negative</em> (as a vector), making the mismatch much larger than in forward SHG—QPM is essential.</li>
+          <li><strong>Governing equations:</strong> wavevectors <span class="muted">k</span> = <span class="muted">n(Ω)</span>Ω/<span class="muted">c</span>; grating wavevector magnitude <span class="muted">|K<sub>m</sub>|</span> = 2πm/Λ (m = QPM order).</li>
+          <li><strong>Result type:</strong> symbolic ratio Λ/λ<sub>ω</sub> in the medium, expressed in terms of refractive indices <span class="muted">n(ω)</span>, <span class="muted">n(2ω)</span>.</li>
+          <li><strong>Final physical meaning:</strong> the poling period Λ must be short enough that the χ<sup>(2)</sup> grating supplies the extra momentum required to reverse the SH direction.</li>
+        </ul>
+
+        <div class="callouts">
+          <div class="callout">
+            <div class="tag"><span class="miniDot good"></span>Outcome</div>
+            <h4>Backward-QPM condition (vector)</h4>
+            <p class="small">A periodic χ<sup>(2)</sup> grating can generate a backward SH wave when its grating wavevector cancels the (large) backward mismatch.</p>
+          </div>
+          <div class="callout">
+            <div class="tag"><span class="miniDot warn"></span>Sign alert</div>
+            <h4>Direction changes k-sign</h4>
+            <p class="small">In 1D, traveling in −z means the wavevector is negative even though its magnitude is positive.</p>
+          </div>
+        </div>
+
+        <div class="backTop"><a href="#top" title="Back to top">↑ Back to top</a></div>
+      </section>
+
+      <section id="primer">
+        <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+        <h3>0.1 Core definitions (symbols + SI units)</h3>
+        <ul>
+          <li><strong>ω</strong> — fundamental angular frequency (rad·s<sup>−1</sup>).</li>
+          <li><strong>2ω</strong> — second-harmonic angular frequency (rad·s<sup>−1</sup>).</li>
+          <li><strong>n(ω), n(2ω)</strong> — refractive index at ω and 2ω (dimensionless).</li>
+          <li><strong>k(Ω)</strong> — wavevector (1D along z): <span class="muted">k</span> = ±n(Ω)Ω/c (rad·m<sup>−1</sup>); sign encodes propagation direction.</li>
+          <li><strong>λ<sub>ω</sub></strong> — wavelength of the fundamental <em>in the medium</em> (m): λ<sub>ω</sub> = 2π/|k<sub>ω</sub>|.</li>
+          <li><strong>χ<sup>(2)</sup>(z)</strong> — second-order nonlinear susceptibility (m·V<sup>−1</sup> in SI conventions; often tabulated differently), here modulated periodically.</li>
+          <li><strong>Λ</strong> — poling period (m): spatial period of χ<sup>(2)</sup> sign reversal.</li>
+          <li><strong>K<sub>m</sub></strong> — grating wavevector (rad·m<sup>−1</sup>): K<sub>m</sub> = 2πm/Λ, where m is an integer QPM order (m = 1, 3, 5, ... for a 50% duty-cycle sign-flip).</li>
+          <li><strong>Δk</strong> — phase mismatch (rad·m<sup>−1</sup>): the net wavevector imbalance that causes destructive interference of generated SH along z.</li>
+        </ul>
+
+        <h3>0.2 Physical meaning (intuition)</h3>
+        <p>
+          In SHG, a nonlinear polarization oscillating at 2ω acts like a <em>source</em> that drives a 2ω field.
+          As the wave propagates, contributions from different z-slices add with a relative phase set by
+          the mismatch between the driven polarization phase (set by the pump) and the generated SH phase.
+        </p>
+        <p class="muted">
+          If the relative phase keeps drifting, new SH produced later can partially cancel earlier SH. Phase matching (or QPM) fixes this so contributions add constructively over long distances.
+        </p>
+
+        <h3>0.3 Key principles and validity conditions</h3>
+        <div class="callout">
+          <div class="tag"><span class="miniDot good"></span>Assumptions typically used</div>
+          <h4>Standard SHG/QPM regime</h4>
+          <ul class="small">
+            <li>Slowly-varying envelope approximation (SVEA): amplitudes change slowly compared to optical period.</li>
+            <li>Undepleted pump (for conceptual derivations): fundamental amplitude roughly constant.</li>
+            <li>1D propagation along z (collinear interaction).</li>
+            <li>Periodic χ<sup>(2)</sup> modulation is stable and accurately described by a Fourier series.</li>
+          </ul>
+        </div>
+
+        <h3>0.4 Common models/approximations (why we use them)</h3>
+        <ul>
+          <li><strong>Plane-wave, collinear model:</strong> isolates phase-matching physics without beam geometry complications.</li>
+          <li><strong>Fourier grating model for χ<sup>(2)</sup>(z):</strong> periodic poling acts like a spatial grating with discrete wavevectors ±K<sub>m</sub>.</li>
+          <li><strong>Quasi-phase matching:</strong> rather than forcing Δk = 0 via birefringence/temperature, we choose Λ so that Δk is canceled by a grating wavevector.</li>
+        </ul>
+
+        <h3>0.5 Mini intuition examples (minimal algebra)</h3>
+        <ul>
+          <li><strong>Forward SHG (both waves +z):</strong> Δk = k<sub>2ω</sub> − 2k<sub>ω</sub>. If n(2ω) &gt; n(ω), Δk is positive; QPM uses <em>negative</em> grating contribution.</li>
+          <li><strong>Backward SHG (SH in −z):</strong> k<sub>2ω</sub> becomes negative, so Δk becomes strongly negative (large magnitude). You need a <em>positive</em> K to cancel it.</li>
+          <li><strong>Why higher-order QPM exists:</strong> using the m-th Fourier harmonic effectively uses K<sub>m</sub> = 2πm/Λ; higher m allows larger K for fixed Λ or larger Λ for fixed mismatch, but with reduced effective nonlinearity.</li>
+        </ul>
+
+        <h3>0.6 What to watch for (pitfalls &amp; sign conventions)</h3>
+        <div class="callouts">
+          <div class="callout">
+            <div class="tag"><span class="miniDot bad"></span>Pitfall</div>
+            <h4>Mixing magnitude and vector k</h4>
+            <p class="small">|k| is always positive; k (as a 1D vector) can be ±|k| depending on propagation direction.</p>
+          </div>
+          <div class="callout">
+            <div class="tag"><span class="miniDot warn"></span>Pitfall</div>
+            <h4>Using vacuum wavelength by accident</h4>
+            <p class="small">The problem asks for the ratio to the fundamental wavelength <em>in the medium</em>: λ<sub>ω</sub> = λ<sub>0</sub>/n(ω).</p>
+          </div>
+        </div>
+
+        <details>
+          <summary>Deeper note: why a χ<sup>(2)</sup> grating supplies momentum</summary>
+          <p class="small">
+            In a uniform medium, translational symmetry enforces conservation of wavevector (momentum) for interacting waves.
+            A periodic χ<sup>(2)</sup>(z) breaks continuous translation symmetry and replaces it with a discrete symmetry, allowing
+            exchange of integer multiples of the reciprocal lattice vector K = 2π/Λ—exactly like momentum exchange with a diffraction grating.
+          </p>
+        </details>
+
+        <div class="backTop"><a href="#top" title="Back to top">↑ Back to top</a></div>
+      </section>
+
+      <section id="analysis">
+        <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+        <h3>1.1 Restate the problem (in plain words)</h3>
+        <p>
+          We have a periodically poled nonlinear crystal (χ<sup>(2)</sup> changes sign every half-period).
+          Show that such a structure can generate a second-harmonic wave that propagates opposite to the fundamental wave (backward SHG).
+          Then write the quasi-phase-matching (QPM) equation for this backward process.
+          Finally, if QPM uses the <strong>7th-order harmonic</strong> of the periodic poling, find the ratio
+          <strong>Λ / λ<sub>ω</sub></strong>, where λ<sub>ω</sub> is the fundamental wavelength in the medium.
+        </p>
+
+        <h3>1.2 Given quantities</h3>
+        <ul>
+          <li>Periodically poled χ<sup>(2)</sup> medium with poling period Λ.</li>
+          <li>Fundamental wave at ω traveling forward (take +z).</li>
+          <li>Second-harmonic wave at 2ω traveling backward (−z).</li>
+          <li>QPM uses the <strong>m = 7</strong> Fourier harmonic of the periodic function.</li>
+        </ul>
+
+        <h3>1.3 Unknowns / what must be found</h3>
+        <ul>
+          <li>A clear explanation of how periodic poling enables backward SHG (momentum compensation).</li>
+          <li>The QPM phase-matching equation with correct signs for backward propagation.</li>
+          <li>The ratio Λ/λ<sub>ω</sub> when the condition is satisfied for m = 7.</li>
+        </ul>
+
+        <h3>1.4 Relevant principles (and why they apply)</h3>
+        <ul>
+          <li><strong>Nonlinear polarization source:</strong> P<sub>NL</sub>(2ω) ∝ χ<sup>(2)</sup> E(ω)<sup>2</sup> drives SH radiation.</li>
+          <li><strong>Wavevector (phase) matching:</strong> constructive buildup requires stationary relative phase between the source polarization and the generated field.</li>
+          <li><strong>QPM with periodic χ<sup>(2)</sup>(z):</strong> the χ<sup>(2)</sup> grating contributes discrete wavevectors ±K<sub>m</sub>.</li>
+        </ul>
+        <p class="muted">
+          We do not need detailed coupled-wave amplitude solutions; this is mainly a momentum/phase-matching bookkeeping problem.
+        </p>
+
+        <h3>1.5 Assumptions (explicit)</h3>
+        <div class="callout">
+          <div class="tag"><span class="miniDot good"></span>Assumptions</div>
+          <ul class="small">
+            <li>Collinear 1D propagation; fundamental travels +z, SH travels −z.</li>
+            <li>Refractive indices n(ω) and n(2ω) are well-defined (no strong absorption; weak dispersion is fine).</li>
+            <li>Periodic poling can be represented by Fourier components with wavevectors ±K<sub>m</sub> = ±2πm/Λ.</li>
+            <li>We focus on the QPM phase condition; efficiency factors (Fourier coefficient magnitude) are not required unless asked.</li>
+          </ul>
+        </div>
+
+        <h3>1.6 Possible approaches (pros/cons)</h3>
+        <ul>
+          <li><strong>Approach A: Wavevector conservation with grating vector (best here).</strong>
+            <br><span class="muted">Pros:</span> fast, highlights sign conventions and backward direction cleanly.
+            <span class="muted">Cons:</span> does not compute conversion efficiency.</li>
+          <li><strong>Approach B: Coupled-wave equations with χ<sup>(2)</sup>(z) Fourier expansion.</strong>
+            <br><span class="muted">Pros:</span> shows explicitly how the m-th harmonic appears in the driving term.
+            <span class="muted">Cons:</span> longer algebra, unnecessary for the asked ratio.</li>
+          <li><strong>Approach C: Energy-momentum picture (photon + reciprocal lattice vector).</strong>
+            <br><span class="muted">Pros:</span> strong intuition: “add K to satisfy momentum.”
+            <span class="muted">Cons:</span> can hide sign details if not careful.</li>
+        </ul>
+
+        <p><strong>Chosen approach:</strong> Approach A (vector phase-matching with grating wavevector), with a brief link to the Fourier-harmonic interpretation to justify “7th-order harmonic”.</p>
+
+        <div class="backTop"><a href="#top" title="Back to top">↑ Back to top</a></div>
+      </section>
+
+      <section id="strategy">
+        <h2>PART 2 — Strategy &amp; Tips (Roadmap Only)</h2>
+
+        <ol>
+          <li><strong>Set the propagation directions.</strong>
+            <br><span class="muted">Tool:</span> 1D sign convention for k along z.
+            <br><span class="muted">Meaning:</span> backward SH means k<sub>2ω</sub> is negative.</li>
+          <li><strong>Write the basic phase mismatch.</strong>
+            <br><span class="muted">Tool:</span> Δk = k<sub>2ω</sub> − 2k<sub>ω</sub>.
+            <br><span class="muted">Meaning:</span> measures the z-rate of phase slip between source and SH field.</li>
+          <li><strong>Introduce the QPM grating vector.</strong>
+            <br><span class="muted">Tool:</span> χ<sup>(2)</sup>(z) Fourier components → ±K<sub>m</sub> with K<sub>m</sub>=2πm/Λ.
+            <br><span class="muted">Meaning:</span> the medium can provide (or absorb) momentum K<sub>m</sub>.</li>
+          <li><strong>Write the QPM phase condition.</strong>
+            <br><span class="muted">Tool:</span> Δk + K<sub>m</sub> = 0 (choosing sign of K<sub>m</sub> appropriately).
+            <br><span class="muted">Meaning:</span> net phase slip is canceled → coherent buildup.</li>
+          <li><strong>Solve for Λ/λ<sub>ω</sub>.</strong>
+            <br><span class="muted">Tool:</span> relate k to wavelength in medium: |k<sub>ω</sub>| = 2π/λ<sub>ω</sub>.
+            <br><span class="muted">Meaning:</span> expresses poling period in intuitive “how many wavelengths per domain” form.</li>
+          <li><strong>Plug in m = 7.</strong>
+            <br><span class="muted">Meaning:</span> 7th harmonic supplies a larger grating momentum per period.</li>
+        </ol>
+
+        <div class="callout">
+          <div class="tag"><span class="miniDot warn"></span>Common mistakes</div>
+          <ul class="small">
+            <li>For backward SHG, writing k<sub>2ω</sub> as +|k<sub>2ω</sub>| instead of −|k<sub>2ω</sub>|.</li>
+            <li>Using λ<sub>0</sub> (vacuum wavelength) instead of λ<sub>ω</sub> in the <em>medium</em>.</li>
+            <li>Forgetting that the grating vector can enter as ±K<sub>m</sub>; choose the sign that cancels Δk.</li>
+          </ul>
+        </div>
+
+        <div class="backTop"><a href="#top" title="Back to top">↑ Back to top</a></div>
+      </section>
+
+      <section id="solution" class="pageBreak">
+        <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+        <h3>3.1 Qualitative expectation (before calculating)</h3>
+        <p>
+          If the SH is generated backward, its phase advances in the opposite z-direction compared to the pump.
+          That makes the natural phase mismatch huge: the pump-driven nonlinear polarization oscillates with a spatial phase roughly like e<sup>i(2k<sub>ω</sub>z)</sup>,
+          while a backward SH field varies like e<sup>−ik<sub>2ω</sub>z</sup> (with k<sub>2ω</sub>&gt;0 as a magnitude).
+          Without help, the relative phase slips extremely rapidly and the net SH build-up is negligible over more than a tiny distance.
+        </p>
+        <p class="muted">
+          Periodic poling supplies an extra spatial phase factor (a grating) so the source polarization can remain in step with a backward-propagating SH wave.
+        </p>
+
+        <h3>3.2 Step 1 — Define wavevectors with direction</h3>
+        <p>
+          Work in 1D along z. Let the fundamental propagate forward (+z). Then its wavevector is
+        </p>
+
+        <div class="eq" data-copy="k_ω = + n(ω) ω / c  (propagation +z)">
+          <div class="eqTop">
+            <div class="eqLabel"><span class="bolt"></span>Key equation: forward pump k</div>
+            <button class="copyBtn" type="button">Copy</button>
+          </div>
+          <pre>k_ω = + n(ω) ω / c   (propagation along +z)</pre>
+        </div>
+
+        <p>
+          The second harmonic is specified to propagate backward (−z). Therefore its <em>vector</em> wavevector is negative:
+        </p>
+
+        <div class="eq" data-copy="k_2ω = - n(2ω) (2ω) / c  (propagation -z)">
+          <div class="eqTop">
+            <div class="eqLabel"><span class="bolt"></span>Key equation: backward SH k</div>
+            <button class="copyBtn" type="button">Copy</button>
+          </div>
+          <pre>k_2ω = - n(2ω) (2ω) / c   (propagation along -z)</pre>
+        </div>
+
+        <p class="small">
+          Here n(ω) and n(2ω) are refractive indices at ω and 2ω. The magnitudes are |k<sub>ω</sub>| = n(ω)ω/c and |k<sub>2ω</sub>| = n(2ω)2ω/c.
+        </p>
+
+        <h3>3.3 Step 2 — Write the basic phase mismatch Δk</h3>
+        <p>
+          For SHG, the nonlinear polarization at 2ω is driven by E(ω)<sup>2</sup>, so it carries twice the pump phase.
+          In collinear 1D form, the standard phase mismatch is
+        </p>
+
+        <div class="eq" data-copy="Δk = k_2ω - 2 k_ω">
+          <div class="eqTop">
+            <div class="eqLabel"><span class="bolt"></span>Key equation: mismatch definition</div>
+            <button class="copyBtn" type="button">Copy</button>
+          </div>
+          <pre>Δk = k_2ω - 2 k_ω</pre>
+        </div>
+
+        <p>
+          Substitute the direction-aware k’s:
+        </p>
+
+        <div class="eq" data-copy="Δk = -(n(2ω) 2ω / c) - 2 (n(ω) ω / c) = - (2ω/c) [ n(2ω) + n(ω) ]">
+          <div class="eqTop">
+            <div class="eqLabel"><span class="bolt"></span>Backward-SHG mismatch (expanded)</div>
+            <button class="copyBtn" type="button">Copy</button>
+          </div>
+          <pre>Δk = -(n(2ω) 2ω / c) - 2 (n(ω) ω / c)
+   = - (2ω/c) [ n(2ω) + n(ω) ]</pre>
+        </div>
+
+        <p class="muted">
+          Key takeaway: for backward SHG, Δk is negative and its magnitude is proportional to n(2ω)+n(ω), typically a large number (order unity) multiplied by 2ω/c.
+        </p>
+
+        <h3>3.4 Step 3 — How periodic poling enables backward SHG</h3>
+        <p>
+          Periodic poling flips the sign of χ<sup>(2)</sup>(z) with period Λ. Any periodic function can be written as a Fourier series containing spatial harmonics:
+          χ<sup>(2)</sup>(z) contains terms like e<sup>±iK<sub>m</sub>z</sup> where
+        </p>
+
+        <div class="eq" data-copy="K_m = 2π m / Λ   (m = 1,2,3,...)">
+          <div class="eqTop">
+            <div class="eqLabel"><span class="bolt"></span>Grating wavevector</div>
+            <button class="copyBtn" type="button">Copy</button>
+          </div>
+          <pre>K_m = 2π m / Λ   (m = 1,2,3,...)</pre>
+        </div>
+
+        <p>
+          In the SHG coupling term, this effectively adds (or subtracts) K<sub>m</sub> to the momentum balance.
+          So the medium can supply a “kick” of ±K<sub>m</sub> to compensate mismatch—this is exactly what makes otherwise-forbidden (or highly mismatched) processes possible,
+          including generating the SH in the backward direction.
+        </p>
+
+        <h3>3.5 Step 4 — The QPM phase-matching equation for backward SHG</h3>
+        <p>
+          The quasi-phase-matching condition is that the <em>effective</em> mismatch vanishes:
+        </p>
+
+        <div class="eq" data-copy="Δk + K_m = 0   (choose the sign of K_m that cancels Δk)">
+          <div class="eqTop">
+            <div class="eqLabel"><span class="bolt"></span>QPM condition (general)</div>
+            <button class="copyBtn" type="button">Copy</button>
+          </div>
+          <pre>Δk + K_m = 0   (choose sign of K_m to cancel Δk)</pre>
+        </div>
+
+        <p>
+          For backward SHG we found Δk is negative, so we choose K<sub>m</sub> positive to cancel it:
+        </p>
+
+        <div class="eq" data-copy="K_m = -Δk = (2ω/c)[n(2ω)+n(ω)]">
+          <div class="eqTop">
+            <div class="eqLabel"><span class="bolt"></span>Backward-SHG QPM (explicit)</div>
+            <button class="copyBtn" type="button">Copy</button>
+          </div>
+          <pre>K_m = -Δk = (2ω/c)[ n(2ω) + n(ω) ]</pre>
+        </div>
+
+        <p>
+          Using K<sub>m</sub> = 2πm/Λ gives the backward-QPM phase-matching equation:
+        </p>
+
+        <div class="eq" data-copy="2π m / Λ = (2ω/c)[n(2ω)+n(ω)]  (backward SHG QPM)">
+          <div class="eqTop">
+            <div class="eqLabel"><span class="bolt"></span>Phase-matching equation (what the problem asks)</div>
+            <button class="copyBtn" type="button">Copy</button>
+          </div>
+          <pre>2π m / Λ = (2ω/c)[ n(2ω) + n(ω) ]    (backward SHG, QPM order m)</pre>
+        </div>
+
+        <details>
+          <summary>Alternative but equivalent way to write it (using magnitudes)</summary>
+          <p class="small">
+            If you prefer to keep magnitudes positive, define k<sub>ω</sub> = |k<sub>ω</sub>| and k<sub>2ω</sub> = |k<sub>2ω</sub>|.
+            Backward propagation means the SH vector wavevector is −k<sub>2ω</sub>. Then:
+            Δk = (−k<sub>2ω</sub>) − 2k<sub>ω</sub> = −(k<sub>2ω</sub> + 2k<sub>ω</sub>).
+            QPM requires 2πm/Λ = k<sub>2ω</sub> + 2k<sub>ω</sub>, which matches the equation above after substituting k magnitudes.
+          </p>
+        </details>
+
+        <h3>3.6 Step 5 — Compute Λ / λ<sub>ω</sub> for the 7th-order harmonic</h3>
+        <p>
+          The problem says the equation is satisfied for the <strong>7th-order harmonic</strong>, so set m = 7:
+        </p>
+
+        <div class="eq" data-copy="2π·7 / Λ = (2ω/c)[n(2ω)+n(ω)]">
+          <div class="eqTop">
+            <div class="eqLabel"><span class="bolt"></span>Use m = 7</div>
+            <button class="copyBtn" type="button">Copy</button>
+          </div>
+          <pre>2π·7 / Λ = (2ω/c)[ n(2ω) + n(ω) ]</pre>
+        </div>
+
+        <p>
+          Now relate λ<sub>ω</sub> (in the medium) to k<sub>ω</sub>. The fundamental magnitude is
+        </p>
+
+        <div class="eq" data-copy="|k_ω| = n(ω) ω / c = 2π / λ_ω  ⇒  λ_ω = 2π c / (n(ω) ω)">
+          <div class="eqTop">
+            <div class="eqLabel"><span class="bolt"></span>Wavelength–wavevector relation</div>
+            <button class="copyBtn" type="button">Copy</button>
+          </div>
+          <pre>|k_ω| = n(ω) ω / c = 2π / λ_ω
+⇒ λ_ω = 2π c / (n(ω) ω)</pre>
+        </div>
+
+        <p>
+          Solve the QPM condition for Λ, then form the ratio Λ/λ<sub>ω</sub>.
+          From 2π·7/Λ = (2ω/c)[n(2ω)+n(ω)],
+        </p>
+
+        <div class="eq" data-copy="Λ = (2π·7) / ((2ω/c)[n(2ω)+n(ω)]) = (7π c)/(ω[n(2ω)+n(ω)])">
+          <div class="eqTop">
+            <div class="eqLabel"><span class="bolt"></span>Λ from backward QPM</div>
+            <button class="copyBtn" type="button">Copy</button>
+          </div>
+          <pre>Λ = (2π·7) / ((2ω/c)[n(2ω)+n(ω)])
+  = (7π c) / (ω [n(2ω)+n(ω)])</pre>
+        </div>
+
+        <p>
+          Divide by λ<sub>ω</sub> = 2πc/(n(ω)ω):
+        </p>
+
+        <div class="eq" data-copy="Λ/λ_ω = [ (7π c)/(ω(n(2ω)+n(ω))) ] / [ (2π c)/(n(ω)ω) ] = 7 n(ω) / (2(n(2ω)+n(ω)))">
+          <div class="eqTop">
+            <div class="eqLabel"><span class="bolt"></span>Compute the requested ratio</div>
+            <button class="copyBtn" type="button">Copy</button>
+          </div>
+          <pre>Λ/λ_ω = [ (7π c)/(ω(n(2ω)+n(ω))) ] / [ (2π c)/(n(ω)ω) ]
+      = 7 n(ω) / (2 ( n(2ω) + n(ω) ))</pre>
+        </div>
+
+        <article aria-label="Final Answer" style="margin-top:14px">
+          <h3 style="margin-top:0">Final Answer</h3>
+          <p class="muted">Backward-SHG QPM phase-matching equation (order m) and the requested ratio for m = 7:</p>
+
+          <div class="eq" data-copy="Backward-SHG QPM:  k_2ω - 2k_ω + K_m = 0, with k_ω = +n(ω)ω/c, k_2ω = -n(2ω)2ω/c, K_m = +2πm/Λ.  Equivalent: 2πm/Λ = (2ω/c)[n(2ω)+n(ω)].  For m=7:  Λ/λ_ω = 7 n(ω) / (2(n(2ω)+n(ω))).">
+            <div class="eqTop">
+              <div class="eqLabel"><span class="bolt"></span>Copy-ready final result (plain text)</div>
+              <button class="copyBtn" type="button">Copy</button>
+            </div>
+            <pre>Backward-SHG QPM (vector):
+k_2ω - 2k_ω + K_m = 0
+with k_ω = +n(ω)ω/c,  k_2ω = -n(2ω)2ω/c,  K_m = +2πm/Λ.
+
+Equivalent scalar form (choosing sign to cancel mismatch):
+2πm/Λ = (2ω/c)[n(2ω)+n(ω)].
+
+For 7th-order QPM (m = 7), ratio to the fundamental wavelength in the medium:
+Λ/λ_ω = 7 n(ω) / (2(n(2ω)+n(ω))).</pre>
+          </div>
+
+          <details>
+            <summary>Sanity checks (units, limits, direction reasoning)</summary>
+            <ul class="small">
+              <li><strong>Units:</strong> K<sub>m</sub> = 2πm/Λ has units rad·m<sup>−1</sup>, same as k. The ratio Λ/λ<sub>ω</sub> is dimensionless.</li>
+              <li><strong>Direction logic:</strong> Backward SH means k<sub>2ω</sub> is negative, making Δk negative; thus K<sub>m</sub> must be positive to satisfy Δk + K<sub>m</sub> = 0.</li>
+              <li><strong>Reasonable magnitude:</strong> If dispersion is weak so n(2ω) ≈ n(ω), then Λ/λ<sub>ω</sub> ≈ 7/(2·2) = 7/4 = 1.75 (a few wavelengths per poling period, plausible for short-period poling).</li>
+              <li><strong>Limiting trend:</strong> If n(2ω) increases, the denominator n(2ω)+n(ω) grows, so Λ/λ<sub>ω</sub> decreases: stronger dispersion demands shorter poling period.</li>
+            </ul>
+          </details>
+        </article>
+
+        <div class="backTop"><a href="#top" title="Back to top">↑ Back to top</a></div>
+      </section>
+
+      <section id="deeper">
+        <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+        <h3>4.1 Re-interpret the final formula</h3>
+        <p>
+          The backward-QPM condition can be read as “the grating supplies exactly the momentum needed to convert two forward ω photons into one backward 2ω photon.”
+          In 1D, the magnitude mismatch is effectively
+          <span class="muted">k<sub>2ω</sub>(mag) + 2k<sub>ω</sub>(mag)</span>,
+          not the usual forward difference <span class="muted">k<sub>2ω</sub> − 2k<sub>ω</sub></span>.
+        </p>
+        <p class="muted">
+          That is why backward SHG is much harder without QPM: you are “fighting” the sum of wavevectors instead of their small difference.
+        </p>
+
+        <h3>4.2 Parameter dependence (qualitative)</h3>
+        <ul>
+          <li><strong>Increase n(2ω):</strong> increases required grating wavevector K, so Λ must decrease (finer poling).</li>
+          <li><strong>Increase n(ω):</strong> does two things:
+            it increases the mismatch (needs smaller Λ),
+            but also changes λ<sub>ω</sub> (in-medium wavelength decreases). In the ratio
+            Λ/λ<sub>ω</sub> = (7/2)·n(ω)/(n(2ω)+n(ω)),
+            larger n(ω) tends to increase the numerator but also appears in the denominator—net effect depends on dispersion balance.</li>
+          <li><strong>Use higher QPM order m:</strong> K<sub>m</sub> scales with m, so for fixed mismatch, Λ scales with m (larger m allows larger Λ). However, higher-order Fourier components are weaker, so efficiency typically drops.</li>
+        </ul>
+
+        <h3>4.3 Alternative derivation idea (brief but meaningful)</h3>
+        <details>
+          <summary>Coupled-wave / Fourier-harmonic viewpoint</summary>
+          <p class="small">
+            Start from the driven wave equation for the SH envelope A<sub>2</sub>(z), where the source term contains χ<sup>(2)</sup>(z)A<sub>1</sub><sup>2</sup>e<sup>i(k<sub>2</sub>−2k<sub>1</sub>)z</sup>.
+            Expand χ<sup>(2)</sup>(z) = Σ χ<sub>m</sub>e<sup>iK<sub>m</sub>z</sup>. Then the driving phase becomes e<sup>i(Δk + K<sub>m</sub>)z</sup>.
+            The term with Δk + K<sub>m</sub> ≈ 0 accumulates coherently; all others average out. This directly yields the QPM condition.
+          </p>
+        </details>
+
+        <h3>4.4 Concept checks (self-test with answers)</h3>
+        <ul>
+          <li><strong>Q:</strong> Why does backward propagation change the phase-matching condition so dramatically?
+            <br><strong>A:</strong> Because the SH wavevector reverses sign, turning k<sub>2ω</sub> − 2k<sub>ω</sub> into −(k<sub>2ω</sub> + 2k<sub>ω</sub>), a much larger-magnitude mismatch.</li>
+          <li><strong>Q:</strong> What does “7th-order harmonic” mean in periodically poled QPM?
+            <br><strong>A:</strong> It means the m = 7 Fourier component of χ<sup>(2)</sup>(z) (with grating vector K<sub>7</sub> = 2π·7/Λ) provides the momentum compensation.</li>
+          <li><strong>Q:</strong> If n(2ω) ≈ n(ω), what is Λ/λ<sub>ω</sub> for m = 7?
+            <br><strong>A:</strong> Approximately 7/4 ≈ 1.75.</li>
+          <li><strong>Q:</strong> In the QPM equation, can K enter with a minus sign?
+            <br><strong>A:</strong> Yes. Because χ<sup>(2)</sup>(z) contains both +K and −K Fourier components, the medium can effectively add or subtract K to cancel Δk.</li>
+        </ul>
+
+        <div class="backTop"><a href="#top" title="Back to top">↑ Back to top</a></div>
+      </section>
+
+      <section id="plot">
+        <h2>PART 5 — Optional Plot Guide</h2>
+        <p class="muted">
+          A plot is not necessary here because the task is primarily <strong>symbolic</strong>: write the QPM phase-matching equation and compute a ratio.
+          Any plot would require choosing specific dispersive indices n(ω), n(2ω), which are material-dependent and not provided.
+        </p>
+        <div class="backTop"><a href="#top" title="Back to top">↑ Back to top</a></div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div class="foot wrap">
+      <p>
+        Built as a self-contained learning article (vanilla HTML/CSS/JS). Copy buttons copy plain-text equations and results.
+      </p>
     </div>
-  </main>
+  </footer>
+
+  <script>
+    // Smooth scroll for in-page TOC links (respect reduced motion)
+    (function(){
+      const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      document.querySelectorAll('a[href^="#"]').forEach(a=>{
+        a.addEventListener('click', (e)=>{
+          const id = a.getAttribute('href');
+          if(!id || id.length < 2) return;
+          const el = document.querySelector(id);
+          if(!el) return;
+          e.preventDefault();
+          el.scrollIntoView({behavior: prefersReduced ? 'auto' : 'smooth', block:'start'});
+          history.replaceState(null, '', id);
+        });
+      });
+    })();
+
+    // Copy buttons: copy the plain-text stored in data-copy (or fallback to <pre> text)
+    (function(){
+      function showToast(btn, msg){
+        let toast = btn.querySelector('.copyToast');
+        if(!toast){
+          toast = document.createElement('span');
+          toast.className = 'copyToast';
+          toast.textContent = msg;
+          btn.appendChild(toast);
+        }else{
+          toast.textContent = msg;
+        }
+        // force reflow
+        void toast.offsetWidth;
+        toast.classList.add('show');
+        setTimeout(()=>toast.classList.remove('show'), 950);
+      }
+
+      async function copyText(text){
+        try{
+          await navigator.clipboard.writeText(text);
+          return true;
+        }catch(err){
+          // Fallback
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          ta.style.top = '0';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          let ok = false;
+          try{ ok = document.execCommand('copy'); }catch(e){ ok = false; }
+          document.body.removeChild(ta);
+          return ok;
+        }
+      }
+
+      document.querySelectorAll('.eq').forEach(eq=>{
+        const btn = eq.querySelector('.copyBtn');
+        if(!btn) return;
+        btn.setAttribute('aria-live','polite');
+        btn.addEventListener('click', async ()=>{
+          const payload = eq.getAttribute('data-copy') || (eq.querySelector('pre') ? eq.querySelector('pre').innerText : '');
+          const ok = await copyText(payload.trim());
+          showToast(btn, ok ? 'Copied!' : 'Copy failed');
+        });
+      });
+    })();
+  </script>
 </body>
 </html>

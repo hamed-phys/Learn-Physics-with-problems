@@ -2,64 +2,1056 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>21.2-4 — The “Push–Pull” Intensity Modulator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Push–Pull Intensity Modulator (Double-Pass) — Derivation of Intensity Transmittance</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.085);
       --text: rgba(255,255,255,0.92);
       --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+      --faint: rgba(255,255,255,0.55);
+      --border: rgba(255,255,255,0.14);
+      --accent: #7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 16px 50px rgba(0,0,0,0.35);
+      --radius: 16px;
+      --radius2: 22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --maxw: 1100px;
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f7fafc;
+        --panel: rgba(15,23,42,0.05);
+        --panel2: rgba(15,23,42,0.08);
+        --text: rgba(15,23,42,0.92);
+        --muted: rgba(15,23,42,0.72);
+        --faint: rgba(15,23,42,0.56);
+        --border: rgba(15,23,42,0.14);
+        --shadow: 0 18px 55px rgba(2,6,23,0.12);
+      }
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family: var(--sans);
       color: var(--text);
-      line-height: 1.55;
+      background: radial-gradient(1200px 700px at 10% 0%, rgba(125,211,252,0.18), transparent 55%),
+                  radial-gradient(900px 520px at 100% 10%, rgba(167,139,250,0.16), transparent 50%),
+                  radial-gradient(900px 520px at 60% 120%, rgba(52,211,153,0.10), transparent 50%),
+                  var(--bg);
+      line-height:1.55;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+
+    .wrap{
+      max-width: calc(var(--maxw) + 320px);
+      margin:0 auto;
+      padding: 28px 18px 70px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
     }
-    .box {
-      background: var(--card);
+    @media (min-width: 980px){
+      .wrap{
+        grid-template-columns: 280px 1fr;
+        align-items:start;
+      }
+    }
+
+    header{
+      grid-column: 1 / -1;
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      padding: 22px 20px;
+      overflow:hidden;
+      position:relative;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
+    header:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(800px 200px at 20% 0%, rgba(125,211,252,0.22), transparent 65%),
+                  radial-gradient(700px 220px at 95% 10%, rgba(167,139,250,0.18), transparent 60%);
+      pointer-events:none;
+      opacity:0.9;
+    }
+    header > *{position:relative}
+    .title{
+      margin:0;
+      font-size: clamp(1.35rem, 2.0vw + 0.8rem, 2.1rem);
+      letter-spacing: -0.02em;
+    }
+    .subtitle{
+      margin:8px 0 0;
+      color: var(--muted);
+      max-width: 75ch;
+      font-size: 1.02rem;
+    }
+    .meta{
+      margin-top: 14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px 12px;
+      color: var(--faint);
+      font-size:0.95rem;
+    }
+    .pill{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,0.05);
+      padding: 6px 10px;
+      border-radius: 999px;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      backdrop-filter: blur(6px);
+    }
+    .dot{
+      width:8px;height:8px;border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(125,211,252,0.18);
+    }
+
+    nav.toc{
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 14px;
+      position: sticky;
+      top: 14px;
+      max-height: calc(100vh - 28px);
+      overflow:auto;
+    }
+    nav.toc h2{
+      margin: 4px 0 10px;
       font-size: 0.95rem;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
       color: var(--muted);
     }
-    code {
+    nav.toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      text-decoration:none;
+      color: var(--text);
+      border: 1px solid transparent;
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+      font-size: 0.98rem;
+      line-height:1.2;
+    }
+    nav.toc a:hover{
+      background: rgba(125,211,252,0.10);
+      border-color: rgba(125,211,252,0.20);
+      transform: translateX(2px);
+    }
+    nav.toc .mini{
+      font-size: 0.92rem;
+      color: var(--muted);
+      padding-left: 12px;
+      opacity:0.95;
+    }
+
+    main{
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 6px;
+      overflow:hidden;
+    }
+
+    section{
+      padding: 10px 4px 18px;
+      border-bottom: 1px dashed rgba(255,255,255,0.14);
+    }
+    section:last-child{border-bottom:none}
+    h2{
+      margin: 10px 0 8px;
+      font-size: 1.35rem;
+      letter-spacing:-0.01em;
+    }
+    h3{
+      margin: 14px 0 6px;
+      font-size: 1.12rem;
+      color: var(--text);
+      letter-spacing:-0.01em;
+    }
+    p{margin: 8px 0; color: var(--text)}
+    ul, ol{margin: 8px 0 8px 22px}
+    li{margin: 6px 0}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 760px){
+      .grid2{grid-template-columns: 1fr 1fr}
+    }
+
+    .card{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      border-radius: var(--radius);
+      padding: 12px 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    }
+    .card h4{
+      margin: 2px 0 8px;
+      font-size: 0.98rem;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .card .small{color: var(--muted); font-size:0.97rem}
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      margin: 4px 0 10px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .badge .b{
+      width:9px;height:9px;border-radius:50%;
+      background: var(--good);
+      box-shadow: 0 0 0 3px rgba(52,211,153,0.16);
+    }
+    .badge.warn .b{background: var(--warn); box-shadow: 0 0 0 3px rgba(251,191,36,0.16);}
+    .badge.bad .b{background: var(--bad); box-shadow: 0 0 0 3px rgba(251,113,133,0.16);}
+
+    .eq{
+      margin: 10px 0;
+      border: 1px solid rgba(125,211,252,0.22);
+      background: rgba(125,211,252,0.08);
+      border-radius: var(--radius);
+      padding: 12px 12px 10px;
+      position:relative;
+      overflow:hidden;
+    }
+    .eq:before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: radial-gradient(700px 120px at 0% 0%, rgba(125,211,252,0.18), transparent 55%);
+      pointer-events:none;
+    }
+    .eq .row{
+      position:relative;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+    }
+    pre.eqtext{
+      margin:0;
+      font-family: var(--mono);
+      font-size: 0.98rem;
+      line-height:1.35;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text);
+    }
+    .copybtn{
+      flex: 0 0 auto;
+      border: 1px solid var(--border);
       background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: 0.92rem;
+      cursor:pointer;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+      user-select:none;
+    }
+    .copybtn:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.11);
+      border-color: rgba(125,211,252,0.25);
+    }
+    .copybtn:active{transform: translateY(0px) scale(0.99)}
+    .copyhint{
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      position:relative;
+    }
+
+    details{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.035);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      margin: 10px 0;
+    }
+    details > summary{
+      cursor:pointer;
+      color: var(--text);
+      font-weight: 650;
+      list-style:none;
+      outline:none;
+      user-select:none;
+    }
+    details > summary::-webkit-details-marker{display:none}
+    details > summary:before{
+      content:"▸";
+      display:inline-block;
+      margin-right: 8px;
+      color: var(--accent);
+      transition: transform 160ms ease;
+    }
+    details[open] > summary:before{transform: rotate(90deg)}
+    details .inside{margin-top:8px; color: var(--muted)}
+
+    figure{
+      margin: 10px 0 0;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      border-radius: var(--radius);
+      padding: 10px;
+      overflow:hidden;
+    }
+    figcaption{
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    canvas{
+      width: 100%;
+      height: 320px;
+      display:block;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.12);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .backtop{
+      margin: 14px 0 6px;
+      display:flex;
+      justify-content:flex-end;
+    }
+    .backtop a{
+      text-decoration:none;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.05);
+      padding: 8px 10px;
+      border-radius: 999px;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+      font-size:0.95rem;
+    }
+    .backtop a:hover{
+      transform: translateY(-1px);
+      background: rgba(125,211,252,0.10);
+      border-color: rgba(125,211,252,0.20);
+      color: var(--text);
+    }
+
+    footer{
+      grid-column: 1 / -1;
+      color: var(--muted);
+      text-align:center;
+      font-size: 0.95rem;
+      margin-top: 8px;
+      padding: 10px 4px;
+    }
+
+    .fadein{
+      animation: fadeInUp 420ms ease both;
+    }
+    @keyframes fadeInUp{
+      from{opacity:0; transform: translateY(6px)}
+      to{opacity:1; transform: translateY(0)}
+    }
+
+    @media print{
+      body{
+        background: #fff !important;
+        color: #000 !important;
+      }
+      header, nav.toc, main, .card, .eq, details, figure{
+        box-shadow:none !important;
+        background:#fff !important;
+      }
+      nav.toc{display:none}
+      .copybtn{display:none}
+      a{color:#000; text-decoration:underline}
+      section{page-break-inside: avoid}
+      h2{page-break-after: avoid}
+      figure{page-break-inside: avoid}
+      canvas{border: 1px solid #000}
     }
   </style>
 </head>
-<body>
-  <header>
-    <div class="box">
-      <h1>21.2-4 — The “Push–Pull” Intensity Modulator</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch21/prob_21_2_4.html</code></p>
-    </div>
-  </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
-    </div>
-  </main>
+<body>
+  <a id="top"></a>
+  <div class="wrap">
+    <header class="fadein">
+      <h1 class="title">The “Push–Pull” Intensity Modulator (Double-Pass): Deriving the Intensity Transmittance</h1>
+      <p class="subtitle">
+        Two electro-optic phase modulators sit in the two arms of a 3-dB directional coupler. The light is split, phase-shifted,
+        reflected, phase-shifted again (double pass), and recombined. The output intensity is controlled by interference via the
+        voltage-controlled <em>differential</em> phase.
+      </p>
+      <div class="meta">
+        <span class="pill"><span class="dot"></span> Result: closed-form symbolic transmittance</span>
+        <span class="pill"><span class="dot" style="background:var(--accent2); box-shadow:0 0 0 3px rgba(167,139,250,0.18)"></span> Key idea: EO phase → interference</span>
+        <span class="pill"><span class="dot" style="background:var(--good); box-shadow:0 0 0 3px rgba(52,211,153,0.16)"></span> Device: 3-dB coupler + two EO phase shifters + mirrors</span>
+      </div>
+    </header>
+
+    <nav class="toc fadein" aria-label="Table of Contents">
+      <h2>Contents</h2>
+      <a href="#quick">Quick Summary</a>
+      <a href="#primer">PART 0 — Concept Primer</a>
+      <a class="mini" href="#primer-defs">• Definitions & units</a>
+      <a class="mini" href="#primer-laws">• Laws, models, assumptions</a>
+      <a class="mini" href="#primer-pitfalls">• What to watch for</a>
+      <a href="#analysis">PART 1 — Problem Analysis</a>
+      <a href="#strategy">PART 2 — Strategy & Tips</a>
+      <a href="#solution">PART 3 — Full Solution</a>
+      <a href="#deeper">PART 4 — Deeper Understanding</a>
+      <a href="#plotguide">PART 5 — Optional Plot Guide</a>
+      <a href="#final">Final Answer (copy)</a>
+    </nav>
+
+    <main class="fadein">
+      <section id="quick">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li><strong>What this is:</strong> an intensity modulator built from two <em>phase</em> modulators arranged in a push–pull interferometer.</li>
+          <li><strong>Key physics idea:</strong> voltage changes refractive index (Pockels effect) → phase shift → interference at a 3-dB coupler → intensity modulation.</li>
+          <li><strong>Double-pass boost:</strong> reflection makes the phase modulation happen <em>twice</em> in each arm, doubling each arm’s phase shift.</li>
+          <li><strong>Push–pull boost:</strong> opposite voltages in the two arms double the <em>differential</em> phase again.</li>
+          <li><strong>Governing relationship:</strong> output intensity depends on the differential phase as <span style="font-family:var(--mono)">T ∝ cos²(Δφ/2)</span> (or <span style="font-family:var(--mono)">sin²</span> at the complementary port).</li>
+          <li><strong>Electro-optic phase per pass:</strong> <span style="font-family:var(--mono)">φ(V)= (2π/λ) Δn(V) L</span> with <span style="font-family:var(--mono)">Δn = −(1/2) n³ r_eff E</span> and <span style="font-family:var(--mono)">E≈V/d</span>.</li>
+          <li><strong>Result type:</strong> symbolic transmittance <span style="font-family:var(--mono)">T(V)</span> expressed using <span style="font-family:var(--mono)">V, λ, L, d, n, r_eff</span> (and an overlap factor).</li>
+          <li><strong>Physical meaning:</strong> the device converts voltage into a controllable interference condition (bright ↔ dark) at the output.</li>
+        </ul>
+      </section>
+
+      <section id="primer">
+        <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+        <div id="primer-defs" class="grid2">
+          <article class="card">
+            <h4>Core definitions (symbols & SI units)</h4>
+            <ul class="small">
+              <li><strong>λ</strong> — optical wavelength (m)</li>
+              <li><strong>k = 2π/λ</strong> — wavenumber (rad·m⁻¹)</li>
+              <li><strong>E(t)</strong> — complex optical field envelope (V·m⁻¹, relative scaling often used)</li>
+              <li><strong>I ∝ |E|²</strong> — optical intensity (W·m⁻², up to a constant)</li>
+              <li><strong>n</strong> — refractive index (dimensionless)</li>
+              <li><strong>r<sub>eff</sub></strong> — effective Pockels coefficient (m·V⁻¹)</li>
+              <li><strong>V</strong> — applied voltage (V)</li>
+              <li><strong>d</strong> — electrode gap / effective field distance (m)</li>
+              <li><strong>L</strong> — interaction length of phase modulator (m)</li>
+              <li><strong>Γ</strong> — electro-optic overlap factor (0–1, dimensionless)</li>
+              <li><strong>φ</strong> — optical phase shift (rad)</li>
+              <li><strong>Δφ</strong> — differential phase between interferometer arms (rad)</li>
+              <li><strong>T</strong> — intensity transmittance (dimensionless)</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h4>Physical meaning & intuition</h4>
+            <p class="small">
+              A <strong>phase modulator</strong> changes only the phase of light, not its amplitude. But if you split light into two paths and
+              later recombine them, a <strong>phase difference</strong> turns into an <strong>intensity</strong> difference by interference.
+            </p>
+            <p class="small">
+              <strong>Push–pull</strong> means the two arms get opposite phase shifts: one increases while the other decreases. That makes the
+              differential phase bigger for the same voltage, improving modulation efficiency.
+            </p>
+            <p class="small">
+              With a <strong>mirror</strong>, the light makes a round trip, so each arm experiences the EO phase shift twice.
+            </p>
+          </article>
+        </div>
+
+        <div id="primer-laws" class="grid2" style="margin-top:12px">
+          <article class="card">
+            <h4>Key laws/principles & validity conditions</h4>
+            <div class="badge"><span class="b"></span> Interference</div>
+            <p class="small">
+              Two coherent fields combine as
+              <span style="font-family:var(--mono)">|E₁ + E₂|² = |E₁|² + |E₂|² + 2|E₁||E₂| cos(Δφ)</span>.
+              Equal amplitudes maximize contrast.
+            </p>
+            <div class="badge"><span class="b"></span> Pockels effect</div>
+            <p class="small">
+              <span style="font-family:var(--mono)">Δn = −(1/2) n³ r_eff E</span>, valid in the linear EO regime and for the correct polarization/orientation.
+            </p>
+            <div class="badge warn"><span class="b"></span> Coherence requirement</div>
+            <p class="small">
+              Path mismatch must be within the coherence length; polarization should be matched.
+            </p>
+          </article>
+
+          <article class="card">
+            <h4>Models/approximations (why used)</h4>
+            <ul class="small">
+              <li><strong>Ideal 3-dB coupler:</strong> equal splitting/combining with a fixed phase relation.</li>
+              <li><strong>Effective field:</strong> <span style="font-family:var(--mono)">E≈Γ V/d</span> captures geometry and overlap.</li>
+              <li><strong>Lossless:</strong> gives clean <span style="font-family:var(--mono)">cos²</span>/<span style="font-family:var(--mono)">sin²</span> dependence; losses can be appended later.</li>
+            </ul>
+
+            <details>
+              <summary>Mini intuition examples</summary>
+              <div class="inside">
+                <ul>
+                  <li><strong>V = 0:</strong> equal phases ⇒ one port bright, the other dark.</li>
+                  <li><strong>Δφ = π:</strong> ports swap (bright↔dark).</li>
+                  <li><strong>Small Δφ:</strong> near a maximum/minimum, intensity changes quadratically with Δφ.</li>
+                </ul>
+              </div>
+            </details>
+          </article>
+        </div>
+
+        <div id="primer-pitfalls" class="card" style="margin-top:12px">
+          <h4>What to watch for</h4>
+          <ul class="small">
+            <li><strong>Double pass:</strong> phase shift per arm doubles.</li>
+            <li><strong>Push–pull:</strong> differential phase doubles again.</li>
+            <li><strong>Coupler convention:</strong> different sign conventions don’t change the final intensity dependence on <span style="font-family:var(--mono)">ΔΦ</span>.</li>
+            <li><strong>Define Vπ carefully:</strong> phase Vπ vs intensity-switching Vπ differ by factors.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="analysis">
+        <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+        <article class="card">
+          <h4>Restatement</h4>
+          <p class="small">
+            A 3-dB coupler splits the input field into two equal arms. Each arm is phase modulated, reflected, modulated again, then recombined.
+            Find the output intensity transmittance <span style="font-family:var(--mono)">T(V)=I_out/I_in</span> in terms of <span style="font-family:var(--mono)">V, λ, L, d, n, r_eff</span> (and overlap).
+          </p>
+        </article>
+
+        <div class="grid2" style="margin-top:12px">
+          <article class="card">
+            <h4>Given</h4>
+            <ul class="small">
+              <li>Ideal 3-dB coupler (50/50)</li>
+              <li>Two identical EO phase modulators (length <strong>L</strong>)</li>
+              <li>Material parameters <strong>n</strong>, <strong>r<sub>eff</sub></strong></li>
+              <li>Electrode geometry: effective gap <strong>d</strong>, overlap <strong>Γ</strong></li>
+              <li>Mirrors for reflection (round trip)</li>
+              <li>Wavelength <strong>λ</strong></li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h4>Unknowns</h4>
+            <ul class="small">
+              <li><strong>T(V)</strong> for a chosen output port</li>
+              <li>Optionally an effective intensity half-wave voltage</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="grid2" style="margin-top:12px">
+          <article class="card">
+            <h4>Assumptions</h4>
+            <div class="badge warn"><span class="b"></span> Idealized but standard</div>
+            <ul class="small">
+              <li>Equal arm amplitudes; negligible differential loss</li>
+              <li>Linear EO response (Pockels)</li>
+              <li>Coherent recombination; matched polarization</li>
+              <li>Mirror reflection phase is common-mode (doesn’t affect intensity ratio)</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <h4>Approaches</h4>
+            <ol class="small">
+              <li><strong>Interference method:</strong> quickest; derive <span style="font-family:var(--mono)">cos²(ΔΦ/2)</span> then substitute <span style="font-family:var(--mono)">ΔΦ(V)</span>.</li>
+              <li><strong>Coupler matrix:</strong> more formal; tracks ports explicitly.</li>
+              <li><strong>Visibility argument:</strong> infers form but still needs <span style="font-family:var(--mono)">ΔΦ(V)</span>.</li>
+            </ol>
+            <p class="small"><strong>Choice:</strong> Interference + minimal coupler logic (clear and sufficient).</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="strategy">
+        <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+        <article class="card">
+          <h4>Plan (8 steps)</h4>
+          <ol class="small">
+            <li>Write EO index change <span style="font-family:var(--mono)">Δn(V)</span> using Pockels law.</li>
+            <li>Convert to phase per pass <span style="font-family:var(--mono)">φ(V)=(2π/λ)ΔnL</span>.</li>
+            <li>Apply double pass: round-trip phase in each arm <span style="font-family:var(--mono)">Φ=2φ</span>.</li>
+            <li>Apply push–pull: arm voltages <span style="font-family:var(--mono)">+V</span> and <span style="font-family:var(--mono)">−V</span>.</li>
+            <li>Compute differential phase <span style="font-family:var(--mono)">ΔΦ=Φ1−Φ2</span>.</li>
+            <li>Use equal-amplitude interference at recombination.</li>
+            <li>Normalize to get <span style="font-family:var(--mono)">T(V)=I_out/I_in</span>.</li>
+            <li>Optionally define <span style="font-family:var(--mono)">Vπ,int</span> for the intensity switching form.</li>
+          </ol>
+        </article>
+
+        <article class="card" style="margin-top:12px">
+          <h4>Common mistakes</h4>
+          <div class="badge bad"><span class="b"></span> Quick warnings</div>
+          <ul class="small">
+            <li>Missing factor 2 from double pass.</li>
+            <li>Missing factor 2 from push–pull (opposite signs).</li>
+            <li>Confusing phase Vπ with intensity Vπ.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section id="solution">
+        <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+        <h3>1) EO index change and phase per pass</h3>
+        <p>
+          For the linear EO (Pockels) effect in the relevant configuration,
+        </p>
+
+        <div class="eq" data-copy="Δn(V) = −(1/2) n^3 r_eff E, with E ≈ Γ V/d ⇒ Δn(V)=−(1/2) n^3 r_eff (Γ V/d)">
+          <div class="row">
+            <pre class="eqtext">Δn(V) = −(1/2) n^3 r_eff E
+E ≈ Γ V/d
+⇒ Δn(V) = −(1/2) n^3 r_eff (Γ V/d)</pre>
+            <button class="copybtn" type="button">Copy</button>
+          </div>
+        </div>
+
+        <p>
+          The phase shift acquired over length <span style="font-family:var(--mono)">L</span> in one pass is
+          <span style="font-family:var(--mono)">φ(V) = (2π/λ) Δn(V) L</span>, hence
+        </p>
+
+        <div class="eq" data-copy="φ(V) = (2π/λ) Δn(V) L = −(π n^3 r_eff Γ L /(λ d)) V">
+          <div class="row">
+            <pre class="eqtext">φ(V) = (2π/λ) Δn(V) L
+     = −(π n^3 r_eff Γ L /(λ d)) V</pre>
+            <button class="copybtn" type="button">Copy</button>
+          </div>
+        </div>
+
+        <h3>2) Double pass (mirror) and push–pull differential phase</h3>
+        <p>
+          With a mirror, the modulator is traversed twice, so the EO phase in arm <span style="font-family:var(--mono)">j</span> is
+          <span style="font-family:var(--mono)">Φ_j = 2φ(V_j)</span>.
+          In push–pull drive, <span style="font-family:var(--mono)">V₁=+V</span>, <span style="font-family:var(--mono)">V₂=−V</span>.
+        </p>
+        <p>
+          Therefore the differential phase of the returning fields is
+        </p>
+
+        <div class="eq" data-copy="ΔΦ(V)=Φ1−Φ2 = 2φ(+V) − 2φ(−V) = 4φ(V) = −(4π n^3 r_eff Γ L /(λ d)) V">
+          <div class="row">
+            <pre class="eqtext">ΔΦ(V) = Φ₁ − Φ₂
+     = 2φ(+V) − 2φ(−V)
+     = 4φ(V)
+     = −(4π n^3 r_eff Γ L /(λ d)) V</pre>
+            <button class="copybtn" type="button">Copy</button>
+          </div>
+        </div>
+
+        <h3>3) Recombination and intensity transmittance</h3>
+        <p>
+          The two returning fields have equal amplitude (ideal 3-dB coupler) and phases <span style="font-family:var(--mono)">Φ₁</span>, <span style="font-family:var(--mono)">Φ₂</span>.
+          At one output port the fields add, giving a normalized intensity proportional to
+          <span style="font-family:var(--mono)">|e^{iΦ₁}+e^{iΦ₂}|² = 4 cos²((Φ₁−Φ₂)/2)</span>.
+          Normalizing to the input yields the standard interferometric transfer function:
+        </p>
+
+        <div class="eq" data-copy="T(V)=I_out/I_in = cos^2(ΔΦ(V)/2). Complementary port: T̄(V)=sin^2(ΔΦ(V)/2).">
+          <div class="row">
+            <pre class="eqtext">T(V) = I_out / I_in = cos²(ΔΦ(V)/2)
+
+Complementary port:
+T̄(V) = sin²(ΔΦ(V)/2)</pre>
+            <button class="copybtn" type="button">Copy</button>
+          </div>
+        </div>
+
+        <p>
+          Substitute <span style="font-family:var(--mono)">ΔΦ(V)=−(4π n³ r_eff Γ L /(λ d))V</span>:
+        </p>
+
+        <div class="eq" data-copy="T(V)=cos^2( 2π n^3 r_eff Γ L V /(λ d) )   (ideal, lossless). Complementary: T̄(V)=sin^2( 2π n^3 r_eff Γ L V /(λ d) ).">
+          <div class="row">
+            <pre class="eqtext">T(V) = cos²( 2π n^3 r_eff Γ L V /(λ d) )   (ideal, lossless)
+
+Complementary port:
+T̄(V) = sin²( 2π n^3 r_eff Γ L V /(λ d) )</pre>
+            <button class="copybtn" type="button">Copy</button>
+          </div>
+        </div>
+
+        <h3>4) Effective intensity half-wave voltage</h3>
+        <p>
+          Define <span style="font-family:var(--mono)">Vπ,int</span> so that <span style="font-family:var(--mono)">T(V)=cos²(π V/Vπ,int)</span>.
+          Matching arguments gives:
+        </p>
+
+        <div class="eq" data-copy="Vπ,int = (λ d)/(2 n^3 r_eff Γ L), so T(V)=cos^2(π V/Vπ,int).">
+          <div class="row">
+            <pre class="eqtext">Vπ,int = (λ d)/(2 n^3 r_eff Γ L)
+
+Equivalently:
+T(V) = cos²(π V / Vπ,int)</pre>
+            <button class="copybtn" type="button">Copy</button>
+          </div>
+        </div>
+
+        <h3>Sanity checks</h3>
+        <div class="grid2">
+          <article class="card">
+            <h4>Units</h4>
+            <p class="small">
+              <span style="font-family:var(--mono)">n³</span> and <span style="font-family:var(--mono)">Γ</span> are dimensionless.
+              <span style="font-family:var(--mono)">r_eff</span> is m/V, so <span style="font-family:var(--mono)">r_eff V</span> is m.
+              Multiply by <span style="font-family:var(--mono)">L</span> → m²; divide by <span style="font-family:var(--mono)">λ d</span> → dimensionless. Good.
+            </p>
+          </article>
+          <article class="card">
+            <h4>Limits</h4>
+            <ul class="small">
+              <li><strong>V=0:</strong> <span style="font-family:var(--mono)">T=1</span> at the bright-at-zero port.</li>
+              <li><strong>V=Vπ,int/2:</strong> <span style="font-family:var(--mono)">T=0</span> (ideal extinction).</li>
+              <li><strong>Periodicity:</strong> in the <span style="font-family:var(--mono)">cos²</span> form, <span style="font-family:var(--mono)">T</span> repeats with voltage period <span style="font-family:var(--mono)">Vπ,int</span>.</li>
+            </ul>
+          </article>
+        </div>
+
+        <h3>Simple static plot (normalized curve)</h3>
+        <figure>
+          <canvas id="plot" aria-label="Normalized transmittance plot"></canvas>
+          <figcaption>
+            Universal normalized response: <span style="font-family:var(--mono)">T = cos²(π·V/Vπ,int)</span> vs <span style="font-family:var(--mono)">V/Vπ,int</span>.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section id="deeper">
+        <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+        <div class="card">
+          <h4>What each parameter controls</h4>
+          <ul class="small">
+            <li><strong>Material:</strong> larger <span style="font-family:var(--mono)">n³ r_eff</span> → stronger EO phase per field.</li>
+            <li><strong>Geometry:</strong> smaller <span style="font-family:var(--mono)">d</span> and larger overlap <span style="font-family:var(--mono)">Γ</span> → stronger field seen by the optical mode.</li>
+            <li><strong>Length:</strong> larger <span style="font-family:var(--mono)">L</span> → more phase accumulation.</li>
+            <li><strong>Wavelength:</strong> larger <span style="font-family:var(--mono)">λ</span> → weaker phase for same Δn and L.</li>
+            <li><strong>Architecture:</strong> push–pull and double pass reduce the effective switching voltage by doubling the differential phase twice.</li>
+          </ul>
+        </div>
+
+        <div class="grid2" style="margin-top:12px">
+          <article class="card">
+            <h4>Alternative derivation (brief)</h4>
+            <p class="small">
+              Take returning fields <span style="font-family:var(--mono)">E0 e^{iΦ1}</span> and <span style="font-family:var(--mono)">E0 e^{iΦ2}</span>.
+              Then <span style="font-family:var(--mono)">|E0(e^{iΦ1}+e^{iΦ2})|² = 4|E0|² cos²((Φ1−Φ2)/2)</span>.
+              Normalizing gives <span style="font-family:var(--mono)">T=cos²(ΔΦ/2)</span>, independent of coupler phase convention.
+            </p>
+          </article>
+
+          <article class="card">
+            <h4>Concept check (answers included)</h4>
+            <ul class="small">
+              <li><strong>Q:</strong> Why does the mirror matter? <strong>A:</strong> It doubles the EO phase (round trip).</li>
+              <li><strong>Q:</strong> Why push–pull? <strong>A:</strong> It doubles the differential phase for the same V.</li>
+              <li><strong>Q:</strong> What ruins extinction ratio? <strong>A:</strong> unequal losses/amplitudes or decoherence/polarization mismatch.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="plotguide">
+        <h2>PART 5 — Optional Plot Guide</h2>
+        <div class="card">
+          <h4>Plot meaning</h4>
+          <p class="small">
+            The plot is in normalized units so it needs no numerical “example values.” It shows periodic switching:
+            maxima at integer <span style="font-family:var(--mono)">V/Vπ,int</span> and minima at half-integers.
+          </p>
+          <ul class="small">
+            <li><strong>x-axis:</strong> <span style="font-family:var(--mono)">V/Vπ,int</span> (dimensionless)</li>
+            <li><strong>y-axis:</strong> <span style="font-family:var(--mono)">T</span> (dimensionless)</li>
+            <li><strong>Key feature:</strong> <span style="font-family:var(--mono)">Vπ,int</span> sets the voltage scale for full bright→dark switching.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="final">
+        <h2>Final Answer (copy)</h2>
+
+        <article class="card">
+          <h4>Intensity transmittance (symbolic)</h4>
+
+          <div class="eq" data-copy="Δn(V)=−(1/2) n^3 r_eff (Γ V/d).  φ(V)=(2π/λ)Δn(V)L=−(π n^3 r_eff Γ L /(λ d))V.  Double pass gives Φ=2φ. Push–pull (V1=+V, V2=−V) gives differential phase ΔΦ(V)=Φ1−Φ2=4φ(V)=−(4π n^3 r_eff Γ L /(λ d))V.  For the port bright at V=0: T(V)=I_out/I_in=cos^2(ΔΦ/2)=cos^2( 2π n^3 r_eff Γ L V /(λ d) ). Complementary port: T̄(V)=sin^2( 2π n^3 r_eff Γ L V /(λ d) ).  Define Vπ,int=(λ d)/(2 n^3 r_eff Γ L) so T(V)=cos^2(π V/Vπ,int).">
+            <div class="row">
+              <pre class="eqtext">Δn(V)=−(1/2) n^3 r_eff (Γ V/d).
+φ(V)=(2π/λ)Δn(V)L=−(π n^3 r_eff Γ L /(λ d))V.
+Double pass gives Φ=2φ.
+Push–pull (V1=+V, V2=−V) gives differential phase
+ΔΦ(V)=Φ1−Φ2=4φ(V)=−(4π n^3 r_eff Γ L /(λ d))V.
+
+For the port bright at V=0:
+T(V)=I_out/I_in=cos^2(ΔΦ/2)=cos^2( 2π n^3 r_eff Γ L V /(λ d) ).
+Complementary port:
+T̄(V)=sin^2( 2π n^3 r_eff Γ L V /(λ d) ).
+
+Define Vπ,int=(λ d)/(2 n^3 r_eff Γ L), so
+T(V)=cos^2(π V/Vπ,int).</pre>
+              <button class="copybtn" type="button">Copy</button>
+            </div>
+          </div>
+        </article>
+
+        <div class="backtop">
+          <a href="#top" aria-label="Back to top">↑ Back to top</a>
+        </div>
+      </section>
+
+      <div class="backtop" style="margin-top:10px">
+        <a href="#top" aria-label="Back to top">↑ Back to top</a>
+      </div>
+    </main>
+
+    <footer>
+      Self-contained learning article (vanilla HTML/CSS/JS). Copy buttons copy plain-text equations.
+    </footer>
+  </div>
+
+  <script>
+    (function(){
+      // Copy buttons
+      function setBtnState(btn, text){
+        const old = btn.textContent;
+        btn.textContent = text;
+        btn.disabled = true;
+        setTimeout(()=>{ btn.textContent = old; btn.disabled = false; }, 900);
+      }
+      async function copyText(text){
+        try{
+          await navigator.clipboard.writeText(text);
+          return true;
+        }catch(e){
+          try{
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            ta.setAttribute('readonly','');
+            document.body.appendChild(ta);
+            ta.select();
+            const ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            return ok;
+          }catch(e2){
+            return false;
+          }
+        }
+      }
+      document.querySelectorAll('.eq').forEach(eq=>{
+        const btn = eq.querySelector('.copybtn');
+        if(!btn) return;
+        btn.addEventListener('click', async ()=>{
+          const text = eq.getAttribute('data-copy') || (eq.querySelector('.eqtext') ? eq.querySelector('.eqtext').textContent : '');
+          const ok = await copyText(text.trim());
+          setBtnState(btn, ok ? 'Copied ✓' : 'Copy failed');
+        });
+      });
+
+      // Static plot: T = cos^2(pi x) where x = V/Vpi,int
+      const canvas = document.getElementById('plot');
+      if(!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+      function resizeCanvas(){
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.max(320, Math.floor(rect.width));
+        const h = Math.max(260, Math.floor(rect.height));
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
+        drawPlot(w, h);
+      }
+
+      function drawPlot(w, h){
+        const styles = getComputedStyle(document.documentElement);
+        const text = styles.getPropertyValue('--text').trim() || 'rgba(255,255,255,0.92)';
+        const muted = styles.getPropertyValue('--muted').trim() || 'rgba(255,255,255,0.72)';
+        const border = styles.getPropertyValue('--border').trim() || 'rgba(255,255,255,0.14)';
+        const accent = styles.getPropertyValue('--accent').trim() || '#7dd3fc';
+
+        ctx.clearRect(0,0,w,h);
+
+        const m = {l: 56, r: 18, t: 40, b: 48};
+        const pw = w - m.l - m.r;
+        const ph = h - m.t - m.b;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.06)';
+        ctx.strokeStyle = border;
+        ctx.lineWidth = 1;
+        roundRect(ctx, 8, 8, w-16, h-16, 12);
+        ctx.fill(); ctx.stroke();
+        ctx.restore();
+
+        const xMin = -1.0, xMax = 1.0, yMin = 0.0, yMax = 1.0;
+
+        function x2px(x){ return m.l + (x - xMin) * pw / (xMax - xMin); }
+        function y2py(y){ return m.t + (yMax - y) * ph / (yMax - yMin); }
+
+        // grid
+        ctx.save();
+        ctx.strokeStyle = 'rgba(127,127,127,0.25)';
+        ctx.lineWidth = 1;
+
+        const xticks = [-1, -0.5, 0, 0.5, 1];
+        xticks.forEach(x=>{
+          const X = x2px(x);
+          ctx.beginPath();
+          ctx.moveTo(X, m.t);
+          ctx.lineTo(X, m.t + ph);
+          ctx.stroke();
+        });
+
+        const yticks = [0, 0.25, 0.5, 0.75, 1];
+        yticks.forEach(y=>{
+          const Y = y2py(y);
+          ctx.beginPath();
+          ctx.moveTo(m.l, Y);
+          ctx.lineTo(m.l + pw, Y);
+          ctx.stroke();
+        });
+        ctx.restore();
+
+        // axes
+        ctx.save();
+        ctx.strokeStyle = border;
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(m.l, m.t);
+        ctx.lineTo(m.l, m.t + ph);
+        ctx.lineTo(m.l + pw, m.t + ph);
+        ctx.stroke();
+        ctx.restore();
+
+        // title + labels
+        ctx.save();
+        ctx.fillStyle = text;
+        ctx.font = '600 14px ' + getFontStack();
+        ctx.fillText('Normalized Transmittance Curve', m.l, 26);
+
+        ctx.fillStyle = muted;
+        ctx.font = '12px ' + getFontStack();
+        const xlabel = 'V / Vπ,int (dimensionless)';
+        const tw = ctx.measureText(xlabel).width;
+        ctx.fillText(xlabel, m.l + (pw - tw)/2, h - 10);
+
+        ctx.translate(14, m.t + ph/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText('T (dimensionless)', 0, 0);
+        ctx.restore();
+
+        // tick labels
+        ctx.save();
+        ctx.fillStyle = muted;
+        ctx.font = '12px ' + getFontStack();
+
+        xticks.forEach(x=>{
+          const X = x2px(x);
+          const label = (x === 0) ? '0' : String(x);
+          const lw = ctx.measureText(label).width;
+          ctx.fillText(label, X - lw/2, m.t + ph + 18);
+        });
+
+        yticks.forEach(y=>{
+          const Y = y2py(y);
+          const label = (y === 1) ? '1' : (y === 0) ? '0' : String(y);
+          const lw = ctx.measureText(label).width;
+          ctx.fillText(label, m.l - 10 - lw, Y + 4);
+        });
+        ctx.restore();
+
+        // curve
+        ctx.save();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        const N = Math.max(400, Math.floor(pw * 1.2));
+        for(let i=0;i<=N;i++){
+          const x = xMin + (xMax - xMin) * (i / N);
+          const T = Math.pow(Math.cos(Math.PI * x), 2);
+          const X = x2px(x);
+          const Y = y2py(T);
+          if(i===0) ctx.moveTo(X,Y);
+          else ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // legend
+        ctx.save();
+        const lx = m.l + pw - 190;
+        const ly = m.t + 10;
+        ctx.fillStyle = 'rgba(0,0,0,0.10)';
+        ctx.strokeStyle = border;
+        ctx.lineWidth = 1;
+        roundRect(ctx, lx, ly, 176, 34, 10);
+        ctx.fill(); ctx.stroke();
+
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(lx + 12, ly + 17);
+        ctx.lineTo(lx + 44, ly + 17);
+        ctx.stroke();
+
+        ctx.fillStyle = text;
+        ctx.font = '12px ' + getFontStack();
+        ctx.fillText('T = cos²(π·V/Vπ,int)', lx + 52, ly + 21);
+        ctx.restore();
+      }
+
+      function roundRect(c, x, y, w, h, r){
+        const rr = clamp(r, 0, Math.min(w,h)/2);
+        c.beginPath();
+        c.moveTo(x+rr, y);
+        c.arcTo(x+w, y, x+w, y+h, rr);
+        c.arcTo(x+w, y+h, x, y+h, rr);
+        c.arcTo(x, y+h, x, y, rr);
+        c.arcTo(x, y, x+w, y, rr);
+        c.closePath();
+      }
+
+      function getFontStack(){
+        return 'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      }
+
+      const ro = new ResizeObserver(()=>resizeCanvas());
+      ro.observe(canvas);
+      resizeCanvas();
+    })();
+  </script>
 </body>
 </html>

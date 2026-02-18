@@ -2,64 +2,1496 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>23.1-1 — Superposition of Two Gaussian Pulses</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Superposition of Two Gaussian Pulses (Transform-Limited + Chirped): Intensity, Phase, Spectrum, and Effective Chirp</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1730;
+      --card:#111c3a;
+      --text:#eaf0ff;
+      --muted:#b7c3e6;
+      --faint:#7f8bb2;
+      --accent:#7cd4ff;
+      --accent2:#a7ffb7;
+      --warn:#ffd27a;
+      --danger:#ff7a9e;
+      --line:rgba(255,255,255,.12);
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --shadow2: 0 10px 24px rgba(0,0,0,.25);
+      --radius:16px;
+      --radius2:22px;
+      --max:1100px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f6f8ff;
+        --panel:#ffffff;
+        --card:#ffffff;
+        --text:#0b1224;
+        --muted:#2d3a5e;
+        --faint:#56648a;
+        --line:rgba(11,18,36,.12);
+        --shadow: 0 12px 30px rgba(12,18,40,.12);
+        --shadow2: 0 10px 22px rgba(12,18,40,.10);
+      }
     }
-    header, main {
-      max-width: 980px;
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% 0%, rgba(124,212,255,.14), transparent 60%),
+        radial-gradient(900px 500px at 80% 10%, rgba(167,255,183,.10), transparent 55%),
+        radial-gradient(800px 500px at 50% 100%, rgba(255,122,158,.08), transparent 60%),
+        var(--bg);
+      line-height:1.55;
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    header{
+      padding: 28px 18px 14px;
+    }
+    .wrap{
+      max-width:var(--max);
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:16px;
+    }
+    .hero{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    .hero-inner{
+      padding: 18px 18px 16px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+      align-items:start;
+    }
+    .kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.2px;
+      background: rgba(255,255,255,.03);
+      width:fit-content;
+    }
+    .dot{
+      width:9px;height:9px;border-radius:99px;
+      background: radial-gradient(circle at 30% 30%, var(--accent), rgba(124,212,255,.18));
+      box-shadow: 0 0 0 4px rgba(124,212,255,.10);
+    }
+    h1{
+      margin:10px 0 8px;
+      font-size: clamp(22px, 2.8vw, 34px);
+      line-height:1.15;
+      letter-spacing:-.3px;
+    }
+    .sub{
+      color:var(--muted);
+      margin:0;
+      font-size:14px;
+      max-width: 70ch;
+    }
+    .meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      justify-content:flex-end;
+    }
+    .pill{
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(255,255,255,.03);
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .pill b{ color:var(--text); font-weight:650; }
+
+    main{
+      padding: 0 18px 34px;
+    }
+
+    .layout{
+      max-width: var(--max);
       margin: 0 auto;
-      padding: 24px 18px;
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap: 16px;
+      align-items:start;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+    @media (max-width: 980px){
+      .hero-inner{ grid-template-columns: 1fr; }
+      .meta{ justify-content:flex-start; }
+      .layout{ grid-template-columns: 1fr; }
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
+
+    /* Sticky TOC */
+    nav.toc{
+      position: sticky;
+      top: 12px;
+      align-self:start;
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      box-shadow: var(--shadow2);
+      padding: 12px;
+    }
+    .toc h2{
+      font-size: 13px;
+      margin: 0 0 8px;
       color: var(--muted);
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .toc a{
+      display:block;
+      padding: 7px 10px;
+      border-radius: 10px;
+      color: var(--text);
+      border:1px solid transparent;
+      font-size: 13px;
     }
+    .toc a:hover{
+      background: rgba(124,212,255,.10);
+      border-color: rgba(124,212,255,.20);
+      text-decoration:none;
+    }
+    .toc .small{
+      font-size:12px;
+      color: var(--faint);
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-top: 1px dashed var(--line);
+    }
+
+    section{
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,.03);
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+    }
+    section + section{ margin-top: 14px; }
+
+    .sec-head{
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.01));
+    }
+    .sec-head h2{
+      margin:0;
+      font-size: 16px;
+      letter-spacing:-.2px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .badge{
+      font-size: 12px;
+      color: var(--muted);
+      border:1px solid var(--line);
+      padding: 3px 8px;
+      border-radius:999px;
+      background: rgba(255,255,255,.03);
+    }
+    .sec-body{
+      padding: 14px 16px 16px;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+    }
+    .card h3{
+      margin: 0 0 8px;
+      font-size: 14px;
+      letter-spacing:-.15px;
+    }
+    .card p, .card ul{ margin: 0; color: var(--muted); font-size: 13.5px; }
+    .card ul{ padding-left: 18px; }
+    .card li{ margin: 4px 0; }
+
+    .callout{
+      border-left: 4px solid rgba(124,212,255,.8);
+      background: rgba(124,212,255,.08);
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(124,212,255,.22);
+      color: var(--text);
+    }
+    .callout.warn{
+      border-left-color: rgba(255,210,122,.9);
+      background: rgba(255,210,122,.09);
+      border-color: rgba(255,210,122,.22);
+    }
+    .callout.danger{
+      border-left-color: rgba(255,122,158,.9);
+      background: rgba(255,122,158,.09);
+      border-color: rgba(255,122,158,.22);
+    }
+    .callout h3{
+      margin:0 0 6px;
+      font-size: 14px;
+      letter-spacing:-.15px;
+    }
+    .callout p, .callout ul{ margin:0; color: var(--muted); }
+    .callout ul{ padding-left: 18px; }
+    .callout li{ margin: 4px 0; }
+
+    .eq{
+      margin: 10px 0;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.12);
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.45;
+      overflow:auto;
+      position:relative;
+    }
+    @media (prefers-color-scheme: light){
+      .eq{ background: rgba(11,18,36,.05); }
+    }
+
+    .eqbar{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      margin: 10px 0 6px;
+    }
+    .eqbar .label{
+      font-size: 12px;
+      color: var(--faint);
+    }
+
+    button.copy{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    button.copy:hover{
+      background: rgba(124,212,255,.12);
+      border-color: rgba(124,212,255,.28);
+      transform: translateY(-1px);
+    }
+    button.copy:active{ transform: translateY(0px) scale(.98); }
+
+    details{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      background: rgba(255,255,255,.02);
+      margin-top: 10px;
+    }
+    summary{
+      cursor:pointer;
+      color: var(--text);
+      font-weight: 650;
+      font-size: 13.5px;
+      list-style:none;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    details p, details ul{
+      color: var(--muted);
+      margin: 8px 0 0;
+      font-size: 13.5px;
+    }
+    details ul{ padding-left: 18px; }
+    details li{ margin:4px 0; }
+
+    figure{
+      margin: 12px 0 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,.02);
+    }
+    figcaption{
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+    canvas{
+      width: 100%;
+      height: 320px;
+      display:block;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,.10);
+    }
+    @media (prefers-color-scheme: light){
+      canvas{ background: rgba(11,18,36,.04); }
+    }
+
+    .backtop{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size: 12px;
+      width: fit-content;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .backtop:hover{
+      transform: translateY(-1px);
+      background: rgba(124,212,255,.10);
+      border-color: rgba(124,212,255,.22);
+      text-decoration:none;
+    }
+
+    footer{
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 18px;
+      color: var(--faint);
+      font-size: 12.5px;
+    }
+
+    /* Print */
+    @media print{
+      body{ background:#fff !important; color:#000 !important; }
+      nav.toc{ display:none !important; }
+      section, .hero{ box-shadow:none !important; }
+      .eq{ background:#f4f4f4 !important; }
+      button.copy{ display:none !important; }
+      a{ text-decoration:none !important; color:#000 !important; }
+      section{ break-inside: avoid; page-break-inside: avoid; }
+      figure{ break-inside: avoid; page-break-inside: avoid; }
+      header{ padding-bottom:0; }
+    }
+
+    /* Subtle micro-animation for anchored headings */
+    :target{
+      scroll-margin-top: 14px;
+      animation: targetPulse .65s ease-out 1;
+    }
+    @keyframes targetPulse{
+      0%{ box-shadow: 0 0 0 0 rgba(124,212,255,.0); }
+      35%{ box-shadow: 0 0 0 6px rgba(124,212,255,.14); }
+      100%{ box-shadow: 0 0 0 0 rgba(124,212,255,.0); }
+    }
+
+    .nowrap{ white-space:nowrap; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="box">
-      <h1>23.1-1 — Superposition of Two Gaussian Pulses</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch23/prob_23_1_1.html</code></p>
+<a id="top"></a>
+<header>
+  <div class="wrap hero">
+    <div class="hero-inner">
+      <div>
+        <div class="kicker"><span class="dot" aria-hidden="true"></span><span>Ultrafast optics • Gaussian pulses • Chirp • Interference</span></div>
+        <h1>Superposition of Two Gaussian Pulses: <span class="nowrap">Transform-Limited + Chirped</span></h1>
+        <p class="sub">
+          Problem: add a transform-limited Gaussian pulse to an otherwise identical chirped Gaussian pulse (chirp parameter <b>a</b>),
+          then derive the <b>time-domain intensity</b> and <b>phase</b>, plus the <b>spectral intensity</b>, <b>spectral phase</b>, and an
+          <b>effective chirp</b> for the resulting superposition.
+        </p>
+      </div>
+      <div class="meta" aria-label="key takeaways">
+        <div class="pill"><b>Output:</b> symbolic closed-forms</div>
+        <div class="pill"><b>Key idea:</b> coherent interference</div>
+        <div class="pill"><b>Tool:</b> Gaussian Fourier transform</div>
+        <div class="pill"><b>Engineering lens:</b> pulse shaping & dispersion</div>
+      </div>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+<main>
+  <div class="layout">
+    <nav class="toc" aria-label="Table of Contents">
+      <h2>
+        <span>Table of Contents</span>
+        <span class="badge">sticky</span>
+      </h2>
+      <a href="#qs">Quick Summary</a>
+      <a href="#p0">PART 0 — Concept Primer</a>
+      <a href="#p0b">PART 0B — Industry & Applied Physics</a>
+      <a href="#p1">PART 1 — Problem Analysis</a>
+      <a href="#p2">PART 2 — Strategy & Tips</a>
+      <a href="#p3">PART 3 — Full Solution</a>
+      <a href="#p4">PART 4 — Deeper Understanding</a>
+      <a href="#p5">PART 5 — Optional Plot Guide</a>
+      <div class="small">
+        Tip: use the copy buttons to grab equations and the boxed final results as plain text.
+      </div>
+    </nav>
+
+    <article>
+      <!-- Quick Summary -->
+      <section id="qs" aria-labelledby="qs-h">
+        <div class="sec-head">
+          <h2 id="qs-h">Quick Summary <span class="badge">what you’ll learn</span></h2>
+        </div>
+        <div class="sec-body">
+          <ul style="margin:0; padding-left:18px; color:var(--muted);">
+            <li><b>What this is about:</b> coherent addition of two pulses with identical Gaussian envelopes but different phase (one has quadratic temporal phase = chirp).</li>
+            <li><b>Key physics idea:</b> superposition in a linear optical system leads to <b>interference</b>; intensity is not the sum of intensities unless phases are random.</li>
+            <li><b>Governing field model:</b> complex electric-field envelope of a Gaussian pulse; chirp enters as a <b>quadratic phase</b> in time.</li>
+            <li><b>Main time-domain result:</b> intensity becomes a Gaussian envelope multiplied by a <b>cos²</b> term with argument ∝ <b>a t²</b> (a “temporal Fresnel-like” fringe).</li>
+            <li><b>Main spectral result:</b> spectrum is the sum of two Gaussian-like spectra; spectral intensity includes a cross term with <b>cos(θ(Ω))</b>, producing spectral interference.</li>
+            <li><b>Phase results:</b> time-domain phase is essentially the average of the two phases (plus possible π jumps where the sum crosses zero); spectral phase is an arctangent from vector addition in the complex plane.</li>
+            <li><b>Chirp of the superposition:</b> the summed pulse is <b>not purely Gaussian</b>, so “chirp parameter” is best treated as <b>local/approximate</b>; near pulse center it behaves like chirp ≈ <b>a/2</b>.</li>
+            <li><b>Result type:</b> fully <b>symbolic</b>; one optional plot uses example values only to visualize the cos² modulation.</li>
+          </ul>
+
+          <a class="backtop" href="#top" aria-label="Back to top">↑ Back to top</a>
+        </div>
+      </section>
+
+      <!-- PART 0 -->
+      <section id="p0" aria-labelledby="p0-h">
+        <div class="sec-head">
+          <h2 id="p0-h">PART 0 — Concept Primer <span class="badge">theory refresher</span></h2>
+        </div>
+        <div class="sec-body">
+          <div class="grid2">
+            <div class="card">
+              <h3>Core definitions (symbols & units)</h3>
+              <ul>
+                <li><b>E(t)</b> — complex electric field (V/m). Often written as envelope × carrier.</li>
+                <li><b>ω<sub>0</sub></b> — carrier angular frequency (rad/s).</li>
+                <li><b>T<sub>0</sub></b> — Gaussian time-width parameter (s). (Not always FWHM; see note.)</li>
+                <li><b>Ω = ω − ω<sub>0</sub></b> — frequency offset from carrier (rad/s).</li>
+                <li><b>a</b> — (dimensionless) chirp parameter used here via a quadratic temporal phase.</li>
+                <li><b>I(t) ∝ |E(t)|²</b> — instantaneous intensity (W/m²), proportional to field magnitude squared.</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h3>Physical meaning (intuition)</h3>
+              <ul>
+                <li><b>Transform-limited (TL):</b> minimum time duration for a given spectrum; no extra frequency-time correlation.</li>
+                <li><b>Chirp:</b> instantaneous frequency changes in time; mathematically: temporal phase has curvature (quadratic term).</li>
+                <li><b>Coherent sum:</b> adding fields adds complex numbers; intensity contains an interference term that depends on relative phase.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout" style="margin-top:12px;">
+            <h3>Key model used in ultrafast optics</h3>
+            <p>
+              A chirped Gaussian can be written compactly using a complex “width” factor:
+              the temporal envelope is Gaussian, and chirp appears as a quadratic phase.
+              This is an idealized but very common model for pulses after linear dispersion.
+            </p>
+          </div>
+
+          <div class="grid2" style="margin-top:12px;">
+            <div class="card">
+              <h3>Validity conditions & assumptions</h3>
+              <ul>
+                <li><b>Linear optics</b> (superposition holds): no nonlinear mixing between the two pulses.</li>
+                <li><b>Same carrier ω<sub>0</sub></b> and same Gaussian width T<sub>0</sub>.</li>
+                <li><b>Perfect temporal overlap</b> (added at same time origin) unless stated otherwise.</li>
+                <li><b>Same polarization</b> so the fields add directly.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Mini intuition examples (minimal algebra)</h3>
+              <ul>
+                <li><b>Two equal waves in phase:</b> field doubles → intensity quadruples.</li>
+                <li><b>Two equal waves 180° out of phase:</b> cancel → intensity near zero.</li>
+                <li><b>Time-varying relative phase:</b> interference oscillates in time (or frequency).</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout warn" style="margin-top:12px;">
+            <h3>What to watch for (common pitfalls)</h3>
+            <ul>
+              <li><b>Intensity is not additive</b> for coherent fields: |E<sub>1</sub>+E<sub>2</sub>|² ≠ |E<sub>1</sub>|²+|E<sub>2</sub>|².</li>
+              <li><b>Chirp sign conventions</b> vary across textbooks. Always define the phase explicitly.</li>
+              <li>The summed pulse here is <b>not a pure Gaussian</b> (because of the cos term), so a single global “chirp parameter” is only approximate.</li>
+              <li>Phase can have <b>π jumps</b> where the real amplitude factor crosses zero (field sign flips).</li>
+            </ul>
+          </div>
+
+          <details>
+            <summary>Note on Gaussian width conventions (T0 vs FWHM)</summary>
+            <p>
+              In this article we use the common analytic form
+              exp(−t²/(2T0²)) for the field envelope. Then intensity scales as exp(−t²/T0²).
+              If you need intensity FWHM, it is T_FWHM,int = 2 T0 √(ln 2). Different books may define T0 differently.
+            </p>
+          </details>
+
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </div>
+      </section>
+
+      <!-- PART 0B -->
+      <section id="p0b" aria-labelledby="p0b-h">
+        <div class="sec-head">
+          <h2 id="p0b-h">PART 0B — Industry & Applied Physics Perspective <span class="badge">why engineers care</span></h2>
+        </div>
+        <div class="sec-body">
+          <div class="grid2">
+            <div class="card">
+              <h3>Where this shows up (3+ application areas)</h3>
+              <ul>
+                <li><b>Telecom & coherent links:</b> pulse chirp + interference affects eye diagrams, dispersion tolerance, and coherent receiver DSP needs.</li>
+                <li><b>Ultrafast lasers & pulse compressors:</b> combining chirped and TL components is a basic “building block” of pulse shaping and dispersion compensation.</li>
+                <li><b>Optical metrology (OCT, interferometry):</b> spectral interference encodes phase; chirp alters axial resolution and calibration.</li>
+                <li><b>Laser micromachining:</b> chirp changes peak power and energy deposition; coherent combining can create structured temporal intensity profiles.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Engineering motivations</h3>
+              <ul>
+                <li><b>Performance:</b> peak intensity and bandwidth determine nonlinear efficiency, resolution, and throughput.</li>
+                <li><b>Reliability & safety:</b> unintended constructive interference can raise peak power beyond damage thresholds.</li>
+                <li><b>Cost/complexity:</b> chirp management can shift complexity between optics (dispersion) and electronics (DSP).</li>
+                <li><b>Manufacturability:</b> tolerances (dispersion, alignment, polarization) determine if coherent addition is stable in a product.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:12px;">
+            <div class="card">
+              <h3>Typical measurement/validation in practice</h3>
+              <ul>
+                <li><b>Autocorrelation / cross-correlation</b> for pulse width and overlap.</li>
+                <li><b>FROG/SPIDER</b> to retrieve temporal intensity and phase (chirp) from nonlinear measurements.</li>
+                <li><b>Optical spectrum analyzer</b> to observe spectral interference fringes and bandwidth changes.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Design trade-offs & non-idealities</h3>
+              <ul>
+                <li><b>Dispersion drift</b> (temperature, fiber length) changes chirp and the interference pattern.</li>
+                <li><b>Relative timing jitter</b> reduces coherent interference (averages fringes out).</li>
+                <li><b>Polarization mismatch</b> reduces coherent addition (acts like partial incoherence).</li>
+                <li><b>Amplitude mismatch</b> changes contrast; real systems rarely have perfectly equal pulse energies.</li>
+              </ul>
+            </div>
+          </div>
+
+          <details>
+            <summary>From lab to product: how the ideal model gets adapted</summary>
+            <p>
+              In products, you often replace “perfect overlap and identical parameters” with tolerance bands:
+              add a relative delay, unequal amplitudes, polarization rotation, and measured dispersion.
+              The same math structure still holds (sum complex spectra/fields), but you usually compute expected
+              fringes statistically (jitter) and include measured transfer functions (filters, modulators, fiber).
+            </p>
+          </details>
+
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </div>
+      </section>
+
+      <!-- PART 1 -->
+      <section id="p1" aria-labelledby="p1-h">
+        <div class="sec-head">
+          <h2 id="p1-h">PART 1 — Problem Analysis <span class="badge">set it up</span></h2>
+        </div>
+        <div class="sec-body">
+          <div class="card">
+            <h3>Problem restatement (in plain words)</h3>
+            <p>
+              You have two Gaussian optical pulses with the same carrier frequency and the same Gaussian temporal width.
+              One is transform-limited (no chirp). The other has a quadratic temporal phase corresponding to chirp parameter <b>a</b>.
+              You add the two complex fields coherently and must derive:
+              (1) time-domain intensity and phase of the resulting pulse,
+              (2) spectral intensity and spectral phase of the resulting spectrum,
+              (3) a chirp parameter (interpreted carefully, because the sum is not exactly Gaussian).
+            </p>
+          </div>
+
+          <div class="grid2" style="margin-top:12px;">
+            <div class="card">
+              <h3>Given</h3>
+              <ul>
+                <li>Transform-limited Gaussian pulse with width parameter <b>T<sub>0</sub></b>.</li>
+                <li>Chirped Gaussian pulse with same amplitude/width/carrier, chirp parameter <b>a</b>.</li>
+                <li>Coherent addition (fields add).</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Unknowns to derive</h3>
+              <ul>
+                <li><b>I(t)</b> and temporal phase <b>ψ(t)</b> of the superposition.</li>
+                <li><b>|E(ω)|²</b> and spectral phase <b>Φ(ω)</b>.</li>
+                <li>An <b>effective chirp parameter</b> for the superposition (with clear interpretation).</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout" style="margin-top:12px;">
+            <h3>Relevant principles (and why)</h3>
+            <ul>
+              <li><b>Linear superposition:</b> E<sub>sum</sub>(t) = E<sub>1</sub>(t) + E<sub>2</sub>(t).</li>
+              <li><b>Intensity definition:</b> I(t) ∝ |E(t)|² → interference term appears.</li>
+              <li><b>Fourier transform:</b> spectrum is linear: E(ω) = 𝓕{E(t)} = E<sub>1</sub>(ω)+E<sub>2</sub>(ω).</li>
+              <li><b>Gaussian transform identity:</b> chirped Gaussian stays Gaussian in frequency with complex width.</li>
+            </ul>
+          </div>
+
+          <div class="callout warn" style="margin-top:12px;">
+            <h3>Assumptions (explicit)</h3>
+            <ul>
+              <li>Same time origin (no relative delay) and same polarization.</li>
+              <li>Equal peak field amplitude for both pulses (can be generalized, but not required here).</li>
+              <li>No propagation effects during addition (no additional dispersion/nonlinearity at the combining point).</li>
+              <li>Chirp parameter <b>a</b> enters only through a quadratic temporal phase as defined below.</li>
+            </ul>
+          </div>
+
+          <div class="card" style="margin-top:12px;">
+            <h3>Possible approaches (2–3) and comparison</h3>
+            <ul style="color:var(--muted);">
+              <li><b>(A) Time-domain first:</b> write fields, add, compute |·|² and arg(·). <i>Best for I(t) and ψ(t); very direct.</i></li>
+              <li><b>(B) Frequency-domain first:</b> Fourier transform each pulse, add spectra, compute |·|² and arg(·). <i>Best for spectral quantities.</i></li>
+              <li><b>(C) Small-t expansion:</b> approximate near t=0 to extract an “effective chirp”. <i>Best to interpret chirp for a non-Gaussian sum.</i></li>
+            </ul>
+            <p style="margin-top:8px; color:var(--muted);">
+              We will combine (A)+(B) for exact expressions, and use (C) to define a meaningful effective chirp near pulse center.
+            </p>
+          </div>
+
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </div>
+      </section>
+
+      <!-- PART 2 -->
+      <section id="p2" aria-labelledby="p2-h">
+        <div class="sec-head">
+          <h2 id="p2-h">PART 2 — Strategy & Tips <span class="badge">roadmap</span></h2>
+        </div>
+        <div class="sec-body">
+          <ol style="margin:0; padding-left:18px; color:var(--muted);">
+            <li><b>Define pulse models</b> for TL and chirped Gaussian fields (envelope + carrier).</li>
+            <li><b>Factor out common terms</b> (same carrier and Gaussian envelope) to isolate the interference factor.</li>
+            <li><b>Compute time intensity</b> I(t) ∝ |1 + e^{-iφ(t)}|² and simplify using trig identities.</li>
+            <li><b>Compute time phase</b> ψ(t) = arg(1 + e^{-iφ(t)}) and rewrite in a stable form.</li>
+            <li><b>Fourier transform each pulse</b> using the chirped-Gaussian transform formula.</li>
+            <li><b>Add spectra</b> and express the chirped spectrum as magnitude × phase to expose interference.</li>
+            <li><b>Compute spectral intensity</b> |E(ω)|² including the cross term.</li>
+            <li><b>Compute spectral phase</b> Φ(ω)=arg(sum) via arctangent of imaginary/real parts.</li>
+            <li><b>Define an effective chirp</b> for the superposition: use the phase curvature near t=0 (or instantaneous frequency slope) and explain limitations.</li>
+            <li><b>Sanity checks</b> (limits a→0, large |a|, and consistency with coherent addition).</li>
+          </ol>
+
+          <div class="callout danger" style="margin-top:12px;">
+            <h3>Common mistakes (quick tips)</h3>
+            <ul>
+              <li>Forgetting the <b>cross term</b> when squaring the field magnitude.</li>
+              <li>Mixing up <b>field</b> Gaussian width with <b>intensity</b> Gaussian width.</li>
+              <li>Dropping constant phase factors incorrectly: constants don’t affect intensity but do affect reported phase.</li>
+              <li>Calling the result “a Gaussian with chirp” globally—here the amplitude includes a <b>cos</b> factor, so it’s not purely Gaussian.</li>
+            </ul>
+          </div>
+
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </div>
+      </section>
+
+      <!-- PART 3 -->
+      <section id="p3" aria-labelledby="p3-h">
+        <div class="sec-head">
+          <h2 id="p3-h">PART 3 — Full Solution <span class="badge">step-by-step derivation</span></h2>
+        </div>
+        <div class="sec-body">
+          <div class="card">
+            <h3>Start with qualitative intuition (before equations)</h3>
+            <p>
+              Because the two pulses have the same Gaussian envelope, the key difference is their <b>relative phase</b>.
+              The chirped pulse has a quadratic phase in time, so the relative phase between the two pulses changes with t².
+              Therefore, the sum will show <b>constructive interference near times where the relative phase ≈ 0 mod 2π</b>
+              and <b>destructive interference where the relative phase ≈ π mod 2π</b>. This creates a Gaussian envelope
+              multiplied by an interference fringe that depends on t².
+            </p>
+          </div>
+
+          <!-- Define fields -->
+          <div class="eqbar">
+            <div class="label">Key equation (pulse models)</div>
+            <button class="copy" data-copy="eq1">Copy</button>
+          </div>
+          <div class="eq" id="eq1" data-plain="Let Ω = ω − ω0.
+Transform-limited Gaussian (field):
+E_TL(t) = E0 * exp(−t^2/(2T0^2)) * exp(i ω0 t).
+
+Chirped Gaussian with chirp parameter a (same E0,T0,ω0):
+E_C(t) = E0 * exp(−(1 + i a) t^2/(2T0^2)) * exp(i ω0 t)
+       = E0 * exp(−t^2/(2T0^2)) * exp(−i a t^2/(2T0^2)) * exp(i ω0 t).">
+            Let Ω = ω − ω<sub>0</sub>.<br/>
+            Transform-limited Gaussian (field):<br/>
+            <span style="white-space:pre-wrap;">
+E_TL(t) = E0 · exp(−t^2/(2T0^2)) · exp(i ω0 t).
+            </span><br/>
+            Chirped Gaussian (same E0,T0,ω0) with chirp parameter a:<br/>
+            <span style="white-space:pre-wrap;">
+E_C(t) = E0 · exp(−(1 + i a) t^2/(2T0^2)) · exp(i ω0 t)
+       = E0 · exp(−t^2/(2T0^2)) · exp(−i a t^2/(2T0^2)) · exp(i ω0 t).
+            </span>
+          </div>
+
+          <div class="callout warn">
+            <h3>Sign convention note (important)</h3>
+            <p>
+              We define chirp through the factor exp(−i a t²/(2T0²)). If your book uses exp(+i a t²/(2T0²)),
+              simply replace a → −a in the phase-related expressions. The intensity expressions remain the same because they involve cos(·).
+            </p>
+          </div>
+
+          <!-- Superposition -->
+          <div class="eqbar" style="margin-top:12px;">
+            <div class="label">Superposition field (factor common terms)</div>
+            <button class="copy" data-copy="eq2">Copy</button>
+          </div>
+          <div class="eq" id="eq2" data-plain="Define φ(t) = a t^2/(2T0^2).
+E_sum(t) = E_TL(t) + E_C(t)
+         = E0 * exp(−t^2/(2T0^2)) * exp(i ω0 t) * [ 1 + exp(−i φ(t)) ].">
+            Define φ(t) = a t<sup>2</sup>/(2T<sub>0</sub><sup>2</sup>).<br/>
+            <span style="white-space:pre-wrap;">
+E_sum(t) = E_TL(t) + E_C(t)
+         = E0 · exp(−t^2/(2T0^2)) · exp(i ω0 t) · [ 1 + exp(−i φ(t)) ].
+            </span>
+          </div>
+
+          <!-- Time intensity -->
+          <div class="eqbar" style="margin-top:12px;">
+            <div class="label">Time-domain intensity I(t)</div>
+            <button class="copy" data-copy="eq3">Copy</button>
+          </div>
+          <div class="eq" id="eq3" data-plain="Let I0 = |E0|^2 (up to the medium constant).
+I(t) ∝ |E_sum(t)|^2 = |E0|^2 * exp(−t^2/T0^2) * |1 + e^(−iφ)|^2.
+|1 + e^(−iφ)|^2 = (1 + e^(−iφ))(1 + e^(+iφ)) = 2 + 2 cosφ = 4 cos^2(φ/2).
+Therefore:
+I(t) = 4 I0 * exp(−t^2/T0^2) * cos^2( a t^2/(4T0^2) ).">
+            Let I<sub>0</sub> = |E<sub>0</sub>|² (up to proportionality constants).<br/>
+            <span style="white-space:pre-wrap;">
+I(t) ∝ |E_sum(t)|^2 = |E0|^2 · exp(−t^2/T0^2) · |1 + e^(−iφ)|^2.
+|1 + e^(−iφ)|^2 = (1 + e^(−iφ))(1 + e^(+iφ)) = 2 + 2 cosφ = 4 cos^2(φ/2).
+
+Therefore:
+I(t) = 4 I0 · exp(−t^2/T0^2) · cos^2( a t^2/(4T0^2) ).
+            </span>
+          </div>
+
+          <div class="callout">
+            <h3>Interpretation of I(t)</h3>
+            <p>
+              The Gaussian envelope exp(−t²/T0²) is multiplied by a fringe term cos²(a t²/(4T0²)).
+              Because the argument depends on t², fringes are denser away from the center. When a=0, cos²(0)=1 and
+              you get a simple quadrupling of intensity (two equal pulses in phase).
+            </p>
+          </div>
+
+          <!-- Time phase -->
+          <div class="eqbar" style="margin-top:12px;">
+            <div class="label">Time-domain phase ψ(t)</div>
+            <button class="copy" data-copy="eq4">Copy</button>
+          </div>
+          <div class="eq" id="eq4" data-plain="Write the complex interference factor:
+1 + e^(−iφ) = e^(−iφ/2) [ e^(+iφ/2) + e^(−iφ/2) ] = 2 e^(−iφ/2) cos(φ/2).
+
+Thus:
+E_sum(t) = 2 E0 exp(−t^2/(2T0^2)) exp(i ω0 t) cos(φ/2) exp(−iφ/2).
+
+Temporal phase (where cos(φ/2)>0):
+ψ(t) = ω0 t − φ(t)/2 = ω0 t − a t^2/(4T0^2).
+
+If cos(φ/2) < 0, the field changes sign, producing an additional +π phase jump (equivalently, use |cos| in amplitude).">
+            <span style="white-space:pre-wrap;">
+1 + e^(−iφ) = e^(−iφ/2) [ e^(+iφ/2) + e^(−iφ/2) ] = 2 e^(−iφ/2) cos(φ/2).
+
+E_sum(t) = 2 E0 · exp(−t^2/(2T0^2)) · exp(i ω0 t) · cos(φ/2) · exp(−iφ/2).
+
+Temporal phase (when cos(φ/2) > 0):
+ψ(t) = ω0 t − φ(t)/2 = ω0 t − a t^2/(4T0^2).
+
+If cos(φ/2) < 0, there is an additional +π phase jump (sign flip of the real amplitude).
+            </span>
+          </div>
+
+          <details>
+            <summary>Instantaneous frequency and “local chirp” from ψ(t)</summary>
+            <p>
+              Where the phase is smooth (away from zeros of cos), the instantaneous angular frequency is
+              ω_inst(t) = dψ/dt = ω0 − (a/(2T0²)) t. This is a linear frequency sweep with slope −a/(2T0²).
+              The phase curvature is d²ψ/dt² = −a/(2T0²) (constant), which corresponds to an effective chirp about half of the original chirped pulse
+              (because the phase became −φ/2).
+              Near points where cos(φ/2)=0, the field amplitude vanishes and the phase becomes ill-defined (phase jumps).
+            </p>
+          </details>
+
+          <!-- Fourier transforms -->
+          <div class="eqbar" style="margin-top:12px;">
+            <div class="label">Fourier transforms (spectra of each pulse)</div>
+            <button class="copy" data-copy="eq5">Copy</button>
+          </div>
+          <div class="eq" id="eq5" data-plain="Using the Gaussian transform identity (constants grouped into K):
+Let K = E0 * T0 * sqrt(2π). Then, with Ω = ω − ω0:
+
+E_TL(ω) = K * exp(−Ω^2 T0^2 / 2).
+
+E_C(ω)  = K * (1/√(1 + i a)) * exp( −Ω^2 T0^2 / [2(1 + i a)] ).
+
+Therefore:
+E_sum(ω) = E_TL(ω) + E_C(ω)
+         = K [ exp(−Ω^2 T0^2 / 2) + (1/√(1 + i a)) exp( −Ω^2 T0^2 / (2(1 + i a)) ) ].">
+            Using a standard Gaussian Fourier transform (group constants into K):<br/>
+            Let K = E<sub>0</sub> · T<sub>0</sub> · √(2π), with Ω = ω − ω<sub>0</sub>.<br/>
+            <span style="white-space:pre-wrap;">
+E_TL(ω) = K · exp(−Ω^2 T0^2 / 2).
+
+E_C(ω)  = K · (1/√(1 + i a)) · exp( −Ω^2 T0^2 / [2(1 + i a)] ).
+
+E_sum(ω) = E_TL(ω) + E_C(ω)
+         = K [ exp(−Ω^2 T0^2 / 2) + (1/√(1 + i a)) exp( −Ω^2 T0^2 / (2(1 + i a)) ) ].
+            </span>
+          </div>
+
+          <div class="callout warn">
+            <h3>Why the chirped spectrum looks “broader”</h3>
+            <p>
+              The factor 1/(1+i a) in the exponent reduces the real decay rate in frequency by (1+a²),
+              which typically broadens the time-domain pulse (for fixed spectrum) or broadens the spectrum (for fixed time width),
+              depending on how the pulse was generated. Here we keep the same time-domain envelope width T0 by construction,
+              so the chirped pulse has a modified complex spectral shape (and phase).
+            </p>
+          </div>
+
+          <!-- Spectral magnitude-phase decomposition -->
+          <div class="eqbar" style="margin-top:12px;">
+            <div class="label">Put the chirped spectrum into magnitude × phase</div>
+            <button class="copy" data-copy="eq6">Copy</button>
+          </div>
+          <div class="eq" id="eq6" data-plain="Define x = Ω^2 T0^2 / 2.
+Then:
+1/(1 + i a) = (1 − i a)/(1 + a^2).
+
+So:
+exp(−x/(1 + i a)) = exp(−x/(1 + a^2)) * exp(+ i a x/(1 + a^2)).
+
+Also:
+1/√(1 + i a) = (1 + a^2)^(−1/4) * exp(− i (1/2) arctan(a)).
+
+Hence the chirped spectral term can be written as:
+B(Ω) = Bmag(Ω) * exp(i θ(Ω)),
+with
+Bmag(Ω) = (1 + a^2)^(−1/4) * exp(−x/(1 + a^2)),
+θ(Ω) = a x/(1 + a^2) − (1/2) arctan(a).">
+            Define x = Ω² T<sub>0</sub>² / 2.<br/>
+            <span style="white-space:pre-wrap;">
+1/(1 + i a) = (1 − i a)/(1 + a^2).
+
+exp(−x/(1 + i a)) = exp(−x/(1 + a^2)) · exp(+ i a x/(1 + a^2)).
+
+1/√(1 + i a) = (1 + a^2)^(−1/4) · exp(− i (1/2) arctan(a)).
+
+So the chirped spectral term:
+B(Ω) = Bmag(Ω) · exp(i θ(Ω)),
+Bmag(Ω) = (1 + a^2)^(−1/4) · exp(−x/(1 + a^2)),
+θ(Ω) = a x/(1 + a^2) − (1/2) arctan(a).
+            </span>
+          </div>
+
+          <!-- Spectral intensity -->
+          <div class="eqbar" style="margin-top:12px;">
+            <div class="label">Spectral intensity |E(ω)|²</div>
+            <button class="copy" data-copy="eq7">Copy</button>
+          </div>
+          <div class="eq" id="eq7" data-plain="Let G(Ω) = exp(−x) = exp(−Ω^2 T0^2/2), which is real and positive.
+Then:
+E_sum(ω) = K [ G(Ω) + Bmag(Ω) e^(iθ(Ω)) ].
+
+So:
+|E_sum(ω)|^2 = |K|^2 [ G^2 + Bmag^2 + 2 G Bmag cos(θ) ].
+
+Explicitly:
+G^2 = exp(−Ω^2 T0^2).
+
+Bmag^2 = (1 + a^2)^(−1/2) * exp(−Ω^2 T0^2/(1 + a^2)).
+
+Cross term:
+2 G Bmag cos(θ) = 2 exp(−Ω^2 T0^2/2) * (1 + a^2)^(−1/4) * exp(−Ω^2 T0^2/[2(1 + a^2)]) * cos(θ(Ω)).
+
+Therefore:
+|E_sum(ω)|^2 = |K|^2 { exp(−Ω^2 T0^2) + (1 + a^2)^(−1/2) exp(−Ω^2 T0^2/(1 + a^2))
++ 2 (1 + a^2)^(−1/4) exp[−Ω^2 T0^2/2 − Ω^2 T0^2/(2(1 + a^2))] cos(θ(Ω)) }.
+
+where θ(Ω) = a(Ω^2 T0^2/2)/(1 + a^2) − (1/2) arctan(a).">
+            Let G(Ω) = exp(−x) = exp(−Ω² T<sub>0</sub>²/2), real positive.<br/>
+            <span style="white-space:pre-wrap;">
+E_sum(ω) = K [ G(Ω) + Bmag(Ω) e^(iθ(Ω)) ].
+
+|E_sum(ω)|^2 = |K|^2 [ G^2 + Bmag^2 + 2 G Bmag cos(θ) ].
+
+G^2 = exp(−Ω^2 T0^2).
+
+Bmag^2 = (1 + a^2)^(−1/2) · exp(−Ω^2 T0^2/(1 + a^2)).
+
+Cross term:
+2 G Bmag cos(θ)
+= 2 exp(−Ω^2 T0^2/2) · (1 + a^2)^(−1/4) · exp(−Ω^2 T0^2/[2(1 + a^2)]) · cos(θ(Ω)).
+
+Therefore:
+|E_sum(ω)|^2 = |K|^2 {
+  exp(−Ω^2 T0^2)
+  + (1 + a^2)^(−1/2) exp(−Ω^2 T0^2/(1 + a^2))
+  + 2 (1 + a^2)^(−1/4) exp[−Ω^2 T0^2/2 − Ω^2 T0^2/(2(1 + a^2))] cos(θ(Ω))
+}.
+
+θ(Ω) = a(Ω^2 T0^2/2)/(1 + a^2) − (1/2) arctan(a).
+            </span>
+          </div>
+
+          <div class="callout">
+            <h3>Interpretation of the spectral interference term</h3>
+            <p>
+              The last term (∝ cos θ(Ω)) is the coherent cross term. It creates spectral fringes whose spacing depends on how θ varies with Ω.
+              Since θ contains Ω², the fringes are generally <b>non-uniform</b> in ω (quadratic phase).
+            </p>
+          </div>
+
+          <!-- Spectral phase -->
+          <div class="eqbar" style="margin-top:12px;">
+            <div class="label">Spectral phase Φ(ω)</div>
+            <button class="copy" data-copy="eq8">Copy</button>
+          </div>
+          <div class="eq" id="eq8" data-plain="With E_sum(ω) = K [ G + Bmag e^(iθ) ] and G>0 real:
+
+Real part: Re = G + Bmag cosθ
+Imag part: Im = Bmag sinθ
+
+Spectral phase (relative to arg(K)):
+Φ(ω) = atan2( Im, Re )
+     = atan2( Bmag(Ω) sinθ(Ω),  G(Ω) + Bmag(Ω) cosθ(Ω) ).
+
+(Plus any constant phase from K, which does not affect intensity.)">
+            With E<sub>sum</sub>(ω) = K [ G + B<sub>mag</sub> e<sup>iθ</sup> ] and G&gt;0 real:<br/>
+            <span style="white-space:pre-wrap;">
+Re = G + Bmag cosθ
+Im = Bmag sinθ
+
+Φ(ω) = atan2(Im, Re)
+     = atan2( Bmag(Ω) sinθ(Ω),  G(Ω) + Bmag(Ω) cosθ(Ω) ).
+
+(Up to an additive constant phase from K.)
+            </span>
+          </div>
+
+          <!-- Effective chirp parameter -->
+          <div class="eqbar" style="margin-top:12px;">
+            <div class="label">Chirp parameter of the superposition (careful interpretation)</div>
+            <button class="copy" data-copy="eq9">Copy</button>
+          </div>
+          <div class="eq" id="eq9" data-plain="The superposition field is:
+E_sum(t) = E0 exp(−t^2/(2T0^2)) exp(iω0 t) [1 + exp(−i a t^2/(2T0^2))].
+
+This is not a pure chirped Gaussian because the amplitude includes cos( a t^2/(4T0^2) ).
+So there is no single global chirp parameter that exactly describes the entire pulse.
+
+However, near t = 0 (pulse center), cos( a t^2/(4T0^2) ) ≈ 1 and the phase is smooth:
+ψ(t) ≈ ω0 t − a t^2/(4T0^2).
+
+Comparing to a standard chirped-Gaussian phase form ψ_std(t)=ω0 t − a_eff t^2/(2T0^2),
+we identify:
+a_eff ≈ a/2  (valid locally near t≈0, away from amplitude zeros).
+
+Equivalently, instantaneous frequency:
+ω_inst(t)=dψ/dt ≈ ω0 − (a/(2T0^2)) t,
+so the linear chirp slope is half that of the original chirped pulse (which has slope −a t/T0^2 under this convention).">
+            The superposition is:
+            <span style="white-space:pre-wrap;">
+E_sum(t) = E0 exp(−t^2/(2T0^2)) exp(iω0 t) [1 + exp(−i a t^2/(2T0^2))].
+            </span><br/>
+            This is <b>not</b> a pure chirped Gaussian because the amplitude contains cos(a t²/(4T0²)).
+            So there is no single exact global chirp parameter for all t.<br/><br/>
+            <b>Local effective chirp near t≈0:</b> cos(a t²/(4T0²)) ≈ 1, and ψ(t) ≈ ω0 t − a t²/(4T0²).<br/>
+            Comparing with ψ<sub>std</sub>(t)=ω0 t − a<sub>eff</sub> t²/(2T0²) gives:<br/>
+            <span style="white-space:pre-wrap;">
+a_eff ≈ a/2  (valid near pulse center, away from cosine zeros).
+            </span><br/>
+            Instantaneous frequency: ω<sub>inst</sub>(t)=dψ/dt ≈ ω0 − (a/(2T0²)) t.
+          </div>
+
+          <!-- FINAL ANSWER BOX -->
+          <div class="eqbar" style="margin-top:12px;">
+            <div class="label">Final answer (boxed summary)</div>
+            <button class="copy" data-copy="final">Copy</button>
+          </div>
+          <div class="eq" id="final" data-plain="Let φ(t)=a t^2/(2T0^2), Ω=ω−ω0, and K=E0 T0 sqrt(2π).
+Time domain:
+E_sum(t)=E0 exp(−t^2/(2T0^2)) exp(iω0 t) [1+exp(−iφ(t))].
+I(t)=|E_sum(t)|^2=4|E0|^2 exp(−t^2/T0^2) cos^2( a t^2/(4T0^2) ).
+Temporal phase (where cos>0): ψ(t)=ω0 t − a t^2/(4T0^2), with +π jumps when cos(a t^2/(4T0^2)) changes sign.
+
+Frequency domain:
+E_sum(ω)=K[ exp(−Ω^2 T0^2/2) + (1/√(1+ia)) exp(−Ω^2 T0^2/(2(1+ia))) ].
+
+Let x=Ω^2 T0^2/2, Bmag=(1+a^2)^(−1/4) exp(−x/(1+a^2)),
+θ(Ω)=a x/(1+a^2) − (1/2) arctan(a), and G=exp(−x).
+Then:
+|E_sum(ω)|^2=|K|^2[ G^2 + Bmag^2 + 2 G Bmag cosθ ].
+Spectral phase (relative to arg(K)):
+Φ(ω)=atan2( Bmag sinθ, G + Bmag cosθ ).
+
+Effective chirp of the superposition:
+Not globally defined (pulse not purely Gaussian). Locally near t≈0: a_eff ≈ a/2, i.e., ψ(t)≈ω0 t − a t^2/(4T0^2).">
+            <b>Let</b> φ(t)=a t²/(2T<sub>0</sub>²), Ω=ω−ω<sub>0</sub>, and K=E<sub>0</sub> T<sub>0</sub> √(2π).<br/><br/>
+
+            <b>Time domain</b><br/>
+            <span style="white-space:pre-wrap;">
+E_sum(t)=E0 exp(−t^2/(2T0^2)) exp(iω0 t) [1+exp(−iφ(t))].
+I(t)=|E_sum(t)|^2=4|E0|^2 exp(−t^2/T0^2) cos^2( a t^2/(4T0^2) ).
+Temporal phase (where cos>0): ψ(t)=ω0 t − a t^2/(4T0^2), with +π jumps when cos(a t^2/(4T0^2)) changes sign.
+            </span><br/>
+
+            <b>Frequency domain</b><br/>
+            <span style="white-space:pre-wrap;">
+E_sum(ω)=K[ exp(−Ω^2 T0^2/2) + (1/√(1+ia)) exp(−Ω^2 T0^2/(2(1+ia))) ].
+            </span><br/>
+
+            <b>Magnitude/phase form</b><br/>
+            <span style="white-space:pre-wrap;">
+Let x=Ω^2 T0^2/2, Bmag=(1+a^2)^(−1/4) exp(−x/(1+a^2)),
+θ(Ω)=a x/(1+a^2) − (1/2) arctan(a), and G=exp(−x).
+Then:
+|E_sum(ω)|^2=|K|^2[ G^2 + Bmag^2 + 2 G Bmag cosθ ].
+Φ(ω)=atan2( Bmag sinθ, G + Bmag cosθ )  (relative to arg(K)).
+            </span><br/>
+
+            <b>Effective chirp</b><br/>
+            <span style="white-space:pre-wrap;">
+Not globally defined (pulse not purely Gaussian). Locally near t≈0: a_eff ≈ a/2, i.e., ψ(t)≈ω0 t − a t^2/(4T0^2).
+            </span>
+          </div>
+
+          <!-- Sanity checks -->
+          <div class="callout warn" style="margin-top:12px;">
+            <h3>Sanity checks</h3>
+            <ul>
+              <li><b>Limit a → 0:</b> φ(t)=0 ⇒ E_sum=2E_TL ⇒ I(t)=4I_TL(t). Spectrum similarly doubles in field → quadruples in intensity.</li>
+              <li><b>Large |a|:</b> relative phase varies rapidly with t² and Ω², producing strong fringe structure (time and frequency).</li>
+              <li><b>Units:</b> a is dimensionless; arguments of exp and cos are dimensionless: a t²/T0² and Ω² T0² are dimensionless.</li>
+              <li><b>Physical meaning:</b> the interference pattern is a direct fingerprint of coherent addition between a flat-phase pulse and a quadratically phased pulse.</li>
+            </ul>
+          </div>
+
+          <!-- Optional plot (static) -->
+          <figure aria-label="Example plot of intensity modulation">
+            <canvas id="plot" role="img" aria-label="Plot of normalized intensity vs normalized time using example values"></canvas>
+            <figcaption>
+              <b>Optional visualization (example values only):</b> normalized intensity
+              I(t)/(4I0) = exp(−t²/T0²) cos²(a t²/(4T0²)) for a=6 (dimensionless), with horizontal axis t/T0.
+              This is purely to help intuition; the final results above remain symbolic.
+            </figcaption>
+          </figure>
+
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </div>
+      </section>
+
+      <!-- PART 4 -->
+      <section id="p4" aria-labelledby="p4-h">
+        <div class="sec-head">
+          <h2 id="p4-h">PART 4 — Deeper Understanding <span class="badge">interpretation</span></h2>
+        </div>
+        <div class="sec-body">
+          <div class="grid2">
+            <div class="card">
+              <h3>Re-interpret the final formulas</h3>
+              <ul>
+                <li><b>Gaussian envelope</b> exp(−t²/T0²): sets the overall time window where anything matters.</li>
+                <li><b>Interference fringe</b> cos²(a t²/(4T0²)): encodes the <b>relative quadratic phase</b> between the two pulses.</li>
+                <li><b>Spectral interference</b> cos θ(Ω): comes from adding a real Gaussian spectral component to a complex-phased Gaussian spectral component.</li>
+                <li><b>Phase behavior</b>: ψ(t) roughly equals the average phase (because 1+e^{-iφ} produces e^{-iφ/2}).</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Parameter dependence (qualitative)</h3>
+              <ul>
+                <li>Increase <b>|a|</b> → faster variation of φ(t) with t² → more closely spaced temporal nulls (where cos=0).</li>
+                <li>Increase <b>T0</b> (wider pulse) → fringes in time spread out (since argument uses t²/T0²).</li>
+                <li>In frequency, θ(Ω) contains Ω² → interference features become more pronounced away from ω0.</li>
+              </ul>
+            </div>
+          </div>
+
+          <details>
+            <summary>Alternative derivation idea (brief but meaningful)</summary>
+            <p>
+              Instead of adding in time then Fourier transforming, you can start in the frequency domain:
+              (i) take the known spectra of TL and chirped Gaussians,
+              (ii) represent them as phasors at each Ω,
+              (iii) add the phasors geometrically. Intensity is the squared magnitude of the resulting phasor,
+              and phase is the angle. This viewpoint is often used in coherent combining and spectral interferometry.
+            </p>
+          </details>
+
+          <div class="callout" style="margin-top:12px;">
+            <h3>Concept checks (self-test with answers)</h3>
+            <ul>
+              <li><b>Q:</b> Why does I(t) contain cos² of something proportional to t²?<br/>
+                  <b>A:</b> The relative phase between the pulses is quadratic in time (chirp), and interference depends on cos of the relative phase.</li>
+              <li><b>Q:</b> If a=0, why do we get a factor of 4 in intensity?<br/>
+                  <b>A:</b> Fields add coherently: E doubles, so |E|² quadruples.</li>
+              <li><b>Q:</b> Why isn’t the superposition a “Gaussian with a new chirp” exactly?<br/>
+                  <b>A:</b> The amplitude becomes Gaussian × cos(·), which introduces zeros and sign changes; that is not a pure Gaussian envelope.</li>
+              <li><b>Q:</b> What sets spectral fringes in |E(ω)|²?<br/>
+                  <b>A:</b> The cross term 2 G Bmag cosθ; θ(Ω) changes with Ω², producing oscillatory constructive/destructive interference.</li>
+              <li><b>Q:</b> What does “a_eff ≈ a/2 near t=0” really mean?<br/>
+                  <b>A:</b> Near the center, the cosine factor is ~1 so the field looks like a single chirped Gaussian with half the quadratic phase curvature.</li>
+            </ul>
+          </div>
+
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </div>
+      </section>
+
+      <!-- PART 5 -->
+      <section id="p5" aria-labelledby="p5-h">
+        <div class="sec-head">
+          <h2 id="p5-h">PART 5 — Optional Plot Guide <span class="badge">how to read the curve</span></h2>
+        </div>
+        <div class="sec-body">
+          <div class="card">
+            <h3>What the plot shows (and why it helps)</h3>
+            <p>
+              The plot visualizes the analytic time-domain intensity:
+              <span class="nowrap"><b>I(t)/(4I0) = exp(−t²/T0²) cos²(a t²/(4T0²))</b></span>.
+              It highlights that coherent addition with chirp produces “fringes” in time that depend on t²,
+              even though each individual pulse is a smooth Gaussian.
+            </p>
+            <ul style="margin-top:8px; color:var(--muted); padding-left:18px;">
+              <li><b>x-axis:</b> normalized time t/T0 (dimensionless).</li>
+              <li><b>y-axis:</b> normalized intensity I(t)/(4I0) (dimensionless).</li>
+              <li><b>Example values:</b> a=6 (dimensionless) only for visualization; the derived formulas are fully symbolic.</li>
+              <li><b>Features to notice:</b> zeros where cos(...) = 0, increasing fringe density for larger |t|, Gaussian roll-off.</li>
+            </ul>
+          </div>
+
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </div>
+      </section>
+    </article>
+  </div>
+</main>
+
+<footer>
+  <div style="max-width:var(--max); margin:0 auto;">
+    <div style="border-top:1px solid var(--line); padding-top:12px;">
+      <b>Note on notation:</b> This article used a dimensionless chirp parameter <b>a</b> via exp(−i a t²/(2T0²)).
+      If your reference defines chirp with the opposite sign, replace a → −a in phase-only expressions.
+      <span style="opacity:.8;">(Intensity expressions are unchanged.)</span>
     </div>
-  </main>
+  </div>
+</footer>
+
+<script>
+  // Smooth scrolling for in-page TOC
+  (function(){
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.querySelectorAll('a[href^="#"]').forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        const id = a.getAttribute('href');
+        if(!id || id.length < 2) return;
+        const el = document.querySelector(id);
+        if(!el) return;
+        e.preventDefault();
+        el.scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block:'start'});
+        history.pushState(null, "", id);
+      });
+    });
+  })();
+
+  // Copy buttons (plain text)
+  (function(){
+    function toast(msg){
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.style.position='fixed';
+      t.style.left='50%';
+      t.style.bottom='18px';
+      t.style.transform='translateX(-50%)';
+      t.style.padding='10px 12px';
+      t.style.border='1px solid rgba(255,255,255,.18)';
+      t.style.borderRadius='999px';
+      t.style.background='rgba(0,0,0,.55)';
+      t.style.color='white';
+      t.style.font='600 12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      t.style.zIndex='9999';
+      t.style.backdropFilter='blur(8px)';
+      t.style.boxShadow='0 10px 24px rgba(0,0,0,.25)';
+      t.style.opacity='0';
+      t.style.transition='opacity .18s ease, transform .18s ease';
+      document.body.appendChild(t);
+      requestAnimationFrame(()=>{ t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(-2px)'; });
+      setTimeout(()=>{
+        t.style.opacity='0';
+        t.style.transform='translateX(-50%) translateY(2px)';
+        setTimeout(()=>t.remove(), 220);
+      }, 900);
+    }
+
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        toast('Copied');
+      }catch(err){
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position='fixed';
+        ta.style.left='-9999px';
+        ta.style.top='-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try{ document.execCommand('copy'); toast('Copied'); }
+        catch(e){ toast('Copy failed'); }
+        ta.remove();
+      }
+    }
+
+    document.querySelectorAll('button.copy[data-copy]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.getAttribute('data-copy');
+        const el = document.getElementById(id);
+        if(!el) return;
+        const plain = el.getAttribute('data-plain') || el.textContent || '';
+        copyText(plain.trim());
+      });
+    });
+  })();
+
+  // Static plot on canvas (single plot, non-interactive)
+  (function(){
+    const canvas = document.getElementById('plot');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    function draw(){
+      const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+      const rect = canvas.getBoundingClientRect();
+      const W = Math.max(320, Math.floor(rect.width));
+      const H = Math.max(260, Math.floor(rect.height));
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      // Colors (do not rely on CSS variables for canvas; pick based on theme)
+      const isLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      const bg = isLight ? '#ffffff' : '#0b1020';
+      const panel = isLight ? 'rgba(11,18,36,0.04)' : 'rgba(0,0,0,0.10)';
+      const grid = isLight ? 'rgba(11,18,36,0.10)' : 'rgba(255,255,255,0.10)';
+      const axes = isLight ? 'rgba(11,18,36,0.55)' : 'rgba(255,255,255,0.60)';
+      const text = isLight ? '#0b1224' : '#eaf0ff';
+      const muted = isLight ? 'rgba(11,18,36,0.70)' : 'rgba(234,240,255,0.78)';
+      const curve = isLight ? '#0b1224' : '#eaf0ff';
+
+      // Background
+      ctx.fillStyle = bg;
+      ctx.fillRect(0,0,W,H);
+
+      // Plot area
+      const padL = 56, padR = 16, padT = 38, padB = 44;
+      const x0 = padL, y0 = padT, x1 = W - padR, y1 = H - padB;
+      const pw = x1 - x0, ph = y1 - y0;
+
+      ctx.fillStyle = panel;
+      ctx.fillRect(x0,y0,pw,ph);
+
+      // Example values for plot only
+      const a = 6.0; // dimensionless
+      const tMin = -3.2, tMax = 3.2; // in units of T0
+      const yMin = 0, yMax = 1.05; // normalized I/(4I0)
+
+      function X(t){ return x0 + (t - tMin) * pw / (tMax - tMin); }
+      function Y(y){ return y0 + (yMax - y) * ph / (yMax - yMin); }
+
+      // Grid + ticks
+      ctx.strokeStyle = grid;
+      ctx.lineWidth = 1;
+
+      // vertical gridlines
+      const xTicks = 8;
+      for(let i=0;i<=xTicks;i++){
+        const t = tMin + (tMax - tMin)*i/xTicks;
+        const x = X(t);
+        ctx.beginPath();
+        ctx.moveTo(x,y0);
+        ctx.lineTo(x,y1);
+        ctx.stroke();
+      }
+      // horizontal gridlines
+      const yTicks = 7;
+      for(let j=0;j<=yTicks;j++){
+        const yv = yMin + (yMax - yMin)*j/yTicks;
+        const y = Y(yv);
+        ctx.beginPath();
+        ctx.moveTo(x0,y);
+        ctx.lineTo(x1,y);
+        ctx.stroke();
+      }
+
+      // Axes
+      ctx.strokeStyle = axes;
+      ctx.lineWidth = 1.25;
+      ctx.beginPath();
+      ctx.moveTo(x0,y1);
+      ctx.lineTo(x1,y1);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x0,y0);
+      ctx.lineTo(x0,y1);
+      ctx.stroke();
+
+      // Tick labels
+      ctx.fillStyle = muted;
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for(let i=0;i<=xTicks;i++){
+        const t = tMin + (tMax - tMin)*i/xTicks;
+        const x = X(t);
+        const label = (Math.round(t*10)/10).toString();
+        ctx.fillText(label, x, y1 + 8);
+      }
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for(let j=0;j<=yTicks;j++){
+        const yv = yMin + (yMax - yMin)*j/yTicks;
+        const y = Y(yv);
+        const label = (Math.round(yv*100)/100).toString();
+        ctx.fillText(label, x0 - 8, y);
+      }
+
+      // Titles
+      ctx.fillStyle = text;
+      ctx.font = '600 13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText('Example: normalized intensity I(t)/(4I0) = exp(−(t/T0)^2) cos^2( a (t/T0)^2 / 4 ), a=6', x0, 12);
+
+      // Axis labels
+      ctx.fillStyle = muted;
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('t / T0 (dimensionless)', x0 + pw/2, H - 10);
+
+      ctx.save();
+      ctx.translate(16, y0 + ph/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText('I(t) / (4 I0) (dimensionless)', 0, 0);
+      ctx.restore();
+
+      // Curve
+      ctx.strokeStyle = curve;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      const N = 900;
+      for(let k=0;k<=N;k++){
+        const t = tMin + (tMax - tMin)*k/N;
+        const y = Math.exp(-(t*t)) * Math.pow(Math.cos(a*t*t/4), 2);
+        const px = X(t);
+        const py = Y(y);
+        if(k===0) ctx.moveTo(px,py);
+        else ctx.lineTo(px,py);
+      }
+      ctx.stroke();
+
+      // Legend (simple)
+      const lx = x1 - 210, ly = y0 + 10;
+      ctx.fillStyle = isLight ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.10)';
+      ctx.strokeStyle = isLight ? 'rgba(11,18,36,0.12)' : 'rgba(255,255,255,0.14)';
+      ctx.lineWidth = 1;
+      roundRect(ctx, lx, ly, 200, 40, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = curve;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(lx+12, ly+20);
+      ctx.lineTo(lx+44, ly+20);
+      ctx.stroke();
+
+      ctx.fillStyle = isLight ? 'rgba(11,18,36,0.75)' : 'rgba(234,240,255,0.78)';
+      ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('I(t)/(4I0) (example)', lx+54, ly+20);
+
+      function roundRect(c,x,y,w,h,r){
+        c.beginPath();
+        c.moveTo(x+r,y);
+        c.arcTo(x+w,y,x+w,y+h,r);
+        c.arcTo(x+w,y+h,x,y+h,r);
+        c.arcTo(x,y+h,x,y,r);
+        c.arcTo(x,y,x+w,y,r);
+        c.closePath();
+      }
+    }
+
+    let raf = 0;
+    function onResize(){
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(draw);
+    }
+    window.addEventListener('resize', onResize, { passive:true });
+    draw();
+  })();
+</script>
 </body>
 </html>

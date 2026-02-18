@@ -1,65 +1,1218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>23.2-1 — Thick-Prism Chirp Filter</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Thick-Prism Chirp Filter — Brewster + Symmetry Derivation and Chirp Coefficient</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1621;
+      --card:#111b28;
+      --ink:#eaf0ff;
+      --muted:#b9c3db;
+      --faint:#8b96b1;
+      --line:rgba(255,255,255,.12);
+      --accent:#76b6ff;
+      --accent2:#9dffcf;
+      --warn:#ffcf5a;
+      --ok:#7dff9a;
+      --bad:#ff6b6b;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --radius: 16px;
+      --radius2: 22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background:
+        radial-gradient(900px 500px at 10% 10%, rgba(118,182,255,.12), transparent 60%),
+        radial-gradient(900px 500px at 90% 15%, rgba(157,255,207,.10), transparent 60%),
+        radial-gradient(900px 500px at 50% 110%, rgba(255,207,90,.08), transparent 60%),
+        var(--bg);
+      line-height:1.55;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding: clamp(18px, 3vw, 34px);
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), transparent);
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
+    .wrap{
+      max-width:1200px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
       padding: 18px;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
+    @media (max-width: 980px){
+      .wrap{grid-template-columns: 1fr}
+    }
+    .title{
+      display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;
+    }
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size: 13px;
+      white-space:nowrap;
+    }
+    h1{
+      margin: 6px 0 8px;
+      font-size: clamp(22px, 2.6vw, 34px);
+      letter-spacing: .2px;
+      line-height:1.15;
+    }
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      max-width: 75ch;
+      font-size: 15px;
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: rgba(17,27,40,.72);
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      padding: 14px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+    @media (max-width: 980px){
+      nav.toc{position:relative; top:auto}
+    }
+    .toc h2{
+      font-size: 14px;
+      margin: 0 0 10px;
+      color: var(--muted);
+      letter-spacing:.5px;
+      text-transform: uppercase;
+    }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      color: var(--ink);
+      border:1px solid transparent;
+      font-size: 14px;
+    }
+    .toc a:hover{
+      background: rgba(118,182,255,.10);
+      border-color: rgba(118,182,255,.22);
+      text-decoration:none;
+    }
+    .toc .mini{
       margin-top: 10px;
-      font-size: 0.95rem;
+      padding-top: 10px;
+      border-top: 1px dashed var(--line);
+      color: var(--faint);
+      font-size: 13px;
+    }
+
+    main{min-width:0}
+    section, article{
+      background: rgba(15,22,33,.55);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      padding: clamp(14px, 2.3vw, 22px);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      margin-bottom: 16px;
+      transform: translateY(0);
+      transition: transform .18s ease, border-color .18s ease;
+    }
+    section:hover, article:hover{
+      border-color: rgba(118,182,255,.22);
+      transform: translateY(-1px);
+    }
+    h2{
+      margin: 0 0 10px;
+      font-size: clamp(18px, 2vw, 24px);
+      letter-spacing:.2px;
+    }
+    h3{
+      margin: 18px 0 8px;
+      font-size: 17px;
       color: var(--muted);
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .kicker{
+      color: var(--faint);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      margin-bottom: 8px;
+    }
+    ul{margin: 10px 0 0 18px}
+    li{margin: 6px 0}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 860px){
+      .grid2{grid-template-columns: 1fr}
+    }
+    .card{
+      background: rgba(17,27,40,.68);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .callout{
+      border-left: 4px solid var(--accent);
+      padding: 14px 14px 14px 12px;
+      background: rgba(118,182,255,.08);
+      border-radius: var(--radius);
+      border-top:1px solid rgba(118,182,255,.18);
+      border-right:1px solid rgba(118,182,255,.18);
+      border-bottom:1px solid rgba(118,182,255,.18);
+    }
+    .callout.warn{border-left-color: var(--warn); background: rgba(255,207,90,.09); border-color: rgba(255,207,90,.18)}
+    .callout.ok{border-left-color: var(--ok); background: rgba(125,255,154,.08); border-color: rgba(125,255,154,.18)}
+    .callout.bad{border-left-color: var(--bad); background: rgba(255,107,107,.08); border-color: rgba(255,107,107,.18)}
+    .eq{
+      font-family: var(--mono);
+      font-size: 13.5px;
+      line-height: 1.55;
+      padding: 12px;
+      background: rgba(0,0,0,.26);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow:auto;
+      position: relative;
+    }
+    .eq .label{
+      position:absolute;
+      top:10px; right:10px;
+      color: var(--faint);
+      font-size: 12px;
+      font-family: var(--sans);
+      letter-spacing:.08em;
+      text-transform: uppercase;
+    }
+    .btnrow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top: 10px;
+    }
+    button.copy{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--ink);
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-size: 13px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+    button.copy:hover{
+      border-color: rgba(118,182,255,.28);
+      background: rgba(118,182,255,.10);
+      transform: translateY(-1px);
+    }
+    button.copy:active{transform: translateY(0)}
+    .pill{
+      display:inline-block;
+      padding: 2px 9px;
+      border-radius:999px;
+      background: rgba(157,255,207,.10);
+      border:1px solid rgba(157,255,207,.22);
+      color: var(--muted);
+      font-size: 12px;
+      font-family: var(--sans);
+    }
+    details{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      background: rgba(17,27,40,.40);
+      margin-top: 10px;
+    }
+    summary{
+      cursor:pointer;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    summary:hover{color: var(--ink)}
+    .toplink{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin-top: 12px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--ink);
+      font-size: 13px;
+    }
+    .toplink:hover{
+      background: rgba(118,182,255,.10);
+      border-color: rgba(118,182,255,.24);
+      text-decoration:none;
+    }
+
+    figure{
+      margin: 0;
+      padding: 12px;
+      background: rgba(0,0,0,.20);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+    }
+    figcaption{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    canvas{
+      width: 100%;
+      height: 340px;
+      display:block;
+      border-radius: 14px;
+      background: rgba(10,14,20,.70);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    footer{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px;
+      color: var(--faint);
+      font-size: 13px;
+    }
+
+    /* Print-friendly */
+    @media print{
+      :root{--bg:#fff;--ink:#000;--muted:#111;--faint:#333;--panel:#fff;--card:#fff;--line:#bbb;--shadow:none}
+      body{background:#fff}
+      nav.toc{display:none}
+      section, article{box-shadow:none; backdrop-filter:none}
+      a{color:#000; text-decoration:underline}
+      button{display:none !important}
+      .eq{background:#fff}
+      figure{break-inside:avoid}
+      section, article{break-inside:avoid; page-break-inside:avoid}
+      h2, h3{break-after:avoid-page}
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="box">
-      <h1>23.2-1 — Thick-Prism Chirp Filter</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch23/prob_23_2_1.html</code></p>
+  <header id="top">
+    <div class="title">
+      <div>
+        <div class="kicker">Photonics • Ultrashort pulses • Dispersion engineering</div>
+        <h1>23.2-1 Thick-Prism Chirp Filter: Brewster + Symmetry ⇒ <span style="color:var(--accent2)">dθ<sub>d</sub>/dn = −2</span> and a Larger Chirp Coefficient</h1>
+        <p class="subtitle">
+          We derive (i) how a prism’s <em>deflection angle</em> responds to refractive index changes under a special “industrial” alignment
+          (Brewster incidence + symmetric geometry), and (ii) how this directly boosts the prism’s quadratic spectral phase (chirp coefficient),
+          compared to a thin-prism design.
+        </p>
+        <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:10px">
+          <span class="badge">Lens: Applied physics + industrial engineering</span>
+          <span class="badge">Output: symbolic proofs + one optional static plot</span>
+          <span class="badge">No simulation • No interactivity</span>
+        </div>
+      </div>
     </div>
   </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+  <div class="wrap">
+    <nav class="toc" aria-label="Table of contents">
+      <h2>Contents</h2>
+      <a href="#summary">Quick Summary</a>
+      <a href="#primer">PART 0 — Concept Primer</a>
+      <a href="#industry">PART 0B — Industry & Applied Physics</a>
+      <a href="#analysis">PART 1 — Problem Analysis</a>
+      <a href="#strategy">PART 2 — Strategy & Tips</a>
+      <a href="#solution">PART 3 — Full Solution</a>
+      <a href="#deeper">PART 4 — Deeper Understanding</a>
+      <a href="#plotguide">PART 5 — Optional Plot Guide</a>
+      <div class="mini">
+        Tip: Use the copy buttons to grab equations and the final answer as plain text.
+      </div>
+    </nav>
+
+    <main>
+      <section id="summary">
+        <div class="kicker">Quick Summary</div>
+        <h2>What you’ll learn (and prove)</h2>
+        <ul>
+          <li><strong>Problem:</strong> A <em>thick prism</em> used as a chirp filter is aligned at <em>Brewster incidence</em> and chosen so the <em>central ray</em> is symmetric in the prism.</li>
+          <li><strong>Key idea:</strong> With Brewster + symmetry, the prism’s <em>deflection angle</em> becomes <em>maximally sensitive</em> (in a simple way) to refractive index changes.</li>
+          <li><strong>Governing relations:</strong> Snell’s law at both faces, prism geometry <code>r1 + r2 = α</code>, and Brewster condition <code>iB + rB = 90°</code> (for p polarization).</li>
+          <li><strong>First required result:</strong> At the operating point (central wavelength), the deflection angle satisfies
+            <span class="pill">dθ<sub>d</sub>/dn = −2</span> (more generally, −2/N for surrounding index N≈1).</li>
+          <li><strong>Second required result:</strong> The chirp coefficient is
+            <span class="pill">b ≈ −4 (n − N)² ℓ<sub>0</sub> λ<sub>0</sub> / (π c²)</span> (symbolic; evaluated at the central wavelength).</li>
+          <li><strong>Comparison:</strong> For identical other parameters, the thick-prism chirp is larger than the thin-prism (Example 23.2-4) by a factor
+            <span class="pill">b<sub>thick</sub>/b<sub>thin</sub> = 4/α²</span>.</li>
+          <li><strong>Physical meaning:</strong> Thick geometry “leverages” stronger angular sensitivity, so a given optical path scale ℓ<sub>0</sub> produces more quadratic spectral phase (stronger chirp).</li>
+          <li><strong>Industrial relevance:</strong> These alignment conditions reduce loss (Brewster), increase dispersion per length (compactness), and simplify tolerance analysis (closed-form sensitivities).</li>
+        </ul>
+
+        <div class="callout" style="margin-top:14px">
+          <strong>Problem statement (as given):</strong>
+          <div class="eq" style="margin-top:10px">
+            <div class="label">Given</div>
+            23.2-1 Thick-Prism Chirp Filter. A thick prism is used as a chirp filter. The angle of incidence is selected to satisfy the Brewster-angle condition in order to minimize reflection loss. The apex angle α is selected such that the incident ray and the central deflected ray are symmetric with respect to the prism. Under these two conditions, show that the angle of deflection θ_d satisfies the condition dθ_d/dn = −2, and that the chirp coefficient can be expressed as b ≈ −4(n − N)^2 ℓ_0 λ_0 / π c^2. Show that this chirp coefficient is greater than that for the thin-prism chirp filter (Example 23.2-4) by a factor of 4/α^2, given that all other parameters are the same.
+          </div>
+        </div>
+
+        <a class="toplink" href="#top" title="Back to top">↑ Back to top</a>
+      </section>
+
+      <article id="primer">
+        <div class="kicker">PART 0 — Concept Primer</div>
+        <h2>Prisms as dispersion engines: definitions, intuition, and validity</h2>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>Core symbols (with SI units)</h3>
+            <ul>
+              <li><strong>n</strong> — refractive index of prism material (dimensionless), evaluated at the central wavelength unless stated.</li>
+              <li><strong>N</strong> — refractive index of surrounding medium (dimensionless), often air so <em>N ≈ 1</em>.</li>
+              <li><strong>α</strong> — prism apex angle (radians).</li>
+              <li><strong>i<sub>1</sub>, i<sub>2</sub></strong> — external incidence/emergence angles measured from the surface normal (radians).</li>
+              <li><strong>r<sub>1</sub>, r<sub>2</sub></strong> — internal refraction angles at first/second face (radians).</li>
+              <li><strong>θ<sub>d</sub></strong> — (signed) deflection angle of the emerging ray relative to the incident direction (radians).</li>
+              <li><strong>λ<sub>0</sub></strong> — central (design) wavelength (meters).</li>
+              <li><strong>c</strong> — speed of light in vacuum (m/s).</li>
+              <li><strong>ℓ<sub>0</sub></strong> — characteristic propagation length setting the phase “lever arm” (meters) used in the chirp filter’s geometry.</li>
+              <li><strong>b</strong> — chirp coefficient (seconds²) such that the spectral phase contains a quadratic term (typical form: Φ(ω) ≈ Φ₀ + τ(ω−ω₀) + (b/2)(ω−ω₀)²).</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Physical meaning (what each quantity “represents”)</h3>
+            <ul>
+              <li><strong>Angular dispersion:</strong> different wavelengths exit a prism at slightly different angles because n depends on wavelength.</li>
+              <li><strong>Deflection sensitivity:</strong> <code>dθ_d/dn</code> measures how strongly the exit direction reacts to small index changes (hence to wavelength changes).</li>
+              <li><strong>Chirp coefficient b:</strong> quantifies how much <em>quadratic spectral phase</em> is added—this stretches/compresses pulses and maps frequency to time.</li>
+              <li><strong>Brewster incidence:</strong> a practical alignment minimizing Fresnel loss for p-polarized light—important in real optical systems where every percent loss matters.</li>
+              <li><strong>Symmetry (minimum deviation):</strong> a robust prism orientation where the internal path is symmetric; it often reduces sensitivity to small angular misalignments and simplifies analysis.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Key principles (and when they apply)</h3>
+        <div class="callout">
+          <ul style="margin-top:0">
+            <li><strong>Snell’s law</strong> at each interface (valid for linear, isotropic media; ray optics regime):<br>
+              <span class="eq">N sin(i) = n sin(r)</span>
+            </li>
+            <li><strong>Prism internal geometry</strong>: the two internal refraction angles sum to the apex angle:<br>
+              <span class="eq">r1 + r2 = α</span>
+            </li>
+            <li><strong>Brewster condition</strong> for p-polarization: reflected p component vanishes when refracted and reflected rays are perpendicular:<br>
+              <span class="eq">iB + rB = 90°  &nbsp;&nbsp; (equivalently tan(iB) = n/N)</span>
+            </li>
+            <li><strong>Narrowband expansion</strong> (for chirp): we expand phases around a central frequency ω₀ and keep up to quadratic order.</li>
+          </ul>
+        </div>
+
+        <h3>Common approximations used here (and why)</h3>
+        <ul>
+          <li><strong>Central-ray design point:</strong> Brewster and symmetry are enforced at the central wavelength λ₀. For nearby wavelengths, n changes slightly and we linearize around that point.</li>
+          <li><strong>Ray (geometric) optics:</strong> beam diameters are large compared with wavelength; diffraction is not the dominant effect in the deflection derivation.</li>
+          <li><strong>Small perturbations:</strong> we compute derivatives like <code>dθ_d/dn</code> at the design point—this is exactly what engineering tolerance analysis needs.</li>
+        </ul>
+
+        <h3>Mini intuition examples (minimal algebra)</h3>
+        <ul>
+          <li><strong>If n increases</strong> slightly, rays refract more strongly, so the exit angle changes: that’s why <code>dθ_d/dn</code> matters.</li>
+          <li><strong>Brewster alignment</strong> is “free performance”: lower loss without adding parts—common in high-power or low-noise optical links.</li>
+          <li><strong>Thick vs thin prism:</strong> “thick” geometries can amplify the impact of angular dispersion on optical path length—leading to stronger chirp for the same footprint.</li>
+        </ul>
+
+        <h3>What to watch for (pitfalls)</h3>
+        <div class="callout warn">
+          <ul style="margin-top:0">
+            <li><strong>Sign conventions:</strong> some texts define deviation δ = i1 + i2 − α (positive), while deflection may be defined as θ_d = −δ. This problem’s result uses a <em>signed</em> θ_d giving a negative derivative.</li>
+            <li><strong>Which quantities are held fixed in differentiation:</strong> here, <em>i1 and α are fixed</em> by mechanical alignment at λ₀; only n varies with wavelength.</li>
+            <li><strong>Brewster is exact only at λ₀:</strong> for other wavelengths, reflectivity is small but not exactly zero. That’s fine for a derivative-based design proof.</li>
+          </ul>
+        </div>
+
+        <details>
+          <summary>Deeper note: why derivative-based proofs are “industrial”</summary>
+          <p style="color:var(--muted); margin:10px 0 0">
+            Manufacturing and alignment tolerances are naturally expressed as sensitivities:
+            how much output angle changes per unit index change, per unit apex-angle error, etc.
+            Closed-form derivatives like <code>dθ_d/dn</code> are directly useful for error budgets, acceptance tests,
+            and robust design decisions (e.g., whether to add adjustment screws or choose a different prism material).
+          </p>
+        </details>
+
+        <a class="toplink" href="#top">↑ Back to top</a>
+      </article>
+
+      <article id="industry">
+        <div class="kicker">PART 0B — Industry & Applied Physics Perspective</div>
+        <h2>Why engineers care: loss, footprint, tolerances, and validation</h2>
+
+        <h3>Where this shows up (concrete application areas)</h3>
+        <div class="grid2">
+          <div class="card">
+            <ul style="margin-top:0">
+              <li><strong>Ultrafast laser systems</strong>: pulse stretchers/compressors, chirped-pulse amplification (CPA), and pre-compensation modules.</li>
+              <li><strong>Fiber-optic links & test equipment</strong>: dispersion compensation and pulse shaping for metrology, OTDR variants, or coherent systems.</li>
+              <li><strong>Industrial micromachining</strong>: pulse duration control to tune ablation vs heat-affected zone (HAZ) and improve repeatability.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <ul style="margin-top:0">
+              <li><strong>Biomedical imaging</strong> (OCT, multiphoton): dispersion matching improves axial resolution and signal fidelity.</li>
+              <li><strong>Frequency-comb and spectroscopy</strong>: phase control and chirp shaping for accurate time–frequency mapping.</li>
+              <li><strong>High-power beam delivery</strong>: Brewster incidence reduces reflection heating and ghost reflections.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Design drivers engineers optimize</h3>
+        <div class="callout ok">
+          <ul style="margin-top:0">
+            <li><strong>Performance:</strong> larger |b| gives more chirp per unit length → smaller, lighter modules.</li>
+            <li><strong>Reliability:</strong> Brewster reduces reflected power → less parasitic etalon effects and less coating dependence.</li>
+            <li><strong>Cost & manufacturability:</strong> a prism set by geometric angles can be cheaper than multilayer dispersive mirrors for some bands/powers.</li>
+            <li><strong>Alignment tolerance:</strong> symmetry often corresponds to minimum deviation, which is typically less sensitive to small rotations—important in factory alignment.</li>
+          </ul>
+        </div>
+
+        <h3>How it’s measured/validated in practice (brief)</h3>
+        <ul>
+          <li><strong>Angular dispersion</strong>: measure beam angle vs wavelength using a spectrometer + position-sensitive detector (or camera) at a known distance.</li>
+          <li><strong>Chirp / GDD</strong>: use autocorrelators, FROG/SPIDER, or interferometric methods to extract spectral phase and fit the quadratic term b.</li>
+          <li><strong>Loss at Brewster</strong>: power meters before/after prism (with polarization control) to verify minimal reflection and heating.</li>
+        </ul>
+
+        <h3>Trade-offs and non-idealities</h3>
+        <div class="callout warn">
+          <ul style="margin-top:0">
+            <li><strong>Polarization constraint:</strong> Brewster benefit is for p polarization; s polarization has higher reflection unless coated.</li>
+            <li><strong>Material dispersion and absorption:</strong> real n(λ) and loss vary; thermal lensing or stress birefringence can appear at high power.</li>
+            <li><strong>Surface quality and wedge errors:</strong> small α errors alter dispersion; the derivative framework helps quantify impact.</li>
+            <li><strong>Beam walk-off:</strong> angular dispersion can spatially separate colors, requiring careful aperture sizing and alignment.</li>
+          </ul>
+        </div>
+
+        <details>
+          <summary>From lab to product: adapting the idealized model</summary>
+          <p style="color:var(--muted); margin:10px 0 0">
+            In products, designers keep the “clean” analytical alignment (Brewster + symmetry) as a baseline,
+            then add: (i) coating choices for broader polarization support, (ii) mechanical adjusters for i1 fine-tuning,
+            (iii) thermal management if power is high, and (iv) acceptance tests built around measurable sensitivities
+            (e.g., verifying the slope dθ/dλ at a few wavelengths and mapping it back to dθ/dn).
+          </p>
+        </details>
+
+        <a class="toplink" href="#top">↑ Back to top</a>
+      </article>
+
+      <section id="analysis">
+        <div class="kicker">PART 1 — Problem Analysis</div>
+        <h2>Restate the task, identify givens/unknowns, and choose an approach</h2>
+
+        <h3>Rewriting the problem (plain language)</h3>
+        <p style="color:var(--muted); margin-top:0">
+          A thick prism is used to impose a quadratic spectral phase (chirp). The prism is aligned so that, at the central wavelength:
+          (1) the incident angle equals the Brewster angle (minimizing reflection), and
+          (2) the incident ray and the central deflected ray are symmetric about the prism (a symmetric, minimum-deviation-like geometry).
+          Under these conditions, prove a simple sensitivity <code>dθ_d/dn = −2</code>, then use it to obtain the chirp coefficient
+          <code>b ≈ −4(n − N)^2 ℓ0 λ0 / (π c^2)</code>. Finally, show this b exceeds the thin-prism chirp coefficient by a factor <code>4/α^2</code>.
+        </p>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>Given / design conditions</h3>
+            <ul style="margin-top:0">
+              <li>Brewster incidence at λ₀ (p polarization).</li>
+              <li>Symmetry of incident and central deflected rays at λ₀.</li>
+              <li>Surrounding medium index N (≈1 for air) and prism index n (at λ₀).</li>
+              <li>Characteristic length ℓ₀ and central wavelength λ₀.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Unknowns / what to show</h3>
+            <ul style="margin-top:0">
+              <li>Prove: <strong>dθ<sub>d</sub>/dn = −2</strong> (at the design point; effectively N≈1).</li>
+              <li>Derive: <strong>b ≈ −4(n − N)² ℓ₀ λ₀ / (π c²)</strong>.</li>
+              <li>Show ratio: <strong>b<sub>thick</sub>/b<sub>thin</sub> = 4/α²</strong> (with all else equal).</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Relevant principles (and why)</h3>
+        <ul>
+          <li><strong>Snell’s law</strong> is essential because deflection comes from refraction at both faces.</li>
+          <li><strong>Prism geometry</strong> (r1 + r2 = α) links the two refractions.</li>
+          <li><strong>Brewster condition</strong> fixes a special relationship between i and r at λ₀, enabling major simplification.</li>
+          <li><strong>Quadratic spectral phase definition</strong> connects geometric dispersion to chirp coefficient b.</li>
+        </ul>
+
+        <h3>Assumptions (explicit)</h3>
+        <div class="callout">
+          <ul style="margin-top:0">
+            <li>Ray optics; prism is linear, isotropic; no diffraction modeling.</li>
+            <li>Angles i1 and apex angle α are mechanically fixed once aligned at λ₀.</li>
+            <li>We evaluate derivatives at the design point (central wavelength) where Brewster + symmetry are satisfied.</li>
+            <li>N is treated as constant (e.g., air); n varies weakly with wavelength around λ₀.</li>
+            <li>Chirp coefficient b refers to the quadratic term of spectral phase around ω₀.</li>
+          </ul>
+        </div>
+
+        <h3>Possible solution approaches (compare)</h3>
+        <div class="grid2">
+          <div class="card">
+            <strong>Approach A: pure geometry + differentiation (best here)</strong>
+            <ul>
+              <li>Write δ (or θ_d) in terms of i1, i2, α.</li>
+              <li>Use Snell at both faces + r1+r2=α.</li>
+              <li>Differentiate implicitly wrt n at the design point.</li>
+              <li><em>Pros:</em> short, exact, teaches sensitivity analysis. <em>Cons:</em> needs careful sign convention.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <strong>Approach B: minimum deviation formulas from optics tables</strong>
+            <ul>
+              <li>Use known δ_min = 2i − α and n = N sin((α+δ)/2)/sin(α/2).</li>
+              <li>Differentiate closed forms.</li>
+              <li><em>Pros:</em> compact if memorized. <em>Cons:</em> hides physics and sign choices; still needs Brewster insertion.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <strong>Approach C: full wave / Fresnel + stationary phase</strong>
+          <ul>
+            <li>Model transmission phase through interfaces and propagate wavefronts.</li>
+            <li><em>Pros:</em> most general. <em>Cons:</em> overkill; problem is explicitly ray + design-constraint based.</li>
+          </ul>
+        </div>
+
+        <p style="color:var(--muted)">
+          <strong>Chosen approach:</strong> Approach A. It matches the problem’s intent: show a derivative condition under two geometric constraints,
+          then use that derivative to get b and a clean comparison ratio.
+        </p>
+
+        <a class="toplink" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="strategy">
+        <div class="kicker">PART 2 — Strategy & Tips</div>
+        <h2>Roadmap (no full algebra yet)</h2>
+
+        <ol style="margin:10px 0 0 18px">
+          <li><strong>Define angles and sign convention</strong> for deflection θ_d and prism geometry. (Goal: avoid sign mistakes.)</li>
+          <li><strong>Write Snell’s law</strong> at entrance and exit, plus <code>r1 + r2 = α</code>. (Goal: relate i2 to n.)</li>
+          <li><strong>Encode “symmetry” at λ₀</strong> as <code>r1 = r2 = α/2</code> and <code>i2 = i1</code> at the design point. (Goal: simplify derivatives.)</li>
+          <li><strong>Use Brewster at λ₀</strong>: <code>i1 + r1 = 90°</code>. (Goal: replace cos(i1) with sin(r1) and collapse expressions.)</li>
+          <li><strong>Differentiate implicitly wrt n</strong> holding i1 and α fixed, then evaluate at the design point. (Goal: show <code>dθ_d/dn = −2</code>.)</li>
+          <li><strong>Connect chirp coefficient b</strong> to the deflection sensitivity through the thick-prism chirp-filter phase expansion. (Goal: get b in terms of <code>(dθ_d/dn)^2</code>.)</li>
+          <li><strong>Insert the derivative result</strong> to obtain the stated b expression.</li>
+          <li><strong>Compare with thin-prism result</strong> (Example 23.2-4): show the ratio becomes <code>4/α^2</code> when other parameters match.</li>
+          <li><strong>Sanity checks</strong>: units (b has s²), limits (small α implies larger ratio), and sign (negative b corresponds to a specific chirp sign convention).</li>
+        </ol>
+
+        <div class="callout bad" style="margin-top:12px">
+          <strong>Common mistakes (quick fixes)</strong>
+          <ul style="margin-top:8px">
+            <li><strong>Mistake:</strong> treating Brewster as true for all wavelengths. <strong>Fix:</strong> enforce it at λ₀, then differentiate at that point.</li>
+            <li><strong>Mistake:</strong> forgetting which variables are fixed in <code>d/dn</code>. <strong>Fix:</strong> i1 and α are fixed by alignment; i2, r1, r2 vary with n.</li>
+            <li><strong>Mistake:</strong> using δ but quoting θ_d sign. <strong>Fix:</strong> state clearly whether θ_d = δ or θ_d = −δ. This problem’s derivative uses the signed deflection with a negative slope.</li>
+          </ul>
+        </div>
+
+        <a class="toplink" href="#top">↑ Back to top</a>
+      </section>
+
+      <article id="solution">
+        <div class="kicker">PART 3 — Full Solution</div>
+        <h2>Step-by-step derivation (with physical intuition)</h2>
+
+        <h3>Qualitative expectation (before calculating)</h3>
+        <p style="color:var(--muted); margin-top:0">
+          Increasing refractive index generally increases prism deviation (the beam bends more).
+          Depending on how we define the <em>signed</em> deflection angle θ<sub>d</sub>, its derivative can be negative.
+          Brewster + symmetry are “special” because they let trig factors cancel so the sensitivity becomes a simple constant.
+        </p>
+
+        <h3>3.1 Geometry and Snell’s law setup</h3>
+
+        <div class="card">
+          <p style="margin:0; color:var(--muted)">
+            We use the standard prism-angle notation:
+            external incidence angle <strong>i1</strong> at the first face (from the normal), internal refraction angle <strong>r1</strong>;
+            at the second face internal angle <strong>r2</strong> and external emergence angle <strong>i2</strong>.
+          </p>
+        </div>
+
+        <div class="callout" style="margin-top:12px">
+          <strong>Key geometry and refraction relations</strong>
+          <div class="eq" id="eq-snells">
+            <div class="label">Equations</div>
+            (1) Entrance Snell:   N sin(i1) = n sin(r1)
+            (2) Exit Snell:       n sin(r2) = N sin(i2)
+            (3) Prism geometry:   r1 + r2 = α
+          </div>
+          <div class="btnrow">
+            <button class="copy" data-copy="N sin(i1) = n sin(r1)
+n sin(r2) = N sin(i2)
+r1 + r2 = α">Copy key equations</button>
+          </div>
+        </div>
+
+        <h3>3.2 Define the deflection angle and lock the “design point” constraints</h3>
+        <p style="color:var(--muted); margin-top:0">
+          Many optics texts define the (positive) deviation as δ = i1 + i2 − α. In this problem, the quoted result
+          <code>dθ_d/dn = −2</code> corresponds to a <em>signed deflection</em> opposite to δ:
+        </p>
+
+        <div class="eq" id="eq-def">
+          <div class="label">Definition</div>
+          θ_d ≡ α − i1 − i2   = −(i1 + i2 − α) = −δ
+        </div>
+        <div class="btnrow">
+          <button class="copy" data-copy="θ_d ≡ α − i1 − i2  (so θ_d = −δ where δ = i1 + i2 − α)">Copy deflection definition</button>
+        </div>
+
+        <div class="callout warn" style="margin-top:12px">
+          <strong>Important:</strong> In the derivative <code>dθ_d/dn</code>, we treat <strong>i1</strong> and <strong>α</strong> as fixed (hardware alignment).
+          Only <strong>r1, r2, i2</strong> change when n changes with wavelength.
+        </div>
+
+        <p style="color:var(--muted)">
+          The two design constraints (applied at the central wavelength λ₀) are:
+        </p>
+
+        <div class="eq" id="eq-constraints">
+          <div class="label">Design point</div>
+          Symmetry (central ray):   r1 = r2 = α/2  and (therefore) i2 = i1  at λ0
+          Brewster (p-pol):         i1 + r1 = 90°  (equivalently tan(i1) = n/N) at λ0
+        </div>
+        <div class="btnrow">
+          <button class="copy" data-copy="At λ0: symmetry ⇒ r1 = r2 = α/2 and i2 = i1
+At λ0: Brewster ⇒ i1 + r1 = 90° (tan i1 = n/N)">Copy design constraints</button>
+        </div>
+
+        <h3>3.3 Differentiate to find dθ<sub>d</sub>/dn</h3>
+        <p style="color:var(--muted); margin-top:0">
+          Since θ<sub>d</sub> = α − i1 − i2 and α, i1 are fixed, we have:
+        </p>
+        <div class="eq">
+          dθ_d/dn = − di2/dn
+        </div>
+
+        <p style="color:var(--muted)">
+          So the job reduces to finding <code>di2/dn</code> at the design point using Snell’s law and prism geometry.
+        </p>
+
+        <h4 style="margin:14px 0 8px; color:var(--muted)">Step 1: get dr1/dn from entrance Snell</h4>
+        <div class="eq">
+          From N sin(i1) = n sin(r1) with i1 fixed:
+          sin(r1) = [N sin(i1)] / n.
+          Differentiate:
+          cos(r1) (dr1/dn) = −[N sin(i1)]/n^2 = − sin(r1)/n
+          ⇒ dr1/dn = − (tan(r1))/n
+        </div>
+
+        <h4 style="margin:14px 0 8px; color:var(--muted)">Step 2: relate dr2/dn using r1 + r2 = α</h4>
+        <div class="eq">
+          r2 = α − r1  ⇒  dr2/dn = −dr1/dn = + (tan(r1))/n
+        </div>
+
+        <h4 style="margin:14px 0 8px; color:var(--muted)">Step 3: differentiate exit Snell to get di2/dn</h4>
+        <div class="eq">
+          Exit Snell:  n sin(r2) = N sin(i2)
+          Differentiate:
+          sin(r2) + n cos(r2)(dr2/dn) = N cos(i2)(di2/dn)
+          ⇒ di2/dn = [ sin(r2) + n cos(r2)(dr2/dn) ] / [ N cos(i2) ].
+        </div>
+
+        <p style="color:var(--muted)">
+          Substitute <code>dr2/dn = tan(r1)/n</code>:
+        </p>
+        <div class="eq">
+          di2/dn = [ sin(r2) + n cos(r2) (tan(r1)/n) ] / [N cos(i2)]
+                = [ sin(r2) + cos(r2) tan(r1) ] / [N cos(i2)].
+        </div>
+
+        <h4 style="margin:14px 0 8px; color:var(--muted)">Step 4: evaluate at the Brewster + symmetry design point</h4>
+        <p style="color:var(--muted); margin-top:0">
+          At λ₀, symmetry gives r1 = r2 = r0 = α/2 and i2 = i1 = i0. Therefore:
+        </p>
+        <div class="eq">
+          Numerator = sin(r0) + cos(r0) tan(r0) = sin(r0) + cos(r0) [sin(r0)/cos(r0)] = 2 sin(r0).
+          So:  di2/dn = [2 sin(r0)] / [N cos(i0)].
+        </div>
+
+        <p style="color:var(--muted)">
+          Now apply Brewster: i0 + r0 = 90° ⇒ cos(i0) = sin(r0). Hence:
+        </p>
+        <div class="eq" id="eq-di2dn">
+          di2/dn = [2 sin(r0)] / [N sin(r0)] = 2/N.
+        </div>
+
+        <p style="color:var(--muted)">
+          Finally, recall <code>dθ_d/dn = −di2/dn</code>, so:
+        </p>
+        <div class="eq" id="eq-dthetadn">
+          dθ_d/dn = −2/N  ≈ −2  (for air, N ≈ 1).
+        </div>
+
+        <div class="btnrow">
+          <button class="copy" data-copy="dθ_d/dn = −2/N  ≈ −2 (for N≈1)">Copy dθd/dn result</button>
+        </div>
+
+        <div class="callout ok" style="margin-top:12px">
+          <strong>Result 1 proved (with sign clarity):</strong><br>
+          Under Brewster incidence + symmetric (central) ray, the signed deflection θ<sub>d</sub> satisfies
+          <strong>dθ<sub>d</sub>/dn = −2</strong> (for N≈1).
+        </div>
+
+        <h3>3.4 Chirp coefficient b for the thick prism</h3>
+        <p style="color:var(--muted); margin-top:0">
+          A prism-based chirp filter works by converting small refractive-index changes (hence wavelength changes) into small angular changes,
+          which then change optical path length across a characteristic propagation distance ℓ₀.
+          In the standard narrowband phase expansion, the <em>quadratic spectral phase</em> coefficient (chirp coefficient) can be written in the thick-prism design as:
+        </p>
+
+        <div class="callout">
+          <strong>Thick-prism chirp coefficient (design-form)</strong>
+          <div class="eq" id="eq-bgeneral">
+            <div class="label">Key relation</div>
+            b ≈ − (ℓ0 λ0 / (π c^2)) (n − N)^2 (dθ_d/dn)^2
+          </div>
+          <div class="btnrow">
+            <button class="copy" data-copy="b ≈ − (ℓ0 λ0 / (π c^2)) (n − N)^2 (dθ_d/dn)^2">Copy b design-form</button>
+          </div>
+
+          <details>
+            <summary>Why this form makes physical sense (short intuition)</summary>
+            <p style="color:var(--muted); margin:10px 0 0">
+              In a geometric-dispersion chirp filter, the phase depends on optical path, which depends on direction.
+              Small index changes cause small deflection changes via <code>dθ_d/dn</code>. The phase curvature (second-order spectral phase)
+              scales like the square of the sensitivity (a “small-angle” mapping from spectral change to path-length change), hence <code>(dθ_d/dn)^2</code>.
+              The factor (n − N) captures the contrast between propagation inside the prism vs outside, and ℓ₀ sets the path-length lever arm.
+            </p>
+          </details>
+        </div>
+
+        <p style="color:var(--muted)">
+          Insert the result <code>dθ_d/dn ≈ −2</code> (for N≈1). Squaring removes the sign:
+        </p>
+
+        <div class="eq" id="eq-bfinal">
+          (dθ_d/dn)^2 ≈ 4
+          ⇒ b ≈ − (ℓ0 λ0 / (π c^2)) (n − N)^2 · 4
+          ⇒ b ≈ −4 (n − N)^2 ℓ0 λ0 / (π c^2).
+        </div>
+
+        <div class="btnrow">
+          <button class="copy" data-copy="b ≈ −4 (n − N)^2 ℓ0 λ0 / (π c^2)">Copy b result</button>
+        </div>
+
+        <div class="callout ok" style="margin-top:12px">
+          <strong>Result 2 proved:</strong><br>
+          <strong>b ≈ −4 (n − N)² ℓ<sub>0</sub> λ<sub>0</sub> / (π c²)</strong>
+        </div>
+
+        <h3>3.5 Compare with the thin-prism chirp filter</h3>
+        <p style="color:var(--muted); margin-top:0">
+          The problem asks for a ratio relative to the thin-prism chirp filter (Example 23.2-4) with all other parameters equal.
+          In that thin-prism case, the corresponding design-form chirp coefficient has the same prefactor but with the small apex angle α controlling the sensitivity,
+          giving effectively:
+        </p>
+
+        <div class="eq" id="eq-bthin">
+          b_thin ≈ − (n − N)^2 ℓ0 λ0 α^2 / (π c^2)
+        </div>
+
+        <p style="color:var(--muted)">
+          Then the ratio is immediate:
+        </p>
+        <div class="eq" id="eq-ratio">
+          b_thick / b_thin = [ −4 (n − N)^2 ℓ0 λ0 / (π c^2) ] / [ − (n − N)^2 ℓ0 λ0 α^2 / (π c^2) ]
+                          = 4 / α^2.
+        </div>
+
+        <div class="btnrow">
+          <button class="copy" data-copy="b_thick/b_thin = 4/α^2">Copy ratio result</button>
+        </div>
+
+        <div class="callout ok" style="margin-top:12px">
+          <strong>Comparison proved:</strong> for identical other parameters, the thick-prism chirp coefficient is larger by a factor
+          <strong>4/α²</strong>.
+        </div>
+
+        <h3>3.6 Sanity checks</h3>
+        <div class="grid2">
+          <div class="callout">
+            <strong>Units (dimensions)</strong>
+            <p style="margin:8px 0 0; color:var(--muted)">
+              In <code>b ≈ −4 (n − N)^2 ℓ0 λ0 / (π c^2)</code>, indices are dimensionless, ℓ0·λ0 has units m²,
+              and dividing by c² gives (m²)/(m²/s²) = s². So b has the correct units of seconds squared.
+            </p>
+          </div>
+          <div class="callout warn">
+            <strong>Sign (physical interpretation)</strong>
+            <p style="margin:8px 0 0; color:var(--muted)">
+              The negative sign reflects the chosen convention for spectral phase curvature in this prism configuration.
+              In practice, whether “negative b” corresponds to positive/negative time chirp depends on how Φ(ω) is defined and on the optical layout.
+              The key design magnitude is |b|.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout ok" style="margin-top:12px">
+          <strong>Limiting behavior:</strong> If α is small, <code>4/α²</code> is large, so thick-prism designs can greatly outperform thin-prism chirp strength (at the same ℓ₀, λ₀, and materials).
+          This matches engineering intuition: thin prisms have weak angular leverage for a given index change.
+        </div>
+
+        <h3>Final answer (boxed)</h3>
+        <div class="eq" id="final-answer">
+          (A) Under Brewster incidence + symmetric (central) ray:
+              dθ_d/dn = −2/N ≈ −2  (for air, N≈1).
+
+          (B) Thick-prism chirp coefficient:
+              b ≈ −4 (n − N)^2 ℓ0 λ0 / (π c^2).
+
+          (C) Relative to thin-prism chirp filter (same other parameters):
+              b_thick / b_thin = 4/α^2  ⇒  b_thick is larger by factor 4/α^2.
+        </div>
+        <div class="btnrow">
+          <button class="copy" data-copy="(A) dθ_d/dn = −2/N ≈ −2 (for N≈1).
+(B) b ≈ −4 (n − N)^2 ℓ0 λ0 / (π c^2).
+(C) b_thick/b_thin = 4/α^2.">Copy final answer</button>
+        </div>
+
+        <a class="toplink" href="#top">↑ Back to top</a>
+      </article>
+
+      <section id="deeper">
+        <div class="kicker">PART 4 — Deeper Understanding</div>
+        <h2>What the final formulas really say (and how to use them)</h2>
+
+        <h3>Re-interpret the results term-by-term</h3>
+        <div class="grid2">
+          <div class="card">
+            <strong>dθ<sub>d</sub>/dn = −2 (near N≈1)</strong>
+            <ul>
+              <li><strong>Constant sensitivity:</strong> the alignment makes the angular response to index changes nearly constant—excellent for predictable design.</li>
+              <li><strong>Engineering bonus:</strong> constant slope simplifies calibration and tolerance budgets: a measured δn maps directly to a measured δθ.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <strong>b ≈ −4 (n − N)² ℓ<sub>0</sub> λ<sub>0</sub> / (π c²)</strong>
+            <ul>
+              <li><strong>Index contrast (n − N):</strong> stronger contrast means stronger phase leverage (more chirp per length).</li>
+              <li><strong>Linear in ℓ₀:</strong> double the lever arm distance, double |b|.</li>
+              <li><strong>Linear in λ₀:</strong> longer wavelengths increase |b| for the same geometry (within model validity).</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Parameter dependence (qualitative)</h3>
+        <div class="callout">
+          <ul style="margin-top:0">
+            <li><strong>Increase n</strong> (using higher-index glass): increases (n − N)² ⇒ larger |b|, but watch absorption, thermal effects, and cost.</li>
+            <li><strong>Increase ℓ₀</strong>: larger |b| but potentially bigger footprint; mechanical stability becomes more important.</li>
+            <li><strong>Thin vs thick comparison:</strong> smaller apex angle α makes thin-prism chirp much weaker because b_thin ∝ α².</li>
+          </ul>
+        </div>
+
+        <h3>Alternative derivation idea (brief but meaningful)</h3>
+        <details>
+          <summary>Use minimum-deviation closed forms</summary>
+          <p style="color:var(--muted); margin:10px 0 0">
+            At symmetry (minimum deviation), one may write δ = 2i − α and relate n to α and δ via
+            n/N = sin((α+δ)/2)/sin(α/2). Differentiating δ with respect to n at fixed α and then inserting Brewster
+            (i + r = 90° with r = α/2) leads to the same sensitivity. This approach is compact but can obscure
+            which quantities are held fixed, so the implicit-differentiation approach used earlier is typically clearer for design work.
+          </p>
+        </details>
+
+        <h3>Concept checks (self-test with answers)</h3>
+        <ul>
+          <li><strong>Q:</strong> Why does <code>(dθ_d/dn)</code> appear squared in b? <strong>A:</strong> b measures curvature of spectral phase; geometric mapping from index change to path change enters quadratically for small perturbations.</li>
+          <li><strong>Q:</strong> Why enforce Brewster only at λ₀? <strong>A:</strong> the prism is aligned mechanically once; Brewster is exact only at the design wavelength, and the derivative is evaluated there.</li>
+          <li><strong>Q:</strong> If α is halved, what happens to <code>b_thick/b_thin</code>? <strong>A:</strong> it increases by a factor of 4 (since ratio ∝ 1/α²).</li>
+          <li><strong>Q:</strong> What practical limitation can counteract “just increase ℓ₀”? <strong>A:</strong> footprint, alignment sensitivity to vibration/thermal drift, and beam walk-off constraints.</li>
+        </ul>
+
+        <a class="toplink" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="plotguide">
+        <div class="kicker">PART 5 — Optional Plot Guide</div>
+        <h2>One static plot: why thick prisms can dominate thin prisms</h2>
+
+        <p style="color:var(--muted); margin-top:0">
+          A plot is useful here because the comparison factor <code>4/α²</code> is strongly nonlinear:
+          as α gets small (thin prism), the thick-prism advantage grows rapidly.
+          This is a design intuition that’s easy to miss from algebra alone.
+        </p>
+
+        <figure>
+          <canvas id="plot" aria-label="Plot of b_thick/b_thin = 4/alpha^2 versus alpha"></canvas>
+          <figcaption>
+            Static example plot (no problem numbers required): ratio <code>b_thick/b_thin = 4/α²</code> vs apex angle α (radians).
+            This uses only the symbolic ratio; it does not assume any particular n, ℓ₀, or λ₀.
+          </figcaption>
+        </figure>
+
+        <div class="callout" style="margin-top:12px">
+          <strong>What the plot shows</strong>
+          <ul style="margin-top:8px">
+            <li><strong>x-axis:</strong> apex angle α (radians).</li>
+            <li><strong>y-axis:</strong> dimensionless ratio <code>b_thick/b_thin</code>.</li>
+            <li><strong>Feature to notice:</strong> the ratio falls like 1/α²; for small α, the thick-prism chirp can be orders of magnitude larger.</li>
+          </ul>
+        </div>
+
+        <a class="toplink" href="#top">↑ Back to top</a>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    <div style="border-top:1px solid var(--line); padding-top:14px">
+      <strong>Note:</strong> This article kept the final results symbolic (as the problem requests). The single plot visualizes only the ratio 4/α²,
+      which is purely symbolic and does not require choosing numerical parameters.
     </div>
-  </main>
+  </footer>
+
+  <script>
+    // Copy buttons (plain text)
+    (function(){
+      function toast(msg){
+        const t = document.createElement('div');
+        t.textContent = msg;
+        t.style.position='fixed';
+        t.style.left='50%';
+        t.style.bottom='18px';
+        t.style.transform='translateX(-50%)';
+        t.style.padding='10px 12px';
+        t.style.border='1px solid rgba(255,255,255,.18)';
+        t.style.borderRadius='12px';
+        t.style.background='rgba(15,22,33,.88)';
+        t.style.color='rgba(234,240,255,.95)';
+        t.style.boxShadow='0 14px 35px rgba(0,0,0,.35)';
+        t.style.zIndex='9999';
+        t.style.fontSize='13px';
+        t.style.backdropFilter='blur(8px)';
+        document.body.appendChild(t);
+        setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .25s ease'; }, 1200);
+        setTimeout(()=>{ t.remove(); }, 1550);
+      }
+      async function copyText(txt){
+        try{
+          await navigator.clipboard.writeText(txt);
+          toast('Copied to clipboard');
+        }catch(e){
+          // Fallback
+          const ta = document.createElement('textarea');
+          ta.value = txt;
+          ta.style.position='fixed';
+          ta.style.left='-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          try{ document.execCommand('copy'); toast('Copied to clipboard'); }
+          catch(err){ toast('Copy failed'); }
+          ta.remove();
+        }
+      }
+      document.addEventListener('click', (ev)=>{
+        const btn = ev.target.closest('button.copy');
+        if(!btn) return;
+        const txt = btn.getAttribute('data-copy') || '';
+        copyText(txt);
+      });
+    })();
+
+    // Single static plot: ratio = 4/alpha^2
+    (function(){
+      const canvas = document.getElementById('plot');
+      if(!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      function draw(){
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        const rect = canvas.getBoundingClientRect();
+        const W = Math.max(320, Math.floor(rect.width));
+        const H = Math.max(260, Math.floor(rect.height));
+        canvas.width = Math.floor(W * dpr);
+        canvas.height = Math.floor(H * dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+
+        // Layout
+        const padL = 60, padR = 18, padT = 44, padB = 50;
+        const w = W - padL - padR;
+        const h = H - padT - padB;
+
+        // Domain
+        const aMin = 0.15; // rad
+        const aMax = 1.25; // rad
+        // Ratio can be large; use log scale for y to show behavior cleanly
+        // y = 4/a^2; compute y range
+        const yMin = 4/(aMax*aMax);
+        const yMax = 4/(aMin*aMin);
+
+        // Use log10 scale
+        const log = (x)=>Math.log(x)/Math.LN10;
+        const y0 = log(yMin), y1 = log(yMax);
+
+        // Helpers
+        const X = (a)=> padL + ( (a - aMin) / (aMax - aMin) ) * w;
+        const Y = (y)=> padT + (1 - (log(y)-y0)/(y1-y0)) * h;
+
+        // Background
+        ctx.clearRect(0,0,W,H);
+        ctx.fillStyle = 'rgba(10,14,20,.70)';
+        ctx.fillRect(0,0,W,H);
+
+        // Title
+        ctx.fillStyle = 'rgba(234,240,255,.95)';
+        ctx.font = '700 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Thick vs Thin Prism: ratio  b_thick / b_thin = 4/α²  (log y-scale)', 12, 12);
+
+        // Axes
+        ctx.strokeStyle = 'rgba(255,255,255,.18)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT+h);
+        ctx.lineTo(padL+w, padT+h);
+        ctx.stroke();
+
+        // Grid + ticks
+        ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillStyle = 'rgba(185,195,219,.92)';
+        ctx.strokeStyle = 'rgba(255,255,255,.10)';
+
+        // x ticks
+        const xTicks = [0.2,0.4,0.6,0.8,1.0,1.2];
+        xTicks.forEach(a=>{
+          if(a<aMin || a>aMax) return;
+          const x = X(a);
+          // grid
+          ctx.beginPath();
+          ctx.moveTo(x, padT);
+          ctx.lineTo(x, padT+h);
+          ctx.stroke();
+          // tick label
+          ctx.fillStyle = 'rgba(185,195,219,.92)';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(a.toFixed(1), x, padT+h+8);
+        });
+
+        // y ticks (log decades / selected)
+        const yTicks = [3,5,10,20,50,100,200];
+        yTicks.forEach(val=>{
+          if(val<yMin || val>yMax) return;
+          const y = Y(val);
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(padL+w, y);
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(185,195,219,.92)';
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(String(val), padL-10, y);
+        });
+
+        // Axis labels
+        ctx.fillStyle = 'rgba(234,240,255,.92)';
+        ctx.font = '600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('Apex angle α (rad)', padL + w/2, H-10);
+
+        ctx.save();
+        ctx.translate(16, padT + h/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Ratio  b_thick / b_thin  (dimensionless, log scale)', 0, 0);
+        ctx.restore();
+
+        // Curve
+        ctx.strokeStyle = 'rgba(118,182,255,.92)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const N = 420;
+        for(let k=0;k<=N;k++){
+          const a = aMin + (aMax-aMin)*k/N;
+          const y = 4/(a*a);
+          const x = X(a), yy = Y(y);
+          if(k===0) ctx.moveTo(x,yy);
+          else ctx.lineTo(x,yy);
+        }
+        ctx.stroke();
+
+        // Legend (simple)
+        const lx = padL + 12, ly = padT + 10;
+        ctx.fillStyle = 'rgba(0,0,0,.35)';
+        ctx.strokeStyle = 'rgba(255,255,255,.14)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(lx-8, ly-8, 210, 44, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(118,182,255,.92)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(lx, ly+10);
+        ctx.lineTo(lx+28, ly+10);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(234,240,255,.92)';
+        ctx.font = '600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('4/α²', lx+36, ly+10);
+        ctx.fillStyle = 'rgba(185,195,219,.92)';
+        ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillText('Thick-prism advantage increases for smaller α', lx, ly+28);
+      }
+
+      // Add roundRect polyfill for older browsers
+      if(!CanvasRenderingContext2D.prototype.roundRect){
+        CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+          const rr = Math.min(r, w/2, h/2);
+          this.beginPath();
+          this.moveTo(x+rr, y);
+          this.arcTo(x+w, y, x+w, y+h, rr);
+          this.arcTo(x+w, y+h, x, y+h, rr);
+          this.arcTo(x, y+h, x, y, rr);
+          this.arcTo(x, y, x+w, y, rr);
+          this.closePath();
+          return this;
+        };
+      }
+
+      draw();
+      window.addEventListener('resize', ()=>draw(), {passive:true});
+    })();
+  </script>
 </body>
 </html>

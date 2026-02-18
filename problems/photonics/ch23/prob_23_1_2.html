@@ -2,64 +2,1408 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>23.1-2 — The Hyperbolic-Secant Pulse</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Hyperbolic-Secant Pulse: Time & Spectral FWHM via Fourier Transform</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg: #0b0d10;
+      --panel:#11151b;
+      --card:#0f1319;
+      --ink:#e9eef6;
+      --muted:#b7c1d1;
+      --faint:#8ea0b8;
+      --line: rgba(255,255,255,.10);
+      --line2: rgba(255,255,255,.16);
+      --accent:#7dd3fc;
+      --accent2:#a7f3d0;
+      --warn:#fbbf24;
+      --ok:#86efac;
+      --bad:#fb7185;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 14px;
+      --max: 1180px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f6f8fb;
+        --panel:#ffffff;
+        --card:#ffffff;
+        --ink:#0b1220;
+        --muted:#415168;
+        --faint:#63738a;
+        --line: rgba(16,24,40,.10);
+        --line2: rgba(16,24,40,.16);
+        --shadow: 0 14px 40px rgba(16,24,40,.10);
+      }
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 650px at 15% 0%, rgba(125,211,252,.14), transparent 55%),
+                  radial-gradient(900px 520px at 95% 10%, rgba(167,243,208,.12), transparent 50%),
+                  linear-gradient(180deg, var(--bg), var(--bg));
+      color:var(--ink);
+      line-height:1.58;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+
+    header{
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), transparent);
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
+    .wrap{
+      max-width:var(--max);
+      margin:0 auto;
+      padding: 28px 18px;
+    }
+    .hero{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    @media (max-width: 940px){
+      .hero{ grid-template-columns:1fr; }
+    }
+    .titleCard{
+      background: linear-gradient(135deg, rgba(125,211,252,.12), rgba(167,243,208,.08));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px 18px 16px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .titleCard:before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      background: radial-gradient(520px 260px at 0% 0%, rgba(125,211,252,.14), transparent 60%);
+      pointer-events:none;
+    }
+    h1{
+      margin:0 0 6px;
+      font-size: clamp(1.35rem, 1.1rem + 1.4vw, 2.15rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size: 1.02rem;
+      max-width: 72ch;
+    }
+    .meta{
+      margin-top: 14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .pill{
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,.06);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: .88rem;
       color: var(--muted);
+      backdrop-filter: blur(8px);
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+
+    .tocCard{
+      background: var(--panel);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 14px 12px;
+      box-shadow: var(--shadow);
+      position:relative;
+    }
+    .tocCard h2{
+      margin:0 0 10px;
+      font-size: 1rem;
+      letter-spacing:.2px;
+      color: var(--ink);
+    }
+    .toc{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      font-size:.94rem;
+    }
+    .toc a{
+      color: var(--muted);
+      text-decoration:none;
+      border:1px solid transparent;
+      padding: 6px 8px;
+      border-radius: 10px;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      will-change: transform;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.28);
+      transform: translateX(2px);
+      color: var(--ink);
+    }
+    .tocSticky{
+      position: sticky;
+      top: 10px;
+    }
+    @media (max-width: 940px){
+      .tocSticky{ position:relative; top:auto; }
+    }
+
+    main .grid{
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 940px){
+      main .grid{ grid-template-columns:1fr; }
+    }
+
+    section{
+      background: var(--panel);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    section + section{ margin-top: 16px; }
+
+    h2{
+      margin:0 0 10px;
+      font-size: 1.25rem;
+      letter-spacing:.2px;
+    }
+    h3{
+      margin: 14px 0 8px;
+      font-size: 1.05rem;
+      color: var(--ink);
+    }
+    p{ margin: 10px 0; color: var(--muted); }
+    ul,ol{ margin:10px 0 10px 18px; color: var(--muted); }
+    li{ margin: 6px 0; }
+    .muted{ color: var(--muted); }
+    .faint{ color: var(--faint); }
+
+    .cards{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .card{
+      grid-column: span 6;
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      padding: 12px 12px 10px;
+    }
+    @media (max-width: 700px){
+      .card{ grid-column: span 12; }
+    }
+    .callout{
+      border-left: 4px solid rgba(125,211,252,.7);
+      background: linear-gradient(180deg, rgba(125,211,252,.10), transparent);
+    }
+    .warn{
+      border-left-color: rgba(251,191,36,.75);
+      background: linear-gradient(180deg, rgba(251,191,36,.10), transparent);
+    }
+    .ok{
+      border-left-color: rgba(134,239,172,.70);
+      background: linear-gradient(180deg, rgba(134,239,172,.10), transparent);
+    }
+    .bad{
+      border-left-color: rgba(251,113,133,.70);
+      background: linear-gradient(180deg, rgba(251,113,133,.10), transparent);
+    }
+    .card h4{
+      margin:0 0 6px;
+      font-size: .98rem;
+      letter-spacing:.15px;
+      color: var(--ink);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .chip{
+      font-size:.78rem;
+      border:1px solid var(--line2);
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: var(--faint);
+      background: rgba(255,255,255,.05);
+    }
+
+    .eq{
+      margin: 10px 0;
+      padding: 10px 10px 8px;
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      position:relative;
+    }
+    .eq pre{
+      margin:0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: var(--mono);
+      font-size: .93rem;
+      line-height:1.45;
+      color: var(--ink);
+    }
+    .eqbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom: 8px;
+    }
+    .eqtitle{
+      font-size:.88rem;
+      color: var(--faint);
+      letter-spacing:.15px;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,.06);
+      color: var(--ink);
+      border-radius: 12px;
+      padding: 6px 10px;
+      font-size: .86rem;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      will-change: transform;
+      white-space:nowrap;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.28);
+    }
+    .btn:active{ transform: translateY(0px) scale(.98); }
+    .btn[aria-live]{ position:relative; }
+    .btn.small{ padding: 5px 9px; font-size: .84rem; border-radius: 11px; }
+
+    details{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius: 14px;
+      padding: 10px 10px 8px;
+      margin: 10px 0;
+    }
+    details summary{
+      cursor:pointer;
+      color: var(--ink);
+      font-weight: 650;
+      letter-spacing:.15px;
+      list-style:none;
+      outline:none;
+    }
+    details summary::-webkit-details-marker{ display:none; }
+    details summary:after{
+      content:"▾";
+      float:right;
+      color: var(--faint);
+      transition: transform .18s ease;
+    }
+    details[open] summary:after{ transform: rotate(180deg); }
+    details .content{ margin-top: 8px; color: var(--muted); }
+
+    figure{
+      margin: 12px 0 0;
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      overflow:hidden;
+      background: rgba(255,255,255,.03);
+    }
+    figcaption{
+      padding: 10px 12px;
+      border-top:1px solid var(--line);
+      color: var(--muted);
+      font-size:.92rem;
+    }
+    canvas{
+      width:100%;
+      height: 320px;
+      display:block;
+      background: radial-gradient(900px 280px at 20% 10%, rgba(125,211,252,.10), transparent 60%),
+                  radial-gradient(700px 240px at 80% 0%, rgba(167,243,208,.08), transparent 55%),
+                  rgba(0,0,0,.08);
+    }
+    @media (max-width: 560px){
+      canvas{ height: 300px; }
+    }
+
+    .side{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    .side section{
+      padding: 14px;
+      border-radius: var(--radius);
+    }
+    .side h3{
+      margin: 0 0 8px;
+      font-size: 1.02rem;
+    }
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top: 10px;
+    }
+    .k{
+      border:1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px;
+      background: rgba(255,255,255,.04);
+    }
+    .k .label{
+      color: var(--faint);
+      font-size:.82rem;
+      margin-bottom:4px;
+    }
+    .k .val{
+      font-family: var(--mono);
+      font-size: .95rem;
+      color: var(--ink);
+      line-height:1.25;
+    }
+
+    .backTop{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      text-decoration:none;
+      margin-top: 10px;
+      color: var(--muted);
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      padding: 7px 10px;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .backTop:hover{
+      transform: translateY(-1px);
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.28);
+      color: var(--ink);
+    }
+
+    footer{
+      margin-top: 18px;
+      padding: 18px 0 30px;
+      color: var(--faint);
+      text-align:center;
+      font-size:.92rem;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{ background:#fff; color:#000; }
+      header, footer{ box-shadow:none; }
+      .tocSticky{ position:relative; top:auto; }
+      section{ box-shadow:none; page-break-inside: avoid; break-inside: avoid; }
+      a{ color:#000; text-decoration:none; }
+      .btn{ display:none !important; }
+      canvas{ background:#fff; }
+      .pill{ border-color:#bbb; }
+      .card, .eq, details, figure{ border-color:#bbb; }
     }
   </style>
 </head>
+
 <body>
-  <header>
-    <div class="box">
-      <h1>23.1-2 — The Hyperbolic-Secant Pulse</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch23/prob_23_1_2.html</code></p>
+  <header id="top">
+    <div class="wrap">
+      <div class="hero">
+        <div class="titleCard" role="banner">
+          <h1>Hyperbolic-Secant Pulse: Time FWHM and Spectral FWHM (with Fourier-Transform Convention)</h1>
+          <p class="subtitle">
+            We derive the full-width at half-maximum (FWHM) of a <span class="muted">sech</span>-shaped optical pulse in time and frequency,
+            highlight the crucial Fourier-transform convention, and compare against the Gaussian pulse from the appendix.
+          </p>
+          <div class="meta" aria-label="article tags">
+            <span class="pill">Topic: ultrafast optics / photonics</span>
+            <span class="pill">Tool: Fourier transform</span>
+            <span class="pill">Result: symbolic + practical constants</span>
+            <span class="pill">Engineering lens: bandwidth, dispersion, specs</span>
+          </div>
+        </div>
+
+        <aside class="tocCard tocSticky" aria-label="sticky table of contents">
+          <h2>Table of Contents</h2>
+          <nav class="toc">
+            <a href="#quick">Quick Summary</a>
+            <a href="#p0">PART 0 — Concept Primer</a>
+            <a href="#p0b">PART 0B — Industry & Applied Physics</a>
+            <a href="#p1">PART 1 — Problem Analysis</a>
+            <a href="#p2">PART 2 — Strategy & Tips</a>
+            <a href="#p3">PART 3 — Full Solution</a>
+            <a href="#p4">PART 4 — Deeper Understanding</a>
+            <a href="#p5">PART 5 — Optional Plot Guide</a>
+          </nav>
+        </aside>
+      </div>
     </div>
   </header>
 
   <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+    <div class="wrap">
+      <div class="grid">
+        <article>
+          <!-- QUICK SUMMARY -->
+          <section id="quick" aria-labelledby="quickTitle">
+            <h2 id="quickTitle">Quick Summary</h2>
+            <ul>
+              <li><strong>What this is about:</strong> A pulse with field envelope <span class="muted">f(t) = sech(t/τ)</span>; find the <strong>time-domain intensity</strong> FWHM and the <strong>spectral intensity</strong> shape and FWHM.</li>
+              <li><strong>Key physics idea:</strong> The Fourier transform converts <em>temporal localization</em> into <em>spectral broadening</em> (time–bandwidth trade-off).</li>
+              <li><strong>Governing transform (appendix convention):</strong> <span class="muted">F(ν) = ∫ f(t) e^{-j2πνt} dt</span>, <span class="muted">f(t) = ∫ F(ν) e^{+j2πνt} dν</span>.</li>
+              <li><strong>Time intensity:</strong> <span class="muted">I(t) ∝ |f(t)|² = sech²(t/τ)</span>.</li>
+              <li><strong>Time FWHM result:</strong> <strong>Δt<sub>FWHM</sub> = 2τ arcosh(√2) ≈ 1.763τ</strong>.</li>
+              <li><strong>Spectrum:</strong> <span class="muted">F(ν) = πτ sech(π²τν)</span> under the appendix’s <span class="muted">e^{-j2πνt}</span> convention, hence <span class="muted">S(ν) ∝ |F(ν)|² ∝ sech²(π²τν)</span>.</li>
+              <li><strong>Spectral FWHM (same convention):</strong> <strong>Δν<sub>FWHM</sub> = 2 arcosh(√2)/(π²τ) ≈ 0.1786/τ</strong> (Hz).</li>
+              <li><strong>Physical meaning:</strong> Shorter pulses (smaller τ) require larger bandwidth (larger Δν).</li>
+              <li><strong>Comparison vs Gaussian:</strong> Gaussian has larger time–bandwidth product; for intensity-FWHM, <strong>sech²: ΔtΔν ≈ 0.315</strong> vs <strong>Gaussian: ΔtΔν ≈ 0.441</strong>.</li>
+              <li><strong>Important note:</strong> Published constants can differ if a book uses angular frequency ω or a different “τ” definition; the derivation below shows exactly where factors of 2π enter.</li>
+            </ul>
+
+            <div class="cards">
+              <div class="card callout">
+                <h4>Key outcome <span class="chip">usable constants</span></h4>
+                <p class="muted">For <span class="muted">f(t)=sech(t/τ)</span> (field) and <span class="muted">I(t)∝sech²(t/τ)</span> (intensity):</p>
+                <ul>
+                  <li><span class="muted">Δt<sub>FWHM</sub> ≈ 1.763τ</span></li>
+                  <li><span class="muted">Δν<sub>FWHM</sub> ≈ 0.1786/τ</span> (with the appendix’s FT convention)</li>
+                  <li><span class="muted">Δt<sub>FWHM</sub>Δν<sub>FWHM</sub> ≈ 0.315</span></li>
+                </ul>
+              </div>
+
+              <div class="card warn">
+                <h4>Convention alert <span class="chip">2π matters</span></h4>
+                <p class="muted">
+                  If you instead use <span class="muted">F(ω)=∫ f(t)e^{-jωt}dt</span>, the spectrum becomes
+                  <span class="muted">F(ω)=πτ sech(πτω/2)</span>. Converting <span class="muted">ω↔ν</span> via <span class="muted">ω=2πν</span> returns the same <span class="muted">Δν</span>.
+                </p>
+              </div>
+            </div>
+
+            <a class="backTop" href="#top" aria-label="back to top link">↑ Back to top</a>
+          </section>
+
+          <!-- PART 0 -->
+          <section id="p0" aria-labelledby="p0Title">
+            <h2 id="p0Title">PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+            <h3>0.1 Core definitions (symbols + SI units)</h3>
+            <ul>
+              <li><strong>Time</strong> <span class="muted">t</span> (seconds, s).</li>
+              <li><strong>Pulse time constant</strong> <span class="muted">τ</span> (seconds, s). In this problem it sets how quickly <span class="muted">sech(t/τ)</span> decays.</li>
+              <li><strong>Field envelope</strong> <span class="muted">f(t)</span> (arbitrary field units; often √W for optical field amplitude).</li>
+              <li><strong>Intensity</strong> <span class="muted">I(t) ∝ |f(t)|²</span> (e.g., W for power, or W/m² for irradiance).</li>
+              <li><strong>Frequency</strong> <span class="muted">ν</span> (Hz = s⁻¹, cycles/s). Angular frequency <span class="muted">ω</span> (rad/s) relates by <span class="muted">ω = 2πν</span>.</li>
+              <li><strong>Fourier transform pair (appendix style):</strong> <span class="muted">F(ν) = ∫ f(t)e^{-j2πνt}dt</span>, <span class="muted">f(t)=∫ F(ν)e^{+j2πνt}dν</span>.</li>
+              <li><strong>Spectral intensity</strong> <span class="muted">S(ν) ∝ |F(ν)|²</span> (power per Hz, or arbitrary units).</li>
+              <li><strong>FWHM</strong> (full width at half maximum): width between the two points where the quantity equals half its peak value.</li>
+            </ul>
+
+            <h3>0.2 Physical meaning (intuition)</h3>
+            <p>
+              A localized pulse in time necessarily contains a spread of frequencies. The narrower the pulse in time, the broader its spectrum.
+              This is not “instrument limitation”—it is mathematics (Fourier analysis) and physics (uncertainty-like trade-off).
+            </p>
+
+            <h3>0.3 Key principles and validity conditions</h3>
+            <div class="cards">
+              <div class="card ok">
+                <h4>Fourier theorem for pulses <span class="chip">linear systems</span></h4>
+                <p class="muted">
+                  If the medium/system is linear and time-invariant (LTI), the spectrum fully characterizes how filters, dispersion, and bandwidth limits affect the pulse.
+                </p>
+                <ul>
+                  <li>Assumes linear superposition holds.</li>
+                  <li>Assumes envelope is well-behaved (integrable, or tempered distributions in practice).</li>
+                </ul>
+              </div>
+              <div class="card warn">
+                <h4>What is “sech” pulse? <span class="chip">laser physics</span></h4>
+                <p class="muted">
+                  Hyperbolic-secant pulses commonly arise as soliton solutions of the nonlinear Schrödinger equation in fibers and mode-locked lasers.
+                  The intensity shape is often <span class="muted">sech²</span>.
+                </p>
+              </div>
+            </div>
+
+            <h3>0.4 Common models/approximations and why engineers use them</h3>
+            <ul>
+              <li><strong>Envelope model:</strong> Use a slowly varying envelope <span class="muted">f(t)</span> instead of the optical carrier. This isolates the “information-bearing” pulse shape.</li>
+              <li><strong>Intensity from field:</strong> Use <span class="muted">I(t) ∝ |f(t)|²</span> when detector response is much slower than the carrier oscillation.</li>
+              <li><strong>FWHM metrics:</strong> FWHM is a practical spec that connects directly to measurement equipment readouts and datasheets (oscilloscope/OSA).</li>
+            </ul>
+
+            <h3>0.5 Mini intuition examples (minimal algebra)</h3>
+            <ul>
+              <li><strong>Shorter pulse → broader spectrum:</strong> If τ halves, the pulse decays twice as fast; its spectrum spreads roughly twice as wide (Δν ∝ 1/τ).</li>
+              <li><strong>Shape matters:</strong> Two pulses can have the same FWHM time width but different spectral widths (e.g., Gaussian vs sech²).</li>
+              <li><strong>Engineering consequence:</strong> A bandwidth-limited modulator or photodiode can distort a pulse even if average power is fine.</li>
+            </ul>
+
+            <h3>0.6 What to watch for (pitfalls)</h3>
+            <div class="cards">
+              <div class="card bad">
+                <h4>Pitfall: mixing conventions <span class="chip">2π &amp; τ</span></h4>
+                <ul>
+                  <li>Using <span class="muted">e^{-jωt}</span> vs <span class="muted">e^{-j2πνt}</span> changes constants unless you convert variables correctly.</li>
+                  <li>Some texts define the sech pulse as <span class="muted">sech(t/T0)</span> but report widths in terms of <span class="muted">T0</span> or intensity parameters.</li>
+                </ul>
+              </div>
+              <div class="card warn">
+                <h4>Pitfall: FWHM of field vs intensity <span class="chip">square matters</span></h4>
+                <p class="muted">
+                  Here, intensity is <span class="muted">sech²</span>, not <span class="muted">sech</span>. FWHM must be computed on the quantity requested.
+                </p>
+              </div>
+            </div>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </section>
+
+          <!-- PART 0B -->
+          <section id="p0b" aria-labelledby="p0bTitle">
+            <h2 id="p0bTitle">PART 0B — Industry & Applied Physics Perspective</h2>
+
+            <h3>Where this shows up in industry (concrete areas)</h3>
+            <ul>
+              <li><strong>Fiber-optic communications:</strong> Pulse bandwidth sets dispersion penalty, filter passband requirements, and inter-symbol interference risk.</li>
+              <li><strong>Ultrafast lasers (manufacturing, micromachining):</strong> Pulse duration and spectrum affect peak intensity, ablation threshold, heat-affected zone, and process repeatability.</li>
+              <li><strong>Metrology & spectroscopy:</strong> Short pulses provide broad spectra for frequency-comb and pump–probe systems; spectral width determines resolution and accessible transitions.</li>
+              <li><strong>High-speed electronics/EO modulators:</strong> Driver + modulator bandwidth must support the required Δν to avoid pulse broadening and ringing.</li>
+            </ul>
+
+            <h3>Why engineers care</h3>
+            <ul>
+              <li><strong>Performance:</strong> bandwidth-limited components reshape pulses, reducing eye opening and increasing BER in telecom.</li>
+              <li><strong>Reliability & safety:</strong> peak power scales inversely with pulse duration for fixed energy; short pulses can exceed damage thresholds.</li>
+              <li><strong>Cost & manufacturability:</strong> wider bandwidth demands higher-grade RF packaging, lower parasitics, better dispersion management, and tighter tolerances.</li>
+            </ul>
+
+            <h3>Typical measurement/validation methods</h3>
+            <ul>
+              <li><strong>Time domain:</strong> fast photodiode + sampling scope (limited by bandwidth), autocorrelator (for ultrafast), cross-correlation.</li>
+              <li><strong>Frequency domain:</strong> optical spectrum analyzer (OSA), RF spectrum analyzer after detection, frequency-resolved optical gating (FROG) for full characterization.</li>
+              <li><strong>Model validation:</strong> compare measured FWHM and spectral width to analytical constants (like 1.763 and 0.1786) to infer whether a pulse is close to sech² or Gaussian.</li>
+            </ul>
+
+            <h3>Design trade-offs and constraints</h3>
+            <ul>
+              <li><strong>Non-idealities:</strong> chirp, gain narrowing, finite filter slopes, detector saturation, and dispersion alter the ideal sech spectrum.</li>
+              <li><strong>Tolerances:</strong> manufacturing variations change τ (temporal) and therefore Δν; specs often include “typical” and “max/min.”</li>
+              <li><strong>System constraints:</strong> dispersion compensation or pulse shaping may be required to meet both time and spectral masks.</li>
+            </ul>
+
+            <details>
+              <summary>From lab to product: how the ideal model is adapted</summary>
+              <div class="content">
+                In practice, engineers treat the sech² result as a <em>reference baseline</em>. Real pulses may be chirped or truncated; systems add filters and dispersion.
+                A common product workflow is: measure <span class="muted">Δt</span> and <span class="muted">Δν</span>, compute the time–bandwidth product, then decide whether
+                pulse compression, dispersion compensation, or spectral shaping is needed to hit performance and compliance targets.
+              </div>
+            </details>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </section>
+
+          <!-- PART 1 -->
+          <section id="p1" aria-labelledby="p1Title">
+            <h2 id="p1Title">PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+            <h3>Rewrite the problem (clear statement)</h3>
+            <p>
+              A pulse has a <strong>complex field envelope</strong> <span class="muted">f(t) = sech(t/τ)</span>, where <span class="muted">sech(x)=1/cosh(x)</span> and <span class="muted">τ</span> is a time constant.
+              Using the Fourier-transform convention shown in Appendix A:
+            </p>
+            <ul>
+              <li>(a) Show that the <strong>intensity</strong> width (FWHM) satisfies <span class="muted">Δt<sub>FWHM</sub> = 1.76 τ</span> (more precisely 1.763τ).</li>
+              <li>(b) Show that the <strong>spectral intensity</strong> has the form <span class="muted">S(ν) ∝ sech²(π² τ ν)</span> and find its FWHM spectral width <span class="muted">Δν</span>.</li>
+              <li>(c) Compare with a Gaussian pulse (Appendix A).</li>
+            </ul>
+
+            <h3>Given quantities</h3>
+            <ul>
+              <li><span class="muted">f(t)=sech(t/τ)</span></li>
+              <li><span class="muted">τ</span> is a constant (s)</li>
+              <li>Fourier pair: <span class="muted">F(ν)=∫ f(t)e^{-j2πνt}dt</span></li>
+            </ul>
+
+            <h3>Unknowns</h3>
+            <ul>
+              <li>Time FWHM of intensity <span class="muted">I(t) ∝ |f(t)|²</span></li>
+              <li>Form of spectral intensity <span class="muted">S(ν) ∝ |F(ν)|²</span></li>
+              <li>Frequency FWHM <span class="muted">Δν<sub>FWHM</sub></span></li>
+              <li>Comparison constants vs Gaussian</li>
+            </ul>
+
+            <h3>Relevant principles and why they apply</h3>
+            <ul>
+              <li><strong>Definition of intensity:</strong> <span class="muted">I(t) ∝ |f(t)|²</span> applies because the pulse is described by a complex envelope.</li>
+              <li><strong>Fourier transform:</strong> directly yields <span class="muted">F(ν)</span>, hence spectrum and spectral intensity.</li>
+              <li><strong>Even symmetry:</strong> <span class="muted">sech(t/τ)</span> is even, simplifying FWHM calculations and transform properties.</li>
+            </ul>
+
+            <div class="cards">
+              <div class="card callout">
+                <h4>Assumptions <span class="chip">explicit</span></h4>
+                <ul>
+                  <li>The pulse envelope is ideal and extends to ±∞ (no truncation).</li>
+                  <li>We use the appendix’s transform convention with <span class="muted">e^{-j2πνt}</span>.</li>
+                  <li>We measure widths using intensity FWHM (not field FWHM).</li>
+                </ul>
+              </div>
+              <div class="card warn">
+                <h4>Why other tools aren’t needed <span class="chip">keep it clean</span></h4>
+                <p class="muted">
+                  No differential equations or propagation models are needed here; the task is purely shape + Fourier transform + FWHM definitions.
+                </p>
+              </div>
+            </div>
+
+            <h3>Possible approaches (compare 2–3)</h3>
+            <ol>
+              <li><strong>Direct FWHM from definition:</strong> Solve <span class="muted">I(t)=I(0)/2</span> for t. <em>Fast, exact.</em></li>
+              <li><strong>Use known transform table:</strong> Recall <span class="muted">∫sech(at)e^{-iωt}dt = (π/a)sech(πω/2a)</span>. <em>Fastest if known.</em></li>
+              <li><strong>Complex analysis / residues:</strong> Derive transform from scratch using poles of <span class="muted">sech</span>. <em>Most general, but longer.</em></li>
+            </ol>
+
+            <p>
+              <strong>Best approach:</strong> Use direct FWHM definition for part (a), and the standard transform identity (with careful conversion between ω and ν) for part (b).
+              This is both rigorous and efficient, and matches how engineers use transform pairs in practice.
+            </p>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </section>
+
+          <!-- PART 2 -->
+          <section id="p2" aria-labelledby="p2Title">
+            <h2 id="p2Title">PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+            <ol>
+              <li><strong>Goal:</strong> Write intensity. <strong>Tool:</strong> <span class="muted">I(t)∝|f(t)|²</span>. <strong>Meaning:</strong> what detectors “see.”</li>
+              <li><strong>Goal:</strong> Find time FWHM. <strong>Tool:</strong> solve <span class="muted">sech²(t/τ)=1/2</span>. <strong>Meaning:</strong> pulse duration spec.</li>
+              <li><strong>Goal:</strong> Compute Fourier transform. <strong>Tool:</strong> known identity for <span class="muted">∫sech</span> plus variable substitution. <strong>Meaning:</strong> spectrum amplitude.</li>
+              <li><strong>Goal:</strong> Convert to spectral intensity. <strong>Tool:</strong> <span class="muted">S(ν)∝|F(ν)|²</span>. <strong>Meaning:</strong> power vs frequency.</li>
+              <li><strong>Goal:</strong> Spectral FWHM. <strong>Tool:</strong> solve <span class="muted">sech²(…)=1/2</span>. <strong>Meaning:</strong> bandwidth requirement.</li>
+              <li><strong>Goal:</strong> Compare to Gaussian. <strong>Tool:</strong> standard Gaussian FT + FWHM. <strong>Meaning:</strong> shape-dependent bandwidth penalty.</li>
+              <li><strong>Goal:</strong> Sanity checks. <strong>Tool:</strong> units + scaling (Δν∝1/τ). <strong>Meaning:</strong> catch missing 2π factors.</li>
+            </ol>
+
+            <div class="cards">
+              <div class="card warn">
+                <h4>Common mistakes <span class="chip">quick tips</span></h4>
+                <ul>
+                  <li>Computing FWHM of <span class="muted">sech</span> when the problem asks for <span class="muted">sech²</span> (intensity).</li>
+                  <li>Forgetting that half-maximum is <span class="muted">1/2</span> of the peak, not half the argument.</li>
+                  <li>Mixing <span class="muted">ν (Hz)</span> and <span class="muted">ω (rad/s)</span> without <span class="muted">ω=2πν</span>.</li>
+                  <li>Dropping the scaling from substitution <span class="muted">u=t/τ</span> in the integral.</li>
+                </ul>
+              </div>
+
+              <div class="card callout">
+                <h4>Constant you’ll see repeatedly <span class="chip">arcosh</span></h4>
+                <p class="muted">Both FWHMs hinge on solving <span class="muted">cosh(x)=√2</span>, giving:</p>
+                <div class="eq" data-copy="arcosh(√2) = ln(√2 + 1) ≈ 0.881373587">
+                  <div class="eqbar">
+                    <div class="eqtitle">Reusable identity</div>
+                    <button class="btn small" data-copy-btn>Copy</button>
+                  </div>
+                  <pre>arcosh(√2) = ln(√2 + 1) ≈ 0.881373587</pre>
+                </div>
+              </div>
+            </div>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </section>
+
+          <!-- PART 3 -->
+          <section id="p3" aria-labelledby="p3Title">
+            <h2 id="p3Title">PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+            <h3>Qualitative expectation (before calculation)</h3>
+            <p>
+              Because <span class="muted">sech(t/τ)</span> becomes narrower when τ decreases, we expect:
+              <strong>Δt<sub>FWHM</sub> ∝ τ</strong> and <strong>Δν<sub>FWHM</sub> ∝ 1/τ</strong>.
+              Also, since <span class="muted">sech</span> has exponential-like tails, its spectrum should also have a smooth, non-oscillatory shape (no sharp edges that would cause spectral ringing).
+            </p>
+
+            <h3>(a) Time-domain intensity FWHM</h3>
+            <p>
+              The complex envelope is:
+              <span class="muted">f(t) = sech(t/τ)</span>.
+              The intensity is proportional to the squared magnitude:
+            </p>
+
+            <div class="eq" data-copy="I(t) ∝ |f(t)|^2 = sech^2(t/τ)">
+              <div class="eqbar">
+                <div class="eqtitle">Intensity from field envelope</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>I(t) ∝ |f(t)|^2 = sech^2(t/τ)</pre>
+            </div>
+
+            <p>
+              The peak occurs at <span class="muted">t=0</span> because <span class="muted">sech(0)=1</span>, so <span class="muted">I(0) ∝ 1</span>.
+              The FWHM condition is:
+            </p>
+
+            <div class="eq" data-copy="sech^2(t/τ) = 1/2">
+              <div class="eqbar">
+                <div class="eqtitle">Half-maximum condition</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>sech^2(t/τ) = 1/2</pre>
+            </div>
+
+            <p>
+              Take the square root (positive because intensity is positive and sech is positive for real arguments):
+              <span class="muted">sech(t/τ) = 1/√2</span>.
+              Invert sech using <span class="muted">sech(x)=1/cosh(x)</span>:
+            </p>
+
+            <div class="eq" data-copy="sech(x)=1/√2  ⇒  cosh(x)=√2  ⇒  x = arcosh(√2) = ln(√2+1)">
+              <div class="eqbar">
+                <div class="eqtitle">Solve for the half-maximum points</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>sech(x)=1/√2  ⇒  cosh(x)=√2  ⇒  x = arcosh(√2) = ln(√2+1)</pre>
+            </div>
+
+            <p>
+              Here <span class="muted">x = t/τ</span>. Therefore the two half-maximum times are:
+              <span class="muted">t = ± τ arcosh(√2)</span>.
+              The full width (difference between the two) is:
+            </p>
+
+            <div class="eq" data-copy="Δt_FWHM = 2 τ arcosh(√2) = 2τ ln(√2+1) ≈ 1.763 τ">
+              <div class="eqbar">
+                <div class="eqtitle">Time FWHM (intensity)</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>Δt_FWHM = 2 τ arcosh(√2)
+        = 2τ ln(√2+1)
+        ≈ 1.763 τ</pre>
+            </div>
+
+            <h3>(b) Spectral intensity shape and spectral FWHM</h3>
+            <p>
+              The appendix uses the Fourier transform:
+            </p>
+
+            <div class="eq" data-copy="F(ν) = ∫_{-∞}^{∞} f(t) e^{-j 2π ν t} dt">
+              <div class="eqbar">
+                <div class="eqtitle">Appendix A Fourier transform</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>F(ν) = ∫_{-∞}^{∞} f(t) e^{-j 2π ν t} dt</pre>
+            </div>
+
+            <p>
+              Substitute <span class="muted">f(t)=sech(t/τ)</span> and use the change of variables <span class="muted">u=t/τ</span>
+              (so <span class="muted">t=τu</span> and <span class="muted">dt=τ du</span>):
+            </p>
+
+            <div class="eq" data-copy="F(ν)= τ ∫_{-∞}^{∞} sech(u) e^{-j 2π (ν τ) u} du">
+              <div class="eqbar">
+                <div class="eqtitle">Scale out τ</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>F(ν)= ∫ sech(t/τ) e^{-j2πνt} dt
+    = τ ∫_{-∞}^{∞} sech(u) e^{-j 2π (ν τ) u} du</pre>
+            </div>
+
+            <p>
+              Now we use a standard transform identity (can be derived by complex analysis, but commonly listed in Fourier tables):
+            </p>
+
+            <div class="eq" data-copy="∫_{-∞}^{∞} sech(u) e^{-j ω u} du = π sech( (π ω)/2 )">
+              <div class="eqbar">
+                <div class="eqtitle">Known integral identity</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>∫_{-∞}^{∞} sech(u) e^{-j ω u} du = π sech( (π ω)/2 )</pre>
+            </div>
+
+            <p>
+              In our case, the angular variable in the exponential is
+              <span class="muted">ω = 2π(ντ)</span>.
+              Plugging into the identity gives:
+            </p>
+
+            <div class="eq" data-copy="F(ν) = τ · π · sech( (π/2)·[2πντ] ) = πτ sech( π^2 τ ν )">
+              <div class="eqbar">
+                <div class="eqtitle">Fourier transform of sech(t/τ)</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>F(ν) = τ · π · sech( (π/2)·[2πντ] )
+     = πτ sech( π^2 τ ν )</pre>
+            </div>
+
+            <p>
+              The spectral intensity is proportional to magnitude squared:
+            </p>
+
+            <div class="eq" data-copy="S(ν) ∝ |F(ν)|^2 ∝ sech^2(π^2 τ ν)">
+              <div class="eqbar">
+                <div class="eqtitle">Spectral intensity shape</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>S(ν) ∝ |F(ν)|^2 ∝ sech^2(π^2 τ ν)</pre>
+            </div>
+
+            <p>
+              To find the FWHM in frequency, set <span class="muted">S(ν)=S(0)/2</span>.
+              Since <span class="muted">S(0)</span> is at <span class="muted">ν=0</span>, we solve:
+              <span class="muted">sech²(π²τν)=1/2</span>.
+              This is the same equation as before, with argument <span class="muted">x = π²τν</span>.
+            </p>
+
+            <div class="eq" data-copy="sech^2(π^2 τ ν)=1/2 ⇒ |ν| = arcosh(√2)/(π^2 τ)">
+              <div class="eqbar">
+                <div class="eqtitle">Half-maximum frequencies</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>sech^2(π^2 τ ν)=1/2
+⇒ sech(π^2 τ ν)=1/√2
+⇒ cosh(π^2 τ ν)=√2
+⇒ |ν| = arcosh(√2)/(π^2 τ)</pre>
+            </div>
+
+            <p>
+              Therefore the <strong>full</strong> spectral FWHM is twice that:
+            </p>
+
+            <div class="eq" data-copy="Δν_FWHM = 2 arcosh(√2)/(π^2 τ) = 2 ln(√2+1)/(π^2 τ) ≈ 0.1786/τ">
+              <div class="eqbar">
+                <div class="eqtitle">Spectral FWHM (Hz, appendix convention)</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>Δν_FWHM = 2 arcosh(√2)/(π^2 τ)
+        = 2 ln(√2+1)/(π^2 τ)
+        ≈ 0.1786 / τ</pre>
+            </div>
+
+            <details>
+              <summary>Why some sources report different numbers (e.g., 1.786/τ)</summary>
+              <div class="content">
+                Differences almost always come from <strong>definitions</strong>:
+                <ul>
+                  <li>Using angular frequency <span class="muted">ω</span> (rad/s) vs frequency <span class="muted">ν</span> (Hz).</li>
+                  <li>Using a different pulse parameter (e.g., defining the field as <span class="muted">sech(t/T0)</span> but naming the intensity parameter as τ).</li>
+                  <li>Defining width for the <em>field</em> rather than the <em>intensity</em>.</li>
+                </ul>
+                With the appendix’s explicit <span class="muted">e^{-j2πνt}</span> convention and the stated <span class="muted">f(t)=sech(t/τ)</span>, the consistent result is
+                <span class="muted">S(ν)∝sech²(π²τν)</span> and <span class="muted">Δν≈0.1786/τ</span>.
+              </div>
+            </details>
+
+            <h3>(c) Compare with Gaussian pulse (Appendix A)</h3>
+            <p>
+              A common Gaussian field envelope is <span class="muted">f_G(t)=exp[-(t/τ_G)²]</span>, giving intensity
+              <span class="muted">I_G(t)∝exp[-2(t/τ_G)²]</span>.
+              Its Fourier transform is also Gaussian, and the intensity FWHM products are well-known.
+            </p>
+
+            <div class="cards">
+              <div class="card callout">
+                <h4>Gaussian intensity FWHM (typical parameterization)</h4>
+                <p class="muted">If <span class="muted">I_G(t)∝exp[-2(t/τ_G)²]</span>, then:</p>
+                <div class="eq" data-copy="Δt_FWHM(Gaussian) = τ_G √(2 ln 2) ≈ 1.177 τ_G">
+                  <div class="eqbar">
+                    <div class="eqtitle">Time FWHM (Gaussian intensity)</div>
+                    <button class="btn small" data-copy-btn>Copy</button>
+                  </div>
+                  <pre>Δt_FWHM(Gaussian) = τ_G √(2 ln 2) ≈ 1.177 τ_G</pre>
+                </div>
+                <p class="muted">
+                  With the appendix frequency variable (Hz), the Gaussian spectral intensity is also Gaussian and yields
+                  <span class="muted">Δt_FWHM Δν_FWHM ≈ 0.441</span>.
+                </p>
+              </div>
+
+              <div class="card ok">
+                <h4>Sech² vs Gaussian (engineering takeaway)</h4>
+                <ul>
+                  <li><strong>Sech²:</strong> <span class="muted">ΔtΔν ≈ 0.315</span> (more bandwidth-efficient for a given intensity FWHM).</li>
+                  <li><strong>Gaussian:</strong> <span class="muted">ΔtΔν ≈ 0.441</span> (needs more bandwidth for same time width).</li>
+                  <li><strong>Interpretation:</strong> pulse shape affects required optical/electrical bandwidth and dispersion sensitivity.</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- FINAL ANSWER BOX -->
+            <div class="eq" style="border-color: rgba(134,239,172,.35); background: linear-gradient(180deg, rgba(134,239,172,.10), rgba(255,255,255,.03));" data-copy="Final results (for f(t)=sech(t/τ), Appendix-A convention F(ν)=∫f(t)e^{-j2πνt}dt):
+(a) I(t)∝sech²(t/τ) ⇒ Δt_FWHM = 2τ arcosh(√2) = 2τ ln(√2+1) ≈ 1.763τ.
+(b) F(ν)=πτ sech(π²τν) ⇒ S(ν)∝sech²(π²τν) ⇒ Δν_FWHM = 2 arcosh(√2)/(π²τ) ≈ 0.1786/τ (Hz).
+(c) Time–bandwidth: sech² gives ΔtΔν≈0.315, Gaussian gives ΔtΔν≈0.441 (for intensity FWHM).">
+              <div class="eqbar">
+                <div class="eqtitle"><strong>Final Answer (copyable)</strong></div>
+                <button class="btn" data-copy-btn>Copy Final Answer</button>
+              </div>
+<pre>Final results (for f(t)=sech(t/τ), Appendix-A convention F(ν)=∫f(t)e^{-j2πνt}dt):
+(a) I(t)∝sech²(t/τ) ⇒ Δt_FWHM = 2τ arcosh(√2) = 2τ ln(√2+1) ≈ 1.763τ.
+(b) F(ν)=πτ sech(π²τν) ⇒ S(ν)∝sech²(π²τν) ⇒ Δν_FWHM = 2 arcosh(√2)/(π²τ) ≈ 0.1786/τ (Hz).
+(c) Time–bandwidth: sech² gives ΔtΔν≈0.315, Gaussian gives ΔtΔν≈0.441 (for intensity FWHM).</pre>
+            </div>
+
+            <h3>Sanity checks</h3>
+            <div class="cards">
+              <div class="card ok">
+                <h4>Units / dimensions <span class="chip">must pass</span></h4>
+                <ul>
+                  <li><span class="muted">Δt</span> has units of seconds because it is proportional to <span class="muted">τ</span> (seconds).</li>
+                  <li><span class="muted">Δν</span> has units of Hz because it is proportional to <span class="muted">1/τ</span>.</li>
+                </ul>
+              </div>
+              <div class="card callout">
+                <h4>Limiting behavior <span class="chip">physics intuition</span></h4>
+                <ul>
+                  <li>If <span class="muted">τ → 0</span>, pulse becomes extremely short: <span class="muted">Δt → 0</span> and <span class="muted">Δν → ∞</span>.</li>
+                  <li>If <span class="muted">τ → ∞</span>, pulse becomes quasi-continuous: <span class="muted">Δt → ∞</span> and <span class="muted">Δν → 0</span>.</li>
+                </ul>
+              </div>
+              <div class="card warn">
+                <h4>Interpretation <span class="chip">plain language</span></h4>
+                <p class="muted">
+                  The constants (1.763 and 0.1786) are “shape fingerprints.” If your measured pulse deviates strongly,
+                  it is likely chirped, filtered, truncated, or not actually sech²-shaped.
+                </p>
+              </div>
+            </div>
+
+            <!-- Optional single plot -->
+            <figure aria-label="single static plot">
+              <canvas id="plot" width="1200" height="700"></canvas>
+              <figcaption>
+                Single static plot (example): normalized intensity <span class="muted">I(t)/I(0)=sech²(t/τ)</span> versus normalized time <span class="muted">t/τ</span>,
+                with FWHM markers at <span class="muted">±arcosh(√2) ≈ ±0.881</span> and <span class="muted">Δt<sub>FWHM</sub> ≈ 1.763τ</span>.
+                (Plot uses example normalization only; the final results above remain symbolic in τ.)
+              </figcaption>
+            </figure>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </section>
+
+          <!-- PART 4 -->
+          <section id="p4" aria-labelledby="p4Title">
+            <h2 id="p4Title">PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+            <h3>Re-interpreting the final formulas</h3>
+            <ul>
+              <li><strong>Δt<sub>FWHM</sub> = 2τ arcosh(√2):</strong> τ is the fundamental time scale; the constant <span class="muted">2arcosh(√2)</span> is purely due to the <span class="muted">sech²</span> shape.</li>
+              <li><strong>S(ν) ∝ sech²(π²τν):</strong> the argument <span class="muted">π²τν</span> shows that scaling time by τ scales frequency by <span class="muted">1/τ</span>, with additional π factors from the Fourier kernel.</li>
+              <li><strong>Δν<sub>FWHM</sub> = 2 arcosh(√2)/(π²τ):</strong> bandwidth requirement grows inversely with τ; shorter pulses demand wider passbands.</li>
+            </ul>
+
+            <h3>Parameter dependence (what happens if you change τ?)</h3>
+            <ul>
+              <li>If <span class="muted">τ</span> increases by 20%, then <span class="muted">Δt</span> increases by 20% and <span class="muted">Δν</span> decreases by about 16.7% (since Δν ∝ 1/τ).</li>
+              <li>Because <span class="muted">ΔtΔν</span> is constant for a given shape (here ≈0.315), improving time resolution forces bandwidth expense.</li>
+            </ul>
+
+            <h3>Alternative derivation idea (brief but meaningful)</h3>
+            <p class="muted">
+              Instead of using a transform table, you can derive the integral for <span class="muted">∫ sech(u)e^{-jωu}du</span>
+              via complex analysis: <span class="muted">sech(z)</span> has simple poles at <span class="muted">z = jπ/2 + jπk</span>.
+              Summing residues yields the same closed-form <span class="muted">π sech(πω/2)</span>. This is a useful method when you encounter
+              transforms not present in tables.
+            </p>
+
+            <h3>Concept check (self-test with answers)</h3>
+            <ul>
+              <li><strong>Q:</strong> If you measure <span class="muted">Δt</span> and <span class="muted">Δν</span> and find <span class="muted">ΔtΔν ≈ 0.31</span>, what pulse shape is suggested?<br/>
+                  <strong>A:</strong> A transform-limited <span class="muted">sech²</span>-like pulse (close to the analytical constant 0.315).</li>
+              <li><strong>Q:</strong> Why does the spectrum involve π²?<br/>
+                  <strong>A:</strong> One π comes from the <span class="muted">sech</span> transform identity, and another from using <span class="muted">e^{-j2πνt}</span> rather than <span class="muted">e^{-jωt}</span>.</li>
+              <li><strong>Q:</strong> What would chirp do to these results?<br/>
+                  <strong>A:</strong> Chirp typically increases spectral width for the same time width (or increases time width after propagation), so <span class="muted">ΔtΔν</span> becomes larger than the transform-limited constant.</li>
+              <li><strong>Q:</strong> Is intensity FWHM the same as field FWHM?<br/>
+                  <strong>A:</strong> No. Intensity is squared magnitude; its half-maximum occurs at a different point than the field’s half-maximum.</li>
+            </ul>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </section>
+
+          <!-- PART 5 -->
+          <section id="p5" aria-labelledby="p5Title">
+            <h2 id="p5Title">PART 5 — Optional Plot Guide</h2>
+
+            <h3>What the plot shows and why it’s useful</h3>
+            <p>
+              The plot displays the normalized intensity <span class="muted">I(t)/I(0) = sech²(t/τ)</span> as a function of normalized time <span class="muted">t/τ</span>.
+              This helps you visually confirm:
+            </p>
+            <ul>
+              <li>The pulse peak at <span class="muted">t=0</span> and smooth decay.</li>
+              <li>The half-maximum level at <span class="muted">I/I(0)=0.5</span>.</li>
+              <li>The FWHM points at <span class="muted">t/τ = ±arcosh(√2) ≈ ±0.881</span>, giving <span class="muted">Δt/τ ≈ 1.763</span>.</li>
+            </ul>
+
+            <h3>Axes and units</h3>
+            <ul>
+              <li><strong>x-axis:</strong> normalized time <span class="muted">t/τ</span> (dimensionless).</li>
+              <li><strong>y-axis:</strong> normalized intensity <span class="muted">I(t)/I(0)</span> (dimensionless).</li>
+            </ul>
+
+            <h3>Example values statement</h3>
+            <p class="muted">
+              No numerical τ is assumed for the plot—normalization by τ makes it universal. The <em>final answers</em> remain symbolic in τ.
+            </p>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </section>
+        </article>
+
+        <!-- RIGHT SIDEBAR -->
+        <aside class="side" aria-label="sidebar">
+          <section>
+            <h3>At-a-glance constants</h3>
+            <div class="kpi" role="list">
+              <div class="k" role="listitem">
+                <div class="label">arcosh(√2)</div>
+                <div class="val">≈ 0.8813736</div>
+              </div>
+              <div class="k" role="listitem">
+                <div class="label">Δt<sub>FWHM</sub>/τ</div>
+                <div class="val">≈ 1.763</div>
+              </div>
+              <div class="k" role="listitem">
+                <div class="label">Δν<sub>FWHM</sub>·τ</div>
+                <div class="val">≈ 0.1786</div>
+              </div>
+              <div class="k" role="listitem">
+                <div class="label">(ΔtΔν)<sub>FWHM</sub></div>
+                <div class="val">≈ 0.315</div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h3>Engineering interpretation</h3>
+            <ul>
+              <li><span class="muted">Δν ≈ 0.1786/τ</span> sets a <strong>minimum bandwidth</strong> target for filters, modulators, and receivers.</li>
+              <li>If a component’s passband is narrower than Δν, expect <strong>pulse broadening</strong> and <strong>ISI</strong>.</li>
+              <li>In dispersive media, broader spectra experience more group-delay variation → <strong>temporal spreading</strong>.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h3>Copy: Key equations</h3>
+            <div class="eq" data-copy="I(t) ∝ sech^2(t/τ)">
+              <div class="eqbar">
+                <div class="eqtitle">Intensity</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>I(t) ∝ sech^2(t/τ)</pre>
+            </div>
+
+            <div class="eq" data-copy="Δt_FWHM = 2τ ln(√2+1) ≈ 1.763τ">
+              <div class="eqbar">
+                <div class="eqtitle">Time FWHM</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>Δt_FWHM = 2τ ln(√2+1) ≈ 1.763τ</pre>
+            </div>
+
+            <div class="eq" data-copy="F(ν)=πτ sech(π^2 τ ν)">
+              <div class="eqbar">
+                <div class="eqtitle">Fourier transform</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>F(ν)=πτ sech(π^2 τ ν)</pre>
+            </div>
+
+            <div class="eq" data-copy="S(ν) ∝ sech^2(π^2 τ ν)">
+              <div class="eqbar">
+                <div class="eqtitle">Spectral intensity</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>S(ν) ∝ sech^2(π^2 τ ν)</pre>
+            </div>
+
+            <div class="eq" data-copy="Δν_FWHM = 2 ln(√2+1)/(π^2 τ) ≈ 0.1786/τ">
+              <div class="eqbar">
+                <div class="eqtitle">Spectral FWHM</div>
+                <button class="btn small" data-copy-btn>Copy</button>
+              </div>
+              <pre>Δν_FWHM = 2 ln(√2+1)/(π^2 τ) ≈ 0.1786/τ</pre>
+            </div>
+          </section>
+        </aside>
+      </div>
     </div>
   </main>
+
+  <footer>
+    <div class="wrap">
+      <div>Built as a single self-contained HTML learning article (no external libraries). Print-friendly and copy-enabled.</div>
+    </div>
+  </footer>
+
+  <script>
+    // ---------- Copy buttons ----------
+    (function(){
+      function copyText(txt){
+        if(!txt) return;
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          return navigator.clipboard.writeText(txt);
+        }
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = txt;
+        ta.setAttribute('readonly','');
+        ta.style.position='fixed';
+        ta.style.left='-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try{ document.execCommand('copy'); }catch(e){}
+        document.body.removeChild(ta);
+        return Promise.resolve();
+      }
+
+      document.querySelectorAll('[data-copy-btn]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const box = btn.closest('[data-copy]');
+          const txt = box ? box.getAttribute('data-copy') : '';
+          const old = btn.textContent;
+          btn.textContent = 'Copied ✓';
+          btn.style.borderColor = 'rgba(134,239,172,.45)';
+          btn.style.background = 'rgba(134,239,172,.10)';
+          try{ await copyText(txt); }catch(e){}
+          setTimeout(()=>{
+            btn.textContent = old;
+            btn.style.borderColor = '';
+            btn.style.background = '';
+          }, 900);
+        });
+      });
+    })();
+
+    // ---------- Single static plot: sech^2(t/τ) with FWHM markers ----------
+    (function(){
+      const canvas = document.getElementById('plot');
+      const ctx = canvas.getContext('2d');
+
+      function sech(x){ return 1/Math.cosh(x); }
+      function draw(){
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        const rect = canvas.getBoundingClientRect();
+        const W = Math.max(320, Math.floor(rect.width));
+        const H = Math.max(260, Math.floor(rect.height));
+        canvas.width = Math.floor(W * dpr);
+        canvas.height = Math.floor(H * dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+
+        // layout
+        const padL = 62, padR = 18, padT = 44, padB = 54;
+        const x0 = padL, y0 = padT;
+        const w = W - padL - padR;
+        const h = H - padT - padB;
+
+        // background (subtle)
+        ctx.clearRect(0,0,W,H);
+
+        // helpers
+        function xToPx(x){
+          // x in [-4, +4]
+          return x0 + (x + 4) * (w/8);
+        }
+        function yToPx(y){
+          // y in [0, 1.05]
+          const ymin = 0, ymax = 1.05;
+          return y0 + (ymax - y) * (h/(ymax - ymin));
+        }
+
+        // title
+        ctx.save();
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#e9eef6';
+        ctx.font = '700 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillText('Normalized Intensity of a Sech² Pulse:  I(t)/I(0) = sech²(t/τ)', x0, 22);
+        ctx.restore();
+
+        // grid + axes
+        const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#e9eef6';
+        const muted = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#b7c1d1';
+        const line = getComputedStyle(document.documentElement).getPropertyValue('--line').trim() || 'rgba(255,255,255,.10)';
+        const line2 = getComputedStyle(document.documentElement).getPropertyValue('--line2').trim() || 'rgba(255,255,255,.16)';
+
+        // gridlines
+        ctx.save();
+        ctx.strokeStyle = line;
+        ctx.lineWidth = 1;
+        // vertical ticks at integer x
+        for(let k=-4;k<=4;k++){
+          const X = xToPx(k);
+          ctx.beginPath();
+          ctx.moveTo(X, y0);
+          ctx.lineTo(X, y0+h);
+          ctx.stroke();
+        }
+        // horizontal ticks at y = 0, 0.25, 0.5, 0.75, 1.0
+        const ys = [0,0.25,0.5,0.75,1.0];
+        for(const yy of ys){
+          const Y = yToPx(yy);
+          ctx.beginPath();
+          ctx.moveTo(x0, Y);
+          ctx.lineTo(x0+w, Y);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // axes border
+        ctx.save();
+        ctx.strokeStyle = line2;
+        ctx.lineWidth = 1.25;
+        ctx.strokeRect(x0, y0, w, h);
+        ctx.restore();
+
+        // labels
+        ctx.save();
+        ctx.fillStyle = muted;
+        ctx.font = '600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        // x ticks
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        for(let k=-4;k<=4;k++){
+          const X = xToPx(k);
+          ctx.fillText(String(k), X, y0+h+8);
+        }
+        // y ticks
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for(const yy of ys){
+          const Y = yToPx(yy);
+          ctx.fillText(yy.toFixed(2).replace(/0+$/,'').replace(/\.$/,''), x0-10, Y);
+        }
+        // axis titles
+        ctx.textAlign='center';
+        ctx.textBaseline='bottom';
+        ctx.fillText('Normalized time  t/τ  (dimensionless)', x0 + w/2, y0 + h + 44);
+
+        ctx.save();
+        ctx.translate(18, y0 + h/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.textAlign='center';
+        ctx.textBaseline='top';
+        ctx.fillText('Normalized intensity  I(t)/I(0)', 0, 0);
+        ctx.restore();
+        ctx.restore();
+
+        // curve
+        const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#7dd3fc';
+        ctx.save();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        const N = 800;
+        for(let i=0;i<=N;i++){
+          const x = -4 + 8*(i/N);
+          const y = Math.pow(sech(x), 2);
+          const X = xToPx(x);
+          const Y = yToPx(y);
+          if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // half-maximum line
+        ctx.save();
+        ctx.strokeStyle = 'rgba(251,191,36,.75)';
+        ctx.lineWidth = 1.6;
+        ctx.setLineDash([6,5]);
+        const Yh = yToPx(0.5);
+        ctx.beginPath();
+        ctx.moveTo(x0, Yh);
+        ctx.lineTo(x0+w, Yh);
+        ctx.stroke();
+        ctx.restore();
+
+        // FWHM markers at x = ±arcosh(sqrt(2))
+        const xHalf = Math.acosh(Math.SQRT2); // 0.881373...
+        const Xm1 = xToPx(-xHalf);
+        const Xm2 = xToPx(+xHalf);
+        const Yhm = yToPx(0.5);
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(251,191,36,.95)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+        // vertical markers
+        ctx.beginPath(); ctx.moveTo(Xm1, y0); ctx.lineTo(Xm1, y0+h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(Xm2, y0); ctx.lineTo(Xm2, y0+h); ctx.stroke();
+
+        // dots at intersections
+        ctx.fillStyle = 'rgba(255,255,255,.92)';
+        ctx.beginPath(); ctx.arc(Xm1, Yhm, 4.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(Xm2, Yhm, 4.5, 0, Math.PI*2); ctx.fill();
+
+        // label
+        ctx.fillStyle = ink;
+        ctx.font = '700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.textAlign='left';
+        ctx.textBaseline='top';
+        const label = `FWHM: Δt/τ = 2·arcosh(√2) ≈ ${(2*xHalf).toFixed(3)}`;
+        ctx.fillText(label, x0 + 10, y0 + 10);
+
+        ctx.fillStyle = 'rgba(251,191,36,.95)';
+        ctx.font = '600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillText('Half-maximum (0.5)', x0 + 10, Yh + 6);
+
+        // mini legend
+        ctx.textAlign='left';
+        ctx.textBaseline='middle';
+        const lx = x0 + 10, ly = y0 + h - 18;
+        ctx.fillStyle = 'rgba(255,255,255,.75)';
+        ctx.fillRect(lx, ly-10, 240, 28);
+        ctx.strokeStyle = 'rgba(16,24,40,.18)';
+        ctx.strokeRect(lx, ly-10, 240, 28);
+
+        // legend items
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath(); ctx.moveTo(lx+10, ly); ctx.lineTo(lx+44, ly); ctx.stroke();
+        ctx.fillStyle = '#00000000';
+        ctx.fillStyle = ink;
+        ctx.font = '600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillText('I(t)/I(0)', lx+52, ly);
+
+        ctx.strokeStyle = 'rgba(251,191,36,.85)';
+        ctx.lineWidth = 1.6;
+        ctx.setLineDash([6,5]);
+        ctx.beginPath(); ctx.moveTo(lx+125, ly); ctx.lineTo(lx+159, ly); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = ink;
+        ctx.fillText('FWHM level', lx+167, ly);
+
+        ctx.restore();
+      }
+
+      let rAF = null;
+      function onResize(){
+        if(rAF) cancelAnimationFrame(rAF);
+        rAF = requestAnimationFrame(draw);
+      }
+      window.addEventListener('resize', onResize, {passive:true});
+      draw();
+    })();
+  </script>
 </body>
 </html>

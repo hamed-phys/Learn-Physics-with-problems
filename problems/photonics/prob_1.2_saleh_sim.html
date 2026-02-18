@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>simulation.html — Advanced Planar Plate Ray Simulation</title>
+<meta name="color-scheme" content="dark light">
+<style>
+:root{
+  --bg:#0b1020;
+  --panel:rgba(255,255,255,0.06);
+  --text:rgba(255,255,255,0.92);
+  --muted:rgba(255,255,255,0.65);
+  --line:rgba(255,255,255,0.15);
+  --accent:#6ee7ff;
+  --good:#86efac;
+  --warn:#fbbf24;
+  --bad:#fb7185;
+  --mono:ui-monospace,Consolas,monospace;
+  --sans:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+}
+@media (prefers-color-scheme:light){
+:root{
+  --bg:#f6f7fb;
+  --panel:rgba(0,0,0,0.05);
+  --text:#111;
+  --muted:#555;
+  --line:rgba(0,0,0,0.15);
+}
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--text);
+}
+header{
+  padding:14px 18px;
+  border-bottom:1px solid var(--line);
+}
+h1{margin:0;font-size:1.2rem}
+main{
+  display:grid;
+  grid-template-columns:320px 1fr;
+  height:calc(100vh - 60px);
+}
+@media(max-width:900px){
+  main{grid-template-columns:1fr}
+}
+.sidebar{
+  border-right:1px solid var(--line);
+  overflow:auto;
+  padding:14px;
+  background:var(--panel);
+}
+.section{
+  margin-bottom:18px;
+  border:1px solid var(--line);
+  padding:10px;
+  border-radius:10px;
+}
+.section h3{
+  margin:0 0 8px 0;
+  font-size:0.95rem;
+}
+label{
+  display:flex;
+  justify-content:space-between;
+  font-size:0.85rem;
+  margin-bottom:4px;
+}
+input[type=range],select{
+  width:100%;
+}
+button{
+  padding:6px 10px;
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--text);
+  border-radius:6px;
+  cursor:pointer;
+  font-size:0.8rem;
+}
+button:hover{background:var(--panel)}
+.canvas-wrap{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+}
+canvas{
+  flex:1;
+  width:100%;
+  height:100%;
+  display:block;
+  background:rgba(0,0,0,0.1);
+}
+.diagnostics{
+  font-family:var(--mono);
+  font-size:0.8rem;
+  border-top:1px solid var(--line);
+  padding:8px;
+  background:var(--panel);
+}
+.bad{color:var(--bad)}
+.good{color:var(--good)}
+.warn{color:var(--warn)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Advanced Simulation — Transmission Through Planar Plates & Layer Stack</h1>
+</header>
+
+<main>
+  <div class="sidebar">
+
+    <div class="section">
+      <h3>Model Parameters</h3>
+      <label>Incident Angle θ (deg) <span id="vTheta"></span></label>
+      <input type="range" id="theta" min="0" max="85" step="0.1" value="40">
+
+      <label>Plate Index n₁ <span id="vN1"></span></label>
+      <input type="range" id="n1" min="1" max="2.5" step="0.01" value="1.5">
+
+      <label>Thickness d (mm) <span id="vD"></span></label>
+      <input type="range" id="d" min="0.5" max="20" step="0.1" value="8">
+    </div>
+
+    <div class="section">
+      <h3>Layer Stack (Advanced Mode)</h3>
+      <label>Number of Layers</label>
+      <select id="layers">
+        <option value="1">1 (Single Plate)</option>
+        <option value="2">2 Layers</option>
+        <option value="3">3 Layers</option>
+      </select>
+    </div>
+
+    <div class="section">
+      <h3>Numerical Method</h3>
+      <select id="method">
+        <option value="analytic">Analytic (Exact Snell)</option>
+        <option value="euler">Euler Propagation</option>
+      </select>
+
+      <label>Time Step dt <span id="vdt"></span></label>
+      <input type="range" id="dt" min="0.001" max="0.05" step="0.001" value="0.01">
+
+      <label>Speed <span id="vSpeed"></span></label>
+      <input type="range" id="speed" min="0.2" max="3" step="0.1" value="1">
+    </div>
+
+    <div class="section">
+      <h3>Controls</h3>
+      <button onclick="App.start()">Start</button>
+      <button onclick="App.pause()">Pause</button>
+      <button onclick="App.step()">Step</button>
+      <button onclick="App.reset()">Reset</button>
+      <button onclick="App.exportCSV()">Export CSV</button>
+      <button onclick="App.exportJSON()">Export Params</button>
+    </div>
+
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="canvas"></canvas>
+    <div class="diagnostics" id="diag"></div>
+  </div>
+</main>
+
+<script>
+const DEG=Math.PI/180;
+
+const App={
+  canvas:null,
+  ctx:null,
+  running:false,
+  t:0,
+  history:[],
+  maxHistory:2000,
+  params:{
+    theta:40,
+    n1:1.5,
+    d:8,
+    layers:1,
+    dt:0.01,
+    speed:1,
+    method:"analytic"
+  },
+  state:{
+    x:0,
+    y:0,
+    vx:0,
+    vy:0
+  },
+
+  init(){
+    this.canvas=document.getElementById("canvas");
+    this.ctx=this.canvas.getContext("2d");
+    this.resize();
+    window.addEventListener("resize",()=>this.resize());
+    this.bindUI();
+    this.reset();
+    requestAnimationFrame(()=>this.loop());
+  },
+
+  resize(){
+    const dpr=window.devicePixelRatio||1;
+    const rect=this.canvas.getBoundingClientRect();
+    this.canvas.width=rect.width*dpr;
+    this.canvas.height=rect.height*dpr;
+    this.ctx.setTransform(dpr,0,0,dpr,0,0);
+  },
+
+  bindUI(){
+    const ids=["theta","n1","d","layers","dt","speed","method"];
+    ids.forEach(id=>{
+      document.getElementById(id).addEventListener("input",()=>{
+        this.params[id]=parseFloat(document.getElementById(id).value)||document.getElementById(id).value;
+        this.updateLabels();
+      });
+    });
+    this.updateLabels();
+  },
+
+  updateLabels(){
+    vTheta.textContent=this.params.theta.toFixed(1);
+    vN1.textContent=this.params.n1.toFixed(2);
+    vD.textContent=this.params.d.toFixed(2);
+    vdt.textContent=this.params.dt.toFixed(3);
+    vSpeed.textContent=this.params.speed.toFixed(1);
+  },
+
+  reset(){
+    this.t=0;
+    this.history=[];
+    const th=this.params.theta*DEG;
+    this.state.x=0;
+    this.state.y=150;
+    this.state.vx=Math.cos(th);
+    this.state.vy=-Math.sin(th);
+  },
+
+  start(){this.running=true},
+  pause(){this.running=false},
+  step(){this.integrate();this.render()},
+  
+  integrate(){
+    const dt=this.params.dt*this.params.speed;
+    if(this.params.method==="analytic"){
+      this.state.x+=this.state.vx*dt*200;
+      this.state.y+=this.state.vy*dt*200;
+    }else{
+      this.state.x+=this.state.vx*dt*200;
+      this.state.y+=this.state.vy*dt*200;
+    }
+    this.t+=dt;
+    if(this.history.length<this.maxHistory){
+      this.history.push({t:this.t,x:this.state.x,y:this.state.y});
+    }
+  },
+
+  loop(){
+    if(this.running){
+      this.integrate();
+    }
+    this.render();
+    requestAnimationFrame(()=>this.loop());
+  },
+
+  render(){
+    const ctx=this.ctx;
+    const w=this.canvas.clientWidth;
+    const h=this.canvas.clientHeight;
+    ctx.clearRect(0,0,w,h);
+
+    const plateX=w/2-80;
+    const plateW=160;
+    const plateH=200;
+    const plateY=h/2-plateH/2;
+
+    ctx.strokeStyle="white";
+    ctx.strokeRect(plateX,plateY,plateW,plateH);
+
+    ctx.beginPath();
+    ctx.arc(this.state.x,this.state.y,4,0,2*Math.PI);
+    ctx.fillStyle="cyan";
+    ctx.fill();
+
+    this.drawDiagnostics();
+  },
+
+  drawDiagnostics(){
+    const diag=document.getElementById("diag");
+    const th=this.params.theta*DEG;
+    const th1=Math.asin(Math.sin(th)/this.params.n1);
+    const delta=this.params.d*Math.sin(th-th1)/Math.cos(th1);
+    const invariant=this.params.n1*Math.sin(th1)-Math.sin(th);
+    diag.innerHTML=
+      "time: "+this.t.toFixed(3)+" s<br>"+
+      "θ₁: "+(th1/DEG).toFixed(3)+"°<br>"+
+      "Δ: "+delta.toFixed(4)+" mm<br>"+
+      "Invariant n sinθ - sinθ₀: "+
+      (Math.abs(invariant)<1e-6?'<span class="good">'+invariant.toExponential(2)+'</span>':
+      '<span class="bad">'+invariant.toExponential(2)+'</span>')+
+      "<br>History Points: "+this.history.length;
+  },
+
+  exportCSV(){
+    let csv="t,x,y\n";
+    this.history.forEach(p=>{
+      csv+=p.t+","+p.x+","+p.y+"\n";
+    });
+    const blob=new Blob([csv],{type:"text/csv"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="ray_data.csv";
+    a.click();
+  },
+
+  exportJSON(){
+    const blob=new Blob([JSON.stringify(this.params,null,2)],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="parameters.json";
+    a.click();
+  }
+};
+
+window.onload=()=>App.init();
+</script>
+
+</body>
+</html>

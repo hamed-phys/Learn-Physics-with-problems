@@ -2,64 +2,1370 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>21.1-4 — An Elasto-Optic Strain Sensor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Elasto-Optic Strain Sensor in Integrated Photonics (with Electro-Optic Nulling in an MZI)</title>
   <style>
-    :root {
-      --bg: #050608;
+    :root{
+      --bg: #0b1020;
       --card: rgba(255,255,255,0.06);
+      --card2: rgba(255,255,255,0.08);
       --text: rgba(255,255,255,0.92);
       --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+      --faint: rgba(255,255,255,0.55);
+      --line: rgba(255,255,255,0.14);
+      --accent: #7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 16px 40px rgba(0,0,0,0.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f7fafc;
+        --card: rgba(2,6,23,0.06);
+        --card2: rgba(2,6,23,0.08);
+        --text: rgba(2,6,23,0.92);
+        --muted: rgba(2,6,23,0.74);
+        --faint: rgba(2,6,23,0.55);
+        --line: rgba(2,6,23,0.12);
+        --shadow: 0 18px 44px rgba(2,6,23,0.12);
+      }
+    }
+
+    html{ scroll-behavior: smooth; }
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 700px at 20% -10%, rgba(125,211,252,0.25), transparent 55%),
+        radial-gradient(1000px 650px at 90% 0%, rgba(167,139,250,0.22), transparent 55%),
+        radial-gradient(900px 700px at 50% 120%, rgba(52,211,153,0.14), transparent 60%),
+        var(--bg);
       color: var(--text);
+      font-family: var(--sans);
       line-height: 1.55;
     }
-    header, main {
-      max-width: 980px;
+
+    a{ color: var(--accent); text-decoration: none; }
+    a:hover{ text-decoration: underline; }
+    .wrap{
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 24px 18px;
+      padding: 22px 16px 60px;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
+
+    header.hero{
+      position: relative;
+      padding: 22px 18px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    header.hero::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(600px 260px at 15% 10%, rgba(125,211,252,0.20), transparent 60%),
+        radial-gradient(520px 240px at 85% 0%, rgba(167,139,250,0.18), transparent 65%);
+      pointer-events:none;
+      filter: blur(0.2px);
+    }
+    header.hero > *{ position:relative; }
+    .kicker{
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 10px;
+    }
+    h1{
+      margin: 0 0 10px;
+      font-size: clamp(24px, 3.1vw, 38px);
+      line-height: 1.15;
+    }
+    .sub{
+      margin: 0;
+      color: var(--muted);
+      max-width: 85ch;
+      font-size: 15.5px;
+    }
+
+    .layout{
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 16px;
+      margin-top: 16px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 12px;
+      border: 1px solid var(--line);
       border-radius: 16px;
+      background: rgba(255,255,255,0.05);
+      padding: 14px 12px;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.18);
+      backdrop-filter: blur(8px);
+    }
+    nav.toc h2{
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--text);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+    }
+    nav.toc .mini{
+      font-size: 12px;
+      color: var(--faint);
+      font-weight: 500;
+    }
+    nav.toc ul{
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 6px;
+    }
+    nav.toc a{
+      display:block;
+      padding: 9px 10px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      color: var(--muted);
+      transition: transform .14s ease, background .14s ease, border-color .14s ease;
+      font-size: 13.5px;
+      line-height: 1.25;
+    }
+    nav.toc a:hover{
+      background: rgba(125,211,252,0.10);
+      border-color: rgba(125,211,252,0.25);
+      transform: translateY(-1px);
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    main{
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.04);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    article{
       padding: 18px;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
+
+    section{
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+    }
+    section:first-of-type{ border-top: none; padding-top: 0; }
+    section h2{
+      margin: 0 0 10px;
+      font-size: 20px;
+      letter-spacing: 0.01em;
+    }
+    section h3{
+      margin: 14px 0 8px;
+      font-size: 16px;
+      color: var(--text);
+    }
+    p{ margin: 8px 0; color: var(--muted); }
+    .tight p{ margin: 6px 0; }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 900px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.05);
+      padding: 12px 12px;
+      transition: transform .14s ease, border-color .14s ease, background .14s ease;
+    }
+    .card:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,0.22);
+      background: rgba(255,255,255,0.06);
+    }
+    .card .title{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+      margin: 0 0 6px;
+      color: var(--text);
+      font-weight: 650;
+      font-size: 14px;
+    }
+    .pill{
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--faint);
+      white-space: nowrap;
+      background: rgba(255,255,255,0.04);
+    }
+
+    ul{
+      margin: 8px 0 0 18px;
       color: var(--muted);
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    li{ margin: 6px 0; }
+
+    .eq{
+      border: 1px solid rgba(125,211,252,0.25);
+      background: rgba(125,211,252,0.08);
+      border-radius: 14px;
+      padding: 10px 10px;
+      margin: 10px 0;
+      overflow:auto;
+    }
+    .eq pre{
+      margin:0;
+      font-family: var(--mono);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+    .eqrow{
+      display:flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .copybtn{
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 12.5px;
+      transition: transform .14s ease, border-color .14s ease, background .14s ease;
+      white-space: nowrap;
+      user-select:none;
+    }
+    .copybtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,0.35);
+      background: rgba(125,211,252,0.10);
+    }
+    .copybtn:active{ transform: translateY(0px) scale(0.98); }
+
+    .callout{
+      border-left: 4px solid var(--accent2);
+      background: rgba(167,139,250,0.10);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin: 10px 0;
+      border: 1px solid rgba(167,139,250,0.25);
+    }
+    .callout strong{ color: var(--text); }
+    .callout .tag{
+      display:inline-block;
+      font-size: 11.5px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 6px;
+    }
+
+    .assump{
+      border-left: 4px solid var(--warn);
+      border: 1px solid rgba(251,191,36,0.28);
+      background: rgba(251,191,36,0.10);
+    }
+    .mist{
+      border-left: 4px solid var(--bad);
+      border: 1px solid rgba(251,113,133,0.25);
+      background: rgba(251,113,133,0.09);
+    }
+    .final{
+      border-left: 4px solid var(--good);
+      border: 1px solid rgba(52,211,153,0.25);
+      background: rgba(52,211,153,0.08);
+    }
+
+    details{
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.04);
+      margin: 10px 0;
+    }
+    summary{
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 650;
+      list-style: none;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    summary .hint{
+      font-weight: 500;
+      color: var(--faint);
+      font-size: 12.5px;
+    }
+
+    figure.plot{
+      margin: 12px 0 6px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 10px;
+      background: rgba(255,255,255,0.04);
+    }
+    figure.plot figcaption{
+      margin-top: 8px;
+      color: var(--faint);
+      font-size: 12.5px;
+    }
+    canvas{
+      width: 100%;
+      height: 320px;
+      display:block;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.08);
+    }
+    @media (prefers-color-scheme: light){
+      canvas{ background: rgba(2,6,23,0.04); }
+    }
+
+    .toplink{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      font-size: 13px;
+      margin-top: 12px;
+      transition: transform .14s ease, border-color .14s ease, background .14s ease;
+    }
+    .toplink:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,0.35);
+      background: rgba(125,211,252,0.10);
+      text-decoration:none;
+    }
+
+    footer{
+      margin-top: 14px;
+      padding: 16px 18px;
+      border-top: 1px solid var(--line);
+      color: var(--faint);
+      font-size: 12.5px;
+    }
+
+    @keyframes fadeUp{
+      from{ opacity:0; transform: translateY(6px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+    .animate{ animation: fadeUp .28s ease both; }
+
+    @media print{
+      body{ background: #fff; color:#000; }
+      header.hero, nav.toc, main{ box-shadow:none !important; }
+      nav.toc{ position: static; }
+      .copybtn, .toplink{ display:none !important; }
+      a{ color:#000; text-decoration: underline; }
+      main{ border: 1px solid #bbb; }
+      section{ break-inside: avoid; }
+      figure.plot{ break-inside: avoid; }
+      :root{ --text:#000; --muted:#111; --faint:#333; --line:#ccc; }
+      canvas{ background:#fff; border:1px solid #ddd; }
     }
   </style>
 </head>
-<body>
-  <header>
-    <div class="box">
-      <h1>21.1-4 — An Elasto-Optic Strain Sensor</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch21/prob_21_1_4.html</code></p>
-    </div>
-  </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+<body>
+  <div class="wrap" id="top">
+    <header class="hero animate">
+      <p class="kicker">Integrated Photonics • Interferometric Sensing • Closed-loop Readout</p>
+      <h1>Elasto-Optic Strain Sensor on a Chip (with Electro-Optic Compensation in a Mach–Zehnder Interferometer)</h1>
+      <p class="sub">
+        We design an integrated-photonic strain sensor that converts mechanical strain into an optical phase shift via the
+        <em>elasto-optic</em> (photoelastic) effect, then (if the material is also electro-optic) uses a feedback electric field to
+        <em>null</em> the Mach–Zehnder output. The required nulling field becomes a direct, linear electrical readout of strain.
+      </p>
+    </header>
+
+    <div class="layout">
+      <nav class="toc animate" aria-label="Table of contents">
+        <h2>
+          <span>Contents</span>
+          <span class="mini">sticky</span>
+        </h2>
+        <ul>
+          <li><a href="#quick">Quick Summary</a></li>
+          <li><a href="#part0">PART 0 — Concept Primer</a></li>
+          <li><a href="#part1">PART 1 — Problem Analysis</a></li>
+          <li><a href="#part2">PART 2 — Strategy & Tips</a></li>
+          <li><a href="#part3">PART 3 — Full Solution</a></li>
+          <li><a href="#part4">PART 4 — Deeper Understanding</a></li>
+          <li><a href="#part5">PART 5 — Optional Plot Guide</a></li>
+        </ul>
+      </nav>
+
+      <main class="animate">
+        <article>
+          <section id="quick" class="tight">
+            <h2>Quick Summary</h2>
+            <ul>
+              <li><strong>What this is about:</strong> designing a chip-scale strain sensor where mechanical strain changes refractive index (elasto-optic), producing a measurable interferometric phase shift.</li>
+              <li><strong>Key physics idea:</strong> a Mach–Zehnder interferometer (MZI) converts a differential phase shift <span style="font-family:var(--mono)">Δφ</span> into intensity at a photodetector.</li>
+              <li><strong>Governing relationships:</strong> (i) elasto-optic index change, (ii) electro-optic (Pockels) index change, (iii) interferometric transfer <span style="font-family:var(--mono)">I(Δφ)</span>.</li>
+              <li><strong>Strain-to-phase:</strong> strain changes both the effective index <span style="font-family:var(--mono)">n_eff</span> and the physical path length <span style="font-family:var(--mono)">L</span>, so the optical phase shifts even if only one arm is strained.</li>
+              <li><strong>Electro-optic nulling:</strong> apply an electric field so electro-optic phase cancels the strain-induced phase; the nulling field is proportional to strain.</li>
+              <li><strong>Result type:</strong> <strong>symbolic</strong> (general design formulas). A single plot is provided using clearly labeled <em>example values</em> only.</li>
+              <li><strong>Physical meaning:</strong> closed-loop operation turns the sensor into a “servo” where the control signal (electric field or voltage) directly encodes strain and linearizes the readout.</li>
+            </ul>
+
+            <div class="callout assump">
+              <div class="tag">Assumptions (preview)</div>
+              <p>
+                Small strain (linear regime), single-mode waveguide, stable couplers, and a well-defined effective
+                elasto-optic coefficient <span style="font-family:var(--mono)">p_eff</span> and electro-optic coefficient
+                <span style="font-family:var(--mono)">r_eff</span> for the guided mode.
+              </p>
+            </div>
+          </section>
+
+          <section id="part0">
+            <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+            <div class="grid2">
+              <div class="card">
+                <div class="title">Core definitions (symbols + SI units) <span class="pill">must-know</span></div>
+                <ul>
+                  <li><span style="font-family:var(--mono)">λ</span> — free-space optical wavelength (m).</li>
+                  <li><span style="font-family:var(--mono)">k0 = 2π/λ</span> — free-space wavenumber (rad·m<sup>−1</sup>).</li>
+                  <li><span style="font-family:var(--mono)">n_eff</span> — waveguide effective index (dimensionless).</li>
+                  <li><span style="font-family:var(--mono)">L</span> — interaction length in the sensing arm (m).</li>
+                  <li><span style="font-family:var(--mono)">ε</span> — (axial) strain (dimensionless, e.g. microstrain = 10<sup>−6</sup>).</li>
+                  <li><span style="font-family:var(--mono)">E</span> — applied electric field across the electro-optic region (V·m<sup>−1</sup>).</li>
+                  <li><span style="font-family:var(--mono)">p_eff</span> — effective photoelastic (elasto-optic) coefficient for the guided mode (dimensionless).</li>
+                  <li><span style="font-family:var(--mono)">r_eff</span> — effective Pockels (electro-optic) coefficient for the guided mode (m·V<sup>−1</sup>).</li>
+                  <li><span style="font-family:var(--mono)">Γ</span> — electric-field overlap / confinement factor (0…1), mapping applied field to modal perturbation.</li>
+                  <li><span style="font-family:var(--mono)">Δφ</span> — differential phase shift between MZI arms (rad).</li>
+                </ul>
+              </div>
+
+              <div class="card">
+                <div class="title">Physical meaning (intuition) <span class="pill">what it represents</span></div>
+                <ul>
+                  <li><strong>Elasto-optic effect:</strong> deforming a material changes its optical polarizability tensor → refractive index changes approximately linearly with strain.</li>
+                  <li><strong>Electro-optic (Pockels) effect:</strong> an applied electric field changes the index linearly (in non-centrosymmetric materials), enabling phase tuning.</li>
+                  <li><strong>MZI sensing:</strong> the output intensity is a cosine function of the phase difference; phase is the natural “currency” for many photonic sensors.</li>
+                  <li><strong>Nulling readout:</strong> keep the MZI output at a chosen setpoint (often a dark fringe) by feedback; the needed electrical control becomes the measurement.</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>Key principles and validity conditions</h3>
+            <div class="callout">
+              <div class="tag">Principles</div>
+              <ul>
+                <li><strong>Optical phase accumulation:</strong> for a guided mode, phase ≈ <span style="font-family:var(--mono)">φ = k0 n_eff L</span>.</li>
+                <li><strong>Small-perturbation linearization:</strong> for small changes, <span style="font-family:var(--mono)">Δφ ≈ k0 (L Δn_eff + n_eff ΔL)</span>.</li>
+                <li><strong>Photoelastic relation (common form):</strong> the change in inverse-square index is linear:
+                  <span style="font-family:var(--mono)">Δ(1/n^2) = p_eff ε</span> (effective, polarization-dependent).</li>
+                <li><strong>Pockels relation (common form):</strong>
+                  <span style="font-family:var(--mono)">Δ(1/n^2) = r_eff E</span> (effective, electrode/mode-dependent).</li>
+              </ul>
+              <p>
+                These relations are valid when strain is small (linear elasticity), fields are below breakdown,
+                and the guided mode remains single-mode (no mode hopping).
+              </p>
+            </div>
+
+            <h3>Common models / approximations (and why)</h3>
+            <ul>
+              <li><strong>Effective coefficients:</strong> in a waveguide, strain and field distributions are not uniform. We wrap geometry + tensor projections + modal overlap into <span style="font-family:var(--mono)">p_eff</span>, <span style="font-family:var(--mono)">r_eff</span>, and <span style="font-family:var(--mono)">Γ</span> so the sensor can be designed with compact formulas.</li>
+              <li><strong>Single-arm sensing:</strong> one MZI arm is mechanically coupled to the structure; the other is isolated to provide a stable reference and reject common-mode perturbations.</li>
+              <li><strong>Ideal 50/50 couplers:</strong> simplifies the MZI transfer function. Non-idealities are handled in practice by calibration or balanced detection.</li>
+            </ul>
+
+            <h3>Mini intuition examples (quick)</h3>
+            <ul>
+              <li><strong>Example 1 (pure phase shifter):</strong> If <span style="font-family:var(--mono)">n_eff</span> increases slightly, the phase increases, shifting the interference fringes without needing any power change in the arms.</li>
+              <li><strong>Example 2 (length change matters):</strong> Even if the index stayed fixed, stretching the arm by strain increases <span style="font-family:var(--mono)">L</span> and thus increases phase.</li>
+              <li><strong>Example 3 (closed-loop):</strong> If a control voltage restores the same interference condition after strain, the voltage must be proportional to the induced phase shift → proportional to strain.</li>
+            </ul>
+
+            <div class="callout mist">
+              <div class="tag">What to watch for (pitfalls)</div>
+              <ul>
+                <li><strong>Sign conventions:</strong> photoelastic and electro-optic effects often come with minus signs depending on whether you write changes in <span style="font-family:var(--mono)">n</span> or <span style="font-family:var(--mono)">1/n^2</span>.</li>
+                <li><strong>Forgetting the <span style="font-family:var(--mono)">n_eff ΔL</span> term:</strong> strain changes geometry, not just index.</li>
+                <li><strong>Mode overlap:</strong> the applied field in the cladding/electrodes is not the same as the field experienced by the optical mode (include <span style="font-family:var(--mono)">Γ</span>).</li>
+                <li><strong>Bias point matters:</strong> “nulling the photodetector” means keeping the MZI at a specific phase condition (often a dark fringe).</li>
+              </ul>
+            </div>
+
+            <details>
+              <summary>
+                Tensor note: why “effective” coefficients are used
+                <span class="hint">optional deeper note</span>
+              </summary>
+              <p>
+                In full generality, the photoelastic effect is tensorial:
+                strain components <span style="font-family:var(--mono)">ε_ij</span> perturb the impermeability tensor
+                <span style="font-family:var(--mono)">B_ij = (1/n^2)_ij</span> via a 4th-rank tensor <span style="font-family:var(--mono)">p_ijkl</span>.
+                Similarly, the electro-optic effect uses <span style="font-family:var(--mono)">r_ijk</span>.
+                In a waveguide, the guided polarization, propagation direction, and nonuniform strain/field profiles
+                mean the modal phase responds to a weighted average. That’s why designers typically extract or simulate
+                a single “effective” <span style="font-family:var(--mono)">p_eff</span> and <span style="font-family:var(--mono)">r_eff</span>
+                for a chosen mode and electrode layout.
+              </p>
+            </details>
+          </section>
+
+          <section id="part1">
+            <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+            <h3>Problem restatement (in plain language)</h3>
+            <p>
+              We want an integrated-photonic strain sensor using a material whose refractive index changes in proportion to strain (elasto-optic).
+              We should propose a practical chip implementation, and if the same material is also electro-optic, we should design a scheme where an
+              applied electric field cancels the strain-induced index change. In a Mach–Zehnder interferometer, we then find the electric field that
+              restores a <em>zero</em> photodetector reading (null output), which provides a direct strain measurement.
+            </p>
+
+            <div class="grid2">
+              <div class="card">
+                <div class="title">Given (implicit) <span class="pill">from statement</span></div>
+                <ul>
+                  <li>Elasto-optic material: index change proportional to strain.</li>
+                  <li>Optional electro-optic response: index change proportional to applied electric field.</li>
+                  <li>Mach–Zehnder interferometer configuration with photodetector readout.</li>
+                  <li>No specific numbers provided → keep answer symbolic.</li>
+                </ul>
+              </div>
+
+              <div class="card">
+                <div class="title">Unknowns / what to find <span class="pill">deliverables</span></div>
+                <ul>
+                  <li>A concrete integrated-photonic sensor architecture (how to implement on-chip).</li>
+                  <li>The phase/intensity relationship for the MZI under strain.</li>
+                  <li>The electric field <span style="font-family:var(--mono)">E_null</span> that nulls the photodetector by compensating elasto-optic + strain-length effects with electro-optic tuning.</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>Relevant principles (and why they apply)</h3>
+            <ul>
+              <li><strong>MZI transfer function</strong> applies because it converts differential phase to intensity with high sensitivity.</li>
+              <li><strong>Perturbation of optical phase</strong> applies because strain/field cause small changes in <span style="font-family:var(--mono)">n_eff</span> and <span style="font-family:var(--mono)">L</span>.</li>
+              <li><strong>Elasto-optic and electro-optic linear laws</strong> apply in the small-signal regime (strain and fields not too large).</li>
+              <li><strong>Why not other effects?</strong> Thermo-optic and stress-optic cross-couplings can matter in real devices, but the problem explicitly focuses on elasto-optic and electro-optic compensation, so we treat others as secondary (to be calibrated in practice).</li>
+            </ul>
+
+            <div class="callout assump">
+              <div class="tag">Assumptions (explicit)</div>
+              <ul>
+                <li>Small axial strain <span style="font-family:var(--mono)">|ε| ≪ 1</span>, linear elasticity.</li>
+                <li>Single-mode waveguide with well-defined <span style="font-family:var(--mono)">n_eff</span>.</li>
+                <li>Only one MZI arm is strained (sensing arm); the reference arm is mechanically isolated (or experiences negligible strain).</li>
+                <li>Ideal 50/50 couplers and high visibility for clean “null” operation (visibility corrections can be calibrated).</li>
+                <li>Electro-optic phase tuning occurs in (at least) the sensing arm over length <span style="font-family:var(--mono)">L</span>.</li>
+              </ul>
+            </div>
+
+            <h3>Possible approaches (compare)</h3>
+            <div class="grid2">
+              <div class="card">
+                <div class="title">Approach A: Direct intensity readout (open-loop) <span class="pill">simple</span></div>
+                <ul>
+                  <li><strong>Method:</strong> measure photodetector intensity change from strain-induced <span style="font-family:var(--mono)">Δφ(ε)</span>.</li>
+                  <li><strong>Pros:</strong> minimal electronics.</li>
+                  <li><strong>Cons:</strong> nonlinear cosine response; sensitive to drift (laser power, bias phase, temperature).</li>
+                </ul>
+              </div>
+              <div class="card">
+                <div class="title">Approach B: Quadrature bias + small-signal linearization <span class="pill">common</span></div>
+                <ul>
+                  <li><strong>Method:</strong> bias MZI at <span style="font-family:var(--mono)">Δφ ≈ π/2</span> for maximum slope and linearize for small strain.</li>
+                  <li><strong>Pros:</strong> near-linear for small <span style="font-family:var(--mono)">Δφ</span>.</li>
+                  <li><strong>Cons:</strong> still drifts; limited dynamic range before nonlinearity returns.</li>
+                </ul>
+              </div>
+              <div class="card">
+                <div class="title">Approach C: Closed-loop nulling (electro-optic servo) <span class="pill">best here</span></div>
+                <ul>
+                  <li><strong>Method:</strong> adjust <span style="font-family:var(--mono)">E</span> until photodetector returns to a dark fringe; use <span style="font-family:var(--mono)">E_null</span> as the output.</li>
+                  <li><strong>Pros:</strong> linear, wide dynamic range, drift-robust (measurement is a control signal).</li>
+                  <li><strong>Cons:</strong> requires electro-optic actuation and feedback electronics.</li>
+                </ul>
+              </div>
+            </div>
+
+            <p>
+              We choose <strong>Approach C</strong> because the problem explicitly asks for compensating elasto-optic and electro-optic index changes and
+              finding the field that nulls the detector.
+            </p>
+          </section>
+
+          <section id="part2">
+            <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+            <ol style="margin:8px 0 0 18px; color:var(--muted);">
+              <li><strong>Write the MZI transfer function</strong> to connect <span style="font-family:var(--mono)">Δφ</span> to photodetector intensity <span style="font-family:var(--mono)">I</span>.</li>
+              <li><strong>Express optical phase</strong> in a waveguide: <span style="font-family:var(--mono)">φ = k0 n_eff L</span>.</li>
+              <li><strong>Linearize the phase change</strong>: <span style="font-family:var(--mono)">Δφ ≈ k0 (L Δn_eff + n_eff ΔL)</span>.</li>
+              <li><strong>Model elasto-optic index change</strong> with an effective coefficient <span style="font-family:var(--mono)">p_eff</span>.</li>
+              <li><strong>Include geometric strain</strong> through <span style="font-family:var(--mono)">ΔL = L ε</span> for axial strain transfer.</li>
+              <li><strong>Model electro-optic index change</strong> with effective Pockels coefficient <span style="font-family:var(--mono)">r_eff</span> and overlap <span style="font-family:var(--mono)">Γ</span>.</li>
+              <li><strong>Combine strain and EO contributions</strong> to get <span style="font-family:var(--mono)">Δφ_total(ε,E)</span>.</li>
+              <li><strong>Impose the null condition</strong> (restore the same dark-fringe phase as the baseline) to solve for <span style="font-family:var(--mono)">E_null(ε)</span>.</li>
+              <li><strong>Interpret the result</strong>: scaling with <span style="font-family:var(--mono)">λ</span>, <span style="font-family:var(--mono)">L</span>, <span style="font-family:var(--mono)">n_eff</span>, <span style="font-family:var(--mono)">p_eff</span>, <span style="font-family:var(--mono)">r_eff</span>, <span style="font-family:var(--mono)">Γ</span>.</li>
+            </ol>
+
+            <div class="callout mist">
+              <div class="tag">Common mistakes</div>
+              <ul>
+                <li>Using <span style="font-family:var(--mono)">Δn = p ε</span> without clarifying the exact definition of <span style="font-family:var(--mono)">p</span>; many texts define photoelasticity in terms of <span style="font-family:var(--mono)">Δ(1/n^2)</span>.</li>
+                <li>Nulling <span style="font-family:var(--mono)">Δφ</span> instead of nulling the <em>detector output</em>; in practice we hold the MZI at the same phase setpoint (often a dark fringe).</li>
+                <li>Forgetting overlap <span style="font-family:var(--mono)">Γ</span> (field in electrodes ≠ field experienced by the mode).</li>
+                <li>Dropping the length term <span style="font-family:var(--mono)">n_eff ΔL</span>, which can be comparable to the elasto-optic term.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section id="part3">
+            <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+            <h3>Qualitative expectation (before calculating)</h3>
+            <p>
+              Strain in one MZI arm should change its optical path length (OPL) and thus the phase. The MZI output then shifts along a cosine fringe.
+              If the material is electro-optic, we can apply a field to push the phase in the opposite direction. Because both effects are linear
+              (in the small-signal regime), the nulling field should be <strong>linearly proportional</strong> to strain.
+            </p>
+
+            <h3>Step 1 — MZI intensity transfer</h3>
+            <p>
+              For an ideal 50/50-coupler Mach–Zehnder interferometer with input optical power <span style="font-family:var(--mono)">P_in</span>,
+              the power at one output port is (up to a constant splitting factor and a visibility factor):
+            </p>
+
+            <div class="eq" data-copy="I_out = (P_in/2) * (1 + V * cos(Δφ_total + φ_bias))">
+              <div class="eqrow">
+                <pre>I_out = (P_in/2) * (1 + V * cos(Δφ_total + φ_bias))</pre>
+                <button class="copybtn" type="button">Copy equation</button>
+              </div>
+            </div>
+
+            <p>
+              Here <span style="font-family:var(--mono)">V</span> is fringe visibility (0…1), and <span style="font-family:var(--mono)">φ_bias</span> is a static bias phase (set by design or tuning).
+              A <strong>dark fringe (null)</strong> at that output port occurs when:
+              <span style="font-family:var(--mono)">cos(Δφ_total + φ_bias) = -1</span>, i.e. <span style="font-family:var(--mono)">Δφ_total + φ_bias = (2m+1)π</span>.
+            </p>
+
+            <div class="callout">
+              <div class="tag">Key idea</div>
+              <p>
+                “Nulling the photodetector” means: keep the interferometer at the same dark-fringe condition despite strain.
+                So the feedback enforces that the <em>total</em> differential phase stays at its baseline value.
+              </p>
+            </div>
+
+            <h3>Step 2 — Phase accumulation and small-change formula</h3>
+            <p>
+              The optical phase in a guided arm of length <span style="font-family:var(--mono)">L</span> is:
+            </p>
+
+            <div class="eq" data-copy="φ = k0 * n_eff * L,   where k0 = 2π/λ">
+              <div class="eqrow">
+                <pre>φ = k0 * n_eff * L,   where k0 = 2π/λ</pre>
+                <button class="copybtn" type="button">Copy equation</button>
+              </div>
+            </div>
+
+            <p>
+              For small perturbations, the phase change is:
+            </p>
+
+            <div class="eq" data-copy="Δφ ≈ k0 * (L * Δn_eff + n_eff * ΔL)">
+              <div class="eqrow">
+                <pre>Δφ ≈ k0 * (L * Δn_eff + n_eff * ΔL)</pre>
+                <button class="copybtn" type="button">Copy equation</button>
+              </div>
+            </div>
+
+            <p>
+              This is simply the first-order differential of <span style="font-family:var(--mono)">k0 n_eff L</span>.
+            </p>
+
+            <h3>Step 3 — Strain contributions: (i) length change, (ii) elasto-optic index change</h3>
+
+            <p>
+              For axial strain transfer to the sensing arm, the physical length changes as:
+            </p>
+            <div class="eq" data-copy="ΔL = L * ε  (axial strain, small ε)">
+              <div class="eqrow">
+                <pre>ΔL = L * ε  (axial strain, small ε)</pre>
+                <button class="copybtn" type="button">Copy equation</button>
+              </div>
+            </div>
+
+            <p>
+              For the elasto-optic (photoelastic) effect, a standard compact relation is written in terms of inverse-square index:
+            </p>
+
+            <div class="eq" data-copy="Δ(1/n_eff^2) = p_eff * ε">
+              <div class="eqrow">
+                <pre>Δ(1/n_eff^2) = p_eff * ε</pre>
+                <button class="copybtn" type="button">Copy equation</button>
+              </div>
+            </div>
+
+            <p>
+              Convert this into <span style="font-family:var(--mono)">Δn_eff</span>. For small changes, differentiate <span style="font-family:var(--mono)">n^{-2}</span>:
+              <span style="font-family:var(--mono)">d(n^{-2}) = -2 n^{-3} dn</span>, so:
+            </p>
+
+            <div class="eq" data-copy="Δn_eff ≈ -(1/2) * n_eff^3 * p_eff * ε">
+              <div class="eqrow">
+                <pre>Δn_eff ≈ -(1/2) * n_eff^3 * p_eff * ε</pre>
+                <button class="copybtn" type="button">Copy equation</button>
+              </div>
+            </div>
+
+            <p>
+              The minus sign here is a convention consequence of using <span style="font-family:var(--mono)">Δ(1/n^2)</span>.
+              (Depending on material/tensor projections, the net effective response could be positive or negative; that is encoded in <span style="font-family:var(--mono)">p_eff</span>.)
+            </p>
+
+            <h3>Step 4 — Strain-induced phase shift in the sensing arm</h3>
+            <p>
+              Substitute the strain effects into the small-change phase formula:
+            </p>
+
+            <div class="eq" data-copy="Δφ_ε ≈ k0 * ( L * (-(1/2) n_eff^3 p_eff ε) + n_eff * (L ε) )">
+              <div class="eqrow">
+                <pre>Δφ_ε ≈ k0 * ( L * (-(1/2) n_eff^3 p_eff ε) + n_eff * (L ε) )</pre>
+                <button class="copybtn" type="button">Copy equation</button>
+              </div>
+            </div>
+
+            <p>
+              Factor the common terms:
+            </p>
+
+            <div class="eq" data-copy="Δφ_ε ≈ (2π/λ) * L * ε * ( n_eff - (1/2) n_eff^3 p_eff )">
+              <div class="eqrow">
+                <pre>Δφ_ε ≈ (2π/λ) * L * ε * ( n_eff - (1/2) n_eff^3 p_eff )</pre>
+                <button class="copybtn" type="button">Copy equation</button>
+              </div>
+            </div>
+
+            <p>
+              This is the differential phase introduced by strain in the sensing arm, assuming the reference arm is unstrained.
+            </p>
+
+            <details>
+              <summary>
+                Alternative compact form: “phase-strain responsivity”
+                <span class="hint">optional deeper note</span>
+              </summary>
+              <p>
+                It is often convenient to define a phase responsivity:
+                <span style="font-family:var(--mono)">S_ε = ∂(Δφ)/∂ε = (2π/λ) L ( n_eff - (1/2) n_eff^3 p_eff )</span>.
+                Then <span style="font-family:var(--mono)">Δφ_ε ≈ S_ε ε</span>.
+              </p>
+            </details>
+
+            <h3>Step 5 — Electro-optic phase shift (Pockels tuning)</h3>
+            <p>
+              Using the same inverse-square-index form for the electro-optic effect:
+            </p>
+
+            <div class="eq" data-copy="Δ(1/n_eff^2) = r_eff * (Γ E)">
+              <div class="eqrow">
+                <pre>Δ(1/n_eff^2) = r_eff * (Γ E)</pre>
+                <button class="copybtn" type="button">Copy equation</button>
+              </div>
+            </div>
+
+            <p>
+              Converting to index change (same differential as before) gives:
+            </p>
+
+            <div class="eq" data-copy="Δn_EO ≈ -(1/2) * n_eff^3 * r_eff * Γ * E">
+              <div class="eqrow">
+                <pre>Δn_EO ≈ -(1/2) * n_eff^3 * r_eff * Γ * E</pre>
+                <button class="copybtn" type="button">Copy equation</button>
+              </div>
+            </div>
+
+            <p>
+              The electro-optic phase shift over the tuning length <span style="font-family:var(--mono)">L</span> is then:
+            </p>
+
+            <div class="eq" data-copy="Δφ_EO ≈ (2π/λ) * L * (-(1/2) n_eff^3 r_eff Γ E)">
+              <div class="eqrow">
+                <pre>Δφ_EO ≈ (2π/λ) * L * (-(1/2) n_eff^3 r_eff Γ E)</pre>
+                <button class="copybtn" type="button">Copy equation</button>
+              </div>
+            </div>
+
+            <h3>Step 6 — Nulling condition and solution for the required electric field</h3>
+            <p>
+              Choose a baseline operating point where the photodetector is nulled at zero strain by setting the bias such that the total phase satisfies
+              <span style="font-family:var(--mono)">(Δφ_total + φ_bias) = (2m+1)π</span>. When strain is applied, the phase changes by
+              <span style="font-family:var(--mono)">Δφ_ε</span>. We then apply an electro-optic phase shift <span style="font-family:var(--mono)">Δφ_EO</span>
+              to restore the same dark fringe. That means the <em>incremental</em> change must cancel:
+            </p>
+
+            <div class="eq" data-copy="Δφ_ε + Δφ_EO = 0  (hold the same null condition)">
+              <div class="eqrow">
+                <pre>Δφ_ε + Δφ_EO = 0  (hold the same null condition)</pre>
+                <button class="copybtn" type="button">Copy equation</button>
+              </div>
+            </div>
+
+            <p>
+              Substitute the expressions from Steps 4 and 5. The common prefactor <span style="font-family:var(--mono)">(2π/λ) L</span> cancels immediately,
+              leaving a simple linear equation in <span style="font-family:var(--mono)">E</span>:
+            </p>
+
+            <div class="eq" data-copy="ε * ( n_eff - (1/2) n_eff^3 p_eff )  +  (-(1/2) n_eff^3 r_eff Γ E) = 0">
+              <div class="eqrow">
+                <pre>ε * ( n_eff - (1/2) n_eff^3 p_eff )  +  (-(1/2) n_eff^3 r_eff Γ E) = 0</pre>
+                <button class="copybtn" type="button">Copy equation</button>
+              </div>
+            </div>
+
+            <p>
+              Solve for the nulling electric field <span style="font-family:var(--mono)">E_null</span>:
+            </p>
+
+            <div class="eq final" data-copy="E_null(ε) = [ n_eff - (1/2) n_eff^3 p_eff ] * (2 ε) / ( n_eff^3 r_eff Γ )
+= ( (2/n_eff^2) - p_eff ) * ε / ( r_eff Γ )">
+              <div class="eqrow">
+                <pre><strong>E_null(ε) = [ n_eff - (1/2) n_eff^3 p_eff ] * (2 ε) / ( n_eff^3 r_eff Γ )
+= ( (2/n_eff^2) - p_eff ) * ε / ( r_eff Γ )</strong></pre>
+                <button class="copybtn" type="button">Copy final answer</button>
+              </div>
+            </div>
+
+            <div class="callout final">
+              <div class="tag">Final result (meaning)</div>
+              <p>
+                The required electric field to null the MZI output is <strong>linear in strain</strong>.
+                The proportionality depends on: the guided-mode index <span style="font-family:var(--mono)">n_eff</span>,
+                how strongly strain changes optical properties (<span style="font-family:var(--mono)">p_eff</span> plus the geometric length term),
+                and how efficiently the electric field tunes the index (<span style="font-family:var(--mono)">r_eff Γ</span>).
+              </p>
+            </div>
+
+            <h3>Design description: an integrated-photonic implementation</h3>
+            <div class="grid2">
+              <div class="card">
+                <div class="title">Chip architecture <span class="pill">practical</span></div>
+                <ul>
+                  <li><strong>MZI on chip:</strong> two waveguide arms from a 50/50 splitter to a 50/50 combiner.</li>
+                  <li><strong>Sensing arm:</strong> routed over (or bonded to) a flexure/diaphragm/cantilever region that transfers axial strain <span style="font-family:var(--mono)">ε</span> to the waveguide.</li>
+                  <li><strong>Reference arm:</strong> mechanically isolated (thicker substrate region, symmetric anchoring, or separate strain-relief trench) to reduce common-mode strain.</li>
+                  <li><strong>Photodetector:</strong> integrated (e.g., Ge on Si) or external fiber-coupled PD.</li>
+                </ul>
+              </div>
+              <div class="card">
+                <div class="title">Electro-optic nulling path <span class="pill">closed-loop</span></div>
+                <ul>
+                  <li><strong>Electrodes:</strong> place electrodes adjacent to (or above) the sensing arm to apply a transverse field.</li>
+                  <li><strong>Overlap factor:</strong> maximize <span style="font-family:var(--mono)">Γ</span> by electrode placement and mode engineering while controlling optical loss.</li>
+                  <li><strong>Servo control:</strong> electronics adjust voltage until PD output is nulled; the required voltage (or inferred <span style="font-family:var(--mono)">E</span>) is the strain signal.</li>
+                  <li><strong>Option:</strong> push–pull (tune both arms with opposite sign) doubles phase efficiency and improves linearity, but the basic null equation is unchanged in form (it modifies the effective tuning coefficient).</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>Sanity checks</h3>
+            <div class="grid2">
+              <div class="card">
+                <div class="title">Units / dimensions <span class="pill">must pass</span></div>
+                <p>
+                  In <span style="font-family:var(--mono)">E_null = ((2/n_eff^2) - p_eff) * ε / (r_eff Γ)</span>:
+                  <span style="font-family:var(--mono)">p_eff</span> and <span style="font-family:var(--mono)">2/n_eff^2</span> are dimensionless,
+                  <span style="font-family:var(--mono)">ε</span> is dimensionless,
+                  <span style="font-family:var(--mono)">r_eff</span> has units m/V,
+                  so the result has units V/m, as required.
+                </p>
+              </div>
+              <div class="card">
+                <div class="title">Limiting cases <span class="pill">physics check</span></div>
+                <ul>
+                  <li>If <span style="font-family:var(--mono)">r_eff → 0</span> (no EO effect), <span style="font-family:var(--mono)">E_null</span> diverges → you cannot null by EO tuning (correct).</li>
+                  <li>If <span style="font-family:var(--mono)">ε → 0</span>, then <span style="font-family:var(--mono)">E_null → 0</span> (no compensation needed).</li>
+                  <li>If the elasto-optic contribution is very strong (large <span style="font-family:var(--mono)">p_eff</span>), the required field changes accordingly; sign reversals are possible depending on the net coefficient <span style="font-family:var(--mono)">(2/n_eff^2 - p_eff)</span>.</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>One simple plot (example values only)</h3>
+            <p>
+              The formula predicts a linear relationship between nulling field and strain. The plot below shows
+              <span style="font-family:var(--mono)">E_null</span> vs. <span style="font-family:var(--mono)">ε</span> using explicitly stated <em>example values</em>
+              (not part of the symbolic final answer).
+            </p>
+
+            <figure class="plot">
+              <canvas id="plot" aria-label="Plot of nulling electric field versus strain"></canvas>
+              <figcaption>
+                Example plot only: <span style="font-family:var(--mono)">E_null(ε) = ((2/n_eff^2) - p_eff) ε / (r_eff Γ)</span>.
+                Values used are listed in PART 5.
+              </figcaption>
+            </figure>
+
+            <a class="toplink" href="#top">↑ Back to top</a>
+          </section>
+
+          <section id="part4">
+            <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+            <h3>Re-interpreting the final formula</h3>
+            <p>
+              The nulling field can be read as a ratio:
+              <strong>(strain-induced phase per strain)</strong> divided by <strong>(EO phase per field)</strong>.
+              In our derivation, the MZI geometry and wavelength canceled in the null equation because both effects
+              act through the same phase accumulation length. What remains is the ratio of material/geometry sensitivities.
+            </p>
+
+            <div class="callout">
+              <div class="tag">Term-by-term meaning</div>
+              <ul>
+                <li><span style="font-family:var(--mono)">(2/n_eff^2)</span>: comes from the <strong>geometric length change</strong> term (<span style="font-family:var(--mono)">n_eff ΔL</span>) after rewriting in inverse-square-index form. It represents “phase change because the arm is longer.”</li>
+                <li><span style="font-family:var(--mono)">p_eff</span>: represents “phase change because the <strong>index changes under strain</strong>.”</li>
+                <li><span style="font-family:var(--mono)">r_eff Γ</span>: represents “how efficiently an applied field changes the effective index seen by the mode.” Larger values reduce required field.</li>
+                <li><span style="font-family:var(--mono)">ε</span>: measurement quantity; linearity is the main advantage of nulling readout.</li>
+              </ul>
+            </div>
+
+            <h3>Parameter dependence (qualitative)</h3>
+            <ul>
+              <li><strong>Increase overlap <span style="font-family:var(--mono)">Γ</span>:</strong> decreases required field linearly (better electrode/mode overlap → easier tuning).</li>
+              <li><strong>Increase electro-optic coefficient <span style="font-family:var(--mono)">r_eff</span>:</strong> decreases required field (choose a stronger EO material or better tensor projection).</li>
+              <li><strong>Increase strain transfer to the waveguide:</strong> increases phase per strain, thus increases required compensation field (but also improves sensitivity in open-loop mode).</li>
+              <li><strong>Effect of <span style="font-family:var(--mono)">n_eff</span>:</strong> appears inside <span style="font-family:var(--mono)">(2/n_eff^2 - p_eff)</span>. Higher index reduces <span style="font-family:var(--mono)">2/n_eff^2</span>, shifting the balance between geometric and photoelastic contributions.</li>
+            </ul>
+
+            <details>
+              <summary>
+                Alternative derivation idea (short but meaningful)
+                <span class="hint">optional deeper note</span>
+              </summary>
+              <p>
+                Instead of converting everything through <span style="font-family:var(--mono)">Δ(1/n^2)</span>, you can work directly with an
+                effective “phase-strain” coefficient and an “EO phase” coefficient:
+              </p>
+              <div class="eq" data-copy="S_ε = ∂(Δφ)/∂ε,   S_E = ∂(Δφ)/∂E,   and nulling gives E_null = -(S_ε/S_E) * ε">
+                <div class="eqrow">
+                  <pre>S_ε = ∂(Δφ)/∂ε,   S_E = ∂(Δφ)/∂E,   and nulling gives E_null = -(S_ε/S_E) * ε</pre>
+                  <button class="copybtn" type="button">Copy equation</button>
+                </div>
+              </div>
+              <p>
+                This viewpoint is useful experimentally: you can measure <span style="font-family:var(--mono)">S_E</span> by applying known voltages and
+                observing fringes, and measure <span style="font-family:var(--mono)">S_ε</span> by applying known strain. Then the strain readout is a calibrated ratio.
+              </p>
+            </details>
+
+            <h3>Concept checks (self-test with answers)</h3>
+            <ul>
+              <li><strong>Q:</strong> Why does closed-loop nulling improve linearity? <strong>A:</strong> It holds the MZI at a fixed operating point; the measured quantity becomes the control signal (proportional to phase), avoiding the cosine nonlinearity.</li>
+              <li><strong>Q:</strong> Why include <span style="font-family:var(--mono)">ΔL</span> at all? <strong>A:</strong> Strain physically stretches the optical path; even with constant index, phase changes because <span style="font-family:var(--mono)">φ ∝ L</span>.</li>
+              <li><strong>Q:</strong> What does <span style="font-family:var(--mono)">Γ</span> capture? <strong>A:</strong> The fraction of applied electric field that effectively overlaps the optical mode and contributes to index change.</li>
+              <li><strong>Q:</strong> If both arms experience the same strain, what happens? <strong>A:</strong> The MZI is mostly insensitive to common-mode strain because it measures <em>differential</em> phase; the design intentionally strains one arm more than the other.</li>
+              <li><strong>Q:</strong> What practical effect might still cause drift even with nulling? <strong>A:</strong> Changes in <span style="font-family:var(--mono)">r_eff</span> or <span style="font-family:var(--mono)">Γ</span> with temperature, electrode aging, or bias-dependent EO response; these are handled via calibration and temperature control.</li>
+            </ul>
+
+            <a class="toplink" href="#top">↑ Back to top</a>
+          </section>
+
+          <section id="part5">
+            <h2>PART 5 — Optional Plot Guide</h2>
+
+            <h3>What the plot shows (and why it helps)</h3>
+            <p>
+              The plot shows the <strong>linear</strong> dependence of the nulling electric field <span style="font-family:var(--mono)">E_null</span>
+              on strain <span style="font-family:var(--mono)">ε</span>. This is the key learning point: in a closed-loop EO-compensated MZI,
+              the electrical control variable is a linear proxy for strain, even though the raw MZI intensity is a cosine.
+            </p>
+
+            <h3>Axes, units, and example values</h3>
+            <ul>
+              <li><strong>x-axis:</strong> strain <span style="font-family:var(--mono)">ε</span> in microstrain (με = 10<sup>−6</sup>).</li>
+              <li><strong>y-axis:</strong> required electric field <span style="font-family:var(--mono)">E_null</span> in V/μm (scaled for readability).</li>
+              <li><strong>Example values (for the plot only):</strong>
+                <ul>
+                  <li><span style="font-family:var(--mono)">n_eff = 2.2</span></li>
+                  <li><span style="font-family:var(--mono)">p_eff = 0.10</span></li>
+                  <li><span style="font-family:var(--mono)">r_eff = 30 pm/V = 30×10^-12 m/V</span></li>
+                  <li><span style="font-family:var(--mono)">Γ = 0.8</span></li>
+                  <li>Strain range: <span style="font-family:var(--mono)">ε ∈ [-500, +500] με</span></li>
+                </ul>
+              </li>
+            </ul>
+
+            <h3>Features to notice</h3>
+            <ul>
+              <li><strong>Slope:</strong> the slope is the sensor’s closed-loop “field per strain” gain.</li>
+              <li><strong>Sign:</strong> the sign depends on <span style="font-family:var(--mono)">(2/n_eff^2 - p_eff)</span>. A different material/tensor projection can flip the sign (your servo just compensates accordingly).</li>
+              <li><strong>Linearity:</strong> straight line indicates linear behavior in the assumed small-signal regime; deviations in real devices indicate nonlinearity, imperfect strain transfer, or bias-dependent coefficients.</li>
+            </ul>
+
+            <a class="toplink" href="#top">↑ Back to top</a>
+          </section>
+        </article>
+
+        <footer>
+          <strong>Implementation note:</strong> In real chips, <span style="font-family:var(--mono)">p_eff</span>, <span style="font-family:var(--mono)">r_eff</span>, and <span style="font-family:var(--mono)">Γ</span>
+          are typically obtained from a combination of FEM simulations (mechanical + optical + electrostatic) and calibration measurements.
+          The closed-loop nulling method remains the same and is widely used to linearize interferometric sensors.
+        </footer>
+      </main>
     </div>
-  </main>
+  </div>
+
+  <script>
+    (function(){
+      // Copy buttons
+      function copyText(text){
+        if (!navigator.clipboard){
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          try{ document.execCommand('copy'); }catch(e){}
+          document.body.removeChild(ta);
+          return;
+        }
+        navigator.clipboard.writeText(text).catch(()=>{});
+      }
+
+      document.querySelectorAll('.eq').forEach(eq=>{
+        const btn = eq.querySelector('.copybtn');
+        if(!btn) return;
+        btn.addEventListener('click', ()=>{
+          const t = eq.getAttribute('data-copy') || eq.innerText || '';
+          copyText(t.trim());
+          const old = btn.textContent;
+          btn.textContent = 'Copied ✓';
+          btn.style.borderColor = 'rgba(52,211,153,0.45)';
+          btn.style.background = 'rgba(52,211,153,0.10)';
+          setTimeout(()=>{
+            btn.textContent = old;
+            btn.style.borderColor = '';
+            btn.style.background = '';
+          }, 900);
+        });
+      });
+
+      // Simple static plot: E_null vs epsilon (example values)
+      const canvas = document.getElementById('plot');
+      if(!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+
+      function getTheme(){
+        const cs = getComputedStyle(document.documentElement);
+        return {
+          text: cs.getPropertyValue('--text').trim() || '#e5e7eb',
+          muted: cs.getPropertyValue('--muted').trim() || 'rgba(255,255,255,0.72)',
+          faint: cs.getPropertyValue('--faint').trim() || 'rgba(255,255,255,0.55)',
+          line: cs.getPropertyValue('--line').trim() || 'rgba(255,255,255,0.14)',
+          accent: cs.getPropertyValue('--accent').trim() || '#7dd3fc'
+        };
+      }
+
+      function resize(){
+        const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.max(320, Math.floor(rect.width));
+        const h = Math.max(260, Math.floor(rect.height));
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+        draw(w, h);
+      }
+
+      function draw(w, h){
+        const theme = getTheme();
+
+        // Example values (plot only)
+        const n = 2.2;
+        const p = 0.10;
+        const r = 30e-12; // m/V
+        const Gamma = 0.8;
+
+        // E_null = ((2/n^2) - p) * ε / (r Γ)
+        function E_of_eps(eps){
+          return ((2/(n*n)) - p) * eps / (r * Gamma); // V/m
+        }
+        function yDisplay(E_Vm){ return E_Vm * 1e-6; } // V/um
+
+        // Domain in microstrain
+        const epsMin_u = -500, epsMax_u = 500;
+        const epsMin = epsMin_u * 1e-6;
+        const epsMax = epsMax_u * 1e-6;
+
+        const N = 250;
+        const xs = [];
+        const ys = [];
+        let yMin = Infinity, yMax = -Infinity;
+        for(let i=0;i<=N;i++){
+          const t = i/N;
+          const eps = epsMin + (epsMax-epsMin)*t;
+          const E = E_of_eps(eps);
+          const y = yDisplay(E);
+          xs.push(eps);
+          ys.push(y);
+          if(y < yMin) yMin = y;
+          if(y > yMax) yMax = y;
+        }
+
+        const yPad = (yMax - yMin) * 0.12 + 0.02*Math.max(1, Math.abs(yMax));
+        yMin -= yPad; yMax += yPad;
+
+        const padL = 62, padR = 18, padT = 34, padB = 52;
+        const pw = w - padL - padR;
+        const ph = h - padT - padB;
+
+        function xToPx(eps){
+          return padL + ((eps - epsMin) / (epsMax - epsMin)) * pw;
+        }
+        function yToPx(y){
+          return padT + (1 - ((y - yMin) / (yMax - yMin))) * ph;
+        }
+
+        ctx.clearRect(0,0,w,h);
+
+        // Gridlines
+        const xTicks_u = [-500,-250,0,250,500];
+        const yTicks = niceTicks(yMin, yMax, 5);
+
+        ctx.save();
+        ctx.strokeStyle = theme.line;
+        ctx.lineWidth = 1;
+
+        xTicks_u.forEach(vu=>{
+          const eps = vu*1e-6;
+          const x = xToPx(eps);
+          ctx.beginPath();
+          ctx.moveTo(x, padT);
+          ctx.lineTo(x, padT+ph);
+          ctx.stroke();
+        });
+
+        yTicks.forEach(v=>{
+          const y = yToPx(v);
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(padL+pw, y);
+          ctx.stroke();
+        });
+        ctx.restore();
+
+        // Axes
+        ctx.save();
+        ctx.strokeStyle = theme.muted;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT+ph);
+        ctx.lineTo(padL+pw, padT+ph);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT+ph);
+        ctx.stroke();
+        ctx.restore();
+
+        // Ticks & labels
+        ctx.save();
+        ctx.fillStyle = theme.muted;
+        ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+
+        xTicks_u.forEach(vu=>{
+          const x = xToPx(vu*1e-6);
+          ctx.strokeStyle = theme.muted;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(x, padT+ph);
+          ctx.lineTo(x, padT+ph+6);
+          ctx.stroke();
+          ctx.fillText(String(vu), x, padT+ph+10);
+        });
+
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        yTicks.forEach(v=>{
+          const y = yToPx(v);
+          ctx.strokeStyle = theme.muted;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(padL-6, y);
+          ctx.lineTo(padL, y);
+          ctx.stroke();
+          ctx.fillText(formatNum(v, 3), padL-10, y);
+        });
+        ctx.restore();
+
+        // Title
+        ctx.save();
+        ctx.fillStyle = theme.text;
+        ctx.font = '600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Example: EO nulling field vs. strain (linear)', padL, 10);
+        ctx.restore();
+
+        // Axis labels
+        ctx.save();
+        ctx.fillStyle = theme.faint;
+        ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('Strain ε (microstrain, με)', padL + pw/2, h - 10);
+
+        ctx.translate(16, padT + ph/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Nulling field E_null (V/μm)', 0, 0);
+        ctx.restore();
+
+        // Plot line
+        ctx.save();
+        ctx.strokeStyle = theme.accent;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        for(let i=0;i<xs.length;i++){
+          const x = xToPx(xs[i]);
+          const y = yToPx(ys[i]);
+          if(i===0) ctx.moveTo(x,y);
+          else ctx.lineTo(x,y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // Legend
+        ctx.save();
+        const lx = padL + 12;
+        const ly = padT + 10;
+        const bw = 210, bh = 44;
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.strokeStyle = theme.line;
+        ctx.lineWidth = 1;
+        roundRect(ctx, lx, ly, bw, bh, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.strokeStyle = theme.accent;
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(lx+12, ly+16);
+        ctx.lineTo(lx+44, ly+16);
+        ctx.stroke();
+
+        ctx.fillStyle = theme.muted;
+        ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('E_null from example values', lx+52, ly+16);
+
+        ctx.fillStyle = theme.faint;
+        ctx.font = '11.5px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        const slope = ((2/(n*n)) - p) / (r*Gamma) * 1e-6 * 1e-6; // (V/um) per microstrain
+        ctx.fillText('Slope ≈ ' + formatNum(slope, 3) + ' V/μm per με', lx+12, ly+32);
+        ctx.restore();
+      }
+
+      function niceTicks(min, max, approxCount){
+        const span = max - min;
+        if(span <= 0) return [min];
+        const rawStep = span / Math.max(1, approxCount);
+        const mag = Math.pow(10, Math.floor(Math.log10(Math.abs(rawStep))));
+        const norm = rawStep / mag;
+        let step;
+        if(norm < 1.5) step = 1 * mag;
+        else if(norm < 3.5) step = 2 * mag;
+        else if(norm < 7.5) step = 5 * mag;
+        else step = 10 * mag;
+
+        const start = Math.ceil(min / step) * step;
+        const ticks = [];
+        for(let v = start; v <= max + 1e-12; v += step){
+          ticks.push(v);
+        }
+        if(ticks.length < 3){
+          const step2 = step/2;
+          const start2 = Math.ceil(min / step2) * step2;
+          const ticks2 = [];
+          for(let v=start2; v<=max + 1e-12; v += step2) ticks2.push(v);
+          return ticks2;
+        }
+        return ticks;
+      }
+
+      function formatNum(x, sig){
+        if(!isFinite(x)) return String(x);
+        const ax = Math.abs(x);
+        if(ax === 0) return "0";
+        if(ax >= 1000 || ax < 0.01) return x.toExponential(Math.max(0, sig-1));
+        const p = Math.max(0, sig - 1 - Math.floor(Math.log10(ax)));
+        return x.toFixed(Math.min(6, p));
+      }
+
+      function roundRect(ctx, x, y, w, h, r){
+        const rr = Math.min(r, w/2, h/2);
+        ctx.beginPath();
+        ctx.moveTo(x+rr, y);
+        ctx.arcTo(x+w, y, x+w, y+h, rr);
+        ctx.arcTo(x+w, y+h, x, y+h, rr);
+        ctx.arcTo(x, y+h, x, y, rr);
+        ctx.arcTo(x, y, x+w, y, rr);
+        ctx.closePath();
+      }
+
+      const ro = new ResizeObserver(()=>resize());
+      ro.observe(canvas);
+      window.addEventListener('resize', resize, {passive:true});
+      resize();
+    })();
+  </script>
 </body>
 </html>

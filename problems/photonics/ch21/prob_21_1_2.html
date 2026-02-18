@@ -2,64 +2,1744 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>21.1-2 — Response Time of a Phase Modulator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Response Time of a Longitudinal Electro-Optic Phase Modulator (GaAs)</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.085);
       --text: rgba(255,255,255,0.92);
       --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+      --faint: rgba(255,255,255,0.55);
+      --line: rgba(255,255,255,0.12);
+      --accent: #7bdcff;
+      --accent2:#b7ff7b;
+      --warn:#ffcc66;
+      --bad:#ff6b6b;
+      --good:#7CFFB2;
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --radius: 16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg: #f7f9ff;
+        --panel: rgba(0,0,0,0.045);
+        --panel2: rgba(0,0,0,0.06);
+        --text: rgba(0,0,0,0.88);
+        --muted: rgba(0,0,0,0.68);
+        --faint: rgba(0,0,0,0.52);
+        --line: rgba(0,0,0,0.12);
+        --shadow: 0 10px 30px rgba(0,0,0,0.12);
+      }
     }
-    header, main {
-      max-width: 980px;
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 10% 5%, rgba(123,220,255,0.18), transparent 55%),
+        radial-gradient(1000px 600px at 90% 10%, rgba(183,255,123,0.12), transparent 55%),
+        radial-gradient(900px 600px at 50% 90%, rgba(255,204,102,0.10), transparent 60%),
+        var(--bg);
+      line-height:1.55;
+    }
+
+    header{
+      padding: 28px 18px 10px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 24px 18px;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
+    .hero{
+      display:grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap:16px;
+      align-items:stretch;
+    }
+    @media (max-width: 980px){
+      .hero{grid-template-columns: 1fr}
+    }
+    .titleCard{
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding:18px 18px 16px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .titleCard:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(500px 220px at 20% 20%, rgba(123,220,255,0.20), transparent 60%),
+                  radial-gradient(500px 220px at 70% 40%, rgba(183,255,123,0.14), transparent 60%);
+      pointer-events:none;
+      filter: blur(2px);
+      opacity:0.95;
+    }
+    .titleCard > *{position:relative}
+    h1{
+      margin:0 0 6px;
+      font-size: clamp(22px, 2.6vw, 34px);
+      letter-spacing: -0.02em;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size: 14.5px;
+    }
+    .metaRow{
+      margin-top:12px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+    .pill{
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(127,127,127,0.12);
+      border:1px solid var(--line);
+      font-size: 12.5px;
+      color: var(--muted);
+      backdrop-filter: blur(8px);
+    }
+
+    .tocCard{
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding:14px 14px 12px;
+      box-shadow: var(--shadow);
+      position:sticky;
+      top:12px;
+      align-self:start;
+    }
+    .tocTitle{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .tocTitle strong{font-size: 13px; letter-spacing: 0.02em}
+    .tocTitle span{font-size: 12px; color: var(--muted)}
+    nav a{
+      display:block;
+      padding:8px 10px;
+      border-radius: 12px;
+      text-decoration:none;
+      color: var(--text);
+      border:1px solid transparent;
+      font-size: 13px;
+    }
+    nav a:hover{
+      background: rgba(127,127,127,0.10);
+      border-color: var(--line);
+    }
+
+    main{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 10px 18px 42px;
+    }
+
+    section{
+      margin-top: 16px;
       padding: 18px;
+      border-radius: var(--radius);
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
+
+    h2{
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+    }
+    h3{
+      margin: 14px 0 8px;
+      font-size: 15.5px;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    p{margin: 8px 0; color: var(--text)}
+    ul{margin: 8px 0 8px 18px; color: var(--text)}
+    li{margin: 5px 0}
+    .muted{color: var(--muted)}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 900px){ .grid2{grid-template-columns: 1fr} }
+
+    .callouts{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:12px;
       margin-top: 10px;
-      font-size: 0.95rem;
+    }
+    .card{
+      grid-column: span 6;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 12px 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    }
+    @media (max-width: 980px){ .card{grid-column: span 12} }
+    .card h4{
+      margin: 0 0 6px;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
       color: var(--muted);
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .keyEq{
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height:1.45;
+      background: rgba(127,127,127,0.10);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      overflow:auto;
+      position:relative;
     }
+    .btnRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+      align-items:center;
+    }
+    button.copyBtn{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(127,127,127,0.10);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-size: 12.5px;
+      transition: transform .08s ease, background .15s ease;
+    }
+    button.copyBtn:hover{background: rgba(127,127,127,0.16)}
+    button.copyBtn:active{transform: translateY(1px)}
+    .copyNote{
+      font-size:12px;
+      color: var(--muted);
+      min-height: 1em;
+    }
+
+    .vizWrap{
+      display:grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap:14px;
+      align-items:stretch;
+    }
+    @media (max-width: 980px){ .vizWrap{grid-template-columns: 1fr} }
+
+    .vizCard{
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .canvasTitle{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:baseline;
+      margin-bottom:8px;
+    }
+    .canvasTitle strong{
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .canvasTitle span{font-size:12px; color:var(--faint)}
+    canvas{
+      width:100%;
+      height: 300px;
+      display:block;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,0.10);
+    }
+    .small canvas{height: 250px}
+    .controls{
+      display:grid;
+      gap:10px;
+    }
+    .ctrlBlock{
+      border:1px solid var(--line);
+      background: rgba(127,127,127,0.08);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .ctrlBlock h4{
+      margin:0 0 8px;
+      font-size: 12.5px;
+      letter-spacing:0.02em;
+      text-transform:uppercase;
+      color: var(--muted);
+    }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+      margin: 8px 0;
+    }
+    .row label{
+      font-size: 13px;
+      color: var(--text);
+    }
+    .row .val{
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--muted);
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,0.08);
+      min-width: 92px;
+      text-align:right;
+    }
+    input[type="range"]{width:100%}
+    select, input[type="number"]{
+      width:100%;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,0.08);
+      color: var(--text);
+      font-size: 13px;
+      outline:none;
+    }
+    .inline{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 480px){ .inline{grid-template-columns: 1fr} }
+
+    .answerBox{
+      border:1px solid rgba(123,220,255,0.35);
+      background: linear-gradient(180deg, rgba(123,220,255,0.12), rgba(255,255,255,0.02));
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-top: 10px;
+      box-shadow: var(--shadow);
+    }
+    .answerBox h3{margin-top:0}
+    .answerGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 900px){ .answerGrid{grid-template-columns: 1fr} }
+    .kv{
+      border:1px solid var(--line);
+      background: rgba(0,0,0,0.08);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .kv .k{
+      font-size: 12.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      margin-bottom: 6px;
+    }
+    .kv .v{
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    footer{
+      max-width:1200px;
+      margin: 0 auto;
+      padding: 16px 18px 36px;
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    @media print{
+      body{background:#fff; color:#000}
+      .tocCard{position:static}
+      .vizCard, .titleCard, section, .answerBox{box-shadow:none}
+      canvas{border:1px solid #aaa; background:#fff}
+      button{display:none !important}
+    }
+
+    @keyframes floatIn{
+      from{transform: translateY(6px); opacity:0}
+      to{transform: translateY(0); opacity:1}
+    }
+    section, .titleCard, .tocCard, .vizCard{animation: floatIn .35s ease both}
   </style>
 </head>
 <body>
-  <header>
-    <div class="box">
-      <h1>21.1-2 — Response Time of a Phase Modulator</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch21/prob_21_1_2.html</code></p>
-    </div>
-  </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+<header>
+  <div class="hero">
+    <div class="titleCard">
+      <h1>21.1-2 — Response Time of a Phase Modulator (GaAs, Longitudinal EO)</h1>
+      <p class="subtitle">
+        Compute the <span class="muted">half-wave voltage</span> V<sub>π</sub>, the <span class="muted">optical transit time</span>,
+        the <span class="muted">device capacitance</span>, and decide what limits the switching speed: <em>light transit</em> vs <em>RC response</em>.
+      </p>
+      <div class="metaRow">
+        <span class="pill">Electro-optic (Pockels) phase modulation</span>
+        <span class="pill">Longitudinal geometry (E ‖ propagation)</span>
+        <span class="pill">GaAs: n=3.6, r=1.6 pm/V, εr=13.5</span>
+        <span class="pill">λ0=1.3 μm, L=3 cm, A=1 cm², Rs=50 Ω</span>
+      </div>
     </div>
-  </main>
+
+    <aside class="tocCard" aria-label="Table of contents">
+      <div class="tocTitle">
+        <strong>Table of Contents</strong>
+        <span>sticky</span>
+      </div>
+      <nav>
+        <a href="#quick">Quick Summary</a>
+        <a href="#part0">PART 0 — Concept Primer</a>
+        <a href="#part1">PART 1 — Problem Analysis</a>
+        <a href="#part2">PART 2 — Strategy & Tips</a>
+        <a href="#part3">PART 3 — Full Solution</a>
+        <a href="#part4">PART 4 — Deeper Understanding</a>
+        <a href="#part5">PART 5 — Visualization Guide</a>
+        <a href="#viz">Interactive Visualizations</a>
+      </nav>
+    </aside>
+  </div>
+</header>
+
+<main>
+  <section id="quick">
+    <h2>Quick Summary</h2>
+    <ul>
+      <li><strong>What this problem is:</strong> A GaAs crystal is used as a <em>phase modulator</em> via the linear electro-optic (Pockels) effect in <em>longitudinal</em> configuration; we compute V<sub>π</sub>, optical transit time, and capacitance.</li>
+      <li><strong>Key physics idea:</strong> An applied electric field changes refractive index: Δ(1/n²) = rE (linear EO), producing a phase shift Δφ = (2π/λ) Δn · L.</li>
+      <li><strong>Governing relations:</strong>
+        Δn ≈ −(1/2) n³ r E and (longitudinal) E ≈ V/L.
+      </li>
+      <li><strong>Half-wave condition:</strong> Δφ = π ⇒ V<sub>π</sub> = λ / (n³ r) (for longitudinal geometry).</li>
+      <li><strong>Optical transit time:</strong> t<sub>opt</sub> = (nL)/c.</li>
+      <li><strong>Electrical capacitance:</strong> C = εA/L with ε = ε<sub>r</sub>ε<sub>0</sub> (parallel-plate approximation).</li>
+      <li><strong>Speed limit comparison:</strong> Electrical response ~ RC (or ~2.2RC for 10–90% rise) vs optical transit time; the <em>larger</em> time constant dominates.</li>
+      <li><strong>Final result type:</strong> Numeric results (with symbolic formulas shown and sanity checks).</li>
+    </ul>
+  </section>
+
+  <section id="part0">
+    <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+    <div class="callouts">
+      <div class="card">
+        <h4>Core definitions</h4>
+        <ul>
+          <li><strong>Refractive index</strong> n (unitless): sets optical phase velocity v = c/n.</li>
+          <li><strong>Electro-optic coefficient</strong> r (m/V): linear coupling between electric field and the <em>index ellipsoid</em>.</li>
+          <li><strong>Phase shift</strong> Δφ (rad): change in optical phase accumulated over length L.</li>
+          <li><strong>Half-wave voltage</strong> V<sub>π</sub> (V): voltage required to induce Δφ = π.</li>
+          <li><strong>Permittivity</strong> ε = ε<sub>r</sub>ε<sub>0</sub> (F/m): determines capacitor C.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Physical meaning</h4>
+        <ul>
+          <li>The applied voltage creates an electric field inside the crystal.</li>
+          <li>That field slightly changes n (typically tiny: Δn ≪ n).</li>
+          <li>Even a tiny Δn matters because phase accumulates over distance: Δφ ∝ Δn·L/λ.</li>
+          <li>The modulator’s speed is set by how fast the <em>field inside the device</em> can change (electrical RC and wave propagation), and/or by how quickly light traverses the crystal (transit time).</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h4>Key law (Pockels effect)</h4>
+        <div class="keyEq" id="eq1Text">Linear EO:  Δ(1/n^2) = r E
+Small-signal index change:  Δn ≈ −(1/2) n^3 r E</div>
+        <div class="btnRow">
+          <button class="copyBtn" data-copy="#eq1Text">Copy equation</button>
+          <span class="copyNote" id="copyNote1"></span>
+        </div>
+        <p class="muted" style="margin-top:8px">
+          Valid when the material has no inversion symmetry (GaAs qualifies) and the field is in the linear range.
+        </p>
+      </div>
+
+      <div class="card">
+        <h4>Common approximations (and why)</h4>
+        <ul>
+          <li><strong>Uniform field:</strong> E ≈ V/L for longitudinal electrodes across the full crystal length.</li>
+          <li><strong>Plane-wave / single pass:</strong> phase accumulation is Δφ = (2π/λ)Δn·L.</li>
+          <li><strong>Parallel-plate capacitance:</strong> C ≈ εA/L; reasonable when electrode area is large compared with separation and fringing is small.</li>
+          <li><strong>RC-limited drive:</strong> with a source resistance R<sub>s</sub>, the device behaves like a capacitor → time constant τ = R<sub>s</sub>C (first-order response).</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Mini intuition examples</h3>
+    <ul>
+      <li><strong>Longer crystal (bigger L):</strong> gives more phase shift for a given Δn, but also increases optical transit time and (for fixed area) decreases capacitance (C∝1/L). So speed can improve or worsen depending on which limit dominates.</li>
+      <li><strong>Larger electrode area (bigger A):</strong> increases capacitance → slows electrical response (RC), without directly improving phase efficiency in a longitudinal geometry (where Vπ does not depend on L, but can depend on overlap and effective r).</li>
+    </ul>
+
+    <h3>What to watch for (pitfalls)</h3>
+    <ul>
+      <li>Mixing up <strong>λ in vacuum</strong> (λ<sub>0</sub>) with wavelength in medium (λ<sub>0</sub>/n). Use λ<sub>0</sub> in Δφ = (2π/λ<sub>0</sub>) n·L for optical path, and keep consistent derivation.</li>
+      <li>For longitudinal modulators, <strong>E = V/L</strong>, so Δφ ∝ Δn·L ∝ E·L ∝ V (L cancels in Vπ).</li>
+      <li>Confusing <strong>capacitance geometry</strong>: here the “plate separation” is along the optical axis in the simplest idealization, giving C=εA/L.</li>
+      <li>Speed metric: τ=RC is the 1/e time; rise time (10–90%) ≈ 2.2τ. Be explicit which you use.</li>
+    </ul>
+  </section>
+
+  <section id="part1">
+    <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+    <h3>Problem rewritten (in plain words)</h3>
+    <p>
+      We have a GaAs crystal used as an electro-optic <em>phase</em> modulator at vacuum wavelength λ<sub>0</sub>=1.3 μm.
+      The modulator operates in <strong>longitudinal configuration</strong> (electric field along the propagation direction).
+      The crystal length is L=3 cm, cross-sectional area A=1 cm², refractive index n=3.6, EO coefficient r=1.6 pm/V.
+      We must compute:
+      (1) half-wave voltage V<sub>π</sub>,
+      (2) optical transit time t<sub>opt</sub>,
+      (3) electrical capacitance C (given ε<sub>r</sub>=13.5),
+      and then compare optical transit time vs electrical RC response using a 50 Ω source.
+    </p>
+
+    <div class="grid2">
+      <div>
+        <h3>Given quantities</h3>
+        <ul>
+          <li>n = 3.6</li>
+          <li>r = 1.6 pm/V = 1.6×10<sup>−12</sup> m/V</li>
+          <li>λ<sub>0</sub> = 1.3 μm = 1.3×10<sup>−6</sup> m</li>
+          <li>L = 3 cm = 3.0×10<sup>−2</sup> m</li>
+          <li>A = 1 cm² = 1.0×10<sup>−4</sup> m²</li>
+          <li>ε<sub>r</sub> = ε/ε<sub>0</sub> = 13.5</li>
+          <li>R<sub>s</sub> = 50 Ω</li>
+          <li>c = 2.99792458×10<sup>8</sup> m/s, ε<sub>0</sub> = 8.8541878128×10<sup>−12</sup> F/m</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Unknowns</h3>
+        <ul>
+          <li>V<sub>π</sub> (V)</li>
+          <li>t<sub>opt</sub> = nL/c (s)</li>
+          <li>C = εA/L (F)</li>
+          <li>Electrical time constant τ = R<sub>s</sub>C (s) and/or rise time t<sub>r</sub>≈2.2τ</li>
+          <li>Which limit dominates: t<sub>opt</sub> vs τ (or t<sub>r</sub>)</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Relevant principles (and why they apply)</h3>
+    <ul>
+      <li><strong>Pockels effect:</strong> GaAs is non-centrosymmetric, so linear EO effect exists; given r explicitly → we use Δn ≈ −(1/2)n³rE.</li>
+      <li><strong>Phase accumulation:</strong> a wave accumulates phase φ = (2π/λ<sub>0</sub>) nL; a change in n produces Δφ = (2π/λ<sub>0</sub>) Δn·L.</li>
+      <li><strong>Electrostatics (low-frequency):</strong> capacitance from ε and geometry; given ε<sub>r</sub> “low-frequency” implies quasi-static C is appropriate for RC estimate.</li>
+      <li><strong>Circuit response:</strong> driving a capacitor through R gives first-order exponential response, setting modulation bandwidth/time.</li>
+    </ul>
+
+    <h3>Assumptions (explicit)</h3>
+    <div class="callouts">
+      <div class="card">
+        <h4>Assumptions</h4>
+        <ul>
+          <li>Uniform electric field in the crystal: E ≈ V/L (ideal longitudinal electrodes).</li>
+          <li>Small index change: |Δn| ≪ n → linearization Δn ≈ −(1/2)n³rE valid.</li>
+          <li>Single-pass phase modulation (no resonant cavity enhancement).</li>
+          <li>Capacitance modeled as parallel-plate: C ≈ εA/L (ignore fringing/contacts).</li>
+          <li>Source resistance dominates; ignore inductance and transmission-line effects (we will briefly comment when this might fail).</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>What we are NOT using (and why)</h4>
+        <ul>
+          <li><strong>Kerr (χ<sup>(3)</sup>) effect:</strong> would be quadratic in E; here r is given → linear EO dominates.</li>
+          <li><strong>Traveling-wave electrode theory:</strong> not requested; geometry given as a bulk crystal with “voltage applied” and low-frequency ε<sub>r</sub>.</li>
+          <li><strong>Detailed tensor selection rules:</strong> r is provided as an effective coefficient; we treat it as the relevant component.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Possible approaches (2–3) and comparison</h3>
+    <ul>
+      <li><strong>Approach A (direct Pockels + phase):</strong> Use Δn ≈ −(1/2)n³r(V/L), then Δφ = (2π/λ<sub>0</sub>)ΔnL. <em>Pros:</em> simple and transparent; <em>Cons:</em> relies on scalar r and uniform-field idealization.</li>
+      <li><strong>Approach B (index-ellipsoid formalism):</strong> Start from Δ(1/n²)=rE and derive Δn. <em>Pros:</em> more fundamental and less “memorized”; <em>Cons:</em> more algebra but same result in the end.</li>
+      <li><strong>Approach C (energy/circuit bandwidth):</strong> Determine C from ε, then bandwidth f<sub>3dB</sub>=1/(2πRC) or rise time ≈2.2RC. <em>Pros:</em> connects speed to circuit; <em>Cons:</em> doesn’t give Vπ unless combined with A/B.</li>
+    </ul>
+    <p><strong>Best choice:</strong> Combine A (for Vπ) with C (for speed). This directly matches what the problem asks and uses the given numbers with minimal extra assumptions.</p>
+  </section>
+
+  <section id="part2">
+    <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+    <ol>
+      <li><strong>Goal:</strong> relate voltage to index change. <br />
+        <span class="muted">Use:</span> Δn ≈ −(1/2)n³rE, with E≈V/L. <br />
+        <span class="muted">Meaning:</span> the applied voltage “tunes” the optical phase velocity.
+      </li>
+      <li><strong>Goal:</strong> convert index change to phase change. <br />
+        <span class="muted">Use:</span> Δφ = (2π/λ<sub>0</sub>) Δn · L. <br />
+        <span class="muted">Meaning:</span> phase accumulates over distance; longer path gives larger effect.
+      </li>
+      <li><strong>Goal:</strong> enforce the half-wave condition. <br />
+        <span class="muted">Use:</span> Δφ = π ⇒ solve for V = V<sub>π</sub>. <br />
+        <span class="muted">Meaning:</span> π rad is the phase shift that flips interference from constructive to destructive (a “half wave”).
+      </li>
+      <li><strong>Goal:</strong> compute optical transit time. <br />
+        <span class="muted">Use:</span> t<sub>opt</sub> = nL/c. <br />
+        <span class="muted">Meaning:</span> how quickly optical information traverses the modulator.
+      </li>
+      <li><strong>Goal:</strong> compute capacitance. <br />
+        <span class="muted">Use:</span> C = εA/L with ε=ε<sub>r</sub>ε<sub>0</sub>. <br />
+        <span class="muted">Meaning:</span> how much charge is needed to change the internal field.
+      </li>
+      <li><strong>Goal:</strong> compare time limits. <br />
+        <span class="muted">Use:</span> τ = R<sub>s</sub>C (and optionally 10–90% rise t<sub>r</sub>≈2.2τ). <br />
+        <span class="muted">Meaning:</span> electrical circuit sets how fast voltage across the device changes.
+      </li>
+    </ol>
+
+    <div class="callouts">
+      <div class="card">
+        <h4>Common mistakes</h4>
+        <ul>
+          <li>Using λ in the medium instead of λ<sub>0</sub> without consistency.</li>
+          <li>Forgetting r is in <em>m/V</em> (pm/V needs conversion).</li>
+          <li>Mixing cm² and m² when computing capacitance.</li>
+          <li>Comparing τ to t<sub>opt</sub> but quoting rise time without stating which.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Quick tips</h4>
+        <ul>
+          <li>Check units at every major step; Vπ must be volts, C must be farads.</li>
+          <li>Expect Vπ to be <em>hundreds of volts</em> for bulk longitudinal crystals (often large).</li>
+          <li>Expect C to be small for long, moderate-area crystals: C ~ εA/L.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="part3">
+    <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+    <h3>Qualitative expectation (before calculating)</h3>
+    <p>
+      Because the EO coefficient is only ~10<sup>−12</sup> m/V, the index change per volt is tiny.
+      To get a π phase shift at λ ~ 1 μm, we usually need a substantial voltage unless the device uses a long interaction length,
+      resonant enhancement, or a transverse geometry with small electrode spacing.
+      In longitudinal geometry, the length cancels in Vπ, so Vπ can be fairly large.
+      For speed, the optical transit time through 3 cm of n≈3.6 material is on the order of 0.3–0.4 ns.
+      The RC time depends on capacitance: with A=1 cm² and L=3 cm, C might be only a few pF, giving τ ~ 0.1 ns with 50 Ω.
+      So we anticipate the <strong>optical transit</strong> may be comparable to or larger than the RC time.
+    </p>
+
+    <h3>Step 1 — From Pockels law to Δn</h3>
+    <p>
+      The linear electro-optic (Pockels) relation for a suitable polarization/direction can be written (effective scalar form):
+    </p>
+    <div class="keyEq" id="eqPockels">Δ(1/n^2) = r E</div>
+    <p>
+      We want Δn, not Δ(1/n²). Use a small-perturbation expansion. Let n → n + Δn with |Δn| ≪ n.
+      Then:
+    </p>
+    <div class="keyEq" id="eqDerive1">(1/(n+Δn)^2) ≈ (1/n^2) (1 + Δn/n)^(-2) ≈ (1/n^2) [1 − 2(Δn/n)]</div>
+    <p>
+      Therefore the change is:
+    </p>
+    <div class="keyEq" id="eqDerive2">Δ(1/n^2) ≈ −(2Δn)/n^3</div>
+    <p>
+      Set this equal to rE:
+    </p>
+    <div class="keyEq" id="eqDn">−(2Δn)/n^3 = rE  ⇒  Δn = −(1/2) n^3 r E</div>
+    <p class="muted">
+      What we did: linearized the index-ellipsoid relation. Why: the EO effect is small, so first-order perturbation is accurate.
+    </p>
+
+    <h3>Step 2 — Longitudinal geometry: relate E to V</h3>
+    <p>
+      In longitudinal configuration, the electric field is along the propagation direction and (idealized) uniform over length L, so:
+    </p>
+    <div class="keyEq" id="eqE">E ≈ V / L</div>
+    <p class="muted">Meaning: the voltage drops approximately uniformly over the crystal length.</p>
+
+    <h3>Step 3 — Phase shift from index change</h3>
+    <p>
+      An optical wave of vacuum wavelength λ<sub>0</sub> accumulates phase φ = (2π/λ<sub>0</sub>) nL in a medium of index n over length L.
+      A change Δn changes the phase by:
+    </p>
+    <div class="keyEq" id="eqPhase">Δφ = (2π/λ0) (Δn) L</div>
+    <p>
+      Substitute Δn from Step 1 and E from Step 2:
+    </p>
+    <div class="keyEq" id="eqPhaseV">Δφ = (2π/λ0) [−(1/2) n^3 r (V/L)] L = −(π n^3 r / λ0) V</div>
+    <p class="muted">
+      Key insight: the L cancels in longitudinal geometry. Longer crystal lowers E for fixed V, but increases interaction length equally.
+    </p>
+
+    <h3>Step 4 — Half-wave voltage Vπ</h3>
+    <p>
+      The half-wave voltage is defined by a phase shift magnitude |Δφ| = π. Using the magnitude:
+    </p>
+    <div class="keyEq" id="eqVpiSymbol">|Δφ| = π  ⇒  (π n^3 r / λ0) Vπ = π  ⇒  Vπ = λ0 / (n^3 r)</div>
+
+    <p>
+      Now insert numbers:
+      n = 3.6 → n³ = 3.6³ = 46.656,
+      r = 1.6×10<sup>−12</sup> m/V,
+      λ<sub>0</sub> = 1.3×10<sup>−6</sup> m.
+    </p>
+    <div class="keyEq" id="eqVpiNum">Vπ = (1.3e−6) / (46.656 × 1.6e−12)  V</div>
+    <p>
+      Compute denominator: 46.656×1.6×10<sup>−12</sup> = 74.6496×10<sup>−12</sup> = 7.46496×10<sup>−11</sup>.
+      Then:
+    </p>
+    <div class="keyEq" id="eqVpiNum2">Vπ ≈ (1.3e−6) / (7.46496e−11) ≈ 1.7416e4 V ≈ 1.74×10^4 V</div>
+    <p class="muted">
+      Interpretation: bulk longitudinal modulators require very high voltages because the field is distributed over the full length.
+    </p>
+
+    <h3>Step 5 — Optical transit time through the crystal</h3>
+    <p>
+      The optical group velocity (approx) is v ≈ c/n (assuming dispersion is modest and n is treated as phase index).
+      Transit time:
+    </p>
+    <div class="keyEq" id="eqTopt">topt = L / (c/n) = nL / c</div>
+    <p>
+      Insert numbers: n=3.6, L=0.03 m, c=2.99792458×10<sup>8</sup> m/s.
+    </p>
+    <div class="keyEq" id="eqToptNum">topt = (3.6 × 0.03) / (2.99792458e8) s = 0.108 / 2.99792458e8 s</div>
+    <div class="keyEq" id="eqToptNum2">topt ≈ 3.603e−10 s ≈ 0.360 ns</div>
+
+    <h3>Step 6 — Device capacitance (parallel-plate approximation)</h3>
+    <p>
+      Model the device as a capacitor with permittivity ε=ε<sub>r</sub>ε<sub>0</sub>, area A, and separation L:
+    </p>
+    <div class="keyEq" id="eqCap">C = ε A / L = (εr ε0) A / L</div>
+    <p>
+      Convert units: A = 1 cm² = 1×10<sup>−4</sup> m², L = 0.03 m, ε<sub>r</sub>=13.5, ε<sub>0</sub>=8.8541878128×10<sup>−12</sup> F/m.
+    </p>
+    <div class="keyEq" id="eqCapNum">C = (13.5 × 8.8541878128e−12) × (1e−4) / (3e−2)  F</div>
+    <p>
+      Compute ε: 13.5×8.8541878128×10<sup>−12</sup> ≈ 1.19531535×10<sup>−10</sup> F/m.
+      Then:
+    </p>
+    <div class="keyEq" id="eqCapNum2">C ≈ (1.1953e−10 × 1e−4) / 3e−2 ≈ 1.1953e−14 / 3e−2 ≈ 3.984e−13 F</div>
+    <div class="keyEq" id="eqCapNum3">C ≈ 3.98e−13 F ≈ 0.398 pF</div>
+
+    <h3>Step 7 — Electrical response time with 50 Ω source</h3>
+    <p>
+      Driving a capacitor C through source resistance R<sub>s</sub> gives a first-order time constant:
+    </p>
+    <div class="keyEq" id="eqTau">τ = Rs C</div>
+    <p>
+      Insert R<sub>s</sub>=50 Ω and C≈3.98×10<sup>−13</sup> F:
+    </p>
+    <div class="keyEq" id="eqTauNum">τ ≈ 50 × 3.98e−13 s ≈ 1.99e−11 s ≈ 0.0199 ns</div>
+    <p>
+      If you prefer a more “digital” metric, the 10–90% rise time is approximately:
+    </p>
+    <div class="keyEq" id="eqRise">tr(10–90%) ≈ 2.2 τ ≈ 0.0438 ns</div>
+
+    <h3>Step 8 — Which factor limits the speed?</h3>
+    <p>
+      Compare the times:
+    </p>
+    <ul>
+      <li>Optical transit time: t<sub>opt</sub> ≈ 0.360 ns</li>
+      <li>Electrical RC time constant: τ ≈ 0.0199 ns (rise time ≈ 0.0438 ns)</li>
+    </ul>
+    <p>
+      The optical transit time is about <strong>18×</strong> larger than τ (and about <strong>8×</strong> larger than the 10–90% rise time).
+      Therefore, under the stated lumped-element assumptions, the <strong>transit time of light through the crystal limits the speed</strong>,
+      not the electrical RC response.
+    </p>
+
+    <div class="answerBox" id="finalAnswerBox">
+      <h3>Final Answer (boxed)</h3>
+      <div class="answerGrid">
+        <div class="kv">
+          <div class="k">Half-wave voltage</div>
+          <div class="v">Vπ = λ0 / (n^3 r) ≈ 1.74×10^4 V</div>
+        </div>
+        <div class="kv">
+          <div class="k">Optical transit time</div>
+          <div class="v">topt = nL/c ≈ 3.60×10^−10 s = 0.360 ns</div>
+        </div>
+        <div class="kv">
+          <div class="k">Capacitance</div>
+          <div class="v">C = εr ε0 A / L ≈ 3.98×10^−13 F = 0.398 pF</div>
+        </div>
+        <div class="kv">
+          <div class="k">Electrical response</div>
+          <div class="v">τ = Rs C ≈ 1.99×10^−11 s = 0.0199 ns (tr≈0.0438 ns)</div>
+        </div>
+      </div>
+      <p style="margin-top:10px">
+        <strong>Speed limit:</strong> optical transit time (t<sub>opt</sub> ≫ RC time) dominates for the given parameters.
+      </p>
+      <div class="btnRow">
+        <button class="copyBtn" data-copy="#finalPlain">Copy final answer (plain text)</button>
+        <span class="copyNote" id="copyNoteFinal"></span>
+      </div>
+      <pre class="keyEq" id="finalPlain" style="margin-top:10px; white-space:pre-wrap;">Vπ = λ0/(n^3 r) ≈ 1.74×10^4 V
+t_opt = nL/c ≈ 0.360 ns
+C = εr ε0 A/L ≈ 0.398 pF
+τ = Rs C ≈ 0.0199 ns (10–90% rise ≈ 0.0438 ns)
+Speed limit: optical transit time (t_opt dominates over RC)</pre>
+    </div>
+
+    <h3>Sanity checks</h3>
+    <ul>
+      <li><strong>Units:</strong> Vπ uses λ (m) divided by (unitless × m/V) → volts. C uses (F/m)×m²/m → F. Times are seconds.</li>
+      <li><strong>Limiting cases:</strong> If r increases → Vπ decreases (easier modulation). If n increases → Vπ decreases strongly (∝1/n³) but t<sub>opt</sub> increases (slower optical transit).</li>
+      <li><strong>Geometry consistency:</strong> In longitudinal geometry, L cancels in Vπ (matches our derivation), but C decreases with L, so electrical speed can improve with longer L even though optical transit worsens.</li>
+      <li><strong>Physical interpretation:</strong> The device can charge electrically very fast (small C), but light still takes ~0.36 ns to traverse 3 cm of GaAs, so the modulation “seen” at the output cannot change faster than that traversal.</li>
+    </ul>
+  </section>
+
+  <section id="part4">
+    <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+    <h3>Re-interpreting the key formulas</h3>
+    <div class="callouts">
+      <div class="card">
+        <h4>What controls Vπ?</h4>
+        <div class="keyEq">Vπ = λ0/(n^3 r)</div>
+        <ul class="muted">
+          <li><strong>λ0</strong>: longer wavelength needs larger Vπ (phase per length is smaller).</li>
+          <li><strong>n^3</strong>: strong dependence; higher index materials are more efficient (in this simplified scalar model).</li>
+          <li><strong>r</strong>: higher EO coefficient lowers Vπ.</li>
+          <li><strong>Notably:</strong> L cancels (longitudinal), unlike transverse modulators where electrode spacing matters.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>What controls speed?</h4>
+        <div class="keyEq">topt = nL/c,   τ = Rs (εr ε0 A/L)</div>
+        <ul class="muted">
+          <li><strong>Optical:</strong> scales with n and L (longer or higher-n means slower).</li>
+          <li><strong>Electrical (lumped):</strong> τ ∝ A and τ ∝ 1/L. Bigger area slows the circuit; longer L reduces C (faster).</li>
+          <li>So there is a tradeoff: increasing L doesn’t help Vπ (longitudinal), but it slows optical transit while speeding RC.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>How changing parameters affects outcomes (connect to plots)</h3>
+    <ul>
+      <li>If you increase <strong>area A</strong>, capacitance increases linearly → τ increases → electrical limit can start dominating.</li>
+      <li>If you increase <strong>length L</strong>, optical transit increases linearly, but τ decreases like 1/L (in this simple model).</li>
+      <li>If you increase <strong>n</strong>, you decrease Vπ strongly but increase t<sub>opt</sub>.</li>
+      <li>If you increase <strong>r</strong>, you reduce Vπ (better modulation efficiency) without directly affecting speed in this lumped approximation.</li>
+    </ul>
+
+    <h3>Alternative derivation idea</h3>
+    <p>
+      Instead of linearizing Δ(1/n²), you can start from the definition of optical path length (OPL) = ∫n ds.
+      For a uniform medium: OPL = nL. A voltage-induced Δn produces Δ(OPL)=Δn·L.
+      Then Δφ = (2π/λ<sub>0</sub>)Δ(OPL). Combine with Δn from EO tensor relations to reach the same Vπ.
+    </p>
+
+    <h3>Concept checks (with answers)</h3>
+    <ul>
+      <li><strong>Q:</strong> Why does Vπ not depend on L in longitudinal geometry? <br />
+        <strong>A:</strong> Because E=V/L decreases with L, but phase accumulation increases with L; they cancel: Δφ ∝ (V/L)·L = V.</li>
+      <li><strong>Q:</strong> If we halve the area A, what happens to τ? <br />
+        <strong>A:</strong> τ halves (since C ∝ A).</li>
+      <li><strong>Q:</strong> If the same device were driven by 1 kΩ instead of 50 Ω, what likely dominates? <br />
+        <strong>A:</strong> τ would increase by 20×, likely becoming comparable to or larger than t<sub>opt</sub>, making electrical response dominant.</li>
+      <li><strong>Q:</strong> Does a large Vπ necessarily mean slow device? <br />
+        <strong>A:</strong> Not necessarily. Vπ is modulation efficiency; speed is about how fast the field/phase can change (RC, wave propagation, transit time).</li>
+    </ul>
+  </section>
+
+  <section id="part5">
+    <h2>PART 5 — Visualization Guide (How to Read the Plots)</h2>
+    <p>
+      Below you will find three canvases:
+    </p>
+    <ul>
+      <li><strong>Diagram:</strong> a labeled longitudinal EO modulator: crystal length L, applied voltage V across the length, optical wave propagating through.</li>
+      <li><strong>Main plot:</strong> phase shift Δφ versus applied voltage V, showing the half-wave point where |Δφ|=π at V=Vπ.</li>
+      <li><strong>Secondary plot (parameter sweep):</strong> compares <em>optical transit time</em> t<sub>opt</sub> and <em>electrical time constant</em> τ versus a chosen sweep parameter (here: length L) while holding other parameters fixed (or using the values you set).</li>
+    </ul>
+    <p>
+      <strong>Interactive controls:</strong> you can change A and L (and also n, r, λ<sub>0</sub>, ε<sub>r</sub>, R<sub>s</sub>).
+      The page will recompute Vπ, t<sub>opt</sub>, C, and τ and update <em>all</em> plots live.
+      Watch how Vπ is almost unaffected by L (longitudinal), while t<sub>opt</sub> grows with L and τ shrinks with L.
+    </p>
+  </section>
+
+  <section id="viz">
+    <h2>Interactive Visualizations</h2>
+
+    <div class="vizWrap">
+      <div class="vizCard">
+        <div class="canvasTitle">
+          <strong>Diagram: Longitudinal EO Phase Modulator</strong>
+          <span>not to scale</span>
+        </div>
+        <canvas id="diagram"></canvas>
+
+        <div class="canvasTitle" style="margin-top:12px">
+          <strong>Main Plot: Phase Shift vs Voltage</strong>
+          <span>Δφ(V) with Vπ marker</span>
+        </div>
+        <canvas id="plot1"></canvas>
+
+        <div class="canvasTitle" style="margin-top:12px">
+          <strong>Secondary Plot: Time Limits vs Length</strong>
+          <span>topt(L) and τ(L)</span>
+        </div>
+        <canvas id="plot2"></canvas>
+      </div>
+
+      <div class="controls">
+        <div class="vizCard">
+          <div class="canvasTitle">
+            <strong>Controls</strong>
+            <span>updates everything</span>
+          </div>
+
+          <div class="ctrlBlock">
+            <h4>Material / Optical</h4>
+            <div class="inline">
+              <div>
+                <label class="muted" for="nIn">Refractive index n</label>
+                <input id="nIn" type="number" step="0.1" min="1" max="6" value="3.6" />
+              </div>
+              <div>
+                <label class="muted" for="rIn">EO coeff r (pm/V)</label>
+                <input id="rIn" type="number" step="0.1" min="0.1" max="100" value="1.6" />
+              </div>
+            </div>
+            <div class="inline" style="margin-top:10px">
+              <div>
+                <label class="muted" for="lamIn">λ0 (μm)</label>
+                <input id="lamIn" type="number" step="0.01" min="0.2" max="3.0" value="1.3" />
+              </div>
+              <div>
+                <label class="muted" for="erIn">εr</label>
+                <input id="erIn" type="number" step="0.1" min="1" max="30" value="13.5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="ctrlBlock">
+            <h4>Geometry</h4>
+            <div class="row">
+              <div>
+                <label for="Lrange">Length L (cm)</label>
+                <input id="Lrange" type="range" min="0.5" max="10" step="0.1" value="3.0" />
+              </div>
+              <div class="val" id="Lval">3.0 cm</div>
+            </div>
+            <div class="row">
+              <div>
+                <label for="Arange">Area A (cm²)</label>
+                <input id="Arange" type="range" min="0.05" max="5" step="0.05" value="1.00" />
+              </div>
+              <div class="val" id="Aval">1.00 cm²</div>
+            </div>
+          </div>
+
+          <div class="ctrlBlock">
+            <h4>Drive / Plot Settings</h4>
+            <div class="inline">
+              <div>
+                <label class="muted" for="RsIn">Source resistance Rs (Ω)</label>
+                <input id="RsIn" type="number" step="1" min="1" max="5000" value="50" />
+              </div>
+              <div>
+                <label class="muted" for="VmaxIn">Plot V max (kV)</label>
+                <input id="VmaxIn" type="number" step="1" min="1" max="80" value="25" />
+              </div>
+            </div>
+            <div class="btnRow" style="margin-top:10px">
+              <button class="copyBtn" id="resetBtn">Reset to problem values</button>
+              <button class="copyBtn" id="snapBtn">Snap plot Vmax to ~1.5×Vπ</button>
+            </div>
+            <p class="muted" style="margin:8px 0 0">
+              Tip: Increase A or Rs to see the electrical RC become the dominant limit.
+            </p>
+          </div>
+
+          <div class="ctrlBlock">
+            <h4>Live computed results</h4>
+            <div class="keyEq" id="liveText" style="white-space:pre-wrap">—</div>
+            <div class="btnRow">
+              <button class="copyBtn" data-copy="#liveText">Copy live results</button>
+              <span class="copyNote" id="copyNoteLive"></span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>
+    Notes: This is a simplified lumped model for the electrical response (RC) and a scalar-effective EO coefficient.
+    In high-speed practice, electrode transmission-line effects and velocity matching can matter, but the problem explicitly provides low-frequency εr and a source resistance, indicating an RC comparison is intended.
+  </p>
+</footer>
+
+<script>
+(() => {
+  const C0 = {
+    c: 2.99792458e8,
+    eps0: 8.8541878128e-12,
+    pi: Math.PI
+  };
+
+  const els = {
+    diagram: document.getElementById('diagram'),
+    plot1: document.getElementById('plot1'),
+    plot2: document.getElementById('plot2'),
+
+    nIn: document.getElementById('nIn'),
+    rIn: document.getElementById('rIn'),
+    lamIn: document.getElementById('lamIn'),
+    erIn: document.getElementById('erIn'),
+
+    Lrange: document.getElementById('Lrange'),
+    Arange: document.getElementById('Arange'),
+    Lval: document.getElementById('Lval'),
+    Aval: document.getElementById('Aval'),
+
+    RsIn: document.getElementById('RsIn'),
+    VmaxIn: document.getElementById('VmaxIn'),
+
+    resetBtn: document.getElementById('resetBtn'),
+    snapBtn: document.getElementById('snapBtn'),
+
+    liveText: document.getElementById('liveText'),
+  };
+
+  function fmt(x, sig=3){
+    if (!isFinite(x)) return "—";
+    const ax = Math.abs(x);
+    if (ax === 0) return "0";
+    if (ax >= 1e4 || ax < 1e-3) return x.toExponential(sig);
+    return x.toFixed(sig);
+  }
+  function fmtSI(x, unit){
+    return `${fmt(x,3)} ${unit}`;
+  }
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+  function readParams(){
+    const n = parseFloat(els.nIn.value);
+    const r_pm = parseFloat(els.rIn.value);
+    const r = r_pm * 1e-12;
+    const lam_um = parseFloat(els.lamIn.value);
+    const lam0 = lam_um * 1e-6;
+    const er = parseFloat(els.erIn.value);
+
+    const L_cm = parseFloat(els.Lrange.value);
+    const L = L_cm * 1e-2;
+    const A_cm2 = parseFloat(els.Arange.value);
+    const A = A_cm2 * 1e-4;
+
+    const Rs = parseFloat(els.RsIn.value);
+    const Vmax_kV = parseFloat(els.VmaxIn.value);
+    const Vmax = Vmax_kV * 1e3;
+
+    return { n, r_pm, r, lam_um, lam0, er, L_cm, L, A_cm2, A, Rs, Vmax_kV, Vmax };
+  }
+
+  function compute(p){
+    const n3 = p.n*p.n*p.n;
+    const Vpi = p.lam0/(n3*p.r);
+    const topt = p.n*p.L/C0.c;
+    const eps = p.er*C0.eps0;
+    const C = eps*p.A/p.L;
+    const tau = p.Rs*C;
+    const tr = 2.2*tau;
+
+    const f3dB = 1/(2*C0.pi*tau);
+
+    return { n3, Vpi, topt, eps, C, tau, tr, f3dB };
+  }
+
+  // HiDPI canvas helpers
+  function resizeCanvas(canvas, desiredCSSHeight){
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(2, Math.floor(rect.width));
+    const hCSS = desiredCSSHeight || rect.height || 300;
+    const h = Math.max(2, Math.floor(hCSS));
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+    return { ctx: canvas.getContext('2d'), w, h, dpr };
+  }
+
+  function clear(ctx, w, h, dpr){
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,w,h);
+  }
+
+  function drawGridAxes(ctx, w, h, opts){
+    const {
+      padL=54, padR=18, padT=18, padB=40,
+      xMin=0, xMax=1, yMin=0, yMax=1,
+      xLabel="", yLabel="", title="",
+      xTicks=6, yTicks=6
+    } = opts;
+
+    const plot = { x0: padL, y0: padT, x1: w-padR, y1: h-padB };
+    const pw = plot.x1-plot.x0, ph = plot.y1-plot.y0;
+
+    const getX = (x)=> plot.x0 + (x-xMin)/(xMax-xMin)*pw;
+    const getY = (y)=> plot.y1 - (y-yMin)/(yMax-yMin)*ph;
+
+    // Background
+    ctx.save();
+    ctx.fillStyle = "rgba(127,127,127,0.06)";
+    ctx.fillRect(plot.x0, plot.y0, pw, ph);
+    ctx.restore();
+
+    // Grid + ticks
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(127,127,127,0.20)";
+    ctx.fillStyle = "rgba(127,127,127,0.75)";
+    ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+
+    for(let i=0;i<=xTicks;i++){
+      const t = i/xTicks;
+      const x = plot.x0 + t*pw;
+      ctx.beginPath();
+      ctx.moveTo(x, plot.y0);
+      ctx.lineTo(x, plot.y1);
+      ctx.stroke();
+
+      const xv = xMin + t*(xMax-xMin);
+      ctx.fillText(formatTick(xv), x, plot.y1+6);
+    }
+
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    for(let j=0;j<=yTicks;j++){
+      const t = j/yTicks;
+      const y = plot.y1 - t*ph;
+      ctx.beginPath();
+      ctx.moveTo(plot.x0, y);
+      ctx.lineTo(plot.x1, y);
+      ctx.stroke();
+
+      const yv = yMin + t*(yMax-yMin);
+      ctx.fillText(formatTick(yv), plot.x0-6, y);
+    }
+
+    // Axes border
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,0.22)";
+    ctx.strokeRect(plot.x0, plot.y0, pw, ph);
+    ctx.restore();
+
+    // Title
+    ctx.save();
+    ctx.fillStyle = "rgba(127,127,127,0.85)";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.font = "600 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.fillText(title, plot.x0, 2);
+    ctx.restore();
+
+    // Labels
+    ctx.save();
+    ctx.fillStyle = "rgba(127,127,127,0.85)";
+    ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillText(xLabel, plot.x0 + pw/2, h-6);
+
+    ctx.translate(14, plot.y0 + ph/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.textBaseline = "top";
+    ctx.fillText(yLabel, 0, 0);
+    ctx.restore();
+
+    return { plot, getX, getY };
+  }
+
+  function formatTick(v){
+    const av = Math.abs(v);
+    if (av >= 1e4 || (av > 0 && av < 1e-3)) return v.toExponential(1);
+    if (av >= 100) return v.toFixed(0);
+    if (av >= 10) return v.toFixed(1);
+    if (av >= 1) return v.toFixed(2);
+    return v.toFixed(3);
+  }
+
+  function legend(ctx, w, items){
+    // items: [{label, styleFn(ctx)}]
+    const pad = 10;
+    const x = w - 8;
+    let y = 10;
+    ctx.save();
+    ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+    for(const it of items){
+      it.styleFn(ctx);
+      ctx.fillRect(x-12, y+3, 10, 3);
+      ctx.fillStyle = "rgba(127,127,127,0.88)";
+      ctx.fillText(it.label, x-18, y-2);
+      y += 16;
+    }
+    ctx.restore();
+  }
+
+  function drawDiagram(p, c){
+    const { ctx, w, h, dpr } = c;
+    clear(ctx,w,h,dpr);
+
+    const pad = 18;
+    const x0 = pad, y0 = pad+8, x1 = w-pad, y1 = h-pad;
+    const midY = (y0+y1)/2;
+
+    // Crystal block
+    const Lpx = (x1-x0)*0.72;
+    const blockH = (y1-y0)*0.35;
+    const bx = x0 + (x1-x0)*0.14;
+    const by = midY - blockH/2;
+
+    // Glow background
+    ctx.save();
+    ctx.fillStyle = "rgba(127,127,127,0.06)";
+    ctx.fillRect(x0, y0, x1-x0, y1-y0);
+    ctx.restore();
+
+    // Block
+    ctx.save();
+    ctx.fillStyle = "rgba(123,220,255,0.10)";
+    ctx.strokeStyle = "rgba(123,220,255,0.35)";
+    ctx.lineWidth = 2;
+    roundRect(ctx, bx, by, Lpx, blockH, 14);
+    ctx.fill();
+    ctx.stroke();
+
+    // Optical arrow (propagation)
+    const ax0 = bx - 30, ax1 = bx + Lpx + 30;
+    const ay = by + blockH*0.30;
+    drawArrow(ctx, ax0, ay, ax1, ay, "rgba(183,255,123,0.85)", 2.5);
+    ctx.fillStyle = "rgba(183,255,123,0.90)";
+    ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("Optical wave (λ₀), propagation →", ax0, ay-6);
+
+    // Electric field arrow (longitudinal, inside)
+    const ex0 = bx + Lpx*0.10, ex1 = bx + Lpx*0.90;
+    const ey = by + blockH*0.72;
+    drawArrow(ctx, ex0, ey, ex1, ey, "rgba(255,204,102,0.90)", 2.5);
+    ctx.fillStyle = "rgba(255,204,102,0.95)";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText("E ≈ V/L (longitudinal)", ex0, ey+6);
+
+    // Voltage terminals
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,0.30)";
+    ctx.lineWidth = 2;
+    // left terminal
+    ctx.beginPath();
+    ctx.moveTo(bx, by + blockH/2);
+    ctx.lineTo(bx-28, by + blockH/2);
+    ctx.stroke();
+    // right terminal
+    ctx.beginPath();
+    ctx.moveTo(bx+Lpx, by + blockH/2);
+    ctx.lineTo(bx+Lpx+28, by + blockH/2);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("+V", bx+Lpx+44, by + blockH/2);
+    ctx.fillText("0", bx-44, by + blockH/2);
+    ctx.restore();
+
+    // Dimension L annotation
+    const dimY = by - 16;
+    drawDoubleArrow(ctx, bx, dimY, bx+Lpx, dimY, "rgba(255,255,255,0.55)", 2);
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.70)";
+    ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillText(`Crystal length L = ${p.L_cm.toFixed(2)} cm`, bx + Lpx/2, dimY-3);
+    ctx.restore();
+
+    // Area label
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.70)";
+    ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(`Cross-section area A = ${p.A_cm2.toFixed(2)} cm²`, bx, by + blockH + 10);
+    ctx.restore();
+
+    // Material label
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.72)";
+    ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(`GaAs: n=${p.n.toFixed(2)}, r=${p.r_pm.toFixed(2)} pm/V, εr=${p.er.toFixed(1)}`, x0+6, y0+6);
+    ctx.restore();
+
+    // Subtle caption
+    ctx.save();
+    ctx.fillStyle = "rgba(127,127,127,0.85)";
+    ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("Idealized longitudinal electrodes: uniform E along optical path", x0+6, y1-6);
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+  function drawArrow(ctx, x0, y0, x1, y1, strokeStyle, lw){
+    const dx = x1-x0, dy = y1-y0;
+    const L = Math.hypot(dx,dy) || 1;
+    const ux = dx/L, uy = dy/L;
+    const head = 10;
+    ctx.save();
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = lw;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x0,y0);
+    ctx.lineTo(x1,y1);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x1 - ux*head - uy*head*0.55, y1 - uy*head + ux*head*0.55);
+    ctx.lineTo(x1 - ux*head + uy*head*0.55, y1 - uy*head - ux*head*0.55);
+    ctx.closePath();
+    ctx.fillStyle = strokeStyle;
+    ctx.fill();
+    ctx.restore();
+  }
+  function drawDoubleArrow(ctx, x0, y0, x1, y1, strokeStyle, lw){
+    drawArrow(ctx, x0, y0, x1, y1, strokeStyle, lw);
+    drawArrow(ctx, x1, y1, x0, y0, strokeStyle, lw);
+  }
+
+  function drawPhasePlot(p, comp, c){
+    const { ctx, w, h, dpr } = c;
+    clear(ctx,w,h,dpr);
+
+    const Vmax = Math.max(1, p.Vmax);
+    const Vmin = 0;
+
+    // Δφ = -(π n^3 r / λ0) V
+    const slope = -(C0.pi * (p.n*p.n*p.n) * p.r / p.lam0); // rad/V
+    // Plot from 0..Vmax, y range from min to max
+    const yAtMax = slope * Vmax;
+    const yMin = Math.min(0, yAtMax, -C0.pi*1.2);
+    const yMax = Math.max(0, yAtMax,  C0.pi*0.2);
+
+    const ax = drawGridAxes(ctx,w,h,{
+      xMin: Vmin, xMax: Vmax,
+      yMin: yMin, yMax: yMax,
+      xLabel: "Voltage V (V)",
+      yLabel: "Phase shift Δφ (rad)",
+      title: "Δφ(V) = −(π n³ r / λ₀) V",
+      xTicks: 6,
+      yTicks: 6
+    });
+
+    // Curve
+    ctx.save();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "rgba(183,255,123,0.90)";
+    ctx.beginPath();
+    const N = 300;
+    for(let i=0;i<=N;i++){
+      const V = Vmin + (Vmax-Vmin)*(i/N);
+      const y = slope*V;
+      const X = ax.getX(V), Y = ax.getY(y);
+      if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+    }
+    ctx.stroke();
+
+    // Horizontal line at -π (half-wave magnitude)
+    ctx.strokeStyle = "rgba(255,204,102,0.85)";
+    ctx.setLineDash([6,4]);
+    ctx.beginPath();
+    ctx.moveTo(ax.plot.x0, ax.getY(-C0.pi));
+    ctx.lineTo(ax.plot.x1, ax.getY(-C0.pi));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Vπ marker
+    const Vpi = comp.Vpi;
+    if (isFinite(Vpi)){
+      const Xv = ax.getX(clamp(Vpi, Vmin, Vmax));
+      ctx.strokeStyle = "rgba(123,220,255,0.95)";
+      ctx.setLineDash([6,4]);
+      ctx.beginPath();
+      ctx.moveTo(Xv, ax.plot.y0);
+      ctx.lineTo(Xv, ax.plot.y1);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // point
+      const Yp = ax.getY(slope*clamp(Vpi, Vmin, Vmax));
+      ctx.fillStyle = "rgba(123,220,255,0.95)";
+      ctx.beginPath();
+      ctx.arc(Xv, Yp, 4.5, 0, Math.PI*2);
+      ctx.fill();
+
+      // label
+      ctx.fillStyle = "rgba(123,220,255,0.95)";
+      ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(`Vπ ≈ ${fmt(Vpi,3)} V`, Xv+6, ax.getY(-C0.pi)-6);
+    }
+
+    // Legend
+    legend(ctx, w, [
+      {label:"Δφ(V)", styleFn:(c2)=>{c2.fillStyle="rgba(183,255,123,0.90)";}},
+      {label:"Δφ=−π", styleFn:(c2)=>{c2.fillStyle="rgba(255,204,102,0.85)";}},
+      {label:"Vπ", styleFn:(c2)=>{c2.fillStyle="rgba(123,220,255,0.95)";}},
+    ]);
+
+    ctx.restore();
+  }
+
+  function drawTimeSweepPlot(p, baseComp, c){
+    const { ctx, w, h, dpr } = c;
+    clear(ctx,w,h,dpr);
+
+    // Sweep L from 0.5 cm to 10 cm, keep A and others fixed at current controls
+    const Lmin_cm = 0.5, Lmax_cm = 10.0;
+    const Lmin = Lmin_cm*1e-2, Lmax = Lmax_cm*1e-2;
+
+    // Compute arrays
+    const N = 240;
+    let tMin = Infinity, tMax = -Infinity;
+    const arr = [];
+    for(let i=0;i<=N;i++){
+      const L = Lmin + (Lmax-Lmin)*(i/N);
+      const topt = p.n*L/C0.c;
+      const C = (p.er*C0.eps0)*p.A/L;
+      const tau = p.Rs*C;
+      arr.push({L, topt, tau});
+      tMin = Math.min(tMin, topt, tau);
+      tMax = Math.max(tMax, topt, tau);
+    }
+
+    // Expand range for clarity
+    tMin = Math.max(0, tMin*0.85);
+    tMax = tMax*1.15;
+
+    const ax = drawGridAxes(ctx,w,h,{
+      xMin: Lmin_cm, xMax: Lmax_cm,
+      yMin: tMin*1e9, yMax: tMax*1e9, // plot in ns
+      xLabel: "Length L (cm)",
+      yLabel: "Time (ns)",
+      title: "Speed limits vs length: t_opt(L) and τ(L)=Rs·εA/L",
+      xTicks: 6,
+      yTicks: 6
+    });
+
+    // Curves
+    ctx.save();
+    ctx.lineWidth = 2.5;
+
+    // topt
+    ctx.strokeStyle = "rgba(255,204,102,0.90)";
+    ctx.beginPath();
+    for(let i=0;i<arr.length;i++){
+      const Lcm = arr[i].L*100;
+      const y = arr[i].topt*1e9;
+      const X = ax.getX(Lcm), Y = ax.getY(y);
+      if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+    }
+    ctx.stroke();
+
+    // tau
+    ctx.strokeStyle = "rgba(123,220,255,0.95)";
+    ctx.beginPath();
+    for(let i=0;i<arr.length;i++){
+      const Lcm = arr[i].L*100;
+      const y = arr[i].tau*1e9;
+      const X = ax.getX(Lcm), Y = ax.getY(y);
+      if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+    }
+    ctx.stroke();
+
+    // Mark current L
+    const curLcm = p.L_cm;
+    ctx.strokeStyle = "rgba(183,255,123,0.85)";
+    ctx.setLineDash([6,4]);
+    ctx.beginPath();
+    ctx.moveTo(ax.getX(curLcm), ax.plot.y0);
+    ctx.lineTo(ax.getX(curLcm), ax.plot.y1);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Intersection estimate (optional): find L where topt=tau
+    let best = null;
+    for(let i=1;i<arr.length;i++){
+      const a = arr[i-1], b = arr[i];
+      const fa = a.topt - a.tau;
+      const fb = b.topt - b.tau;
+      if (fa===0){ best = a; break; }
+      if (fa*fb < 0){
+        const t = fa/(fa-fb);
+        const Lint = (a.L + t*(b.L-a.L));
+        const toptInt = p.n*Lint/C0.c;
+        best = {L: Lint, topt: toptInt, tau: toptInt};
+        break;
+      }
+    }
+
+  /* Why you might get an error here (most common causes)
+    1) best exists but best.L or best.topt is undefined/NaN  -> .toFixed(...) crashes or getX/getY gets NaN.
+    2) ax.getX / ax.getY not functions (ax not what you expect) -> earlier drawGridAxes failed or returned wrong object.
+    3) legend(...) is not defined in this scope (hoisting / overwritten name) -> runtime ReferenceError at legend line.
+    4) ctx.restore() mismatch (restore without a matching save) -> not usually a hard error, but can cause weird state.
+
+    Fix approach: guard everything + compute safe numbers + only label when finite.
+  */
+
+  if (best && Number.isFinite(best.L) && Number.isFinite(best.topt)) {
+    const Lcm = best.L * 100;
+    const tns = best.topt * 1e9;
+
+    // Guard against invalid axis mapping functions too
+    if (ax && typeof ax.getX === "function" && typeof ax.getY === "function") {
+      const X = ax.getX(Lcm);
+      const Y = ax.getY(tns);
+
+      // Only draw if mapping produced finite pixel coordinates
+      if (Number.isFinite(X) && Number.isFinite(Y)) {
+        ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,0.85)";
+        ctx.beginPath();
+        ctx.arc(X, Y, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(255,255,255,0.78)";
+        ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+
+        // Safely format label
+        const label = `t_opt = τ near L ≈ ${Lcm.toFixed(2)} cm`;
+        ctx.fillText(label, X + 6, Y - 6);
+        ctx.restore();
+      }
+    }
+  }
+
+  // Call legend only if it exists (prevents ReferenceError)
+  if (typeof legend === "function") {
+    legend(ctx, w, [
+      { label: "t_opt (ns)", styleFn: (c2) => { c2.fillStyle = "rgba(255,204,102,0.90)"; } },
+      { label: "τ = Rs·C (ns)", styleFn: (c2) => { c2.fillStyle = "rgba(123,220,255,0.95)"; } },
+      { label: "current L", styleFn: (c2) => { c2.fillStyle = "rgba(183,255,123,0.85)"; } },
+    ]);
+  }
+
+  // Only restore if you KNOW you saved earlier in this function.
+  // If you did `ctx.save()` at the start of drawTimeSweepPlot, keep this.
+  // Otherwise remove it to avoid save/restore imbalance.
+  // ctx.restore();
+
+
+  /* The template literal block in updateLiveText can error if:
+    - fmt is not defined in scope
+    - p.* fields are not numbers (toFixed throws if value is not finite number)
+    Fix: use safe numeric parsing and fallbacks.
+  */
+  function safeFixed(x, digits) {
+    return Number.isFinite(x) ? x.toFixed(digits) : "—";
+  }
+
+  function updateLiveText(p, comp) {
+    const dominant = (comp.topt > comp.tau) ? "Optical transit time dominates" : "Electrical RC dominates";
+    const dominant2 = (comp.topt > comp.tr) ? "Optical transit dominates (even vs 10–90% rise)" : "Electrical rise dominates";
+
+    const txt =
+  `Inputs:
+    n = ${safeFixed(p.n, 3)}
+    r = ${safeFixed(p.r_pm, 3)} pm/V
+    λ0 = ${safeFixed(p.lam_um, 3)} μm
+    εr = ${safeFixed(p.er, 3)}
+    L = ${safeFixed(p.L_cm, 3)} cm
+    A = ${safeFixed(p.A_cm2, 3)} cm²
+    Rs = ${safeFixed(p.Rs, 2)} Ω
+
+  Computed:
+    Vπ = λ0/(n^3 r) = ${fmt(comp.Vpi, 4)} V
+    t_opt = nL/c = ${fmt(comp.topt * 1e9, 4)} ns
+    C = εr ε0 A/L = ${fmt(comp.C * 1e12, 4)} pF
+    τ = Rs C = ${fmt(comp.tau * 1e9, 4)} ns
+    t_r(10–90%) ≈ 2.2τ = ${fmt(comp.tr * 1e9, 4)} ns
+    f_3dB ≈ 1/(2π τ) = ${fmt(comp.f3dB * 1e-9, 4)} GHz
+
+  Comparison:
+    ${dominant}
+    ${dominant2}`;
+    els.liveText.textContent = txt;
+  }
+
+  function updateLabels(p) {
+    els.Lval.textContent = `${safeFixed(p.L_cm, 1)} cm`;
+    els.Aval.textContent = `${safeFixed(p.A_cm2, 2)} cm²`;
+  }
+
+
+  function renderAll(){
+    const p = readParams();
+    updateLabels(p);
+    const comp = compute(p);
+
+    // show computed
+    updateLiveText(p, comp);
+
+    // canvases: set heights based on CSS
+    const cDiag = resizeCanvas(els.diagram);
+    const cP1 = resizeCanvas(els.plot1);
+    const cP2 = resizeCanvas(els.plot2);
+
+    drawDiagram(p, cDiag);
+    drawPhasePlot(p, comp, cP1);
+    drawTimeSweepPlot(p, comp, cP2);
+  }
+
+  // Copy buttons
+  function setupCopy(){
+    document.querySelectorAll('[data-copy]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const sel = btn.getAttribute('data-copy');
+        const el = document.querySelector(sel);
+        if(!el) return;
+        const text = el.textContent.replace(/\u00A0/g,' ');
+        try{
+          await navigator.clipboard.writeText(text);
+          const noteId =
+            (sel==="#eq1Text") ? "copyNote1" :
+            (sel==="#finalPlain") ? "copyNoteFinal" :
+            (sel==="#liveText") ? "copyNoteLive" : null;
+          if(noteId){
+            const n = document.getElementById(noteId);
+            n.textContent = "Copied ✓";
+            setTimeout(()=>{ n.textContent = ""; }, 1200);
+          }
+        }catch(e){
+          // fallback
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          try{ document.execCommand('copy'); }catch(_){}
+          document.body.removeChild(ta);
+        }
+      });
+    });
+  }
+
+  // Controls events
+  function setupControls(){
+    const rerender = () => renderAll();
+    ['input','change'].forEach(evt=>{
+      els.Lrange.addEventListener(evt, rerender);
+      els.Arange.addEventListener(evt, rerender);
+      els.nIn.addEventListener(evt, rerender);
+      els.rIn.addEventListener(evt, rerender);
+      els.lamIn.addEventListener(evt, rerender);
+      els.erIn.addEventListener(evt, rerender);
+      els.RsIn.addEventListener(evt, rerender);
+      els.VmaxIn.addEventListener(evt, rerender);
+    });
+
+    els.resetBtn.addEventListener('click', ()=>{
+      els.nIn.value = "3.6";
+      els.rIn.value = "1.6";
+      els.lamIn.value = "1.3";
+      els.erIn.value = "13.5";
+      els.Lrange.value = "3.0";
+      els.Arange.value = "1.00";
+      els.RsIn.value = "50";
+      els.VmaxIn.value = "25";
+      renderAll();
+    });
+
+    els.snapBtn.addEventListener('click', ()=>{
+      const p = readParams();
+      const comp = compute(p);
+      const target = (isFinite(comp.Vpi) ? comp.Vpi*1.5 : 25000);
+      const kV = clamp(target/1e3, 1, 80);
+      els.VmaxIn.value = kV.toFixed(0);
+      renderAll();
+    });
+
+    // Resize observer for responsive rendering
+    const ro = new ResizeObserver(() => renderAll());
+    ro.observe(els.diagram);
+    ro.observe(els.plot1);
+    ro.observe(els.plot2);
+
+    window.addEventListener('resize', () => renderAll(), {passive:true});
+  }
+
+  // Init
+  setupCopy();
+  setupControls();
+  renderAll();
+})();
+</script>
+
 </body>
 </html>
