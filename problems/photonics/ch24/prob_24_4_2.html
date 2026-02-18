@@ -2,64 +2,1334 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>24.4-2 — Photonic Logic Gate</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Photonic Logic Gates with a Nonlinear Threshold Device (AND, NAND, OR, NOR, XOR?)</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b0f17;
+      --panel:#101828;
+      --card:#0f172a;
+      --muted:#94a3b8;
+      --text:#e5e7eb;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --border:rgba(148,163,184,.18);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --radius2:14px;
+      --max: 1100px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 900px at 15% 5%, rgba(125,211,252,.10), transparent 55%),
+                  radial-gradient(900px 700px at 85% 15%, rgba(167,139,250,.10), transparent 55%),
+                  linear-gradient(180deg, #070a10 0%, #0b0f17 100%);
+      color:var(--text);
+      line-height:1.55;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      position:relative;
+      padding: 34px 18px 16px;
+      border-bottom:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(16,24,40,.80) 0%, rgba(16,24,40,.35) 100%);
+      overflow:hidden;
+    }
+    header:before{
+      content:"";
+      position:absolute; inset:-80px -120px auto auto;
+      width:380px; height:380px;
+      background: radial-gradient(circle at 30% 30%, rgba(125,211,252,.20), transparent 55%),
+                  radial-gradient(circle at 70% 70%, rgba(167,139,250,.18), transparent 55%);
+      filter: blur(1px);
+      transform: rotate(12deg);
+      pointer-events:none;
+    }
+    .wrap{max-width:var(--max); margin:0 auto; padding:0 14px}
+    .titlegrid{
+      display:grid;
+      grid-template-columns: 1.4fr .9fr;
+      gap:16px;
+      align-items:end;
+    }
+    @media (max-width: 900px){
+      .titlegrid{grid-template-columns: 1fr; align-items:start}
+    }
+    h1{
+      margin:0 0 8px;
+      font-size: clamp(1.45rem, 2.2vw + 1rem, 2.35rem);
+      letter-spacing:-.02em;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      max-width:70ch;
+      font-size:1.02rem;
+    }
+    .meta{
+      margin-top:8px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+    .pill{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:7px 10px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      background: rgba(15,23,42,.65);
+      box-shadow: 0 8px 18px rgba(0,0,0,.18);
+      backdrop-filter: blur(8px);
+    }
+    .dot{width:8px; height:8px; border-radius:50%}
+    .dot.a{background:var(--accent)}
+    .dot.b{background:var(--accent2)}
+    .dot.c{background:var(--ok)}
+    main{
+      padding: 22px 0 60px;
+    }
+    .layout{
+      display:grid;
+      grid-template-columns: 290px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .layout{grid-template-columns:1fr}
+    }
+    nav.toc{
+      position:sticky;
+      top:14px;
+      align-self:start;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(16,24,40,.55);
+      box-shadow: var(--shadow);
+      padding:14px 14px 12px;
+      backdrop-filter: blur(10px);
+      max-height: calc(100vh - 28px);
+      overflow:auto;
+    }
+    nav.toc h2{
+      margin:0 0 10px;
+      font-size:1.02rem;
+      letter-spacing:.02em;
+      color:#dbeafe;
+    }
+    .toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:10px;
+      color:var(--text);
+      border:1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,.08);
+      border-color: rgba(125,211,252,.20);
+      transform: translateX(2px);
+      text-decoration:none;
+    }
+    .toc small{
+      color:var(--muted);
+      display:block;
+      margin-top:10px;
+      padding:0 4px;
+    }
+    article{
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(15,23,42,.55);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    section{
+      padding: 18px 18px 12px;
+      border-top:1px solid var(--border);
+    }
+    section:first-of-type{border-top:none}
+    h2{
+      margin:0 0 8px;
+      font-size: 1.35rem;
+      letter-spacing:-.01em;
+    }
+    h3{
+      margin:14px 0 8px;
+      font-size:1.1rem;
+      color:#e0f2fe;
+    }
+    p{margin: 10px 0}
+    ul,ol{margin:10px 0 10px 18px}
+    li{margin:6px 0}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 860px){
+      .grid2{grid-template-columns:1fr}
+    }
+    .card{
+      border:1px solid var(--border);
+      border-radius: var(--radius2);
+      background: rgba(16,24,40,.55);
+      padding:12px 12px 10px;
+    }
+    .callout{
+      border-left: 4px solid var(--accent);
+      background: rgba(125,211,252,.08);
+      padding: 12px 12px 10px;
+      border-radius: 14px;
+      border:1px solid rgba(125,211,252,.20);
+    }
+    .callout.warn{
+      border-left-color: var(--warn);
+      background: rgba(251,191,36,.08);
+      border-color: rgba(251,191,36,.22);
+    }
+    .callout.bad{
+      border-left-color: var(--bad);
+      background: rgba(251,113,133,.08);
+      border-color: rgba(251,113,133,.20);
+    }
+    .callout.ok{
+      border-left-color: var(--ok);
+      background: rgba(52,211,153,.08);
+      border-color: rgba(52,211,153,.20);
+    }
+    .kq{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      border:1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(2,6,23,.35);
+      padding:10px;
+      margin:10px 0;
+    }
+    pre, code{font-family:var(--mono)}
+    pre{
+      margin:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      color:#e2e8f0;
+      font-size: .95rem;
+      line-height:1.45;
+    }
+    .btn{
+      cursor:pointer;
+      border:1px solid var(--border);
+      background: rgba(15,23,42,.75);
       color: var(--text);
-      line-height: 1.55;
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: .92rem;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+      white-space:nowrap;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+    .btn:hover{
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.25);
+      transform: translateY(-1px);
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+    .btn:active{transform: translateY(0px) scale(.99)}
+    .btn.small{padding:6px 9px; font-size:.9rem; border-radius: 11px}
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-start;
+      margin-top:8px;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
+    details{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 10px 8px;
+      background: rgba(16,24,40,.35);
+      margin: 10px 0;
+    }
+    summary{
+      cursor:pointer;
+      font-weight:650;
+      color:#dbeafe;
+    }
+    summary:hover{color:#e0f2fe}
+    .table{
+      width:100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      overflow:hidden;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background: rgba(2,6,23,.25);
+    }
+    .table th, .table td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(148,163,184,.14);
+      text-align:left;
+      vertical-align:top;
+      font-size:.95rem;
+    }
+    .table th{color:#dbeafe; background: rgba(16,24,40,.35)}
+    .table tr:last-child td{border-bottom:none}
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(16,24,40,.5);
+      color:#e2e8f0;
+      font-size:.92rem;
+    }
+    figure{
+      margin: 10px 0 4px;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(2,6,23,.25);
+      overflow:hidden;
+    }
+    figcaption{
+      padding: 10px 12px;
       color: var(--muted);
+      border-top:1px solid rgba(148,163,184,.14);
+      font-size:.92rem;
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    canvas{display:block; width:100%; height:320px}
+    .backtop{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(16,24,40,.45);
+      box-shadow: 0 8px 20px rgba(0,0,0,.18);
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+    .backtop:hover{
+      transform: translateY(-1px);
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.25);
+      text-decoration:none;
+    }
+    footer{
+      padding: 16px 0 34px;
+      color: var(--muted);
+      text-align:center;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff; color:#000}
+      header, nav.toc{display:none !important}
+      article{box-shadow:none; border:1px solid #ddd; background:#fff}
+      section{page-break-inside:avoid}
+      .btn{display:none !important}
+      .callout, .card, details{background:#fff; border-color:#ddd}
+      a{color:#000; text-decoration:underline}
+      figure{border-color:#ddd}
+      figcaption{color:#333}
+    }
+
+    /* Subtle micro-animation for section headings */
+    @media (prefers-reduced-motion: no-preference){
+      h2{
+        position:relative;
+      }
+      h2:after{
+        content:"";
+        position:absolute;
+        left:0; bottom:-6px;
+        width: 58px; height: 2px;
+        background: linear-gradient(90deg, rgba(125,211,252,.85), rgba(167,139,250,.65));
+        border-radius: 4px;
+        opacity:.8;
+        transform-origin:left;
+        transform: scaleX(.65);
+        transition: transform .18s ease;
+      }
+      section:hover h2:after{transform: scaleX(1)}
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="box">
-      <h1>24.4-2 — Photonic Logic Gate</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch24/prob_24_4_2.html</code></p>
+  <header id="top">
+    <div class="wrap">
+      <div class="titlegrid">
+        <div>
+          <h1>Photonic Logic Gates via a Nonlinear Thresholding Optical Device</h1>
+          <p class="subtitle">
+            How a single “optical threshold element” plus linear power combining implements AND, NAND, OR, and NOR—and why
+            XOR needs additional structure. Includes an applied/industrial lens: cascadability, noise margins, and fan-in limits.
+          </p>
+          <div class="meta">
+            <span class="pill"><span class="dot a"></span>Nonlinear optics → digital logic</span>
+            <span class="pill"><span class="dot b"></span>Threshold transfer function</span>
+            <span class="pill"><span class="dot c"></span>Engineering relevance</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="badge" style="margin-bottom:8px;">
+            <span class="dot a"></span><strong>Problem:</strong>&nbsp;Build NAND/OR/NOR like the AND example
+          </div>
+          <div class="badge" style="margin-bottom:8px;">
+            <span class="dot b"></span><strong>Also:</strong>&nbsp;Is XOR possible with the same system?
+          </div>
+          <div class="badge">
+            <span class="dot c"></span><strong>Plus:</strong>&nbsp;OR of N binary inputs
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+  <main class="wrap">
+    <div class="layout">
+      <nav class="toc" aria-label="Table of contents">
+        <h2>Table of Contents</h2>
+        <a href="#quick">Quick Summary</a>
+        <a href="#primer">PART 0 — Concept Primer</a>
+        <a href="#industry">PART 0B — Industry &amp; Applied Physics</a>
+        <a href="#analysis">PART 1 — Problem Analysis</a>
+        <a href="#strategy">PART 2 — Strategy &amp; Tips</a>
+        <a href="#solution">PART 3 — Full Solution</a>
+        <a href="#deeper">PART 4 — Deeper Understanding</a>
+        <a href="#plotguide">PART 5 — Optional Plot Guide</a>
+        <small>Tip: use the copy buttons to grab equations and final results as plain text.</small>
+      </nav>
+
+      <article>
+        <section id="quick">
+          <h2>Quick Summary</h2>
+          <ul>
+            <li><strong>What this is about:</strong> Using a <em>nonlinear optical threshold device</em> (a 1-bit “decision element”) to implement photonic logic gates.</li>
+            <li><strong>Key physics idea:</strong> A device with a steep input–output transfer <code>y = f(Pin)</code> that switches from LOW to HIGH when optical input power exceeds a threshold <code>Pth</code>.</li>
+            <li><strong>Governing model:</strong> Linear combining of input powers (via couplers) + monotonic thresholding:
+              <code>Pin = Σ Pi</code>, then <code>y = 1</code> if <code>Pin ≥ Pth</code>, else <code>y = 0</code>.
+            </li>
+            <li><strong>How AND works:</strong> Choose <code>Pth</code> between one-input power and two-input power, so only <code>(1,1)</code> crosses threshold.</li>
+            <li><strong>How OR works:</strong> Choose <code>Pth</code> between 0 and one-input power, so any single “1” triggers.</li>
+            <li><strong>NAND/NOR:</strong> Add an optical inversion (or use a complementary output port) after the AND/OR stage.</li>
+            <li><strong>XOR question:</strong> A single monotonic threshold on summed intensities <em>cannot</em> realize XOR; XOR is not linearly separable and needs at least two decision regions or interference/phase encoding.</li>
+            <li><strong>OR of N inputs:</strong> Combine N powers and set <code>Pth</code> below one-input level (with noise margin); similarly, AND of N inputs uses <code>Pth</code> between <code>(N−1)P1</code> and <code>N P1</code>.</li>
+            <li><strong>Result type:</strong> Primarily <strong>symbolic</strong> (threshold placement + architecture); physical meaning is <em>noise margins</em> and <em>fan-in limits</em> of photonic decision circuits.</li>
+          </ul>
+
+          <div class="grid2">
+            <div class="kq" aria-label="Key equation: threshold model">
+              <pre id="eq1">Binary threshold model (idealized):
+Pin = Σ_i Pi
+y = 1 if Pin ≥ Pth
+y = 0 if Pin &lt; Pth</pre>
+              <button class="btn small" data-copy="#eq1">Copy</button>
+            </div>
+            <div class="kq" aria-label="Key equation: threshold placement for AND/OR with equal logic-1 power">
+              <pre id="eq2">If logic-1 optical power per input is P1:
+AND (2-input): choose Pth such that  P1 &lt; Pth &lt; 2P1
+OR  (2-input): choose Pth such that  0  &lt; Pth &lt; P1</pre>
+              <button class="btn small" data-copy="#eq2">Copy</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="primer">
+          <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+          <h3>Core definitions (symbols + SI units)</h3>
+          <div class="card">
+            <ul>
+              <li><strong>Optical power</strong> <code>P</code> [W]: time-averaged optical energy flow (for a continuous-wave or intensity-modulated beam).</li>
+              <li><strong>Optical intensity</strong> <code>I</code> [W/m²]: power per area. Many devices respond to intensity; in guided optics we often use power because the modal area is fixed.</li>
+              <li><strong>Threshold power</strong> <code>Pth</code> [W]: input power at which the device switches from LOW output to HIGH output (or vice versa).</li>
+              <li><strong>Transfer function</strong> <code>y = f(Pin)</code> [dimensionless output state]: maps input power to an output level (often a steep sigmoid-like curve).</li>
+              <li><strong>Logic levels</strong>: encode <code>0</code> as <code>P ≈ 0</code> and <code>1</code> as <code>P = P1</code> (a chosen “on” power) at the device input.</li>
+              <li><strong>Coupler/summer</strong>: passive optical element that combines beams so total power at a port is approximately the sum of the inputs (subject to insertion loss and splitting ratios).</li>
+            </ul>
+          </div>
+
+          <h3>Physical meaning and intuition</h3>
+          <p>
+            A <strong>thresholding optical device</strong> behaves like a photonic “decision element.”
+            Below a certain input power, its output stays near a LOW level; above it, the output jumps to a HIGH level.
+            Physically, this can come from:
+          </p>
+          <ul>
+            <li><strong>Optical bistability</strong> (nonlinear cavity): feedback + Kerr/thermal nonlinearity creates two stable output states.</li>
+            <li><strong>Saturable absorption</strong>: absorption decreases at high intensity, allowing transmission to “turn on.”</li>
+            <li><strong>Nonlinear interferometers</strong> (e.g., Mach–Zehnder with Kerr phase shift): phase shift grows with power, converting to intensity at the output.</li>
+          </ul>
+          <p>
+            For logic, we idealize the device as a steep step at <code>Pth</code>.
+            Then logic becomes a geometry problem on the <em>sum of inputs</em>.
+          </p>
+
+          <h3>Key principles + validity conditions</h3>
+          <div class="callout">
+            <strong>Principle:</strong> If the device response is <em>monotonic</em> in input power and has a sharp transition,
+            then by choosing <code>Pth</code> appropriately you can decide which combinations of inputs cross the threshold.
+            <br/><br/>
+            <strong>Validity conditions (typical):</strong>
+            <ul>
+              <li>Inputs combine approximately <em>linearly in power</em> at the decision element (no unintended interference unless designed for it).</li>
+              <li>Device has a sufficiently steep slope (high “gain” in a digital sense) to restore logic levels (cascadability).</li>
+              <li>Noise and drifts are small compared with the <em>noise margin</em> set by how far logic sums are from <code>Pth</code>.</li>
+            </ul>
+          </div>
+
+          <h3>Common models/approximations (and why engineers use them)</h3>
+          <div class="grid2">
+            <div class="card">
+              <strong>Ideal step model</strong>
+              <div class="kq" style="margin-top:8px;">
+                <pre id="eq_step">y(Pin) = 1 for Pin ≥ Pth
+y(Pin) = 0 for Pin &lt; Pth</pre>
+                <button class="btn small" data-copy="#eq_step">Copy</button>
+              </div>
+              <p style="margin-top:8px;">
+                Useful for truth tables and threshold placement. Captures the core digital logic behavior.
+              </p>
+            </div>
+            <div class="card">
+              <strong>Smooth (sigmoid) switching</strong>
+              <div class="kq" style="margin-top:8px;">
+                <pre id="eq_sig">Example smooth model:
+y(Pin) ≈ 1 / (1 + exp(-(Pin - Pth)/ΔP))</pre>
+                <button class="btn small" data-copy="#eq_sig">Copy</button>
+              </div>
+              <p style="margin-top:8px;">
+                Engineers use this to discuss slope, finite extinction ratio, and sensitivity to noise.
+                <code>ΔP</code> is an effective transition width.
+              </p>
+            </div>
+          </div>
+
+          <h3>Mini intuition examples (conceptual, minimal algebra)</h3>
+          <ul>
+            <li><strong>Example A (AND):</strong> If each “1” contributes power <code>P1</code>, then one input “on” gives <code>Pin = P1</code>, two inputs “on” gives <code>Pin = 2P1</code>. Put <code>Pth</code> between them so only the two-on case triggers.</li>
+            <li><strong>Example B (OR):</strong> Put <code>Pth</code> below <code>P1</code> but above 0 so any single “on” crosses it.</li>
+            <li><strong>Example C (fan-in):</strong> With <code>N</code> inputs, sums cluster at <code>kP1</code> for <code>k=0..N</code>. The smallest spacing is still <code>P1</code> (ideal), but real losses and variations compress margins.</li>
+          </ul>
+
+          <h3>What to watch for (pitfalls &amp; hidden assumptions)</h3>
+          <div class="callout warn">
+            <ul>
+              <li><strong>Power not exactly additive</strong> if coherent beams interfere (phases matter). Many logic proposals enforce incoherence or use balanced couplers with controlled phase.</li>
+              <li><strong>Insertion loss &amp; unequal splitting</strong> shift the effective “seen” powers; threshold settings must be adjusted.</li>
+              <li><strong>Noise margins</strong> shrink with higher fan-in because variations add.</li>
+              <li><strong>Hysteresis</strong> in bistable devices can help noise immunity but complicates switching speed and reset conditions.</li>
+              <li><strong>Cascadability</strong>: if output levels aren’t restored (no effective gain), errors accumulate over stages.</li>
+            </ul>
+          </div>
+
+          <details>
+            <summary>Optional deeper note: why “monotonic threshold + linear sum” is a classification problem</summary>
+            <p>
+              If inputs are binary, each input combination corresponds to a point in a plane (for 2 inputs) or a hypercube (for N inputs).
+              Summing powers and thresholding is equivalent to testing whether a weighted sum exceeds a constant:
+              <code>Σ wi xi ≥ θ</code>. This is a single linear boundary (a half-space). Gates realizable this way are exactly the
+              <em>linearly separable</em> Boolean functions (e.g., AND, OR, NAND, NOR), but not XOR.
+            </p>
+          </details>
+        </section>
+
+        <section id="industry">
+          <h2>PART 0B — Industry &amp; Applied Physics Perspective</h2>
+
+          <h3>Where this appears in industry (concrete application areas)</h3>
+          <div class="grid2">
+            <div class="card">
+              <strong>1) Optical communications &amp; signal regeneration</strong>
+              <p>
+                Threshold-like nonlinearities are used for <em>reshaping</em> intensity-modulated signals (2R/3R concepts):
+                suppressing noise on “0” and restoring “1” levels in high-speed links or photonic interconnects.
+              </p>
+            </div>
+            <div class="card">
+              <strong>2) Photonic computing / accelerators</strong>
+              <p>
+                All-optical (or opto-electronic) thresholding elements act as nonlinear activations or decision gates,
+                relevant to neuromorphic photonics and high-throughput inference pipelines.
+              </p>
+            </div>
+            <div class="card">
+              <strong>3) Optical sensing &amp; instrumentation</strong>
+              <p>
+                Devices with sharp switching (bistable cavities, nonlinear interferometers) can serve as sensitive
+                comparators, discriminators, or limiters in measurement chains.
+              </p>
+            </div>
+            <div class="card">
+              <strong>4) Laser protection and power limiting</strong>
+              <p>
+                Saturable absorbers and optical limiters protect detectors/eyes by strongly attenuating below/above certain levels,
+                conceptually similar to “thresholding,” but with safety-first design constraints.
+              </p>
+            </div>
+          </div>
+
+          <h3>Why engineers care (performance, reliability, cost)</h3>
+          <ul>
+            <li><strong>Speed:</strong> Switching time depends on the physical nonlinearity (Kerr can be ultrafast; thermal is slower).</li>
+            <li><strong>Energy per operation:</strong> Threshold power × switching time determines optical energy; impacts heat, laser requirements, and system cost.</li>
+            <li><strong>Noise immunity:</strong> Steeper transfer → better regeneration; hysteresis can improve robustness but can create memory effects.</li>
+            <li><strong>Manufacturability:</strong> Resonant devices (rings/cavities) are sensitive to fabrication tolerances and temperature drift; requires tuning loops.</li>
+            <li><strong>System integration:</strong> Fan-in/fan-out, insertion loss budgets, and compatibility with modulators/detectors dominate architecture choices.</li>
+          </ul>
+
+          <h3>Typical measurement/validation methods</h3>
+          <div class="card">
+            <ul>
+              <li><strong>Static transfer measurement:</strong> sweep input power and measure output (looking for threshold, slope, hysteresis loop).</li>
+              <li><strong>Eye diagrams / BER testing:</strong> quantify regeneration in communications-style setups.</li>
+              <li><strong>Time-domain switching:</strong> apply pulses and measure rise/fall times, overshoot, and pattern dependence.</li>
+              <li><strong>Thermal drift characterization:</strong> temperature sweep to observe threshold shift in resonant/nonlinear devices.</li>
+            </ul>
+          </div>
+
+          <h3>Design trade-offs and constraints (non-idealities)</h3>
+          <div class="callout warn">
+            <ul>
+              <li><strong>Loss vs. nonlinearity:</strong> Strong nonlinear materials can introduce absorption; cavities enhance fields but add sensitivity and bandwidth limits.</li>
+              <li><strong>Tolerances:</strong> Coupler ratios, waveguide loss, and effective mode area variations change the “effective P1” at the decision point.</li>
+              <li><strong>Temperature &amp; aging:</strong> Threshold drift requires control loops; product systems often include heaters/thermoelectric control.</li>
+              <li><strong>Cascading constraints:</strong> Outputs must be standardized for the next stage (logic restoration); otherwise errors accumulate.</li>
+            </ul>
+          </div>
+
+          <details>
+            <summary>From lab to product: how the ideal model is adapted</summary>
+            <p>
+              A lab demo might assume perfect power sums and a perfectly sharp threshold.
+              A product design adds: calibrated couplers, monitoring photodiodes, automatic bias/thermal tuning, packaging for stability,
+              and specifications for extinction ratio and noise margins. The “threshold placement” becomes a robust design problem:
+              choose <code>Pth</code> so worst-case process/voltage/temperature variations still keep correct truth tables.
+            </p>
+          </details>
+        </section>
+
+        <section id="analysis">
+          <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+          <h3>Problem rewritten in clear words</h3>
+          <p>
+            A figure (referenced as Fig. 24-4-5) shows how a nonlinear optical device that switches when its input power exceeds a threshold
+            can implement an <strong>AND</strong> gate. The task is to show how a similar setup can implement <strong>NAND</strong>, <strong>OR</strong>, and <strong>NOR</strong>.
+            Then determine whether the same kind of system can implement <strong>XOR</strong>. Finally, ask whether the same approach can produce the <strong>OR of N binary inputs</strong>.
+          </p>
+
+          <h3>Given quantities</h3>
+          <ul>
+            <li>A nonlinear thresholding optical device with a switch threshold <code>Pth</code> and a monotonic transfer from LOW to HIGH output.</li>
+            <li>Binary optical inputs that can be combined (summed in power) using passive optical elements.</li>
+            <li>The AND gate example exists; we extend the idea to other gates.</li>
+          </ul>
+
+          <h3>Unknowns / what must be shown</h3>
+          <ul>
+            <li>Architectures and threshold settings for <strong>NAND</strong>, <strong>OR</strong>, <strong>NOR</strong> using the same components.</li>
+            <li>Whether <strong>XOR</strong> can be done using the same “linear sum + single threshold” system.</li>
+            <li>Whether the method extends to <strong>OR of N inputs</strong> (and what threshold setting is needed).</li>
+          </ul>
+
+          <h3>Relevant principles (and why they apply)</h3>
+          <ul>
+            <li><strong>Linear power combining:</strong> in the simplest model the decision element sees <code>Pin = Σ Pi</code>.</li>
+            <li><strong>Threshold decision:</strong> output changes state when <code>Pin</code> crosses <code>Pth</code>.</li>
+            <li><strong>Logic inversion:</strong> NAND/NOR are inverted versions of AND/OR; photonics can invert by using a complementary port, absorption, or an explicit inverter stage.</li>
+            <li><strong>Boolean function realizability:</strong> single-threshold weighted-sum systems implement linearly separable logic; XOR is the classic counterexample.</li>
+          </ul>
+
+          <h3>Assumptions (explicit)</h3>
+          <div class="callout">
+            <strong>Assumptions used for a clean logic derivation:</strong>
+            <ul>
+              <li>Logic “1” at each input corresponds to equal optical power <code>P1</code> at the summer input; logic “0” corresponds to ~0 power.</li>
+              <li>Summation is power-additive (phases either randomized or irrelevant at the combining point).</li>
+              <li>The threshold device is monotonic and sufficiently steep (outputs can be treated as binary).</li>
+              <li>Losses are either negligible or absorbed into an “effective <code>P1</code>” and “effective <code>Pth</code>.”</li>
+            </ul>
+          </div>
+
+          <h3>Possible approaches (2–3) and comparison</h3>
+          <div class="grid2">
+            <div class="card">
+              <strong>Approach 1: Ideal threshold + truth-table sums</strong>
+              <ul>
+                <li><strong>Method:</strong> compute <code>Pin</code> for each input combination, choose <code>Pth</code> to separate desired cases.</li>
+                <li><strong>Pros:</strong> fastest, clearest, matches the spirit of the problem.</li>
+                <li><strong>Cons:</strong> hides practical issues (noise margins, losses) unless explicitly discussed.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <strong>Approach 2: Weighted-sum classification view</strong>
+              <ul>
+                <li><strong>Method:</strong> express as <code>w·x ≥ θ</code>, classify which Boolean functions are possible.</li>
+                <li><strong>Pros:</strong> immediately answers the XOR question rigorously.</li>
+                <li><strong>Cons:</strong> can feel abstract unless tied back to power levels.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <strong>Approach 3: Device-physics (bistability/interferometer) specifics</strong>
+              <ul>
+                <li><strong>Method:</strong> derive <code>f(Pin)</code> from cavity or Kerr equations and show switching.</li>
+                <li><strong>Pros:</strong> deepest physical grounding.</li>
+                <li><strong>Cons:</strong> not required for the gate-design question; adds heavy algebra.</li>
+              </ul>
+            </div>
+          </div>
+
+          <p>
+            <strong>Chosen approach:</strong> Combine <em>Approach 1</em> (sum-and-threshold truth tables) with a compact <em>Approach 2</em> argument to settle XOR.
+            This best matches the problem’s intent while still being rigorous.
+          </p>
+        </section>
+
+        <section id="strategy">
+          <h2>PART 2 — Strategy &amp; Tips (Roadmap Only)</h2>
+
+          <ol>
+            <li><strong>Define the digital encoding:</strong> choose <code>P=0</code> for logic 0 and <code>P=P1</code> for logic 1.</li>
+            <li><strong>Model the summer:</strong> write <code>Pin = P(A) + P(B)</code> for 2 inputs.</li>
+            <li><strong>List possible summed levels:</strong> for (A,B) ∈ {0,1}², <code>Pin</code> can be {0, P1, 2P1}.</li>
+            <li><strong>Pick <code>Pth</code> for AND:</strong> place it between <code>P1</code> and <code>2P1</code>.</li>
+            <li><strong>Pick <code>Pth</code> for OR:</strong> place it between 0 and <code>P1</code>.</li>
+            <li><strong>Get NAND/NOR:</strong> invert the AND/OR output (using an inverter stage or complementary port).</li>
+            <li><strong>Address XOR:</strong> show that any single-threshold function depends only on <code>Pin</code> (i.e., only on the count of ones), so it cannot map (01) and (10) to 1 while mapping (00) and (11) to 0 with a single boundary.</li>
+            <li><strong>Extend to N inputs:</strong> for OR choose threshold below one-input level; explain fan-in and margins.</li>
+          </ol>
+
+          <div class="callout bad">
+            <strong>Common mistakes (quick tips)</strong>
+            <ul>
+              <li><strong>Forgetting losses:</strong> in real circuits the summer delivers <code>αP1</code> not <code>P1</code>; always interpret threshold inequalities as “effective” at the device input.</li>
+              <li><strong>Choosing <code>Pth</code> too close to a level:</strong> leaves no noise margin; drift/noise will flip outputs.</li>
+              <li><strong>Assuming XOR is possible “by tuning the threshold”:</strong> tuning only moves one boundary; XOR needs two separated decision regions.</li>
+              <li><strong>Coherent interference surprises:</strong> if inputs are coherent and not phase-controlled, <code>Pin</code> may fluctuate due to interference.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="solution">
+          <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+          <h3>Qualitative expectation (before calculating)</h3>
+          <p>
+            Because the device triggers when total input power exceeds a threshold, we expect it to naturally implement
+            “at least k inputs are ON” style logic. AND corresponds to “at least 2 are ON” for a 2-input gate;
+            OR corresponds to “at least 1 is ON.” NAND and NOR are simply complements.
+            XOR, however, asks for “exactly 1 is ON,” which intuitively requires distinguishing the middle level
+            (<code>P1</code>) from both extremes (<code>0</code> and <code>2P1</code>)—that suggests two boundaries, not one.
+          </p>
+
+          <h3>Step 1 — Define signals, summer, and threshold device</h3>
+          <p>
+            Let the two binary inputs be <code>A</code> and <code>B</code>, each encoded as optical powers at the summer:
+          </p>
+
+          <div class="kq">
+            <pre id="eq_encode">Encoding:
+If A = 0 → P(A) = 0
+If A = 1 → P(A) = P1
+
+If B = 0 → P(B) = 0
+If B = 1 → P(B) = P1</pre>
+            <button class="btn small" data-copy="#eq_encode">Copy</button>
+          </div>
+
+          <p>
+            A passive combiner (e.g., coupler network) delivers approximately the summed power to the threshold element:
+          </p>
+          <div class="kq">
+            <pre id="eq_sum">Summer model (ideal):
+Pin = P(A) + P(B)</pre>
+            <button class="btn small" data-copy="#eq_sum">Copy</button>
+          </div>
+
+          <p>
+            The threshold device outputs a binary-like signal <code>Y</code>:
+          </p>
+          <div class="kq">
+            <pre id="eq_thresh">Threshold decision (ideal):
+Y = 1  if Pin ≥ Pth
+Y = 0  if Pin &lt; Pth</pre>
+            <button class="btn small" data-copy="#eq_thresh">Copy</button>
+          </div>
+
+          <h3>Step 2 — Enumerate input combinations and the three possible summed levels</h3>
+          <p>
+            For two inputs, the total power reaching the threshold device can only be:
+            <code>0</code>, <code>P1</code>, or <code>2P1</code>.
+          </p>
+
+          <table class="table" aria-label="Input combinations and summed power">
+            <thead>
+              <tr>
+                <th>A</th><th>B</th><th>P(A)</th><th>P(B)</th><th>Pin = P(A)+P(B)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>
+              </tr>
+              <tr>
+                <td>0</td><td>1</td><td>0</td><td>P1</td><td>P1</td>
+              </tr>
+              <tr>
+                <td>1</td><td>0</td><td>P1</td><td>0</td><td>P1</td>
+              </tr>
+              <tr>
+                <td>1</td><td>1</td><td>P1</td><td>P1</td><td>2P1</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Step 3 — OR gate from threshold placement</h3>
+          <p>
+            OR should output 1 for inputs (01), (10), and (11), but 0 for (00).
+            Looking at the table, that means:
+          </p>
+          <ul>
+            <li>We want <code>Y=0</code> when <code>Pin=0</code>.</li>
+            <li>We want <code>Y=1</code> when <code>Pin=P1</code> or <code>Pin=2P1</code>.</li>
+          </ul>
+          <p>
+            A single threshold achieves this if it lies between 0 and <code>P1</code>:
+          </p>
+
+          <div class="callout ok">
+            <strong>OR threshold condition (2-input):</strong>
+            <div class="kq" style="margin-top:8px;">
+              <pre id="eq_or">OR gate by thresholding:
+Choose Pth such that  0 &lt; Pth &lt; P1
+Then:
+Pin=0  → below threshold → Y=0
+Pin=P1 or 2P1 → above threshold → Y=1</pre>
+              <button class="btn small" data-copy="#eq_or">Copy</button>
+            </div>
+          </div>
+
+          <h3>Step 4 — AND gate reminder (same idea)</h3>
+          <p>
+            AND should output 1 only for (11). That corresponds to only the <code>Pin = 2P1</code> case being above threshold.
+            So we choose the threshold between <code>P1</code> and <code>2P1</code>:
+          </p>
+
+          <div class="callout ok">
+            <strong>AND threshold condition (2-input):</strong>
+            <div class="kq" style="margin-top:8px;">
+              <pre id="eq_and">AND gate by thresholding:
+Choose Pth such that  P1 &lt; Pth &lt; 2P1
+Then:
+Pin=0 or P1 → below threshold → Y=0
+Pin=2P1 → above threshold → Y=1</pre>
+              <button class="btn small" data-copy="#eq_and">Copy</button>
+            </div>
+          </div>
+
+          <h3>Step 5 — NAND and NOR: add inversion (or use complementary output)</h3>
+          <p>
+            NAND and NOR are just the complements of AND and OR:
+            <code>NAND = NOT(AND)</code> and <code>NOR = NOT(OR)</code>.
+            In photonics, inversion can be done in several practical ways:
+          </p>
+          <ul>
+            <li><strong>Complementary port:</strong> many interferometric or bistable devices provide two outputs whose powers trade off; one can act as the inverted output.</li>
+            <li><strong>Optical inverter stage:</strong> a second threshold element arranged so that high input drives low output (e.g., using absorption, cross-gain modulation, or a saturable-absorber scheme that flips levels).</li>
+            <li><strong>Opto-electronic inversion:</strong> detect then re-modulate (often used in practical systems when all-optical inversion is costly).</li>
+          </ul>
+
+          <div class="grid2">
+            <div class="callout">
+              <strong>NAND implementation:</strong>
+              <p style="margin:8px 0 6px;">
+                First build AND with <code>P1 &lt; Pth &lt; 2P1</code>, then invert the output.
+              </p>
+              <div class="kq">
+                <pre id="eq_nand">NAND:
+Y_AND = 1 if Pin ≥ Pth AND, with P1 &lt; Pth AND &lt; 2P1
+Y_NAND = 1 - Y_AND</pre>
+                <button class="btn small" data-copy="#eq_nand">Copy</button>
+              </div>
+            </div>
+            <div class="callout">
+              <strong>NOR implementation:</strong>
+              <p style="margin:8px 0 6px;">
+                First build OR with <code>0 &lt; Pth &lt; P1</code>, then invert the output.
+              </p>
+              <div class="kq">
+                <pre id="eq_nor">NOR:
+Y_OR = 1 if Pin ≥ Pth OR, with 0 &lt; Pth OR &lt; P1
+Y_NOR = 1 - Y_OR</pre>
+                <button class="btn small" data-copy="#eq_nor">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <h3>Step 6 — Is XOR possible with the same system?</h3>
+          <p>
+            XOR requires:
+          </p>
+          <ul>
+            <li><code>XOR = 1</code> for (01) and (10) → <code>Pin = P1</code></li>
+            <li><code>XOR = 0</code> for (00) and (11) → <code>Pin = 0</code> and <code>Pin = 2P1</code></li>
+          </ul>
+          <p>
+            But a single monotonic threshold device produces an output that depends only on whether <code>Pin</code> is above or below <code>Pth</code>.
+            That creates only one dividing line on the possible <code>Pin</code> values. Let’s test all possible threshold placements:
+          </p>
+
+          <div class="card">
+            <ul>
+              <li>If <code>Pth ≤ 0</code>, then all cases are above threshold → output always 1 (not XOR).</li>
+              <li>If <code>0 &lt; Pth &lt; P1</code>, then <code>Pin=P1</code> and <code>2P1</code> both produce 1 → (11) would incorrectly output 1.</li>
+              <li>If <code>P1 &lt; Pth &lt; 2P1</code>, then only <code>2P1</code> produces 1 → that’s AND, not XOR.</li>
+              <li>If <code>Pth ≥ 2P1</code>, then all cases produce 0 → output always 0 (not XOR).</li>
+            </ul>
+          </div>
+
+          <div class="callout bad">
+            <strong>Conclusion (XOR):</strong>
+            <p style="margin:8px 0 0;">
+              <strong>No</strong>—a <em>single</em> monotonic threshold element fed by a <em>linear power sum</em> cannot implement XOR.
+              XOR needs the middle level (<code>P1</code>) to map to 1 while both extremes (0 and <code>2P1</code>) map to 0, which requires
+              <strong>two decision boundaries</strong> (a “band-pass” in power) or a different encoding (e.g., coherent interference with controlled phase, or multiple threshold stages).
+            </p>
+          </div>
+
+          <details>
+            <summary>What would enable XOR in photonics (brief, practical ideas)</summary>
+            <ul>
+              <li><strong>Two-threshold cascade:</strong> create a window detector: output 1 if <code>Plo &lt; Pin &lt; Phi</code>.</li>
+              <li><strong>Interferometric (phase) encoding:</strong> XOR can be done if inputs modulate phase and an interferometer maps phase sums to intensity (requires coherence and phase control).</li>
+              <li><strong>Non-monotonic transfer:</strong> a resonance-shaped or inhibitory response (rare in simple threshold devices) can create two crossings.</li>
+            </ul>
+          </details>
+
+          <h3>Step 7 — OR of N binary inputs (and what changes)</h3>
+          <p>
+            Now suppose there are <code>N</code> binary inputs, each delivering power <code>P1</code> when “1” and 0 when “0.”
+            If we combine them (ideally) into one input to the threshold device:
+          </p>
+
+          <div class="kq">
+            <pre id="eq_nsum">N-input summer:
+Pin = Σ_{i=1..N} P(i)
+If k inputs are '1', then Pin = k P1</pre>
+            <button class="btn small" data-copy="#eq_nsum">Copy</button>
+          </div>
+
+          <p>
+            For the <strong>OR of N inputs</strong>, we want output 1 whenever <em>at least one</em> input is 1 (i.e., whenever <code>k ≥ 1</code>),
+            and 0 only when <code>k = 0</code>. That is achieved by placing the threshold between 0 and the smallest nonzero sum (<code>P1</code>):
+          </p>
+
+          <div class="callout ok">
+            <strong>OR of N inputs (ideal):</strong>
+            <div class="kq" style="margin-top:8px;">
+              <pre id="eq_orN">OR_N gate by thresholding:
+Choose Pth such that  0 &lt; Pth &lt; P1
+Then:
+k=0 → Pin=0 → output 0
+k≥1 → Pin≥P1 → output 1</pre>
+              <button class="btn small" data-copy="#eq_orN">Copy</button>
+            </div>
+          </div>
+
+          <div class="callout warn">
+            <strong>Engineering note (fan-in and margin):</strong>
+            <p style="margin:8px 0 0;">
+              As N grows, practical summers introduce loss and imbalance, and input powers vary.
+              Engineers design <code>Pth</code> with a <em>worst-case</em> inequality:
+              ensure <code>Pth</code> is above the maximum “0” leakage/noise but below the minimum delivered single-‘1’ power at the threshold device.
+            </p>
+          </div>
+
+          <h3>Sanity checks</h3>
+          <div class="grid2">
+            <div class="card">
+              <strong>Units/dimensions</strong>
+              <ul>
+                <li><code>P1</code>, <code>Pth</code>, <code>Pin</code> are powers in watts [W].</li>
+                <li>Inequalities like <code>P1 &lt; Pth &lt; 2P1</code> are dimensionally consistent.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <strong>Limiting cases</strong>
+              <ul>
+                <li>If <code>Pth</code> is extremely low, gate saturates to constant 1 (bad).</li>
+                <li>If <code>Pth</code> is extremely high, gate saturates to constant 0 (bad).</li>
+                <li>XOR fails because one boundary cannot isolate the middle power level only.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout ok" style="margin-top:12px;">
+            <strong>Final boxed result (plain language):</strong>
+            <p style="margin:8px 0 10px;">
+              With a linear power combiner feeding a single monotonic threshold device:
+              <strong>AND</strong> and <strong>OR</strong> are obtained by choosing <code>Pth</code> between the discrete summed levels;
+              <strong>NAND</strong> and <strong>NOR</strong> are obtained by inverting those outputs.
+              <strong>XOR is not achievable</strong> with only one such threshold stage and linear summation.
+              The approach extends directly to <strong>OR of N inputs</strong> (and similarly to <strong>AND of N inputs</strong>) by threshold placement.
+            </p>
+
+            <div class="kq" aria-label="Final answer text for copying">
+              <pre id="final_answer">FINAL ANSWER (threshold settings + feasibility):
+
+Assume each input '1' delivers power P1 at the summer; '0' delivers ~0. Let Pin be the summed power into a monotonic threshold device (output=1 if Pin ≥ Pth, else 0).
+
+2-input OR:
+Choose 0 &lt; Pth &lt; P1  → output 1 for (01),(10),(11); output 0 for (00).
+
+2-input AND (as in the figure):
+Choose P1 &lt; Pth &lt; 2P1 → output 1 only for (11).
+
+NAND:
+Implement AND (P1 &lt; Pth &lt; 2P1) then invert the output (or use a complementary output port): NAND = 1 - AND.
+
+NOR:
+Implement OR (0 &lt; Pth &lt; P1) then invert the output (or use a complementary output port): NOR = 1 - OR.
+
+XOR:
+NOT possible with only linear power summation + a single monotonic threshold stage, because XOR requires output=1 at Pin=P1 but output=0 at both Pin=0 and Pin=2P1, which cannot be achieved by one threshold boundary (linearly non-separable).
+
+OR of N inputs:
+Combine N inputs so Pin = k P1 when k inputs are '1'. Choose 0 &lt; Pth &lt; P1 → output 1 for any k≥1, and 0 only for k=0 (subject to practical noise/loss margins).</pre>
+              <button class="btn" data-copy="#final_answer">Copy final answer</button>
+            </div>
+          </div>
+
+        </section>
+
+        <section id="deeper">
+          <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+          <h3>Re-interpreting the formulas: what each term controls</h3>
+          <div class="card">
+            <ul>
+              <li><strong><code>P1</code> (logic-1 power):</strong> sets the spacing between discrete summed levels (<code>0</code>, <code>P1</code>, <code>2P1</code>, …).</li>
+              <li><strong><code>Pth</code> (threshold):</strong> chooses which “count of ones” triggers the device. It is literally a criterion on <em>how many inputs are ON</em>.</li>
+              <li><strong><code>ΔP</code> (transition width, if using a smooth model):</strong> quantifies noise sensitivity; smaller <code>ΔP</code> means better digital restoration.</li>
+              <li><strong>Loss/imbalance (practical):</strong> effectively modifies <code>P1</code> to <code>P1,eff</code> at the decision element; design inequalities use worst-case <code>P1,eff</code>.</li>
+            </ul>
+          </div>
+
+          <h3>Parameter dependence (qualitative)</h3>
+          <ul>
+            <li><strong>Increase <code>P1</code>:</strong> widens the gap between levels → larger margins, but higher energy/thermal load.</li>
+            <li><strong>Move <code>Pth</code> upward:</strong> gate becomes “harder to trigger,” transitioning from OR-like to AND-like behavior as it crosses <code>P1</code>.</li>
+            <li><strong>Increase fan-in N:</strong> more summed levels exist; OR still uses <code>0 &lt; Pth &lt; P1</code>, but practical single-‘1’ margins can shrink due to losses and variations.</li>
+          </ul>
+
+          <h3>Alternative derivation idea (brief but meaningful)</h3>
+          <p>
+            View the gate as a weighted-sum classifier on binary inputs:
+            <code>Pin = Σ wi xi</code> with <code>xi ∈ {0,1}</code>.
+            A single threshold produces <code>y = 1</code> in one half-space of the input cube.
+            AND/OR and their inverses correspond to half-spaces; XOR does not—it requires selecting two separated corners (01 and 10),
+            which cannot be done with one half-space boundary.
+          </p>
+
+          <h3>Concept checks (self-test with answers)</h3>
+          <div class="card">
+            <ul>
+              <li><strong>Q:</strong> If each input “1” is <code>P1</code>, what threshold range makes the gate output 1 for exactly two or more ones in a 3-input system?
+                <br><strong>A:</strong> Choose <code>2P1 &lt; Pth &lt; 3P1</code> for “exactly 3” (AND of 3). For “≥2,” a single threshold cannot separate <code>2P1</code> and <code>3P1</code> both as 1 while making <code>P1</code> as 0? Actually it can: choose <code>P1 &lt; Pth &lt; 2P1</code> then outputs 1 for <code>2P1</code> and <code>3P1</code> (k≥2). This is a “majority-like” threshold gate.</li>
+              <li><strong>Q:</strong> Why does OR use the same threshold range for any N?
+                <br><strong>A:</strong> Because the smallest nonzero sum is always one input ON → <code>P1</code>. OR just separates <code>0</code> from <code>≥P1</code>.</li>
+              <li><strong>Q:</strong> If the device has hysteresis, does that automatically break XOR impossibility?
+                <br><strong>A:</strong> Not by itself. Hysteresis still gives a single switching boundary for rising and another for falling, but XOR requires a stable “window” in power for the same direction of operation, or extra state/control.</li>
+              <li><strong>Q:</strong> What practical feature most helps cascadability?
+                <br><strong>A:</strong> A steep transfer (high effective gain) and consistent output levels (extinction ratio) so each stage restores logic levels.</li>
+            </ul>
+          </div>
+
+          <div class="row" style="margin-top:14px;">
+            <a class="backtop" href="#top" aria-label="Back to top">↑ Back to top</a>
+          </div>
+        </section>
+
+        <section id="plotguide">
+          <h2>PART 5 — Optional Plot Guide</h2>
+
+          <p>
+            A plot is not strictly necessary because the problem is primarily <strong>symbolic/architectural</strong> (threshold placement + logic truth tables).
+            However, one curve is genuinely helpful: it visually explains what “thresholding” means and how <code>Pth</code> selects logic behavior.
+            The plot below shows an <strong>example</strong> smooth switching curve (sigmoid approximation) and a chosen threshold.
+          </p>
+
+          <figure>
+            <canvas id="plot" aria-label="Static plot of threshold transfer function"></canvas>
+            <figcaption>
+              Static illustration (example values): normalized output state y versus normalized input power Pin/P1.
+              The steep region around threshold highlights why threshold placement implements OR or AND depending on where Pth sits relative to P1 and 2P1.
+            </figcaption>
+          </figure>
+
+          <div class="callout">
+            <strong>What the plot shows and why it’s useful</strong>
+            <ul>
+              <li><strong>x-axis:</strong> normalized input power <code>Pin/P1</code> [dimensionless].</li>
+              <li><strong>y-axis:</strong> normalized output level <code>y</code> (0 to 1) [dimensionless].</li>
+              <li><strong>Example values (for visualization only):</strong> threshold at <code>Pth = 1.5 P1</code> and transition width <code>ΔP = 0.12 P1</code>.</li>
+              <li><strong>Feature to notice:</strong> if the threshold is at <code>1.5P1</code>, then a single “1” (~<code>Pin=P1</code>) stays below and two “1”s (~<code>Pin=2P1</code>) switch above → AND behavior.</li>
+            </ul>
+          </div>
+
+          <div class="row" style="margin-top:14px;">
+            <a class="backtop" href="#top" aria-label="Back to top">↑ Back to top</a>
+          </div>
+        </section>
+      </article>
     </div>
   </main>
+
+  <footer>
+    <div class="wrap">
+      <p>
+        Built as a self-contained learning article: threshold photonics → Boolean logic, with engineering considerations (noise margins, fan-in, and inversion strategies).
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    (function(){
+      // Copy buttons (plain text)
+      function copyFromSelector(sel){
+        var el = document.querySelector(sel);
+        if(!el) return;
+        var text = el.innerText.replace(/\u00A0/g, " ");
+        navigator.clipboard.writeText(text).then(function(){
+          // small UX pulse
+        }).catch(function(){
+          // fallback
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position='fixed';
+          ta.style.opacity='0';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          try{ document.execCommand('copy'); }catch(e){}
+          document.body.removeChild(ta);
+        });
+      }
+      document.addEventListener('click', function(ev){
+        var btn = ev.target.closest('[data-copy]');
+        if(!btn) return;
+        var sel = btn.getAttribute('data-copy');
+        var old = btn.textContent;
+        copyFromSelector(sel);
+        btn.textContent = "Copied!";
+        btn.style.borderColor = "rgba(52,211,153,.35)";
+        btn.style.background = "rgba(52,211,153,.10)";
+        setTimeout(function(){
+          btn.textContent = old;
+          btn.style.borderColor = "";
+          btn.style.background = "";
+        }, 900);
+      });
+
+      // Static plot: threshold transfer function (sigmoid example)
+      var canvas = document.getElementById('plot');
+      if(!canvas) return;
+
+      function draw(){
+        var ctx = canvas.getContext('2d');
+        var dpr = Math.max(1, window.devicePixelRatio || 1);
+        var cssW = canvas.clientWidth || 800;
+        var cssH = canvas.clientHeight || 320;
+        canvas.width = Math.floor(cssW * dpr);
+        canvas.height = Math.floor(cssH * dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+
+        // Colors (keep minimal; no external styles)
+        var bg = "rgba(2,6,23,0.15)";
+        var grid = "rgba(148,163,184,0.18)";
+        var axis = "rgba(226,232,240,0.70)";
+        var text = "rgba(226,232,240,0.92)";
+        var muted = "rgba(148,163,184,0.90)";
+        var curve = "rgba(125,211,252,0.95)";
+        var thresh = "rgba(251,191,36,0.90)";
+        var pts = "rgba(167,139,250,0.95)";
+
+        // Plot area
+        var padL = 56, padR = 18, padT = 34, padB = 44;
+        var W = cssW, H = cssH;
+        var x0 = padL, y0 = H - padB;
+        var x1 = W - padR, y1 = padT;
+
+        // Background
+        ctx.clearRect(0,0,W,H);
+        ctx.fillStyle = bg;
+        ctx.fillRect(0,0,W,H);
+
+        // Title
+        ctx.fillStyle = text;
+        ctx.font = "700 14px " + getComputedStyle(document.body).fontFamily;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillText("Example Threshold Transfer (Smooth Approximation)", padL, 10);
+
+        // Axes ranges
+        var xmin = 0, xmax = 2.2; // Pin/P1
+        var ymin = 0, ymax = 1.0; // normalized y
+
+        function X(x){ return x0 + (x - xmin) * (x1 - x0) / (xmax - xmin); }
+        function Y(y){ return y0 - (y - ymin) * (y0 - y1) / (ymax - ymin); }
+
+        // Gridlines + ticks
+        ctx.strokeStyle = grid;
+        ctx.lineWidth = 1;
+
+        // Vertical grid: 0..2.0 step 0.2
+        for(var xv=0; xv<=2.2+1e-9; xv+=0.2){
+          var xx = X(xv);
+          ctx.beginPath();
+          ctx.moveTo(xx, y0);
+          ctx.lineTo(xx, y1);
+          ctx.stroke();
+        }
+        // Horizontal grid: 0..1.0 step 0.1
+        for(var yv=0; yv<=1.0+1e-9; yv+=0.1){
+          var yy = Y(yv);
+          ctx.beginPath();
+          ctx.moveTo(x0, yy);
+          ctx.lineTo(x1, yy);
+          ctx.stroke();
+        }
+
+        // Axes
+        ctx.strokeStyle = axis;
+        ctx.lineWidth = 1.25;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0); ctx.lineTo(x1, y0);
+        ctx.moveTo(x0, y0); ctx.lineTo(x0, y1);
+        ctx.stroke();
+
+        // Tick labels
+        ctx.fillStyle = muted;
+        ctx.font = "600 12px " + getComputedStyle(document.body).fontFamily;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        for(var xt=0; xt<=2.2+1e-9; xt+=0.4){
+          ctx.fillText(xt.toFixed(1), X(xt), y0 + 8);
+        }
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        for(var yt=0; yt<=1.0+1e-9; yt+=0.2){
+          ctx.fillText(yt.toFixed(1), x0 - 8, Y(yt));
+        }
+
+        // Axis labels
+        ctx.fillStyle = text;
+        ctx.font = "700 12px " + getComputedStyle(document.body).fontFamily;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillText("Normalized input power  Pin / P1  (dimensionless)", (x0+x1)/2, H - 26);
+
+        ctx.save();
+        ctx.translate(18, (y0+y1)/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillText("Normalized output level  y  (0 to 1)", 0, 0);
+        ctx.restore();
+
+        // Model parameters (example)
+        var Pth = 1.5;    // in units of P1
+        var dP  = 0.12;   // transition width
+
+        function sigmoid(x){
+          // y = 1/(1+exp(-(x-Pth)/dP))
+          return 1 / (1 + Math.exp(-(x - Pth)/dP));
+        }
+
+        // Draw curve
+        ctx.strokeStyle = curve;
+        ctx.lineWidth = 2.25;
+        ctx.beginPath();
+        var started = false;
+        for(var i=0;i<=450;i++){
+          var x = xmin + (xmax-xmin)*i/450;
+          var y = sigmoid(x);
+          var xx = X(x), yy = Y(y);
+          if(!started){ ctx.moveTo(xx,yy); started=true; }
+          else ctx.lineTo(xx,yy);
+        }
+        ctx.stroke();
+
+        // Threshold vertical line
+        ctx.strokeStyle = thresh;
+        ctx.setLineDash([6,5]);
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(X(Pth), y0);
+        ctx.lineTo(X(Pth), y1);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Mark key discrete input levels: 0, 1, 2
+        var marks = [0,1,2];
+        ctx.fillStyle = pts;
+        marks.forEach(function(m){
+          var yy = Y(sigmoid(m));
+          ctx.beginPath();
+          ctx.arc(X(m), yy, 4.2, 0, Math.PI*2);
+          ctx.fill();
+        });
+
+        // Legend (simple)
+        var lx = x0 + 10, ly = y1 + 8;
+        ctx.font = "600 12px " + getComputedStyle(document.body).fontFamily;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+
+        // Curve swatch
+        ctx.strokeStyle = curve;
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(lx, ly+8); ctx.lineTo(lx+22, ly+8); ctx.stroke();
+        ctx.fillStyle = text;
+        ctx.fillText("y ≈ 1/(1+exp(-(Pin/P1 - Pth/P1)/Δ)) (example)", lx+28, ly);
+
+        // Threshold swatch
+        ctx.strokeStyle = thresh;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6,5]);
+        ctx.beginPath(); ctx.moveTo(lx, ly+28); ctx.lineTo(lx+22, ly+28); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = text;
+        ctx.fillText("Threshold (example): Pth = 1.5 P1", lx+28, ly+20);
+      }
+
+      // Resize handling
+      var raf = null;
+      function schedule(){
+        if(raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(draw);
+      }
+      window.addEventListener('resize', schedule, {passive:true});
+      schedule();
+    })();
+  </script>
 </body>
 </html>

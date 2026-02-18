@@ -2,64 +2,833 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>24.2-1 — Cascaded MZI MUX/DMUX</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Cascaded MZI MUX/DMUX (4 Channels): Required Path-Length Differences</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
+    :root{
+      --bg: #0b0f17;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.085);
       --text: rgba(255,255,255,0.92);
       --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+      --faint: rgba(255,255,255,0.55);
+      --line: rgba(255,255,255,0.14);
+      --accent: #7dd3fc;
+      --accent2: #a7f3d0;
+      --warn: #fbbf24;
+      --good: #34d399;
+      --bad: #fb7185;
+      --shadow: 0 18px 55px rgba(0,0,0,0.45);
+      --radius: 18px;
+      --radius2: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
+
+    *{ box-sizing: border-box; }
+    html{ scroll-behavior: smooth; }
+    body{
+      margin:0;
+      font-family: var(--sans);
       color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(125,211,252,0.10), transparent 55%),
+        radial-gradient(900px 650px at 70% 30%, rgba(167,243,208,0.10), transparent 55%),
+        radial-gradient(1200px 900px at 50% 110%, rgba(251,191,36,0.06), transparent 60%),
+        var(--bg);
       line-height: 1.55;
     }
-    header, main {
-      max-width: 980px;
+
+    a{ color: var(--accent); text-decoration: none; }
+    a:hover{ text-decoration: underline; }
+
+    header{
+      padding: 28px 18px 10px;
+      position: relative;
+    }
+
+    .wrap{
+      max-width: 1160px;
       margin: 0 auto;
-      padding: 24px 18px;
+      padding: 0 18px 48px;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
-    }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
+
+    .hero{
+      display:grid;
+      grid-template-columns: 1.6fr 0.9fr;
+      gap: 18px;
+      align-items: stretch;
       margin-top: 10px;
-      font-size: 0.95rem;
-      color: var(--muted);
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.05));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .card .inner{
+      padding: 18px 18px 16px;
+    }
+
+    .title{
+      font-size: clamp(1.35rem, 1.1rem + 1.2vw, 2.1rem);
+      margin: 0 0 8px;
+      letter-spacing: 0.2px;
+    }
+    .subtitle{
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+
+    .meta{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .pill{
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.14);
+      color: var(--muted);
+      font-size: 0.92rem;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      white-space: nowrap;
+    }
+    .dot{
+      width: 9px; height: 9px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(125,211,252,0.12);
+      flex: 0 0 auto;
+    }
+
+    /* Layout with sticky TOC */
+    main{
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap: 18px;
+      margin-top: 16px;
+      align-items:start;
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.05);
+      box-shadow: 0 10px 35px rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+    .toc header{
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+    }
+    .toc h2{
+      margin: 0;
+      font-size: 0.95rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.82);
+    }
+    .toc .hint{
+      margin: 6px 0 0;
+      font-size: 0.9rem;
+      color: var(--faint);
+    }
+    .toc .links{
+      padding: 10px 10px 12px;
+      display:flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .toc a{
+      display:block;
+      padding: 9px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.0);
+      color: rgba(255,255,255,0.84);
+      background: rgba(255,255,255,0.03);
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,0.09);
+      border-color: rgba(125,211,252,0.28);
+      transform: translateY(-1px);
+      text-decoration:none;
+    }
+
+    article{
+      display:flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    section{
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.045);
+      box-shadow: 0 10px 34px rgba(0,0,0,0.30);
+      overflow:hidden;
+    }
+    section > header{
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,0.035);
+    }
+    section > header h2{
+      margin: 0;
+      font-size: 1.12rem;
+      letter-spacing: 0.2px;
+    }
+    section > .content{
+      padding: 14px 18px 18px;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      align-items:start;
+    }
+
+    .callouts{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .callout{
+      grid-column: span 12;
+      border-radius: var(--radius2);
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      overflow:hidden;
+    }
+    .callout .bar{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.03);
+    }
+    .callout .bar strong{
+      font-size: 0.96rem;
+      letter-spacing: 0.2px;
+    }
+    .callout .body{
+      padding: 10px 12px 12px;
+      color: rgba(255,255,255,0.84);
+    }
+
+    .callout.assumptions .bar strong{ color: var(--warn); }
+    .callout.keyeq .bar strong{ color: var(--accent); }
+    .callout.mistakes .bar strong{ color: var(--bad); }
+    .callout.answer .bar strong{ color: var(--good); }
+
+    .eq{
+      font-family: var(--mono);
+      font-size: 0.96rem;
+      color: rgba(255,255,255,0.90);
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 10px 10px;
+      overflow-x:auto;
+      white-space: nowrap;
+    }
+
+    .btn{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.88);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+      cursor:pointer;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      white-space: nowrap;
+      user-select:none;
+    }
+    .btn:hover{
+      background: rgba(125,211,252,0.10);
+      border-color: rgba(125,211,252,0.30);
+      transform: translateY(-1px);
+    }
+    .btn:active{ transform: translateY(0px) scale(0.99); }
+
+    .btn .mini{
+      width: 9px; height: 9px; border-radius: 50%;
+      background: rgba(255,255,255,0.65);
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.10);
+    }
+
+    ul{ margin: 8px 0 0 18px; padding:0; }
+    li{ margin: 6px 0; color: rgba(255,255,255,0.86); }
+    p{ margin: 10px 0; color: rgba(255,255,255,0.86); }
+    .muted{ color: var(--muted); }
+    .faint{ color: var(--faint); }
+
+    details{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.045);
+      padding: 10px 12px;
+      margin-top: 10px;
+      overflow:hidden;
+    }
+    summary{
+      cursor: pointer;
+      color: rgba(255,255,255,0.88);
+      font-weight: 650;
+      letter-spacing: 0.2px;
+      list-style: none;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    summary::after{
+      content:"▾";
+      float:right;
+      color: rgba(255,255,255,0.70);
+      transition: transform 160ms ease;
+    }
+    details[open] summary::after{ transform: rotate(180deg); }
+    details .inside{
+      margin-top: 10px;
+      color: rgba(255,255,255,0.84);
+    }
+
+    .backtop{
+      display:flex;
+      justify-content:flex-end;
+      padding-top: 8px;
+    }
+
+    footer{
+      padding: 18px 18px 40px;
+      color: rgba(255,255,255,0.65);
+    }
+    footer .wrap{
+      padding-bottom: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 980px){
+      .hero{ grid-template-columns: 1fr; }
+      main{ grid-template-columns: 1fr; }
+      nav.toc{ position: relative; top: 0; }
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{ background: #fff; color:#000; }
+      .card, section, nav.toc{ box-shadow:none; }
+      .card, section, nav.toc{ border: 1px solid #ddd; background:#fff; }
+      .toc, .btn{ display:none !important; }
+      a{ color:#000; text-decoration: underline; }
+      .eq{ background:#f6f6f6; border-color:#ddd; color:#000; }
+      section{ break-inside: avoid; }
+      header, footer{ break-inside: avoid; }
     }
   </style>
 </head>
 <body>
+  <a id="top"></a>
   <header>
-    <div class="box">
-      <h1>24.2-1 — Cascaded MZI MUX/DMUX</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch24/prob_24_2_1.html</code></p>
+    <div class="wrap">
+      <div class="hero">
+        <div class="card">
+          <div class="inner">
+            <h1 class="title">Cascaded MZI MUX/DMUX (4 Channels): Required Path-Length Differences</h1>
+            <p class="subtitle">
+              Three Mach–Zehnder interferometers (MZIs) arranged as a 4-channel wavelength multiplexer/demultiplexer.
+              We determine the needed differential path lengths to achieve a channel spacing of <strong>&Delta;&lambda; = 0.2 nm</strong>
+              around <strong>&lambda;<sub>0</sub> = 1550 nm</strong>, assuming effective refractive index <strong>n = 2.3</strong>.
+            </p>
+            <div class="meta">
+              <span class="pill"><span class="dot"></span>Applied photonics (filter design)</span>
+              <span class="pill"><span class="dot" style="background:var(--accent2); box-shadow:0 0 0 3px rgba(167,243,208,0.12);"></span>Industry lens: tolerances & manufacturability</span>
+              <span class="pill"><span class="dot" style="background:var(--warn); box-shadow:0 0 0 3px rgba(251,191,36,0.12);"></span>Key output: numeric &Delta;d for each MZI</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="inner">
+            <h2 style="margin:0 0 8px; font-size:1.08rem;">Quick Summary</h2>
+            <ul>
+              <li><strong>What:</strong> Design path-length imbalances for a <strong>cascaded 4-channel MZI</strong> mux/demux.</li>
+              <li><strong>Key idea:</strong> MZI output is periodic in wavelength; the <strong>free spectral range (FSR)</strong> sets channel spacing behavior.</li>
+              <li><strong>Governing relation:</strong> <span class="eq" style="display:inline-block; padding:4px 8px; vertical-align:baseline;">FSR &equiv; &Delta;&lambda;<sub>FSR</sub> &approx; &lambda;<sup>2</sup>/(n &Delta;d)</span></li>
+              <li><strong>Port alternation condition:</strong> adjacent channels swap ports when phase changes by <strong>&pi;</strong> per channel step.</li>
+              <li><strong>Cascade logic:</strong> stage 1 separates <em>odd/even</em> channels (needs <strong>&Delta;&lambda;<sub>FSR</sub> = 2&Delta;&lambda;</strong>); stage 2 separates each pair (needs <strong>&Delta;&lambda;<sub>FSR</sub> = 4&Delta;&lambda;</strong>).</li>
+              <li><strong>Result type:</strong> numeric (symbolic formula shown) and what it physically means: <strong>geometric length imbalance</strong>.</li>
+              <li><strong>Final values:</strong> one MZI requires <strong>2.61 mm</strong>; the other two require <strong>1.31 mm</strong>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+  <div class="wrap">
+    <main>
+      <nav class="toc" aria-label="Table of contents">
+        <header>
+          <h2>Contents</h2>
+          <p class="hint">Sticky mini-TOC (tap to jump)</p>
+        </header>
+        <div class="links">
+          <a href="#p0">PART 0 — Concept Primer</a>
+          <a href="#p0b">PART 0B — Industry & Applied Physics</a>
+          <a href="#p1">PART 1 — Problem Analysis</a>
+          <a href="#p2">PART 2 — Strategy & Tips</a>
+          <a href="#p3">PART 3 — Full Solution</a>
+          <a href="#p4">PART 4 — Deeper Understanding</a>
+          <a href="#p5">PART 5 — Optional Plot Guide</a>
+          <a href="#refs">Key Takeaways</a>
+        </div>
+      </nav>
+
+      <article>
+        <section id="p0">
+          <header><h2>PART 0 — Concept Primer (Theory Before Solving)</h2></header>
+          <div class="content">
+            <p>
+              A Mach–Zehnder interferometer (MZI) splits light into two arms, accumulates different optical phase, and recombines.
+              Since phase depends on wavelength, an MZI acts as a <strong>periodic wavelength filter</strong>. Cascading MZIs enables
+              <strong>WDM multiplexers/demultiplexers</strong> by routing specific wavelengths to specific output ports.
+            </p>
+
+            <div class="callouts">
+              <div class="callout keyeq">
+                <div class="bar">
+                  <strong>Core definitions (symbols + SI units)</strong>
+                  <button class="btn" data-copy="defs"><span class="mini"></span>Copy</button>
+                </div>
+                <div class="body">
+                  <div class="eq" id="defs">λ : optical wavelength (m)
+λ0 : central wavelength (m)
+Δλ : channel spacing (m)
+Δd : path-length difference between MZI arms (m)
+n : effective refractive index (dimensionless)
+OPD : optical path difference = n·Δd (m)
+φ(λ) : differential phase = 2π·OPD/λ (rad)
+Δλ_FSR : free spectral range (m)</div>
+                </div>
+              </div>
+
+              <div class="callout">
+                <div class="bar"><strong>Physical meaning (intuition)</strong></div>
+                <div class="body">
+                  <ul>
+                    <li><strong>Δd</strong> is the geometric mismatch between arms. Larger Δd &rarr; phase changes faster with wavelength &rarr; smaller FSR.</li>
+                    <li><strong>FSR</strong> is the wavelength spacing between repeated transmission states (period of the spectrum).</li>
+                    <li>Port swapping happens after a phase change of <strong>π</strong> (half-period), while full repetition needs <strong>2π</strong>.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="callout assumptions">
+                <div class="bar"><strong>Key principle + validity conditions</strong></div>
+                <div class="body">
+                  <div class="eq">φ(λ) = (2π n Δd)/λ</div>
+                  <p class="muted">
+                    We assume: ideal 50/50 couplers, negligible loss, single-mode arms, and constant index over the small wavelength span.
+                    In industry-grade design, use group index n<sub>g</sub>(λ); here we follow the problem statement using n=2.3.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <details>
+              <summary>Mini intuition examples</summary>
+              <div class="inside">
+                <ul>
+                  <li>If Δd doubles, the spectrum repeats twice as often &rarr; FSR halves.</li>
+                  <li>If n increases, the same Δd produces more OPD &rarr; FSR decreases.</li>
+                  <li>Alternating adjacent channels between ports needs π per Δλ, not 2π per Δλ.</li>
+                </ul>
+              </div>
+            </details>
+
+            <div class="callout mistakes" style="margin-top:12px;">
+              <div class="bar"><strong>What to watch for (pitfalls)</strong></div>
+              <div class="body">
+                <ul>
+                  <li>Don’t confuse <strong>port swap</strong> (π) with <strong>full spectral repeat</strong> (2π).</li>
+                  <li>Don’t forget nm → m conversions.</li>
+                  <li>In real chips, replace n by n<sub>g</sub>; results scale as 1/n<sub>g</sub>.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="backtop"><a class="btn" href="#top"><span class="mini"></span>Back to top</a></div>
+          </div>
+        </section>
+
+        <section id="p0b">
+          <header><h2>PART 0B — Industry & Applied Physics Perspective</h2></header>
+          <div class="content">
+            <p>
+              Cascaded MZI mux/demux structures are widely used in integrated photonics because they are scalable,
+              relatively tolerant compared to high-Q rings, and compatible with standard fabrication flows.
+            </p>
+
+            <div class="grid2">
+              <div>
+                <h3 style="margin:6px 0 8px; font-size:1.02rem;">Where this appears (concrete areas)</h3>
+                <ul>
+                  <li><strong>Telecom & datacom:</strong> WDM transceivers to combine/split multiple laser wavelengths.</li>
+                  <li><strong>Coherent photonics & microwave photonics:</strong> channelized filtering and wavelength routing.</li>
+                  <li><strong>Sensing/spectroscopy:</strong> on-chip wavelength selection for detectors and analyzers.</li>
+                </ul>
+              </div>
+              <div>
+                <h3 style="margin:6px 0 8px; font-size:1.02rem;">Why engineers care</h3>
+                <ul>
+                  <li><strong>Performance:</strong> insertion loss, crosstalk, passband shape.</li>
+                  <li><strong>Reliability:</strong> thermal drift and packaging stress change phase.</li>
+                  <li><strong>Cost/yield:</strong> fabrication tolerances change n and Δd effectively.</li>
+                </ul>
+              </div>
+            </div>
+
+            <details>
+              <summary>Measurement & validation in practice</summary>
+              <div class="inside">
+                <ul>
+                  <li>Tunable-laser wavelength sweep to extract FSR, extinction ratio, and insertion loss.</li>
+                  <li>Model fitting to estimate effective/group index and phase offsets.</li>
+                  <li>Thermal characterization to measure wavelength shift vs temperature and required tuning power.</li>
+                </ul>
+              </div>
+            </details>
+
+            <details>
+              <summary>Design trade-offs and constraints</summary>
+              <div class="inside">
+                <ul>
+                  <li><strong>Dispersion:</strong> FSR varies with wavelength, so designs target a band and add tuning.</li>
+                  <li><strong>Coupler imbalance:</strong> reduces extinction; mitigated via MMI couplers and trimming.</li>
+                  <li><strong>Footprint vs sensitivity:</strong> larger Δd increases footprint and thermal phase sensitivity.</li>
+                </ul>
+              </div>
+            </details>
+
+            <div class="backtop"><a class="btn" href="#top"><span class="mini"></span>Back to top</a></div>
+          </div>
+        </section>
+
+        <section id="p1">
+          <header><h2>PART 1 — Problem Analysis (No Solving Yet)</h2></header>
+          <div class="content">
+            <p>
+              <strong>Restated:</strong> Design three cascaded MZIs so that four wavelengths, spaced by Δλ = 0.2 nm around 1550 nm,
+              are multiplexed/demultiplexed. Find the required arm length differences Δd for each MZI given n = 2.3.
+            </p>
+
+            <div class="grid2">
+              <div class="callout">
+                <div class="bar"><strong>Given</strong></div>
+                <div class="body">
+                  <ul>
+                    <li>Δλ = 0.2 nm</li>
+                    <li>λ0 = 1550 nm</li>
+                    <li>n = 2.3</li>
+                    <li>Three MZIs in a standard 4-channel cascade (binary tree).</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="callout">
+                <div class="bar"><strong>Unknowns</strong></div>
+                <div class="body">
+                  <ul>
+                    <li>Δd1 for stage 1 (top splitter)</li>
+                    <li>Δd2 for stage 2A and Δd3 for stage 2B (usually equal by symmetry)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="callout assumptions" style="margin-top:12px;">
+              <div class="bar"><strong>Relevant principles & assumptions</strong></div>
+              <div class="body">
+                <ul>
+                  <li>MZI phase difference: φ(λ)=2πnΔd/λ.</li>
+                  <li>Use FSR near λ0 from phase periodicity.</li>
+                  <li>Assume ideal, lossless interferometers and constant index near 1550 nm.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="callout">
+              <div class="bar"><strong>Approaches (pros/cons)</strong></div>
+              <div class="body">
+                <ul>
+                  <li><strong>FSR method:</strong> quickest sizing; needs only channel spacing and λ0 (best here).</li>
+                  <li><strong>Direct phase-step method:</strong> equivalent; uses Δφ=π conditions explicitly.</li>
+                  <li><strong>Full transfer-function matching:</strong> most detailed; unnecessary without full architecture specifics.</li>
+                </ul>
+                <p class="muted" style="margin-bottom:0;"><strong>Chosen:</strong> FSR method for clarity and minimal assumptions.</p>
+              </div>
+            </div>
+
+            <div class="backtop"><a class="btn" href="#top"><span class="mini"></span>Back to top</a></div>
+          </div>
+        </section>
+
+        <section id="p2">
+          <header><h2>PART 2 — Strategy & Tips (Roadmap Only)</h2></header>
+          <div class="content">
+            <ol style="margin: 8px 0 0 20px; color: rgba(255,255,255,0.86);">
+              <li>Relate MZI phase to wavelength: φ(λ)=2πnΔd/λ.</li>
+              <li>Derive FSR: require Δφ=2π over Δλ_FSR near λ0.</li>
+              <li>Stage 1 must alternate ports every Δλ &rarr; Δλ_FSR,1=2Δλ.</li>
+              <li>Stage 2 must alternate between channels spaced 2Δλ &rarr; Δλ_FSR,2=4Δλ.</li>
+              <li>Compute Δd = λ0²/(nΔλ_FSR) for each stage.</li>
+              <li>Check scaling and units; report in mm.</li>
+            </ol>
+
+            <div class="callout mistakes" style="margin-top:12px;">
+              <div class="bar"><strong>Common mistakes</strong></div>
+              <div class="body">
+                <ul>
+                  <li>Using Δλ_FSR=Δλ for stage 1 (should be 2Δλ).</li>
+                  <li>Mixing nm and m.</li>
+                  <li>Forgetting stage 2 has larger FSR and thus smaller Δd.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="backtop"><a class="btn" href="#top"><span class="mini"></span>Back to top</a></div>
+          </div>
+        </section>
+
+        <section id="p3">
+          <header><h2>PART 3 — Full Solution (Detailed + Teaching)</h2></header>
+          <div class="content">
+            <p>
+              <strong>Intuition:</strong> The first MZI must distinguish adjacent channels, so it needs a stronger wavelength sensitivity
+              (larger Δd). The second-stage MZIs split channels separated by 2Δλ, so they can use about half the Δd.
+            </p>
+
+            <div class="callout keyeq">
+              <div class="bar">
+                <strong>Key equations</strong>
+                <button class="btn" data-copy="keyeq"><span class="mini"></span>Copy</button>
+              </div>
+              <div class="body">
+                <div class="eq" id="keyeq">φ(λ) = (2π n Δd)/λ
+
+Δλ_FSR ≈ λ0^2 / (n Δd)
+
+Δd = λ0^2 / (n Δλ_FSR)</div>
+              </div>
+            </div>
+
+            <h3 style="margin:12px 0 8px; font-size:1.02rem;">3.1 Derive the FSR relation (near λ0)</h3>
+            <p>Start with differential phase:</p>
+            <div class="eq">φ(λ) = 2π nΔd / λ</div>
+            <p>For a small wavelength change near λ0:</p>
+            <div class="eq">Δφ ≈ |dφ/dλ| · Δλ</div>
+            <p>Compute derivative:</p>
+            <div class="eq">dφ/dλ = - 2π nΔd / λ^2</div>
+            <p>Magnitude at λ0:</p>
+            <div class="eq">|dφ/dλ| = 2π nΔd / λ0^2</div>
+            <p>By definition, one full period (FSR) corresponds to Δφ = 2π:</p>
+            <div class="eq">2π = (2π nΔd / λ0^2) · Δλ_FSR</div>
+            <p>Cancel 2π and solve:</p>
+            <div class="eq">Δλ_FSR = λ0^2 / (nΔd)  ⇔  Δd = λ0^2 / (n Δλ_FSR)</div>
+
+            <h3 style="margin:14px 0 8px; font-size:1.02rem;">3.2 Determine required FSR per stage (routing logic)</h3>
+            <p>
+              In a standard 4-channel MZI cascade, the first stage performs an odd/even split:
+              adjacent channels must go to opposite outputs, so the output must flip each time λ increases by Δλ.
+              A flip corresponds to a phase change of π, while a full repeat is 2π. Therefore:
+            </p>
+            <div class="eq">Stage 1:  π per Δλ  ⇒  2π per 2Δλ  ⇒  Δλ_FSR,1 = 2Δλ</div>
+            <p>
+              Each second-stage MZI receives two channels separated by 2Δλ. To separate that pair, it must flip between them:
+            </p>
+            <div class="eq">Stage 2:  π per (2Δλ)  ⇒  2π per (4Δλ)  ⇒  Δλ_FSR,2 = 4Δλ</div>
+
+            <h3 style="margin:14px 0 8px; font-size:1.02rem;">3.3 Plug in numbers</h3>
+            <div class="eq">λ0 = 1550 nm = 1.55×10^-6 m
+Δλ = 0.2 nm = 2.0×10^-10 m
+n = 2.3</div>
+            <p>Compute λ0²:</p>
+            <div class="eq">λ0^2 = (1.55×10^-6)^2 = 2.4025×10^-12 m^2</div>
+
+            <h4 style="margin:12px 0 6px; font-size:0.98rem;">Stage 1 (top MZI)</h4>
+            <div class="eq">Δλ_FSR,1 = 2Δλ = 0.4 nm = 4.0×10^-10 m</div>
+            <div class="eq">Δd1 = λ0^2 / (n Δλ_FSR,1)
+    = (2.4025×10^-12) / (2.3×4.0×10^-10)
+    = (2.4025×10^-12) / (9.2×10^-10)
+    = 2.6114×10^-3 m
+    ≈ 2.61 mm</div>
+
+            <h4 style="margin:12px 0 6px; font-size:0.98rem;">Stage 2 (two identical lower MZIs)</h4>
+            <div class="eq">Δλ_FSR,2 = 4Δλ = 0.8 nm = 8.0×10^-10 m</div>
+            <div class="eq">Δd2 = λ0^2 / (n Δλ_FSR,2)
+    = (2.4025×10^-12) / (2.3×8.0×10^-10)
+    = (2.4025×10^-12) / (1.84×10^-9)
+    = 1.3057×10^-3 m
+    ≈ 1.31 mm</div>
+
+            <div class="callout answer" style="margin-top:14px;">
+              <div class="bar">
+                <strong>Final Answer (copyable)</strong>
+                <button class="btn" data-copy="final"><span class="mini"></span>Copy</button>
+              </div>
+              <div class="body">
+                <div class="eq" id="final">Stage 1 (odd/even splitter):  Δλ_FSR = 2Δλ = 0.4 nm  →  Δd1 ≈ 2.61 mm
+
+Stage 2 (two identical MZIs):  Δλ_FSR = 4Δλ = 0.8 nm  →  Δd2 ≈ 1.31 mm (each)
+
+So the three cascaded MZIs use:
+• one interferometer with Δd ≈ 2.61 mm
+• two interferometers with Δd ≈ 1.31 mm each</div>
+              </div>
+            </div>
+
+            <h3 style="margin:14px 0 8px; font-size:1.02rem;">Sanity checks</h3>
+            <ul>
+              <li><strong>Units:</strong> m²/(dimensionless·m)=m.</li>
+              <li><strong>Scaling:</strong> doubling FSR halves Δd, matching 2.61 mm vs 1.31 mm.</li>
+              <li><strong>Interpretation:</strong> These are geometric length imbalances needed to set the spectral periodicity at 1550 nm for 0.2 nm channel grid routing.</li>
+            </ul>
+
+            <div class="backtop"><a class="btn" href="#top"><span class="mini"></span>Back to top</a></div>
+          </div>
+        </section>
+
+        <section id="p4">
+          <header><h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2></header>
+          <div class="content">
+            <p>
+              The result is controlled by the simple inverse relationship between Δd and Δλ<sub>FSR</sub>.
+              In a 4-channel binary cascade, stage roles dictate the needed periodicity:
+              the first stage must flip at every channel step (tightest requirement), while the second stage flips over a two-step spacing.
+            </p>
+
+            <h3 style="margin:12px 0 8px; font-size:1.02rem;">Term-by-term meaning</h3>
+            <ul>
+              <li><strong>λ0²:</strong> sets the scale; moving to longer wavelengths increases required Δd.</li>
+              <li><strong>n:</strong> higher index increases phase per length, reducing required Δd.</li>
+              <li><strong>Δλ_FSR:</strong> desired spectral period; smaller period requires larger Δd.</li>
+            </ul>
+
+            <h3 style="margin:12px 0 8px; font-size:1.02rem;">Alternative (direct phase-step) derivation</h3>
+            <div class="eq">Δφ = (2π nΔd / λ0^2)·Δλ</div>
+            <p>For stage 1, impose Δφ=π at Δλ:</p>
+            <div class="eq">π = (2π nΔd / λ0^2)·Δλ  ⇒  Δd = λ0^2 / (2 n Δλ)</div>
+            <p class="muted">This equals the FSR method with Δλ_FSR=2Δλ.</p>
+
+            <div class="callout">
+              <div class="bar"><strong>Concept check (Q&A)</strong></div>
+              <div class="body">
+                <ul>
+                  <li><strong>Q:</strong> Larger Δd does what to FSR? <strong>A:</strong> Decreases it.</li>
+                  <li><strong>Q:</strong> Why do we have two identical stage-2 MZIs? <strong>A:</strong> Each branch performs the same “split a 2-channel group” function.</li>
+                  <li><strong>Q:</strong> What index should be used in real designs? <strong>A:</strong> Group index n<sub>g</sub>, often wavelength-dependent.</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="backtop"><a class="btn" href="#top"><span class="mini"></span>Back to top</a></div>
+          </div>
+        </section>
+
+        <section id="p5">
+          <header><h2>PART 5 — Optional Plot Guide</h2></header>
+          <div class="content">
+            <p class="muted" style="margin-top:0;">
+              A plot isn’t necessary because this problem is a direct sizing calculation:
+              once Δλ<sub>FSR</sub> is set by routing logic, Δd follows from a single closed-form expression.
+            </p>
+            <div class="backtop"><a class="btn" href="#top"><span class="mini"></span>Back to top</a></div>
+          </div>
+        </section>
+
+        <section id="refs">
+          <header><h2>Key Takeaways</h2></header>
+          <div class="content">
+            <ul>
+              <li>FSR near λ0: <strong>Δλ<sub>FSR</sub> ≈ λ0²/(nΔd)</strong>.</li>
+              <li>4-channel cascade targets: <strong>Δλ<sub>FSR,1</sub>=2Δλ</strong>, <strong>Δλ<sub>FSR,2</sub>=4Δλ</strong>.</li>
+              <li>Numerical results: <strong>Δd1 ≈ 2.61 mm</strong>, <strong>Δd2 ≈ 1.31 mm</strong> (two MZIs).</li>
+              <li>Industrial refinement uses group index, dispersion, and tuning for tolerance/thermal control.</li>
+            </ul>
+            <div class="backtop"><a class="btn" href="#top"><span class="mini"></span>Back to top</a></div>
+          </div>
+        </section>
+      </article>
+    </main>
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <p style="margin:0;">
+        Self-contained learning article (vanilla HTML/CSS/JS). Copy buttons copy plain-text equations and final answers.
+      </p>
     </div>
-  </main>
+  </footer>
+
+  <script>
+    (function(){
+      function copyText(text){
+        if(!text) return;
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly','');
+        ta.style.position='fixed';
+        ta.style.left='-9999px';
+        ta.style.top='-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try{ document.execCommand('copy'); }catch(e){}
+        document.body.removeChild(ta);
+      }
+
+      function flash(btn, msg){
+        const old = btn.innerHTML;
+        btn.innerHTML = '<span class="mini"></span>' + msg;
+        btn.style.borderColor = 'rgba(52,211,153,0.45)';
+        btn.style.background = 'rgba(52,211,153,0.12)';
+        setTimeout(()=>{
+          btn.innerHTML = old;
+          btn.style.borderColor = '';
+          btn.style.background = '';
+        }, 950);
+      }
+
+      document.addEventListener('click', function(e){
+        const btn = e.target.closest('button[data-copy]');
+        if(!btn) return;
+        const id = btn.getAttribute('data-copy');
+        const el = document.getElementById(id);
+        if(!el) return;
+        const text = (el.innerText || el.textContent || '').trim();
+        copyText(text);
+        flash(btn, 'Copied');
+      });
+    })();
+  </script>
 </body>
 </html>

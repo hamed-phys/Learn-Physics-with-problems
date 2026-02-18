@@ -2,64 +2,1303 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>24.4-3 — Bistable Interferometer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Bistable Interferometer with Kerr Nonlinearity (Mach–Zehnder + Feedback)</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b0f17;
+      --panel:#0f172a;
+      --card:#111c33;
+      --ink:#eaf0ff;
+      --muted:#b8c3e6;
+      --faint:#7f8bb8;
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.16);
+      --accent:#86b7ff;
+      --accent2:#8bffda;
+      --warn:#ffd28a;
+      --ok:#a6ffb0;
+      --danger:#ff8aa0;
+      --shadow: 0 18px 50px rgba(0,0,0,.45);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 800px at 12% -10%, rgba(134,183,255,.22), transparent 60%),
+        radial-gradient(900px 700px at 88% 0%, rgba(139,255,218,.14), transparent 55%),
+        radial-gradient(900px 700px at 40% 110%, rgba(255,138,160,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg), #070a10 70%);
+      line-height:1.55;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+
+    header{
+      padding: clamp(18px, 4vw, 44px) 18px 18px;
+      border-bottom: 1px solid var(--line);
+      position:relative;
+      overflow:hidden;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+    header .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:18px;
+      align-items:start;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
+    @media (max-width: 900px){
+      header .wrap{grid-template-columns:1fr}
+    }
+
+    h1{
+      margin:0 0 10px 0;
+      font-size: clamp(24px, 3.2vw, 40px);
+      letter-spacing:.2px;
+      line-height:1.12;
+    }
+    .subtitle{
+      color:var(--muted);
+      margin:0;
+      font-size: clamp(14px, 1.6vw, 17px);
+      max-width: 70ch;
+    }
+
+    .meta{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 14px 12px;
+      box-shadow: var(--shadow);
+    }
+    .meta h3{
+      margin:0 0 8px 0;
+      font-size: 14px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
       color: var(--muted);
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .meta ul{margin:0; padding-left:18px; color:var(--muted)}
+    .meta li{margin:6px 0}
+
+    main{
+      max-width:1100px;
+      margin: 0 auto;
+      padding: 18px 18px 70px;
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns:1fr}
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px 12px 10px;
+      box-shadow: var(--shadow);
+    }
+    @media (max-width: 980px){
+      nav.toc{position:relative; top:auto}
+    }
+    .toc .label{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin:0 0 8px 0;
+      color: var(--muted);
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      font-size: 12px;
+    }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      color: var(--ink);
+      text-decoration:none;
+      border:1px solid transparent;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+      font-size: 14px;
+    }
+    .toc a:hover{
+      background: rgba(134,183,255,.10);
+      border-color: rgba(134,183,255,.22);
+      transform: translateY(-1px);
+    }
+    .toc .small{
+      color: var(--faint);
+      font-size: 12px;
+      margin: 10px 10px 2px;
+    }
+
+    article{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+    section{
+      background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px 16px 14px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    section::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: radial-gradient(700px 220px at 20% 0%, rgba(134,183,255,.10), transparent 60%),
+                  radial-gradient(700px 220px at 80% 0%, rgba(139,255,218,.08), transparent 60%);
+      pointer-events:none;
+      opacity:.55;
+    }
+    section > *{position:relative}
+
+    h2{
+      margin: 0 0 10px 0;
+      font-size: 20px;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+    }
+    h2 .tag{
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      padding: 3px 8px;
+      border: 1px solid var(--line2);
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+    }
+    p{margin:10px 0; color: var(--ink)}
+    .muted{color:var(--muted)}
+    .fine{color:var(--faint); font-size: 13px}
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 820px){ .grid2{grid-template-columns:1fr} }
+
+    .callout{
+      border: 1px solid var(--line2);
+      background: rgba(255,255,255,.03);
+      border-radius: 14px;
+      padding: 12px 12px 10px;
+      overflow:hidden;
+    }
+    .callout h3{
+      margin:0 0 8px 0;
+      font-size: 13px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: var(--muted);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .badge{
+      width:10px; height:10px; border-radius: 50%;
+      display:inline-block;
+      box-shadow: 0 0 0 3px rgba(255,255,255,.03);
+    }
+    .b-assump{background: var(--warn)}
+    .b-eq{background: var(--accent)}
+    .b-mist{background: var(--danger)}
+    .b-final{background: var(--ok)}
+
+    .eq{
+      font-family: var(--mono);
+      font-size: 13px;
+      color: #eaf0ff;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      padding: 10px 10px;
+      overflow:auto;
+      margin: 8px 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .copyRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    button.copy{
+      appearance:none;
+      border:1px solid rgba(134,183,255,.28);
+      background: rgba(134,183,255,.12);
+      color: var(--ink);
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor:pointer;
+      transition: transform .16s ease, background .16s ease, border-color .16s ease;
+      font-size: 13px;
+    }
+    button.copy:hover{
+      transform: translateY(-1px);
+      border-color: rgba(134,183,255,.48);
+      background: rgba(134,183,255,.16);
+    }
+    button.copy:active{transform: translateY(0px) scale(.99)}
+    .copyMsg{
+      color: var(--faint);
+      font-size: 13px;
+      min-height: 18px;
+    }
+
+    details{
+      border:1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.02);
+      margin-top: 10px;
+    }
+    summary{
+      cursor:pointer;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing:.02em;
+    }
+    details[open]{border-color: rgba(255,255,255,.18)}
+
+    figure{
+      margin: 10px 0 0 0;
+      border:1px solid var(--line);
+      border-radius: 16px;
+      overflow:hidden;
+      background: rgba(0,0,0,.20);
+    }
+    figure figcaption{
+      padding: 10px 12px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    canvas{
+      display:block;
+      width:100%;
+      height: 340px;
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00));
+    }
+    @media (max-width: 560px){
+      canvas{height: 300px}
+    }
+
+    .backTop{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin-top: 8px;
+      text-decoration:none;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 13px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border:1px solid transparent;
+      transition: background .16s ease, transform .16s ease, border-color .16s ease;
+    }
+    .backTop:hover{
+      background: rgba(255,255,255,.04);
+      border-color: rgba(255,255,255,.12);
+      transform: translateY(-1px);
+    }
+
+    footer{
+      max-width:1100px;
+      margin: 0 auto;
+      padding: 0 18px 50px;
+      color: var(--faint);
+      font-size: 13px;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff; color:#000}
+      header, main, footer{box-shadow:none}
+      nav.toc{display:none}
+      section, .meta{box-shadow:none; border-color:#bbb}
+      section::before{display:none}
+      .eq{background:#f4f4f4; color:#000; border-color:#bbb}
+      button.copy, .copyMsg{display:none}
+      a{color:#000; text-decoration:none}
+      figure{break-inside:avoid}
+      section{break-inside:avoid}
+      h2{break-after:avoid}
+    }
+
+    /* Subtle micro-animation */
+    @media (prefers-reduced-motion: no-preference){
+      section{animation: pop .34s ease both}
+      @keyframes pop{
+        from{transform: translateY(6px); opacity:.0}
+        to{transform: translateY(0); opacity:1}
+      }
     }
   </style>
 </head>
-<body>
-  <header>
-    <div class="box">
-      <h1>24.4-3 — Bistable Interferometer</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch24/prob_24_4_3.html</code></p>
-    </div>
-  </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+<body id="top">
+<header>
+  <div class="wrap">
+    <div>
+      <h1>Bistable Interferometer (Mach–Zehnder + Kerr Crystal + Optical Feedback)</h1>
+      <p class="subtitle">
+        How Kerr-induced phase shift plus feedback makes a normally linear interferometer behave like a nonlinear,
+        switching “optical latch” — and how to compute the <span class="muted">maximum differential gain</span> from the
+        implicit input–output relation.
+      </p>
     </div>
-  </main>
+    <aside class="meta">
+      <h3>Quick Summary</h3>
+      <ul>
+        <li><b>What it’s about:</b> A Mach–Zehnder interferometer becomes <b>bistable</b> when its output intensity is fed back into a Kerr medium.</li>
+        <li><b>Key physics idea:</b> Kerr effect makes phase shift depend on intensity: <span class="muted">Δφ ∝ I</span>, so interference becomes nonlinear.</li>
+        <li><b>Governing transmittance:</b> <span class="muted">T(I<sub>o</sub>) = 1/2 + 1/2 cos(π I<sub>o</sub>/I<sub>π</sub> + φ)</span>.</li>
+        <li><b>Feedback equation:</b> Output is implicit: <span class="muted">I<sub>o</sub> = I<sub>i</sub> T(I<sub>o</sub>)</span> (nonlinear due to T depending on I<sub>o</sub>).</li>
+        <li><b>Bistability:</b> For some input range, the same <span class="muted">I<sub>i</sub></span> admits multiple <span class="muted">I<sub>o</sub></span> solutions (hysteresis in practice).</li>
+        <li><b>Differential gain:</b> <span class="muted">dI<sub>o</sub>/dI<sub>i</sub> = T / (1 − I<sub>i</sub> T')</span> (from implicit differentiation).</li>
+        <li><b>Maximum gain (ideal model):</b> Approaches <b>infinity</b> at switching points where <span class="muted">dI<sub>i</sub>/dI<sub>o</sub> = 0</span> (vertical tangent).</li>
+        <li><b>Result type:</b> Symbolic gain formula + a transcendental condition for switching; numeric values only for the optional sketch.</li>
+      </ul>
+    </aside>
+  </div>
+</header>
+
+<main>
+  <nav class="toc" aria-label="Table of contents">
+    <div class="label">Contents</div>
+    <a href="#primer">PART 0 — Concept Primer</a>
+    <a href="#industry">PART 0B — Industry & Applied Physics</a>
+    <a href="#analysis">PART 1 — Problem Analysis</a>
+    <a href="#strategy">PART 2 — Strategy & Tips</a>
+    <a href="#solution">PART 3 — Full Solution</a>
+    <a href="#deeper">PART 4 — Deeper Understanding</a>
+    <a href="#plotguide">PART 5 — Optional Plot Guide</a>
+    <div class="small">Tools</div>
+    <a href="#copy">Copy Buttons</a>
+    <a href="#top" class="backTop" style="margin:8px 0 0 0; padding:8px 10px;">↑ Back to top</a>
+  </nav>
+
+  <article>
+    <section id="primer">
+      <h2>PART 0 — Concept Primer <span class="tag">theory first</span></h2>
+
+      <div class="grid2">
+        <div class="callout">
+          <h3><span class="badge b-eq"></span>Core definitions (symbols & units)</h3>
+          <p class="muted">
+            We will use intensities (power per area). In many optics texts, “intensity” is interchangeable with
+            “optical power” when the mode area is fixed; the math is the same as long as you are consistent.
+          </p>
+          <div class="eq" id="eq_defs">I_i : input intensity to the Mach–Zehnder (W·m^-2)
+I_o : transmitted/output intensity of the Mach–Zehnder (W·m^-2)
+T(I_o) : intensity transmittance (dimensionless), output-to-input ratio
+φ : static phase bias in the interferometer (radians)
+Δφ_Kerr : Kerr-induced phase shift in one arm (radians)
+I_π : “pi-intensity” (W·m^-2), defined so that Δφ_Kerr = π when I_o = I_π</div>
+        </div>
+
+        <div class="callout">
+          <h3><span class="badge b-assump"></span>Physical meaning (intuition)</h3>
+          <p>
+            A Mach–Zehnder converts a <b>phase difference</b> between its two arms into an <b>intensity difference</b>
+            at the output through interference. If the phase difference depends on intensity (Kerr effect), then
+            the interferometer becomes a <b>nonlinear transfer element</b>.
+          </p>
+          <p class="muted">
+            Feeding back the output intensity into the Kerr medium creates “self-action”:
+            the output controls its own phase — a recipe for <b>multiple steady states</b> (bistability).
+          </p>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-eq"></span>Key principles & validity conditions</h3>
+        <ul class="muted" style="margin:8px 0 0 18px;">
+          <li><b>Interference law (Mach–Zehnder):</b> For equal splitting/combining and negligible loss, the output intensity depends on phase difference via a cosine.</li>
+          <li><b>Optical Kerr effect:</b> Refractive index depends on intensity: <span class="muted">n = n0 + n2 I</span> (instantaneous, scalar form).</li>
+          <li><b>Phase accumulation:</b> Phase in an arm is <span class="muted">βL = (2π/λ) n L</span>; if n increases with I, the phase increases with I.</li>
+          <li><b>Steady-state assumption:</b> We assume the feedback settles to a constant output (no dynamics, no delay oscillations).</li>
+          <li><b>Coherence:</b> The two arms must remain coherent (stable path-length difference within coherence length).</li>
+        </ul>
+
+        <details>
+          <summary>Common modeling approximations (and why they’re used)</summary>
+          <p class="muted">
+            (1) <b>Lossless 50/50 couplers</b> give clean cosine transfer functions.
+            (2) <b>Single-mode, fixed area</b> lets intensity scale like power.
+            (3) <b>Instantaneous Kerr</b> ignores response time; valid for electronic Kerr (fs) but not for slower thermal effects.
+            (4) <b>Single-arm nonlinearity</b> isolates the effect: only one arm’s phase shifts with intensity.
+          </p>
+        </details>
+
+        <details>
+          <summary>Mini intuition examples (conceptual, minimal algebra)</summary>
+          <ul class="muted" style="margin:8px 0 0 18px;">
+            <li><b>Linear interferometer:</b> If phase is fixed, output is just a scaled cosine of that phase — a static “fringe”.</li>
+            <li><b>Kerr without feedback:</b> If phase depends on input intensity, you get an S-shaped transfer vs input only if the phase varies significantly; otherwise it’s just a weak nonlinearity.</li>
+            <li><b>Kerr with feedback:</b> Output affects the phase that determines the output: this circular dependence can create multiple consistent outputs for one input.</li>
+          </ul>
+        </details>
+
+        <div class="callout" style="margin-top:10px;">
+          <h3><span class="badge b-mist"></span>What to watch for (pitfalls)</h3>
+          <ul class="muted" style="margin:8px 0 0 18px;">
+            <li><b>Implicit relation:</b> Output appears on both sides: you must solve/interpret it as an implicit equation.</li>
+            <li><b>Derivative sign:</b> Differentiate carefully: <span class="muted">T = T(I_o)</span>, so <span class="muted">dT/dI_i = (dT/dI_o)(dI_o/dI_i)</span>.</li>
+            <li><b>“Maximum gain” meaning:</b> In the ideal steady-state model, the gain diverges at turning points (vertical slope). Real devices cap it via noise, loss, finite bandwidth, saturation.</li>
+            <li><b>Bias phase φ:</b> φ shifts the cosine; setting φ=0 creates symmetric extrema at cosine maxima/minima.</li>
+          </ul>
+        </div>
+      </div>
+
+      <a class="backTop" href="#top">↑ Back to top</a>
+    </section>
+
+    <section id="industry">
+      <h2>PART 0B — Industry & Applied Physics Perspective <span class="tag">why engineers care</span></h2>
+
+      <div class="grid2">
+        <div class="callout">
+          <h3><span class="badge b-eq"></span>Where this appears in industry</h3>
+          <ul class="muted" style="margin:8px 0 0 18px;">
+            <li><b>Optical switching & routing:</b> Nonlinear interferometers can act as all-optical switches (no O/E/O conversion).</li>
+            <li><b>Optical signal regeneration:</b> Steep transfer curves “reshape” noisy signals (amplitude noise suppression).</li>
+            <li><b>Photonic computing / logic:</b> Bistability enables optical memory elements (latches) and thresholding.</li>
+            <li><b>Fiber/Integrated photonics sensing:</b> Nonlinear phase sensitivity can amplify small perturbations (with care).</li>
+          </ul>
+        </div>
+
+        <div class="callout">
+          <h3><span class="badge b-assump"></span>Industrial engineering relevance</h3>
+          <p class="muted">
+            From an industrial engineering lens, you care about how a physics nonlinearity translates into:
+            <b>repeatable switching thresholds</b>, <b>yield</b>, <b>testability</b>, <b>power budget</b>, and
+            <b>reliability</b> under temperature drift and manufacturing tolerances.
+          </p>
+          <ul class="muted" style="margin:8px 0 0 18px;">
+            <li><b>Performance:</b> extinction ratio, switching energy, latency, small-signal gain.</li>
+            <li><b>Cost:</b> required optical power (sets laser cost, thermal load).</li>
+            <li><b>Reliability:</b> hysteresis can be helpful (noise immunity) or harmful (stuck states).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-eq"></span>Measurement/validation in practice (brief)</h3>
+        <ul class="muted" style="margin:8px 0 0 18px;">
+          <li><b>Static transfer measurement:</b> Sweep input power slowly; record output power; look for hysteresis loops (up-sweep vs down-sweep).</li>
+          <li><b>Phase calibration:</b> Use a known phase modulator (thermal/electro-optic) to map output fringes and extract φ.</li>
+          <li><b>Nonlinearity extraction:</b> Fit Kerr coefficient via phase shift vs power (or via four-wave mixing in related setups).</li>
+          <li><b>Stability tests:</b> Temperature cycling and vibration to check drift in path length and bias phase.</li>
+        </ul>
+
+        <details>
+          <summary>Design trade-offs & non-idealities</summary>
+          <ul class="muted" style="margin:8px 0 0 18px;">
+            <li><b>Loss & imbalance:</b> Real couplers aren’t perfectly 50/50; loss reduces contrast and changes T(I).</li>
+            <li><b>Finite response time:</b> Kerr can be fast, but thermal nonlinearities are slow and may cause oscillations with feedback delay.</li>
+            <li><b>Noise:</b> Shot noise + laser RIN + thermal drift smear the switching point, limiting “usable” gain.</li>
+            <li><b>Damage & heating:</b> High intensities needed for Kerr in many materials can heat or damage the device.</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>From lab to product: adapting the ideal model</summary>
+          <p class="muted">
+            Product-grade designs replace the “perfect cosine” with a calibrated transfer curve including loss, imbalance,
+            and wavelength dependence, then add control loops (thermal tuning) to lock the bias phase. The “infinite gain”
+            predicted at the ideal turning point is replaced by a finite, noise-limited slope and a specified
+            switching margin (e.g., at a given BER or drift budget).
+          </p>
+        </details>
+      </div>
+
+      <a class="backTop" href="#top">↑ Back to top</a>
+    </section>
+
+    <section id="analysis">
+      <h2>PART 1 — Problem Analysis <span class="tag">what is asked</span></h2>
+
+      <p>
+        <b>Problem (rewritten clearly):</b> A Kerr nonlinear crystal sits in one arm of a Mach–Zehnder interferometer.
+        The output intensity <span class="muted">I<sub>o</sub></span> is fed back to illuminate the crystal, so the
+        phase shift in that arm depends on <span class="muted">I<sub>o</sub></span>. You must:
+        (1) show that the intensity transmittance is
+        <span class="muted">I<sub>o</sub>/I<sub>i</sub> = T(I<sub>o</sub>) = 1/2 + 1/2 cos(π I<sub>o</sub>/I<sub>π</sub> + φ)</span>;
+        (2) with <span class="muted">φ = 0</span>, sketch the implicit input–output curve <span class="muted">I<sub>o</sub>(I<sub>i</sub>)</span>;
+        (3) derive an expression for the maximum differential gain <span class="muted">dI<sub>o</sub>/dI<sub>i</sub></span>.
+      </p>
+
+      <div class="grid2">
+        <div class="callout">
+          <h3><span class="badge b-assump"></span>Given</h3>
+          <ul class="muted" style="margin:8px 0 0 18px;">
+            <li>Mach–Zehnder interferometer with one Kerr arm.</li>
+            <li>Feedback: transmitted intensity <span class="muted">I<sub>o</sub></span> illuminates the Kerr crystal.</li>
+            <li>Constants: <span class="muted">I<sub>π</sub></span> and <span class="muted">φ</span>.</li>
+            <li>For sketch: set <span class="muted">φ = 0</span>.</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <h3><span class="badge b-eq"></span>Unknowns / what to find</h3>
+          <ul class="muted" style="margin:8px 0 0 18px;">
+            <li>Derive <span class="muted">T(I<sub>o</sub>)</span> (the given cosine form).</li>
+            <li>Describe/plot the implicit curve <span class="muted">I<sub>o</sub> vs I<sub>i</sub></span> for <span class="muted">φ=0</span>.</li>
+            <li>Find <span class="muted">dI<sub>o</sub>/dI<sub>i</sub></span> and identify its maximum (ideal).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-assump"></span>Relevant principles (and why)</h3>
+        <ul class="muted" style="margin:8px 0 0 18px;">
+          <li><b>MZI interference:</b> Converts phase difference to output intensity via cosine — directly produces the stated functional form.</li>
+          <li><b>Kerr phase shift:</b> Provides intensity-dependent phase difference; feedback selects <span class="muted">I_o</span> as the controlling intensity.</li>
+          <li><b>Implicit differentiation:</b> Needed because <span class="muted">I_o</span> appears inside <span class="muted">T(I_o)</span> and also outside it.</li>
+        </ul>
+        <p class="fine">
+          Principles not needed here: full wave equation solution, time-domain stability, or dispersion modeling — the problem is steady-state and uses the given cosine transmittance model.
+        </p>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-eq"></span>Assumptions (explicit)</h3>
+        <ul class="muted" style="margin:8px 0 0 18px;">
+          <li>Steady-state (no time delay effects, no oscillations).</li>
+          <li>Lossless or effectively absorbed into constants; high-visibility interference.</li>
+          <li>Kerr-induced phase shift is proportional to the feedback intensity and summarized by <span class="muted">π I_o/I_π</span>.</li>
+          <li>Scalar model: polarization effects neglected.</li>
+        </ul>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-eq"></span>Possible approaches (compare)</h3>
+        <ul class="muted" style="margin:8px 0 0 18px;">
+          <li><b>(A) Interference + Kerr phase directly:</b> Write MZI output intensity in terms of phase difference, then substitute Kerr phase ∝ I<sub>o</sub>. <span class="muted">Best for clarity and matches the given form.</span></li>
+          <li><b>(B) Use energy splitting matrices:</b> Model couplers with 2×2 matrices; derive output power formula. <span class="muted">More general, but heavier algebra for same cosine result.</span></li>
+          <li><b>(C) Treat as feedback nonlinearity block diagram:</b> Start from given T(I<sub>o</sub>) and analyze bistability. <span class="muted">Fast for gain, but doesn’t “show” where T comes from.</span></li>
+        </ul>
+        <p class="muted"><b>Chosen approach:</b> (A) for deriving T + implicit equation, then implicit differentiation for gain.</p>
+      </div>
+
+      <a class="backTop" href="#top">↑ Back to top</a>
+    </section>
+
+    <section id="strategy">
+      <h2>PART 2 — Strategy & Tips <span class="tag">roadmap</span></h2>
+
+      <div class="callout">
+        <h3><span class="badge b-eq"></span>Plan (minimal steps, with meaning)</h3>
+        <ol class="muted" style="margin:8px 0 0 18px;">
+          <li><b>Write MZI output law:</b> Express output intensity as <span class="muted">I_o = I_i [1/2 + 1/2 cos(Δφ + φ)]</span>. <span class="fine">Meaning: interference converts phase to power.</span></li>
+          <li><b>Model Kerr phase:</b> Use <span class="muted">Δφ = π I_o/I_π</span> by definition of <span class="muted">I_π</span>. <span class="fine">Meaning: feedback intensity sets phase.</span></li>
+          <li><b>Identify transmittance:</b> Read off <span class="muted">T(I_o) = I_o/I_i</span>. <span class="fine">Meaning: nonlinear “transfer function”.</span></li>
+          <li><b>Make implicit I–O equation:</b> <span class="muted">I_o = I_i T(I_o)</span>. <span class="fine">Meaning: self-consistency with feedback.</span></li>
+          <li><b>Differentiate implicitly:</b> Solve for <span class="muted">dI_o/dI_i</span>. <span class="fine">Meaning: small-signal gain around an operating point.</span></li>
+          <li><b>Find maximum gain condition:</b> Examine when denominator becomes smallest; at turning points (switching) <span class="muted">dI_i/dI_o=0</span> → gain diverges (ideal).</li>
+          <li><b>Sketch:</b> Use the parametric relation <span class="muted">I_i = I_o / T(I_o)</span> to see multivalued regions for <span class="muted">φ=0</span>.</li>
+        </ol>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-mist"></span>Common mistakes (quick tips)</h3>
+        <ul class="muted" style="margin:8px 0 0 18px;">
+          <li>Forgetting that <span class="muted">T</span> depends on <span class="muted">I_o</span> (chain rule error).</li>
+          <li>Claiming <span class="muted">dI_o/dI_i = T</span> as if it were memoryless (that would be true only if T were constant).</li>
+          <li>Mixing the roles of <span class="muted">I_i</span> (independent variable) and <span class="muted">I_o</span> (implicit dependent variable).</li>
+          <li>Interpreting the “infinite gain” as physically achievable; in reality, noise and dynamics limit it.</li>
+        </ul>
+      </div>
+
+      <a class="backTop" href="#top">↑ Back to top</a>
+    </section>
+
+    <section id="solution">
+      <h2>PART 3 — Full Solution <span class="tag">step-by-step</span></h2>
+
+      <div class="callout">
+        <h3><span class="badge b-assump"></span>Qualitative expectation (before calculating)</h3>
+        <p class="muted">
+          A linear Mach–Zehnder has a sinusoidal transmittance versus phase. If the phase increases with intensity,
+          then increasing input intensity can change the phase and therefore change the transmittance.
+          With <b>feedback</b>, the output intensity itself controls the phase: for some inputs, the system can satisfy
+          the self-consistency condition at <b>multiple</b> output levels. Near the switching edges, a tiny change in
+          input can produce a large change in output — large differential gain.
+        </p>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-eq"></span>Step 1: Mach–Zehnder intensity law</h3>
+        <p>
+          For a balanced Mach–Zehnder interferometer (50/50 splitter + 50/50 combiner), the output intensity is
+          a cosine function of the phase difference between the two arms. Writing the phase difference as
+          <span class="muted">Δφ + φ</span> (where φ is a fixed bias phase), one standard form is:
+        </p>
+        <div class="eq" id="eq_mzi">I_o = I_i * [ 1/2 + 1/2 cos(Δφ + φ) ]</div>
+        <p class="muted">
+          This expression is an energy-conserving interference law: output is between 0 and I<sub>i</sub>.
+        </p>
+
+        <details>
+          <summary>Why the cosine appears (short reasoning)</summary>
+          <p class="muted">
+            The two arm fields add at the output: <span class="muted">E_out ∝ E1 + E2 e^{i(Δφ+φ)}</span>.
+            Intensity is proportional to |E_out|², producing a term proportional to cos(Δφ+φ).
+            Balanced splitting makes the prefactors equal, yielding the symmetric 1/2 ± 1/2 cosine.
+          </p>
+        </details>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-eq"></span>Step 2: Kerr-induced phase shift and the meaning of I<sub>π</sub></h3>
+        <p>
+          In the Kerr effect, refractive index changes with intensity:
+          <span class="muted">n = n<sub>0</sub> + n<sub>2</sub>I</span>.
+          A change in n changes the propagation constant and therefore the phase accumulated through a length L.
+          The problem packages all device specifics (n<sub>2</sub>, L, wavelength, mode area) into a single
+          convenient constant <span class="muted">I<sub>π</sub></span>, defined so that:
+        </p>
+        <div class="eq" id="eq_kerr">Δφ = π * (I_o / I_π)</div>
+        <p class="muted">
+          This is a <b>definition</b> of I<sub>π</sub>: when the feedback intensity equals I<sub>π</sub>, the Kerr arm
+          adds an extra π radians of phase relative to the other arm.
+        </p>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-eq"></span>Step 3: Show the transmittance T(I<sub>o</sub>)</h3>
+        <p>
+          Substitute the Kerr phase shift into the Mach–Zehnder law:
+          <span class="muted">Δφ + φ = π(I<sub>o</sub>/I<sub>π</sub>) + φ</span>.
+          Then:
+        </p>
+        <div class="eq" id="eq_trans">I_o = I_i * [ 1/2 + 1/2 cos( π I_o/I_π + φ ) ]</div>
+        <p>
+          Divide both sides by <span class="muted">I<sub>i</sub></span> to identify the intensity transmittance:
+        </p>
+        <div class="eq" id="eq_T">T(I_o) ≡ I_o/I_i = 1/2 + 1/2 cos( π I_o/I_π + φ )</div>
+        <p class="muted">
+          This matches the required result. Note the key nonlinearity: <b>T depends on I<sub>o</sub></b>, not directly on I<sub>i</sub>.
+        </p>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-eq"></span>Step 4: Set φ = 0 and write the implicit input–output relation</h3>
+        <p>
+          With <span class="muted">φ = 0</span>:
+        </p>
+        <div class="eq" id="eq_Tphi0">T(I_o) = 1/2 + 1/2 cos( π I_o/I_π )</div>
+        <p>
+          The steady-state relation is:
+        </p>
+        <div class="eq" id="eq_implicit">I_o = I_i * T(I_o)</div>
+        <p class="muted">
+          This is an implicit equation for I<sub>o</sub> given I<sub>i</sub>. A “sketch” is easiest by parametrizing:
+          <span class="muted">I_i = I_o / T(I_o)</span>.
+        </p>
+      </div>
+
+      <figure aria-label="Static plot: bistable input-output curve">
+        <canvas id="plot" role="img" aria-label="Plot of normalized output intensity Io/Ipi versus normalized input Ii/Ipi (example)"></canvas>
+        <figcaption>
+          Static sketch (with example scaling): implicit curve for φ = 0 using
+          <span class="muted">I<sub>i</sub> = I<sub>o</sub>/T(I<sub>o</sub>)</span>.
+          Dashed segment indicates the typically unstable middle branch in a bistable system.
+          <span class="fine">Plot uses normalized units (I/I<sub>π</sub>) and is for visualization only; final results remain symbolic.</span>
+        </figcaption>
+      </figure>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-eq"></span>Step 5: Differential gain dI<sub>o</sub>/dI<sub>i</sub> (implicit differentiation)</h3>
+        <p>
+          Start from the implicit equation (valid for any φ):
+        </p>
+        <div class="eq">I_o = I_i T(I_o)</div>
+        <p>
+          Differentiate both sides with respect to <span class="muted">I<sub>i</sub></span>. Remember:
+          <span class="muted">T = T(I_o)</span>, so it changes with I<sub>i</sub> through I<sub>o</sub>.
+        </p>
+        <div class="eq" id="eq_diff1">dI_o/dI_i = T(I_o) + I_i * (dT/dI_o) * (dI_o/dI_i)</div>
+        <p>
+          Now solve for <span class="muted">dI<sub>o</sub>/dI<sub>i</sub></span> by collecting terms:
+        </p>
+        <div class="eq" id="eq_gain_general">dI_o/dI_i * [ 1 − I_i T'(I_o) ] = T(I_o)
+⇒ dI_o/dI_i = T(I_o) / [ 1 − I_i T'(I_o) ]</div>
+        <p class="muted">
+          where <span class="muted">T'(I_o) = dT/dI_o</span>.
+        </p>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-eq"></span>Step 6: Compute T'(I<sub>o</sub>) for φ = 0 and simplify</h3>
+        <p>
+          With <span class="muted">φ = 0</span>:
+        </p>
+        <div class="eq">T(I_o) = 1/2 + 1/2 cos(π I_o/I_π)</div>
+        <p>
+          Differentiate:
+        </p>
+        <div class="eq" id="eq_Tprime">T'(I_o) = dT/dI_o
+= (1/2) * [ -sin(π I_o/I_π) ] * (π/I_π)
+= - (π/(2 I_π)) sin(π I_o/I_π)</div>
+        <p>
+          Substitute into the gain formula:
+        </p>
+        <div class="eq" id="eq_gain_phi0">dI_o/dI_i = T(I_o) / [ 1 − I_i * ( - (π/(2 I_π)) sin(π I_o/I_π) ) ]
+= T(I_o) / [ 1 + I_i (π/(2 I_π)) sin(π I_o/I_π) ]</div>
+        <p class="muted">
+          This is already a correct expression, but it still contains I<sub>i</sub>. Use the steady-state relation
+          <span class="muted">I_i = I_o / T(I_o)</span> to eliminate I<sub>i</sub> if desired.
+        </p>
+        <div class="eq" id="eq_gain_elim">Using I_i = I_o/T(I_o):
+dI_o/dI_i = T(I_o) / [ 1 + (π I_o/(2 I_π)) * ( sin(π I_o/I_π) / T(I_o) ) ]
+= T(I_o)^2 / [ T(I_o) + (π I_o/(2 I_π)) sin(π I_o/I_π) ]</div>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-final"></span>Maximum differential gain (ideal steady-state model)</h3>
+        <p>
+          The differential gain becomes very large when the denominator approaches zero. A clean way to see this is to
+          consider <span class="muted">I_i(I_o) = I_o / T(I_o)</span> and note:
+        </p>
+        <div class="eq">dI_o/dI_i = 1 / (dI_i/dI_o)</div>
+        <p>
+          Compute <span class="muted">dI<sub>i</sub>/dI<sub>o</sub></span>:
+        </p>
+        <div class="eq" id="eq_didio">I_i = I_o / T
+dI_i/dI_o = (T − I_o T') / T^2</div>
+        <p>
+          Turning points (switching edges) occur when:
+        </p>
+        <div class="eq" id="eq_turning">dI_i/dI_o = 0  ⇔  T(I_o) − I_o T'(I_o) = 0</div>
+        <p>
+          At those points, <span class="muted">dI_o/dI_i</span> diverges:
+        </p>
+        <div class="eq" id="eq_gain_max">Maximum (ideal) differential gain:
+(dI_o/dI_i)_max → ∞ as T(I_o) − I_o T'(I_o) → 0</div>
+
+        <p class="muted">
+          For φ = 0, substitute <span class="muted">T</span> and <span class="muted">T'</span>. Let
+          <span class="muted">x = π I_o/I_π</span> (dimensionless). Then:
+        </p>
+        <div class="eq" id="eq_turning_x">T = 1/2(1 + cos x),   T' = - (π/(2 I_π)) sin x
+Condition T − I_o T' = 0 becomes:
+1 + cos x + x sin x = 0  where x = π I_o/I_π</div>
+
+        <details>
+          <summary>Practical note: why “infinite” gain is not physically infinite</summary>
+          <p class="muted">
+            Real systems include loss, finite interference visibility, noise, and (critically) feedback dynamics
+            with delay and finite Kerr response. These effects round off the vertical tangent and limit the
+            maximum measurable slope. Engineers often specify a finite “effective gain” at a chosen operating
+            point away from the exact turning point to guarantee stability and margin.
+          </p>
+        </details>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-final"></span>Sanity checks</h3>
+        <ul class="muted" style="margin:8px 0 0 18px;">
+          <li><b>Units:</b> T is dimensionless; T' has units of 1/intensity; so <span class="muted">I_i T'</span> is dimensionless, making the gain dimensionless as expected.</li>
+          <li><b>Limits:</b> If Kerr is negligible (I<sub>π</sub> → ∞) then T' → 0 and <span class="muted">dI_o/dI_i → T</span>, the usual linear interferometer slope.</li>
+          <li><b>Physical meaning:</b> Large gain occurs when small changes in input force the operating point to move rapidly along the self-consistent curve — near switching.</li>
+        </ul>
+      </div>
+
+      <a class="backTop" href="#top">↑ Back to top</a>
+    </section>
+
+    <section id="deeper">
+      <h2>PART 4 — Deeper Understanding <span class="tag">interpretation</span></h2>
+
+      <div class="grid2">
+        <div class="callout">
+          <h3><span class="badge b-eq"></span>Re-interpreting the gain formula</h3>
+          <p class="muted">
+            The general result
+            <span class="muted">dI<sub>o</sub>/dI<sub>i</sub> = T / (1 − I<sub>i</sub>T')</span>
+            has a classic feedback-control structure:
+          </p>
+          <div class="eq">gain = (forward transmittance) / (1 − loop sensitivity)</div>
+          <p class="muted">
+            Here, <span class="muted">I<sub>i</sub>T'(I<sub>o</sub>)</span> measures how strongly changing output
+            changes the transmittance, scaled by the input level. When this approaches 1, the denominator approaches 0,
+            and the slope becomes huge.
+          </p>
+        </div>
+
+        <div class="callout">
+          <h3><span class="badge b-assump"></span>Parameter dependence (qualitative)</h3>
+          <ul class="muted" style="margin:8px 0 0 18px;">
+            <li><b>Smaller I<sub>π</sub>:</b> stronger nonlinearity (phase changes faster with intensity) → bistability at lower powers.</li>
+            <li><b>Bias phase φ:</b> shifts the cosine; can move switching points, change symmetry, or even remove bistability depending on operating region.</li>
+            <li><b>Loss/visibility:</b> reduces contrast, effectively shrinking T' → lowers achievable slope and can eliminate bistability.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-eq"></span>Alternative derivation idea (brief but meaningful)</h3>
+        <p class="muted">
+          Instead of differentiating <span class="muted">I_o = I_i T(I_o)</span>, you can parametrize the steady states
+          by the phase <span class="muted">x = π I_o/I_π</span>. Then
+          <span class="muted">T(x) = 1/2(1+cos(x+φ))</span> and
+          <span class="muted">I_i/I_π = (x/π)/T(x)</span>.
+          The turning points satisfy <span class="muted">d(I_i)/dx = 0</span>, which leads directly to the same condition
+          <span class="muted">T − I_o T' = 0</span>.
+        </p>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-final"></span>Concept check (self-test with answers)</h3>
+        <ul class="muted" style="margin:8px 0 0 18px;">
+          <li><b>Q:</b> Why is the system nonlinear even if the MZI itself is linear? <b>A:</b> The Kerr medium makes phase depend on intensity, and feedback makes output determine that phase.</li>
+          <li><b>Q:</b> What does I<sub>π</sub> represent physically? <b>A:</b> The output intensity that produces a π rad Kerr phase shift in the nonlinear arm (given the device geometry/material).</li>
+          <li><b>Q:</b> Why can there be multiple outputs for one input? <b>A:</b> Because the self-consistency equation can intersect the nonlinear transmittance curve at multiple points.</li>
+          <li><b>Q:</b> What mathematical feature signals switching? <b>A:</b> A turning point where <span class="muted">dI_i/dI_o = 0</span> (vertical slope in I<sub>o</sub> vs I<sub>i</sub>).</li>
+          <li><b>Q:</b> Does “infinite gain” mean infinite output power? <b>A:</b> No—only an infinite slope in the ideal static curve; real physics limits the slope.</li>
+        </ul>
+      </div>
+
+      <a class="backTop" href="#top">↑ Back to top</a>
+    </section>
+
+    <section id="plotguide">
+      <h2>PART 5 — Optional Plot Guide <span class="tag">what the sketch shows</span></h2>
+
+      <div class="callout">
+        <h3><span class="badge b-eq"></span>What the plot shows and why it’s useful</h3>
+        <p class="muted">
+          The plot sketches the implicit steady-state relation for φ=0 by using the parametrization
+          <span class="muted">I_i = I_o / T(I_o)</span>. It visualizes how feedback can make the input–output curve
+          fold over, creating a region where one input corresponds to multiple possible outputs (bistability).
+        </p>
+        <ul class="muted" style="margin:8px 0 0 18px;">
+          <li><b>x-axis:</b> normalized input <span class="muted">I_i/I_π</span> (dimensionless).</li>
+          <li><b>y-axis:</b> normalized output <span class="muted">I_o/I_π</span> (dimensionless).</li>
+          <li><b>Example values:</b> No extra numbers beyond normalization; the curve shape comes from the cosine model.</li>
+        </ul>
+        <p class="muted">
+          <b>Features to notice:</b> near the fold (turning point), the slope <span class="muted">dI_o/dI_i</span>
+          becomes very large; that is the origin of the “maximum gain → ∞” statement in the ideal model.
+        </p>
+      </div>
+
+      <a class="backTop" href="#top">↑ Back to top</a>
+    </section>
+
+    <section id="copy">
+      <h2>Copy Buttons <span class="tag">plain text</span></h2>
+
+      <div class="callout">
+        <h3><span class="badge b-eq"></span>Key equations (copy plain text)</h3>
+
+        <div class="eq" id="eq_copy1">Transmittance:
+T(I_o) = 1/2 + 1/2 cos( π I_o/I_π + φ )
+
+Implicit steady-state relation:
+I_o = I_i T(I_o)</div>
+
+        <div class="copyRow">
+          <button class="copy" data-copy-target="eq_copy1">Copy key equations</button>
+          <span class="copyMsg" id="msg1" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:12px;">
+        <h3><span class="badge b-final"></span>Final answer (copy plain text)</h3>
+
+        <div class="eq" id="eq_final">For φ = 0:
+T(I_o) = 1/2 + 1/2 cos(π I_o/I_π)
+
+Differential gain (general implicit form):
+dI_o/dI_i = T(I_o) / [ 1 − I_i T'(I_o) ]
+
+With φ = 0:
+T'(I_o) = − (π/(2 I_π)) sin(π I_o/I_π)
+
+So:
+dI_o/dI_i = T(I_o) / [ 1 + I_i (π/(2 I_π)) sin(π I_o/I_π) ]
+and using I_i = I_o/T(I_o):
+dI_o/dI_i = T(I_o)^2 / [ T(I_o) + (π I_o/(2 I_π)) sin(π I_o/I_π) ]
+
+Maximum differential gain in the ideal steady-state model occurs at turning points where:
+dI_i/dI_o = 0  ⇔  T(I_o) − I_o T'(I_o) = 0
+At those points: (dI_o/dI_i)_max → ∞
+
+For φ = 0, letting x = π I_o/I_π:
+Turning-point condition becomes: 1 + cos x + x sin x = 0.</div>
+
+        <div class="copyRow">
+          <button class="copy" data-copy-target="eq_final">Copy final answer</button>
+          <span class="copyMsg" id="msg2" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <a class="backTop" href="#top">↑ Back to top</a>
+    </section>
+
+  </article>
+</main>
+
+<footer>
+  <p>
+    <b>Note:</b> This article follows the idealized steady-state model specified in the problem statement.
+    Real bistable interferometers require dynamic stability analysis (feedback delay, noise, thermal drift) to predict
+    switching behavior and usable gain in products.
+  </p>
+</footer>
+
+<script>
+  // ---------- Copy buttons ----------
+  (function(){
+    function flashMsg(el, text){
+      if(!el) return;
+      el.textContent = text;
+      el.style.opacity = "1";
+      setTimeout(()=>{ el.style.opacity = "0.85"; }, 700);
+      setTimeout(()=>{ el.textContent = ""; el.style.opacity="1"; }, 1600);
+    }
+
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      }catch(e){
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly','');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try{ ok = document.execCommand('copy'); }catch(err){ ok = false; }
+        document.body.removeChild(ta);
+        return ok;
+      }
+    }
+
+    document.querySelectorAll('button.copy').forEach((btn, idx)=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.getAttribute('data-copy-target');
+        const el = document.getElementById(id);
+        const msg = document.getElementById(idx === 0 ? "msg1" : "msg2");
+        if(!el){ flashMsg(msg, "Nothing to copy."); return; }
+        const ok = await copyText(el.textContent.trim());
+        flashMsg(msg, ok ? "Copied ✔" : "Copy failed (browser blocked).");
+      });
+    });
+  })();
+
+  // ---------- Single static plot (canvas), crisp + responsive ----------
+  (function(){
+    const canvas = document.getElementById('plot');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    function Tphi0(Io){
+      // Io normalized by Ipi in plot code: Io means Io/Ipi (dimensionless)
+      const x = Math.PI * Io;
+      return 0.5 * (1 + Math.cos(x));
+    }
+
+    function buildCurve(){
+      // Parameterize by Io in [0, 2] (i.e., 0..2 Ipi) and compute Ii = Io/T(Io).
+      // Clip very large Ii for plotting window.
+      const pts = [];
+      const ptsUnstable = [];
+      const N = 2200;
+
+      // Find approximate turning point (local minimum of Ii on second branch, excluding asymptote near Io=1).
+      let best = {Io: 1.7, Ii: Infinity};
+      for(let k=0;k<=N;k++){
+        const Io = 0 + 2*k/N;
+        const T = Tphi0(Io);
+        if(T < 1e-3) continue;
+        const Ii = Io / T;
+        if(Io > 1.1 && Io < 1.99 && Ii < best.Ii){
+          best = {Io, Ii};
+        }
+      }
+
+      // Classify "unstable-ish" segment as the fold region: Io in (best.Io, 1) is not present; actual unstable branch
+      // in typical bistable devices corresponds to negative-slope portion in Io vs Ii. Here we emulate by drawing
+      // dashed near the fold neighborhood on second branch where dIi/dIo < 0 (equivalently dIo/dIi < 0).
+      let prev = null;
+      for(let k=0;k<=N;k++){
+        const Io = 0 + 2*k/N;
+        const T = Tphi0(Io);
+        if(T < 1e-3) { prev = null; continue; }
+        const Ii = Io / T;
+        if(!isFinite(Ii)) { prev = null; continue; }
+        // Numerical derivative sign using neighbor points (rough):
+        let deriv = 0;
+        if(prev){
+          deriv = (Ii - prev.Ii) / (Io - prev.Io);
+        }
+        const p = {x:Ii, y:Io, deriv};
+        pts.push(p);
+        prev = p;
+      }
+
+      // Build unstable subset: points on second branch where deriv < 0 (Ii decreasing with Io),
+      // which means Io vs Ii has negative slope (unstable steady state in common optical bistability).
+      for(const p of pts){
+        if(p.y > 1.02 && p.y < 1.98 && p.deriv < 0){
+          ptsUnstable.push(p);
+        }
+      }
+
+      return {pts, ptsUnstable, turning: best};
+    }
+
+    function draw(){
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const rect = canvas.getBoundingClientRect();
+      const W = Math.max(320, Math.floor(rect.width));
+      const H = Math.max(260, Math.floor(rect.height));
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      // Plot window (normalized units)
+      const xMin = 0, xMax = 4.0; // Ii/Ipi
+      const yMin = 0, yMax = 2.0; // Io/Ipi
+
+      const padL = 58, padR = 18, padT = 38, padB = 52;
+      const pw = W - padL - padR;
+      const ph = H - padT - padB;
+
+      function X(x){ return padL + (x - xMin) * pw / (xMax - xMin); }
+      function Y(y){ return padT + ph - (y - yMin) * ph / (yMax - yMin); }
+
+      // Background
+      ctx.clearRect(0,0,W,H);
+      // subtle vignette
+      const g = ctx.createLinearGradient(0,padT,0,padT+ph);
+      g.addColorStop(0,"rgba(255,255,255,0.03)");
+      g.addColorStop(1,"rgba(255,255,255,0.00)");
+      ctx.fillStyle = g;
+      ctx.fillRect(padL, padT, pw, ph);
+
+      // Title
+      ctx.fillStyle = "rgba(234,240,255,0.92)";
+      ctx.font = "800 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText("Bistable Interferometer Sketch (φ = 0, normalized by Iπ)", padL, 12);
+
+      // Grid + ticks
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      // vertical grid
+      const xTicks = 8; // 0..4 step 0.5
+      for(let i=0;i<=xTicks;i++){
+        const xv = xMin + (xMax-xMin)*i/xTicks;
+        const xx = X(xv);
+        ctx.moveTo(xx, padT);
+        ctx.lineTo(xx, padT+ph);
+      }
+      // horizontal grid
+      const yTicks = 8; // 0..2 step 0.25
+      for(let i=0;i<=yTicks;i++){
+        const yv = yMin + (yMax-yMin)*i/yTicks;
+        const yy = Y(yv);
+        ctx.moveTo(padL, yy);
+        ctx.lineTo(padL+pw, yy);
+      }
+      ctx.stroke();
+
+      // Axes
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(padL, padT+ph);
+      ctx.lineTo(padL+pw, padT+ph);
+      ctx.moveTo(padL, padT);
+      ctx.lineTo(padL, padT+ph);
+      ctx.stroke();
+
+      // Tick labels
+      ctx.fillStyle = "rgba(184,195,230,0.92)";
+      ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      for(let i=0;i<=xTicks;i++){
+        const xv = xMin + (xMax-xMin)*i/xTicks;
+        const xx = X(xv);
+        ctx.fillText((Math.round(xv*100)/100).toString(), xx, padT+ph+10);
+      }
+
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for(let i=0;i<=yTicks;i++){
+        const yv = yMin + (yMax-yMin)*i/yTicks;
+        const yy = Y(yv);
+        ctx.fillText((Math.round(yv*100)/100).toString(), padL-10, yy);
+      }
+
+      // Axis labels
+      ctx.fillStyle = "rgba(234,240,255,0.90)";
+      ctx.font = "800 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("Input intensity  Ii / Iπ  (dimensionless)", padL + pw/2, H-10);
+
+      ctx.save();
+      ctx.translate(16, padT + ph/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText("Output intensity  Io / Iπ  (dimensionless)", 0, 0);
+      ctx.restore();
+
+      // Data
+      const {pts, ptsUnstable, turning} = buildCurve();
+
+      // Draw stable curve (solid)
+      ctx.strokeStyle = "rgba(134,183,255,0.92)";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      let started = false;
+      for(const p of pts){
+        const x = p.x, y = p.y;
+        if(x < xMin || x > xMax || y < yMin || y > yMax) {
+          started = false;
+          continue;
+        }
+        const xx = X(x), yy = Y(y);
+        if(!started){ ctx.moveTo(xx,yy); started = true; }
+        else { ctx.lineTo(xx,yy); }
+      }
+      ctx.stroke();
+
+      // Draw unstable segment (dashed)
+      ctx.strokeStyle = "rgba(255,210,138,0.90)";
+      ctx.lineWidth = 2.0;
+      ctx.setLineDash([6,6]);
+      ctx.beginPath();
+      started = false;
+      for(const p of ptsUnstable){
+        const x = p.x, y = p.y;
+        if(x < xMin || x > xMax || y < yMin || y > yMax) {
+          started = false;
+          continue;
+        }
+        const xx = X(x), yy = Y(y);
+        if(!started){ ctx.moveTo(xx,yy); started = true; }
+        else { ctx.lineTo(xx,yy); }
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Mark turning point (local minimum Ii on upper branch)
+      const tx = turning.Ii, ty = turning.Io;
+      if(isFinite(tx) && isFinite(ty) && tx>=xMin && tx<=xMax && ty>=yMin && ty<=yMax){
+        const xx = X(tx), yy = Y(ty);
+        ctx.fillStyle = "rgba(234,240,255,0.92)";
+        ctx.beginPath();
+        ctx.arc(xx,yy,4.8,0,Math.PI*2);
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(234,240,255,0.86)";
+        ctx.font = "700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+        ctx.fillText("fold (switching edge)", xx+8, yy-8);
+      }
+
+      // Legend
+      const lx = padL + 10, ly = padT + 10;
+      ctx.fillStyle = "rgba(0,0,0,0.35)";
+      ctx.strokeStyle = "rgba(255,255,255,0.14)";
+      ctx.lineWidth = 1;
+      const lw = 240, lh = 52;
+      ctx.beginPath();
+      roundRect(ctx, lx, ly, lw, lh, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = "700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+
+      // stable
+      ctx.strokeStyle = "rgba(134,183,255,0.92)";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(lx+12, ly+18);
+      ctx.lineTo(lx+48, ly+18);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(234,240,255,0.88)";
+      ctx.fillText("stable steady-state branch", lx+56, ly+18);
+
+      // unstable
+      ctx.strokeStyle = "rgba(255,210,138,0.90)";
+      ctx.lineWidth = 2.0;
+      ctx.setLineDash([6,6]);
+      ctx.beginPath();
+      ctx.moveTo(lx+12, ly+36);
+      ctx.lineTo(lx+48, ly+36);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(234,240,255,0.88)";
+      ctx.fillText("typically unstable middle branch", lx+56, ly+36);
+    }
+
+    function roundRect(ctx, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.moveTo(x+rr,y);
+      ctx.arcTo(x+w,y, x+w,y+h, rr);
+      ctx.arcTo(x+w,y+h, x,y+h, rr);
+      ctx.arcTo(x,y+h, x,y, rr);
+      ctx.arcTo(x,y, x+w,y, rr);
+      ctx.closePath();
+    }
+
+    let raf = null;
+    function schedule(){
+      if(raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(draw);
+    }
+    window.addEventListener('resize', schedule, {passive:true});
+    schedule();
+  })();
+</script>
 </body>
 </html>

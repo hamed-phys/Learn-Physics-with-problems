@@ -2,64 +2,1146 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>24.3-2 — MZI Crossbar Switch</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>MZI Crossbar Switch: Required Voltage and Crosstalk from 1% Error</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b0f17;
+      --panel:#11182a;
+      --panel2:#0f1524;
+      --text:#e9eefc;
+      --muted:#b9c3df;
+      --faint:#7f8bb0;
+      --accent:#6ee7ff;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:rgba(255,255,255,0.10);
+      --line2:rgba(255,255,255,0.14);
+      --shadow: 0 16px 40px rgba(0,0,0,0.35);
+      --radius:16px;
+      --radius2:22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% -10%, rgba(110,231,255,0.18), transparent 55%),
+        radial-gradient(900px 600px at 90% 0%, rgba(167,139,250,0.18), transparent 52%),
+        radial-gradient(900px 650px at 60% 110%, rgba(52,211,153,0.12), transparent 58%),
+        linear-gradient(180deg, #070a12 0%, #0b0f17 40%, #070a12 100%);
+      line-height:1.55;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    .wrap{
+      max-width:1200px;
+      margin:0 auto;
+      padding:28px 18px 80px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    header{
+      grid-column: 1 / -1;
+      padding:18px 18px 10px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    header:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(650px 220px at 10% 0%, rgba(110,231,255,0.18), transparent 60%),
+        radial-gradient(520px 220px at 90% 0%, rgba(167,139,250,0.18), transparent 60%);
+      pointer-events:none;
+      opacity:0.9;
+    }
+    header > *{position:relative}
+    .kicker{
+      color:var(--muted);
+      font-size:0.95rem;
+      letter-spacing:0.02em;
+      margin:0 0 6px;
+    }
+    h1{
+      margin:0 0 10px;
+      font-size: clamp(1.45rem, 2.1vw, 2.1rem);
+      line-height:1.18;
+    }
+    .sub{
+      margin:0;
+      color:var(--muted);
+      max-width: 90ch;
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17,24,42,0.88), rgba(15,21,36,0.86));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:14px 14px 12px;
+      backdrop-filter: blur(10px);
+    }
+    .toc h2{
+      margin:0 0 8px;
+      font-size:0.95rem;
+      color:var(--muted);
+      letter-spacing:0.02em;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      padding:3px 10px;
+      border:1px solid var(--line2);
+      border-radius:999px;
+      font-size:0.78rem;
+      color:var(--faint);
+      background: rgba(255,255,255,0.03);
+      white-space:nowrap;
+    }
+    .toc ul{list-style:none; padding:0; margin:10px 0 0}
+    .toc li{margin:7px 0}
+    .toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid transparent;
       color: var(--text);
-      line-height: 1.55;
+      background: rgba(255,255,255,0.02);
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+      font-size:0.95rem;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+    .toc a:hover{
+      transform: translateY(-1px);
+      border-color: rgba(110,231,255,0.25);
+      background: rgba(110,231,255,0.06);
+      text-decoration:none;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
+
+    main{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17,24,42,0.72), rgba(15,21,36,0.62));
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .content{
       padding: 18px;
+      display:grid;
+      gap:16px;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
-      color: var(--muted);
+
+    section{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+      border-radius: var(--radius);
+      padding: 16px 16px 14px;
+      position:relative;
+      overflow:hidden;
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    section:hover{
+      border-color: rgba(255,255,255,0.16);
+    }
+    section h2{
+      margin:0 0 10px;
+      font-size:1.2rem;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    section h3{
+      margin:14px 0 8px;
+      font-size:1.05rem;
+      color:var(--text);
+    }
+    p{margin:8px 0; color: var(--muted)}
+    ul{margin:8px 0 8px 22px; color: var(--muted)}
+    li{margin:5px 0}
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 980px){
+      .wrap{grid-template-columns: 1fr; }
+      nav.toc{position:relative; top:auto}
+    }
+    @media (max-width: 720px){
+      .grid2,.grid3{grid-template-columns: 1fr;}
+      .content{padding:14px}
+      section{padding:14px}
+    }
+
+    .card{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border-radius: 16px;
+      padding: 12px 12px 10px;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.22);
+    }
+    .card strong{color:var(--text)}
+    .tag{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:3px 10px;
+      border-radius:999px;
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,0.03);
+      color: var(--faint);
+      font-size:0.78rem;
+      margin-right:8px;
+      margin-bottom:8px;
+      white-space:nowrap;
+    }
+
+    .callout{
+      border-radius: 18px;
+      padding: 12px 12px 10px;
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,0.03);
+      position:relative;
+      overflow:hidden;
+    }
+    .callout:before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background: radial-gradient(800px 200px at 0% 0%, rgba(110,231,255,0.11), transparent 60%);
+      opacity:0.9;
+    }
+    .callout > *{position:relative}
+    .callout h4{
+      margin:0 0 6px;
+      font-size:0.95rem;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .callout p, .callout ul{color:var(--muted)}
+    .assumptions:before{background: radial-gradient(900px 220px at 0% 0%, rgba(52,211,153,0.12), transparent 60%);}
+    .mistakes:before{background: radial-gradient(900px 220px at 0% 0%, rgba(251,191,36,0.14), transparent 62%);}
+    .final:before{background: radial-gradient(900px 220px at 0% 0%, rgba(167,139,250,0.14), transparent 62%);}
+
+    .eqbox{
+      border:1px solid rgba(110,231,255,0.22);
+      background: rgba(110,231,255,0.06);
+      border-radius: 16px;
+      padding: 12px;
+      overflow:auto;
+      position:relative;
+    }
+    .eqbox pre{
+      margin:0;
+      font-family: var(--mono);
+      color: var(--text);
+      font-size: 0.93rem;
+      line-height:1.45;
+      white-space: pre-wrap;
+    }
+    .btnrow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:10px;
+    }
+    button.copy{
+      appearance:none;
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,0.04);
+      color:var(--text);
+      padding:9px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:600;
+      letter-spacing:0.01em;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    button.copy:hover{
+      transform: translateY(-1px);
+      background: rgba(110,231,255,0.08);
+      border-color: rgba(110,231,255,0.28);
+    }
+    button.copy:active{transform: translateY(0px) scale(0.98)}
+    .hint{
+      color:var(--faint);
+      font-size:0.88rem;
+      margin:6px 0 0;
+    }
+    details{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:10px 12px;
+      background: rgba(255,255,255,0.02);
+      margin-top:10px;
+    }
+    summary{
+      cursor:pointer;
+      color:var(--text);
+      font-weight:700;
+    }
+    details p, details ul{color:var(--muted)}
+    .toplink{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin-top:12px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .toplink:hover{
+      transform: translateY(-1px);
+      border-color: rgba(110,231,255,0.25);
+      background: rgba(110,231,255,0.06);
+      text-decoration:none;
+    }
+
+    figure{
+      margin: 10px 0 0;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,0.18);
+      border-radius: 18px;
+      padding: 12px;
+      overflow:hidden;
+    }
+    figcaption{
+      color: var(--faint);
+      font-size:0.9rem;
+      margin-top:8px;
+    }
+    canvas{
+      width: 100%;
+      height: 340px;
+      display:block;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,0.10);
+      background: rgba(10,14,22,0.6);
+    }
+
+    footer{
+      grid-column: 1 / -1;
+      color: var(--faint);
+      text-align:center;
+      padding: 10px 0 0;
+      font-size:0.9rem;
+    }
+
+    @media print{
+      body{background:#fff; color:#000}
+      header, nav.toc, main, section, .card, .callout, figure{box-shadow:none !important}
+      header, main, section, nav.toc, .card, .callout, figure{
+        background:#fff !important;
+        border-color:#000 !important;
+      }
+      .wrap{max-width:none; padding:0; grid-template-columns: 1fr;}
+      nav.toc{position:relative; top:auto; page-break-after:always;}
+      a{color:#000; text-decoration:underline}
+      button.copy{display:none}
+      .toplink{display:none}
+      canvas{border-color:#000}
+      section{page-break-inside: avoid}
+      h1,h2,h3{color:#000}
+      p,ul,li,figcaption,.kicker,.sub{color:#000}
     }
   </style>
 </head>
-<body>
-  <header>
-    <div class="box">
-      <h1>24.3-2 — MZI Crossbar Switch</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch24/prob_24_3_2.html</code></p>
-    </div>
-  </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
-    </div>
-  </main>
+<body>
+  <a id="top"></a>
+  <div class="wrap">
+    <header>
+      <p class="kicker">Photonics • Electro-Optics • Switching • Manufacturing Tolerances</p>
+      <h1>MZI Crossbar Switch: What Voltage Switches Bar → Cross, and What Crosstalk Comes from a 1% Voltage Error?</h1>
+      <p class="sub">
+        We analyze an electro-optic Mach–Zehnder interferometer (MZI) used as a 2×2 crossbar switch. You’ll learn the transfer physics
+        (phase-to-power mapping), then compute the required drive voltage and quantify crosstalk in dB due to a small calibration error—an
+        industrially crucial tolerance question.
+      </p>
+    </header>
+
+    <nav class="toc" aria-label="Table of contents">
+      <h2>
+        <span>Mini Table of Contents</span>
+        <span class="pill">sticky</span>
+      </h2>
+      <ul>
+        <li><a href="#qs">Quick Summary</a></li>
+        <li><a href="#p0">PART 0 — Concept Primer</a></li>
+        <li><a href="#p0b">PART 0B — Industry & Applied Physics</a></li>
+        <li><a href="#p1">PART 1 — Problem Analysis</a></li>
+        <li><a href="#p2">PART 2 — Strategy & Tips</a></li>
+        <li><a href="#p3">PART 3 — Full Solution</a></li>
+        <li><a href="#p4">PART 4 — Deeper Understanding</a></li>
+        <li><a href="#p5">PART 5 — Optional Plot Guide</a></li>
+      </ul>
+      <p class="hint">Tip: click any item to smoothly scroll.</p>
+    </nav>
+
+    <main>
+      <div class="content">
+
+        <section id="qs">
+          <h2>Quick Summary</h2>
+          <ul>
+            <li><span class="tag">What it is</span> An electro-optic MZI used as a <strong>2×2 crossbar switch</strong> (bar vs cross routing).</li>
+            <li><span class="tag">Key idea</span> A differential <strong>phase shift</strong> between arms determines which output port gets constructive interference.</li>
+            <li><span class="tag">Given</span> Applying <strong>V = V<sub>π</sub></strong> in one arm induces a phase shift of <strong>π radians</strong>.</li>
+            <li><span class="tag">Governing mapping</span> For ideal 50/50 couplers: <strong>P<sub>bar</sub> = cos²(Δφ/2)</strong>, <strong>P<sub>cross</sub> = sin²(Δφ/2)</strong>.</li>
+            <li><span class="tag">Switching voltage</span> If bar at V = 0 (Δφ = 0), then cross at Δφ = π ⇒ <strong>V = V<sub>π</sub></strong> (with the appropriate polarity).</li>
+            <li><span class="tag">Error → crosstalk</span> A 1% voltage error gives phase error ε = π·0.01, causing leakage power ≈ sin²(ε/2).</li>
+            <li><span class="tag">Crosstalk result</span> <strong>XT = P<sub>wrong</sub>/P<sub>right</sub> = tan²(ε/2) ≈ 2.47×10⁻⁴</strong> ⇒ <strong>XT ≈ −36.1 dB</strong>.</li>
+            <li><span class="tag">Physical meaning</span> Small voltage errors produce <strong>quadratic</strong> leakage (good news), but tight specs still matter in dense WDM / high-isolation switching.</li>
+          </ul>
+          <a class="toplink" href="#top">Back to top ↑</a>
+        </section>
+
+        <section id="p0">
+          <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+          <div class="grid2">
+            <div class="card">
+              <h3>Core definitions (symbols + SI units)</h3>
+              <ul>
+                <li><strong>Δφ</strong> (radians): phase difference between the two interferometer arms at recombination.</li>
+                <li><strong>V</strong> (volts): applied drive voltage to the electro-optic phase shifter.</li>
+                <li><strong>V<sub>π</sub></strong> (volts): “pi-voltage” producing a phase shift of π (for the specified electrode length and geometry).</li>
+                <li><strong>P<sub>bar</sub>, P<sub>cross</sub></strong> (dimensionless, normalized): output powers at bar/cross ports relative to input power.</li>
+                <li><strong>XT</strong> (dimensionless or dB): crosstalk ratio, typically undesired/desired output power.</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h3>Physical meaning (intuition)</h3>
+              <ul>
+                <li>An MZI splits light into two paths, then recombines it. The output depends on whether the fields add or cancel.</li>
+                <li>Applying an EO voltage changes refractive index (Pockels effect), changing optical phase in one arm.</li>
+                <li>“Bar” vs “cross” is just naming of which output port gets the constructive interference.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Key principle: interference maps phase to power</h3>
+          <p>
+            For an ideal MZI with two identical 50/50 couplers, the recombined output intensities are sinusoidal in the
+            differential phase <strong>Δφ</strong>. A standard (and very convenient) normalized model is:
+          </p>
+
+          <div class="eqbox" role="group" aria-label="Key equations: MZI power transfer">
+<pre id="eq1">Ideal MZI (50/50 couplers), normalized powers:
+P_bar   = cos^2(Δφ/2)
+P_cross = sin^2(Δφ/2)</pre>
+            <div class="btnrow">
+              <button class="copy" data-copy-target="eq1">Copy key equations</button>
+              <span class="hint">Copies as plain text.</span>
+            </div>
+          </div>
+
+          <h3>Voltage-to-phase model (electro-optic phase shifter)</h3>
+          <p>
+            In many modulators, phase shift is approximately linear in applied voltage over the operating range:
+          </p>
+
+          <div class="eqbox" role="group" aria-label="Key equation: phase versus voltage">
+<pre id="eq2">Given: V = Vπ produces a phase shift of π in one arm.
+Thus (single-arm drive, ideal linear model):
+Δφ(V) = π · (V / Vπ)</pre>
+            <div class="btnrow">
+              <button class="copy" data-copy-target="eq2">Copy voltage–phase relation</button>
+            </div>
+          </div>
+
+          <div class="callout assumptions">
+            <h4>Assumptions & validity conditions</h4>
+            <ul>
+              <li><strong>Ideal couplers:</strong> exactly 50/50 splitting with correct relative phase (no imbalance).</li>
+              <li><strong>Single-arm phase shifter:</strong> only one arm experiences Δφ(V).</li>
+              <li><strong>Linear EO response:</strong> Δφ ∝ V (good approximation for many Pockels-based devices in normal drive range).</li>
+              <li><strong>Neglect loss and dispersion:</strong> no differential attenuation between arms; coherent recombination.</li>
+              <li><strong>Monochromatic / narrowband:</strong> phase is well-defined; broadband effects ignored.</li>
+            </ul>
+          </div>
+
+          <h3>Mini intuition examples (quick)</h3>
+          <ul>
+            <li><strong>Δφ = 0:</strong> the two arms return in phase → constructive interference at the bar port → P<sub>bar</sub>=1, P<sub>cross</sub>=0.</li>
+            <li><strong>Δφ = π:</strong> the arms are out of phase → destructive at bar, constructive at cross → P<sub>bar</sub>=0, P<sub>cross</sub>=1.</li>
+            <li><strong>Small error ε around π:</strong> leakage goes like sin²(ε/2) ≈ (ε²/4) → quadratic sensitivity (very common in interferometers).</li>
+          </ul>
+
+          <h3>What to watch for (pitfalls)</h3>
+          <ul>
+            <li><strong>Port convention:</strong> some texts swap “bar” and “cross.” Always anchor with: “bar at V=0” given here.</li>
+            <li><strong>Phase sign:</strong> ±V can give ±Δφ. For switching, you need the correct magnitude (and polarity that moves Δφ toward π).</li>
+            <li><strong>Crosstalk definition:</strong> usually undesired/desired power (a small number, negative dB). Some industries quote isolation as +dB = −XT(dB).</li>
+            <li><strong>Non-idealities:</strong> coupler imbalance and loss can dominate crosstalk more than voltage error in real hardware.</li>
+          </ul>
+
+          <a class="toplink" href="#top">Back to top ↑</a>
+        </section>
+
+        <section id="p0b">
+          <h2>PART 0B — Industry & Applied Physics Perspective</h2>
+
+          <div class="grid3">
+            <div class="card">
+              <h3>Where it appears (real applications)</h3>
+              <ul>
+                <li><strong>Data centers:</strong> optical cross-connects, switch fabrics, reconfigurable interconnects.</li>
+                <li><strong>Telecom/WDM:</strong> add–drop multiplexing, protection switching, ROADM subsystems (when integrated with filters).</li>
+                <li><strong>Test & measurement:</strong> fast optical gating, coherent receiver path routing, photonic instrumentation.</li>
+                <li><strong>LIDAR / sensing:</strong> beam routing in integrated photonic front-ends (platform-dependent).</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h3>Why engineers care</h3>
+              <ul>
+                <li><strong>Performance:</strong> low crosstalk/isolation prevents channel contamination and BER penalties.</li>
+                <li><strong>Reliability:</strong> drift in V<sub>π</sub> with temperature/aging can break isolation budgets.</li>
+                <li><strong>Cost:</strong> tighter calibration and closed-loop control add BOM and complexity.</li>
+                <li><strong>Efficiency:</strong> lower V<sub>π</sub> reduces driver power, easing thermal design.</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h3>How it’s validated in practice</h3>
+              <ul>
+                <li><strong>Transfer curve measurement:</strong> sweep V and measure output power to extract V<sub>π</sub>, extinction, imbalance.</li>
+                <li><strong>Optical spectrum analysis:</strong> quantify leakage tones in WDM systems.</li>
+                <li><strong>Production test:</strong> automated calibration to set bias points (bar/cross) at test temperature.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Design trade-offs and constraints</h3>
+          <ul>
+            <li><strong>Coupler accuracy vs footprint:</strong> tighter coupler control improves isolation but may increase process complexity.</li>
+            <li><strong>V<sub>π</sub> vs bandwidth:</strong> lowering V<sub>π</sub> often increases capacitance or length, potentially reducing electrical bandwidth.</li>
+            <li><strong>Thermal drift:</strong> index changes shift phase; many products add heaters + control loops (bias stabilization).</li>
+            <li><strong>Loss and imbalance:</strong> differential loss breaks perfect cancellation and can dominate crosstalk even if phase is perfect.</li>
+          </ul>
+
+          <details>
+            <summary>From lab to product: adapting the ideal model</summary>
+            <p>
+              In production, engineers rarely rely on the ideal sin²/cos² model alone. They fit measured data to an extended model that includes:
+              (i) coupler splitting ratio errors, (ii) differential loss, (iii) residual phase offsets, (iv) wavelength dependence,
+              and (v) driver limitations (quantization, noise). The “required voltage” becomes a calibrated setpoint, and isolation
+              becomes a budget combining phase error, component mismatch, and environmental drift.
+            </p>
+          </details>
+
+          <a class="toplink" href="#top">Back to top ↑</a>
+        </section>
+
+        <section id="p1">
+          <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+          <h3>Problem restatement (clear wording)</h3>
+          <p>
+            An electro-optic Mach–Zehnder interferometer acts as a 2×2 crossbar switch. Applying a voltage <strong>V = V<sub>π</sub></strong>
+            to one arm produces a phase shift of <strong>π</strong>. If the switch is in the <strong>bar state</strong> when <strong>V = 0</strong>,
+            what voltage is needed to change it to the <strong>cross state</strong>? Then, if the applied voltage has a <strong>1% error</strong>,
+            compute the resulting <strong>crosstalk</strong> in dB.
+          </p>
+
+          <div class="grid2">
+            <div class="card">
+              <h3>Given</h3>
+              <ul>
+                <li>At <strong>V = V<sub>π</sub></strong>, the induced phase shift in one arm is <strong>π rad</strong>.</li>
+                <li>At <strong>V = 0</strong>, the switch output is <strong>bar state</strong> (all power exits bar port ideally).</li>
+                <li>Voltage error magnitude: <strong>±1%</strong> of the intended switching voltage.</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h3>Unknowns</h3>
+              <ul>
+                <li>Required applied voltage <strong>V</strong> to reach the cross state.</li>
+                <li>Crosstalk (dB) due to a <strong>1%</strong> voltage error.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Relevant principles (and why)</h3>
+          <ul>
+            <li><strong>MZI interference transfer:</strong> phase difference determines output power split between ports.</li>
+            <li><strong>EO phase shifter calibration:</strong> V<sub>π</sub> defines the voltage-to-phase scale.</li>
+            <li><strong>Small-error analysis:</strong> a small deviation from π produces leakage power that can be approximated and then converted to dB.</li>
+          </ul>
+
+          <div class="callout assumptions">
+            <h4>Explicit assumptions used for this problem</h4>
+            <ul>
+              <li>Ideal 50/50 couplers and perfect symmetry at V=0 → Δφ(0)=0 produces pure bar state.</li>
+              <li>Phase shift from voltage is linear: Δφ = π(V/V<sub>π</sub>).</li>
+              <li>Crosstalk is evaluated in the cross state as <strong>XT = P<sub>bar</sub>/P<sub>cross</sub></strong> (undesired/desired).</li>
+            </ul>
+          </div>
+
+          <h3>Possible approaches (compare 2–3)</h3>
+          <ul>
+            <li><strong>Approach A (transfer-function model):</strong> Use P<sub>bar</sub>=cos²(Δφ/2), P<sub>cross</sub>=sin²(Δφ/2) directly.
+              <em>Pros:</em> fastest, standard; <em>Cons:</em> relies on known convention. </li>
+            <li><strong>Approach B (field phasor derivation):</strong> Write the two arm fields, recombine through a 3 dB coupler matrix, square magnitudes.
+              <em>Pros:</em> removes ambiguity; <em>Cons:</em> longer algebra. </li>
+            <li><strong>Approach C (small-signal around π):</strong> Linearize near the switching point to show quadratic leakage.
+              <em>Pros:</em> highlights tolerance physics; <em>Cons:</em> still needs a baseline transfer. </li>
+          </ul>
+
+          <p>
+            <strong>Chosen approach:</strong> Approach A, anchored by the given condition “bar at V=0,” which fixes the port convention unambiguously and keeps the solution clean.
+          </p>
+
+          <a class="toplink" href="#top">Back to top ↑</a>
+        </section>
+
+        <section id="p2">
+          <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+          <div class="card">
+            <h3>Plan (8 steps)</h3>
+            <ol style="margin:8px 0 8px 22px; color:var(--muted)">
+              <li><strong>Anchor the convention:</strong> use “bar at V=0” to set Δφ(0)=0.</li>
+              <li><strong>Write the MZI power laws:</strong> P<sub>bar</sub>=cos²(Δφ/2), P<sub>cross</sub>=sin²(Δφ/2).</li>
+              <li><strong>Define switching condition:</strong> cross state means P<sub>cross</sub>=1 ⇒ Δφ=π (mod 2π).</li>
+              <li><strong>Use the V<sub>π</sub> definition:</strong> Δφ(V)=π(V/V<sub>π</sub>) for single-arm drive.</li>
+              <li><strong>Solve for V:</strong> set Δφ=π to get the required voltage.</li>
+              <li><strong>Model 1% error:</strong> V = V<sub>π</sub>(1+δ), with δ=±0.01.</li>
+              <li><strong>Compute leakage ratio:</strong> XT = P<sub>bar</sub>/P<sub>cross</sub> at Δφ=π(1+δ).</li>
+              <li><strong>Convert to dB:</strong> XT(dB)=10 log<sub>10</sub>(XT).</li>
+            </ol>
+          </div>
+
+          <div class="callout mistakes">
+            <h4>Common mistakes (quick tips)</h4>
+            <ul>
+              <li>Using P ∝ cos²(Δφ) instead of cos²(Δφ/2): the factor of 2 matters.</li>
+              <li>Forgetting that “1% voltage error” means a phase error of ε = π·0.01 (since phase scales linearly with V).</li>
+              <li>Mixing definitions: crosstalk vs isolation. This solution reports <strong>crosstalk</strong> (undesired/desired), which is negative in dB.</li>
+            </ul>
+          </div>
+
+          <a class="toplink" href="#top">Back to top ↑</a>
+        </section>
+
+        <section id="p3">
+          <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+          <h3>Qualitative expectation (before calculating)</h3>
+          <p>
+            At V=0 the device is stated to be in the bar state, so the two arms must recombine <em>in phase</em> at the bar output.
+            To flip to cross, we need to flip constructive/destructive interference, which is achieved by adding a phase difference of π.
+            For small voltage errors around the correct value, we expect leakage to be small and to scale roughly with the <em>square</em> of the phase error.
+          </p>
+
+          <h3>Step 1: Use the ideal MZI transfer law</h3>
+          <p>
+            With ideal 50/50 couplers, the normalized output powers can be written as:
+          </p>
+          <div class="eqbox">
+<pre> P_bar   = cos^2(Δφ/2)
+ P_cross = sin^2(Δφ/2)</pre>
+          </div>
+          <p>
+            This satisfies the required anchor: at Δφ=0, P<sub>bar</sub>=1 and P<sub>cross</sub>=0, matching “bar at V=0.”
+          </p>
+
+          <h3>Step 2: Determine the phase needed for the cross state</h3>
+          <p>
+            The cross state corresponds to sending (ideally) all power to the cross port:
+          </p>
+          <div class="eqbox">
+<pre>P_cross = 1  ⇒  sin^2(Δφ/2) = 1  ⇒  Δφ/2 = π/2 (mod π)  ⇒  Δφ = π (mod 2π)</pre>
+          </div>
+          <p>
+            The smallest-magnitude phase shift that performs the switch is therefore:
+            <strong>Δφ = π</strong>.
+          </p>
+
+          <h3>Step 3: Convert phase requirement into voltage</h3>
+          <p>
+            The problem states: applying <strong>V = V<sub>π</sub></strong> to one arm produces a phase shift of π. Under the standard linear model for a single-arm phase shifter:
+          </p>
+          <div class="eqbox">
+<pre>Δφ(V) = π · (V / Vπ)</pre>
+          </div>
+          <p>
+            To switch bar → cross, set Δφ(V) = π:
+          </p>
+          <div class="eqbox">
+<pre>π · (V / Vπ) = π  ⇒  V = Vπ</pre>
+          </div>
+
+          <div class="callout final">
+            <h4>Result 1 — Switching voltage (bar → cross)</h4>
+            <p style="margin:8px 0; color:var(--muted)">
+              <strong>V = V<sub>π</sub></strong> (with the polarity that produces a +π phase shift relative to the V=0 bar bias).
+            </p>
+          </div>
+
+          <h3>Step 4: Model a 1% error in the applied voltage</h3>
+          <p>
+            Let the intended switching voltage be V<sub>π</sub>, but we actually apply
+            <strong>V = V<sub>π</sub>(1+δ)</strong>, where δ is the fractional error. For a 1% error, |δ|=0.01.
+          </p>
+          <p>
+            The achieved phase becomes:
+          </p>
+          <div class="eqbox">
+<pre>Δφ = π · (V/Vπ) = π · (1+δ) = π + ε
+where the phase error ε = πδ</pre>
+          </div>
+
+          <h3>Step 5: Compute crosstalk in the cross state</h3>
+          <p>
+            In the cross state, the <em>desired</em> port is cross and the <em>undesired leakage</em> is bar. Using the transfer functions:
+          </p>
+          <div class="eqbox">
+<pre>P_cross = sin^2( (π+ε)/2 )
+P_bar   = cos^2( (π+ε)/2 )</pre>
+          </div>
+          <p>
+            Use the trig identities:
+            <strong>sin(π/2 + x) = cos(x)</strong> and <strong>cos(π/2 + x) = −sin(x)</strong>.
+            With x = ε/2:
+          </p>
+          <div class="eqbox">
+<pre>P_cross = cos^2(ε/2)
+P_bar   = sin^2(ε/2)</pre>
+          </div>
+
+          <p>
+            Define crosstalk as the power ratio (undesired/desired):
+          </p>
+          <div class="eqbox" role="group" aria-label="Crosstalk equation">
+<pre id="eq3">XT ≡ P_bar / P_cross
+   = sin^2(ε/2) / cos^2(ε/2)
+   = tan^2(ε/2)
+with ε = πδ</pre>
+            <div class="btnrow">
+              <button class="copy" data-copy-target="eq3">Copy crosstalk equation</button>
+            </div>
+          </div>
+
+          <h3>Step 6: Evaluate for a 1% error</h3>
+          <p>
+            For |δ|=0.01:
+          </p>
+          <div class="eqbox">
+<pre>ε = πδ = π(0.01) = 0.01π ≈ 0.0314159 rad
+ε/2 ≈ 0.01570795 rad</pre>
+          </div>
+          <div class="eqbox">
+<pre>XT = tan^2(ε/2) = tan^2(0.01570795) ≈ (0.015709)^2 ≈ 2.467×10^-4</pre>
+          </div>
+          <div class="eqbox">
+<pre>XT(dB) = 10 log10(XT)
+       = 10 log10(2.467×10^-4)
+       ≈ -36.1 dB</pre>
+          </div>
+
+          <div class="callout final">
+            <h4>Result 2 — Crosstalk from 1% voltage error</h4>
+            <div class="eqbox" style="margin-top:10px">
+<pre id="finalAns">Required voltage for cross state:
+V = Vπ
+
+With a 1% error (|δ| = 0.01):
+ε = πδ
+XT = tan^2(ε/2) = tan^2(πδ/2) ≈ 2.47×10^-4
+XT(dB) = 10 log10(XT) ≈ -36.1 dB</pre>
+              <div class="btnrow">
+                <button class="copy" data-copy-target="finalAns">Copy final answer</button>
+              </div>
+            </div>
+          </div>
+
+          <h3>Sanity checks</h3>
+          <div class="grid2">
+            <div class="callout">
+              <h4>Units / dimensions</h4>
+              <ul>
+                <li>Δφ and ε are in radians (dimensionless).</li>
+                <li>V and V<sub>π</sub> are volts; V/V<sub>π</sub> is dimensionless.</li>
+                <li>XT is a power ratio (dimensionless); XT(dB) uses 10·log<sub>10</sub>.</li>
+              </ul>
+            </div>
+            <div class="callout">
+              <h4>Limiting cases</h4>
+              <ul>
+                <li>If δ → 0 ⇒ ε → 0 ⇒ XT = tan²(0) = 0 (perfect isolation).</li>
+                <li>If δ increases, XT rises roughly as δ² for small δ (quadratic leakage).</li>
+                <li>At δ = 0.5 (huge error), ε=π/2 ⇒ not a switch state; outputs become comparable (as expected).</li>
+              </ul>
+            </div>
+          </div>
+
+          <a class="toplink" href="#top">Back to top ↑</a>
+        </section>
+
+        <section id="p4">
+          <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+          <h3>Re-interpreting the formula</h3>
+          <p>
+            The crosstalk expression <strong>XT = tan²(πδ/2)</strong> shows the key control knob is the fractional voltage error δ.
+            Since phase is proportional to voltage, the MZI converts voltage accuracy directly into isolation performance.
+          </p>
+
+          <div class="grid2">
+            <div class="card">
+              <h3>Parameter dependence</h3>
+              <ul>
+                <li><strong>δ (drive accuracy):</strong> for small δ, XT ≈ (π²/4)δ² → doubling δ worsens XT by ~4× (~+6 dB).</li>
+                <li><strong>V<sub>π</sub>:</strong> smaller V<sub>π</sub> reduces required driver voltage, but drift in V<sub>π</sub> still impacts calibration unless controlled.</li>
+                <li><strong>Non-idealities:</strong> coupler imbalance / loss often set the real isolation floor.</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h3>Small-error approximation (engineering rule)</h3>
+              <div class="eqbox">
+<pre>XT = tan^2(πδ/2) ≈ (πδ/2)^2 = (π^2/4) δ^2</pre>
+              </div>
+              <p class="hint">Quadratic scaling explains why isolation improves rapidly as calibration tightens—until other errors dominate.</p>
+            </div>
+          </div>
+
+          <h3>Alternative derivation idea</h3>
+          <p>
+            Using field addition, outputs are proportional to (1 ± e^{iΔφ}); squaring magnitudes gives cos²(Δφ/2) and sin²(Δφ/2).
+            This also clarifies why Δφ=π swaps outputs.
+          </p>
+
+          <h3>Concept check (with answers)</h3>
+          <ul>
+            <li><strong>Q:</strong> Why does π cause switching?<br><strong>A:</strong> It flips the relative sign between arm fields at recombination.</li>
+            <li><strong>Q:</strong> If error doubles from 1% to 2%, what happens to XT (approx.)?<br><strong>A:</strong> XT ≈ const·δ² ⇒ 4× higher leakage ⇒ about +6 dB worse.</li>
+            <li><strong>Q:</strong> Why is XT(dB) negative?<br><strong>A:</strong> Because XT &lt; 1 (leakage is smaller than desired output power).</li>
+          </ul>
+
+          <a class="toplink" href="#top">Back to top ↑</a>
+        </section>
+
+        <section id="p5">
+          <h2>PART 5 — Optional Plot Guide (Plot Included)</h2>
+
+          <p>
+            The plot visualizes how crosstalk in dB depends on fractional voltage error—useful for tolerance and calibration specs.
+          </p>
+
+          <figure>
+            <canvas id="plot" aria-label="Crosstalk versus voltage error plot"></canvas>
+            <figcaption>
+              Static plot: XT(dB) = 10 log10[tan²(πδ/2)] versus voltage error |δ| (%), assuming an ideal MZI.
+              The point at 1% matches XT ≈ −36.1 dB.
+            </figcaption>
+          </figure>
+
+          <a class="toplink" href="#top">Back to top ↑</a>
+        </section>
+
+      </div>
+    </main>
+
+    <footer>
+      Self-contained learning article (vanilla HTML/CSS/JS). No external assets.
+    </footer>
+  </div>
+
+  <script>
+    (function(){
+      // Smooth scrolling for in-page links
+      document.querySelectorAll('a[href^="#"]').forEach(a=>{
+        a.addEventListener('click', (e)=>{
+          const href = a.getAttribute('href');
+          if(!href || href.length < 2) return;
+          const el = document.querySelector(href);
+          if(!el) return;
+          e.preventDefault();
+          el.scrollIntoView({behavior:'smooth', block:'start'});
+          history.replaceState(null, '', href);
+        });
+      });
+
+      // Copy buttons
+      async function copyText(text){
+        try{
+          await navigator.clipboard.writeText(text);
+          return true;
+        }catch(err){
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly','');
+          ta.style.position='fixed';
+          ta.style.left='-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          try{
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            return true;
+          }catch(e){
+            document.body.removeChild(ta);
+            return false;
+          }
+        }
+      }
+
+      document.querySelectorAll('button.copy').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const id = btn.getAttribute('data-copy-target');
+          const el = document.getElementById(id);
+          if(!el) return;
+          const text = (el.innerText || el.textContent || '').trim();
+          const ok = await copyText(text);
+          const old = btn.textContent;
+          btn.textContent = ok ? 'Copied ✓' : 'Copy failed';
+          btn.style.borderColor = ok ? 'rgba(52,211,153,0.45)' : 'rgba(251,113,133,0.55)';
+          btn.style.background = ok ? 'rgba(52,211,153,0.10)' : 'rgba(251,113,133,0.12)';
+          setTimeout(()=>{
+            btn.textContent = old;
+            btn.style.borderColor = '';
+            btn.style.background = '';
+          }, 1100);
+        });
+      });
+
+      // Plot XT(dB) vs |δ| (%)
+      const canvas = document.getElementById('plot');
+      const ctx = canvas.getContext('2d');
+
+      function xtDbFromPercent(pct){
+        const delta = pct/100;
+        const x = Math.PI*delta/2;
+        const t = Math.tan(x);
+        const XT = t*t;
+        const safe = Math.max(XT, 1e-20);
+        return 10*Math.log10(safe);
+      }
+
+      function roundRect(c, x, y, w, h, r){
+        const rr = Math.min(r, w/2, h/2);
+        c.beginPath();
+        c.moveTo(x+rr,y);
+        c.arcTo(x+w,y,x+w,y+h,rr);
+        c.arcTo(x+w,y+h,x,y+h,rr);
+        c.arcTo(x,y+h,x,y,rr);
+        c.arcTo(x,y,x+w,y,rr);
+        c.closePath();
+      }
+
+      function draw(){
+        const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+        const rect = canvas.getBoundingClientRect();
+        const W = Math.max(320, Math.floor(rect.width));
+        const H = Math.max(260, Math.floor(rect.height));
+        canvas.width = Math.floor(W * dpr);
+        canvas.height = Math.floor(H * dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+
+        const padL = 56, padR = 18, padT = 38, padB = 44;
+        const plotW = W - padL - padR;
+        const plotH = H - padT - padB;
+
+        const xMin = 0, xMax = 5;
+        const yMin = -80, yMax = 0;
+
+        function xToPx(x){ return padL + (x - xMin) * (plotW/(xMax - xMin)); }
+        function yToPx(y){ return padT + (yMax - y) * (plotH/(yMax - yMin)); }
+
+        ctx.clearRect(0,0,W,H);
+        ctx.fillStyle = 'rgba(0,0,0,0.18)';
+        ctx.fillRect(0,0,W,H);
+
+        // grid
+        ctx.save();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+        for(let x=0; x<=5; x+=1){
+          const px = xToPx(x);
+          ctx.beginPath();
+          ctx.moveTo(px, padT);
+          ctx.lineTo(px, padT + plotH);
+          ctx.stroke();
+        }
+        for(let y=-80; y<=0; y+=10){
+          const py = yToPx(y);
+          ctx.beginPath();
+          ctx.moveTo(padL, py);
+          ctx.lineTo(padL + plotW, py);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // axes
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+        ctx.lineWidth = 1.25;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + plotH);
+        ctx.lineTo(padL + plotW, padT + plotH);
+        ctx.stroke();
+        ctx.restore();
+
+        // ticks & labels
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.82)';
+        ctx.font = '600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        for(let x=0; x<=5; x+=1){
+          const px = xToPx(x);
+          const py = padT + plotH;
+          ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(px, py+6);
+          ctx.stroke();
+          ctx.fillText(String(x), px, py+8);
+        }
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for(let y=-80; y<=0; y+=10){
+          const px = padL;
+          const py = yToPx(y);
+          ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+          ctx.beginPath();
+          ctx.moveTo(px-6, py);
+          ctx.lineTo(px, py);
+          ctx.stroke();
+          ctx.fillText(String(y), px-9, py);
+        }
+        ctx.restore();
+
+        // title
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.90)';
+        ctx.font = '700 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Crosstalk vs Voltage Error (Ideal MZI)', padL, 10);
+        ctx.restore();
+
+        // axis labels
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.80)';
+        ctx.font = '600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('Voltage error |δ| (%)', padL + plotW/2, H - 10);
+
+        ctx.translate(16, padT + plotH/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Crosstalk XT (dB) = 10·log10(P_wrong / P_right)', 0, 0);
+        ctx.restore();
+
+        // curve
+        ctx.save();
+        ctx.strokeStyle = 'rgba(110,231,255,0.95)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const n = 400;
+        for(let i=0;i<=n;i++){
+          const x = xMin + (xMax-xMin)*i/n;
+          const y = xtDbFromPercent(x);
+          const px = xToPx(x);
+          const py = yToPx(Math.max(yMin, Math.min(yMax, y)));
+          if(i===0) ctx.moveTo(px,py);
+          else ctx.lineTo(px,py);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // mark 1% point
+        const x1 = 1.0;
+        const y1 = xtDbFromPercent(x1);
+        const px1 = xToPx(x1);
+        const py1 = yToPx(y1);
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.90)';
+        ctx.beginPath();
+        ctx.arc(px1, py1, 4.5, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = '600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('1% → XT ≈ ' + y1.toFixed(1) + ' dB', px1 + 8, py1 - 6);
+        ctx.restore();
+
+        // legend
+        ctx.save();
+        const lx = padL + plotW - 180;
+        const ly = padT + 10;
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+        ctx.lineWidth = 1;
+        roundRect(ctx, lx, ly, 170, 44, 10);
+        ctx.fill(); ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(110,231,255,0.95)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(lx+12, ly+16);
+        ctx.lineTo(lx+42, ly+16);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = '600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('XT(dB) = 10 log10[tan²(πδ/2)]', lx+50, ly+16);
+        ctx.restore();
+      }
+
+      let raf=null;
+      function schedule(){
+        if(raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(draw);
+      }
+      window.addEventListener('resize', schedule, {passive:true});
+      schedule();
+    })();
+  </script>
 </body>
 </html>

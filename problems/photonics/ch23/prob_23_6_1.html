@@ -2,64 +2,1258 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>23.6-1 — Measurement of a Gaussian Pulse</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Gaussian Pulse Measurement by Intensity Autocorrelation + Fiber Stretching (Applied & Industrial View)</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b0f14;
+      --card:#0f1620;
+      --ink:#eaf2ff;
+      --muted:#a9b6c9;
+      --faint:#6f7f95;
+      --line:rgba(255,255,255,.10);
+      --accent:#7bdcff;
+      --accent2:#b7ff7b;
+      --warn:#ffd37b;
+      --good:#9cffc8;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1000px 700px at 20% -10%, rgba(123,220,255,.12), transparent 60%),
+        radial-gradient(900px 700px at 85% 5%, rgba(183,255,123,.10), transparent 55%),
+        radial-gradient(1200px 800px at 60% 110%, rgba(255,211,123,.10), transparent 60%),
+        var(--bg);
+      color:var(--ink);
+      line-height:1.62;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    .wrap{
+      max-width:1200px;
+      margin:0 auto;
+      padding:28px 18px 70px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:18px;
+      align-items:start;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+
+    header.hero{
+      grid-column:1 / -1;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: calc(var(--radius) + 6px);
+      box-shadow: var(--shadow);
+      padding:22px 18px;
+      position:relative;
+      overflow:hidden;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
+    header.hero::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(600px 220px at 10% 20%, rgba(123,220,255,.15), transparent 55%),
+        radial-gradient(540px 220px at 75% 25%, rgba(183,255,123,.13), transparent 55%),
+        radial-gradient(700px 260px at 35% 120%, rgba(255,211,123,.10), transparent 60%);
+      pointer-events:none;
+      filter: blur(.2px);
+    }
+    header.hero > *{position:relative}
+    .kicker{
+      color:var(--muted);
+      font-size:0.95rem;
+      letter-spacing:.2px;
+      margin:0 0 8px 0;
+    }
+    h1{
+      margin:0 0 10px 0;
+      font-size: clamp(1.45rem, 1.2rem + 1.3vw, 2.15rem);
+      line-height:1.18;
+    }
+    .sub{
+      margin:0;
+      color:var(--muted);
+      max-width: 82ch;
+    }
+
+    nav.toc{
+      position:sticky;
+      top:14px;
+      align-self:start;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
+      padding:14px 12px;
+    }
+    nav.toc h2{
+      margin:0 0 10px 0;
+      font-size:1rem;
+      letter-spacing:.2px;
+      color:var(--ink);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:999px;background:var(--accent);
+      box-shadow:0 0 0 4px rgba(123,220,255,.14);
+      flex:0 0 auto;
+    }
+    nav.toc ul{list-style:none; padding:0; margin:0; display:grid; gap:6px}
+    nav.toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid transparent;
+      color:var(--muted);
+      font-size:.95rem;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease, color .15s ease;
+    }
+    nav.toc a:hover{
+      background: rgba(123,220,255,.08);
+      border-color: rgba(123,220,255,.18);
+      color: var(--ink);
+      transform: translateY(-1px);
+      text-decoration:none;
+    }
+    .toplink{
+      margin-top:10px;
+      border-top:1px solid var(--line);
+      padding-top:10px;
+      font-size:.92rem;
+      color:var(--muted);
+    }
+
+    main{
+      background: rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:18px 18px 10px;
+      overflow:hidden;
+    }
+
+    section{
+      padding: 10px 0 20px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    section:last-child{border-bottom:none}
+    section > h2{
+      margin: 4px 0 10px;
+      font-size: 1.35rem;
+      line-height:1.25;
+    }
+    h3{
+      margin: 14px 0 8px;
+      font-size: 1.1rem;
+      color: var(--ink);
+    }
+    p{margin: 8px 0; color: var(--muted)}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 980px){
+      .wrap{grid-template-columns: 1fr}
+      nav.toc{position:relative; top:auto}
+      .grid2{grid-template-columns: 1fr}
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding:14px 14px 12px;
+    }
+    .card h3{margin-top:0}
+    .pillrow{
+      display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 0;
+    }
+    .pill{
+      font-size:.85rem;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--muted);
+      background: rgba(0,0,0,.18);
+    }
+
+    .callout{
+      border-radius: var(--radius);
+      padding: 14px 14px 12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      position:relative;
+      overflow:hidden;
+    }
+    .callout::before{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(540px 160px at 12% 18%, rgba(123,220,255,.12), transparent 60%);
+      pointer-events:none;
+    }
+    .callout > *{position:relative}
+    .callout strong{color:var(--ink)}
+    .callout.assump::before{background: radial-gradient(540px 170px at 12% 20%, rgba(255,211,123,.12), transparent 60%)}
+    .callout.mist::before{background: radial-gradient(540px 170px at 12% 20%, rgba(255,123,123,.11), transparent 60%)}
+    .callout.final::before{background: radial-gradient(540px 170px at 12% 20%, rgba(183,255,123,.12), transparent 60%)}
+
+    .eq{
+      margin:10px 0 0;
+      border-radius: 14px;
+      border:1px dashed rgba(255,255,255,.18);
+      background: rgba(0,0,0,.20);
+      padding:12px 12px 10px;
+      display:grid;
+      gap:8px;
+    }
+    .eq .row{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+    pre{
+      margin:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-family: var(--mono);
+      font-size:.95rem;
+      line-height:1.45;
+      color:#eaf2ff;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--ink);
+      border-radius: 12px;
+      padding:8px 10px;
+      font-size:.86rem;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+      flex:0 0 auto;
+    }
+    .btn:hover{transform: translateY(-1px); background: rgba(123,220,255,.10); border-color: rgba(123,220,255,.22)}
+    .btn:active{transform: translateY(0px)}
+    .btn.small{padding:7px 9px; font-size:.83rem}
+
+    details{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      margin: 10px 0 0;
+    }
+    details summary{
+      cursor:pointer;
+      color: var(--ink);
+      font-weight: 650;
+      list-style:none;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    details summary::-webkit-details-marker{display:none}
+    .chev{
+      width:10px;height:10px; border-right:2px solid var(--muted); border-bottom:2px solid var(--muted);
+      transform: rotate(-45deg);
+      transition: transform .18s ease;
+      opacity:.9;
+      flex:0 0 auto;
+    }
+    details[open] .chev{transform: rotate(45deg)}
+    details .content{margin-top:10px; color: var(--muted)}
+
+    figure{
+      margin: 10px 0 0;
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+    }
+    figcaption{
+      margin-top:10px;
+      color: var(--muted);
+      font-size:.95rem;
+    }
+    canvas{
+      width: 100%;
+      height: 360px;
+      display:block;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(15,22,32,.55);
+    }
+    .mini{
+      font-size:.95rem;
       color: var(--muted);
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .list{
+      margin:8px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+    .list li{margin: 6px 0}
+
+    footer{
+      grid-column:1 / -1;
+      color:var(--faint);
+      text-align:center;
+      font-size:.92rem;
+      margin-top: 10px;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:white; color:#000}
+      .wrap{max-width:none; padding:0; grid-template-columns:1fr}
+      nav.toc{display:none}
+      header.hero, main{box-shadow:none; background:white; border:1px solid #bbb}
+      section{page-break-inside:avoid}
+      .btn{display:none}
+      canvas{border:1px solid #bbb; background:white}
+      .callout, .card, details, figure, .eq{background:white; border:1px solid #bbb}
+      pre{color:#000}
+      p, .mini, .list{color:#111}
+      a{color:#000; text-decoration:underline}
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="box">
-      <h1>23.6-1 — Measurement of a Gaussian Pulse</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch23/prob_23_6_1.html</code></p>
-    </div>
-  </header>
+  <div id="top"></div>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
-    </div>
-  </main>
+  <div class="wrap">
+    <header class="hero">
+      <p class="kicker">Ultrafast optics • Intensity autocorrelation • Dispersion engineering • Applied & industrial lens</p>
+      <h1>Measuring a 50&nbsp;fs Gaussian Pulse with an Intensity Autocorrelator (and What Fiber Stretching Changes)</h1>
+      <p class="sub">
+        We solve a classic ultrafast-measurement problem: (a) the measured intensity autocorrelation of a transform-limited Gaussian pulse,
+        (b) how much dispersive silica fiber is needed to stretch one pulse by a factor of 5 using a given dispersion parameter,
+        (c) what the modified correlation looks like and how this idea translates (merits & pitfalls) to a nonlinear interferometer.
+      </p>
+    </header>
+
+    <nav class="toc" aria-label="Table of contents">
+      <h2><span class="dot" aria-hidden="true"></span>Contents</h2>
+      <ul>
+        <li><a href="#qs">Quick Summary</a></li>
+        <li><a href="#p0">PART 0 — Concept Primer</a></li>
+        <li><a href="#p0b">PART 0B — Industry & Applied Perspective</a></li>
+        <li><a href="#p1">PART 1 — Problem Analysis</a></li>
+        <li><a href="#p2">PART 2 — Strategy & Tips</a></li>
+        <li><a href="#p3">PART 3 — Full Solution</a></li>
+        <li><a href="#p4">PART 4 — Deeper Understanding</a></li>
+        <li><a href="#p5">PART 5 — Optional Plot Guide</a></li>
+      </ul>
+      <div class="toplink"><a href="#top">Back to top ↑</a></div>
+    </nav>
+
+    <main>
+      <article>
+        <section id="qs">
+          <h2>Quick Summary</h2>
+          <ul class="list">
+            <li><strong>What this is about:</strong> measuring an ultrashort <em>Gaussian</em> optical pulse using an <strong>intensity autocorrelator</strong>, then intentionally stretching one arm with dispersive fiber.</li>
+            <li><strong>Key physics idea:</strong> an intensity autocorrelator measures a <strong>time-overlap integral</strong> of intensities; for Gaussians, the correlation is also Gaussian.</li>
+            <li><strong>Governing equation:</strong> intensity autocorrelation (or cross-correlation if pulses differ):<br/>
+              <span style="font-family:var(--mono)">G(τ) = ∫ I₁(t) I₂(t−τ) dt</span>.</li>
+            <li><strong>Gaussian width rule:</strong> convolution of Gaussians adds variances: <span style="font-family:var(--mono)">σ_G² = σ₁² + σ₂²</span>, so <span style="font-family:var(--mono)">FWHM_G = √(FWHM₁² + FWHM₂²)</span>.</li>
+            <li><strong>(a) Result:</strong> for identical pulses, the measured <strong>intensity autocorrelation</strong> is Gaussian with <strong>FWHM = √2 · (pulse FWHM)</strong>.</li>
+            <li><strong>(b) Result type:</strong> numeric fiber length using dispersion parameter <span style="font-family:var(--mono)">Dλ</span>. For a 50&nbsp;fs transform-limited Gaussian at 800&nbsp;nm, bandwidth is ~18.8&nbsp;nm (FWHM).</li>
+            <li><strong>(b) Fiber length:</strong> to stretch by factor 5, needed length is about <strong>0.12&nbsp;m</strong> (≈12&nbsp;cm) for <span style="font-family:var(--mono)">|Dλ|=110 ps/(km·nm)</span>.</li>
+            <li><strong>(c) Modified correlation width:</strong> cross-correlation of 50&nbsp;fs and 250&nbsp;fs Gaussians gives <strong>FWHM ≈ √26 · 50&nbsp;fs ≈ 255&nbsp;fs</strong>.</li>
+            <li><strong>Engineering meaning:</strong> deliberate chirp/stretch can widen and stabilize overlap signals, but introduces calibration needs, phase distortions, and bandwidth/acceptance constraints—especially in nonlinear interferometers.</li>
+          </ul>
+        </section>
+
+        <section id="p0">
+          <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+          <div class="grid2">
+            <div class="card">
+              <h3>Core definitions (symbols + SI units)</h3>
+              <ul class="list">
+                <li><strong>Time</strong> <span style="font-family:var(--mono)">t</span> (s) and <strong>delay</strong> <span style="font-family:var(--mono)">τ</span> (s).</li>
+                <li><strong>Optical field</strong> <span style="font-family:var(--mono)">U(t)</span> (arbitrary field units). Often written <span style="font-family:var(--mono)">U(t)=A(t) e^{j2πν₀t}</span>.</li>
+                <li><strong>Intensity</strong> <span style="font-family:var(--mono)">I(t)=|U(t)|²</span> (W/m² in absolute terms; often normalized).</li>
+                <li><strong>FWHM</strong> (full width at half maximum): duration where a function is ≥ half its peak (s).</li>
+                <li><strong>Intensity autocorrelation</strong> (2nd-order intensity correlation):
+                  <span style="font-family:var(--mono)">G_I(τ)=∫ I(t) I(t−τ) dt</span> (units: intensity²·time).</li>
+                <li><strong>Dispersion parameter</strong> <span style="font-family:var(--mono)">Dλ</span> (ps/(km·nm)): slope of group delay vs wavelength.</li>
+                <li><strong>Optical bandwidth</strong> <span style="font-family:var(--mono)">Δλ</span> (m or nm) and <span style="font-family:var(--mono)">Δν</span> (Hz).</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h3>Physical meaning (intuition)</h3>
+              <ul class="list">
+                <li><span style="font-family:var(--mono)">G_I(τ)</span> measures “how much two copies of the pulse overlap” when one is delayed by <span style="font-family:var(--mono)">τ</span>.</li>
+                <li>At <span style="font-family:var(--mono)">τ=0</span> the overlap is maximal; as <span style="font-family:var(--mono)">|τ|</span> grows beyond the pulse duration, overlap → 0.</li>
+                <li>For Gaussians, overlap vs delay is also Gaussian—this is a major reason Gaussians are analytically convenient.</li>
+                <li>Fiber dispersion stretches pulses because different wavelengths travel at different group velocities, producing a time “spread” proportional to <span style="font-family:var(--mono)">|Dλ| L Δλ</span>.</li>
+              </ul>
+              <div class="pillrow" aria-label="Key ideas">
+                <span class="pill">Overlap integral</span>
+                <span class="pill">Gaussian-in → Gaussian-out</span>
+                <span class="pill">Dispersion broadening</span>
+              </div>
+            </div>
+          </div>
+
+          <h3>Key laws/principles + validity conditions</h3>
+          <div class="callout assump">
+            <strong>Assumptions behind the standard formulas</strong>
+            <ul class="list">
+              <li>Pulses are well-modeled as <strong>Gaussian</strong> in time (intensity) and <strong>transform-limited</strong> unless otherwise stated.</li>
+              <li>Autocorrelator is an <strong>intensity correlator</strong>: output ∝ <span style="font-family:var(--mono)">∫ I(t)I(t−τ)dt</span> (not a field interferometer unless specified).</li>
+              <li>Fiber stretching uses <span style="font-family:var(--mono)">Dλ</span> and assumes dispersion is approximately constant over the pulse bandwidth and <strong>higher-order dispersion</strong> is negligible.</li>
+              <li>Nonlinear conversion (e.g., SHG gating) is assumed fast compared with pulse duration and within its phase-matching bandwidth.</li>
+            </ul>
+          </div>
+
+          <h3>Common models/approximations (and why they’re used)</h3>
+          <ul class="list">
+            <li><strong>Gaussian pulse model:</strong> analytic integrals; many lasers are close to Gaussian near transform-limit.</li>
+            <li><strong>Linear dispersion broadening:</strong> treat stretching as RMS addition: output duration depends on input duration and dispersive delay spread.</li>
+            <li><strong>Small-bandwidth approximation for Δν ↔ Δλ:</strong> <span style="font-family:var(--mono)">Δν ≈ (c/λ²) Δλ</span> (valid when <span style="font-family:var(--mono)">Δλ ≪ λ</span>; here it’s moderate but still commonly used for estimates).</li>
+          </ul>
+
+          <h3>Mini intuition examples (conceptual)</h3>
+          <ul class="list">
+            <li><strong>Example 1 (overlap):</strong> Two identical pulses: if you slide one by one pulse-width, overlap drops strongly; that drop defines the correlation width.</li>
+            <li><strong>Example 2 (Gaussian property):</strong> Multiplying two Gaussians in time gives another Gaussian; integrating over time preserves Gaussian dependence on delay.</li>
+            <li><strong>Example 3 (dispersion):</strong> If your pulse has 20&nbsp;nm bandwidth and fiber causes 100&nbsp;ps/nm delay spread, different spectral components arrive separated by ~2&nbsp;ns → huge stretch (unless the fiber is short).</li>
+          </ul>
+
+          <h3>What to watch for (pitfalls)</h3>
+          <div class="callout mist">
+            <strong>Pitfalls & misconceptions</strong>
+            <ul class="list">
+              <li><strong>Autocorrelation ≠ pulse:</strong> an autocorrelation trace is broader than the pulse; you need a <em>deconvolution factor</em> that depends on pulse shape.</li>
+              <li><strong>Intensity vs field interferometry:</strong> intensity autocorrelation loses optical phase; nonlinear interferometers can contain phase information but require more care.</li>
+              <li><strong>FWHM vs RMS (σ):</strong> Gaussian algebra is easiest in σ; converting back to FWHM must be consistent.</li>
+              <li><strong>Dispersion parameters:</strong> <span style="font-family:var(--mono)">Dλ</span> (ps/km/nm) is not the same as <span style="font-family:var(--mono)">β₂</span> (s²/m), though they are related.</li>
+              <li><strong>Higher-order dispersion & bandwidth:</strong> very short pulses can be wideband; constant-<span style="font-family:var(--mono)">Dλ</span> may be only an estimate.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="p0b">
+          <h2>PART 0B — Industry & Applied Physics Perspective</h2>
+
+          <div class="grid2">
+            <div class="card">
+              <h3>Where this appears in industry (3+ areas)</h3>
+              <ul class="list">
+                <li><strong>Ultrafast laser manufacturing & metrology:</strong> verifying pulse duration for micromachining (glass, polymers, metals) and semiconductor scribing.</li>
+                <li><strong>Telecom & datacom R&amp;D:</strong> characterizing short pulses and chirp for high-speed optical links and coherent systems.</li>
+                <li><strong>Biophotonics & microscopy:</strong> two-photon / multiphoton imaging depends critically on pulse width at the sample (dispersion in optics matters).</li>
+                <li><strong>Materials processing & LIDT (laser-induced damage threshold):</strong> peak power scales inversely with pulse duration, affecting safety margins and reliability.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Why engineers care (performance, cost, reliability)</h3>
+              <ul class="list">
+                <li><strong>Performance:</strong> peak intensity, nonlinear efficiency, and processing quality depend on accurate pulse width.</li>
+                <li><strong>Reliability:</strong> unknown chirp/dispersion can drift with temperature, fiber routing, and component aging.</li>
+                <li><strong>Cost & manufacturability:</strong> intensity autocorrelators are simpler and cheaper than full phase-retrieval tools, but provide less information.</li>
+                <li><strong>Safety:</strong> peak power estimation from average power requires correct pulse duration; errors can be costly.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Typical measurement/validation methods in practice (brief)</h3>
+          <ul class="list">
+            <li><strong>Intensity autocorrelation (this problem):</strong> quick “is it ~50 fs or ~200 fs?” check; robust and common in production labs.</li>
+            <li><strong>SHG-FROG / SPIDER:</strong> full characterization (amplitude + phase) for R&amp;D and critical systems; more complex calibration.</li>
+            <li><strong>Spectral + dispersion audit:</strong> spectrum analyzer + known optics/fiber dispersion budgets to predict pulse broadening at the target plane.</li>
+          </ul>
+
+          <h3>Design trade-offs and constraints (real-world non-idealities)</h3>
+          <ul class="list">
+            <li><strong>Finite phase-matching bandwidth:</strong> SHG crystal may not support the full bandwidth of a 50 fs pulse, distorting the trace.</li>
+            <li><strong>Alignment & polarization:</strong> correlator signals are sensitive to polarization and beam overlap.</li>
+            <li><strong>Dispersion variability:</strong> <span style="font-family:var(--mono)">Dλ</span> depends on wavelength, fiber type, and temperature; higher-order terms matter for ultrashort pulses.</li>
+            <li><strong>Interpretation risk:</strong> different pulse shapes can produce similar autocorrelation widths; “Gaussian assumption” must be justified.</li>
+          </ul>
+
+          <details>
+            <summary><span class="chev" aria-hidden="true"></span>From lab to product: how idealized models are adapted</summary>
+            <div class="content">
+              <ul class="list">
+                <li>Production settings often use autocorrelation as a <strong>process-control metric</strong> (pass/fail window) rather than a full diagnostic.</li>
+                <li>Engineers build a <strong>calibration curve</strong> by comparing autocorrelation width to a “gold standard” (FROG/SPIDER) for representative units.</li>
+                <li>Dispersion compensation in real systems is designed with <strong>tolerance margins</strong>, because component-to-component variations and routing changes are unavoidable.</li>
+              </ul>
+            </div>
+          </details>
+        </section>
+
+        <section id="p1">
+          <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+          <h3>Problem restatement (in plain words)</h3>
+          <p>
+            A transform-limited Gaussian optical pulse has <strong>50 fs FWHM</strong> and central wavelength <strong>800 nm</strong>.
+            It is measured using an <strong>intensity autocorrelator</strong> (a standard two-arm setup with a nonlinear gate and slow detector).
+          </p>
+          <p>
+            (a) Find the <strong>shape</strong> and <strong>FWHM</strong> of the measured autocorrelation trace.<br/>
+            (b) Improve the measurement by stretching one arm’s pulse by a factor of <strong>5</strong> using a silica-glass fiber with dispersion coefficient
+            <strong>Dλ = −110 ps/(km·nm)</strong> at 800 nm. Find the required fiber length and the width of the modified correlation function.<br/>
+            (c) Apply the stretching idea to a <strong>nonlinear interferometer</strong> and discuss merits and difficulties for pulse measurement.
+          </p>
+
+          <div class="grid2">
+            <div class="card">
+              <h3>Given</h3>
+              <ul class="list">
+                <li>Pulse is Gaussian, transform-limited</li>
+                <li>Pulse intensity FWHM: <span style="font-family:var(--mono)">Δt = 50 fs</span></li>
+                <li>Central wavelength: <span style="font-family:var(--mono)">λ₀ = 800 nm</span></li>
+                <li>Stretch factor: <span style="font-family:var(--mono)">S = 5</span></li>
+                <li>Fiber dispersion parameter: <span style="font-family:var(--mono)">Dλ = −110 ps/(km·nm)</span></li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Unknowns</h3>
+              <ul class="list">
+                <li>(a) Autocorrelation shape and FWHM: <span style="font-family:var(--mono)">Δτ_AC</span></li>
+                <li>(b) Required fiber length <span style="font-family:var(--mono)">L</span> and modified correlation width <span style="font-family:var(--mono)">Δτ_mod</span></li>
+                <li>(c) Merits/difficulties in a nonlinear interferometer (qualitative, applied)</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Relevant principles (and why)</h3>
+          <ul class="list">
+            <li><strong>Gaussian convolution:</strong> intensity correlation is a convolution-like integral; Gaussians remain Gaussian.</li>
+            <li><strong>Transform-limited time–bandwidth product:</strong> connects 50 fs duration to optical bandwidth needed for dispersion calculation.</li>
+            <li><strong>Dispersion-induced broadening:</strong> stretching due to group-delay slope <span style="font-family:var(--mono)">Dλ</span>.</li>
+            <li><strong>Cross-correlation width rule:</strong> when the two pulses differ (one stretched), the correlation width depends on both widths.</li>
+          </ul>
+
+          <div class="callout assump">
+            <strong>Assumptions we will use</strong>
+            <ul class="list">
+              <li>Pulse intensity is Gaussian: <span style="font-family:var(--mono)">I(t) ∝ exp(−t²/(2σ²))</span>.</li>
+              <li>Autocorrelator measures <span style="font-family:var(--mono)">G(τ)=∫ I(t)I(t−τ)dt</span> (no phase retrieval in parts a–b).</li>
+              <li>Fiber broadening can be estimated by delay spread: <span style="font-family:var(--mono)">Δt_out ≈ √(Δt₀² + (|Dλ| L Δλ)²)</span> (Gaussian FWHM-based estimate).</li>
+              <li>Use small-bandwidth conversion: <span style="font-family:var(--mono)">Δν ≈ (c/λ₀²)Δλ</span>.</li>
+            </ul>
+          </div>
+
+          <h3>Possible approaches (compare 2–3)</h3>
+          <ul class="list">
+            <li><strong>Approach A (σ-domain Gaussian algebra):</strong> convert FWHM → σ, do integrals, then convert back. <em>Pros:</em> clean, minimal mistakes. <em>Cons:</em> requires conversion discipline.</li>
+            <li><strong>Approach B (known deconvolution factors):</strong> recall standard results (Gaussian autocorrelation FWHM = √2 times pulse FWHM). <em>Pros:</em> fast. <em>Cons:</em> easy to mix up intensity vs field autocorrelation.</li>
+            <li><strong>Approach C (frequency-domain dispersion model):</strong> use <span style="font-family:var(--mono)">β₂</span> and Fourier transforms. <em>Pros:</em> rigorous. <em>Cons:</em> longer; needs parameter conversion from <span style="font-family:var(--mono)">Dλ</span>.</li>
+          </ul>
+          <p><strong>Choice:</strong> Use <strong>Approach A</strong> for (a) and correlation widths, plus the standard dispersion broadening estimate for (b). This is accurate enough and keeps the physics transparent.</p>
+        </section>
+
+        <section id="p2">
+          <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+          <ol class="list">
+            <li><strong>Model the pulse intensity as Gaussian</strong> in time and define its σ from the given FWHM.</li>
+            <li><strong>Write the measured intensity autocorrelation integral</strong> <span style="font-family:var(--mono)">G_I(τ)=∫ I(t)I(t−τ)dt</span>.</li>
+            <li><strong>Evaluate the integral</strong> using Gaussian completion of the square to show <span style="font-family:var(--mono)">G_I(τ)</span> is Gaussian in τ.</li>
+            <li><strong>Extract the correlation σ and FWHM</strong> and express it in terms of the pulse FWHM.</li>
+            <li><strong>Compute the transform-limited bandwidth</strong> from the time–bandwidth product for a Gaussian pulse.</li>
+            <li><strong>Relate bandwidth in frequency to wavelength</strong> near 800 nm to obtain <span style="font-family:var(--mono)">Δλ</span>.</li>
+            <li><strong>Use dispersion broadening</strong> to solve for fiber length L such that <span style="font-family:var(--mono)">Δt_out = 5Δt₀</span>.</li>
+            <li><strong>Compute modified correlation width</strong> as a Gaussian cross-correlation: <span style="font-family:var(--mono)">Δτ_mod = √(Δt₀² + Δt_out²)</span>.</li>
+            <li><strong>Discuss nonlinear interferometer implications</strong>: where stretching helps, and where it creates new measurement/phase issues.</li>
+          </ol>
+
+          <div class="callout mist">
+            <strong>Common mistakes (quick tips)</strong>
+            <ul class="list">
+              <li>Using the <em>field</em> autocorrelation factor instead of the <em>intensity</em> autocorrelation factor.</li>
+              <li>Mixing RMS widths (σ) with FWHM without converting consistently.</li>
+              <li>For dispersion: forgetting the bandwidth term <span style="font-family:var(--mono)">Δλ</span> (a short pulse with broad bandwidth stretches quickly).</li>
+              <li>Sign of <span style="font-family:var(--mono)">Dλ</span> does <em>not</em> affect width; only the magnitude matters for stretching.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="p3">
+          <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+          <h3>Physical intuition before calculating</h3>
+          <p>
+            An autocorrelator essentially asks: “If I overlap the pulse with a delayed copy, how strong is the nonlinear signal?”
+            For a Gaussian, overlap falls off smoothly with delay, and we expect a Gaussian-shaped trace centered at <span style="font-family:var(--mono)">τ=0</span>.
+            Because overlap involves two copies, the correlation must be <strong>broader</strong> than the original pulse.
+            Stretching one arm should broaden the correlation even more, roughly like the quadrature sum of widths.
+          </p>
+
+          <h3>(a) Shape and FWHM of the measured intensity autocorrelation</h3>
+          <p>
+            Let the pulse intensity be a Gaussian:
+          </p>
+          <div class="eq" id="eq-a1">
+            <div class="row">
+              <pre>I(t) = I0 · exp( − t^2 / (2σ^2) )</pre>
+              <button class="btn small" data-copy="#eq-a1 pre" aria-label="Copy equation">Copy</button>
+            </div>
+            <p class="mini">Here σ (s) is the intensity standard deviation; FWHM and σ are related for a Gaussian.</p>
+          </div>
+
+          <p>
+            The intensity autocorrelation measured by the correlator is:
+          </p>
+          <div class="eq" id="eq-a2">
+            <div class="row">
+              <pre>G_I(τ) = ∫_{−∞}^{∞} I(t) · I(t−τ) dt</pre>
+              <button class="btn small" data-copy="#eq-a2 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <p>Substitute the Gaussian form:</p>
+          <div class="eq" id="eq-a3">
+            <div class="row">
+              <pre>G_I(τ) = I0^2 ∫ exp( − t^2/(2σ^2) ) · exp( − (t−τ)^2/(2σ^2) ) dt</pre>
+              <button class="btn small" data-copy="#eq-a3 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            Combine exponents:
+          </p>
+          <div class="eq" id="eq-a4">
+            <div class="row">
+              <pre>t^2 + (t−τ)^2 = 2(t − τ/2)^2 + τ^2/2</pre>
+              <button class="btn small" data-copy="#eq-a4 pre" aria-label="Copy identity">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            Therefore
+          </p>
+          <div class="eq" id="eq-a5">
+            <div class="row">
+              <pre>G_I(τ) = I0^2 · exp( − τ^2 / (4σ^2) ) · ∫ exp( − (t − τ/2)^2 / (σ^2) ) dt</pre>
+              <button class="btn small" data-copy="#eq-a5 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            The integral over <span style="font-family:var(--mono)">t</span> is a constant (independent of τ), because it is just the area of a Gaussian.
+            So the τ-dependence is:
+          </p>
+          <div class="eq" id="eq-a6">
+            <div class="row">
+              <pre>G_I(τ) ∝ exp( − τ^2 / (4σ^2) )</pre>
+              <button class="btn small" data-copy="#eq-a6 pre" aria-label="Copy equation">Copy</button>
+            </div>
+            <p class="mini"><strong>Conclusion:</strong> the measured intensity autocorrelation is also Gaussian in τ.</p>
+          </div>
+
+          <p>
+            Compare <span style="font-family:var(--mono)">exp(−τ²/(4σ²))</span> with a standard Gaussian form <span style="font-family:var(--mono)">exp(−τ²/(2σ_G²))</span>.
+            We identify:
+          </p>
+          <div class="eq" id="eq-a7">
+            <div class="row">
+              <pre>1/(2σ_G^2) = 1/(4σ^2)  ⇒  σ_G = √2 · σ</pre>
+              <button class="btn small" data-copy="#eq-a7 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            For a Gaussian, <span style="font-family:var(--mono)">FWHM = 2√(2 ln 2) · σ</span>. Hence:
+          </p>
+          <div class="eq" id="eq-a8">
+            <div class="row">
+              <pre>Δτ_AC = 2√(2 ln 2)·σ_G = 2√(2 ln 2)·(√2 σ) = √2 · (2√(2 ln 2)·σ) = √2 · Δt</pre>
+              <button class="btn small" data-copy="#eq-a8 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <div class="callout final" id="final-a">
+            <strong>(a) Final result</strong>
+            <div class="eq" id="eq-final-a">
+              <div class="row">
+                <pre>Autocorrelation shape: Gaussian
+Autocorrelation FWHM:  Δτ_AC = √2 · Δt
+
+With Δt = 50 fs ⇒ Δτ_AC = √2 · 50 fs ≈ 70.7 fs</pre>
+                <button class="btn small" data-copy="#eq-final-a pre" aria-label="Copy final answer (a)">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <h3>(b) Fiber length to stretch one pulse by a factor of 5 (and modified correlation width)</h3>
+
+          <h4 style="margin:10px 0 6px; color:var(--ink)">Step 1: transform-limited bandwidth of a 50 fs Gaussian</h4>
+          <p>
+            For a <strong>transform-limited Gaussian</strong> pulse, the time–bandwidth product (FWHM form) is:
+          </p>
+          <div class="eq" id="eq-b1">
+            <div class="row">
+              <pre>Δν · Δt = 0.441   (Gaussian, FWHM)</pre>
+              <button class="btn small" data-copy="#eq-b1 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            With <span style="font-family:var(--mono)">Δt = 50 fs = 50×10^−15 s</span>:
+          </p>
+          <div class="eq" id="eq-b2">
+            <div class="row">
+              <pre>Δν = 0.441 / (50×10^−15 s) = 8.82×10^12 Hz  (≈ 8.82 THz)</pre>
+              <button class="btn small" data-copy="#eq-b2 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            Convert frequency bandwidth to wavelength bandwidth near <span style="font-family:var(--mono)">λ₀ = 800 nm</span> using:
+          </p>
+          <div class="eq" id="eq-b3">
+            <div class="row">
+              <pre>Δν ≈ (c / λ0^2) · Δλ   ⇒  Δλ ≈ (Δν λ0^2) / c</pre>
+              <button class="btn small" data-copy="#eq-b3 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            Numerically (with <span style="font-family:var(--mono)">c = 2.9979×10^8 m/s</span>, <span style="font-family:var(--mono)">λ₀ = 800 nm</span>):
+          </p>
+          <div class="eq" id="eq-b4">
+            <div class="row">
+              <pre>Δλ ≈ (8.82×10^12)(800×10^−9)^2 / (2.9979×10^8)
+    ≈ 1.883×10^−8 m ≈ 18.8 nm  (FWHM)</pre>
+              <button class="btn small" data-copy="#eq-b4 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <details>
+            <summary><span class="chev" aria-hidden="true"></span>Note on validity of Δν ↔ Δλ conversion for 50 fs at 800 nm</summary>
+            <div class="content">
+              <p>
+                Here <span style="font-family:var(--mono)">Δλ/λ₀ ≈ 18.8/800 ≈ 2.35%</span>, which is not extremely tiny but still within the regime where
+                the linear approximation is widely used for engineering estimates. A more exact mapping would slightly adjust the number but not the main conclusion:
+                <strong>wide bandwidth means only a short length of dispersive fiber is needed</strong>.
+              </p>
+            </div>
+          </details>
+
+          <h4 style="margin:12px 0 6px; color:var(--ink)">Step 2: dispersion broadening to achieve a stretch factor S = 5</h4>
+          <p>
+            The fiber’s dispersion parameter is <span style="font-family:var(--mono)">Dλ = −110 ps/(km·nm)</span>.
+            The group-delay spread across the pulse bandwidth is approximately:
+          </p>
+          <div class="eq" id="eq-b5">
+            <div class="row">
+              <pre>Δt_disp ≈ |Dλ| · L · Δλ</pre>
+              <button class="btn small" data-copy="#eq-b5 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            A common Gaussian estimate for output FWHM after dispersive broadening is:
+          </p>
+          <div class="eq" id="eq-b6">
+            <div class="row">
+              <pre>Δt_out ≈ √( Δt0^2 + (Δt_disp)^2 ) = √( Δt0^2 + (|Dλ| L Δλ)^2 )</pre>
+              <button class="btn small" data-copy="#eq-b6 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            We want a stretch factor <span style="font-family:var(--mono)">S = Δt_out/Δt0 = 5</span>. Therefore:
+          </p>
+          <div class="eq" id="eq-b7">
+            <div class="row">
+              <pre>5Δt0 = √( Δt0^2 + (|Dλ| L Δλ)^2 )
+⇒ (|Dλ| L Δλ)^2 = (25−1) Δt0^2
+⇒ |Dλ| L Δλ = Δt0 √24</pre>
+              <button class="btn small" data-copy="#eq-b7 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            Solve for <span style="font-family:var(--mono)">L</span>:
+          </p>
+          <div class="eq" id="eq-b8">
+            <div class="row">
+              <pre>L = (Δt0 √24) / (|Dλ| Δλ)</pre>
+              <button class="btn small" data-copy="#eq-b8 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            Insert numbers (use ps, km, nm consistently):
+            <span style="font-family:var(--mono)">Δt0 = 50 fs = 0.05 ps</span>, <span style="font-family:var(--mono)">Δλ ≈ 18.8 nm</span>,
+            <span style="font-family:var(--mono)">|Dλ| = 110 ps/(km·nm)</span>.
+          </p>
+          <div class="eq" id="eq-b9">
+            <div class="row">
+              <pre>L ≈ (0.05 ps · √24) / (110 ps/(km·nm) · 18.8 nm)
+  ≈ (0.05 · 4.899) / (2068) km
+  ≈ 1.18×10^−4 km ≈ 0.118 m</pre>
+              <button class="btn small" data-copy="#eq-b9 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <div class="callout final">
+            <strong>(b1) Required fiber length (stretch by factor 5)</strong>
+            <div class="eq" id="eq-final-b1">
+              <div class="row">
+                <pre>Pulse bandwidth (TL Gaussian, 50 fs @ 800 nm):  Δλ ≈ 18.8 nm
+Required silica fiber length:  L ≈ 0.12 m  (≈ 12 cm)</pre>
+                <button class="btn small" data-copy="#eq-final-b1 pre" aria-label="Copy final answer (b1)">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <h4 style="margin:12px 0 6px; color:var(--ink)">Step 3: width of the modified correlation function</h4>
+          <p>
+            After the fiber, one arm has width <span style="font-family:var(--mono)">Δt2 = Δt_out = 5Δt0</span> while the other remains <span style="font-family:var(--mono)">Δt1 = Δt0</span>.
+            The correlator now measures a <strong>cross-correlation</strong>:
+          </p>
+          <div class="eq" id="eq-b10">
+            <div class="row">
+              <pre>G_mod(τ) = ∫ I1(t) I2(t−τ) dt</pre>
+              <button class="btn small" data-copy="#eq-b10 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            For Gaussian intensities with FWHMs <span style="font-family:var(--mono)">Δt1</span> and <span style="font-family:var(--mono)">Δt2</span>,
+            the cross-correlation is Gaussian with:
+          </p>
+          <div class="eq" id="eq-b11">
+            <div class="row">
+              <pre>Δτ_mod = √(Δt1^2 + Δt2^2)   (Gaussian intensity cross-correlation, FWHM)</pre>
+              <button class="btn small" data-copy="#eq-b11 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <p>
+            Here <span style="font-family:var(--mono)">Δt1 = 50 fs</span>, <span style="font-family:var(--mono)">Δt2 = 250 fs</span>, so:
+          </p>
+          <div class="eq" id="eq-b12">
+            <div class="row">
+              <pre>Δτ_mod = √(50^2 + 250^2) fs = 50 √26 fs ≈ 255 fs</pre>
+              <button class="btn small" data-copy="#eq-b12 pre" aria-label="Copy equation">Copy</button>
+            </div>
+          </div>
+
+          <div class="callout final" id="final-b2">
+            <strong>(b2) Width of modified correlation function</strong>
+            <div class="eq" id="eq-final-b2">
+              <div class="row">
+                <pre>After stretching one arm by S=5:
+Modified correlation shape: Gaussian
+Modified correlation FWHM:  Δτ_mod = √(Δt^2 + (5Δt)^2) = √26 · Δt
+
+With Δt = 50 fs ⇒ Δτ_mod ≈ 255 fs</pre>
+                <button class="btn small" data-copy="#eq-final-b2 pre" aria-label="Copy final answer (b2)">Copy</button>
+              </div>
+            </div>
+          </div>
+
+          <h3>(c) Applying the stretching idea to a nonlinear interferometer (merits & difficulties)</h3>
+          <p>
+            A nonlinear interferometer (e.g., with a squaring/SHG element before detection) can produce a signal that depends not only on intensity overlap,
+            but also on <strong>phase-sensitive interference terms</strong> of the optical field.
+            Placing dispersive fiber in one arm intentionally makes one replica <strong>chirped/stretched</strong>.
+            That changes how phase information maps into the measured delay-dependent signal.
+          </p>
+
+          <div class="grid2">
+            <div class="callout">
+              <strong>Possible merits (why it could help)</strong>
+              <ul class="list">
+                <li><strong>Wider, smoother envelope:</strong> broader overlap can make alignment less finicky and improve SNR with slow detectors.</li>
+                <li><strong>Temporal “shear” of frequencies:</strong> chirped pulse maps frequency to time, so interference vs delay can encode spectral-phase trends more visibly (conceptually similar to “time-stretch” diagnostics).</li>
+                <li><strong>Stability in industrial setups:</strong> wider correlation features are less sensitive to small mechanical jitter in delay stages (lower sensitivity to micrometer-scale drift).</li>
+              </ul>
+            </div>
+
+            <div class="callout assump">
+              <strong>Difficulties (what gets harder)</strong>
+              <ul class="list">
+                <li><strong>Calibration burden:</strong> you must know the fiber’s dispersion accurately (including higher-order terms) over the pulse bandwidth.</li>
+                <li><strong>Phase distortions:</strong> nonlinear interferometers are sensitive to phase; fiber adds frequency-dependent phase that can complicate interpretation.</li>
+                <li><strong>Bandwidth limits:</strong> SHG phase-matching and detector response can filter the signal, especially for broad 50 fs bandwidth.</li>
+                <li><strong>Ambiguities:</strong> without full phase retrieval, different input phases can yield similar interferometric signatures when combined with chirp.</li>
+                <li><strong>Polarization & PMD:</strong> standard fiber can introduce polarization-mode dispersion and polarization rotation, destabilizing interference.</li>
+              </ul>
+            </div>
+          </div>
+
+          <details>
+            <summary><span class="chev" aria-hidden="true"></span>Applied takeaway for “lab-to-line” measurement design</summary>
+            <div class="content">
+              <p>
+                In many industrial contexts, engineers use dispersion insertion to <strong>condition</strong> a measurement:
+                improve robustness, fit detector bandwidth, or increase dynamic range.
+                But when the goal is true pulse characterization (especially phase), the added dispersion becomes part of the “instrument response”
+                and must be modeled and validated—often pushing teams toward FROG/SPIDER or well-calibrated interferometric methods.
+              </p>
+            </div>
+          </details>
+
+          <h3>Sanity checks (units, limits, interpretation)</h3>
+          <div class="callout">
+            <strong>Checks</strong>
+            <ul class="list">
+              <li><strong>Units:</strong> <span style="font-family:var(--mono)">Dλ L Δλ</span> → (ps/(km·nm))·(km)·(nm) = ps, consistent with a time broadening term.</li>
+              <li><strong>Limiting case:</strong> if <span style="font-family:var(--mono)">L→0</span>, then <span style="font-family:var(--mono)">Δt_out→Δt0</span> and <span style="font-family:var(--mono)">Δτ_mod→√(Δt0^2+Δt0^2)=√2Δt0</span>, matching part (a).</li>
+              <li><strong>Interpretation:</strong> short pulses have large bandwidth, so even modest dispersion can stretch them; hence the surprisingly short (~12&nbsp;cm) fiber length here.</li>
+            </ul>
+          </div>
+
+          <h3>One compact final-answer box (all parts)</h3>
+          <div class="callout final" id="final-all">
+            <strong>Final Answers (copy-friendly)</strong>
+            <div class="eq" id="eq-final-all">
+              <div class="row">
+                <pre>(a) Intensity autocorrelation of a Gaussian pulse:
+    Shape: Gaussian
+    FWHM:  Δτ_AC = √2 · Δt  ⇒  Δτ_AC ≈ 70.7 fs for Δt=50 fs
+
+(b) Stretch one arm by factor S=5 using silica fiber (|Dλ|=110 ps/(km·nm), λ0=800 nm):
+    Transform-limited bandwidth:  Δν = 0.441/Δt ⇒ Δν ≈ 8.82 THz
+    Equivalent wavelength bandwidth:  Δλ ≈ (Δν λ0^2)/c ≈ 18.8 nm
+    Required fiber length:
+      L = (Δt0 √(S^2−1)) / (|Dλ| Δλ)  with Δt0=0.05 ps
+      ⇒ L ≈ 0.12 m (≈ 12 cm)
+    Modified (cross-)correlation width:
+      Δτ_mod = √(Δt^2 + (SΔt)^2) = √(1+S^2) · Δt = √26 · 50 fs ≈ 255 fs
+
+(c) Nonlinear interferometer with dispersive fiber in one arm:
+    Merits: broader envelope/SNR, jitter tolerance, possible frequency-to-time mapping aiding phase insight.
+    Difficulties: added dispersion phase must be calibrated, higher-order dispersion/PMD, SHG bandwidth limits, phase-interpretation ambiguity.</pre>
+                <button class="btn small" data-copy="#eq-final-all pre" aria-label="Copy all final answers">Copy</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="p4">
+          <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+          <h3>Re-interpreting the formulas (what each term controls)</h3>
+          <ul class="list">
+            <li><strong>Δτ_AC = √2·Δt:</strong> the factor √2 comes from “two-pulse overlap” of identical Gaussians; it is a <em>shape-dependent deconvolution factor</em>.</li>
+            <li><strong>Δt_out = √(Δt0² + (|Dλ|LΔλ)²):</strong> output width is the quadrature sum of the original duration and dispersive delay spread.</li>
+            <li><strong>Δτ_mod = √(Δt1² + Δt2²):</strong> cross-correlation width reflects both pulse widths; the larger one dominates once it is much bigger.</li>
+          </ul>
+
+          <h3>Parameter dependence (qualitative)</h3>
+          <ul class="list">
+            <li>Increase <strong>bandwidth Δλ</strong> (shorter pulses) → dispersion stretching increases for a given fiber length.</li>
+            <li>Increase <strong>fiber length L</strong> or <strong>|Dλ|</strong> → broader stretched pulse and broader modified correlation trace.</li>
+            <li>Increase stretch factor <strong>S</strong> → modified correlation width grows like <span style="font-family:var(--mono)">√(1+S²)</span>.</li>
+          </ul>
+
+          <h3>Alternative derivation idea (brief but meaningful)</h3>
+          <p>
+            Instead of time-domain completion of the square, you can use the convolution theorem:
+            <span style="font-family:var(--mono)">G_I(τ)</span> is the convolution of <span style="font-family:var(--mono)">I(t)</span> with <span style="font-family:var(--mono)">I(−t)</span>.
+            The Fourier transform of a Gaussian is a Gaussian, and multiplication in frequency corresponds to convolution in time—leading again to Gaussian <span style="font-family:var(--mono)">G_I(τ)</span> with variance sum.
+          </p>
+
+          <h3>Concept checks (self-test with answers)</h3>
+          <ul class="list">
+            <li><strong>Q:</strong> If the pulse were Lorentzian instead of Gaussian, would the √2 factor still hold? <br/><strong>A:</strong> No. The deconvolution factor depends on pulse shape; √2 is specific to Gaussian intensity autocorrelation.</li>
+            <li><strong>Q:</strong> Why doesn’t the sign of <span style="font-family:var(--mono)">Dλ</span> matter for pulse width? <br/><strong>A:</strong> Width depends on magnitude of delay spread; the sign flips chirp direction but not duration.</li>
+            <li><strong>Q:</strong> If you stretch to extremely large S, what sets the practical limit? <br/><strong>A:</strong> Higher-order dispersion, loss, nonlinearities in fiber (SPM), bandwidth limits of nonlinear crystal/detector, and calibration stability.</li>
+            <li><strong>Q:</strong> Can an intensity autocorrelator uniquely determine pulse shape? <br/><strong>A:</strong> Not uniquely; it provides a width-related metric and some qualitative shape, but phase is lost and multiple pulse shapes can share similar autocorrelations.</li>
+          </ul>
+        </section>
+
+        <section id="p5">
+          <h2>PART 5 — Optional Plot Guide</h2>
+
+          <figure>
+            <canvas id="plot" aria-label="Gaussian correlation plot"></canvas>
+            <figcaption>
+              A single static plot (example values) showing normalized Gaussian curves:
+              the original pulse intensity (50&nbsp;fs FWHM), the intensity autocorrelation (√2 broader),
+              and the modified cross-correlation after stretching one arm by 5× (≈√26 broader than the original pulse).
+            </figcaption>
+          </figure>
+
+          <h3>What the plot shows (and why it’s useful)</h3>
+          <ul class="list">
+            <li><strong>Purpose:</strong> visually connect the derived width factors (√2 and √26) to the measured traces.</li>
+            <li><strong>x-axis:</strong> delay/time in femtoseconds (fs).</li>
+            <li><strong>y-axis:</strong> normalized amplitude (unitless), peak = 1.</li>
+            <li><strong>Example values:</strong> Δt = 50 fs, S = 5 (these are from the problem; normalization is just for display).</li>
+            <li><strong>Features to notice:</strong> the autocorrelation is broader than the pulse; the stretched-arm correlation is much broader and dominated by the stretched pulse width.</li>
+          </ul>
+
+          <details>
+            <summary><span class="chev" aria-hidden="true"></span>Why only one plot (and why no simulation)</summary>
+            <div class="content">
+              <p>
+                The core results are analytic and shape-based (Gaussian in → Gaussian out, with simple width scaling).
+                A single plot is enough to reinforce the width relationships without adding interactive complexity.
+              </p>
+            </div>
+          </details>
+
+          <p class="mini"><a href="#top">Back to top ↑</a></p>
+        </section>
+      </article>
+    </main>
+
+    <footer>
+      Built as a single self-contained HTML article (vanilla HTML/CSS/JS). Print-friendly and copy-ready equations included.
+    </footer>
+  </div>
+
+  <script>
+    (function(){
+      function copyTextFromSelector(sel){
+        const el = document.querySelector(sel);
+        if(!el) return null;
+        const text = el.innerText.replace(/\u00A0/g, " ").trim();
+        return text;
+      }
+
+      async function doCopy(text, btn){
+        try{
+          await navigator.clipboard.writeText(text);
+          const old = btn.textContent;
+          btn.textContent = "Copied ✓";
+          btn.style.borderColor = "rgba(183,255,123,.35)";
+          btn.style.background = "rgba(183,255,123,.10)";
+          setTimeout(()=>{
+            btn.textContent = old;
+            btn.style.borderColor = "";
+            btn.style.background = "";
+          }, 900);
+        }catch(e){
+          const old = btn.textContent;
+          btn.textContent = "Copy failed";
+          setTimeout(()=>{ btn.textContent = old; }, 900);
+        }
+      }
+
+      document.addEventListener("click", (ev)=>{
+        const btn = ev.target.closest("[data-copy]");
+        if(!btn) return;
+        const sel = btn.getAttribute("data-copy");
+        const text = copyTextFromSelector(sel);
+        if(text) doCopy(text, btn);
+      });
+
+      // ---- Static plot (single canvas) ----
+      const canvas = document.getElementById("plot");
+      const ctx = canvas.getContext("2d");
+
+      // Example values (from problem)
+      const dt_fwhm = 50;            // fs
+      const S = 5;
+      const fwhm_pulse = dt_fwhm;               // intensity pulse
+      const fwhm_auto = Math.SQRT2 * dt_fwhm;   // intensity autocorrelation
+      const fwhm_cross = Math.sqrt(1 + S*S) * dt_fwhm; // cross-correlation with stretched arm
+
+      // Gaussian helper: using FWHM directly.
+      // A Gaussian with FWHM = W has form exp( -4 ln 2 * x^2 / W^2 )
+      function gauss(x, W){
+        const a = 4*Math.log(2)/(W*W);
+        return Math.exp(-a*x*x);
+      }
+
+      function resize(){
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.max(320, Math.floor(rect.width));
+        const h = Math.max(300, Math.floor(rect.height));
+        canvas.width = Math.floor(w*dpr);
+        canvas.height = Math.floor(h*dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+        draw(w,h);
+      }
+
+      function draw(w,h){
+        ctx.clearRect(0,0,w,h);
+
+        // Plot area
+        const padL = 58, padR = 18, padT = 36, padB = 44;
+        const x0 = padL, y0 = padT;
+        const pw = w - padL - padR;
+        const ph = h - padT - padB;
+
+        // Domain
+        const xmin = -400, xmax = 400; // fs
+        const ymin = 0, ymax = 1.05;
+
+        function X(x){ return x0 + (x - xmin) * pw / (xmax - xmin); }
+        function Y(y){ return y0 + (ymax - y) * ph / (ymax - ymin); }
+
+        // Background panel
+        ctx.save();
+        ctx.fillStyle = "rgba(0,0,0,0.10)";
+        ctx.strokeStyle = "rgba(255,255,255,0.10)";
+        roundRect(ctx, x0, y0, pw, ph, 14);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+
+        // Grid & ticks
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,255,255,0.10)";
+        ctx.lineWidth = 1;
+
+        // x ticks every 100 fs
+        for(let xt = -400; xt <= 400; xt += 100){
+          const xx = X(xt);
+          ctx.beginPath();
+          ctx.moveTo(xx, y0);
+          ctx.lineTo(xx, y0 + ph);
+          ctx.stroke();
+        }
+        // y ticks every 0.25
+        for(let yt = 0; yt <= 1.0; yt += 0.25){
+          const yy = Y(yt);
+          ctx.beginPath();
+          ctx.moveTo(x0, yy);
+          ctx.lineTo(x0 + pw, yy);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Axes
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,255,255,0.28)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0 + ph);
+        ctx.lineTo(x0 + pw, y0 + ph);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x0, y0 + ph);
+        ctx.stroke();
+        ctx.restore();
+
+        // Labels
+        ctx.save();
+        ctx.fillStyle = "rgba(234,242,255,0.92)";
+        ctx.font = "600 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+        ctx.fillText("Gaussian pulse vs correlation widths (example)", x0, y0 - 12);
+
+        ctx.fillStyle = "rgba(234,242,255,0.80)";
+        ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+
+        // x-axis label
+        ctx.textAlign = "center";
+        ctx.fillText("Delay / time (fs)", x0 + pw/2, y0 + ph + 34);
+
+        // y-axis label (rotated)
+        ctx.save();
+        ctx.translate(18, y0 + ph/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.textAlign = "center";
+        ctx.fillText("Normalized amplitude (a.u.)", 0, 0);
+        ctx.restore();
+
+        // Tick labels
+        ctx.fillStyle = "rgba(234,242,255,0.70)";
+        ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        for(let xt = -400; xt <= 400; xt += 200){
+          ctx.fillText(String(xt), X(xt), y0 + ph + 8);
+        }
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        for(let yt = 0; yt <= 1.0; yt += 0.25){
+          ctx.fillText(yt.toFixed(2), x0 - 8, Y(yt));
+        }
+        ctx.restore();
+
+        // Curves
+        const curves = [
+          {name:`Pulse intensity (FWHM ${fwhm_pulse.toFixed(0)} fs)`, W:fwhm_pulse, color:"rgba(123,220,255,0.95)"},
+          {name:`Intensity autocorr (FWHM ${fwhm_auto.toFixed(1)} fs)`, W:fwhm_auto, color:"rgba(255,211,123,0.95)"},
+          {name:`Stretched-arm correlation (FWHM ${fwhm_cross.toFixed(0)} fs)`, W:fwhm_cross, color:"rgba(183,255,123,0.92)"}
+        ];
+
+        curves.forEach(c=>{
+          ctx.save();
+          ctx.strokeStyle = c.color;
+          ctx.lineWidth = 2.4;
+          ctx.beginPath();
+          const N = 700;
+          for(let i=0;i<=N;i++){
+            const x = xmin + (xmax-xmin)*i/N;
+            const y = gauss(x, c.W);
+            const xx = X(x), yy = Y(y);
+            if(i===0) ctx.moveTo(xx,yy);
+            else ctx.lineTo(xx,yy);
+          }
+          ctx.stroke();
+          ctx.restore();
+        });
+
+        // Legend
+        const lx = x0 + 14, ly = y0 + 12;
+        const lh = 18;
+        ctx.save();
+        ctx.fillStyle = "rgba(0,0,0,0.28)";
+        ctx.strokeStyle = "rgba(255,255,255,0.14)";
+        roundRect(ctx, lx-8, ly-8, Math.min(520, pw-28), 86, 14);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        curves.forEach((c, idx)=>{
+          const yy = ly + idx*lh;
+          ctx.strokeStyle = c.color;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(lx, yy);
+          ctx.lineTo(lx+26, yy);
+          ctx.stroke();
+          ctx.fillStyle = "rgba(234,242,255,0.82)";
+          ctx.fillText(c.name, lx+36, yy);
+        });
+        ctx.restore();
+      }
+
+      function roundRect(ctx, x, y, w, h, r){
+        const rr = Math.min(r, w/2, h/2);
+        ctx.beginPath();
+        ctx.moveTo(x+rr, y);
+        ctx.arcTo(x+w, y, x+w, y+h, rr);
+        ctx.arcTo(x+w, y+h, x, y+h, rr);
+        ctx.arcTo(x, y+h, x, y, rr);
+        ctx.arcTo(x, y, x+w, y, rr);
+        ctx.closePath();
+      }
+
+      window.addEventListener("resize", resize, {passive:true});
+      resize();
+    })();
+  </script>
 </body>
 </html>

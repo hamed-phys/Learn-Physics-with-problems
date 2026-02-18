@@ -2,64 +2,937 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>24.2-2 — AWG DMUX</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AWG Demultiplexer: Required Path-Length Increment (Δd<sub>b</sub>)</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b1020;
+      --panel:#101a33;
+      --panel2:#0f1830;
+      --text:#e9eefc;
+      --muted:#b9c4e3;
+      --faint:#7f8bb3;
+      --line:rgba(255,255,255,0.10);
+      --line2:rgba(255,255,255,0.16);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 14px 40px rgba(0,0,0,.38);
+      --shadow2: 0 10px 24px rgba(0,0,0,.28);
+      --radius: 18px;
+      --radius2: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 12% 10%, rgba(125,211,252,.12), transparent 55%),
+        radial-gradient(900px 600px at 80% 12%, rgba(167,139,250,.12), transparent 55%),
+        radial-gradient(900px 600px at 50% 90%, rgba(52,211,153,.08), transparent 55%),
+        linear-gradient(180deg, var(--bg), #070b16 70%, #050712);
+      line-height:1.55;
     }
-    header, main {
-      max-width: 980px;
+
+    header{
+      padding: 34px 18px 18px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(16,26,51,.72), rgba(16,26,51,.25));
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow:hidden;
+    }
+    header::before{
+      content:"";
+      position:absolute;
+      inset:-2px -2px auto -2px;
+      height: 210px;
+      background:
+        radial-gradient(520px 160px at 20% 40%, rgba(125,211,252,.18), transparent 70%),
+        radial-gradient(520px 160px at 72% 55%, rgba(167,139,250,.18), transparent 70%);
+      pointer-events:none;
+      filter: blur(0.3px);
+      opacity:.95;
+    }
+    .wrap{max-width:1100px;margin:0 auto;position:relative}
+    .title{
+      display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; justify-content:space-between;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(1.6rem, 2.6vw, 2.35rem);
+      letter-spacing: .2px;
+    }
+    .subtitle{
+      margin:10px 0 0;
+      color:var(--muted);
+      max-width: 82ch;
+      font-size: 1.02rem;
+    }
+    .meta{
+      margin-top: 14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      color:var(--faint);
+      font-size:.92rem;
+    }
+    .pill{
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,.04);
+      padding: 6px 10px;
+      border-radius: 999px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    main{
+      max-width:1100px;
       margin: 0 auto;
-      padding: 24px 18px;
+      padding: 18px 18px 54px;
+      display:grid;
+      grid-template-columns: 290px 1fr;
+      gap: 18px;
+      align-items:start;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(16,26,51,.65), rgba(16,26,51,.35));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      padding: 14px 12px;
+      overflow:hidden;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
+    .toc h2{
+      margin: 4px 10px 10px;
+      font-size: 1.02rem;
+      color: var(--text);
+      letter-spacing:.2px;
+    }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      margin: 4px 6px;
+      border-radius: 12px;
+      text-decoration:none;
       color: var(--muted);
+      border:1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size: .95rem;
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .toc a:hover{
+      background: rgba(125,211,252,.08);
+      border-color: rgba(125,211,252,.22);
+      transform: translateY(-1px);
+      color: var(--text);
+    }
+    .toc .small{
+      font-size:.88rem;
+      color: var(--faint);
+      margin: 8px 10px 0;
+    }
+
+    article{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(16,26,51,.55), rgba(16,26,51,.24));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .section{
+      padding: 18px 18px;
+      border-top:1px solid var(--line);
+    }
+    .section:first-child{border-top:none}
+    .section h2{
+      margin: 0 0 10px;
+      font-size: 1.25rem;
+      letter-spacing:.2px;
+    }
+    .section h3{
+      margin: 14px 0 8px;
+      font-size: 1.05rem;
+      color: var(--text);
+    }
+    p{margin:10px 0; color: var(--muted)}
+    ul{margin:10px 0 0 18px; color: var(--muted)}
+    li{margin: 6px 0}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 920px){
+      main{grid-template-columns:1fr}
+      nav.toc{position:relative; top:auto}
+      .grid2{grid-template-columns:1fr}
+    }
+
+    .card{
+      border:1px solid var(--line);
+      background: rgba(10,16,34,.45);
+      border-radius: var(--radius2);
+      padding: 12px 12px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    .callout{
+      border:1px solid var(--line2);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius: var(--radius2);
+      padding: 12px 12px;
+      margin: 12px 0;
+      position:relative;
+      overflow:hidden;
+    }
+    .callout::before{
+      content:"";
+      position:absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      opacity:.95;
+    }
+    .callout h4{
+      margin:0 0 8px;
+      font-size: 1.0rem;
+      color: var(--text);
+    }
+    .kpi{
+      display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;
+    }
+    .kpi .pill{font-size:.92rem;color:var(--muted)}
+    .tag{
+      font-weight: 650;
+      color: var(--text);
+    }
+
+    .eqbox{
+      border:1px solid rgba(125,211,252,.26);
+      background: rgba(125,211,252,.06);
+      border-radius: var(--radius2);
+      padding: 12px;
+      margin: 12px 0;
+    }
+    .eqrow{
+      display:flex; gap:10px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;
+    }
+    pre.eq{
+      margin:0;
+      padding: 10px 10px;
+      border-radius: 12px;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.10);
+      color: #eaf2ff;
+      font-family: var(--mono);
+      font-size: .95rem;
+      overflow:auto;
+      max-width: 100%;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 9px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 650;
+      font-size: .92rem;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,.32);
+      background: rgba(125,211,252,.10);
+    }
+    .btn:active{transform: translateY(0)}
+    .btn.small{padding:7px 9px;font-size:.88rem}
+
+    details{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius: var(--radius2);
+      padding: 10px 12px;
+      margin: 12px 0;
+    }
+    summary{
+      cursor:pointer;
+      color: var(--text);
+      font-weight: 700;
+      list-style:none;
+    }
+    summary::-webkit-details-marker{display:none}
+    summary::after{
+      content:"▾";
+      float:right;
+      color: var(--faint);
+      transition: transform .15s ease;
+    }
+    details[open] summary::after{transform: rotate(-180deg)}
+    .backtop{
+      display:inline-flex; align-items:center; gap:8px;
+      margin-top: 14px;
+      color: var(--muted);
+      text-decoration:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      padding: 8px 10px;
+      border-radius: 999px;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+    .backtop:hover{
+      transform: translateY(-1px);
+      border-color: rgba(167,139,250,.34);
+      background: rgba(167,139,250,.08);
+      color: var(--text);
+    }
+
+    .final{
+      border:1px solid rgba(52,211,153,.30);
+      background: rgba(52,211,153,.08);
+    }
+    .final::before{
+      background: linear-gradient(180deg, rgba(52,211,153,1), rgba(125,211,252,1));
+    }
+
+    .mistakes{
+      border:1px solid rgba(251,191,36,.30);
+      background: rgba(251,191,36,.08);
+    }
+    .mistakes::before{
+      background: linear-gradient(180deg, rgba(251,191,36,1), rgba(251,113,133,1));
+    }
+
+    .assump{
+      border:1px solid rgba(167,139,250,.30);
+      background: rgba(167,139,250,.08);
+    }
+    .assump::before{
+      background: linear-gradient(180deg, rgba(167,139,250,1), rgba(125,211,252,1));
+    }
+
+    .note{
+      color: var(--faint);
+      font-size: .95rem;
+    }
+    .hr{
+      height:1px;
+      background: var(--line);
+      margin: 12px 0;
+    }
+
+    footer{
+      max-width:1100px;
+      margin: 0 auto;
+      padding: 18px 18px 40px;
+      color: var(--faint);
+      font-size: .92rem;
+    }
+
+    /* micro animation for section reveal */
+    @media (prefers-reduced-motion: no-preference){
+      .section{animation: rise .28s ease both}
+      @keyframes rise{
+        from{opacity:0; transform: translateY(6px)}
+        to{opacity:1; transform: translateY(0)}
+      }
+    }
+
+    /* print-friendly */
+    @media print{
+      body{background:#fff;color:#000}
+      header, nav.toc{display:none}
+      main{display:block; padding:0}
+      article{box-shadow:none; border:1px solid #ccc; background:#fff}
+      .section{page-break-inside: avoid}
+      .callout, .eqbox, details{border:1px solid #bbb; background:#fff}
+      pre.eq{background:#f6f6f6; color:#000}
+      .btn{display:none}
+      a{color:#000;text-decoration:none}
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="box">
-      <h1>24.2-2 — AWG DMUX</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch24/prob_24_2_2.html</code></p>
+  <header id="top">
+    <div class="wrap">
+      <div class="title">
+        <div>
+          <h1>AWG Demultiplexer Design: Required Path-Length Increment (Δd<sub>b</sub>)</h1>
+          <p class="subtitle">
+            We determine the incremental optical path-length difference that an arrayed waveguide grating (AWG) must impose to
+            demultiplex four closely spaced wavelength channels around 1550&nbsp;nm.
+          </p>
+        </div>
+      </div>
+      <div class="meta">
+        <span class="pill">Topic: Arrayed Waveguide Gratings (AWG)</span>
+        <span class="pill">Lens: Applied physics + industrial engineering relevance</span>
+        <span class="pill">Result: Numeric (with physical meaning)</span>
+      </div>
     </div>
   </header>
 
   <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
-    </div>
+    <nav class="toc" aria-label="Table of contents">
+      <h2>Table of Contents</h2>
+      <a href="#quick">Quick Summary</a>
+      <a href="#p0">PART 0 — Concept Primer</a>
+      <a href="#p0b">PART 0B — Industry & Applied Physics</a>
+      <a href="#p1">PART 1 — Problem Analysis</a>
+      <a href="#p2">PART 2 — Strategy & Tips</a>
+      <a href="#p3">PART 3 — Full Solution</a>
+      <a href="#p4">PART 4 — Deeper Understanding</a>
+      <a href="#p5">PART 5 — Optional Plot Guide</a>
+      <div class="small">Sticky panel • click to jump</div>
+    </nav>
+
+    <article>
+      <section class="section" id="quick">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li><span class="tag">What this is:</span> An AWG router used as a <em>demultiplexer</em> for 4 wavelength channels near 1550&nbsp;nm.</li>
+          <li><span class="tag">Key physics idea:</span> The AWG works like an integrated diffraction grating: adjacent arrayed waveguides have a fixed <em>incremental phase delay</em> set by a path-length increment Δd<sub>b</sub>.</li>
+          <li><span class="tag">Governing condition (constructive interference):</span> the incremental phase is <span class="tag">2πm</span> at the design wavelength λ<sub>0</sub>.</li>
+          <li><span class="tag">Spectral periodicity:</span> the same output pattern repeats every <em>free spectral range</em> (FSR), approximately <span class="tag">FSR ≈ λ<sub>0</sub><sup>2</sup>/(n·Δd<sub>b</sub>)</span> in a simple effective-index model.</li>
+          <li><span class="tag">Design link to channel count:</span> to demux 4 channels separated by Δλ without ambiguity, a common choice is <span class="tag">FSR ≈ N·Δλ</span> with N = 4.</li>
+          <li><span class="tag">Given:</span> λ<sub>0</sub> = 1550&nbsp;nm, Δλ = 0.2&nbsp;nm, N = 4, refractive index n = 2.3.</li>
+          <li><span class="tag">Result type:</span> numeric Δd<sub>b</sub> (a physical length). Larger Δd<sub>b</sub> → smaller FSR and finer spectral periodicity.</li>
+          <li><span class="tag">Final value:</span> Δd<sub>b</sub> ≈ <span class="tag">1.31&nbsp;mm</span> (using the stated n as the effective index).</li>
+        </ul>
+
+        <div class="callout eqbox">
+          <div class="eqrow">
+            <div>
+              <h4 style="margin:0 0 8px">Key equation to copy</h4>
+              <pre class="eq" id="eq-key">FSR ≈ λ0^2 / (n · Δdb)
+Choose FSR ≈ N · Δλ  ⇒  Δdb ≈ λ0^2 / (n · N · Δλ)</pre>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
+              <button class="btn" data-copy="#eq-key">Copy equation</button>
+            </div>
+          </div>
+          <p class="note" style="margin:10px 0 0">
+            Here we treat the given index <span class="tag">n = 2.3</span> as an effective index for the arrayed waveguides (a standard first-pass design approximation).
+          </p>
+        </div>
+
+        <a class="backtop" href="#top" aria-label="Back to top">↑ Back to top</a>
+      </section>
+
+      <section class="section" id="p0">
+        <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>Core definitions (symbols + SI units)</h3>
+            <ul>
+              <li><span class="tag">λ</span> — optical wavelength (m). Here near 1550&nbsp;nm.</li>
+              <li><span class="tag">Δλ</span> — channel spacing (m). Here 0.2&nbsp;nm.</li>
+              <li><span class="tag">N</span> — number of channels (dimensionless). Here 4.</li>
+              <li><span class="tag">n</span> — (effective) refractive index (dimensionless). Given 2.3.</li>
+              <li><span class="tag">β</span> — propagation constant in a waveguide (rad/m), approximately β ≈ 2πn/λ.</li>
+              <li><span class="tag">Δd<sub>b</sub></span> — incremental <em>physical path-length difference</em> between adjacent array waveguides (m).</li>
+              <li><span class="tag">FSR</span> — free spectral range (m), the wavelength period over which the AWG transfer function repeats.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Physical meaning (intuition)</h3>
+            <ul>
+              <li><span class="tag">AWG as phased array:</span> multiple waveguides emit into a slab coupler; relative phases set the interference pattern.</li>
+              <li><span class="tag">Δd<sub>b</sub> sets phase ramp:</span> adjacent arms accumulate an extra phase Δφ = βΔd<sub>b</sub>.</li>
+              <li><span class="tag">Wavelength sensitivity:</span> because β depends on λ, the phase ramp changes with λ, steering/focusing different wavelengths to different output ports.</li>
+              <li><span class="tag">FSR concept:</span> if you change λ enough to add an extra 2π of phase per arm, the pattern repeats (aliasing risk).</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout assump">
+          <h4>Key laws / principles & validity conditions</h4>
+          <ul>
+            <li><span class="tag">Constructive interference condition:</span> at the design wavelength λ<sub>0</sub>, the incremental phase between adjacent arms is an integer multiple of 2π:
+              <span class="tag">β(λ<sub>0</sub>)·Δd<sub>b</sub> = 2πm</span> (m is the diffraction order).</li>
+            <li><span class="tag">Small-band approximation:</span> for closely spaced channels around λ<sub>0</sub>, treating n as constant (or using an effective index) provides a reliable first estimate.</li>
+            <li><span class="tag">Wave optics regime:</span> AWGs rely on coherent interference; the source linewidth and fabrication phase errors must be small enough that coherence is maintained across the array.</li>
+          </ul>
+        </div>
+
+        <h3>Common models / approximations (and why engineers use them)</h3>
+        <ul>
+          <li><span class="tag">Effective-index model:</span> replace the full guided-mode dispersion by a single effective refractive index n (or group index n<sub>g</sub>) to get closed-form design formulas quickly.</li>
+          <li><span class="tag">Use of FSR:</span> treat spectral periodicity via FSR to ensure the set of channels fits inside one period (avoids overlapping orders).</li>
+          <li><span class="tag">Neglect higher-order details:</span> slab coupler aberrations, phase errors, polarization dependence, and loss are second-pass corrections after a baseline Δd<sub>b</sub> is chosen.</li>
+        </ul>
+
+        <h3>Mini intuition examples (minimal algebra)</h3>
+        <ul>
+          <li><span class="tag">If Δd<sub>b</sub> increases:</span> each arm has a bigger extra delay ⇒ phase changes faster with wavelength ⇒ <em>smaller</em> FSR (more frequent repetition).</li>
+          <li><span class="tag">If n increases:</span> β increases ⇒ for the same Δd<sub>b</sub>, phase is larger ⇒ again a <em>smaller</em> FSR.</li>
+          <li><span class="tag">If you need more channels in the same FSR:</span> you typically shrink channel spacing, or enlarge FSR (which pushes Δd<sub>b</sub> down).</li>
+        </ul>
+
+        <div class="callout mistakes">
+          <h4>What to watch for (pitfalls & hidden assumptions)</h4>
+          <ul>
+            <li><span class="tag">Index choice:</span> many AWG formulas use the <em>group index</em> n<sub>g</sub> (dispersion-aware), not phase index n. This problem explicitly gives n, so we use it as the effective index.</li>
+            <li><span class="tag">FSR vs channel spacing:</span> Δλ is not the FSR. For N channels, a typical constraint is FSR ≥ N·Δλ to avoid overlap.</li>
+            <li><span class="tag">Unit traps:</span> nm must be converted to meters consistently, especially in λ<sup>2</sup>/Δλ formulas.</li>
+          </ul>
+        </div>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section class="section" id="p0b">
+        <h2>PART 0B — Industry & Applied Physics Perspective</h2>
+
+        <h3>Where AWG demultiplexing shows up (concrete applications)</h3>
+        <div class="grid2">
+          <div class="card">
+            <h3 style="margin-top:0">Telecom & datacom WDM</h3>
+            <p>
+              AWGs are core components in wavelength-division multiplexing (WDM) systems: they split (demux) or combine (mux)
+              closely spaced laser channels in metro networks, coherent transceivers, and data-center interconnects.
+            </p>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0">Integrated photonics & SiP modules</h3>
+            <p>
+              In silicon photonics (SiP) and InP platforms, AWGs enable multi-wavelength routing on a chip, reducing footprint
+              and assembly complexity compared to bulk optics.
+            </p>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0">Sensing & spectroscopy</h3>
+            <p>
+              AWG-like dispersive photonic circuits are used in compact spectrometers for chemical sensing, biomedical diagnostics,
+              and industrial process monitoring.
+            </p>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0">Optical test & monitoring</h3>
+            <p>
+              Network monitoring equipment uses AWG demux stages to separate channels for power tracking, OSNR estimation,
+              and fault localization.
+            </p>
+          </div>
+        </div>
+
+        <h3>Why engineers care (industrial engineering relevance)</h3>
+        <ul>
+          <li><span class="tag">Performance:</span> insertion loss, crosstalk, passband shape, and thermal drift determine system margins and achievable data rate.</li>
+          <li><span class="tag">Reliability:</span> packaging stress, temperature cycling, and aging can shift effective index → channel misalignment.</li>
+          <li><span class="tag">Cost & manufacturability:</span> Δd<sub>b</sub> influences chip area (longer arms consume area), sensitivity to lithography errors, and yield.</li>
+          <li><span class="tag">Efficiency:</span> higher loss implies higher laser power or amplification → increased energy use and heat management burden.</li>
+        </ul>
+
+        <h3>Typical measurement/validation methods in practice</h3>
+        <ul>
+          <li><span class="tag">Swept-laser transmission:</span> measure output spectra vs wavelength to extract channel spacing, FSR, and crosstalk.</li>
+          <li><span class="tag">Temperature sweeps:</span> quantify thermal tuning coefficient (nm/°C) and verify stability over operating range.</li>
+          <li><span class="tag">Interferometric/phase metrology:</span> diagnose phase errors across the array (often indirectly via spectral ripple and sidelobes).</li>
+        </ul>
+
+        <h3>Design trade-offs & constraints (real-world non-idealities)</h3>
+        <ul>
+          <li><span class="tag">Dispersion:</span> real n varies with wavelength; group index n<sub>g</sub> can differ significantly from n, shifting the true FSR.</li>
+          <li><span class="tag">Fabrication tolerances:</span> waveguide width/thickness variations change n<sub>eff</sub>, causing phase errors and crosstalk.</li>
+          <li><span class="tag">Thermo-optic effect:</span> n changes with temperature; AWGs often need thermal control or athermal designs.</li>
+          <li><span class="tag">Footprint:</span> larger Δd<sub>b</sub> tends to increase total path length and chip area, affecting cost and yield.</li>
+        </ul>
+
+        <details>
+          <summary>From lab to product: how the ideal model is adapted</summary>
+          <p>
+            In product design, engineers start with closed-form formulas (like those used below) to estimate Δd<sub>b</sub>.
+            Next, they switch to dispersion-aware models (replace n with n<sub>g</sub>, include wavelength-dependent n(λ)),
+            and finally to full electromagnetic and circuit-level simulations to predict passband shape, loss, polarization
+            effects, and thermal behavior. The final design is “centered” via trimming/tuning (heaters, UV trimming, etc.)
+            and validated with wafer-level spectral testing to ensure yield targets are met.
+          </p>
+        </details>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section class="section" id="p1">
+        <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+        <h3>Problem restatement (in plain language)</h3>
+        <p>
+          An arrayed waveguide grating (AWG) router is used as a demultiplexer that separates <span class="tag">four</span>
+          wavelength channels. The channels are evenly spaced by <span class="tag">Δλ = 0.2&nbsp;nm</span> around a central
+          wavelength <span class="tag">λ<sub>0</sub> = 1550&nbsp;nm</span>. Assuming the star coupler/waveguide effective
+          refractive index is <span class="tag">n = 2.3</span>, find the required incremental path-length difference parameter
+          <span class="tag">Δd<sub>b</sub></span> that sets the AWG’s spectral periodicity appropriately.
+        </p>
+
+        <div class="grid2">
+          <div class="card">
+            <h3 style="margin-top:0">Given</h3>
+            <ul>
+              <li>N = 4 channels</li>
+              <li>Δλ = 0.2 nm</li>
+              <li>λ<sub>0</sub> = 1550 nm</li>
+              <li>n = 2.3</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0">Unknown</h3>
+            <ul>
+              <li>Δd<sub>b</sub> (m): incremental path-length difference between adjacent array arms (as parameterized by the star coupler / AWG geometry)</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Relevant principles (why they apply)</h3>
+        <ul>
+          <li><span class="tag">Interference + phased-array condition:</span> the AWG response is governed by phase differences across arms, which depend on Δd<sub>b</sub>.</li>
+          <li><span class="tag">Free spectral range (FSR):</span> determines how often the wavelength response repeats—critical for ensuring distinct channel mapping over the intended set of channels.</li>
+        </ul>
+
+        <div class="callout assump">
+          <h4>Assumptions (explicit)</h4>
+          <ul>
+            <li><span class="tag">Effective-index approximation:</span> treat the provided n = 2.3 as the relevant index controlling phase vs wavelength.</li>
+            <li><span class="tag">Small bandwidth:</span> channel span is small (sub-nm) around 1550 nm, so using constant n is acceptable for a first design value.</li>
+            <li><span class="tag">No aliasing within channel set:</span> choose the FSR to be approximately the total channel span plus one spacing; standard simple choice: FSR ≈ N·Δλ.</li>
+          </ul>
+        </div>
+
+        <h3>Possible approaches (compare 2–3)</h3>
+        <div class="grid2">
+          <div class="card">
+            <h3 style="margin-top:0">Approach A — Use FSR design rule (fast, robust)</h3>
+            <p>
+              Use <span class="tag">FSR ≈ λ<sub>0</sub><sup>2</sup>/(n·Δd<sub>b</sub>)</span> and enforce
+              <span class="tag">FSR ≈ N·Δλ</span> to cover N channels in one period.
+            </p>
+            <p class="note">Pros: needs only given data; aligns with typical AWG sizing logic. Cons: ignores detailed dispersion (n<sub>g</sub>).</p>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0">Approach B — Diffraction order m + geometry (needs more inputs)</h3>
+            <p>
+              Use <span class="tag">β(λ<sub>0</sub>)Δd<sub>b</sub> = 2πm</span> and relate output spacing to angular dispersion through slab length and waveguide pitch.
+            </p>
+            <p class="note">Pros: more detailed; can predict channel spacing directly. Cons: requires slab focal length, waveguide spacing, and layout details not provided.</p>
+          </div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <h3 style="margin-top:0">Approach C — Full dispersion-aware design (most accurate, most data)</h3>
+          <p>
+            Replace n by group index n<sub>g</sub>(λ), include fabrication offsets, and compute passbands with a circuit model.
+          </p>
+          <p class="note">Pros: closest to product-grade design. Cons: needs dispersion data and geometry; far beyond given information.</p>
+        </div>
+
+        <p>
+          <span class="tag">Chosen approach:</span> <strong>Approach A</strong>, because the problem provides only λ<sub>0</sub>, Δλ, N, and n, and explicitly asks for Δd<sub>b</sub> in that simplified context.
+        </p>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section class="section" id="p2">
+        <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+        <ol style="margin:10px 0 0 18px;color:var(--muted)">
+          <li><span class="tag">Set the design goal:</span> ensure four channels fit within one AWG spectral period (FSR) without repeating/overlap.</li>
+          <li><span class="tag">Choose an FSR rule:</span> adopt the common first-pass constraint <span class="tag">FSR ≈ N·Δλ</span>.</li>
+          <li><span class="tag">Relate FSR to Δd<sub>b</sub>:</span> use <span class="tag">FSR ≈ λ<sub>0</sub><sup>2</sup>/(n·Δd<sub>b</sub>)</span>.</li>
+          <li><span class="tag">Solve for Δd<sub>b</sub>:</span> rearrange to <span class="tag">Δd<sub>b</sub> ≈ λ<sub>0</sub><sup>2</sup>/(n·FSR)</span> and substitute FSR ≈ N·Δλ.</li>
+          <li><span class="tag">Compute carefully:</span> convert nm to meters and evaluate Δd<sub>b</sub>.</li>
+          <li><span class="tag">Sanity checks:</span> verify units (meters), verify trends (bigger Δλ or N → smaller Δd<sub>b</sub>), and interpret physically (chip footprint implications).</li>
+        </ol>
+
+        <div class="callout mistakes">
+          <h4>Common mistakes (quick tips)</h4>
+          <ul>
+            <li>Using Δλ directly as the FSR (forgetting multiple channels must fit in one period).</li>
+            <li>Forgetting that λ is squared (λ<sub>0</sub><sup>2</sup>) and mixing nm with meters.</li>
+            <li>Confusing phase index n with group index n<sub>g</sub>. (Here we follow the problem statement and use n.)</li>
+          </ul>
+        </div>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section class="section" id="p3">
+        <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+        <h3>Qualitative expectation (before calculating)</h3>
+        <p>
+          The channel spacing is extremely small (0.2&nbsp;nm). To make the AWG “discriminate” such closely spaced wavelengths
+          without spectral repetition across those four channels, the device must have a correspondingly small FSR.
+          Since <span class="tag">FSR ∝ 1/Δd<sub>b</sub></span>, we expect <span class="tag">Δd<sub>b</sub></span> to be relatively
+          large (millimeter scale) compared to many coarse-WDM AWGs.
+        </p>
+
+        <div class="callout eqbox">
+          <div class="eqrow">
+            <div style="min-width: min(100%, 610px);">
+              <h4 style="margin:0 0 8px">Step 1 — FSR of an AWG (effective-index model)</h4>
+              <pre class="eq" id="eq-1">β(λ) ≈ 2πn / λ
+Incremental phase per arm: Δφ(λ) = β(λ) · Δdb
+
+Spectral repetition occurs when Δφ changes by 2π:
+Δφ(λ + FSR) − Δφ(λ) ≈ 2π
+
+This leads to the standard first-order estimate:
+FSR ≈ λ0^2 / (n · Δdb)</pre>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
+              <button class="btn" data-copy="#eq-1">Copy</button>
+            </div>
+          </div>
+          <p class="note" style="margin:10px 0 0">
+            In more refined treatments, n is replaced by the group index n<sub>g</sub>. The problem provides n, so we use it as stated.
+          </p>
+        </div>
+
+        <h3>Step 2 — Connect FSR to “4 channels spaced by Δλ”</h3>
+        <p>
+          A practical design constraint is that the AWG response should not repeat (wrap around) within the set of channels to be demultiplexed.
+          With <span class="tag">N = 4</span> channels spaced by <span class="tag">Δλ</span>, a common first-pass choice is:
+        </p>
+
+        <div class="eqbox">
+          <div class="eqrow">
+            <pre class="eq" id="eq-2">Choose FSR ≈ N · Δλ</pre>
+            <button class="btn" data-copy="#eq-2">Copy</button>
+          </div>
+          <p class="note" style="margin:10px 0 0">
+            This ensures one full “period” of the AWG comfortably covers the four channels (a conservative, simple criterion when details are limited).
+          </p>
+        </div>
+
+        <h3>Step 3 — Solve for Δd<sub>b</sub></h3>
+        <p>
+          Substitute <span class="tag">FSR ≈ N·Δλ</span> into <span class="tag">FSR ≈ λ<sub>0</sub><sup>2</sup>/(n·Δd<sub>b</sub>)</span>:
+        </p>
+
+        <div class="eqbox">
+          <div class="eqrow">
+            <div style="min-width:min(100%,610px)">
+              <pre class="eq" id="eq-3">FSR ≈ λ0^2 / (n · Δdb)
+FSR ≈ N · Δλ
+
+⇒ N · Δλ ≈ λ0^2 / (n · Δdb)
+⇒ Δdb ≈ λ0^2 / (n · N · Δλ)</pre>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
+              <button class="btn" data-copy="#eq-3">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <h3>Step 4 — Insert numbers (carefully with units)</h3>
+        <div class="grid2">
+          <div class="card">
+            <h3 style="margin-top:0">Convert to SI</h3>
+            <ul>
+              <li>λ<sub>0</sub> = 1550 nm = 1.55 × 10<sup>−6</sup> m</li>
+              <li>Δλ = 0.2 nm = 2.0 × 10<sup>−10</sup> m</li>
+              <li>N = 4</li>
+              <li>n = 2.3</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0">Compute</h3>
+            <p class="note">First compute λ<sub>0</sub><sup>2</sup>:</p>
+            <pre class="eq" style="margin-top:8px">λ0^2 = (1.55×10^-6 m)^2
+     = 2.4025×10^-12 m^2</pre>
+          </div>
+        </div>
+
+        <p>Now compute the denominator <span class="tag">n·N·Δλ</span>:</p>
+        <pre class="eq" style="margin:10px 0">n·N·Δλ = 2.3 · 4 · (2.0×10^-10 m)
+        = 2.3 · 8.0×10^-10 m
+        = 1.84×10^-9 m</pre>
+
+        <p>Finally:</p>
+        <pre class="eq" style="margin:10px 0">Δdb ≈ (2.4025×10^-12 m^2) / (1.84×10^-9 m)
+     ≈ 1.3057×10^-3 m
+     ≈ 1.31 mm</pre>
+
+        <div class="callout final">
+          <div class="eqrow">
+            <div style="min-width:min(100%,600px)">
+              <h4>Final Answer (copy-ready)</h4>
+              <pre class="eq" id="final-ans">Δdb ≈ λ0^2 / (n · N · Δλ)
+With λ0 = 1550 nm, Δλ = 0.2 nm, N = 4, n = 2.3:
+Δdb ≈ 1.31 × 10^-3 m ≈ 1.31 mm</pre>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
+              <button class="btn" data-copy="#final-ans">Copy final answer</button>
+            </div>
+          </div>
+          <div class="kpi" aria-label="Key result badges">
+            <span class="pill"><span class="tag">Δd<sub>b</sub></span> ≈ 1.31 mm</span>
+            <span class="pill"><span class="tag">FSR</span> ≈ NΔλ = 0.8 nm</span>
+            <span class="pill">Interpretation: mm-scale delay increment</span>
+          </div>
+        </div>
+
+        <h3>Sanity checks</h3>
+        <div class="grid2">
+          <div class="card">
+            <h3 style="margin-top:0">Units / dimensions</h3>
+            <p>
+              Δd<sub>b</sub> has units of length:
+              λ<sub>0</sub><sup>2</sup> is m<sup>2</sup>, and (n·N·Δλ) is dimensionless × m, so the ratio is m. ✅
+            </p>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0">Limiting/trend behavior</h3>
+            <ul>
+              <li>If Δλ increases (channels farther apart) ⇒ Δd<sub>b</sub> decreases. ✅</li>
+              <li>If N increases (more channels within one FSR) ⇒ Δd<sub>b</sub> decreases. ✅</li>
+              <li>If n increases ⇒ Δd<sub>b</sub> decreases (more phase per unit length). ✅</li>
+            </ul>
+          </div>
+        </div>
+
+        <p>
+          <span class="tag">Physical interpretation:</span> Δd<sub>b</sub> is the incremental extra length added to each successive waveguide in the array.
+          A value of ~1.31&nbsp;mm means the longest arm is substantially longer than the shortest (depending on arm count),
+          which impacts footprint, loss, and thermal sensitivity—key industrial engineering considerations.
+        </p>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section class="section" id="p4">
+        <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+        <h3>Re-interpret the final formula</h3>
+        <div class="eqbox">
+          <div class="eqrow">
+            <pre class="eq" id="eq-4">Δdb ≈ λ0^2 / (n · N · Δλ)</pre>
+            <button class="btn" data-copy="#eq-4">Copy</button>
+          </div>
+        </div>
+        <ul>
+          <li><span class="tag">λ<sub>0</sub><sup>2</sup>:</span> longer wavelengths generally require larger Δd<sub>b</sub> for the same spectral periodicity constraint.</li>
+          <li><span class="tag">1/n:</span> higher index means more phase per unit length, so less length is needed to reach the same phase progression.</li>
+          <li><span class="tag">1/(N·Δλ):</span> tighter spacing or more channels implies the AWG must maintain uniqueness over a larger count of closely packed wavelengths, which pushes Δd<sub>b</sub> upward if you instead fix FSR; under the chosen rule (FSR ≈ NΔλ), it yields the shown scaling.</li>
+        </ul>
+
+        <h3>Parameter dependence (qualitative)</h3>
+        <div class="grid2">
+          <div class="card">
+            <h3 style="margin-top:0">Increase Δλ (wider channel spacing)</h3>
+            <p>FSR target increases → Δd<sub>b</sub> decreases → smaller chip footprint and often lower loss.</p>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0">Increase N (more channels)</h3>
+            <p>To keep channels within one period, you typically increase FSR. Under the simple design rule, Δd<sub>b</sub> scales as 1/N.</p>
+          </div>
+        </div>
+
+        <details>
+          <summary>Alternative derivation idea (brief but meaningful)</summary>
+          <p>
+            Start with the interference condition for a fixed output:
+            adjacent arms have phase difference Δφ(λ) = (2πn/λ)Δd<sub>b</sub>.
+            A “repeat” occurs when Δφ changes by 2π between λ and λ+FSR. Using a first-order Taylor expansion of 1/λ around λ<sub>0</sub>
+            gives Δφ(λ+Δ)−Δφ(λ) ≈ (2πnΔd<sub>b</sub>/λ<sub>0</sub><sup>2</sup>)·Δ. Setting this equal to 2π yields
+            FSR ≈ λ<sub>0</sub><sup>2</sup>/(nΔd<sub>b</sub>).
+          </p>
+        </details>
+
+        <h3>Concept check (self-test with answers)</h3>
+        <ul>
+          <li><span class="tag">Q:</span> If Δd<sub>b</sub> doubles, what happens to FSR? <br><span class="tag">A:</span> FSR halves (inverse relationship).</li>
+          <li><span class="tag">Q:</span> Why does λ appear squared? <br><span class="tag">A:</span> Because phase depends on 1/λ, and the repetition condition uses the derivative near λ<sub>0</sub>, producing λ<sub>0</sub><sup>2</sup> in the denominator/ratio.</li>
+          <li><span class="tag">Q:</span> In real devices, why might this answer shift? <br><span class="tag">A:</span> The group index n<sub>g</sub> (dispersion) differs from n, and fabrication/thermal effects alter effective index and phase.</li>
+          <li><span class="tag">Q:</span> What is an industrial consequence of large Δd<sub>b</sub>? <br><span class="tag">A:</span> Larger footprint and potentially higher propagation loss and thermal sensitivity, impacting yield and power budget.</li>
+        </ul>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section class="section" id="p5">
+        <h2>PART 5 — Optional Plot Guide</h2>
+        <p>
+          No plot is necessary here because the problem is a direct one-shot design calculation: it maps given spectral specifications
+          (channel spacing and count) to a single required path-length increment Δd<sub>b</sub>. A plot would add little insight without
+          additional geometry or performance targets (loss, crosstalk, passband width).
+        </p>
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+    </article>
   </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="hr"></div>
+      <p>
+        <strong>Note on notation:</strong> Many texts denote the incremental array path-length difference as ΔL. This problem uses Δd<sub>b</sub>
+        “introduced by the star coupler.” In AWG practice, the star coupler (free-propagation region) distributes fields, while the
+        <em>array</em> provides the designed incremental delay; thus Δd<sub>b</sub> is treated as the adjacent-arm path increment that sets the AWG’s phase ramp.
+      </p>
+      <p class="note">
+        If you later include dispersion (group index n<sub>g</sub>) or thermal drift, the same workflow applies—replace n with n<sub>g</sub>(λ) and design margins around FSR.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    (function(){
+      function copyFromSelector(sel){
+        const el = document.querySelector(sel);
+        if(!el) return;
+        const text = (el.innerText || el.textContent || "").trim();
+        navigator.clipboard.writeText(text).then(()=>flashCopied(sel)).catch(()=>fallbackCopy(text, sel));
+      }
+      function fallbackCopy(text, sel){
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position="fixed";
+        ta.style.left="-9999px";
+        ta.style.top="0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try{ document.execCommand("copy"); flashCopied(sel); } catch(e){}
+        document.body.removeChild(ta);
+      }
+      function flashCopied(sel){
+        const btn = document.querySelector('[data-copy="'+sel+'"]');
+        if(!btn) return;
+        const old = btn.textContent;
+        btn.textContent = "Copied ✓";
+        btn.style.borderColor = "rgba(52,211,153,.45)";
+        btn.style.background = "rgba(52,211,153,.12)";
+        setTimeout(()=>{
+          btn.textContent = old;
+          btn.style.borderColor = "";
+          btn.style.background = "";
+        }, 900);
+      }
+
+      document.addEventListener("click", function(e){
+        const b = e.target.closest("[data-copy]");
+        if(!b) return;
+        const sel = b.getAttribute("data-copy");
+        copyFromSelector(sel);
+      }, {passive:true});
+    })();
+  </script>
 </body>
 </html>

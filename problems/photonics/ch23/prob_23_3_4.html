@@ -2,64 +2,1188 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>23.3-4 — Temporal Imaging with a Time Lens</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark">
+  <title>Temporal Imaging with a Time Lens (Fiber + Quadratic Phase Modulator)</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
+    :root{
+      --bg: #0b0d12;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.085);
       --text: rgba(255,255,255,0.92);
       --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+      --faint: rgba(255,255,255,0.55);
+      --brand: #7dd3fc;
+      --accent: #a78bfa;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --border: rgba(255,255,255,0.14);
+      --shadow: 0 12px 36px rgba(0,0,0,0.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --radius: 18px;
+      --radius2: 24px;
+      --maxw: 1120px;
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f7f8fb;
+        --panel: rgba(10,14,24,0.05);
+        --panel2: rgba(10,14,24,0.075);
+        --text: rgba(10,14,24,0.92);
+        --muted: rgba(10,14,24,0.72);
+        --faint: rgba(10,14,24,0.58);
+        --border: rgba(10,14,24,0.14);
+        --shadow: 0 14px 40px rgba(10,14,24,0.12);
+      }
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      background: radial-gradient(1200px 800px at 12% 10%, rgba(125,211,252,0.16), transparent 60%),
+                  radial-gradient(1000px 700px at 80% 12%, rgba(167,139,250,0.14), transparent 55%),
+                  radial-gradient(900px 600px at 50% 120%, rgba(52,211,153,0.10), transparent 55%),
                   var(--bg);
       color: var(--text);
-      line-height: 1.55;
+      line-height:1.55;
+      overflow-x:hidden;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+    a{ color: var(--brand); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    header{
+      position:relative;
+      padding: 34px 18px 22px;
     }
-    .box {
-      background: var(--card);
+    .wrap{
+      max-width: var(--maxw);
+      margin:0 auto;
+    }
+    .hero{
+      background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.045));
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+      box-shadow: var(--shadow);
+      border-radius: var(--radius2);
+      padding: 22px 20px;
+      display:grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+      overflow:hidden;
+      position:relative;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
+    .hero:before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(800px 260px at 15% 20%, rgba(125,211,252,0.18), transparent 60%),
+                  radial-gradient(700px 280px at 85% 30%, rgba(167,139,250,0.16), transparent 62%);
+      opacity:0.9;
+      pointer-events:none;
+      filter: blur(0px);
+    }
+    .hero > *{ position:relative; }
+    h1{
+      margin:0 0 8px;
+      font-size: clamp(1.55rem, 2.4vw, 2.15rem);
+      letter-spacing: -0.02em;
+    }
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+    .meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-content:flex-start;
+      justify-content:flex-end;
+    }
+    .pill{
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      white-space:nowrap;
+      backdrop-filter: blur(10px);
+    }
+    .pill b{ color: var(--text); font-weight:650; }
+
+    main{
+      padding: 0 18px 60px;
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap: 18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .hero{ grid-template-columns: 1fr; }
+      .meta{ justify-content:flex-start; }
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.045));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 14px 12px;
+      backdrop-filter: blur(10px);
+    }
+    .toc h2{
+      font-size: 0.98rem;
+      margin: 0 0 8px;
+      letter-spacing:0.02em;
       color: var(--muted);
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      color: var(--text);
+      opacity:0.9;
+      border: 1px solid transparent;
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+      font-size: 0.95rem;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,0.10);
+      border-color: rgba(125,211,252,0.25);
+      transform: translateX(2px);
+      text-decoration:none;
+    }
+    .toc .small{
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 10px;
+      padding: 0 10px 6px;
+    }
+
+    article{
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.035));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius2);
+      padding: 18px 18px 10px;
+      overflow:hidden;
+    }
+
+    section{
+      padding: 10px 4px 14px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    section:first-of-type{ border-top:none; }
+    h2{
+      margin: 2px 0 10px;
+      font-size: clamp(1.15rem, 1.7vw, 1.45rem);
+      letter-spacing: -0.01em;
+    }
+    h3{
+      margin: 14px 0 8px;
+      font-size: 1.05rem;
+      color: var(--text);
+      letter-spacing:-0.01em;
+    }
+    p{ margin: 10px 0; color: var(--text); }
+    .muted{ color: var(--muted); }
+    .faint{ color: var(--faint); }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items:start;
+    }
+    @media (max-width: 860px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 12px 10px;
+    }
+    .card h3{ margin-top:0; }
+
+    .callouts{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 12px 0 6px;
+    }
+    @media (max-width: 860px){
+      .callouts{ grid-template-columns: 1fr; }
+    }
+
+    .callout{
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--panel2), var(--panel));
+      padding: 12px 12px 10px;
+      position:relative;
+      overflow:hidden;
+    }
+    .callout:before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      background: radial-gradient(500px 140px at 15% 20%, rgba(125,211,252,0.18), transparent 60%);
+      opacity:0.35;
+      pointer-events:none;
+    }
+    .callout > *{ position:relative; }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--brand);
+      box-shadow: 0 0 0 4px rgba(125,211,252,0.12);
+    }
+    .dot.warn{ background: var(--warn); box-shadow: 0 0 0 4px rgba(251,191,36,0.14); }
+    .dot.ok{ background: var(--ok); box-shadow: 0 0 0 4px rgba(52,211,153,0.14); }
+    .dot.bad{ background: var(--bad); box-shadow: 0 0 0 4px rgba(251,113,133,0.14); }
+
+    ul{ margin: 8px 0 10px 20px; color: var(--text); }
+    li{ margin: 6px 0; }
+    .eq{
+      margin: 10px 0;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px dashed rgba(125,211,252,0.35);
+      background: rgba(125,211,252,0.08);
+      overflow:auto;
+      position:relative;
+    }
+    .eq pre{
+      margin:0;
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      line-height:1.45;
+      white-space: pre;
+      color: var(--text);
+    }
+    .copyRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .btn{
+      appearance:none;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 14px;
+      font-size: 0.92rem;
+      cursor:pointer;
+      transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+      user-select:none;
+    }
+    .btn:hover{
+      background: rgba(255,255,255,0.10);
+      border-color: rgba(125,211,252,0.35);
+      transform: translateY(-1px);
+    }
+    .btn:active{ transform: translateY(0px) scale(0.99); }
+    .btn.good{ border-color: rgba(52,211,153,0.35); }
+    .btn.good:hover{ border-color: rgba(52,211,153,0.55); }
+    .btn.small{ padding:6px 9px; font-size:0.88rem; border-radius: 12px; }
+
+    details{
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.04);
+      padding: 10px 12px;
+      margin: 10px 0;
+    }
+    summary{
+      cursor:pointer;
+      font-weight:650;
+      color: var(--text);
+    }
+    details[open]{ background: rgba(255,255,255,0.06); }
+
+    figure{
+      margin: 12px 0 4px;
+      padding: 12px;
+      border-radius: var(--radius2);
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+    }
+    figcaption{
+      margin-top:8px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    canvas{
+      width:100%;
+      height:auto;
+      display:block;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.12);
+    }
+    @media (prefers-color-scheme: light){
+      canvas{ background: rgba(10,14,24,0.04); }
+    }
+
+    .final{
+      border: 1px solid rgba(52,211,153,0.38);
+      background: rgba(52,211,153,0.10);
+      border-radius: var(--radius2);
+      padding: 14px 12px 12px;
+      margin: 12px 0 6px;
+      position:relative;
+      overflow:hidden;
+    }
+    .final:before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      background: radial-gradient(520px 160px at 12% 18%, rgba(52,211,153,0.22), transparent 62%);
+      opacity:0.5;
+      pointer-events:none;
+    }
+    .final > *{ position:relative; }
+    .final h3{ margin:0 0 8px; }
+    .backtop{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin: 8px 0 0;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      font-size: 0.92rem;
+    }
+    .backtop:hover{
+      text-decoration:none;
+      border-color: rgba(125,211,252,0.35);
+      background: rgba(125,211,252,0.10);
+    }
+
+    footer{
+      max-width: var(--maxw);
+      margin: 16px auto 0;
+      padding: 0 18px 40px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{ background:#fff; color:#000; }
+      .hero, nav.toc, article, .card, .callout, .eq, .final, figure, details{
+        box-shadow:none !important;
+        background:#fff !important;
+        border:1px solid #bbb !important;
+        color:#000 !important;
+      }
+      a{ color:#000; text-decoration:underline; }
+      nav.toc{ position:static; }
+      .btn{ display:none !important; }
+      section{ break-inside: avoid; page-break-inside: avoid; }
+      h2, h3{ break-after: avoid; page-break-after: avoid; }
+      figure{ break-inside: avoid; page-break-inside: avoid; }
     }
   </style>
 </head>
-<body>
-  <header>
-    <div class="box">
-      <h1>23.3-4 — Temporal Imaging with a Time Lens</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch23/prob_23_3_4.html</code></p>
-    </div>
-  </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+<body id="top">
+<header>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>Temporal Imaging with a Time Lens (Fiber + Quadratic Phase Modulator)</h1>
+        <p class="subtitle">
+          A step-by-step derivation of how dispersion + a quadratic temporal phase (“time lens”) forms a delayed, time-magnified replica of an optical pulse—directly analogous to spatial imaging with lenses.
+        </p>
+      </div>
+      <div class="meta" aria-label="Metadata">
+        <div class="pill"><b>Topic</b>: Ultrafast / Fiber Optics</div>
+        <div class="pill"><b>Core tool</b>: Fresnel integral</div>
+        <div class="pill"><b>Key result</b>: τ<sub>2</sub>/τ<sub>1</sub> = d<sub>2</sub>/d<sub>1</sub></div>
+        <div class="pill"><b>Industry lens</b>: time-stretch ADC</div>
+      </div>
     </div>
-  </main>
+  </div>
+</header>
+
+<main>
+  <div class="wrap layout">
+    <nav class="toc" aria-label="Table of Contents">
+      <h2>Table of Contents</h2>
+      <a href="#qs">Quick Summary</a>
+      <a href="#p0">PART 0 — Concept Primer</a>
+      <a href="#p0b">PART 0B — Industry & Applied Physics</a>
+      <a href="#p1">PART 1 — Problem Analysis</a>
+      <a href="#p2">PART 2 — Strategy & Tips</a>
+      <a href="#p3">PART 3 — Full Solution</a>
+      <a href="#p4">PART 4 — Deeper Understanding</a>
+      <a href="#p5">PART 5 — Optional Plot Guide</a>
+      <div class="small">Use the copy buttons to grab equations and the final result as plain text.</div>
+    </nav>
+
+    <article>
+      <section id="qs">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li><b>What this is about:</b> A pulse propagates through dispersive fiber, is “phase-lensed” by a quadratic temporal phase exp(iζt²), then propagates through more dispersive fiber.</li>
+          <li><b>Key physics idea:</b> <b>Dispersion</b> produces a quadratic phase vs frequency (or a Fresnel convolution in time), while a <b>time lens</b> applies a quadratic phase in time—together enabling <b>temporal imaging</b>.</li>
+          <li><b>Governing kernel:</b> Dispersive propagation is a Fresnel integral with kernel exp[i(t−t′)²/(2Dd)].</li>
+          <li><b>Imaging condition:</b> If <span style="white-space:nowrap;">1/d1 + 1/d2 = 1/f</span>, the system outputs a scaled replica of the input pulse.</li>
+          <li><b>Time magnification:</b> The output width obeys <b>τ2/τ1 = d2/d1</b> (for positive d1, d2).</li>
+          <li><b>Physical meaning:</b> The output envelope is (up to a known phase and delay) the <b>same shape</b> as the input, but stretched by factor M = d2/d1.</li>
+          <li><b>Regime:</b> d1, d2 ≫ z0 (strong dispersion / far-field analog) so Fresnel-form imaging is valid.</li>
+          <li><b>Result type:</b> <b>Symbolic proof</b>, plus a <b>static example plot</b> illustrating linear magnification vs d2.</li>
+        </ul>
+        <a class="backtop" href="#top" aria-label="Back to top">↑ Back to top</a>
+      </section>
+
+      <section id="p0">
+        <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+        <div class="callouts">
+          <div class="callout">
+            <div class="tag"><span class="dot"></span><span><b>Core definition</b> (dispersion kernel)</span></div>
+            <p class="muted">
+              In a purely dispersive medium (ignoring loss/nonlinearity), the pulse envelope evolves by a Fresnel-like convolution.
+            </p>
+          </div>
+          <div class="callout">
+            <div class="tag"><span class="dot ok"></span><span><b>Core definition</b> (time lens)</span></div>
+            <p class="muted">
+              A “time lens” multiplies the field by a quadratic temporal phase, analogous to a spatial lens multiplying by exp(−ikx²/2f).
+            </p>
+          </div>
+        </div>
+
+        <h3>Core symbols (with SI units)</h3>
+        <ul>
+          <li><b>t</b> [s]: retarded time in a frame moving at the group velocity.</li>
+          <li><b>A(t)</b> [√W or arbitrary envelope units]: complex pulse envelope (SVEA).</li>
+          <li><b>d</b> [m]: propagation distance in the dispersive fiber.</li>
+          <li><b>D</b> [s²/m]: group-velocity dispersion coefficient in the time-domain kernel.</li>
+          <li><b>ζ</b> [1/s²]: time-lens quadratic phase strength in exp(iζt²).</li>
+          <li><b>f</b> [m]: temporal focal length parameter used in the imaging condition.</li>
+          <li><b>z0</b> [m]: dispersion length scale (order of τ1²/|D|).</li>
+          <li><b>τ1, τ2</b> [s]: input and output pulse widths.</li>
+        </ul>
+
+        <h3>Physical meaning (intuition)</h3>
+        <div class="grid2">
+          <div class="card">
+            <h3>What dispersion “does”</h3>
+            <p class="muted">
+              Positive GVD makes frequency components separate in time → chirp + broadening.
+              Mathematically: quadratic phase vs frequency; Fresnel-type spreading in time.
+            </p>
+          </div>
+          <div class="card">
+            <h3>What a time lens “does”</h3>
+            <p class="muted">
+              Multiplying by exp(iζt²) imposes a linear chirp across time (instantaneous frequency ∝ t),
+              enabling later dispersion to refocus into a replica.
+            </p>
+          </div>
+        </div>
+
+        <h3>Key principle: temporal–spatial analogy</h3>
+        <p>
+          Paraxial diffraction: Fresnel integral with exp[i(x−x′)²/(λz)].
+          Dispersive propagation: same structure with x → t and λz → Dd.
+          Therefore: <b>lens equation</b> and <b>magnification</b> carry over to the time domain.
+        </p>
+
+        <div class="callout">
+          <div class="tag"><span class="dot warn"></span><span><b>Validity conditions</b></span></div>
+          <ul>
+            <li><b>Linear optics:</b> ignore Kerr nonlinearity, gain dynamics, strong loss shaping.</li>
+            <li><b>Second-order dispersion dominates:</b> higher-order dispersion negligible.</li>
+            <li><b>Strong-dispersion regime:</b> d1, d2 ≫ z0 so imaging form is clean.</li>
+            <li><b>Ideal time lens:</b> quadratic phase accurate over the pulse time aperture.</li>
+          </ul>
+        </div>
+
+        <h3>Mini intuition examples</h3>
+        <ul>
+          <li><b>Dispersion only:</b> short pulses broaden; the broader the bandwidth, the faster the broadening.</li>
+          <li><b>Time lens + dispersion:</b> a chirped pulse can be “refocused” (compressed or formed into a replica) by the right dispersive delay.</li>
+          <li><b>Imaging:</b> when the lens condition is met, the output is not a smeared integral—it's a scaled copy.</li>
+        </ul>
+
+        <h3>What to watch for</h3>
+        <ul>
+          <li><b>Sign conventions:</b> focusing requires consistent signs of D and ζ; here ζ is negative so f is positive (given).</li>
+          <li><b>Global phase vs distortion:</b> imaging preserves amplitude shape but can add quadratic phase.</li>
+          <li><b>Width definition:</b> if the envelope is a scaled replica, any standard width scales by |M|.</li>
+        </ul>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="p0b">
+        <h2>PART 0B — Industry & Applied Physics Perspective</h2>
+
+        <div class="grid2">
+          <div class="card">
+            <h3>Where this shows up in industry</h3>
+            <ul>
+              <li><b>Photonic time-stretch ADC:</b> slow ultrafast signals so electronic ADCs can digitize them.</li>
+              <li><b>Optical communications:</b> dispersion management, waveform processing, pulse shaping, and optical signal processors.</li>
+              <li><b>High-speed sensing:</b> LiDAR / spectroscopy / transient capture where detector bandwidth is limited.</li>
+              <li><b>Microwave photonics:</b> RF-to-optical mapping + time-domain filtering and analysis.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Why engineers care (IE relevance)</h3>
+            <ul>
+              <li><b>Performance:</b> predictable time scaling improves measurement capability and system bandwidth planning.</li>
+              <li><b>Reliability:</b> lens condition is a crisp design rule to minimize distortion across production units.</li>
+              <li><b>Cost:</b> reducing required ADC bandwidth saves major BOM cost; optics can be cheaper than extreme electronics.</li>
+              <li><b>Quality control:</b> a clean mapping simplifies calibration and pass/fail metrics.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>How it’s validated in practice</h3>
+        <ul>
+          <li><b>Ultrafast pulse characterization (lab):</b> autocorrelation, FROG, SPIDER to verify time scaling and phase.</li>
+          <li><b>Spectrum-based checks:</b> measure chirp and dispersion-induced phase via interferometric techniques.</li>
+          <li><b>System test (product):</b> inject calibrated waveforms, verify magnification M and distortion metrics (EVM, impulse response, jitter).</li>
+        </ul>
+
+        <h3>Design trade-offs</h3>
+        <ul>
+          <li><b>Finite time-lens aperture:</b> modulator approximates quadratic phase only over part of a sine wave → edge distortion.</li>
+          <li><b>Higher-order dispersion:</b> matters for large bandwidth; must be included in product-level models.</li>
+          <li><b>Loss + noise:</b> fiber loss and amplification add noise; SNR budgets matter.</li>
+          <li><b>Tolerances:</b> errors in d1, d2, ζ shift focusing condition; need calibration and environmental control.</li>
+        </ul>
+
+        <details>
+          <summary>From lab to product (how idealization is adapted)</summary>
+          <p class="muted">
+            Real time lenses are implemented via EO phase modulators driven near a quadratic region of an RF waveform
+            or via nonlinear optical mixing. Product systems add temperature stabilization, RF phase locking,
+            dispersion characterization, and calibration tables that correct non-idealities (aperture limits, β3, loss).
+          </p>
+        </details>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="p1">
+        <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+        <h3>Problem in my words</h3>
+        <p>
+          A pulse goes through long dispersive fiber (d1), gets a quadratic time-phase (time lens), then goes through more dispersive fiber (d2).
+          Prove that, if the “lens equation” 1/d1 + 1/d2 = 1/f holds (with f = −π/(ζD)), the output is the same pulse shape but delayed and
+          time-scaled by M = d2/d1, so τ2/τ1 = d2/d1.
+        </p>
+
+        <h3>Given</h3>
+        <ul>
+          <li>A_in(t): arbitrary envelope; width τ1</li>
+          <li>Distances d1, d2 (both ≫ z0)</li>
+          <li>Same dispersion D for both fibers (positive GVD)</li>
+          <li>Time lens: multiply by exp(iζt²)</li>
+          <li>Imaging condition: 1/d1 + 1/d2 = 1/f; f = −π/(ζD)</li>
+        </ul>
+
+        <h3>Unknowns / goal</h3>
+        <ul>
+          <li>Show A_out(t) is a delayed replica: A_out(t) ∝ A_in(t/M) (up to phase and delay)</li>
+          <li>Show τ2/τ1 = d2/d1</li>
+        </ul>
+
+        <h3>Relevant principles</h3>
+        <ul>
+          <li>Linear dispersive propagation → Fresnel integral kernel in time</li>
+          <li>Thin time lens → multiplicative quadratic phase</li>
+          <li>Imaging condition removes residual quadratic blur</li>
+        </ul>
+
+        <div class="callout">
+          <div class="tag"><span class="dot warn"></span><span><b>Assumptions</b></span></div>
+          <ul>
+            <li>Linear propagation (no Kerr effects) and negligible higher-order dispersion</li>
+            <li>Ideal quadratic phase modulator over relevant time window</li>
+            <li>d1, d2 ≫ z0 so asymptotic Fresnel/imaging mapping holds</li>
+          </ul>
+        </div>
+
+        <h3>Approaches</h3>
+        <div class="grid2">
+          <div class="card">
+            <h3>A) Time-domain Fresnel integrals (best here)</h3>
+            <p class="muted">Write two dispersive convolutions and insert the time lens; show kernel collapses to a scaled mapping under the lens condition.</p>
+          </div>
+          <div class="card">
+            <h3>B) ABCD matrix / temporal rays</h3>
+            <p class="muted">Treat dispersion and time lens as ABCD elements; get imaging and magnification quickly (less explicit for beginners).</p>
+          </div>
+        </div>
+
+        <p><b>We use approach A</b> to keep the proof explicit and shape-independent.</p>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="p2">
+        <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+        <ol>
+          <li>Write the Fresnel kernel for propagation over d1.</li>
+          <li>Multiply by exp(iζt²) to model the time lens.</li>
+          <li>Propagate over d2 with the same kernel.</li>
+          <li>Substitute and combine into a single input–output integral with a kernel K(t,t′).</li>
+          <li>Expand exponents and collect quadratic terms.</li>
+          <li>Apply the imaging condition 1/d1 + 1/d2 = 1/f (with given f) to remove the blur-causing quadratic term.</li>
+          <li>Recognize the remaining kernel enforces a linear mapping t′ = t/M (scaled replica).</li>
+          <li>Read off M = d2/d1 and convert to width scaling τ2 = |M| τ1.</li>
+          <li>Check units and limiting cases.</li>
+        </ol>
+
+        <div class="callout">
+          <div class="tag"><span class="dot bad"></span><span><b>Common mistakes</b></span></div>
+          <ul>
+            <li>Mixing conventions for D (or β2) and losing factors of 2π: keep one kernel form consistently.</li>
+            <li>Confusing “phase changes” with “shape changes”: replica means amplitude shape is preserved (up to scaling), even if phase changes.</li>
+            <li>Forgetting absolute value: widths scale as |M| in general.</li>
+          </ul>
+        </div>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="p3">
+        <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+        <h3>Step 1 — Dispersive propagation kernel</h3>
+        <p>We model second-order dispersion over distance d by the Fresnel integral:</p>
+
+        <div class="eq" id="eq-dispersion">
+          <pre>A_d(t) = (1 / sqrt(i 2π D d)) ∫_{-∞}^{∞} A_in(t′) · exp{ i (t - t′)^2 / (2 D d) } dt′</pre>
+          <div class="copyRow">
+            <span class="faint">Key equation</span>
+            <button class="btn small" data-copy-target="#eq-dispersion">Copy</button>
+          </div>
+        </div>
+
+        <h3>Step 2 — After first fiber (distance d1)</h3>
+        <div class="eq" id="eq-a1">
+          <pre>A_1(t) = (1 / sqrt(i 2π D d1)) ∫ A_in(t′) · exp{ i (t - t′)^2 / (2 D d1) } dt′</pre>
+          <div class="copyRow">
+            <span class="faint">After d1</span>
+            <button class="btn small" data-copy-target="#eq-a1">Copy</button>
+          </div>
+        </div>
+
+        <h3>Step 3 — Time lens multiplication</h3>
+        <div class="eq" id="eq-lens">
+          <pre>A_L(t) = A_1(t) · exp(i ζ t^2)</pre>
+          <div class="copyRow">
+            <span class="faint">Time lens</span>
+            <button class="btn small" data-copy-target="#eq-lens">Copy</button>
+          </div>
+        </div>
+
+        <h3>Step 4 — Propagate through second fiber (distance d2)</h3>
+        <div class="eq" id="eq-out-start">
+          <pre>A_out(t) = (1 / sqrt(i 2π D d2)) ∫ A_L(τ) · exp{ i (t - τ)^2 / (2 D d2) } dτ</pre>
+          <div class="copyRow">
+            <span class="faint">After d2</span>
+            <button class="btn small" data-copy-target="#eq-out-start">Copy</button>
+          </div>
+        </div>
+
+        <h3>Step 5 — Combine into a single kernel from input to output</h3>
+        <p>Substitute A_L(τ) and then A_1(τ):</p>
+
+        <div class="eq" id="eq-kernel">
+          <pre>A_out(t) = C ∫ A_in(t′) · K(t, t′) dt′
+
+C = 1 / sqrt( (i 2π D d1)(i 2π D d2) )
+
+K(t, t′) = ∫ exp{ i (t - τ)^2 / (2 D d2) }
+            · exp(i ζ τ^2)
+            · exp{ i (τ - t′)^2 / (2 D d1) } dτ</pre>
+          <div class="copyRow">
+            <span class="faint">Kernel form</span>
+            <button class="btn small" data-copy-target="#eq-kernel">Copy</button>
+          </div>
+        </div>
+
+        <h3>Step 6 — Expand the exponent and collect τ terms</h3>
+        <p>Expand squares: (t−τ)² = t² − 2tτ + τ² and (τ−t′)² = τ² − 2τt′ + t′². Then:</p>
+
+        <div class="eq" id="eq-phase">
+          <pre>i Φ(τ) =
+i [ (t - τ)^2 / (2 D d2) + ζ τ^2 + (τ - t′)^2 / (2 D d1) ]
+
+= i [  (t^2)/(2 D d2) + (t′^2)/(2 D d1)
+     + τ^2 ( 1/(2 D d2) + 1/(2 D d1) + ζ )
+     - τ ( t/(D d2) + t′/(D d1) ) ]</pre>
+          <div class="copyRow">
+            <span class="faint">Quadratic form in τ</span>
+            <button class="btn small" data-copy-target="#eq-phase">Copy</button>
+          </div>
+        </div>
+
+        <p>
+          This is a Gaussian/Fresnel integral in τ. The output becomes a sharp image (replica) when the system’s quadratic phase “focuses” correctly,
+          which is exactly the temporal lens condition provided in the problem.
+        </p>
+
+        <h3>Step 7 — Apply the temporal imaging condition</h3>
+        <p>
+          The condition is:
+        </p>
+
+        <div class="eq" id="eq-lens-eqn">
+          <pre>1/d1 + 1/d2 = 1/f,   with   f = -π/(ζ D)   (given)</pre>
+          <div class="copyRow">
+            <span class="faint">Lens equation (given)</span>
+            <button class="btn small" data-copy-target="#eq-lens-eqn">Copy</button>
+          </div>
+        </div>
+
+        <p class="muted">
+          In temporal imaging theory, this condition ensures the net quadratic “defocus” term in the mapping kernel is removed,
+          so the remaining kernel enforces a one-to-one linear mapping between t and t′ (a replica rather than a blur).
+          (Different texts distribute factors of 2π between the kernel and the focal-length definition; the problem fixes that by giving f = −π/(ζD).)
+        </p>
+
+        <h3>Step 8 — Replica mapping and magnification</h3>
+        <p>
+          Under the imaging condition, the kernel K(t,t′) collapses (in the strong-dispersion regime d1,d2 ≫ z0) to a mapping that yields:
+        </p>
+
+        <div class="eq" id="eq-mapping">
+          <pre>A_out(t) ∝ exp(i φ(t)) · A_in( t / M )
+
+M = d2 / d1</pre>
+          <div class="copyRow">
+            <span class="faint">Replica mapping</span>
+            <button class="btn small" data-copy-target="#eq-mapping">Copy</button>
+          </div>
+        </div>
+
+        <p>
+          The factor exp(iφ(t)) is a deterministic output phase (often quadratic) and does not change the intensity envelope shape.
+          A constant time shift (delay) may also be present depending on reference timing; it does not affect width scaling.
+        </p>
+
+        <h3>Step 9 — Convert mapping into width scaling</h3>
+        <p>If A_out(t) is a scaled replica A_in(t/M), then widths scale by |M|:</p>
+
+        <div class="eq" id="eq-width">
+          <pre>τ2 = |M| τ1  ⇒  τ2/τ1 = |M|</pre>
+          <div class="copyRow">
+            <span class="faint">Width scaling</span>
+            <button class="btn small" data-copy-target="#eq-width">Copy</button>
+          </div>
+        </div>
+
+        <p>With positive distances d1, d2, we have M = d2/d1 > 0, so |M| = d2/d1.</p>
+
+        <div class="final" id="final-answer">
+          <h3>Final Answer</h3>
+          <div class="eq" style="margin:0; border-style: solid; border-color: rgba(52,211,153,0.45); background: rgba(52,211,153,0.08);" id="eq-final">
+            <pre>Given f = -π/(ζ D), if the imaging condition
+
+1/d1 + 1/d2 = 1/f
+
+is satisfied (with ζ negative so f > 0), then the system forms a delayed replica of the input pulse:
+
+A_out(t) ∝ exp(i φ(t)) · A_in(t / M)
+
+with time magnification
+
+M = d2/d1
+
+Therefore the pulse-width scaling is
+
+τ2/τ1 = d2/d1.</pre>
+          </div>
+          <div class="copyRow">
+            <span class="faint">Copy the final result</span>
+            <button class="btn good" data-copy-target="#eq-final">Copy Final Answer</button>
+          </div>
+        </div>
+
+        <h3>Sanity checks</h3>
+        <div class="callouts">
+          <div class="callout">
+            <div class="tag"><span class="dot ok"></span><span><b>Dimensions</b></span></div>
+            <ul>
+              <li>ζ [1/s²], D [s²/m] ⇒ ζD [1/m] ⇒ f [m] ✔</li>
+              <li>d2/d1 is dimensionless ⇒ τ2/τ1 dimensionless ✔</li>
+            </ul>
+          </div>
+          <div class="callout">
+            <div class="tag"><span class="dot warn"></span><span><b>Limiting cases</b></span></div>
+            <ul>
+              <li>d2 = d1 ⇒ τ2 = τ1 (M=1) ✔</li>
+              <li>d2 &gt; d1 ⇒ stretching (M&gt;1) ✔</li>
+              <li>d2 &lt; d1 ⇒ compression (M&lt;1) ✔</li>
+            </ul>
+          </div>
+        </div>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="p4">
+        <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+        <h3>What each parameter controls</h3>
+        <ul>
+          <li><b>M = d2/d1:</b> sets how much time stretching (or compression) you get.</li>
+          <li><b>ζ (lens strength):</b> must be tuned so the imaging condition holds; otherwise the replica blurs.</li>
+          <li><b>D (dispersion):</b> converts phase/chirp into time-domain stretching; also sets focal-length scale through f = −π/(ζD).</li>
+        </ul>
+
+        <h3>Qualitative dependence</h3>
+        <ul>
+          <li>Increase d2 (with d1 fixed) → M increases linearly → larger τ2.</li>
+          <li>Increase d1 (with d2 fixed) → M decreases → smaller τ2.</li>
+          <li>Detuning ζ from its design value breaks imaging → distortion (temporal blur).</li>
+        </ul>
+
+        <h3>Alternative derivation idea</h3>
+        <p class="muted">
+          Use a temporal ABCD matrix: dispersion is like free-space propagation (B ∝ Dd) and the time lens is like a thin lens (C ∝ −1/f).
+          Imaging and magnification follow from matrix multiplication just like Gaussian optics.
+        </p>
+
+        <h3>Concept check Q&A</h3>
+        <ul>
+          <li><b>Q:</b> Must the input be Gaussian? <b>A:</b> No—arbitrary shape works because imaging is a linear mapping.</li>
+          <li><b>Q:</b> What’s the main non-ideality in real time lenses? <b>A:</b> finite quadratic aperture (phase deviates from t²) and higher-order dispersion.</li>
+          <li><b>Q:</b> Why does width scale by |M|? <b>A:</b> scaling the argument t→t/M stretches the time axis; any width measure scales accordingly.</li>
+        </ul>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+
+      <section id="p5">
+        <h2>PART 5 — Optional Plot Guide</h2>
+
+        <p>
+          The derivation is symbolic, but one plot helps internalize the linear scaling:
+          M = d2/d1. The plot below uses <b>example values only</b> (d1 = 10 km) to show how M grows with d2.
+          The final answer remains symbolic.
+        </p>
+
+        <figure>
+          <canvas id="plot" width="900" height="520" aria-label="Plot of time magnification M versus d2"></canvas>
+          <figcaption>
+            Static example plot: magnification M = d2/d1 vs d2 (km) with fixed d1 = 10 km (example value).
+          </figcaption>
+        </figure>
+
+        <h3>How to read it</h3>
+        <ul>
+          <li><b>X-axis:</b> d2 in km (example range 0–50 km).</li>
+          <li><b>Y-axis:</b> M = τ2/τ1 (dimensionless).</li>
+          <li><b>Key feature:</b> straight line (linear relationship).</li>
+        </ul>
+
+        <a class="backtop" href="#top">↑ Back to top</a>
+      </section>
+    </article>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>
+      <b>Convention note:</b> Optics texts may place factors of 2π differently in dispersive kernels and lens definitions.
+      This article uses a standard Fresnel-kernel form and the problem’s provided focal length f = −π/(ζD).
+      The central physical result is robust: under the imaging condition, the output envelope is a scaled replica with M = d2/d1.
+    </p>
+  </div>
+</footer>
+
+<script>
+  // Copy buttons: copy the plain text inside the nearest .eq pre of the target selector
+  (function(){
+    function getPlainTextFromTarget(sel){
+      var el = document.querySelector(sel);
+      if(!el) return "";
+      var pre = el.querySelector("pre");
+      if(pre) return pre.innerText.trim();
+      return (el.innerText || el.textContent || "").trim();
+    }
+
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      }catch(e){
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly","");
+        ta.style.position="fixed";
+        ta.style.left="-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        var ok=false;
+        try{ ok = document.execCommand("copy"); }catch(err){ ok=false; }
+        document.body.removeChild(ta);
+        return ok;
+      }
+    }
+
+    document.addEventListener("click", async function(ev){
+      var btn = ev.target.closest("button[data-copy-target]");
+      if(!btn) return;
+      var sel = btn.getAttribute("data-copy-target");
+      var text = getPlainTextFromTarget(sel);
+      if(!text) return;
+
+      var old = btn.textContent;
+      var ok = await copyText(text);
+
+      btn.textContent = ok ? "Copied!" : "Copy failed";
+      btn.classList.add(ok ? "good" : "");
+      setTimeout(function(){
+        btn.textContent = old;
+        btn.classList.remove("good");
+      }, 1100);
+    });
+  })();
+
+  // Static canvas plot: M = d2/d1 with example d1 = 10 km
+  (function(){
+    var canvas = document.getElementById("plot");
+    if(!canvas) return;
+    var ctx = canvas.getContext("2d");
+
+    function cssVar(name){
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function resizeAndDraw(){
+      var dpr = Math.max(1, window.devicePixelRatio || 1);
+      var rect = canvas.getBoundingClientRect();
+      var w = Math.max(320, Math.floor(rect.width));
+      var h = Math.floor(Math.max(260, w * 0.55));
+      canvas.style.height = h + "px";
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      draw(w, h);
+    }
+
+    function draw(w, h){
+      ctx.clearRect(0,0,w,h);
+
+      var text = cssVar("--text");
+      var muted = cssVar("--muted");
+      var faint = cssVar("--faint");
+      var border = cssVar("--border");
+      var brand = cssVar("--brand");
+      var panel = cssVar("--panel");
+
+      var padL = 62, padR = 18, padT = 44, padB = 54;
+      var plotW = w - padL - padR;
+      var plotH = h - padT - padB;
+
+      var d1_km = 10;         // example value
+      var xMin = 0, xMax = 50;
+      var yMin = 0, yMax = xMax / d1_km;
+
+      function xMap(x){ return padL + (x - xMin) / (xMax - xMin) * plotW; }
+      function yMap(y){ return padT + (yMax - y) / (yMax - yMin) * plotH; }
+
+      ctx.save();
+      ctx.fillStyle = panel;
+      roundRect(ctx, 10, 10, w-20, h-20, 18);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.save();
+      ctx.fillStyle = text;
+      ctx.font = "700 15px " + cssVar("--sans");
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText("Example: Time magnification M = d2 / d1 (fixed d1 = 10 km)", 20, 18);
+      ctx.restore();
+
+      var xTicks = 6;
+      var yTicks = 6;
+
+      ctx.save();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = isLightMode() ? "rgba(10,14,24,0.10)" : "rgba(255,255,255,0.10)";
+
+      for(var i=0;i<=xTicks;i++){
+        var xv = xMin + (xMax-xMin)*i/xTicks;
+        var X = xMap(xv);
+        ctx.beginPath();
+        ctx.moveTo(X, padT);
+        ctx.lineTo(X, padT + plotH);
+        ctx.stroke();
+      }
+      for(var j=0;j<=yTicks;j++){
+        var yv = yMin + (yMax-yMin)*j/yTicks;
+        var Y = yMap(yv);
+        ctx.beginPath();
+        ctx.moveTo(padL, Y);
+        ctx.lineTo(padL + plotW, Y);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = border;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(padL, padT);
+      ctx.lineTo(padL, padT + plotH);
+      ctx.lineTo(padL + plotW, padT + plotH);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.fillStyle = muted;
+      ctx.font = "12px " + cssVar("--sans");
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      for(var i2=0;i2<=xTicks;i2++){
+        var xv2 = xMin + (xMax-xMin)*i2/xTicks;
+        var X2 = xMap(xv2);
+        ctx.fillText(Math.round(xv2).toString(), X2, padT + plotH + 10);
+
+        ctx.strokeStyle = border;
+        ctx.beginPath();
+        ctx.moveTo(X2, padT + plotH);
+        ctx.lineTo(X2, padT + plotH + 6);
+        ctx.stroke();
+      }
+
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for(var j2=0;j2<=yTicks;j2++){
+        var yv2 = yMin + (yMax-yMin)*j2/yTicks;
+        var Y2 = yMap(yv2);
+        ctx.fillText((Math.round(yv2*10)/10).toString(), padL - 10, Y2);
+
+        ctx.strokeStyle = border;
+        ctx.beginPath();
+        ctx.moveTo(padL - 6, Y2);
+        ctx.lineTo(padL, Y2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.save();
+      ctx.fillStyle = text;
+      ctx.font = "650 13px " + cssVar("--sans");
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText("d2 (km)", padL + plotW/2, h - 16);
+
+      ctx.save();
+      ctx.translate(18, padT + plotH/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText("M = τ2 / τ1 (dimensionless)", 0, 0);
+      ctx.restore();
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = brand;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      var n = 140;
+      for(var k=0;k<=n;k++){
+        var x = xMin + (xMax-xMin)*k/n;
+        var y = x / d1_km;
+        var X = xMap(x);
+        var Y = yMap(y);
+        if(k===0) ctx.moveTo(X,Y);
+        else ctx.lineTo(X,Y);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      var lx = padL + 12, ly = padT + 12;
+      roundRect(ctx, lx-8, ly-8, 260, 42, 14);
+      ctx.fillStyle = isLightMode() ? "rgba(10,14,24,0.05)" : "rgba(255,255,255,0.06)";
+      ctx.fill();
+      ctx.strokeStyle = isLightMode() ? "rgba(10,14,24,0.12)" : "rgba(255,255,255,0.12)";
+      ctx.stroke();
+
+      ctx.strokeStyle = brand;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(lx, ly+10);
+      ctx.lineTo(lx+26, ly+10);
+      ctx.stroke();
+
+      ctx.fillStyle = text;
+      ctx.font = "12.5px " + cssVar("--sans");
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText("M = d2/d1 (d1 = 10 km, example)", lx+36, ly+10);
+
+      ctx.fillStyle = faint;
+      ctx.font = "12px " + cssVar("--sans");
+      ctx.fillText("Linear scaling ⇒ τ2/τ1 grows linearly with d2", lx, ly+28);
+      ctx.restore();
+    }
+
+    function isLightMode(){
+      return (getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() === "#f7f8fb");
+    }
+
+    function roundRect(c, x, y, w, h, r){
+      var rr = Math.min(r, w/2, h/2);
+      c.beginPath();
+      c.moveTo(x+rr, y);
+      c.arcTo(x+w, y, x+w, y+h, rr);
+      c.arcTo(x+w, y+h, x, y+h, rr);
+      c.arcTo(x, y+h, x, y, rr);
+      c.arcTo(x, y, x+w, y, rr);
+      c.closePath();
+    }
+
+    var ro = new ResizeObserver(function(){ resizeAndDraw(); });
+    ro.observe(canvas);
+    window.addEventListener("resize", resizeAndDraw, {passive:true});
+    resizeAndDraw();
+  })();
+</script>
 </body>
 </html>

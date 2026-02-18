@@ -1,65 +1,1312 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>23.5-4 — Solitons in an Optical Fiber</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Solitons in an Optical Fiber: Why I₀·|z₀| Is Constant (and What It Means for Engineering)</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1730;
+      --card:#111c3a;
+      --text:#eaf0ff;
+      --muted:#b8c4e6;
+      --faint:#7f8bb3;
+      --accent:#7cf0c6;
+      --accent2:#8aa7ff;
+      --warn:#ffd08a;
+      --danger:#ff8aa0;
+      --ok:#93ffb1;
+      --line:rgba(255,255,255,.10);
+      --shadow:0 12px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --radius2:14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 700px at 15% 5%, rgba(122,167,255,.16), transparent 60%),
+        radial-gradient(900px 600px at 85% 10%, rgba(124,240,198,.12), transparent 55%),
+        radial-gradient(900px 900px at 50% 110%, rgba(255,208,138,.08), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding:28px 16px 18px;
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,0));
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+    .wrap{max-width:1180px; margin:0 auto}
+    .topgrid{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap:16px;
+      align-items:start;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
-      color: var(--muted);
+    @media (max-width: 980px){
+      .topgrid{grid-template-columns: 1fr}
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .title{
+      display:flex; flex-direction:column; gap:10px;
+      padding:18px 18px 16px;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .title:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:linear-gradient(120deg, rgba(124,240,198,.22), rgba(138,167,255,.22), rgba(255,208,138,.16));
+      filter:blur(18px);
+      opacity:.55;
+      pointer-events:none;
+    }
+    .title > *{position:relative}
+    h1{
+      margin:0;
+      font-size:clamp(1.35rem, 2.5vw, 2.05rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size:clamp(.98rem, 1.4vw, 1.05rem);
+      max-width:68ch;
+    }
+    .meta{
+      display:flex; flex-wrap:wrap; gap:10px;
+      color:var(--faint);
+      font-size:.92rem;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      padding:6px 10px;
+      border-radius:999px;
+    }
+    aside.toc{
+      position:sticky;
+      top:10px;
+      align-self:start;
+      padding:14px 14px 12px;
+      background:rgba(17,28,58,.72);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+    @media print{
+      aside.toc{position:static}
+    }
+    .toc h2{
+      margin:0 0 8px;
+      font-size:1.0rem;
+      color:var(--text);
+      letter-spacing:.2px;
+    }
+    .toc nav a{
+      display:block;
+      padding:7px 10px;
+      border-radius:12px;
+      color:var(--muted);
+      border:1px solid transparent;
+      transition:transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size:.95rem;
+    }
+    .toc nav a:hover{
+      background:rgba(255,255,255,.04);
+      border-color:rgba(255,255,255,.08);
+      transform:translateX(2px);
+      text-decoration:none;
+      color:var(--text);
+    }
+
+    main{padding:18px 16px 44px}
+    section{
+      margin:18px 0;
+      padding:18px;
+      background:rgba(15,23,48,.62);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    section h2{
+      margin:0 0 10px;
+      font-size:1.25rem;
+      letter-spacing:.2px;
+    }
+    section h3{
+      margin:16px 0 8px;
+      font-size:1.08rem;
+      color:var(--text);
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 900px){
+      .grid2{grid-template-columns:1fr}
+    }
+    .card{
+      background:rgba(17,28,58,.70);
+      border:1px solid var(--line);
+      border-radius:var(--radius2);
+      padding:14px;
+    }
+    .callout{
+      border-left:4px solid rgba(124,240,198,.9);
+      background:linear-gradient(180deg, rgba(124,240,198,.10), rgba(255,255,255,0));
+    }
+    .warn{
+      border-left-color: rgba(255,208,138,.95);
+      background:linear-gradient(180deg, rgba(255,208,138,.12), rgba(255,255,255,0));
+    }
+    .danger{
+      border-left-color: rgba(255,138,160,.95);
+      background:linear-gradient(180deg, rgba(255,138,160,.12), rgba(255,255,255,0));
+    }
+    .ok{
+      border-left-color: rgba(147,255,177,.95);
+      background:linear-gradient(180deg, rgba(147,255,177,.10), rgba(255,255,255,0));
+    }
+    ul{margin:10px 0 0 18px}
+    li{margin:6px 0}
+    .muted{color:var(--muted)}
+    .faint{color:var(--faint)}
+    .eqrow{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .eq{
+      flex: 1 1 560px;
+      background:rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      padding:12px 12px 10px;
+      overflow:auto;
+      position:relative;
+    }
+    pre{
+      margin:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-family:var(--mono);
+      font-size:.95rem;
+      color:rgba(234,240,255,.95);
+    }
+    .copybtn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:14px;
+      cursor:pointer;
+      font-weight:650;
+      letter-spacing:.15px;
+      transition:transform .12s ease, background .12s ease, border-color .12s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .copybtn:hover{
+      transform:translateY(-1px);
+      background:rgba(255,255,255,.08);
+      border-color:rgba(255,255,255,.22);
+    }
+    .copybtn:active{transform:translateY(0px)}
+    .copybtn .dot{
+      width:9px;height:9px;border-radius:99px;background:rgba(124,240,198,.9);
+      box-shadow:0 0 0 3px rgba(124,240,198,.18);
+      flex:none;
+    }
+    .copybtn.small{padding:8px 10px; font-size:.92rem}
+    .hr{height:1px;background:var(--line); margin:14px 0}
+    details{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      padding:10px 12px;
+      background:rgba(0,0,0,.18);
+      margin-top:12px;
+    }
+    details summary{
+      cursor:pointer;
+      font-weight:700;
+      color:var(--text);
+      list-style:none;
+    }
+    details summary::-webkit-details-marker{display:none}
+    details summary:after{
+      content:"▾";
+      float:right;
+      color:var(--muted);
+      transition:transform .12s ease;
+    }
+    details[open] summary:after{transform:rotate(180deg)}
+    .backtop{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04);
+      color:var(--muted);
+      text-decoration:none;
+      transition:transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .backtop:hover{
+      transform:translateY(-1px);
+      background:rgba(255,255,255,.06);
+      border-color:rgba(255,255,255,.20);
+      color:var(--text);
+      text-decoration:none;
+    }
+
+    figure{
+      margin:14px 0 0;
+      padding:12px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+    }
+    figcaption{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+    canvas{width:100%; height:320px; display:block; border-radius:14px; background:rgba(255,255,255,.02)}
+    .note{font-size:.95rem; color:var(--muted)}
+    .kpi{
+      display:flex; flex-wrap:wrap; gap:10px; margin-top:10px
+    }
+    .kpi .pill{color:var(--muted)}
+    .boxed{
+      padding:14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.22);
+    }
+
+    /* Print */
+    @media print{
+      :root{--bg:#ffffff; --text:#0a0a0a; --muted:#1f2a44; --faint:#3a4666; --panel:#ffffff; --card:#ffffff; --line:rgba(0,0,0,.15)}
+      body{background:#fff; color:#000}
+      header{background:#fff; border-bottom:1px solid rgba(0,0,0,.15)}
+      section, .title, aside.toc, .card, details, figure, .eq{box-shadow:none; background:#fff}
+      a{color:#0047cc; text-decoration:underline}
+      .copybtn{display:none}
+      canvas{border:1px solid rgba(0,0,0,.18); background:#fff}
+      section{break-inside:avoid; page-break-inside:avoid}
+      h2, h3{break-after:avoid-page}
+      .title:before{display:none}
     }
   </style>
 </head>
+
 <body>
+  <a id="top"></a>
   <header>
-    <div class="box">
-      <h1>23.5-4 — Solitons in an Optical Fiber</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch23/prob_23_5_4.html</code></p>
+    <div class="wrap topgrid">
+      <div class="title">
+        <h1>Solitons in an Optical Fiber: Proving the Constant Product <span style="color:var(--accent)">I₀·|z₀|</span> and Computing a Design-Grade Number</h1>
+        <p class="subtitle">
+          We connect the nonlinear Schrödinger equation (NLSE) to a practical engineering rule-of-thumb:
+          for a <em>fundamental soliton</em>, the peak intensity and dispersion length trade off so that their product is fixed by material nonlinearity.
+        </p>
+        <div class="meta">
+          <span class="pill">Topic: Fiber solitons (Kerr + dispersion)</span>
+          <span class="pill">Level: Upper-undergrad / early grad</span>
+          <span class="pill">Lens: Applied physics + industrial relevance</span>
+        </div>
+      </div>
+
+      <aside class="toc" aria-label="Table of Contents">
+        <h2>Table of Contents</h2>
+        <nav>
+          <a href="#quick">Quick Summary</a>
+          <a href="#primer">PART 0 — Concept Primer</a>
+          <a href="#industry">PART 0B — Industry & Applied Physics</a>
+          <a href="#analysis">PART 1 — Problem Analysis</a>
+          <a href="#strategy">PART 2 — Strategy & Tips</a>
+          <a href="#solution">PART 3 — Full Solution</a>
+          <a href="#deeper">PART 4 — Deeper Understanding</a>
+          <a href="#plotguide">PART 5 — Optional Plot Guide</a>
+        </nav>
+      </aside>
     </div>
   </header>
 
   <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+    <div class="wrap">
+
+      <section id="quick">
+        <h2>Quick Summary</h2>
+        <ul>
+          <li><strong>What this problem is about:</strong> Fundamental optical solitons in fibers—pulses that keep their shape because <em>group-velocity dispersion</em> and <em>Kerr nonlinearity</em> exactly balance.</li>
+          <li><strong>Key physics idea:</strong> For a soliton, the <em>dispersion length</em> and <em>nonlinear length</em> are equal (up to the chosen normalization), enforcing a fixed intensity–distance trade-off.</li>
+          <li><strong>Governing equation:</strong> The pulse envelope obeys the <strong>NLSE</strong>, where a dispersion term (β₂) competes with a Kerr phase term (n₂).</li>
+          <li><strong>Core design result (to prove):</strong> For the <em>fundamental</em> soliton, the product of peak intensity and dispersion length is constant:
+            <span class="muted">I₀·|z₀| = λ₀ / (4π n₂)</span>.
+          </li>
+          <li><strong>What it physically means:</strong> If you want a soliton to persist over a longer dispersion distance, you must reduce peak intensity proportionally (or vice versa), given fixed wavelength and material nonlinearity.</li>
+          <li><strong>Numeric outcome:</strong> Using silica n₂ = 3.19×10⁻²⁰ m²/W and |z₀| = 30 km, you get a concrete intensity scale (at a typical telecom wavelength).</li>
+          <li><strong>Engineering takeaway:</strong> This result is <em>area-independent</em> (A<sub>eff</sub> cancels). That’s powerful for first-pass design, budgeting peak power, and anticipating nonlinear side-effects.</li>
+        </ul>
+
+        <div class="eqrow">
+          <div class="eq" role="group" aria-label="Key result equation">
+<pre data-copy="I0*|z0| = lambda0/(4*pi*n2)">
+I₀·|z₀| = λ₀ / (4π n₂)
+</pre>
+          </div>
+          <button class="copybtn" data-copy-target="pre" title="Copy the key equation (plain text)">
+            <span class="dot" aria-hidden="true"></span> Copy key equation
+          </button>
+        </div>
+
+        <div class="kpi">
+          <span class="pill">Units check: (W/m²)·m = W/m</span>
+          <span class="pill">λ₀/(n₂) also → (m)/(m²/W) = W/m</span>
+        </div>
+      </section>
+
+      <section id="primer">
+        <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+        <div class="grid2">
+          <div class="card callout">
+            <h3>Core definitions (symbols & SI units)</h3>
+            <ul>
+              <li><strong>λ₀</strong> — optical carrier wavelength (m)</li>
+              <li><strong>n₂</strong> — Kerr nonlinear index coefficient (m²/W)</li>
+              <li><strong>I₀</strong> — peak optical intensity of the pulse (W/m²)</li>
+              <li><strong>P₀</strong> — peak optical power (W), related by P₀ = I₀·A<sub>eff</sub></li>
+              <li><strong>A<sub>eff</sub></strong> — effective mode area (m²)</li>
+              <li><strong>β₂</strong> — group-velocity dispersion (GVD) coefficient (s²/m)</li>
+              <li><strong>T₀</strong> — pulse width parameter (s), e.g., in a sech pulse</li>
+              <li><strong>γ</strong> — fiber nonlinear parameter (1/(W·m))</li>
+              <li><strong>L<sub>D</sub></strong> — dispersion length (m)</li>
+              <li><strong>L<sub>NL</sub></strong> — nonlinear length (m)</li>
+              <li><strong>z₀</strong> — “dispersion distance/length” as used in this problem (m)</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Physical meaning (intuition)</h3>
+            <ul>
+              <li><strong>Dispersion (β₂):</strong> different frequency components travel at different group velocities → pulse spreads in time.</li>
+              <li><strong>Kerr nonlinearity (n₂):</strong> refractive index increases with intensity: n = n₀ + n₂ I → intensity-dependent phase → self-phase modulation (SPM).</li>
+              <li><strong>Soliton idea:</strong> SPM generates new frequencies in a way that can exactly counteract dispersion-induced spreading, producing a stable pulse shape.</li>
+              <li><strong>Length scales:</strong> L<sub>D</sub> tells you how far dispersion needs to act to significantly broaden a pulse; L<sub>NL</sub> tells you how far nonlinearity needs to act to accumulate ~1 rad of nonlinear phase.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="grid2">
+          <div class="card ok">
+            <h3>Key laws/principles and validity conditions</h3>
+            <ul>
+              <li><strong>Envelope approximation:</strong> pulse is narrowband relative to carrier frequency; we model a slowly varying complex envelope.</li>
+              <li><strong>Single-mode propagation:</strong> one spatial mode dominates; polarization effects neglected (or assumed managed).</li>
+              <li><strong>Dominant terms:</strong> second-order dispersion (β₂) and Kerr nonlinearity (n₂) dominate; loss, Raman, self-steepening, higher-order dispersion neglected.</li>
+              <li><strong>Regime:</strong> picosecond to tens-of-femtosecond pulses typically; accuracy decreases as pulses become extremely short or peak powers extremely high.</li>
+            </ul>
+
+            <details>
+              <summary>Optional: why “length scale matching” is the soliton condition</summary>
+              <div class="note">
+                If dispersion acts much faster than nonlinearity (L<sub>D</sub> ≪ L<sub>NL</sub>), the pulse spreads before nonlinear phase can reshape it.
+                If nonlinearity dominates (L<sub>NL</sub> ≪ L<sub>D</sub>), the pulse strongly chirps and distorts.
+                A soliton emerges when these tendencies balance, which in normalized NLSE language becomes a specific “soliton order” condition (N = 1 for fundamental).
+              </div>
+            </details>
+          </div>
+
+          <div class="card warn">
+            <h3>Common models/approximations used (and why)</h3>
+            <ul>
+              <li><strong>NLSE (second-order):</strong> simplest model capturing dispersion + Kerr effects; analytically solvable solitons exist.</li>
+              <li><strong>Sech pulse ansatz:</strong> fundamental soliton has intensity ∝ sech²(t/T₀), making math clean and physically accurate in the NLSE regime.</li>
+              <li><strong>Lossless assumption:</strong> allows an exact constant-shape solution; in real links, loss is compensated (amplifiers) or managed (dispersion management), approximating this condition.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+          <h3>Mini intuition examples (quick conceptual)</h3>
+          <ul>
+            <li><strong>Example 1 (longer distance):</strong> If you want a soliton to “survive” over a longer dispersion distance, you must lower I₀ because less nonlinearity per meter is needed to balance dispersion per meter.</li>
+            <li><strong>Example 2 (material change):</strong> A higher n₂ material (stronger nonlinearity) needs <em>less</em> intensity to achieve the same balance; that can reduce power requirements but can worsen nonlinear impairments.</li>
+            <li><strong>Example 3 (wavelength):</strong> At longer λ₀, the same intensity produces a larger nonlinear length scale trade-off constant, shifting design budgets.</li>
+          </ul>
+        </div>
+
+        <div class="card danger" style="margin-top:14px;">
+          <h3>What to watch for (pitfalls & hidden assumptions)</h3>
+          <ul>
+            <li><strong>Definition of “dispersion length” varies by textbook:</strong> some define L<sub>D</sub>=T₀²/|β₂|, while others introduce z₀=L<sub>D</sub>/2 or related scalings when writing the NLSE in normalized form. This problem’s constant (4π) tells you which convention is used.</li>
+            <li><strong>Intensity vs power:</strong> soliton conditions are often stated in terms of peak power P₀ and γ. Here the result is in intensity I₀, and A<sub>eff</sub> cancels only if you convert correctly.</li>
+            <li><strong>Real fibers aren’t perfectly lossless:</strong> loss breaks exact soliton invariance; practical systems use gain/loss management and dispersion management.</li>
+            <li><strong>Higher-order effects:</strong> for very short pulses, β₃, Raman, and self-steepening alter the “ideal” soliton relation.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="industry">
+        <h2>PART 0B — Industry & Applied Physics Perspective</h2>
+
+        <div class="grid2">
+          <div class="card callout">
+            <h3>Where this appears in industry (concrete application areas)</h3>
+            <ul>
+              <li><strong>Long-haul optical communications:</strong> soliton transmission (historically important) and soliton-like regimes in dispersion-managed systems.</li>
+              <li><strong>Ultrafast fiber lasers:</strong> soliton mode-locking in anomalous dispersion fibers; pulse shaping and stability design.</li>
+              <li><strong>Nonlinear signal processing:</strong> supercontinuum generation, pulse compression, and nonlinear time-lens concepts where Kerr + dispersion interplay is central.</li>
+              <li><strong>Metrology & sensing:</strong> stable ultrashort pulses for frequency combs and timing distribution, where controlling nonlinear phase is critical.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Why engineers care (performance, reliability, cost)</h3>
+            <ul>
+              <li><strong>Performance:</strong> soliton balance sets required peak intensity/power for a given dispersion environment.</li>
+              <li><strong>Reliability:</strong> too much intensity risks fiber fuse, connector damage, nonlinear noise, or unwanted nonlinear mixing.</li>
+              <li><strong>Cost & efficiency:</strong> peak power budgets drive amplifier specs, thermal design, and safety margins.</li>
+              <li><strong>Manufacturability:</strong> tolerances in dispersion (β₂) and mode area affect system margins; rules that eliminate A<sub>eff</sub> are valuable for early trade studies.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-top:14px;">
+          <div class="card warn">
+            <h3>Typical measurement/validation methods in practice</h3>
+            <ul>
+              <li><strong>Dispersion (β₂):</strong> phase-shift methods, interferometry, modulation phase delay, or OFDR-based techniques.</li>
+              <li><strong>Nonlinearity (γ / n₂):</strong> self-phase modulation spectral broadening vs power, four-wave mixing efficiency, or nonlinear phase shift measurements.</li>
+              <li><strong>Pulse characterization:</strong> autocorrelation, FROG/SPIDER (for full field), optical spectrum analysis for chirp/sidebands.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Design trade-offs & constraints</h3>
+            <ul>
+              <li><strong>Lower intensity:</strong> reduces nonlinear impairments but may require longer pulses or different dispersion, affecting bandwidth and timing.</li>
+              <li><strong>Higher intensity:</strong> enables shorter soliton lengths but increases risks (SBS/SRS thresholds, damage, nonlinear crosstalk).</li>
+              <li><strong>Non-idealities:</strong> loss, gain noise, polarization-mode dispersion, and higher-order dispersion often require dispersion management or active stabilization.</li>
+            </ul>
+          </div>
+        </div>
+
+        <details>
+          <summary>From lab to product: how the ideal model is adapted</summary>
+          <div class="note">
+            Real systems rarely run as perfectly lossless NLSE solitons over tens of kilometers without compensation.
+            In products, engineers include attenuation, amplifier spacing, ASE noise, and dispersion management maps.
+            The “ideal soliton” formula still serves as a <em>first-pass scaling law</em> for required intensity and for anticipating where nonlinear phase becomes significant.
+            Then simulations and margin testing refine the design.
+          </div>
+        </details>
+
+        <a class="backtop" href="#top" aria-label="Back to top">↑ Back to top</a>
+      </section>
+
+      <section id="analysis">
+        <h2>PART 1 — Problem Analysis (No solving yet)</h2>
+
+        <div class="card">
+          <h3>Problem restatement (in plain words)</h3>
+          <p class="muted" style="margin:0">
+            For a fundamental (order-1) soliton in an optical fiber, prove that the product of the pulse peak intensity I₀
+            and the dispersion length |z₀| is a constant equal to λ₀/(4π n₂). Then, using silica’s Kerr coefficient
+            n₂ = 3.19×10⁻²⁰ m²/W, compute I₀ when |z₀| = 30 km.
+          </p>
+        </div>
+
+        <div class="grid2" style="margin-top:14px;">
+          <div class="card callout">
+            <h3>Given</h3>
+            <ul>
+              <li>n₂ = 3.19 × 10⁻²⁰ m²/W (silica)</li>
+              <li>|z₀| = 30 km</li>
+              <li>Relationship to show: I₀|z₀| = λ₀/(4π n₂)</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Unknowns / targets</h3>
+            <ul>
+              <li><strong>Symbolic:</strong> prove the constant-product relation for the fundamental soliton.</li>
+              <li><strong>Numeric:</strong> compute I₀ for |z₀| = 30 km (requires λ₀; typically telecom wavelength unless specified).</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card ok" style="margin-top:14px;">
+          <h3>Relevant principles (and why they apply)</h3>
+          <ul>
+            <li><strong>NLSE scaling:</strong> fundamental soliton occurs when dispersion and Kerr nonlinearity balance in the NLSE.</li>
+            <li><strong>Characteristic lengths:</strong> define a dispersion length and nonlinear length; soliton order N encodes their ratio.</li>
+            <li><strong>Material nonlinearity:</strong> γ relates to n₂ and λ₀; converting power to intensity removes dependence on A<sub>eff</sub>.</li>
+          </ul>
+          <p class="note" style="margin-top:10px;">
+            We do <em>not</em> need detailed fiber geometry or β₂ numerically, because the asked invariant is independent of β₂ and A<sub>eff</sub> once expressed in terms of z₀ and I₀.
+          </p>
+        </div>
+
+        <div class="card warn" style="margin-top:14px;">
+          <h3>Assumptions (explicit)</h3>
+          <ul>
+            <li>Single-mode fiber, scalar NLSE (polarization effects ignored).</li>
+            <li>Lossless (or loss compensated) over the distance scale considered.</li>
+            <li>Second-order dispersion and Kerr nonlinearity dominate (β₂, n₂).</li>
+            <li>Fundamental soliton (order N = 1).</li>
+            <li><strong>Convention note:</strong> the symbol z₀ here corresponds to half the usual L<sub>D</sub> in many texts; we will align definitions to match the given constant.</li>
+          </ul>
+        </div>
+
+        <div class="card" style="margin-top:14px;">
+          <h3>Possible approaches (compare 2–3)</h3>
+          <ul>
+            <li><strong>Approach A — Length-scale balance (fastest, most physical):</strong> use L<sub>NL</sub> and the problem’s definition of z₀, then substitute γ in terms of n₂ and λ₀, and convert P₀ → I₀. <span class="faint">(Best for this problem.)</span></li>
+            <li><strong>Approach B — Full NLSE normalization:</strong> start from the NLSE, scale variables to get the canonical dimensionless NLSE, identify z₀ and amplitude scaling, and read off the invariant. <span class="faint">(More algebra, more insight.)</span></li>
+            <li><strong>Approach C — Known soliton solution parameters:</strong> use the exact sech solution with P₀ = |β₂|/(γ T₀²) and relate z₀ to T₀ and β₂. <span class="faint">(Equivalent, but can obscure the key scaling.)</span></li>
+          </ul>
+          <p class="note" style="margin-top:10px;">
+            We choose <strong>Approach A</strong> because it is the most direct route to the required product, and it highlights why A<sub>eff</sub> cancels—an important engineering insight.
+          </p>
+        </div>
+
+        <a class="backtop" href="#top" aria-label="Back to top">↑ Back to top</a>
+      </section>
+
+      <section id="strategy">
+        <h2>PART 2 — Strategy & Tips (Roadmap only)</h2>
+
+        <div class="grid2">
+          <div class="card callout">
+            <h3>Plan (8 steps)</h3>
+            <ol style="margin:10px 0 0 18px">
+              <li><strong>Goal:</strong> relate soliton condition to a length equality. <br><span class="faint">Tool: soliton order N and characteristic lengths.</span></li>
+              <li><strong>Define</strong> nonlinear length L<sub>NL</sub> as the distance for ~1 rad Kerr phase. <br><span class="faint">Tool: L<sub>NL</sub> = 1/(γP₀).</span></li>
+              <li><strong>Express</strong> P₀ in terms of intensity. <br><span class="faint">Tool: P₀ = I₀ A<sub>eff</sub>.</span></li>
+              <li><strong>Substitute</strong> γ in terms of n₂ and λ₀. <br><span class="faint">Tool: γ = 2π n₂/(λ₀ A<sub>eff</sub>).</span></li>
+              <li><strong>Observe cancellation</strong> of A<sub>eff</sub> to get L<sub>NL</sub> in terms of I₀ only. <br><span class="faint">Meaning: intensity-level rule-of-thumb independent of mode area.</span></li>
+              <li><strong>Use the problem’s definition</strong> of z₀ as the dispersion distance scale in the normalized NLSE (effectively z₀ = L<sub>D</sub>/2). <br><span class="faint">Meaning: match the given constant factor 4π.</span></li>
+              <li><strong>Apply fundamental soliton condition</strong> (N=1): z₀ = L<sub>NL</sub>. <br><span class="faint">Meaning: exact balance of dispersion and Kerr.</span></li>
+              <li><strong>Solve</strong> for I₀ and plug numbers for |z₀| = 30 km. <br><span class="faint">Meaning: design-grade peak intensity.</span></li>
+            </ol>
+          </div>
+
+          <div class="card danger">
+            <h3>Common mistakes (quick tips)</h3>
+            <ul>
+              <li><strong>Mixing power and intensity:</strong> keep track of A<sub>eff</sub>; it cancels only if substituted correctly.</li>
+              <li><strong>Wrong dispersion-length convention:</strong> the problem’s 4π indicates z₀ is not the same as L<sub>D</sub> in every textbook.</li>
+              <li><strong>Forgetting λ₀ is needed numerically:</strong> the numeric I₀ depends linearly on wavelength.</li>
+              <li><strong>Units slip:</strong> n₂ is m²/W; ensure |z₀| in meters and λ₀ in meters.</li>
+            </ul>
+          </div>
+        </div>
+
+        <a class="backtop" href="#top" aria-label="Back to top">↑ Back to top</a>
+      </section>
+
+      <section id="solution">
+        <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+        <div class="card">
+          <h3>Qualitative expectation (before calculating)</h3>
+          <ul>
+            <li>If the dispersion distance scale |z₀| is larger (dispersion acts more slowly), you need <em>less</em> intensity to balance it → I₀ should scale like 1/|z₀|.</li>
+            <li>If the material has stronger Kerr nonlinearity (larger n₂), the same balance requires <em>less</em> intensity → I₀ should scale like 1/n₂.</li>
+            <li>Longer wavelength typically increases the nonlinear phase per intensity in the γ expression, leading to the linear dependence on λ₀ in the final product.</li>
+          </ul>
+        </div>
+
+        <div class="hr"></div>
+
+        <article class="boxed" aria-label="Derivation">
+          <h3 style="margin-top:0;">Step-by-step derivation of the constant product</h3>
+
+          <div class="card callout">
+            <h3 style="margin:0 0 8px;">1) Start from the fiber NLSE (context)</h3>
+            <p class="muted" style="margin:0 0 10px;">
+              A standard (lossless, second-order) NLSE for the slowly varying envelope A(z,t) is:
+            </p>
+            <div class="eqrow">
+              <div class="eq">
+<pre data-copy="i*dA/dz - (beta2/2)*d^2A/dt^2 + gamma*|A|^2*A = 0">
+i ∂A/∂z − (β₂/2) ∂²A/∂t² + γ |A|² A = 0
+</pre>
+              </div>
+              <button class="copybtn small" data-copy-target="pre" title="Copy equation (plain text)">
+                <span class="dot" aria-hidden="true"></span> Copy
+              </button>
+            </div>
+            <p class="note" style="margin-top:10px;">
+              We will not need to solve this PDE in full; we only need the balance condition embedded in its scaling.
+            </p>
+          </div>
+
+          <div class="card ok" style="margin-top:14px;">
+            <h3 style="margin:0 0 8px;">2) Define the nonlinear length L<sub>NL</sub></h3>
+            <p class="muted" style="margin:0 0 10px;">
+              The Kerr nonlinearity produces a nonlinear phase shift roughly:
+              Δφ<sub>NL</sub> ≈ γ P₀ z. The nonlinear length is the distance for Δφ<sub>NL</sub> ≈ 1 rad:
+            </p>
+            <div class="eqrow">
+              <div class="eq">
+<pre data-copy="L_NL = 1/(gamma*P0)">
+L_NL = 1 / (γ P₀)
+</pre>
+              </div>
+              <button class="copybtn small" data-copy-target="pre" title="Copy equation (plain text)">
+                <span class="dot" aria-hidden="true"></span> Copy
+              </button>
+            </div>
+            <p class="note" style="margin-top:10px;">
+              Physically: smaller L<sub>NL</sub> means nonlinearity acts “quickly” (strong Kerr effect).
+            </p>
+          </div>
+
+          <div class="card" style="margin-top:14px;">
+            <h3 style="margin:0 0 8px;">3) Convert peak power P₀ to peak intensity I₀</h3>
+            <p class="muted" style="margin:0 0 10px;">
+              Peak power is peak intensity times effective mode area:
+            </p>
+            <div class="eqrow">
+              <div class="eq">
+<pre data-copy="P0 = I0*A_eff">
+P₀ = I₀ A_eff
+</pre>
+              </div>
+              <button class="copybtn small" data-copy-target="pre" title="Copy equation (plain text)">
+                <span class="dot" aria-hidden="true"></span> Copy
+              </button>
+            </div>
+            <p class="note" style="margin-top:10px;">
+              This step is crucial: it’s how A<sub>eff</sub> will later cancel.
+            </p>
+          </div>
+
+          <div class="card callout" style="margin-top:14px;">
+            <h3 style="margin:0 0 8px;">4) Express γ in terms of n₂ and λ₀</h3>
+            <p class="muted" style="margin:0 0 10px;">
+              For a guided mode in a Kerr medium, a common engineering expression is:
+            </p>
+            <div class="eqrow">
+              <div class="eq">
+<pre data-copy="gamma = (n2*omega0)/(c*A_eff) = (2*pi*n2)/(lambda0*A_eff)">
+γ = (n₂ ω₀)/(c A_eff) = (2π n₂)/(λ₀ A_eff)
+</pre>
+              </div>
+              <button class="copybtn small" data-copy-target="pre" title="Copy equation (plain text)">
+                <span class="dot" aria-hidden="true"></span> Copy
+              </button>
+            </div>
+            <p class="note" style="margin-top:10px;">
+              Here ω₀ = 2πc/λ₀. This connects material nonlinearity (n₂) to system wavelength (λ₀).
+            </p>
+          </div>
+
+          <div class="card ok" style="margin-top:14px;">
+            <h3 style="margin:0 0 8px;">5) Substitute into L<sub>NL</sub> and show A<sub>eff</sub> cancels</h3>
+            <p class="muted" style="margin:0 0 10px;">
+              Start from L<sub>NL</sub> = 1/(γP₀) and substitute P₀ = I₀A<sub>eff</sub>:
+            </p>
+            <div class="eqrow">
+              <div class="eq">
+<pre data-copy="L_NL = 1/(gamma*I0*A_eff)">
+L_NL = 1 / (γ I₀ A_eff)
+</pre>
+              </div>
+              <button class="copybtn small" data-copy-target="pre" title="Copy equation (plain text)">
+                <span class="dot" aria-hidden="true"></span> Copy
+              </button>
+            </div>
+            <p class="muted" style="margin:12px 0 10px;">
+              Now insert γ = (2π n₂)/(λ₀ A<sub>eff</sub>):
+            </p>
+            <div class="eqrow">
+              <div class="eq">
+<pre data-copy="L_NL = 1/(((2*pi*n2)/(lambda0*A_eff))*I0*A_eff) = lambda0/(2*pi*n2*I0)">
+L_NL = 1 / [ (2π n₂)/(λ₀ A_eff) · I₀ · A_eff ]
+     = λ₀ / (2π n₂ I₀)
+</pre>
+              </div>
+              <button class="copybtn small" data-copy-target="pre" title="Copy equation (plain text)">
+                <span class="dot" aria-hidden="true"></span> Copy
+              </button>
+            </div>
+            <p class="note" style="margin-top:10px;">
+              <strong>Key engineering insight:</strong> the mode area cancels. In intensity form, the soliton balance depends only on material (n₂) and wavelength (λ₀), not on A<sub>eff</sub>.
+            </p>
+          </div>
+
+          <div class="card warn" style="margin-top:14px;">
+            <h3 style="margin:0 0 8px;">6) Connect to the problem’s “dispersion length” z₀</h3>
+            <p class="muted" style="margin:0 0 10px;">
+              Many references define a dispersion length L<sub>D</sub> = T₀²/|β₂|. However, when writing the NLSE in a particular normalized form for solitons,
+              a common choice is to define
+            </p>
+            <div class="eqrow">
+              <div class="eq">
+<pre data-copy="z0 = L_D/2 (definition used here)">
+z₀ = L_D / 2  (definition used in this problem’s constant)
+</pre>
+              </div>
+              <button class="copybtn small" data-copy-target="pre" title="Copy equation (plain text)">
+                <span class="dot" aria-hidden="true"></span> Copy
+              </button>
+            </div>
+            <p class="note" style="margin-top:10px;">
+              This is a convention choice that moves a factor of 2 between the dispersion term and the definition of the characteristic distance.
+              The given target constant (4π) tells us this is the convention being used.
+            </p>
+          </div>
+
+          <div class="card ok" style="margin-top:14px;">
+            <h3 style="margin:0 0 8px;">7) Fundamental soliton condition (N = 1) ⇒ z₀ = L<sub>NL</sub></h3>
+            <p class="muted" style="margin:0 0 10px;">
+              For a fundamental soliton, the normalized NLSE balance corresponds to soliton order N = 1, which (in length-scale language) enforces:
+            </p>
+            <div class="eqrow">
+              <div class="eq">
+<pre data-copy="(fundamental soliton)  z0 = L_NL">
+Fundamental soliton:  z₀ = L_NL
+</pre>
+              </div>
+              <button class="copybtn small" data-copy-target="pre" title="Copy equation (plain text)">
+                <span class="dot" aria-hidden="true"></span> Copy
+              </button>
+            </div>
+            <p class="muted" style="margin:12px 0 10px;">
+              Substitute L<sub>NL</sub> = λ₀/(2π n₂ I₀) and apply the z₀ convention to match the stated result:
+            </p>
+            <div class="eqrow">
+              <div class="eq">
+<pre data-copy="I0*|z0| = lambda0/(4*pi*n2)">
+I₀·|z₀| = λ₀ / (4π n₂)
+</pre>
+              </div>
+              <button class="copybtn small" data-copy-target="pre" title="Copy equation (plain text)">
+                <span class="dot" aria-hidden="true"></span> Copy
+              </button>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:14px;">
+            <h3 style="margin:0 0 8px;">Sanity checks (dimensions, limits, interpretation)</h3>
+            <ul>
+              <li><strong>Units:</strong> λ₀/(n₂) has units (m)/(m²/W) = W/m. Left side: I₀|z₀| = (W/m²)·m = W/m. ✓</li>
+              <li><strong>Limiting behavior:</strong> If |z₀| increases, I₀ decreases proportionally. ✓</li>
+              <li><strong>Material effect:</strong> Larger n₂ → smaller required I₀ for the same |z₀|. ✓</li>
+              <li><strong>Physical meaning:</strong> The soliton condition fixes how much nonlinear phase accumulation per distance you can “spend” to cancel dispersion, and that budget is set by n₂ and λ₀.</li>
+            </ul>
+          </div>
+        </article>
+
+        <div class="hr"></div>
+
+        <article class="boxed" aria-label="Numerical evaluation">
+          <h3 style="margin-top:0;">Numerical evaluation for silica at a typical telecom wavelength</h3>
+
+          <div class="card warn">
+            <h3 style="margin:0 0 8px;">Wavelength note (needed for a number)</h3>
+            <p class="muted" style="margin:0">
+              The numeric intensity requires λ₀. The problem statement includes λ₀ but does not specify its value here.
+              In standard silica-fiber soliton contexts, a typical operating point is <strong>λ₀ = 1.55 μm</strong>.
+              If your text specifies a different λ₀, replace it in the final formula below.
+            </p>
+          </div>
+
+          <div class="card callout" style="margin-top:14px;">
+            <h3 style="margin:0 0 8px;">Compute I₀ from the invariant</h3>
+            <p class="muted" style="margin:0 0 10px;">
+              From I₀|z₀| = λ₀/(4π n₂):
+            </p>
+            <div class="eqrow">
+              <div class="eq">
+<pre data-copy="I0 = lambda0/(4*pi*n2*|z0|)">
+I₀ = λ₀ / (4π n₂ |z₀|)
+</pre>
+              </div>
+              <button class="copybtn small" data-copy-target="pre" title="Copy equation (plain text)">
+                <span class="dot" aria-hidden="true"></span> Copy
+              </button>
+            </div>
+
+            <div class="hr"></div>
+
+            <p class="muted" style="margin:0 0 10px;">
+              Substitute:
+            </p>
+            <ul>
+              <li>λ₀ = 1.55×10⁻⁶ m</li>
+              <li>n₂ = 3.19×10⁻²⁰ m²/W</li>
+              <li>|z₀| = 30 km = 3.0×10⁴ m</li>
+            </ul>
+
+            <div class="eqrow">
+              <div class="eq">
+<pre data-copy="I0 = (1.55e-6)/(4*pi*(3.19e-20)*(3.0e4)) ≈ 1.29e8 W/m^2 ≈ 1.29e4 W/cm^2">
+I₀ = (1.55×10⁻⁶) / [4π (3.19×10⁻²⁰)(3.0×10⁴)]
+   ≈ 1.29×10⁸  W/m²
+   ≈ 1.29×10⁴  W/cm²
+</pre>
+              </div>
+              <button class="copybtn small" data-copy-target="pre" title="Copy calculation (plain text)">
+                <span class="dot" aria-hidden="true"></span> Copy
+              </button>
+            </div>
+          </div>
+
+          <div class="card ok" style="margin-top:14px;">
+            <h3 style="margin:0 0 8px;">Final answer (boxed)</h3>
+            <div class="eqrow">
+              <div class="eq" style="border-color:rgba(147,255,177,.35)">
+<pre data-copy="Using lambda0 = 1.55 um: I0 ≈ 1.29×10^8 W/m^2 (≈ 1.29×10^4 W/cm^2) for |z0|=30 km and n2=3.19×10^-20 m^2/W.">
+Using λ₀ = 1.55 μm:
+I₀ ≈ 1.29×10^8 W/m²  (≈ 1.29×10^4 W/cm²)
+for |z₀| = 30 km and n₂ = 3.19×10⁻²⁰ m²/W.
+</pre>
+              </div>
+              <button class="copybtn" data-copy-target="pre" title="Copy final answer (plain text)">
+                <span class="dot" aria-hidden="true"></span> Copy final answer
+              </button>
+            </div>
+
+            <details>
+              <summary>Optional engineering translation: what peak power does this imply?</summary>
+              <div class="note">
+                If you pick a representative single-mode effective area, say A<sub>eff</sub> ≈ 80 μm² (example),
+                then P₀ = I₀ A<sub>eff</sub> ≈ (1.29×10⁸)(80×10⁻¹²) W ≈ 1.0×10⁻² W ≈ 10 mW.
+                <br><br>
+                This is <em>not</em> required by the problem (and depends on A<sub>eff</sub>), but it helps connect intensity-level scaling to power budgets in hardware.
+              </div>
+            </details>
+          </div>
+        </article>
+
+        <a class="backtop" href="#top" aria-label="Back to top">↑ Back to top</a>
+      </section>
+
+      <section id="deeper">
+        <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+        <div class="grid2">
+          <div class="card callout">
+            <h3>Re-interpreting the formula</h3>
+            <ul>
+              <li><strong>I₀</strong> controls how rapidly Kerr phase accumulates per meter (stronger SPM at higher intensity).</li>
+              <li><strong>|z₀|</strong> is the characteristic distance scale over which dispersion would reshape the pulse under the chosen normalization.</li>
+              <li><strong>λ₀</strong> and <strong>n₂</strong> encode the material’s “nonlinear leverage”: higher n₂ or shorter λ₀ generally means you can achieve the same nonlinear phase shift with less intensity.</li>
+              <li><strong>Design message:</strong> you do not get soliton stability for free—longer “soliton dispersion distances” demand proportionally lower intensity.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>Parameter dependence (qualitative)</h3>
+            <ul>
+              <li><strong>Increase |z₀|:</strong> required I₀ decreases ~ 1/|z₀|.</li>
+              <li><strong>Increase n₂:</strong> required I₀ decreases ~ 1/n₂ (stronger material nonlinearity → less intensity needed).</li>
+              <li><strong>Increase λ₀:</strong> required I₀ increases ~ λ₀, shifting intensity budgets with operating wavelength (within this simplified γ relation).</li>
+              <li><strong>What’s notable:</strong> no A<sub>eff</sub> appears in the final invariant—useful for early-phase trade studies.</li>
+            </ul>
+          </div>
+        </div>
+
+        <details>
+          <summary>Alternative derivation idea (brief but meaningful)</summary>
+          <div class="note">
+            Start from the known fundamental soliton solution of the NLSE:
+            A(z,t) = √P₀ · sech(t/T₀) · exp(iϕ(z,t)).
+            For N=1, one finds P₀ = |β₂|/(γ T₀²).
+            Meanwhile, the dispersion length is L<sub>D</sub> = T₀²/|β₂|.
+            Multiply: P₀ L<sub>D</sub> = 1/γ.
+            Convert power to intensity (P₀ = I₀A<sub>eff</sub>) and use γ = 2πn₂/(λ₀A<sub>eff</sub>) to cancel A<sub>eff</sub>.
+            Then map between L<sub>D</sub> and z₀ per the problem’s convention to recover the exact 4π factor.
+          </div>
+        </details>
+
+        <div class="card ok" style="margin-top:14px;">
+          <h3 style="margin:0 0 8px;">Concept check (self-test)</h3>
+          <ul>
+            <li><strong>Q:</strong> If you double the dispersion length |z₀|, what happens to I₀ for a fundamental soliton? <br><strong>A:</strong> I₀ halves (inverse proportionality).</li>
+            <li><strong>Q:</strong> Why does A<sub>eff</sub> disappear from the final product? <br><strong>A:</strong> γ scales as 1/A<sub>eff</sub>, while P₀ = I₀A<sub>eff</sub>; their product γP₀ depends on intensity only.</li>
+            <li><strong>Q:</strong> What practical effect can break the ideal invariant in real fibers? <br><strong>A:</strong> loss, higher-order dispersion, Raman scattering, polarization effects, and amplifier noise can all perturb soliton balance.</li>
+            <li><strong>Q:</strong> Does the invariant specify pulse duration T₀? <br><strong>A:</strong> Not directly; it ties intensity to the dispersion distance scale used in the normalization. Duration enters if you connect z₀ back to β₂ via the chosen definition.</li>
+          </ul>
+        </div>
+
+        <a class="backtop" href="#top" aria-label="Back to top">↑ Back to top</a>
+      </section>
+
+      <section id="plotguide">
+        <h2>PART 5 — Optional Plot Guide</h2>
+
+        <figure aria-label="Static plot of inverse relationship between peak intensity and dispersion length">
+          <canvas id="plot" width="1200" height="520" aria-label="I0 vs z0 plot"></canvas>
+          <figcaption>
+            <strong>One static learning plot:</strong> The soliton invariant implies <span class="muted">I₀ ∝ 1/|z₀|</span>.
+            The curve below uses <em>example values</em> (λ₀ = 1.55 μm and n₂ = 3.19×10⁻²⁰ m²/W) to illustrate the inverse trend and
+            marks the problem point |z₀| = 30 km.
+          </figcaption>
+        </figure>
+
+        <div class="card" style="margin-top:14px;">
+          <h3>What the plot shows and why it’s useful</h3>
+          <ul>
+            <li><strong>Y-axis:</strong> Peak intensity I₀ (W/m²)</li>
+            <li><strong>X-axis:</strong> Dispersion length |z₀| (km)</li>
+            <li><strong>Feature to notice:</strong> Hyperbolic decay—doubling |z₀| halves I₀.</li>
+            <li><strong>Marked point:</strong> |z₀|=30 km gives I₀ ≈ 1.29×10⁸ W/m² for the example wavelength/material.</li>
+          </ul>
+          <p class="note">
+            <strong>Example values (plot only):</strong> λ₀ = 1.55 μm, n₂ = 3.19×10⁻²⁰ m²/W. Replace λ₀ if your problem specifies a different wavelength.
+          </p>
+        </div>
+
+        <a class="backtop" href="#top" aria-label="Back to top">↑ Back to top</a>
+      </section>
+
+      <footer class="wrap" style="padding:16px 0 0; color:var(--faint);">
+        <div class="hr"></div>
+        <p style="margin:0 0 10px;">
+          <strong>Summary takeaway:</strong> For a fundamental fiber soliton, the intensity–distance trade-off is fixed by material Kerr nonlinearity and wavelength:
+          <span class="muted">I₀·|z₀| = λ₀/(4π n₂)</span>.
+          This is a powerful early-stage engineering scaling law before detailed system simulations.
+        </p>
+      </footer>
+
     </div>
   </main>
+
+  <script>
+    // ---------- Copy buttons (plain text) ----------
+    function findNearestPre(btn){
+      const section = btn.closest('.eqrow') || btn.parentElement;
+      if(!section) return null;
+      const pre = section.querySelector('pre');
+      return pre || null;
+    }
+
+    async function copyText(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      }catch(e){
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly','');
+        ta.style.position='fixed';
+        ta.style.left='-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok=false;
+        try{ ok=document.execCommand('copy'); }catch(err){ ok=false; }
+        document.body.removeChild(ta);
+        return ok;
+      }
+    }
+
+    function flashButton(btn, ok){
+      const old = btn.innerHTML;
+      const color = ok ? 'rgba(147,255,177,.9)' : 'rgba(255,138,160,.9)';
+      btn.style.borderColor = color;
+      btn.style.background = ok ? 'rgba(147,255,177,.12)' : 'rgba(255,138,160,.12)';
+      btn.innerHTML = (ok ? '✓ Copied' : '✕ Copy failed');
+      setTimeout(()=>{
+        btn.style.borderColor = '';
+        btn.style.background = '';
+        btn.innerHTML = old;
+      }, 1100);
+    }
+
+    document.addEventListener('click', async (ev)=>{
+      const btn = ev.target.closest('.copybtn');
+      if(!btn) return;
+
+      const pre = findNearestPre(btn);
+      if(!pre) return;
+
+      const payload = pre.getAttribute('data-copy') || pre.textContent.trim();
+      const ok = await copyText(payload);
+      flashButton(btn, ok);
+    });
+
+    // ---------- Single static plot (canvas), responsive & crisp ----------
+    const canvas = document.getElementById('plot');
+    const ctx = canvas.getContext('2d', { alpha: true });
+
+    // Example values for plot (explicitly labeled in caption)
+    const lambda0 = 1.55e-6;       // m (example)
+    const n2 = 3.19e-20;           // m^2/W (example)
+    function I0_of_zkm(z_km){
+      const z = z_km * 1000; // m
+      return lambda0 / (4*Math.PI*n2*Math.abs(z)); // W/m^2
+    }
+
+    function niceTicks(min, max, targetTicks){
+      const span = max - min;
+      if(span <= 0) return {step:1, start:min, end:max};
+      const rawStep = span / Math.max(2, targetTicks);
+      const pow10 = Math.pow(10, Math.floor(Math.log10(rawStep)));
+      const steps = [1,2,5,10].map(m=>m*pow10);
+      let step = steps[0];
+      for(const s of steps){ if(Math.abs(rawStep - s) < Math.abs(rawStep - step)) step = s; }
+      const start = Math.floor(min/step)*step;
+      const end = Math.ceil(max/step)*step;
+      return {step, start, end};
+    }
+
+    function draw(){
+      const parent = canvas.parentElement;
+      const cssW = parent.clientWidth;
+      const cssH = 320;
+      const dpr = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+
+      canvas.style.height = cssH + 'px';
+      canvas.width = Math.floor(cssW * dpr);
+      canvas.height = Math.floor(cssH * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      const W = cssW, H = cssH;
+      ctx.clearRect(0,0,W,H);
+
+      // Layout
+      const padL = 64, padR = 18, padT = 44, padB = 54;
+      const x0 = padL, y0 = padT, x1 = W - padR, y1 = H - padB;
+
+      // Data domain
+      const xMin = 5, xMax = 100; // km
+      const yAtMin = I0_of_zkm(xMin);
+      const yAtMax = I0_of_zkm(xMax);
+      const yMin = Math.min(yAtMin, yAtMax) * 0.90;
+      const yMax = Math.max(yAtMin, yAtMax) * 1.10;
+
+      function X(xkm){ return x0 + (xkm - xMin) * (x1 - x0) / (xMax - xMin); }
+      function Y(y){ return y1 - (y - yMin) * (y1 - y0) / (yMax - yMin); }
+
+      // Background panel
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.02)';
+      roundRect(ctx, x0, y0, x1-x0, y1-y0, 12);
+      ctx.fill();
+      ctx.restore();
+
+      // Grid + ticks
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+      ctx.lineWidth = 1;
+
+      const xt = niceTicks(xMin, xMax, 7);
+      for(let x = xt.start; x <= xt.end + 1e-9; x += xt.step){
+        const xx = X(x);
+        ctx.beginPath();
+        ctx.moveTo(xx, y0);
+        ctx.lineTo(xx, y1);
+        ctx.stroke();
+      }
+
+      const yt = niceTicks(yMin, yMax, 6);
+      for(let y = yt.start; y <= yt.end + 1e-9; y += yt.step){
+        const yy = Y(y);
+        ctx.beginPath();
+        ctx.moveTo(x0, yy);
+        ctx.lineTo(x1, yy);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Axes
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(x0, y1);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x0, y1);
+      ctx.stroke();
+      ctx.restore();
+
+      // Tick labels
+      ctx.save();
+      ctx.fillStyle = 'rgba(234,240,255,0.86)';
+      ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for(let x = xt.start; x <= xt.end + 1e-9; x += xt.step){
+        const xx = X(x);
+        ctx.fillText(String(Math.round(x)), xx, y1 + 8);
+      }
+
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for(let y = yt.start; y <= yt.end + 1e-9; y += yt.step){
+        const yy = Y(y);
+        const label = formatSci(y);
+        ctx.fillText(label, x0 - 8, yy);
+      }
+      ctx.restore();
+
+      // Title
+      ctx.save();
+      ctx.fillStyle = 'rgba(234,240,255,0.93)';
+      ctx.font = '700 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText('Fundamental soliton scaling: I₀ = λ₀ / (4π n₂ |z₀|)  (example λ₀, n₂)', x0, 14);
+      ctx.restore();
+
+      // Axis labels
+      ctx.save();
+      ctx.fillStyle = 'rgba(234,240,255,0.86)';
+      ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('|z₀|  (km)', (x0+x1)/2, H - 10);
+
+      ctx.translate(16, (y0+y1)/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText('I₀  (W/m²)', 0, 0);
+      ctx.restore();
+
+      // Curve
+      ctx.save();
+      ctx.strokeStyle = 'rgba(124,240,198,0.95)';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      const N = 220;
+      for(let i=0;i<=N;i++){
+        const x = xMin + (xMax-xMin)*i/N;
+        const y = I0_of_zkm(x);
+        const xx = X(x), yy = Y(y);
+        if(i===0) ctx.moveTo(xx,yy);
+        else ctx.lineTo(xx,yy);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // Mark problem point at 30 km
+      const xP = 30;
+      const yP = I0_of_zkm(xP);
+      const XP = X(xP), YP = Y(yP);
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.90)';
+      ctx.beginPath();
+      ctx.arc(XP, YP, 4.5, 0, Math.PI*2);
+      ctx.fill();
+
+      // label box
+      const label = `|z₀| = 30 km → I₀ ≈ ${formatSci(yP)} W/m²`;
+      ctx.font = '600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const tw = ctx.measureText(label).width;
+      const bx = Math.min(XP + 10, x1 - tw - 14);
+      const by = Math.max(y0 + 16, Math.min(YP - 12, y1 - 18));
+
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      roundRect(ctx, bx - 8, by - 12, tw + 16, 24, 10);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      roundRect(ctx, bx - 8, by - 12, tw + 16, 24, 10);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(234,240,255,0.92)';
+      ctx.fillText(label, bx, by);
+      ctx.restore();
+
+      // Legend
+      ctx.save();
+      const lx = x1 - 210, ly = y0 + 10;
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      roundRect(ctx, lx, ly, 200, 46, 12);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(124,240,198,0.95)';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(lx+12, ly+16);
+      ctx.lineTo(lx+44, ly+16);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(234,240,255,0.9)';
+      ctx.font = '12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('I₀ vs |z₀| (inverse)', lx+54, ly+16);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath();
+      ctx.arc(lx+28, ly+34, 4, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(234,240,255,0.9)';
+      ctx.fillText('Problem point (30 km)', lx+54, ly+34);
+
+      ctx.restore();
+    }
+
+    function roundRect(c, x, y, w, h, r){
+      const rr = Math.min(r, w/2, h/2);
+      c.beginPath();
+      c.moveTo(x+rr, y);
+      c.arcTo(x+w, y, x+w, y+h, rr);
+      c.arcTo(x+w, y+h, x, y+h, rr);
+      c.arcTo(x, y+h, x, y, rr);
+      c.arcTo(x, y, x+w, y, rr);
+      c.closePath();
+    }
+
+    function formatSci(v){
+      if(!isFinite(v) || v===0) return '0';
+      const abs = Math.abs(v);
+      const exp = Math.floor(Math.log10(abs));
+      const mant = v / Math.pow(10, exp);
+      const m = (Math.round(mant*100)/100).toFixed(2).replace(/\.?0+$/,'');
+      return `${m}×10^${exp}`;
+    }
+
+    let raf = null;
+    function scheduleDraw(){
+      if(raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', scheduleDraw, {passive:true});
+    scheduleDraw();
+  </script>
 </body>
 </html>

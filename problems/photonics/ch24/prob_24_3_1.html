@@ -1,65 +1,995 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>24.3-1 — Power Loss and Crosstalk</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Power Loss and Crosstalk in a 4×4 Optical Switch Built from 2×2 Switches</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b0f17;
+      --card:#111827;
+      --card2:#0f172a;
+      --text:#e7eaf0;
+      --muted:#a8b0c2;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --ok:#86efac;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 10px 28px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(125,211,252,.18), transparent 60%),
+        radial-gradient(1000px 600px at 100% 10%, rgba(167,139,250,.16), transparent 55%),
+        radial-gradient(900px 600px at 30% 110%, rgba(134,239,172,.10), transparent 50%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.6;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+
+    a{color:var(--accent); text-decoration:none}
+    a:hover{ text-decoration:underline }
+
+    header{
+      padding:28px 18px 18px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), transparent);
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+
+    .wrap{
+      max-width:1200px;
+      margin:0 auto;
+      padding:0 14px 40px;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
-      color: var(--muted);
+
+    .title{
+      display:grid;
+      gap:10px;
+      align-items:start;
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .title h1{
+      margin:0;
+      font-size: clamp(1.45rem, 1.15rem + 1.2vw, 2.15rem);
+      letter-spacing:.2px;
+      line-height:1.2;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      max-width:80ch;
+      font-size:1rem;
+    }
+
+    main{ padding:22px 0 10px; }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:16px;
+      align-items:start;
+    }
+
+    @media (min-width: 980px){
+      .layout{ grid-template-columns: 320px 1fr; gap:18px; }
+    }
+
+    .toc{
+      position:sticky;
+      top:12px;
+      align-self:start;
+      padding:14px 14px 12px;
+      border:1px solid var(--line);
+      background: rgba(17,24,39,.72);
+      backdrop-filter: blur(10px);
+      border-radius:14px;
+      box-shadow: var(--shadow);
+    }
+    .toc h2{
+      margin:0 0 10px;
+      font-size:1rem;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .toc h2 span.badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      color:var(--muted);
+      font-size:.78rem;
+    }
+    .toc nav{ display:grid; gap:6px; }
+    .toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid transparent;
+      color:var(--text);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0));
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+      font-size:.95rem;
+    }
+    .toc a:hover{
+      border-color: rgba(125,211,252,.35);
+      transform: translateY(-1px);
+      text-decoration:none;
+      background: linear-gradient(180deg, rgba(125,211,252,.12), rgba(255,255,255,0));
+    }
+    .toc .toplink{ margin-top:8px; font-size:.92rem; color:var(--muted); }
+
+    .content{ display:grid; gap:14px; min-width:0; }
+
+    section{
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background: rgba(17,24,39,.62);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    section h2{
+      margin:0 0 10px;
+      font-size:1.25rem;
+      letter-spacing:.2px;
+      line-height:1.25;
+    }
+    section h3{
+      margin:14px 0 8px;
+      font-size:1.05rem;
+      color: #f2f4f8;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    @media (min-width: 740px){
+      .grid2{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .card{
+      padding:12px 12px 10px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+    }
+
+    .callout{
+      border-left:4px solid rgba(125,211,252,.70);
+      padding:12px;
+      border-radius:12px;
+      background: rgba(125,211,252,.08);
+      border:1px solid rgba(125,211,252,.20);
+    }
+    .callout.warn{
+      border-left-color: rgba(251,191,36,.80);
+      background: rgba(251,191,36,.10);
+      border-color: rgba(251,191,36,.22);
+    }
+    .callout.bad{
+      border-left-color: rgba(251,113,133,.85);
+      background: rgba(251,113,133,.10);
+      border-color: rgba(251,113,133,.22);
+    }
+    .callout.ok{
+      border-left-color: rgba(134,239,172,.80);
+      background: rgba(134,239,172,.10);
+      border-color: rgba(134,239,172,.22);
+    }
+    .callout h4{
+      margin:0 0 6px;
+      font-size:1rem;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .muted{ color:var(--muted); }
+
+    ul{ margin:8px 0 0 18px; padding:0 }
+    li{ margin:6px 0 }
+
+    .equation{
+      margin-top:10px;
+      border:1px dashed rgba(255,255,255,.22);
+      border-radius:14px;
+      padding:10px;
+      background: rgba(15,23,42,.55);
+      overflow:auto;
+      position:relative;
+    }
+    .equation pre{
+      margin:0;
+      font-family:var(--mono);
+      font-size:.92rem;
+      color:#e9eefb;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .copybar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-top:10px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:600;
+      font-size:.92rem;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+      user-select:none;
+    }
+    .btn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,.35);
+      background: rgba(125,211,252,.10);
+    }
+    .btn:active{ transform: translateY(0); }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color:var(--muted);
+      font-size:.88rem;
+    }
+
+    details{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: rgba(15,23,42,.45);
+      padding:10px 10px 8px;
+      margin-top:10px;
+    }
+    summary{
+      cursor:pointer;
+      font-weight:700;
+      color: #e9eefb;
+      outline:none;
+      list-style:none;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    summary:before{
+      content:"▸";
+      color: var(--accent);
+      display:inline-block;
+      transform: translateY(-1px);
+      transition: transform .15s ease;
+    }
+    details[open] summary:before{
+      transform: rotate(90deg) translateX(1px);
+    }
+    details .inner{ margin-top:10px; color: var(--muted); }
+
+    .final{
+      border:1px solid rgba(134,239,172,.28);
+      background: rgba(134,239,172,.09);
+      border-radius:16px;
+      padding:14px;
+    }
+    .final h3{ margin:0 0 10px; }
+
+    .kpi{
+      display:grid;
+      gap:10px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width:720px){
+      .kpi{ grid-template-columns: 1fr 1fr; }
+    }
+    .kpi .box{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(17,24,39,.45);
+      border-radius:14px;
+      padding:12px;
+    }
+    .kpi .box .label{
+      color:var(--muted);
+      font-weight:700;
+      font-size:.9rem;
+      margin-bottom:6px;
+    }
+    .kpi .box .value{
+      font-size:1.25rem;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+    .kpi .box .note{
+      color:var(--muted);
+      margin-top:6px;
+      font-size:.92rem;
+    }
+
+    footer{
+      margin-top:18px;
+      padding:16px;
+      color:var(--muted);
+      border-top:1px solid var(--line);
+      font-size:.92rem;
+    }
+
+    .backtop{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin-top:10px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.05);
+    }
+    .backtop:hover{
+      border-color: rgba(125,211,252,.35);
+      background: rgba(125,211,252,.10);
+      text-decoration:none;
+    }
+
+    @media (prefers-reduced-motion: no-preference){
+      section{ animation: rise .35s ease both; }
+      @keyframes rise{
+        from{ opacity:0; transform: translateY(6px); }
+        to{ opacity:1; transform: translateY(0); }
+      }
+    }
+
+    @media print{
+      body{ background:#fff; color:#000; }
+      header{ border:none; background:#fff; }
+      .toc{ display:none; }
+      section{ box-shadow:none; background:#fff; border:1px solid #bbb; }
+      a{ color:#000; text-decoration:underline; }
+      .btn{ display:none; }
+      details{ border:1px solid #bbb; }
+      details .inner{ color:#111; }
+      .muted{ color:#222; }
+      .callout{ background:#fff; }
+      .equation{ background:#fff; }
+      .final{ background:#fff; }
+      .pagebreak{ break-before: page; }
     }
   </style>
 </head>
+
 <body>
+  <a id="top"></a>
   <header>
-    <div class="box">
-      <h1>24.3-1 — Power Loss and Crosstalk</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch24/prob_24_3_1.html</code></p>
+    <div class="wrap">
+      <div class="title">
+        <h1>Worst-Case Power Loss & Crosstalk in a 4×4 Switch Built from 2×2 Switches</h1>
+        <p class="subtitle">
+          A practical applied-photonics calculation: how insertion loss and crosstalk accumulate through a multistage switch fabric,
+          and what “worst case” means for system budgets (link power margin, BER, and manufacturing specs).
+        </p>
+      </div>
     </div>
   </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+  <main class="wrap">
+    <div class="layout">
+      <aside class="toc" aria-label="Table of contents">
+        <h2>Contents <span class="badge">sticky</span></h2>
+        <nav>
+          <a href="#quick">Quick Summary</a>
+          <a href="#primer">PART 0 — Concept Primer</a>
+          <a href="#industry">PART 0B — Industry & Applied Physics</a>
+          <a href="#analysis">PART 1 — Problem Analysis</a>
+          <a href="#strategy">PART 2 — Strategy & Tips</a>
+          <a href="#solution">PART 3 — Full Solution</a>
+          <a href="#deeper">PART 4 — Deeper Understanding</a>
+          <a href="#plot">PART 5 — Optional Plot Guide</a>
+        </nav>
+        <div class="toplink">
+          <a class="backtop" href="#top" title="Back to top">↑ Back to top</a>
+        </div>
+      </aside>
+
+      <div class="content">
+        <section id="quick">
+          <h2>Quick Summary</h2>
+          <div class="grid2">
+            <div class="card">
+              <ul>
+                <li><strong>What this is about:</strong> A 4×4 switch implemented using <strong>five</strong> 2×2 switches.</li>
+                <li><strong>Key physics/engineering idea:</strong> <em>Insertion loss adds in dB</em> along a cascaded path; <em>crosstalk powers add</em> (usually incoherently) from multiple stages.</li>
+                <li><strong>Governing relations:</strong>
+                  <span class="muted">Loss cascade:</span> <span style="white-space:nowrap;">L<sub>tot</sub>(dB)=ΣL<sub>i</sub></span>;
+                  <span class="muted">Crosstalk sum:</span> <span style="white-space:nowrap;">XT<sub>tot</sub>(dB)=10log<sub>10</sub>(Σ10<sup>XT<sub>i</sub>/10</sup>)</span>.
+                </li>
+                <li><strong>Worst case meaning here:</strong> choose the connection that traverses the <strong>maximum number of 2×2 elements</strong> and assume each stage contributes its worst crosstalk into the selected output.</li>
+                <li><strong>Numeric result:</strong> worst-case path uses <strong>3</strong> cascaded 2×2 switches ⇒ <strong>1.5 dB</strong> insertion loss.</li>
+                <li><strong>Numeric crosstalk result:</strong> three equal crosstalk contributions of −30 dB add to about <strong>−25.2 dB</strong> total.</li>
+                <li><strong>Physical meaning:</strong> −25.2 dB crosstalk ≈ 0.003 of the signal power leaking in (≈0.3%).</li>
+              </ul>
+            </div>
+
+            <div class="callout ok">
+              <h4>Final headline results</h4>
+              <div class="kpi">
+                <div class="box">
+                  <div class="label">Worst-case power loss (insertion loss)</div>
+                  <div class="value">1.5 dB</div>
+                  <div class="note">Cascading 3 stages × 0.5 dB each</div>
+                </div>
+                <div class="box">
+                  <div class="label">Worst-case crosstalk at output</div>
+                  <div class="value">≈ −25.2 dB</div>
+                  <div class="note">Three −30 dB contributions summed in power</div>
+                </div>
+              </div>
+
+              <div class="copybar">
+                <button class="btn" data-copy-target="#finalAnswerText" aria-label="Copy final answer (plain text)">📋 Copy final answer</button>
+                <span class="pill" id="copyStatus" aria-live="polite">Copy buttons produce plain text</span>
+              </div>
+
+              <pre id="finalAnswerText" style="display:none">Worst-case 4×4 switch (built from five 2×2 switches in a 3-stage path):
+Insertion loss = 3×0.5 dB = 1.5 dB.
+Worst-case crosstalk (power-summed, incoherent) = 10 log10(3×10^(−30/10)) ≈ −25.2 dB.</pre>
+            </div>
+          </div>
+        </section>
+
+        <section id="primer">
+          <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+          <div class="grid2">
+            <article class="card">
+              <h3>Core definitions (with units)</h3>
+              <ul>
+                <li><strong>Insertion loss</strong> <span style="white-space:nowrap;">L (dB)</span>: reduction of transmitted power through a device.
+                  <div class="muted">Definition: L(dB)=10log<sub>10</sub>(P<sub>in</sub>/P<sub>out</sub>). (Dimensionless; reported in dB.)</div>
+                </li>
+                <li><strong>Power ratio</strong> <span style="white-space:nowrap;">r</span>: linear fraction <span style="white-space:nowrap;">r=P<sub>out</sub>/P<sub>in</sub></span>.
+                  <div class="muted">Relation: r = 10<sup>−L/10</sup>.</div>
+                </li>
+                <li><strong>Crosstalk</strong> <span style="white-space:nowrap;">XT (dB)</span>: unwanted coupled power relative to the desired signal.
+                  <div class="muted">Common device spec: XT(dB)=10log<sub>10</sub>(P<sub>xt</sub>/P<sub>sig</sub>). Values are usually negative.</div>
+                </li>
+              </ul>
+
+              <div class="callout">
+                <h4>Key intuition</h4>
+                <ul>
+                  <li><strong>dB is logarithmic:</strong> cascading losses is easy: you <em>add</em> dB values.</li>
+                  <li><strong>Crosstalk is a power leak:</strong> multiple independent leaks typically <em>add as powers</em>, not as dB.</li>
+                </ul>
+              </div>
+            </article>
+
+            <article class="card">
+              <h3>Key principles + validity conditions</h3>
+              <ul>
+                <li><strong>Loss in cascaded components:</strong> In linear power ratios, cascades multiply:
+                  <span style="white-space:nowrap;">r<sub>tot</sub>=Π r<sub>i</sub></span>.
+                  In dB this becomes addition:
+                  <span style="white-space:nowrap;">L<sub>tot</sub>=Σ L<sub>i</sub></span>.
+                </li>
+                <li><strong>Crosstalk accumulation:</strong> If crosstalk contributions are <em>incoherent</em> (random phases, broadband signals, or time-varying paths), powers add:
+                  <span style="white-space:nowrap;">(P<sub>xt</sub>)<sub>tot</sub>=Σ P<sub>xt,i</sub></span>.
+                </li>
+                <li><strong>When “powers add” is appropriate:</strong> Typical in telecom links (many channels, scrambling, thermal drift) where phases decorrelate.</li>
+                <li><strong>Limitation:</strong> If the leaked fields were phase-locked and stable, fields could interfere constructively (worse) or destructively (better). Worst-case in product specs often assumes <em>power addition</em> unless coherence is explicitly relevant.</li>
+              </ul>
+
+              <details>
+                <summary>Deeper note: coherent vs incoherent crosstalk</summary>
+                <div class="inner">
+                  <p>
+                    Optical interference depends on <em>field amplitudes</em>, not just powers. If two crosstalk fields arrive
+                    with fixed phase, the combined power can vary between (√P1−√P2)² and (√P1+√P2)².
+                    In most deployed switching fabrics, phase stability is not guaranteed, so specifications and budgets commonly
+                    use <strong>incoherent power-summing</strong> as a practical worst-case.
+                  </p>
+                </div>
+              </details>
+            </article>
+          </div>
+
+          <article class="card">
+            <h3>Common models/approximations and why we use them</h3>
+            <ul>
+              <li><strong>Stage-count model:</strong> Treat the 4×4 as a multistage network; each routed connection traverses a certain number of 2×2 stages. This captures the dominant system-level effects quickly.</li>
+              <li><strong>Uniform component specs:</strong> Each 2×2 has the same loss and crosstalk. This is exactly what the problem states and matches early design budgeting (before detailed Monte Carlo).</li>
+              <li><strong>Equal post-coupling attenuation:</strong> Once crosstalk leaks into the signal path, it experiences the same subsequent losses as the signal, so the <em>ratio</em> at the output is mainly determined by where and how much leakage occurs (not the absolute powers).</li>
+            </ul>
+
+            <div class="grid2">
+              <div class="callout">
+                <h4>Mini intuition example 1 (loss)</h4>
+                <p class="muted" style="margin:0">
+                  Two cascaded devices each with 1 dB loss: total loss is 2 dB. In linear terms,
+                  each transmits 10<sup>−0.1</sup>≈0.794, so total is 0.794²≈0.631 → 10log10(1/0.631)=2 dB.
+                </p>
+              </div>
+              <div class="callout">
+                <h4>Mini intuition example 2 (crosstalk)</h4>
+                <p class="muted" style="margin:0">
+                  Two independent −30 dB leaks: each is 10<sup>−3</sup> of the signal power. Together they make 2×10<sup>−3</sup>,
+                  which in dB is −30 + 10log10(2) ≈ −27.0 dB (less negative → worse).
+                </p>
+              </div>
+            </div>
+
+            <div class="callout warn" style="margin-top:12px">
+              <h4>What to watch for (pitfalls)</h4>
+              <ul>
+                <li><strong>Don’t add crosstalk in dB directly.</strong> Convert to linear power ratios, sum, then convert back.</li>
+                <li><strong>Be clear about “worst-case.”</strong> It usually means the <em>maximum number of stages</em> in the routed path and the <em>largest plausible set of contributors</em> to a given output.</li>
+                <li><strong>Remember sign conventions:</strong> crosstalk is commonly a negative dB number; “worse” means <em>less negative</em> (closer to 0 dB).</li>
+              </ul>
+            </div>
+          </article>
+
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </section>
+
+        <section id="industry">
+          <h2>PART 0B — Industry & Applied Physics Perspective</h2>
+
+          <div class="grid2">
+            <article class="card">
+              <h3>Where this shows up in industry (concrete areas)</h3>
+              <ul>
+                <li><strong>Optical communications networks:</strong> ROADM subsystems, optical cross-connects (OXC), wavelength routing and protection switching.</li>
+                <li><strong>Data centers / HPC:</strong> optical circuit switches for reconfigurable topologies (e.g., rack-to-rack optical fabrics).</li>
+                <li><strong>Photonic integrated circuits (PICs):</strong> MZI-based 2×2 switches building larger N×N routers for LiDAR, sensing, or chip-to-chip links.</li>
+                <li><strong>Test & measurement:</strong> automated fiber switching matrices in labs and production lines.</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>Why engineers care (IE relevance)</h3>
+              <ul>
+                <li><strong>Performance:</strong> insertion loss reduces link margin; crosstalk raises noise floor and can degrade BER/OSNR.</li>
+                <li><strong>Reliability & yield:</strong> stacking many elements amplifies variability; worst-case budgeting is essential for acceptance tests.</li>
+                <li><strong>Cost & manufacturability:</strong> tighter crosstalk specs often increase cost (better isolation, packaging, calibration). Industrial engineering focuses on balancing performance vs. yield and test time.</li>
+                <li><strong>Operations:</strong> network operators set crosstalk and loss limits to maintain service-level guarantees across reconfigurations.</li>
+              </ul>
+            </article>
+          </div>
+
+          <article class="card">
+            <h3>How it’s measured/validated in practice</h3>
+            <ul>
+              <li><strong>Insertion loss:</strong> optical power meter + stabilized laser; often characterized across wavelength and polarization (IL ripple matters).</li>
+              <li><strong>Crosstalk:</strong> inject a strong tone into an “aggressor” port, route a “victim” path, and measure leakage at the victim output using an OSA (optical spectrum analyzer) or coherent receiver.</li>
+              <li><strong>Production testing:</strong> automated switching scripts sweep many states; worst-case metrics become part of go/no-go criteria.</li>
+            </ul>
+
+            <div class="callout">
+              <h4>Design trade-offs & constraints</h4>
+              <ul>
+                <li><strong>More stages</strong> → more flexibility/nonblocking behavior, but higher loss and more crosstalk opportunities.</li>
+                <li><strong>Tolerances:</strong> imperfect couplers, phase errors, thermal drift, and polarization dependence can worsen isolation beyond ideal models.</li>
+                <li><strong>Control complexity:</strong> calibration (thermal tuning) can reduce crosstalk but adds power consumption and control loops.</li>
+              </ul>
+            </div>
+
+            <details>
+              <summary>From lab to product: adapting the ideal model</summary>
+              <div class="inner">
+                <ul>
+                  <li>Early design uses <strong>stage-count + datasheet specs</strong> (like this problem) to set budgets.</li>
+                  <li>Next comes <strong>statistical modeling</strong> (component distributions, correlations, temperature) to predict yield.</li>
+                  <li>Final validation uses <strong>system tests</strong> (BER/OSNR under reconfiguration) because crosstalk interacts with modulation format, filtering, and receiver DSP.</li>
+                </ul>
+              </div>
+            </details>
+          </article>
+
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </section>
+
+        <section id="analysis">
+          <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+          <article class="card">
+            <h3>Restate the problem (clear wording)</h3>
+            <p class="muted" style="margin:0">
+              A 4×4 switch fabric is built using five identical 2×2 switching elements. Each 2×2 introduces
+              an insertion loss of 0.5 dB and has crosstalk of −30 dB. Find the <strong>worst-case</strong>
+              (maximum) overall insertion loss and the worst-case overall crosstalk seen at an output of the 4×4 switch.
+            </p>
+
+            <h3>Given</h3>
+            <ul>
+              <li>Number of 2×2 switches in the 4×4 implementation: <strong>5</strong></li>
+              <li>Per-switch insertion loss: <strong>L<sub>s</sub> = 0.5 dB</strong></li>
+              <li>Per-switch crosstalk: <strong>XT<sub>s</sub> = −30 dB</strong> (i.e., P<sub>xt</sub>/P<sub>sig</sub> = 10<sup>−3</sup>)</li>
+            </ul>
+
+            <h3>Unknowns</h3>
+            <ul>
+              <li>Worst-case overall insertion loss of the 4×4 switch: <strong>L<sub>4×4,wc</sub></strong> (dB)</li>
+              <li>Worst-case overall crosstalk at output: <strong>XT<sub>4×4,wc</sub></strong> (dB)</li>
+            </ul>
+
+            <div class="callout warn">
+              <h4>Assumptions (explicit)</h4>
+              <ul>
+                <li><strong>Multistage path length:</strong> In the common five-2×2 4×4 topology (two first-stage, one middle, two last-stage), any routed connection traverses <strong>3</strong> switching elements.</li>
+                <li><strong>Uniform specs:</strong> every 2×2 has the same loss and crosstalk.</li>
+                <li><strong>Incoherent crosstalk addition:</strong> leakage powers from different stages add (random phases).</li>
+                <li><strong>Worst-case traffic:</strong> assume there exists an aggressor signal that can maximize leakage at each stage relevant to the chosen output path.</li>
+              </ul>
+            </div>
+
+            <h3>Relevant principles (and why)</h3>
+            <ul>
+              <li><strong>dB cascade law:</strong> insertion loss values in dB add along cascaded components → directly applicable.</li>
+              <li><strong>Power-sum crosstalk:</strong> total leakage power is the sum of stage leakages → standard engineering approximation for switch fabrics.</li>
+              <li><strong>Why not detailed field/network analysis:</strong> The problem provides only per-switch scalar specs (loss and crosstalk), not full scattering matrices, so a stage-budget approach is the correct tool.</li>
+            </ul>
+
+            <h3>Possible approaches (compare 2–3)</h3>
+            <div class="grid2">
+              <div class="card">
+                <strong>Approach A — Stage counting + dB/power rules</strong>
+                <ul>
+                  <li><span class="muted">Pros:</span> fast, matches given data, standard in link budgeting.</li>
+                  <li><span class="muted">Cons:</span> ignores coherence and detailed routing constraints.</li>
+                  <li><span class="muted">Best when:</span> early design, worst-case budgeting, datasheet-driven specs.</li>
+                </ul>
+              </div>
+              <div class="card">
+                <strong>Approach B — Full network (S-matrix) analysis</strong>
+                <ul>
+                  <li><span class="muted">Pros:</span> can capture coherent interference and state-dependent isolation.</li>
+                  <li><span class="muted">Cons:</span> requires detailed coupler/phase parameters not provided.</li>
+                  <li><span class="muted">Best when:</span> designing PIC layouts or verifying a specific topology with measured matrices.</li>
+                </ul>
+              </div>
+            </div>
+
+            <p class="muted" style="margin-top:10px">
+              <strong>Chosen approach:</strong> Approach A (stage counting + dB/power rules), because it uses exactly the information provided and matches typical “worst-case” switch-fabric spec calculations.
+            </p>
+          </article>
+
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </section>
+
+        <section id="strategy">
+          <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+          <div class="grid2">
+            <article class="card">
+              <h3>Minimal plan (step-by-step)</h3>
+              <ol style="margin:8px 0 0 18px; padding:0">
+                <li>Identify how many 2×2 switches a signal traverses in the worst-case connection path. <span class="muted">(Topology/stage counting)</span></li>
+                <li>Compute total insertion loss by adding per-switch loss in dB. <span class="muted">(L<sub>tot</sub>=ΣL)</span></li>
+                <li>Convert per-switch crosstalk from dB to linear power ratio. <span class="muted">(x=10<sup>XT/10</sup>)</span></li>
+                <li>Count how many stages can inject crosstalk into the selected output path in worst case. <span class="muted">(Usually equals number of traversed switches)</span></li>
+                <li>Sum the leakage power ratios linearly: x<sub>tot</sub>=Σx. <span class="muted">(Incoherent power sum)</span></li>
+                <li>Convert x<sub>tot</sub> back to dB: XT<sub>tot</sub>=10log<sub>10</sub>(x<sub>tot</sub>). <span class="muted">(Report as negative dB)</span></li>
+                <li>Sanity-check: more stages should worsen (increase) loss and make crosstalk less negative. <span class="muted">(Qualitative check)</span></li>
+              </ol>
+            </article>
+
+            <article class="callout bad">
+              <h4>Common mistakes (quick tips)</h4>
+              <ul>
+                <li><strong>Wrong:</strong> −30 dB × 3 = −90 dB. <span class="muted">(That would be multiplying ratios, not summing independent leaks.)</span></li>
+                <li><strong>Right:</strong> Convert −30 dB → 10<sup>−3</sup>, sum three times → 3×10<sup>−3</sup>, then convert back.</li>
+                <li>Don’t forget: “worse crosstalk” means <strong>closer to 0 dB</strong> (less negative).</li>
+              </ul>
+            </article>
+          </div>
+
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </section>
+
+        <section id="solution">
+          <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+          <article class="card">
+            <h3>Qualitative expectation (before calculating)</h3>
+            <ul>
+              <li><strong>Loss:</strong> Cascading more switches must increase total insertion loss. If a path uses a few stages, expect loss of a few × 0.5 dB.</li>
+              <li><strong>Crosstalk:</strong> Each stage can leak a tiny fraction of power into the desired channel. Multiple independent leaks should add up, making the total crosstalk <em>less negative</em> than −30 dB.</li>
+            </ul>
+
+            <h3>Step 1 — How many 2×2 switches are in a worst-case path?</h3>
+            <p class="muted">
+              The statement “a 4×4 switch may be implemented by use of five 2×2 switches” commonly refers to a 3-stage structure:
+              two 2×2 elements on the input side, one in the middle, and two on the output side (2 + 1 + 2 = 5).
+              Any end-to-end connection must pass through one input-stage 2×2, then the middle 2×2, then one output-stage 2×2:
+            </p>
+            <div class="callout">
+              <h4>Stage count used for worst-case path</h4>
+              <p style="margin:0" class="muted"><strong>N<sub>path</sub> = 3</strong> cascaded 2×2 switches.</p>
+            </div>
+
+            <h3>Step 2 — Worst-case insertion loss (dB adds)</h3>
+            <p class="muted">
+              Let <strong>L<sub>s</sub></strong> be the insertion loss (dB) of one 2×2 switch, and <strong>N<sub>path</sub></strong> the number of switches along the route.
+              For cascaded components, insertion losses add:
+            </p>
+
+            <div class="equation" id="eqLoss">
+              <pre>L_total (dB) = Σ L_i  →  L_4×4,wc = N_path · L_s</pre>
+            </div>
+
+            <div class="copybar">
+              <button class="btn" data-copy-target="#eqLoss pre" aria-label="Copy key equation for loss">📋 Copy key equation</button>
+              <span class="pill">Loss in dB adds along the path</span>
+            </div>
+
+            <p class="muted">
+              Substitute values:
+              <strong>N<sub>path</sub>=3</strong>, <strong>L<sub>s</sub>=0.5 dB</strong>.
+            </p>
+
+            <div class="equation">
+              <pre>L_4×4,wc = 3 × 0.5 dB = 1.5 dB</pre>
+            </div>
+
+            <h3>Step 3 — Worst-case crosstalk (convert to linear, sum, convert back)</h3>
+            <p class="muted">
+              Let <strong>XT<sub>s</sub></strong> be per-switch crosstalk in dB defined by:
+              XT(dB)=10log<sub>10</sub>(P<sub>xt</sub>/P<sub>sig</sub>).
+              Convert to a linear power ratio <strong>x</strong>:
+            </p>
+
+            <div class="equation" id="eqXTlin">
+              <pre>x_s = P_xt / P_sig = 10^(XT_s/10)</pre>
+            </div>
+
+            <div class="copybar">
+              <button class="btn" data-copy-target="#eqXTlin pre" aria-label="Copy key equation for crosstalk linear conversion">📋 Copy key equation</button>
+              <span class="pill">Always sum crosstalk in linear power</span>
+            </div>
+
+            <p class="muted">
+              With XT<sub>s</sub>= −30 dB:
+            </p>
+            <div class="equation">
+              <pre>x_s = 10^(−30/10) = 10^(−3) = 0.001</pre>
+            </div>
+
+            <p class="muted">
+              Worst case assumes each of the <strong>N<sub>path</sub>=3</strong> switches along the route can inject a leakage component into the selected output path.
+              If these leakage powers are independent, the total leakage ratio is:
+            </p>
+
+            <div class="equation" id="eqXTsum">
+              <pre>x_total = Σ x_i = N_path · x_s
+XT_total(dB) = 10 log10(x_total)</pre>
+            </div>
+
+            <div class="copybar">
+              <button class="btn" data-copy-target="#eqXTsum pre" aria-label="Copy key equations for crosstalk summation">📋 Copy key equations</button>
+              <span class="pill">Power-sum then convert to dB</span>
+            </div>
+
+            <p class="muted">Compute:</p>
+            <div class="equation">
+              <pre>x_total = 3 × 0.001 = 0.003
+XT_4×4,wc = 10 log10(0.003)
+          = 10 [log10(3) + log10(10^−3)]
+          = 10 log10(3) − 30
+          ≈ 4.77 − 30
+          ≈ −25.23 dB</pre>
+            </div>
+
+            <div class="final">
+              <h3>✅ Boxed Final Answer</h3>
+              <div class="kpi">
+                <div class="box">
+                  <div class="label">Worst-case insertion loss</div>
+                  <div class="value">L<sub>4×4,wc</sub> = 1.5 dB</div>
+                  <div class="note">Assuming a 3-switch path through the 5-element 4×4 fabric</div>
+                </div>
+                <div class="box">
+                  <div class="label">Worst-case crosstalk</div>
+                  <div class="value">XT<sub>4×4,wc</sub> ≈ −25.2 dB</div>
+                  <div class="note">XT worsens from −30 dB because 3 contributions add in power</div>
+                </div>
+              </div>
+
+              <details>
+                <summary>Sanity checks (quick but important)</summary>
+                <div class="inner">
+                  <ul>
+                    <li><strong>Units:</strong> dB is dimensionless; conversions use base-10 logs (consistent).</li>
+                    <li><strong>Limiting case:</strong> If N<sub>path</sub>=1, results reduce to 0.5 dB loss and −30 dB crosstalk (as expected).</li>
+                    <li><strong>Trend:</strong> Increasing the number of stages increases loss linearly in dB and makes crosstalk less negative by 10log10(N).</li>
+                    <li><strong>Physical meaning:</strong> −25.2 dB ≈ 0.003 → about 0.3% of signal power level leaking into the victim channel (worst-case approximation).</li>
+                  </ul>
+                </div>
+              </details>
+            </div>
+          </article>
+
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </section>
+
+        <section id="deeper">
+          <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+          <div class="grid2">
+            <article class="card">
+              <h3>Re-interpret the formulas (what controls what)</h3>
+              <ul>
+                <li><strong>Loss:</strong> L<sub>tot</sub>=N·L<sub>s</sub>.
+                  <span class="muted">Every added stage consumes link budget directly.</span>
+                </li>
+                <li><strong>Crosstalk:</strong> XT<sub>tot</sub>=XT<sub>s</sub>+10log10(N) (for equal stages, incoherent sum).
+                  <span class="muted">Each doubling of stages worsens crosstalk by ≈3 dB.</span>
+                </li>
+              </ul>
+
+              <div class="callout">
+                <h4>Practical “rule of thumb”</h4>
+                <p class="muted" style="margin:0">
+                  If each stage has the same crosstalk XT<sub>s</sub>, then N stages give:
+                  <strong>XT<sub>tot</sub> ≈ XT<sub>s</sub> + 10log10(N)</strong>.
+                  This is fast for engineering budgeting.
+                </p>
+              </div>
+            </article>
+
+            <article class="card">
+              <h3>Parameter dependence (qualitative)</h3>
+              <ul>
+                <li><strong>Increase L<sub>s</sub>:</strong> output power drops exponentially in linear units, but <em>linearly</em> in dB budget.</li>
+                <li><strong>Increase N:</strong> loss increases by L<sub>s</sub> per added stage; crosstalk worsens slowly (logarithmically) by 10log10(N).</li>
+                <li><strong>Improve XT<sub>s</sub> by 10 dB:</strong> XT<sub>tot</sub> improves by ~10 dB too (dominant effect vs stage count).</li>
+              </ul>
+
+              <details>
+                <summary>Alternative derivation idea (brief)</summary>
+                <div class="inner">
+                  <p>
+                    Work entirely in linear power ratios:
+                    for loss, multiply transmission factors r = 10<sup>−L/10</sup>; for crosstalk,
+                    compute leakage powers at each stage relative to local signal power, propagate both through remaining losses,
+                    and observe that (under equal downstream attenuation) the output ratio equals the summed local ratios.
+                    Converting to dB at the end recovers the compact expressions used above.
+                  </p>
+                </div>
+              </details>
+            </article>
+          </div>
+
+          <article class="card">
+            <h3>Concept check (self-test with answers)</h3>
+            <ul>
+              <li><strong>Q:</strong> If the per-switch loss were 1 dB instead of 0.5 dB, what would the worst-case 4×4 loss be?<br>
+                  <strong>A:</strong> 3×1 dB = 3 dB.</li>
+              <li><strong>Q:</strong> If there were 4 equal crosstalk contributors at −30 dB, what is total crosstalk?<br>
+                  <strong>A:</strong> −30 + 10log10(4) ≈ −30 + 6.02 = −24.0 dB.</li>
+              <li><strong>Q:</strong> Why is −24 dB “worse” than −30 dB?<br>
+                  <strong>A:</strong> Because P<sub>xt</sub>/P<sub>sig</sub> is larger (closer to 0 dB means more leakage).</li>
+              <li><strong>Q:</strong> What engineering change most directly improves crosstalk: fewer stages or better per-stage isolation?<br>
+                  <strong>A:</strong> Usually better per-stage isolation, because crosstalk depends strongly on XT<sub>s</sub> and only logarithmically on N.</li>
+            </ul>
+          </article>
+
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </section>
+
+        <section id="plot">
+          <h2>PART 5 — Optional Plot Guide</h2>
+          <div class="callout">
+            <h4>No plot included (and why)</h4>
+            <p class="muted" style="margin:0">
+              This problem is a direct, small numeric budget calculation with a single stage count (N=3). A plot would add little learning value here because there is no parameter sweep requested.
+              The key takeaway is the <strong>add-in-dB</strong> rule for loss and the <strong>power-sum</strong> rule for crosstalk.
+            </p>
+          </div>
+          <a class="backtop" href="#top">↑ Back to top</a>
+        </section>
+
+        <footer>
+          <strong>Note:</strong> If your course/text uses a different 4×4 topology where a routed path traverses a different number of 2×2 elements, replace
+          <span style="white-space:nowrap;">N<sub>path</sub></span> accordingly. The method (loss adds in dB; crosstalk sums in linear power) remains the same.
+        </footer>
+      </div>
     </div>
   </main>
+
+  <script>
+    (function(){
+      function getTextFromTarget(sel){
+        const el = document.querySelector(sel);
+        if(!el) return "";
+        return (el.innerText || el.textContent || "").trim();
+      }
+
+      async function copyText(text){
+        if(!text) return false;
+        try{
+          await navigator.clipboard.writeText(text);
+          return true;
+        }catch(e){
+          try{
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.setAttribute("readonly","");
+            ta.style.position = "fixed";
+            ta.style.left = "-9999px";
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+            return true;
+          }catch(e2){
+            return false;
+          }
+        }
+      }
+
+      function setStatus(msg, ok){
+        const s = document.getElementById("copyStatus");
+        if(!s) return;
+        s.textContent = msg;
+        s.style.borderColor = ok ? "rgba(134,239,172,.35)" : "rgba(251,113,133,.35)";
+        s.style.color = ok ? "rgba(210,255,230,.92)" : "rgba(255,210,220,.92)";
+        s.style.background = ok ? "rgba(134,239,172,.12)" : "rgba(251,113,133,.12)";
+        window.clearTimeout(setStatus._t);
+        setStatus._t = window.setTimeout(function(){
+          s.textContent = "Copy buttons produce plain text";
+          s.style.borderColor = "rgba(255,255,255,.10)";
+          s.style.color = "var(--muted)";
+          s.style.background = "rgba(255,255,255,.04)";
+        }, 1700);
+      }
+
+      document.addEventListener("click", async function(ev){
+        const btn = ev.target.closest("[data-copy-target]");
+        if(!btn) return;
+        const target = btn.getAttribute("data-copy-target");
+        const text = getTextFromTarget(target);
+        const ok = await copyText(text);
+        setStatus(ok ? "Copied ✔" : "Copy failed ✖", ok);
+      });
+
+      document.querySelectorAll('.toc a[href^="#"]').forEach(function(a){
+        a.addEventListener("click", function(e){
+          const id = a.getAttribute("href");
+          const el = document.querySelector(id);
+          if(!el) return;
+          e.preventDefault();
+          el.scrollIntoView({behavior:"smooth", block:"start"});
+          history.replaceState(null, "", id);
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
