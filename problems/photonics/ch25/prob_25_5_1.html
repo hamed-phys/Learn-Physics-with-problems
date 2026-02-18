@@ -1,65 +1,1178 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>25.5-1 — Number of Nodes in a Broadcast-and-Select WDM Network</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Broadcast-and-Select WDM Network: Maximum Number of Nodes (Power Budget)</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b0d12;
+      --panel:#111520;
+      --card:#141a27;
+      --text:#e9eefc;
+      --muted:#aab3cf;
+      --faint:#7f8ab0;
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.16);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#86efac;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 10px 35px rgba(0,0,0,.45);
+      --radius:18px;
+      --radius2:14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 800px at 15% 10%, rgba(125,211,252,.10), transparent 65%),
+        radial-gradient(900px 700px at 85% 0%, rgba(167,139,250,.10), transparent 60%),
+        linear-gradient(180deg, #070910, #0b0d12 40%, #070910);
+      color:var(--text);
+      line-height:1.6;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
+
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    header{ padding:28px 18px 8px; }
+    .wrap{ max-width:1180px; margin:0 auto; padding:0 18px 50px; }
+
+    .hero{
+      display:grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap:18px;
+      align-items:stretch;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+    @media (max-width: 980px){ .hero{grid-template-columns:1fr} }
+
+    .titleCard{
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:20px 18px 16px;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
-      margin-top: 10px;
-      font-size: 0.95rem;
-      color: var(--muted);
+    .titleCard:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(700px 220px at 40% -20%, rgba(125,211,252,.18), transparent 65%),
+                  radial-gradient(600px 220px at 90% 0%, rgba(167,139,250,.16), transparent 60%);
+      pointer-events:none;
+      filter:saturate(1.2);
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .titleCard > *{position:relative}
+
+    h1{
+      margin:0 0 8px;
+      font-size: clamp(1.35rem, 2.5vw, 2.05rem);
+      line-height:1.2;
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size: clamp(.98rem, 1.25vw, 1.06rem);
+    }
+
+    .meta{
+      margin-top:14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .pill{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      padding:7px 10px;
+      border-radius:999px;
+      color:var(--muted);
+      font-size:.88rem;
+      display:flex; gap:8px; align-items:center;
+    }
+    .dot{
+      width:9px; height:9px; border-radius:50%;
+      background:var(--accent);
+      box-shadow:0 0 0 3px rgba(125,211,252,.12);
+    }
+    .dot.purple{background:var(--accent2); box-shadow:0 0 0 3px rgba(167,139,250,.12)}
+    .dot.green{background:var(--good); box-shadow:0 0 0 3px rgba(134,239,172,.12)}
+    .dot.yellow{background:var(--warn); box-shadow:0 0 0 3px rgba(251,191,36,.12)}
+
+    .toc{
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:14px 14px;
+      box-shadow:var(--shadow);
+      position:sticky;
+      top:12px;
+      align-self:start;
+      max-height: calc(100vh - 24px);
+      overflow:auto;
+    }
+    .toc h2{
+      margin:0 0 10px;
+      font-size:1rem;
+      color:var(--text);
+      letter-spacing:.2px;
+    }
+    .toc ol{
+      margin:0; padding-left:18px;
+      color:var(--muted);
+      font-size:.93rem;
+    }
+    .toc li{margin:7px 0}
+    .toc a{color:var(--muted)}
+    .toc a:hover{color:var(--text); text-decoration:none}
+    .toc .toplink{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      margin-top:10px;
+      font-size:.92rem;
+      color:var(--accent);
+    }
+
+    main{ margin-top:12px; }
+
+    section{
+      margin-top:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+    section h2{
+      margin:0 0 10px;
+      font-size:1.15rem;
+      letter-spacing:.2px;
+    }
+    section h3{
+      margin:14px 0 8px;
+      font-size:1.03rem;
+      color:var(--text);
+    }
+    p{margin:10px 0}
+    ul,ol{margin:10px 0; color:var(--muted)}
+    li{margin:6px 0}
+
+    .grid2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 900px){ .grid2{grid-template-columns:1fr} }
+
+    .callout{
+      border:1px solid var(--line2);
+      background:rgba(255,255,255,.03);
+      border-radius:var(--radius2);
+      padding:12px 12px 10px;
+      position:relative;
+      overflow:hidden;
+    }
+    .callout:before{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(420px 140px at 10% 0%, rgba(125,211,252,.10), transparent 60%);
+      pointer-events:none;
+    }
+    .callout > *{position:relative}
+    .callout.good:before{background: radial-gradient(420px 140px at 10% 0%, rgba(134,239,172,.10), transparent 60%)}
+    .callout.warn:before{background: radial-gradient(420px 140px at 10% 0%, rgba(251,191,36,.10), transparent 60%)}
+    .callout.bad:before{background: radial-gradient(420px 140px at 10% 0%, rgba(251,113,133,.10), transparent 60%)}
+
+    .labelRow{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px; flex-wrap:wrap;
+      margin-bottom:6px;
+    }
+    .tag{
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:.84rem;
+      color:var(--muted);
+      border:1px solid var(--line);
+      padding:5px 9px;
+      border-radius:999px;
+      background:rgba(0,0,0,.18);
+    }
+    .tag b{color:var(--text); font-weight:650}
+    .kbd{
+      font-family:var(--mono);
+      font-size:.86rem;
+      padding:.15rem .35rem;
+      border-radius:8px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.25);
+      color:var(--text);
+    }
+
+    .eqBox{
+      border:1px solid var(--line2);
+      background:rgba(0,0,0,.22);
+      border-radius:var(--radius2);
+      padding:12px 12px 10px;
+      margin:10px 0;
+    }
+    .eq{
+      font-family:var(--mono);
+      font-size:.95rem;
+      color:#f1f5ff;
+      white-space:pre-wrap;
+      word-break:break-word;
+      margin:8px 0 0;
+    }
+    .btnRow{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:8px;
+    }
+    button.copyBtn{
+      appearance:none;
+      border:1px solid var(--line2);
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:650;
+      font-size:.9rem;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+    button.copyBtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,.35);
+      background:linear-gradient(180deg, rgba(125,211,252,.12), rgba(255,255,255,.03));
+    }
+    button.copyBtn:active{transform: translateY(0px) scale(.99)}
+    .toast{
+      margin-left:auto;
+      color:var(--muted);
+      font-size:.9rem;
+      min-height:1.2em;
+    }
+
+    details{
+      border:1px dashed rgba(255,255,255,.18);
+      background:rgba(255,255,255,.02);
+      border-radius:var(--radius2);
+      padding:10px 12px;
+      margin:12px 0;
+    }
+    summary{
+      cursor:pointer;
+      color:var(--text);
+      font-weight:700;
+      letter-spacing:.1px;
+    }
+    details[open] summary{margin-bottom:8px}
+    .small{font-size:.94rem; color:var(--muted)}
+    .muted{color:var(--muted)}
+    .fine{color:var(--faint)}
+    .hr{ height:1px; background:var(--line); margin:14px 0; }
+
+    .final{
+      border:1px solid rgba(134,239,172,.35);
+      background:linear-gradient(180deg, rgba(134,239,172,.10), rgba(0,0,0,.18));
+      border-radius:var(--radius);
+      padding:14px;
+      margin-top:12px;
+    }
+    .final h3{margin:0 0 6px}
+    .final .eq{font-size:1.02rem}
+    .final .tag{border-color: rgba(134,239,172,.25)}
+
+    figure{
+      margin:14px 0 0;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:rgba(0,0,0,.18);
+      overflow:hidden;
+    }
+    figcaption{
+      padding:10px 12px;
+      border-top:1px solid var(--line);
+      color:var(--muted);
+      font-size:.93rem;
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.08));
+    }
+    @media (max-width:560px){ canvas{height:280px} }
+
+    .backTop{
+      display:inline-flex; gap:8px; align-items:center;
+      margin-top:12px;
+      font-weight:700;
+    }
+
+    footer{
+      margin-top:18px;
+      color:var(--muted);
+      font-size:.92rem;
+      padding:14px 18px 38px;
+    }
+
+    @media (prefers-reduced-motion: no-preference){
+      section{ animation: fadeUp .35s ease both; }
+      @keyframes fadeUp{
+        from{opacity:0; transform: translateY(6px)}
+        to{opacity:1; transform: translateY(0)}
+      }
+    }
+
+    @media print{
+      :root{--bg:#fff; --text:#000; --muted:#111; --faint:#333; --panel:#fff; --card:#fff; --line: #bbb; --line2:#999}
+      body{background:#fff; color:#000}
+      header, .toc, .btnRow, .toast, .backTop{display:none !important}
+      section{box-shadow:none; border-color:#bbb; page-break-inside:avoid}
+      figure{page-break-inside:avoid}
+      a{color:#000; text-decoration:underline}
+      canvas{border-top:1px solid #bbb}
     }
   </style>
 </head>
-<body>
+
+<body id="top">
   <header>
-    <div class="box">
-      <h1>25.5-1 — Number of Nodes in a Broadcast-and-Select WDM Network</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch25/prob_25_5_1.html</code></p>
+    <div class="wrap">
+      <div class="hero">
+        <div class="titleCard">
+          <h1>Maximum Number of Nodes in a Broadcast-and-Select WDM Star Network (Power Budget)</h1>
+          <p class="subtitle">
+            A link-budget problem: how many users can share a star coupler before optical splitting loss pushes received power below sensitivity (with margin).
+          </p>
+          <div class="meta">
+            <div class="pill"><span class="dot"></span><span>Topic: Optical power budgets in WDM LANs</span></div>
+            <div class="pill"><span class="dot purple"></span><span>Method: dB accounting + splitter scaling <span class="kbd">10·log10(N)</span></span></div>
+            <div class="pill"><span class="dot green"></span><span>Result: numeric <b>N<sub>max</sub></b> (capacity bound)</span></div>
+            <div class="pill"><span class="dot yellow"></span><span>Engineering lens: margin, connectors, excess loss, scalability</span></div>
+          </div>
+        </div>
+
+        <nav class="toc" aria-label="Table of contents">
+          <h2>Mini Table of Contents</h2>
+          <ol>
+            <li><a href="#quick">Quick Summary</a></li>
+            <li><a href="#primer">PART 0 — Concept Primer</a></li>
+            <li><a href="#industry">PART 0B — Industry &amp; Applied Physics Perspective</a></li>
+            <li><a href="#analysis">PART 1 — Problem Analysis</a></li>
+            <li><a href="#strategy">PART 2 — Strategy &amp; Tips</a></li>
+            <li><a href="#solution">PART 3 — Full Solution</a></li>
+            <li><a href="#deeper">PART 4 — Deeper Understanding</a></li>
+            <li><a href="#plotguide">PART 5 — Optional Plot Guide</a></li>
+          </ol>
+          <a class="toplink" href="#top" title="Back to top">↑ Back to top</a>
+        </nav>
+      </div>
     </div>
   </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
-    </div>
+  <main class="wrap">
+    <section id="quick">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><b>What this is:</b> Find the <b>maximum number of nodes</b> <span class="kbd">N</span> in a broadcast-and-select WDM LAN using an <b>optical star coupler</b>, limited by <b>received optical power</b>.</li>
+        <li><b>Key physics idea:</b> Power is reduced by <b>fiber attenuation</b>, <b>connector insertion loss</b>, and (most importantly) <b>star splitting loss</b> that grows like <span class="kbd">10·log10(N)</span> in dB.</li>
+        <li><b>Governing equation:</b> <span class="kbd">P_rx(dBm) = P_tx(dBm) − (fixed losses) − 10·log10(N)</span>.</li>
+        <li><b>Margin rule:</b> With a safety margin, the receiver requires <span class="kbd">P_rx ≥ P_sens + margin</span>.</li>
+        <li><b>Given numbers:</b> <span class="kbd">P_tx = 1 mW = 0 dBm</span>, sensitivity <span class="kbd">−35 dBm</span>, margin <span class="kbd">5 dB</span> ⇒ required <span class="kbd">−30 dBm</span>.</li>
+        <li><b>Result type:</b> <b>Numeric capacity bound</b> (<span class="kbd">N_max</span>)—how many outputs the star can support before the received power crosses the threshold.</li>
+        <li><b>Main computed result (conservative connector counting):</b> <b>N<sub>max</sub> ≈ 150 nodes</b>.</li>
+        <li><b>Physical meaning:</b> Every doubling of nodes costs ~<span class="kbd">3 dB</span> more splitting loss, so scaling is inherently logarithmic in power budget.</li>
+      </ul>
+    </section>
+
+    <section id="primer">
+      <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+      <div class="grid2">
+        <article class="callout">
+          <div class="labelRow">
+            <span class="tag"><b>Core definitions</b> (symbols &amp; units)</span>
+          </div>
+          <ul>
+            <li><b>P</b>: optical power (W). In telecom we often use <b>dBm</b>: <span class="kbd">P(dBm) = 10·log10(P/1 mW)</span>.</li>
+            <li><b>Loss</b> (dB): multiplicative power reduction expressed additively: if power ratio is <span class="kbd">P_out/P_in</span>, loss = <span class="kbd">−10·log10(P_out/P_in)</span>.</li>
+            <li><b>α</b>: fiber attenuation coefficient (dB/km). Fiber loss over length <b>L</b> is <span class="kbd">α·L</span>.</li>
+            <li><b>Insertion loss</b>: extra loss from connectors/splices/couplers (dB), added directly in a budget.</li>
+            <li><b>Receiver sensitivity</b> <b>P_sens</b> (dBm): minimum received power needed to meet a specified BER.</li>
+            <li><b>Safety margin</b> (dB): engineering headroom to account for aging, temperature, contamination, repair variability, etc.</li>
+            <li><b>Splitter / star</b> with <b>N</b> outputs: ideal splitting gives each output <span class="kbd">1/N</span> of the input power ⇒ splitting loss <span class="kbd">10·log10(N)</span> dB.</li>
+          </ul>
+        </article>
+
+        <article class="callout">
+          <div class="labelRow">
+            <span class="tag"><b>Physical meaning</b> (intuition)</span>
+          </div>
+          <ul>
+            <li>dB arithmetic turns cascaded components into a <b>simple sum</b> of losses—perfect for engineering link budgets.</li>
+            <li>Fiber loss is “distance tax.” Connector/coupler losses are “interface tax.” Splitters impose a “sharing tax.”</li>
+            <li>The star’s sharing tax grows slowly in linear terms but <b>linearly in dB</b>: doubling users costs ~3 dB.</li>
+            <li>The sensitivity is set by <b>photodetector + noise + required BER</b>. Margin ensures the design still works after real-world degradation.</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="callout warn" style="margin-top:14px;">
+        <div class="labelRow">
+          <span class="tag"><b>Key laws / models</b></span>
+        </div>
+        <ul>
+          <li><b>Link budget (steady-state):</b> In dB/dBm, gains and losses add: <span class="kbd">P_rx = P_tx − Σ(losses) + Σ(gains)</span>.</li>
+          <li><b>Validity conditions:</b> Linear optical regime (no saturation), passive components, single-path power accounting, and sensitivity defined for the modulation format/bitrate implied by the problem.</li>
+          <li><b>Splitter model:</b> Equal power division + a specified <b>excess loss</b> (non-ideality) added on top of ideal splitting.</li>
+        </ul>
+      </div>
+
+      <details>
+        <summary>Mini intuition examples (quick checks)</summary>
+        <ul>
+          <li><b>Example 1:</b> If <span class="kbd">N = 8</span>, ideal splitting loss is <span class="kbd">10·log10(8) ≈ 9 dB</span>.</li>
+          <li><b>Example 2:</b> Doubling nodes from 64 to 128 increases splitting loss by <span class="kbd">10·log10(2) ≈ 3 dB</span>.</li>
+          <li><b>Example 3:</b> A connector loss of 1 dB is ~20% power loss; several connectors add up quickly.</li>
+        </ul>
+      </details>
+
+      <div class="callout bad">
+        <div class="labelRow">
+          <span class="tag"><b>What to watch for</b> (pitfalls)</span>
+        </div>
+        <ul>
+          <li><b>Counting path length:</b> Often <b>two fiber segments</b>: Tx→star and star→Rx.</li>
+          <li><b>Counting connectors:</b> Clarify whether loss is per connector or per link segment.</li>
+          <li><b>Splitting vs excess loss:</b> Use both: <span class="kbd">10·log10(N)</span> + given excess dB.</li>
+          <li><b>Margin sign:</b> Required power is <span class="kbd">P_sens + margin</span> (less negative).</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="industry">
+      <h2>PART 0B — Industry &amp; Applied Physics Perspective</h2>
+
+      <div class="grid2">
+        <article class="callout">
+          <div class="labelRow"><span class="tag"><b>Where this appears</b></span></div>
+          <ul>
+            <li><b>Enterprise/campus LANs:</b> passive hubs or star distribution in fiber backbones.</li>
+            <li><b>Data-center optical fabrics:</b> passive couplers distributing light to many endpoints.</li>
+            <li><b>Access networks (PON-like):</b> the same splitter physics limits user count without amplification.</li>
+            <li><b>Industrial sensing networks:</b> distributing optical power to multiple sensor nodes.</li>
+          </ul>
+        </article>
+
+        <article class="callout">
+          <div class="labelRow"><span class="tag"><b>Why engineers care</b></span></div>
+          <ul>
+            <li><b>Performance:</b> received power sets BER and operational margin.</li>
+            <li><b>Reliability:</b> dirt/aging/repairs add loss—margin prevents outages.</li>
+            <li><b>Cost:</b> higher N may force costlier optics (higher-power lasers, better receivers, amplification).</li>
+            <li><b>Scalability:</b> splitting loss scales with N; topology choice is a business + physics decision.</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="callout warn" style="margin-top:14px;">
+        <div class="labelRow"><span class="tag"><b>Measurement &amp; validation</b></span></div>
+        <ul>
+          <li><b>Power meter</b> checks insertion losses and end-to-end received power.</li>
+          <li><b>OTDR</b> locates loss events and verifies fiber attenuation.</li>
+          <li><b>BER/eye tests</b> confirm that sensitivity and margin are met in real conditions.</li>
+        </ul>
+      </div>
+
+      <details>
+        <summary>From lab to product: adapting the ideal model</summary>
+        <ul>
+          <li>Real stars have excess loss variation, split-ratio imbalance, polarization/wavelength dependence.</li>
+          <li>Budgets are often statistical (mean + k·σ), not just worst-case single numbers.</li>
+          <li>Margin may be allocated per subsystem (connectors, fiber, passive plant, aging).</li>
+        </ul>
+      </details>
+    </section>
+
+    <section id="analysis">
+      <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+      <article>
+        <h3>Rewrite the problem</h3>
+        <p class="muted">
+          Each node transmits 1 mW into a star coupler. The signal travels from a transmitting node to the star (2 km),
+          then from the star to a receiving node (2 km). Along the way there is fiber attenuation, connector loss, and
+          star excess loss. The star also splits power equally among N outputs. Find the maximum N such that the received
+          power stays above receiver sensitivity with a 5 dB safety margin.
+        </p>
+
+        <div class="grid2">
+          <div class="callout">
+            <div class="labelRow"><span class="tag"><b>Given</b></span></div>
+            <ul>
+              <li><span class="kbd">P_tx = 1 mW = 0 dBm</span></li>
+              <li><span class="kbd">L = 2 km</span> (per node–star fiber)</li>
+              <li><span class="kbd">α = 0.3 dB/km</span></li>
+              <li><span class="kbd">Loss_connector = 1 dB</span> (counting assumption needed)</li>
+              <li>Star: equal split + <span class="kbd">3 dB</span> excess loss</li>
+              <li><span class="kbd">P_sens = −35 dBm</span></li>
+              <li><span class="kbd">M = 5 dB</span></li>
+            </ul>
+          </div>
+
+          <div class="callout">
+            <div class="labelRow"><span class="tag"><b>Unknown</b></span></div>
+            <ul>
+              <li><span class="kbd">N_max</span></li>
+              <li>End-to-end fixed loss excluding splitting</li>
+              <li>Feasibility inequality <span class="kbd">P_rx(N) ≥ P_sens + M</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout bad" style="margin-top:14px;">
+          <div class="labelRow"><span class="tag"><b>Assumptions</b></span></div>
+          <ul>
+            <li>Two fiber segments: node→star and star→node (total 4 km).</li>
+            <li>Uniform splitting among all star outputs.</li>
+            <li>Conservative connector counting: 4 connectors in the end-to-end path (each 1 dB). Alternative given later.</li>
+          </ul>
+        </div>
+
+        <h3>Approaches</h3>
+        <ol>
+          <li><b>dB link budget (best):</b> add losses, solve for splitting allowance.</li>
+          <li><b>Linear power ratio:</b> multiply ratios; equivalent but easier to make arithmetic mistakes.</li>
+          <li><b>Design allocation:</b> margin split across subsystems; useful in product design, overkill here.</li>
+        </ol>
+      </article>
+    </section>
+
+    <section id="strategy">
+      <h2>PART 2 — Strategy &amp; Tips (Roadmap Only)</h2>
+
+      <article class="callout">
+        <div class="labelRow"><span class="tag"><b>Plan</b></span></div>
+        <ol>
+          <li>Compute <span class="kbd">P_tx</span> in dBm.</li>
+          <li>Compute required <span class="kbd">P_req = P_sens + M</span>.</li>
+          <li>Compute total fiber loss for <span class="kbd">L_total = 2L</span>.</li>
+          <li>Add connector and star excess losses to form <span class="kbd">Loss_fixed</span>.</li>
+          <li>Write <span class="kbd">P_rx(N) = P_tx − Loss_fixed − 10·log10(N)</span>.</li>
+          <li>Solve <span class="kbd">P_rx(N) ≥ P_req</span> for <span class="kbd">N</span>.</li>
+          <li>Round down to the nearest practical integer.</li>
+        </ol>
+      </article>
+
+      <div class="callout bad" style="margin-top:14px;">
+        <div class="labelRow"><span class="tag"><b>Common mistakes</b></span></div>
+        <ul>
+          <li>Using only 2 km instead of 4 km end-to-end.</li>
+          <li>Confusing star excess loss with splitting loss.</li>
+          <li>Using 20·log10 for power splitting (should be 10·log10).</li>
+          <li>Applying margin with wrong sign.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="solution">
+      <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+      <article>
+        <h3>Physical intuition first</h3>
+        <p class="muted">
+          Fiber loss is small here (only a few dB over a few km). The dominant scaling is the star splitting:
+          more nodes means each gets a smaller fraction of the transmitted power, reducing <span class="kbd">P_rx</span>.
+          The budget leftover after fixed losses sets how many dB we can “spend” on splitting, which directly sets <span class="kbd">N_max</span>.
+        </p>
+
+        <div class="callout">
+          <div class="labelRow"><span class="tag"><b>1) Transmitter power</b></span></div>
+          <div class="eqBox">
+            <div class="labelRow">
+              <span class="tag"><b>Key equation</b></span>
+              <div class="btnRow" style="margin:0;">
+                <button class="copyBtn" data-copy="P(dBm) = 10·log10(P / 1 mW)">Copy equation</button>
+              </div>
+              <div class="toast" aria-live="polite"></div>
+            </div>
+            <div class="eq">P_tx = 1 mW = 0 dBm</div>
+          </div>
+        </div>
+
+        <div class="callout" style="margin-top:14px;">
+          <div class="labelRow"><span class="tag"><b>2) Required received power (with margin)</b></span></div>
+          <p class="muted">
+            The receiver sensitivity is −35 dBm. A 5 dB safety margin means the design target is 5 dB higher power:
+          </p>
+          <div class="eqBox">
+            <div class="labelRow">
+              <span class="tag"><b>Key equation</b></span>
+              <div class="btnRow" style="margin:0;">
+                <button class="copyBtn" data-copy="P_req(dBm) = P_sens(dBm) + M(dB)">Copy equation</button>
+              </div>
+              <div class="toast" aria-live="polite"></div>
+            </div>
+            <div class="eq">P_req = −35 dBm + 5 dB = −30 dBm</div>
+          </div>
+        </div>
+
+        <div class="callout warn" style="margin-top:14px;">
+          <div class="labelRow"><span class="tag"><b>3) Fixed losses (fiber + connectors + star excess)</b></span></div>
+
+          <p class="muted">
+            End-to-end fiber length is two segments: Tx→star and star→Rx.
+          </p>
+          <div class="eqBox">
+            <div class="labelRow">
+              <span class="tag"><b>Fiber length</b></span>
+              <div class="btnRow" style="margin:0;">
+                <button class="copyBtn" data-copy="L_total = 2·L = 4 km">Copy</button>
+              </div>
+              <div class="toast" aria-live="polite"></div>
+            </div>
+            <div class="eq">L_total = 2·(2 km) = 4 km</div>
+          </div>
+
+          <p class="muted">Fiber attenuation loss:</p>
+          <div class="eqBox">
+            <div class="labelRow">
+              <span class="tag"><b>Key equation</b></span>
+              <div class="btnRow" style="margin:0;">
+                <button class="copyBtn" data-copy="Loss_fiber(dB) = α(dB/km) · L_total(km)">Copy equation</button>
+              </div>
+              <div class="toast" aria-live="polite"></div>
+            </div>
+            <div class="eq">Loss_fiber = (0.3 dB/km)·(4 km) = 1.2 dB</div>
+          </div>
+
+          <p class="muted">
+            Connector loss is 1 dB per connector. Using a conservative end-to-end count of 4 connectors:
+          </p>
+          <div class="eqBox">
+            <div class="labelRow">
+              <span class="tag"><b>Connector loss (assumed)</b></span>
+              <div class="btnRow" style="margin:0;">
+                <button class="copyBtn" data-copy="Loss_conn = 4 × 1 dB = 4 dB">Copy</button>
+              </div>
+              <div class="toast" aria-live="polite"></div>
+            </div>
+            <div class="eq">Loss_conn = 4 dB</div>
+          </div>
+
+          <p class="muted">Star coupler excess (additional) loss:</p>
+          <div class="eqBox">
+            <div class="labelRow">
+              <span class="tag"><b>Given</b></span>
+              <div class="btnRow" style="margin:0;">
+                <button class="copyBtn" data-copy="Loss_excess = 3 dB">Copy</button>
+              </div>
+              <div class="toast" aria-live="polite"></div>
+            </div>
+            <div class="eq">Loss_excess = 3 dB</div>
+          </div>
+
+          <p class="muted">Therefore the fixed loss (everything except splitting) is:</p>
+          <div class="eqBox">
+            <div class="labelRow">
+              <span class="tag"><b>Key equation</b></span>
+              <div class="btnRow" style="margin:0;">
+                <button class="copyBtn" data-copy="Loss_fixed = Loss_fiber + Loss_conn + Loss_excess">Copy equation</button>
+              </div>
+              <div class="toast" aria-live="polite"></div>
+            </div>
+            <div class="eq">Loss_fixed = 1.2 + 4 + 3 = 8.2 dB</div>
+          </div>
+
+          <details>
+            <summary>Alternate connector interpretation (if total connector loss were only 2 dB)</summary>
+            <p class="small">
+              If “1 dB connector loss” was intended per node–star link (bundling both ends),
+              you would use <span class="kbd">Loss_conn = 2 dB</span> total end-to-end. This raises N_max; computed in the final box.
+            </p>
+          </details>
+        </div>
+
+        <div class="callout" style="margin-top:14px;">
+          <div class="labelRow"><span class="tag"><b>4) Splitting loss model</b></span></div>
+          <p class="muted">
+            Equal splitting among N outputs means each output gets 1/N of the power (ideal). In dB:
+          </p>
+          <div class="eqBox">
+            <div class="labelRow">
+              <span class="tag"><b>Key equation</b></span>
+              <div class="btnRow" style="margin:0;">
+                <button class="copyBtn" data-copy="Loss_split(dB) = 10·log10(N)">Copy equation</button>
+              </div>
+              <div class="toast" aria-live="polite"></div>
+            </div>
+            <div class="eq">Loss_split = 10·log10(N)</div>
+          </div>
+        </div>
+
+        <div class="callout good" style="margin-top:14px;">
+          <div class="labelRow"><span class="tag"><b>5) Received power vs N</b></span></div>
+          <p class="muted">
+            Start from <span class="kbd">P_tx</span> and subtract all losses:
+          </p>
+          <div class="eqBox">
+            <div class="labelRow">
+              <span class="tag"><b>Key equation</b></span>
+              <div class="btnRow" style="margin:0;">
+                <button class="copyBtn" data-copy="P_rx(dBm) = P_tx(dBm) − Loss_fixed(dB) − 10·log10(N)">Copy equation</button>
+              </div>
+              <div class="toast" aria-live="polite"></div>
+            </div>
+            <div class="eq">P_rx(N) = 0 − 8.2 − 10·log10(N)</div>
+          </div>
+
+          <p class="muted">Require <span class="kbd">P_rx(N) ≥ P_req = −30 dBm</span>:</p>
+          <div class="eqBox">
+            <div class="eq">0 − 8.2 − 10·log10(N) ≥ −30</div>
+          </div>
+        </div>
+
+        <div class="callout" style="margin-top:14px;">
+          <div class="labelRow"><span class="tag"><b>6) Solve for N</b></span></div>
+          <div class="eqBox">
+            <div class="eq">
+0 − 8.2 − 10·log10(N) ≥ −30
+−10·log10(N) ≥ −30 + 8.2
+−10·log10(N) ≥ −21.8
+10·log10(N) ≤ 21.8
+log10(N) ≤ 2.18
+N ≤ 10^2.18 ≈ 151
+            </div>
+          </div>
+          <p class="muted">
+            Thus the maximum supported node count is about 151; in practice you select an integer below this for added robustness.
+          </p>
+        </div>
+
+        <div class="final" role="region" aria-label="Final answer">
+          <div class="labelRow">
+            <h3 style="margin:0;">Final Answer (boxed)</h3>
+            <span class="tag"><b>Max nodes</b></span>
+          </div>
+
+          <div class="eqBox" style="margin:10px 0 0;">
+            <div class="labelRow">
+              <span class="tag"><b>Conservative case</b> (4 connectors total)</span>
+              <div class="btnRow" style="margin:0;">
+                <button class="copyBtn" data-copy="P_tx=0 dBm, P_req=-30 dBm. Loss_fiber=0.3*(4)=1.2 dB. Loss_conn=4 dB. Star excess=3 dB. Loss_fixed=8.2 dB. Splitting budget=30-8.2=21.8 dB. 10·log10(N) ≤ 21.8 ⇒ N_max ≈ 10^(2.18) ≈ 151 ≈ 150 nodes.">Copy final answer</button>
+              </div>
+              <div class="toast" aria-live="polite"></div>
+            </div>
+            <div class="eq">
+N_max ≈ 10^((P_tx − P_req − Loss_fixed)/10)
+Loss_fixed = 1.2 + 4 + 3 = 8.2 dB
+⇒ N_max ≈ 10^(21.8/10) ≈ 151  → about 150 nodes
+            </div>
+          </div>
+
+          <details>
+            <summary>Alternate case (if Loss_conn = 2 dB total)</summary>
+            <div class="eqBox">
+              <div class="eq">
+Loss_fixed = 1.2 + 2 + 3 = 6.2 dB
+Splitting budget = 30 − 6.2 = 23.8 dB
+N_max ≈ 10^(23.8/10) ≈ 240 nodes
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="callout" style="margin-top:14px;">
+          <div class="labelRow"><span class="tag"><b>Sanity checks</b></span></div>
+          <ul>
+            <li><b>Units:</b> dBm minus dB gives dBm—consistent.</li>
+            <li><b>Limiting case:</b> N=1 ⇒ P_rx≈−8.2 dBm, comfortably above −30 dBm.</li>
+            <li><b>Scaling:</b> doubling N costs ~3 dB; intersection near ~150 is plausible given ~22 dB splitting budget.</li>
+          </ul>
+        </div>
+
+        <a class="backTop" href="#top">↑ Back to top</a>
+      </article>
+
+      <figure aria-label="Static plot of received power versus number of nodes">
+        <canvas id="plot" width="1200" height="520"></canvas>
+        <figcaption>
+          <b>Static example plot:</b> Received power <span class="kbd">P_rx(N)</span> vs number of nodes <span class="kbd">N</span> using the problem’s numbers (conservative connector counting).
+          The dashed line is <span class="kbd">P_req = −30 dBm</span>. The curve shape comes directly from the <span class="kbd">−10·log10(N)</span> splitting dependence.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section id="deeper">
+      <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+      <article>
+        <h3>What the formula is really saying</h3>
+        <p class="muted">
+          The available power headroom is <span class="kbd">P_tx − P_req</span> (here 30 dB). Fixed losses consume part of it.
+          Whatever remains is the maximum splitting loss you can afford, and that directly sets N through <span class="kbd">10·log10(N)</span>.
+        </p>
+
+        <div class="grid2">
+          <div class="callout">
+            <div class="labelRow"><span class="tag"><b>Parameter dependence</b></span></div>
+            <ul>
+              <li>+10 dB more transmit power ⇒ <span class="kbd">N_max</span> ×10.</li>
+              <li>+3 dB more margin or fixed loss ⇒ <span class="kbd">N_max</span> ÷2.</li>
+              <li>Each extra 1 dB of fixed loss reduces <span class="kbd">N_max</span> by ×<span class="kbd">10^(−0.1)≈0.79</span>.</li>
+            </ul>
+          </div>
+
+          <div class="callout warn">
+            <div class="labelRow"><span class="tag"><b>Engineering interpretation</b></span></div>
+            <ul>
+              <li>If you want larger N, you must either reduce fixed losses (cleaner connectors, fewer patch points) or increase available budget (better optics).</li>
+              <li>The star topology is power-limited by design; scaling often motivates moving to different architectures (trees, switched fabrics, amplification).</li>
+            </ul>
+          </div>
+        </div>
+
+        <details>
+          <summary>Alternative derivation (linear power ratios)</summary>
+          <p class="small">
+            In linear units: <span class="kbd">P_rx = P_tx · 10^{−Loss_fixed/10} · (1/N)</span>.
+            Solve <span class="kbd">P_rx ≥ P_req</span> ⇒ <span class="kbd">N ≤ (P_tx/P_req)·10^{−Loss_fixed/10}</span>.
+            Converting the ratio into dB reproduces the dB expression used above.
+          </p>
+        </details>
+
+        <h3>Concept check (Q&amp;A)</h3>
+        <ul>
+          <li><b>Q:</b> Why does splitting scale as log in dB? <b>A:</b> Because dB is logarithmic and the split is a 1/N power ratio.</li>
+          <li><b>Q:</b> What happens if you double N? <b>A:</b> P_rx drops by ~3 dB.</li>
+          <li><b>Q:</b> Why keep a safety margin? <b>A:</b> To survive aging, contamination, repairs, and environmental variation without failing BER.</li>
+          <li><b>Q:</b> What dominates here: fiber or splitting? <b>A:</b> Splitting dominates; fiber is only 1.2 dB total.</li>
+        </ul>
+
+        <a class="backTop" href="#top">↑ Back to top</a>
+      </article>
+    </section>
+
+    <section id="plotguide">
+      <h2>PART 5 — Optional Plot Guide</h2>
+
+      <article>
+        <p class="muted">
+          The single plot is included because it visually connects the formula <span class="kbd">P_rx(N)=0−8.2−10·log10(N)</span>
+          to the engineering decision: where the curve crosses the required threshold.
+        </p>
+
+        <div class="grid2">
+          <div class="callout">
+            <div class="labelRow"><span class="tag"><b>Axes</b></span></div>
+            <ul>
+              <li><b>x-axis:</b> node count N (dimensionless), log-scaled ticks (1,2,4,...,256).</li>
+              <li><b>y-axis:</b> received power P_rx in dBm.</li>
+              <li><b>Dashed line:</b> required minimum P_req = −30 dBm.</li>
+            </ul>
+          </div>
+
+          <div class="callout warn">
+            <div class="labelRow"><span class="tag"><b>Features to notice</b></span></div>
+            <ul>
+              <li>Straight-line behavior vs log(N) reflects the <span class="kbd">10·log10(N)</span> dependence.</li>
+              <li>The crossing near N≈150 matches the computed N_max.</li>
+              <li>At low N, there is substantial headroom—useful for unmodeled losses in real deployments.</li>
+            </ul>
+          </div>
+        </div>
+
+        <a class="backTop" href="#top">↑ Back to top</a>
+      </article>
+    </section>
+
+    <footer>
+      <div class="wrap" style="padding:0;">
+        <div class="hr"></div>
+        <p style="margin:10px 0 0;">
+          <b>Practical note:</b> In real network planning you would confirm exact connector counts, include patch panels/splices,
+          and often reserve additional system penalties. Designers typically round down N to preserve robustness.
+        </p>
+      </div>
+    </footer>
   </main>
+
+  <script>
+    (function(){
+      // Copy buttons
+      function setToast(btn, msg){
+        const box = btn.closest(".eqBox") || btn.closest(".final") || document;
+        const toast = (box && box.querySelector && box.querySelector(".toast")) ? box.querySelector(".toast") : null;
+        if(!toast) return;
+        toast.textContent = msg;
+        clearTimeout(toast._t);
+        toast._t = setTimeout(()=>{ toast.textContent = ""; }, 1400);
+      }
+      function copyText(text){
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          return navigator.clipboard.writeText(text);
+        }
+        return new Promise((resolve, reject)=>{
+          try{
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.setAttribute("readonly","");
+            ta.style.position="fixed";
+            ta.style.left="-9999px";
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+            resolve();
+          }catch(e){ reject(e); }
+        });
+      }
+      document.addEventListener("click", (e)=>{
+        const btn = e.target.closest("button.copyBtn");
+        if(!btn) return;
+        const txt = btn.getAttribute("data-copy") || "";
+        copyText(txt).then(()=> setToast(btn, "Copied ✓"))
+                     .catch(()=> setToast(btn, "Copy failed"));
+      });
+
+      // Static plot (canvas), crisp DPR, responsive
+      const canvas = document.getElementById("plot");
+      if(!canvas) return;
+
+      function draw(){
+        const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.max(320, Math.floor(rect.width));
+        const h = Math.max(240, Math.floor(rect.height));
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+        ctx.clearRect(0,0,w,h);
+
+        // Parameters (problem numbers, conservative connector count)
+        const Ptx = 0;           // dBm
+        const Loss_fixed = 8.2;  // dB
+        const Preq = -30;        // dBm
+
+        const Nmin = 1, Nmax = 256;
+        function Prx(N){ return Ptx - Loss_fixed - 10*Math.log10(N); }
+
+        const padL = 66, padR = 16, padT = 18, padB = 52;
+        const pw = w - padL - padR;
+        const ph = h - padT - padB;
+
+        const yTop = -5;
+        const yBot = -40;
+
+        function xScale(N){
+          const t = (Math.log10(N) - Math.log10(Nmin)) / (Math.log10(Nmax) - Math.log10(Nmin));
+          return padL + t * pw;
+        }
+        function yScale(p){
+          const t = (p - yBot) / (yTop - yBot);
+          return padT + (1 - t) * ph;
+        }
+
+        // Background
+        ctx.fillStyle = "rgba(0,0,0,0.10)";
+        ctx.fillRect(padL, padT, pw, ph);
+
+        // Grid
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgba(255,255,255,0.10)";
+        ctx.beginPath();
+
+        for(let y = -40; y <= -5; y += 5){
+          const Y = yScale(y);
+          ctx.moveTo(padL, Y);
+          ctx.lineTo(padL + pw, Y);
+        }
+        const xticks = [1,2,4,8,16,32,64,128,256];
+        for(const n of xticks){
+          const X = xScale(n);
+          ctx.moveTo(X, padT);
+          ctx.lineTo(X, padT + ph);
+        }
+        ctx.stroke();
+
+        // Axes
+        ctx.strokeStyle = "rgba(255,255,255,0.25)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + ph);
+        ctx.lineTo(padL + pw, padT + ph);
+        ctx.stroke();
+
+        // Tick labels
+        ctx.fillStyle = "rgba(233,238,252,0.92)";
+        ctx.font = "600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+
+        for(let y = -40; y <= -5; y += 5){
+          const Y = yScale(y);
+          ctx.strokeStyle = "rgba(255,255,255,0.25)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(padL-6, Y);
+          ctx.lineTo(padL, Y);
+          ctx.stroke();
+
+          ctx.fillStyle = "rgba(233,238,252,0.80)";
+          ctx.fillText(String(y), padL-10, Y);
+        }
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        for(const n of xticks){
+          const X = xScale(n);
+          ctx.strokeStyle = "rgba(255,255,255,0.25)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(X, padT + ph);
+          ctx.lineTo(X, padT + ph + 6);
+          ctx.stroke();
+
+          ctx.fillStyle = "rgba(233,238,252,0.80)";
+          ctx.fillText(String(n), X, padT + ph + 10);
+        }
+
+        // Titles
+        ctx.fillStyle = "rgba(233,238,252,0.95)";
+        ctx.font = "700 13px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        ctx.fillText("Number of nodes, N (log scale)", padL + pw/2, h - 12);
+
+        ctx.save();
+        ctx.translate(16, padT + ph/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillText("Received power, P_rx (dBm)", 0, 0);
+        ctx.restore();
+
+        ctx.fillStyle = "rgba(233,238,252,0.96)";
+        ctx.font = "800 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillText("Received power vs node count (example using given numbers)", padL, 10);
+
+        // Threshold
+        const Yreq = yScale(Preq);
+        ctx.strokeStyle = "rgba(251,191,36,0.85)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        ctx.moveTo(padL, Yreq);
+        ctx.lineTo(padL + pw, Yreq);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Curve
+        ctx.strokeStyle = "rgba(125,211,252,0.95)";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        const steps = 420;
+        for(let i=0;i<=steps;i++){
+          const t = i/steps;
+          const logN = Math.log10(Nmin) + t*(Math.log10(Nmax)-Math.log10(Nmin));
+          const N = Math.pow(10, logN);
+          const X = xScale(N);
+          const Y = yScale(Prx(N));
+          if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+
+        // Intersection marker (P_rx = P_req)
+        const splitBudget = Ptx - Loss_fixed - Preq; // dB
+        const Nstar = Math.pow(10, splitBudget/10);
+        const Xstar = xScale(Math.max(Nmin, Math.min(Nmax, Nstar)));
+        const Ystar = yScale(Prx(Math.max(Nmin, Math.min(Nmax, Nstar))));
+
+        ctx.fillStyle = "rgba(255,255,255,0.90)";
+        ctx.beginPath();
+        ctx.arc(Xstar, Ystar, 4.5, 0, Math.PI*2);
+        ctx.fill();
+
+        // Legend box
+        const lx = padL + 10, ly = padT + 34;
+        const boxW = 310, boxH = 58;
+        ctx.fillStyle = "rgba(0,0,0,0.32)";
+        ctx.strokeStyle = "rgba(255,255,255,0.14)";
+        ctx.lineWidth = 1;
+        roundRect(ctx, lx, ly, boxW, boxH, 12, true, true);
+
+        ctx.font = "650 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+
+        ctx.strokeStyle = "rgba(125,211,252,0.95)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(lx+14, ly+18);
+        ctx.lineTo(lx+44, ly+18);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(233,238,252,0.90)";
+        ctx.fillText("P_rx(N) = 0 − 8.2 − 10·log10(N)", lx+52, ly+18);
+
+        ctx.strokeStyle = "rgba(251,191,36,0.85)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6,4]);
+        ctx.beginPath();
+        ctx.moveTo(lx+14, ly+40);
+        ctx.lineTo(lx+44, ly+40);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = "rgba(233,238,252,0.90)";
+        ctx.fillText("Threshold: P_req = −30 dBm", lx+52, ly+40);
+
+        // Annotation
+        ctx.fillStyle = "rgba(233,238,252,0.88)";
+        ctx.font = "700 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+        const msg = "Crossing near N ≈ " + Math.round(Nstar);
+        const ax = Math.min(padL+pw-160, Xstar+10);
+        const ay = Math.max(padT+18, Ystar-10);
+        ctx.fillText(msg, ax, ay);
+
+        function roundRect(c, x, y, ww, hh, rr, fill, stroke){
+          const r = Math.min(rr, ww/2, hh/2);
+          c.beginPath();
+          c.moveTo(x+r, y);
+          c.arcTo(x+ww, y, x+ww, y+hh, r);
+          c.arcTo(x+ww, y+hh, x, y+hh, r);
+          c.arcTo(x, y+hh, x, y, r);
+          c.arcTo(x, y, x+ww, y, r);
+          c.closePath();
+          if(fill) c.fill();
+          if(stroke) c.stroke();
+        }
+      }
+
+      let raf = null;
+      function requestDraw(){
+        if(raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(draw);
+      }
+      window.addEventListener("resize", requestDraw, {passive:true});
+      requestDraw();
+    })();
+  </script>
 </body>
 </html>

@@ -1,17 +1,17 @@
-# kittel_scaffold_generator.py
+# marder_scaffold_generator.py
 # Creates:
-#   ./problems/kittel/ch_1 ... ch_22
+#   ./problems/marder/ch_1 ... ch_27
 # And inside each chapter folder:
-#   kittel_ch_<N>_prob_1.html ... kittel_ch_<N>_prob_5.html
+#   marder_ch_<N>_prob_1.html ... marder_ch_<N>_prob_8.html
 #
 # Run from your project root (the folder that should contain ./problems/)
 
 from pathlib import Path
 
-BASE = Path("problems") / "kittel"
+BASE = Path("problems") / "marder"
 CH_START = 1
-CH_END = 22
-PROBS_PER_CH = 5
+CH_END = 27
+PROBS_PER_CH = 8
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -30,9 +30,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       --border: rgba(255,255,255,0.14);
       --shadow: 0 18px 50px rgba(0,0,0,0.35);
     }}
-
     * {{ box-sizing: border-box; }}
-
     body {{
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -43,13 +41,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       color: var(--text);
       line-height: 1.6;
     }}
-
     header, main, footer {{
       max-width: 980px;
       margin: 0 auto;
       padding: 22px 16px;
     }}
-
     .card {{
       background: var(--panel);
       border: 1px solid var(--border);
@@ -57,35 +53,29 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       box-shadow: var(--shadow);
       padding: 18px;
     }}
-
     h1 {{
       margin: 0 0 10px;
       font-size: 1.25rem;
       letter-spacing: 0.2px;
     }}
-
     p {{
       margin: 0 0 10px;
       color: var(--muted);
     }}
-
     code {{
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.10);
       padding: 2px 6px;
       border-radius: 8px;
     }}
-
     .grid {{
       display: grid;
       grid-template-columns: 1fr;
       gap: 14px;
     }}
-
     @media (min-width: 820px) {{
       .grid {{ grid-template-columns: 1.2fr 0.8fr; }}
     }}
-
     .badge {{
       display: inline-block;
       font-size: 0.85rem;
@@ -100,10 +90,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <body>
   <header>
     <div class="card">
-      <span class="badge">Kittel • Chapter {ch} • Problem {p}</span>
+      <span class="badge">Marder • Chapter {ch} • Problem {p}</span>
       <h1>{title}</h1>
       <p>Replace this scaffold with your full solution as a self-contained HTML learning article (no external libraries).</p>
-      <p><strong>File path:</strong> <code>./problems/kittel/ch_{ch}/kittel_ch_{ch}_prob_{p}.html</code></p>
+      <p><strong>File path:</strong> <code>./problems/marder/ch_{ch}/marder_ch_{ch}_prob_{p}.html</code></p>
     </div>
   </header>
 
@@ -128,7 +118,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
   <footer>
     <div class="card">
-      <p style="margin:0;">© Your site • Kittel problem scaffold</p>
+      <p style="margin:0;">© Your site • Marder problem scaffold</p>
     </div>
   </footer>
 </body>
@@ -156,9 +146,9 @@ def main():
             created_dirs += 1
 
         for p in range(1, PROBS_PER_CH + 1):
-            fname = f"kittel_ch_{ch}_prob_{p}.html"
+            fname = f"marder_ch_{ch}_prob_{p}.html"
             fpath = ch_dir / fname
-            title = f"Kittel Chapter {ch} — Problem {p}"
+            title = f"Marder Chapter {ch} — Problem {p}"
             html = HTML_TEMPLATE.format(ch=ch, p=p, title=title)
 
             if safe_write(fpath, html):
@@ -166,7 +156,7 @@ def main():
             else:
                 skipped_files += 1
 
-    print("Kittel scaffold generation complete.")
+    print("Marder scaffold generation complete.")
     print(f"Base folder: {BASE.resolve()}")
     print(f"Directories created: {created_dirs}")
     print(f"HTML files created: {created_files}")

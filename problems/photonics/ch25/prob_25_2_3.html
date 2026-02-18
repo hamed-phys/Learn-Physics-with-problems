@@ -2,64 +2,1135 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>25.2-3 — Maximum Data Rate for an Attenuation-Limited System</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Maximum Data Rate for an Attenuation-Limited Fiber-Optic Link (Photon Budget Method)</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1620;
+      --card:#111b27;
+      --text:#eaf1ff;
+      --muted:#b7c4dd;
+      --faint:#8aa0c7;
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.16);
+      --accent:#7cc4ff;
+      --accent2:#a7ffda;
+      --warn:#ffd27a;
+      --ok:#a7ffda;
+      --bad:#ff8aa6;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      --radius2: 22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      --maxw: 1120px;
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
+
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f6f8fc;
+        --panel:#ffffff;
+        --card:#ffffff;
+        --text:#101828;
+        --muted:#344054;
+        --faint:#667085;
+        --line:rgba(16,24,40,.10);
+        --line2:rgba(16,24,40,.16);
+        --accent:#0b74ff;
+        --accent2:#0aa37a;
+        --warn:#b45309;
+        --ok:#0a7a52;
+        --bad:#b42318;
+        --shadow: 0 10px 26px rgba(16,24,40,.10);
+      }
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(124,196,255,.18), transparent 55%),
+                  radial-gradient(900px 500px at 90% 10%, rgba(167,255,218,.12), transparent 55%),
                   var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+      color:var(--text);
+      font-family:var(--sans);
+      line-height:1.55;
     }
-    header, main {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 18px;
-    }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
+
+    header{ padding: 28px 18px 8px; }
+    .wrap{ max-width:var(--maxw); margin:0 auto; }
+
+    .hero{
+      display:grid;
+      gap:14px;
+      align-items:end;
       padding: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
+    .hero:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(700px 220px at 20% 10%, rgba(124,196,255,.20), transparent 60%),
+                  radial-gradient(700px 220px at 85% 35%, rgba(167,255,218,.16), transparent 60%);
+      pointer-events:none;
+      opacity:.85;
+    }
+    .hero > *{ position:relative; }
+
+    h1{
+      margin:0;
+      font-size: clamp(1.35rem, 1.1rem + 1.2vw, 2.05rem);
+      letter-spacing: -0.02em;
+      line-height:1.2;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      max-width: 78ch;
+      font-size: 1.02rem;
+    }
+    .meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
       margin-top: 10px;
-      font-size: 0.95rem;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color:var(--muted);
+      font-size:.9rem;
+      backdrop-filter: blur(6px);
+    }
+    .dot{
+      width:8px; height:8px; border-radius:50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,196,255,.18);
+    }
+
+    main{ padding: 14px 18px 70px; }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 14px;
+    }
+    @media (min-width: 980px){
+      .layout{
+        grid-template-columns: 290px 1fr;
+        align-items:start;
+      }
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 12px;
+      align-self:start;
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.04);
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .toc header{
+      padding: 12px 14px;
+      margin:0;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    }
+    .toc h2{
+      font-size: 0.98rem;
+      margin:0;
+      letter-spacing: .02em;
+      text-transform: uppercase;
       color: var(--muted);
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .toc .links{
+      padding: 10px 12px 12px;
+      display:grid;
+      gap: 6px;
+    }
+    .toc a{
+      display:flex;
+      gap:10px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      color: var(--text);
+      text-decoration:none;
+      border: 1px solid transparent;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-size: .95rem;
+    }
+    .toc a:hover{
+      background: rgba(255,255,255,.05);
+      border-color: var(--line);
+      transform: translateY(-1px);
+    }
+    .toc small{ color: var(--faint); font-size: .85rem; }
+
+    article{ display:grid; gap: 16px; min-width: 0; }
+
+    section{
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,.03);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    section > .sec-head{
+      padding: 14px 16px 10px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.01));
+    }
+    section > .sec-body{ padding: 14px 16px 16px; }
+
+    h2{ margin:0; font-size: 1.18rem; letter-spacing:-0.01em; line-height:1.25; }
+    h3{ margin: 16px 0 8px; font-size: 1.03rem; }
+    p{ margin: 10px 0; color: var(--text); }
+    ul{ margin: 10px 0 10px 20px; color: var(--text); }
+    li{ margin: 6px 0; }
+    .muted{ color: var(--muted); }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 820px){ .grid2{ grid-template-columns: 1fr 1fr; } }
+
+    .box{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(0,0,0,.10);
+      padding: 12px;
+    }
+    @media (prefers-color-scheme: light){
+      .box{ background: rgba(16,24,40,.03); }
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size: .86rem;
+      letter-spacing:.02em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .tag .ic{
+      width: 10px; height: 10px; border-radius: 3px;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,196,255,.14);
+    }
+    .tag.warn .ic{ background: var(--warn); box-shadow: 0 0 0 3px rgba(255,210,122,.16); }
+    .tag.ok .ic{ background: var(--accent2); box-shadow: 0 0 0 3px rgba(167,255,218,.16); }
+
+    .eq{
+      font-family: var(--mono);
+      font-size: .95rem;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      overflow:auto;
+      margin: 10px 0;
+      white-space: pre;
+    }
+
+    .eqRow{
+      display:flex;
+      gap:10px;
+      align-items:stretch;
+      flex-wrap:wrap;
+    }
+    .copyBtn{
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-weight: 600;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      user-select:none;
+    }
+    .copyBtn:hover{ transform: translateY(-1px); border-color: rgba(124,196,255,.35); background: rgba(124,196,255,.08); }
+    .copyBtn .mini{
+      font-weight: 700;
+      width: 22px; height: 22px;
+      border-radius: 7px;
+      display:grid; place-items:center;
+      background: rgba(124,196,255,.14);
+      border: 1px solid rgba(124,196,255,.25);
+      font-size: .8rem;
+    }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      background: rgba(20,30,45,.92);
+      border:1px solid rgba(255,255,255,.18);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+      display:none;
+      gap:10px;
+      align-items:center;
+      z-index: 1000;
+      backdrop-filter: blur(8px);
+      max-width: min(92vw, 720px);
+    }
+    .toast.show{ display:flex; animation: pop .18s ease-out; }
+    @keyframes pop{ from{ transform: translateX(-50%) translateY(8px); opacity:0; } to{ transform: translateX(-50%) translateY(0); opacity:1; } }
+    .toast .b{
+      width: 10px; height: 10px; border-radius: 999px;
+      background: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(167,255,218,.16);
+      flex: 0 0 auto;
+    }
+    .toast .msg{ font-size:.95rem; }
+    .toast .sub{ color: var(--muted); font-size:.85rem; }
+
+    details{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      background: rgba(255,255,255,.03);
+      margin: 10px 0 0;
+    }
+    details > summary{
+      cursor:pointer;
+      font-weight: 700;
+      list-style: none;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    details > summary::-webkit-details-marker{ display:none; }
+    details > summary:before{
+      content:"▸";
+      color: var(--accent);
+      font-size: 1.05rem;
+      transform: translateY(-1px);
+    }
+    details[open] > summary:before{ content:"▾"; }
+
+    figure{
+      margin: 12px 0 0;
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      overflow:hidden;
+      background: rgba(255,255,255,.02);
+    }
+    figcaption{
+      padding: 10px 12px;
+      border-top:1px solid var(--line);
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .canvasWrap{ padding: 10px 10px 0; }
+    canvas{ width:100%; height: 320px; display:block; }
+    @media (min-width: 900px){ canvas{ height: 360px; } }
+
+    .backTop{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      margin-top: 8px;
+      color: var(--muted);
+      text-decoration:none;
+      border:1px solid var(--line);
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+    }
+    .backTop:hover{
+      transform: translateY(-1px);
+      border-color: rgba(124,196,255,.28);
+      background: rgba(124,196,255,.07);
+      color: var(--text);
+    }
+
+    footer{ padding: 18px; color: var(--muted); }
+
+    @media print{
+      body{ background:#fff; color:#000; }
+      nav.toc{ display:none; }
+      .hero, section{ box-shadow:none; background:#fff; }
+      .copyBtn, .toast{ display:none !important; }
+      a{ color:#000; text-decoration: underline; }
+      section{ break-inside: avoid; page-break-inside: avoid; }
+      figure{ break-inside: avoid; }
     }
   </style>
 </head>
 <body>
+  <a id="top"></a>
   <header>
-    <div class="box">
-      <h1>25.2-3 — Maximum Data Rate for an Attenuation-Limited System</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch25/prob_25_2_3.html</code></p>
+    <div class="wrap">
+      <div class="hero">
+        <h1>Maximum Data Rate for an Attenuation-Limited Fiber-Optic Link (Photon Budget Method)</h1>
+        <p class="subtitle">
+          We determine the <strong>maximum bit rate</strong> for a 50-km, 1550-nm fiber system when the limiting factor is
+          <strong>link attenuation</strong> and the receiver sensitivity is specified in <strong>photons per bit</strong>.
+          We also show how tightening the required BER from <span class="muted">10<sup>−9</sup></span> to <span class="muted">10<sup>−11</sup></span> reduces the allowable data rate.
+        </p>
+        <div class="meta">
+          <span class="pill"><span class="dot"></span>Applied optics &amp; industrial design relevance</span>
+          <span class="pill"><span class="dot" style="background:var(--accent2)"></span>Numeric answer + sanity checks</span>
+          <span class="pill"><span class="dot" style="background:var(--warn)"></span>Assumes attenuation-limited (not dispersion-limited)</span>
+        </div>
+      </div>
     </div>
   </header>
 
   <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
+    <div class="wrap layout">
+      <nav class="toc" aria-label="Table of contents">
+        <header><h2>Contents</h2></header>
+        <div class="links">
+          <a href="#quick"><span>Quick Summary</span><small>What &amp; why</small></a>
+          <a href="#primer"><span>Part 0 — Concept Primer</span><small>Theory first</small></a>
+          <a href="#industry"><span>Part 0B — Industry Perspective</span><small>Engineering lens</small></a>
+          <a href="#analysis"><span>Part 1 — Problem Analysis</span><small>Given/unknowns</small></a>
+          <a href="#strategy"><span>Part 2 — Strategy &amp; Tips</span><small>Roadmap</small></a>
+          <a href="#solution"><span>Part 3 — Full Solution</span><small>Step-by-step</small></a>
+          <a href="#deeper"><span>Part 4 — Deeper Understanding</span><small>Interpretation</small></a>
+          <a href="#plotguide"><span>Part 5 — Plot Guide</span><small>What the curve shows</small></a>
+        </div>
+      </nav>
+
+      <article>
+        <section id="quick">
+          <div class="sec-head"><h2>Quick Summary</h2></div>
+          <div class="sec-body">
+            <ul>
+              <li><strong>Goal:</strong> Find the <strong>maximum data rate</strong> for a 50-km fiber link when the system is <strong>attenuation-limited</strong>.</li>
+              <li><strong>Key physics idea:</strong> Convert received optical power into a <strong>photon arrival rate</strong>, then divide by the receiver’s required <strong>photons per bit</strong>.</li>
+              <li><strong>Governing relation (power → photons):</strong> <span style="font-family:var(--mono)">E_ph = h c / λ</span>, <span style="font-family:var(--mono)">Φ = P_r / E_ph</span>.</li>
+              <li><strong>Link attenuation in dB:</strong> <span style="font-family:var(--mono)">L_total = α_f·L + L_conn + M</span>, <span style="font-family:var(--mono)">P_r = P_t · 10^(−L_total/10)</span>.</li>
+              <li><strong>Bit-rate limit:</strong> <span style="font-family:var(--mono)">R_max = Φ / N_req</span>.</li>
+              <li><strong>Given sensitivity:</strong> <span style="font-family:var(--mono)">N_req = 1000 photons/bit</span> at BER <span class="muted">10<sup>−9</sup></span>.</li>
+              <li><strong>Numeric result (BER = 10<sup>−9</sup>):</strong> <strong>R<sub>max</sub> ≈ 6.21×10<sup>10</sup> bit/s ≈ 62.1 Gb/s</strong>.</li>
+              <li><strong>BER tightened to 10<sup>−11</sup>:</strong> with Q-scaling (photons/bit ∝ Q²), <strong>N_req ≈ 1250</strong> ⇒ <strong>R<sub>max</sub> ≈ 49.7 Gb/s</strong>.</li>
+              <li><strong>Meaning:</strong> stricter BER requires more photons/bit, reducing max bit rate at fixed received power.</li>
+            </ul>
+
+            <div class="box">
+              <div class="tag"><span class="ic"></span>Key equations (copy)</div>
+              <div class="eqRow">
+                <button class="copyBtn" data-copy="Total loss (dB): L_total = α_f·L + L_conn + M_safety
+Received power: P_r = P_t·10^(−L_total/10)
+Photon energy: E_ph = h c / λ
+Photon rate: Φ = P_r / E_ph
+Max bit rate: R_max = Φ / N_req">
+                  <span class="mini">⧉</span>Copy key equations
+                </button>
+              </div>
+              <div class="eq">Total loss (dB): L_total = α_f·L + L_conn + M_safety
+Received power: P_r = P_t·10^(−L_total/10)
+Photon energy: E_ph = h c / λ
+Photon rate: Φ = P_r / E_ph
+Max bit rate: R_max = Φ / N_req</div>
+            </div>
+
+            <div class="box" style="margin-top:12px;">
+              <div class="tag ok"><span class="ic"></span>Final answers (copy)</div>
+              <div class="eqRow">
+                <button class="copyBtn" data-copy="Results:
+Total loss = 24 dB
+Received power P_r ≈ 7.96 µW
+
+At BER = 1e−9 (N_req = 1000 photons/bit):
+R_max ≈ 6.21×10^10 bit/s ≈ 62.1 Gb/s
+
+At BER = 1e−11 (N_req ≈ 1250 photons/bit):
+R_max ≈ 4.97×10^10 bit/s ≈ 49.7 Gb/s">
+                  <span class="mini">⧉</span>Copy final answers
+                </button>
+              </div>
+              <div class="eq">Results:
+Total loss = 24 dB
+Received power P_r ≈ 7.96 µW
+
+At BER = 1e−9 (N_req = 1000 photons/bit):
+R_max ≈ 6.21×10^10 bit/s ≈ 62.1 Gb/s
+
+At BER = 1e−11 (N_req ≈ 1250 photons/bit):
+R_max ≈ 4.97×10^10 bit/s ≈ 49.7 Gb/s</div>
+            </div>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </div>
+        </section>
+
+        <section id="primer">
+          <div class="sec-head"><h2>PART 0 — Concept Primer (Theory Before Solving)</h2></div>
+          <div class="sec-body">
+            <h3>0.1 Core definitions (symbols + SI units)</h3>
+            <ul>
+              <li><strong>λ</strong> — wavelength (m). Here: 1550 nm = 1.55×10<sup>−6</sup> m.</li>
+              <li><strong>P<sub>t</sub></strong> — launched optical power (W).</li>
+              <li><strong>P<sub>r</sub></strong> — received optical power (W).</li>
+              <li><strong>α<sub>f</sub></strong> — fiber attenuation (dB/km).</li>
+              <li><strong>L</strong> — fiber length (km).</li>
+              <li><strong>L<sub>conn</sub></strong> — connector/coupler loss (dB).</li>
+              <li><strong>M</strong> — safety margin (dB).</li>
+              <li><strong>h</strong> — Planck constant (J·s), <strong>c</strong> — speed of light (m/s).</li>
+              <li><strong>E<sub>ph</sub></strong> — photon energy (J/photon), <strong>Φ</strong> — photon rate (photons/s).</li>
+              <li><strong>N<sub>req</sub></strong> — required photons/bit (photons/bit), <strong>R</strong> — bit rate (bit/s).</li>
+            </ul>
+
+            <h3>0.2 Physical meaning (intuition)</h3>
+            <p>
+              Each bit must carry enough optical energy so the receiver can reliably decide “1” vs “0” despite noise.
+              If received power is fixed by attenuation, then the available photons per second are fixed. Requiring more photons per bit
+              (for lower BER) forces the bit interval to be longer, lowering the maximum data rate.
+            </p>
+
+            <h3>0.3 Key laws/principles + validity</h3>
+            <div class="eq">L_fiber = α_f · L
+L_total = L_fiber + L_conn + M
+P_r = P_t · 10^(−L_total/10)
+
+E_ph = h c / λ
+Φ = P_r / E_ph
+R_max = Φ / N_req</div>
+            <p class="muted">
+              Valid when the system is attenuation-limited and we are tracking average power through linear losses.
+            </p>
+
+            <h3>0.4 Common approximations</h3>
+            <ul>
+              <li>dB budgets add losses; linear units multiply power ratios.</li>
+              <li>Receiver “photons/bit” sensitivity packages detailed detector physics into one requirement at a specified BER.</li>
+              <li>Changing BER is approximated via Q-factor with photons/bit ∝ Q² (engineering estimate).</li>
+            </ul>
+
+            <h3>0.5 Mini intuition examples</h3>
+            <ul>
+              <li>+3 dB extra loss halves received power → halves photon rate → halves max data rate.</li>
+              <li>Better sensitivity (fewer photons/bit) increases max rate in direct proportion.</li>
+              <li>Tightening BER increases photons/bit required → decreases max rate inversely.</li>
+            </ul>
+
+            <h3>0.6 What to watch for</h3>
+            <div class="grid2">
+              <div class="box">
+                <div class="tag warn"><span class="ic"></span>Pitfall: wrong dB conversion</div>
+                <ul>
+                  <li>Use <span style="font-family:var(--mono)">10^(−L/10)</span> for power (not 20).</li>
+                  <li>Add margin in dB just like a loss.</li>
+                </ul>
+              </div>
+              <div class="box">
+                <div class="tag warn"><span class="ic"></span>Pitfall: unit mismatch</div>
+                <ul>
+                  <li>Convert nm → m in photon energy.</li>
+                  <li>Keep photons/bit separate from photons/s.</li>
+                </ul>
+              </div>
+            </div>
+
+            <details>
+              <summary>Optional deeper note: BER and Q-factor</summary>
+              <p class="muted">
+                A common approximation for binary decisions with Gaussian noise is:
+              </p>
+              <div class="eq">BER ≈ (1/2) · erfc(Q / √2)</div>
+              <p class="muted">
+                In shot-noise-like regimes, the decision margin scales like √(photons/bit), hence photons/bit ∝ Q².
+              </p>
+            </details>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </div>
+        </section>
+
+        <section id="industry">
+          <div class="sec-head"><h2>PART 0B — Industry &amp; Applied Physics Perspective</h2></div>
+          <div class="sec-body">
+            <h3>Where this shows up in industry</h3>
+            <ul>
+              <li><strong>Telecom &amp; metro:</strong> long spans, ROADMs, many connectors; margins prevent outages.</li>
+              <li><strong>Data-center interconnect:</strong> energy per bit and cost vs reach are driven by power budgets.</li>
+              <li><strong>Access/PON:</strong> splitter loss makes photon/bit budgeting essential for reach and split ratio.</li>
+              <li><strong>Industrial monitoring:</strong> remote sensors over long fibers depend on usable received power.</li>
+            </ul>
+
+            <h3>Why engineers care</h3>
+            <ul>
+              <li><strong>Performance:</strong> throughput is constrained by received power and required photons/bit.</li>
+              <li><strong>Reliability:</strong> margin covers aging, contamination, temperature drift, repairs.</li>
+              <li><strong>Cost:</strong> better receivers cost more; fewer connectors reduce loss but can reduce modularity.</li>
+              <li><strong>Efficiency:</strong> higher launch power increases energy use and thermal constraints.</li>
+            </ul>
+
+            <h3>How it’s validated in practice</h3>
+            <ul>
+              <li>Power meter checks, OTDR for loss localization, BER testing for receiver sensitivity curves.</li>
+              <li>Spectrum checks for wavelength drift (even if not used in this attenuation-only calculation).</li>
+            </ul>
+
+            <h3>Trade-offs / non-idealities</h3>
+            <ul>
+              <li>APD gain improves sensitivity but adds excess noise and requires bias control.</li>
+              <li>Connector count raises loss and reflections; cleanliness and inspection become critical.</li>
+              <li>At high rates, dispersion often dominates before attenuation does (but this problem says to ignore it).</li>
+            </ul>
+
+            <details>
+              <summary>From lab to product: adapting the ideal model</summary>
+              <p class="muted">
+                Real products add penalties (RIN, reflections, polarization, temperature dependence) and convert them to
+                extra dB margin or a sensitivity shift. The budget method remains the same; only the “penalty terms” change.
+              </p>
+            </details>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </div>
+        </section>
+
+        <section id="analysis">
+          <div class="sec-head"><h2>PART 1 — Problem Analysis (No Solving Yet)</h2></div>
+          <div class="sec-body">
+            <h3>Restate the problem</h3>
+            <p>
+              Compute received power after fiber loss + connector loss + safety margin, convert that power to photons/s at 1550 nm,
+              then find the highest bit rate such that each bit gets at least the required photons/bit for the specified BER.
+              Repeat for BER = 10<sup>−11</sup>.
+            </p>
+
+            <h3>Given</h3>
+            <ul>
+              <li>λ = 1550 nm</li>
+              <li>P<sub>t</sub> = 2 mW</li>
+              <li>L = 50 km</li>
+              <li>α<sub>f</sub> = 0.2 dB/km</li>
+              <li>L<sub>conn</sub> = 8 dB</li>
+              <li>M = 6 dB</li>
+              <li>N<sub>req</sub>(10<sup>−9</sup>) = 1000 photons/bit</li>
+            </ul>
+
+            <h3>Unknowns</h3>
+            <ul>
+              <li>R<sub>max</sub> at BER = 10<sup>−9</sup></li>
+              <li>R<sub>max</sub> at BER = 10<sup>−11</sup></li>
+            </ul>
+
+            <h3>Assumptions</h3>
+            <div class="box">
+              <div class="tag warn"><span class="ic"></span>Assumptions</div>
+              <ul>
+                <li>Attenuation-limited (dispersion/bandwidth not limiting).</li>
+                <li>Losses are linear and additive in dB for average power.</li>
+                <li>Given photons/bit sensitivity already includes detector physics at BER = 10<sup>−9</sup>.</li>
+                <li>For BER tightening, photons/bit scales with Q² from Gaussian/Q approximation.</li>
+              </ul>
+            </div>
+
+            <h3>Approaches</h3>
+            <div class="grid2">
+              <div class="box">
+                <div class="tag"><span class="ic"></span>A) Photon budget (best here)</div>
+                <p class="muted" style="margin:0">
+                  Uses the given photons/bit directly. Fast, minimal extra parameters.
+                </p>
+              </div>
+              <div class="box">
+                <div class="tag"><span class="ic"></span>B) Full APD noise model</div>
+                <p class="muted" style="margin:0">
+                  More detailed but needs many parameters not provided (gain, excess noise, bandwidth, thermal noise).
+                </p>
+              </div>
+            </div>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </div>
+        </section>
+
+        <section id="strategy">
+          <div class="sec-head"><h2>PART 2 — Strategy &amp; Tips (Roadmap Only)</h2></div>
+          <div class="sec-body">
+            <h3>Plan (8 steps)</h3>
+            <ol style="margin:10px 0 10px 20px;">
+              <li>Compute fiber loss: L<sub>fiber</sub> = α<sub>f</sub>·L.</li>
+              <li>Add connector loss and margin: L<sub>total</sub> = L<sub>fiber</sub> + L<sub>conn</sub> + M.</li>
+              <li>Convert to linear ratio: 10^(−L<sub>total</sub>/10).</li>
+              <li>Compute received power: P<sub>r</sub> = P<sub>t</sub>·10^(−L<sub>total</sub>/10).</li>
+              <li>Compute photon energy: E<sub>ph</sub> = h c / λ.</li>
+              <li>Compute photon rate: Φ = P<sub>r</sub>/E<sub>ph</sub>.</li>
+              <li>Compute R<sub>max</sub>(10<sup>−9</sup>) = Φ/1000.</li>
+              <li>Estimate N<sub>req</sub>(10<sup>−11</sup>) via Q² scaling; compute R<sub>max</sub>(10<sup>−11</sup>).</li>
+            </ol>
+
+            <div class="box">
+              <div class="tag warn"><span class="ic"></span>Common mistakes</div>
+              <ul>
+                <li>Forgetting the 6 dB safety margin (it is treated as real loss in the budget).</li>
+                <li>Using 20 instead of 10 in the dB-to-linear conversion.</li>
+                <li>Not converting 1550 nm to meters for photon energy.</li>
+              </ul>
+            </div>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </div>
+        </section>
+
+        <section id="solution">
+          <div class="sec-head"><h2>PART 3 — Full Solution (Detailed + Teaching)</h2></div>
+          <div class="sec-body">
+            <h3>3.1 Qualitative expectation</h3>
+            <p>
+              Total loss is large (tens of dB), so only a tiny fraction of 2 mW reaches the receiver (µW scale).
+              At 1550 nm, µW corresponds to ~10<sup>13</sup> photons/s, so dividing by 1000 photons/bit gives tens of Gb/s.
+            </p>
+
+            <h3>3.2 Total attenuation</h3>
+            <div class="eq">L_fiber = α_f · L</div>
+            <div class="eq">α_f = 0.2 dB/km
+L = 50 km
+⇒ L_fiber = 0.2×50 = 10 dB</div>
+
+            <div class="eq">L_total = L_fiber + L_conn + M
+= 10 dB + 8 dB + 6 dB
+= 24 dB</div>
+
+            <h3>3.3 Received power</h3>
+            <div class="eq">P_r = P_t · 10^(−L_total/10)</div>
+            <div class="eq">P_t = 2 mW = 2×10^−3 W
+10^(−24/10) = 10^−2.4 ≈ 0.003981
+⇒ P_r ≈ 2×10^−3 × 0.003981
+⇒ P_r ≈ 7.96×10^−6 W = 7.96 µW</div>
+
+            <h3>3.4 Photon energy at 1550 nm</h3>
+            <div class="eq">E_ph = h c / λ</div>
+            <div class="eq">h = 6.62607015×10^−34 J·s
+c = 2.99792458×10^8 m/s
+λ = 1550 nm = 1.55×10^−6 m
+⇒ E_ph ≈ 1.28×10^−19 J/photon</div>
+
+            <h3>3.5 Photon rate</h3>
+            <div class="eq">Φ = P_r / E_ph</div>
+            <div class="eq">Φ ≈ (7.96×10^−6) / (1.28×10^−19)
+≈ 6.21×10^13 photons/s</div>
+
+            <h3>3.6 Maximum data rate for BER = 10<sup>−9</sup></h3>
+            <div class="eq">R_max = Φ / N_req</div>
+            <div class="eq">N_req(10^−9) = 1000 photons/bit
+⇒ R_max(10^−9) = (6.21×10^13)/1000
+= 6.21×10^10 bit/s
+≈ 62.1 Gb/s</div>
+
+            <div class="box">
+              <div class="tag ok"><span class="ic"></span>Final result (BER = 10<sup>−9</sup>)</div>
+              <div class="eq" style="margin:10px 0 0;">R_max ≈ 6.21×10^10 bit/s ≈ 62.1 Gb/s</div>
+            </div>
+
+            <h3>3.7 BER = 10<sup>−11</sup>: estimate new photons/bit</h3>
+            <p>
+              Use the standard Gaussian/Q mapping: <span style="font-family:var(--mono)">BER ≈ (1/2)·erfc(Q/√2)</span>.
+              Typical values: Q(10<sup>−9</sup>) ≈ 6.00, Q(10<sup>−11</sup>) ≈ 6.71.
+              With photons/bit ∝ Q²:
+            </p>
+            <div class="eq">N_req(10^−11) ≈ N_req(10^−9) · (Q_11/Q_9)^2
+≈ 1000 · (6.71/6.00)^2
+≈ 1250 photons/bit</div>
+
+            <h3>3.8 Maximum data rate for BER = 10<sup>−11</sup></h3>
+            <div class="eq">R_max(10^−11) = Φ / N_req(10^−11)
+≈ (6.21×10^13) / 1250
+≈ 4.97×10^10 bit/s
+≈ 49.7 Gb/s</div>
+
+            <div class="box">
+              <div class="tag ok"><span class="ic"></span>Final result (BER = 10<sup>−11</sup>)</div>
+              <div class="eq" style="margin:10px 0 0;">R_max ≈ 4.97×10^10 bit/s ≈ 49.7 Gb/s</div>
+            </div>
+
+            <h3>3.9 Sanity checks</h3>
+            <div class="grid2">
+              <div class="box">
+                <div class="tag"><span class="ic"></span>Units</div>
+                <ul>
+                  <li>P (J/s) ÷ E (J/photon) → photons/s.</li>
+                  <li>photons/s ÷ (photons/bit) → bit/s.</li>
+                </ul>
+              </div>
+              <div class="box">
+                <div class="tag"><span class="ic"></span>Scaling</div>
+                <ul>
+                  <li>+3 dB loss → R halves.</li>
+                  <li>+25% photons/bit requirement → R drops by 20% (inverse).</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="box" style="margin-top:12px;">
+              <div class="tag warn"><span class="ic"></span>Reality check</div>
+              <p class="muted" style="margin:0">
+                In practice, 50 km at tens of Gb/s may be dispersion-limited without dispersion compensation/coherent techniques.
+                The problem explicitly asks for attenuation-limited behavior, so this calculation isolates the power/sensitivity ceiling.
+              </p>
+            </div>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </div>
+        </section>
+
+        <section id="deeper">
+          <div class="sec-head"><h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2></div>
+          <div class="sec-body">
+            <h3>4.1 Re-interpret the final formula</h3>
+            <div class="eq">R_max = (P_t · 10^(−L_total/10)) · (λ/(h c)) · (1/N_req)</div>
+            <ul>
+              <li><strong>P<sub>t</sub></strong> ↑ ⇒ R<sub>max</sub> ↑ (linearly).</li>
+              <li><strong>L<sub>total</sub></strong> ↑ ⇒ R<sub>max</sub> ↓ (each +3 dB halves it).</li>
+              <li><strong>N<sub>req</sub></strong> ↑ (stricter BER) ⇒ R<sub>max</sub> ↓ inversely.</li>
+              <li><strong>λ</strong> ↑ ⇒ more photons per watt ⇒ slightly higher R<sub>max</sub> (all else equal).</li>
+            </ul>
+
+            <h3>4.2 Parameter dependence</h3>
+            <div class="box">
+              <div class="tag"><span class="ic"></span>Design sensitivities</div>
+              <ul>
+                <li>Extra 1 dB loss multiplies R<sub>max</sub> by 10<sup>−0.1</sup> ≈ 0.794 (≈ −20.6%).</li>
+                <li>Reducing connector loss by 2 dB increases R<sub>max</sub> by 10<sup>0.2</sup> ≈ 1.58 (≈ +58%).</li>
+                <li>Improving sensitivity from 1000 → 800 photons/bit increases R<sub>max</sub> by 1000/800 = 1.25 (≈ +25%).</li>
+              </ul>
+            </div>
+
+            <h3>4.3 Alternative derivation (energy per bit)</h3>
+            <div class="eq">E_bit,req = N_req · E_ph
+P_r = E_bit · R
+⇒ R_max = P_r / (N_req · E_ph)</div>
+
+            <h3>4.4 Concept checks (with answers)</h3>
+            <ul>
+              <li><strong>Q:</strong> Why does adding 6 dB safety margin reduce data rate? <strong>A:</strong> It reduces P<sub>r</sub>, thus Φ, thus R<sub>max</sub>.</li>
+              <li><strong>Q:</strong> If P<sub>t</sub> doubles, what happens to R<sub>max</sub>? <strong>A:</strong> It doubles (linear).</li>
+              <li><strong>Q:</strong> Why is the relationship between distance and received power “straight” in dB? <strong>A:</strong> Because fiber loss is specified as dB per km, so it adds linearly with distance.</li>
+              <li><strong>Q:</strong> What breaks the “attenuation-limited” assumption at very high bit rates? <strong>A:</strong> dispersion and bandwidth limits of devices/fiber.</li>
+            </ul>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </div>
+        </section>
+
+        <section id="plotguide">
+          <div class="sec-head"><h2>PART 5 — Optional Plot Guide (Plot Included)</h2></div>
+          <div class="sec-body">
+            <p>
+              The plot below reinforces how the link budget behaves: received power (in dBm) decreases linearly with distance.
+              Because R<sub>max</sub> is proportional to received power in this attenuation-limited model, the same slope intuition applies to capacity headroom.
+            </p>
+
+            <figure>
+              <div class="canvasWrap">
+                <canvas id="plot" aria-label="Received power vs distance plot"></canvas>
+              </div>
+              <figcaption>
+                Static plot: Received power P<sub>r</sub> vs distance (dBm). Includes fixed connector loss (8 dB) and safety margin (6 dB).
+                Marker shows the 50-km point used in the solution.
+              </figcaption>
+            </figure>
+
+            <h3>Axes and units</h3>
+            <ul>
+              <li><strong>X-axis:</strong> distance L (km)</li>
+              <li><strong>Y-axis:</strong> received power P<sub>r</sub> (dBm)</li>
+            </ul>
+
+            <h3>Values used (problem data)</h3>
+            <div class="eq">P_t = 2 mW (≈ +3.01 dBm)
+α_f = 0.2 dB/km
+L_conn = 8 dB
+M = 6 dB</div>
+
+            <h3>What to notice</h3>
+            <ul>
+              <li>Fixed losses shift the curve downward; fiber attenuation sets the slope.</li>
+              <li>The 50 km point aligns with P<sub>r</sub> ≈ 7.96 µW ≈ −21.0 dBm.</li>
+              <li>Every +10 km reduces P<sub>r</sub> by 2 dB (with α<sub>f</sub> = 0.2 dB/km).</li>
+            </ul>
+
+            <a class="backTop" href="#top">↑ Back to top</a>
+          </div>
+        </section>
+      </article>
     </div>
   </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="box">
+        <div class="tag"><span class="ic"></span>Takeaway</div>
+        <p class="muted" style="margin:0">
+          In an attenuation-limited optical link, maximum data rate is set by a photon budget:
+          compute photons per second arriving at the receiver, then allocate enough photons per bit to meet the BER requirement.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <span class="b" aria-hidden="true"></span>
+    <div>
+      <div class="msg" id="toastMsg">Copied.</div>
+      <div class="sub" id="toastSub">Ready to paste.</div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      const toastSub = document.getElementById('toastSub');
+      let toastTimer = null;
+
+      function showToast(msg, sub){
+        toastMsg.textContent = msg || "Copied.";
+        toastSub.textContent = sub || "Ready to paste.";
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(()=>toast.classList.remove('show'), 1700);
+      }
+
+      async function copyText(text){
+        try{
+          if(navigator.clipboard && window.isSecureContext){
+            await navigator.clipboard.writeText(text);
+            return true;
+          }
+        }catch(e){}
+        try{
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly','');
+          ta.style.position='fixed';
+          ta.style.left='-9999px';
+          ta.style.top='-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          return ok;
+        }catch(e){
+          return false;
+        }
+      }
+
+      document.querySelectorAll('.copyBtn').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const text = btn.getAttribute('data-copy') || '';
+          const ok = await copyText(text);
+          showToast(ok ? "Copied to clipboard." : "Copy failed.", ok ? "Paste into your notes or report." : "Select and copy manually.");
+        });
+      });
+
+      // Single static plot: P_r(dBm) vs distance
+      const canvas = document.getElementById('plot');
+      if(canvas){
+        const ctx = canvas.getContext('2d');
+
+        const Pt_mW = 2.0;
+        const Pt_dBm = 10*Math.log10(Pt_mW); // 1 mW reference
+        const alpha = 0.2; // dB/km
+        const Lconn = 8;
+        const M = 6;
+        const fixed = Lconn + M;
+        const Lmark = 50;
+
+        function fmt(x, digits){ return (Math.round(x*10**digits)/10**digits).toFixed(digits); }
+
+        function resizeAndDraw(){
+          const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+          const rect = canvas.getBoundingClientRect();
+          const w = Math.max(320, Math.floor(rect.width));
+          const h = Math.max(260, Math.floor(rect.height));
+          canvas.width = Math.floor(w*dpr);
+          canvas.height = Math.floor(h*dpr);
+          ctx.setTransform(dpr,0,0,dpr,0,0);
+
+          const padL = 56, padR = 18, padT = 18, padB = 46;
+          const W = w - padL - padR;
+          const H = h - padT - padB;
+
+          const Lmin = 0, Lmax = 60;
+          const yAt0 = Pt_dBm - fixed;
+          const yAt60 = Pt_dBm - fixed - alpha*Lmax;
+          const ymin = Math.floor((Math.min(yAt0, yAt60) - 2) / 2) * 2;
+          const ymax = Math.ceil((Math.max(yAt0, yAt60) + 1) / 2) * 2;
+
+          function xScale(L){ return padL + (L - Lmin) * (W/(Lmax - Lmin)); }
+          function yScale(y){ return padT + (ymax - y) * (H/(ymax - ymin)); }
+
+          ctx.clearRect(0,0,w,h);
+
+          // background card
+          ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--card').trim() || 'rgba(255,255,255,.03)';
+          roundRect(ctx, 6, 6, w-12, h-12, 16);
+          ctx.fill();
+
+          // grid clip
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(padL, padT, W, H);
+          ctx.clip();
+
+          const gridColor = 'rgba(255,255,255,0.10)';
+          const gridColor2 = 'rgba(255,255,255,0.16)';
+          ctx.lineWidth = 1;
+
+          for(let L=0; L<=Lmax; L+=10){
+            const x = xScale(L);
+            ctx.strokeStyle = (L===0 || L===Lmax) ? gridColor2 : gridColor;
+            ctx.beginPath();
+            ctx.moveTo(x, padT);
+            ctx.lineTo(x, padT+H);
+            ctx.stroke();
+          }
+          for(let y=ymin; y<=ymax; y+=2){
+            const yy = yScale(y);
+            ctx.strokeStyle = (y===ymin || y===ymax) ? gridColor2 : gridColor;
+            ctx.beginPath();
+            ctx.moveTo(padL, yy);
+            ctx.lineTo(padL+W, yy);
+            ctx.stroke();
+          }
+
+          // curve
+          ctx.strokeStyle = 'rgba(124,196,255,0.95)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          for(let i=0;i<=240;i++){
+            const L = Lmin + (Lmax-Lmin)*(i/240);
+            const y = Pt_dBm - fixed - alpha*L;
+            const x = xScale(L);
+            const yy = yScale(y);
+            if(i===0) ctx.moveTo(x,yy);
+            else ctx.lineTo(x,yy);
+          }
+          ctx.stroke();
+
+          // marker
+          const yMark = Pt_dBm - fixed - alpha*Lmark;
+          const xM = xScale(Lmark);
+          const yM = yScale(yMark);
+          ctx.fillStyle = 'rgba(167,255,218,0.92)';
+          ctx.beginPath();
+          ctx.arc(xM, yM, 4.8, 0, Math.PI*2);
+          ctx.fill();
+
+          // label bubble
+          ctx.font = '600 12px ' + getComputedStyle(document.body).fontFamily;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'bottom';
+          const label = `50 km: P_r ≈ ${fmt(yMark,1)} dBm`;
+          const lw = ctx.measureText(label).width;
+          const lx = Math.min(padL+W - lw - 14, xM + 10);
+          const ly = Math.max(padT + 18, yM - 10);
+          ctx.fillStyle = 'rgba(0,0,0,0.35)';
+          roundedFill(ctx, lx-6, ly-16, lw+12, 20, 8);
+          ctx.fillStyle = 'rgba(234,241,255,0.92)';
+          ctx.fillText(label, lx, ly);
+
+          ctx.restore();
+
+          // axes
+          ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(padL, padT);
+          ctx.lineTo(padL, padT+H);
+          ctx.lineTo(padL+W, padT+H);
+          ctx.stroke();
+
+          // ticks labels
+          ctx.fillStyle = 'rgba(234,241,255,0.90)';
+          ctx.font = '500 12px ' + getComputedStyle(document.body).fontFamily;
+
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          for(let L=0; L<=Lmax; L+=10){
+            ctx.fillText(String(L), xScale(L), padT+H+8);
+          }
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'middle';
+          for(let y=ymin; y<=ymax; y+=2){
+            ctx.fillText(String(y), padL-8, yScale(y));
+          }
+
+          // titles
+          ctx.fillStyle = 'rgba(234,241,255,0.94)';
+          ctx.font = '700 13px ' + getComputedStyle(document.body).fontFamily;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillText('Received Power vs Distance (dBm)', padL, 10);
+
+          ctx.fillStyle = 'rgba(183,196,221,0.95)';
+          ctx.font = '600 12px ' + getComputedStyle(document.body).fontFamily;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText('Distance L (km)', padL + W/2, padT + H + 38);
+
+          ctx.save();
+          ctx.translate(16, padT + H/2);
+          ctx.rotate(-Math.PI/2);
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText('Received power P_r (dBm)', 0, 0);
+          ctx.restore();
+
+          ctx.fillStyle = 'rgba(183,196,221,0.92)';
+          ctx.font = '500 12px ' + getComputedStyle(document.body).fontFamily;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText('Model: P_r(dBm)=P_t(dBm)−8 dB−6 dB−(0.2 dB/km)·L', padL, padT + H - 6);
+        }
+
+        function roundRect(c, x, y, w, h, r){
+          const rr = Math.min(r, w/2, h/2);
+          c.beginPath();
+          c.moveTo(x+rr, y);
+          c.arcTo(x+w, y, x+w, y+h, rr);
+          c.arcTo(x+w, y+h, x, y+h, rr);
+          c.arcTo(x, y+h, x, y, rr);
+          c.arcTo(x, y, x+w, y, rr);
+          c.closePath();
+        }
+        function roundedFill(c, x, y, w, h, r){
+          roundRect(c, x, y, w, h, r);
+          c.fill();
+        }
+
+        const ro = new ResizeObserver(()=>resizeAndDraw());
+        ro.observe(canvas);
+        window.addEventListener('resize', resizeAndDraw, {passive:true});
+        resizeAndDraw();
+      }
+    })();
+  </script>
 </body>
 </html>

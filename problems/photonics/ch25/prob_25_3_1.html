@@ -1,65 +1,1157 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <title>25.3-1 — Number of WDM Channels</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Number of WDM Channels in C- and O-Bands (75 GHz Spacing)</title>
   <style>
-    :root {
-      --bg: #050608;
-      --card: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.12);
+    :root{
+      --bg:#0b0f17;
+      --card:#101827;
+      --card2:#0f172a;
+      --text:#e7eefc;
+      --muted:#a9b7d6;
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.14);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      --radius2: 22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(120,120,255,0.12), transparent 60%),
-                  radial-gradient(900px 500px at 100% 20%, rgba(120,255,200,0.10), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      line-height: 1.55;
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 700px at 15% -5%, rgba(125,211,252,.16), transparent 60%),
+        radial-gradient(1000px 700px at 90% 0%, rgba(167,139,250,.14), transparent 55%),
+        radial-gradient(900px 600px at 40% 105%, rgba(52,211,153,.10), transparent 60%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.55;
     }
-    header, main {
-      max-width: 980px;
+
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    .wrap{
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 24px 18px;
+      padding: 24px 18px 80px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      align-items:start;
     }
-    .box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
+
+    header.site{
+      grid-column: 1 / -1;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      padding: 20px 18px;
+      position:relative;
+      overflow:hidden;
     }
-    h1 { margin: 0 0 10px; font-size: 1.25rem; }
-    p { margin: 0 0 10px; color: var(--muted); }
-    .hint {
+    header.site::before{
+      content:"";
+      position:absolute;
+      inset:-2px -2px auto -2px;
+      height: 90px;
+      background: linear-gradient(90deg, rgba(125,211,252,.28), rgba(167,139,250,.22), rgba(52,211,153,.18));
+      filter: blur(18px);
+      opacity:.45;
+      pointer-events:none;
+      transform: translateY(-20px);
+    }
+    .titleRow{
+      position:relative;
+      display:flex;
+      flex-wrap:wrap;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(22px, 2.3vw, 34px);
+      letter-spacing: .2px;
+    }
+    .subtitle{
+      margin:6px 0 0;
+      color:var(--muted);
+      max-width: 78ch;
+      font-size: 14.5px;
+    }
+    .meta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      align-items:center;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(16,24,39,.65);
+      color: var(--muted);
+      font-size: 12.5px;
+      white-space:nowrap;
+    }
+    .dot{
+      width:9px; height:9px;
+      border-radius:999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(125,211,252,.12);
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      background: rgba(16,24,39,.70);
+      backdrop-filter: blur(10px);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 12px;
+    }
+    nav.toc h2{
+      margin:0 0 10px;
+      font-size: 13px;
+      letter-spacing: .12em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .toc a{
+      display:block;
+      padding: 8px 10px;
+      margin: 2px 0;
+      border-radius: 10px;
+      color: var(--text);
+      border:1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size: 13.5px;
+    }
+    .toc a:hover{
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.10);
+      transform: translateX(2px);
+      text-decoration:none;
+    }
+    .toc small{
+      color: var(--muted);
+      display:block;
+      margin-top:10px;
+      padding: 8px 10px;
+      border-top: 1px solid var(--line);
+      font-size: 12.5px;
+    }
+
+    main{
+      min-width: 0;
+    }
+
+    section{
+      background: rgba(16,24,39,.72);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      padding: 18px 18px;
+      margin-bottom: 16px;
+      overflow:hidden;
+    }
+    section h2{
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+    section h3{
+      margin: 14px 0 8px;
+      font-size: 15.5px;
+      color: #dbe7ff;
+    }
+    p{margin: 8px 0}
+    ul{margin:8px 0 8px 22px}
+    li{margin:6px 0; color: var(--text)}
+    .muted{color:var(--muted)}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      .wrap{grid-template-columns: 1fr}
+      nav.toc{position:relative; top:auto}
+      .grid2{grid-template-columns: 1fr}
+      .meta{justify-content:flex-start}
+    }
+
+    .callouts{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
       margin-top: 10px;
-      font-size: 0.95rem;
+    }
+    .card{
+      grid-column: span 12;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px 12px;
+      position: relative;
+      overflow:hidden;
+    }
+    .card::before{
+      content:"";
+      position:absolute;
+      inset: -1px auto auto -1px;
+      width: 140px;
+      height: 140px;
+      background: radial-gradient(circle at 30% 30%, rgba(125,211,252,.18), transparent 60%);
+      pointer-events:none;
+      filter: blur(1px);
+    }
+    .card h4{
+      margin:0 0 6px;
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
       color: var(--muted);
     }
-    code {
-      background: rgba(255,255,255,0.08);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .card p, .card li, .card pre{position:relative}
+    .kbadge{
+      display:inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      border:1px solid var(--line2);
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+    }
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap:wrap;
+      margin-top: 8px;
+    }
+
+    .eq{
+      background: rgba(0,0,0,.22);
+      border:1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 10px;
+    }
+    pre{
+      margin:0;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height:1.4;
+      color:#eef5ff;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-size: 13px;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .btn:hover{
+      background: rgba(255,255,255,.09);
+      border-color: rgba(255,255,255,.22);
+      transform: translateY(-1px);
+    }
+    .btn:active{transform: translateY(0)}
+    .btn small{color:var(--muted); font-size:12px}
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(16,24,39,.92);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 999px;
+      padding: 10px 14px;
+      box-shadow: var(--shadow);
+      color: var(--text);
+      font-size: 13px;
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+      z-index: 50;
+      max-width: min(92vw, 720px);
+    }
+    .toast.show{opacity:1; transform: translateX(-50%) translateY(-2px)}
+    details{
+      margin-top: 10px;
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+    }
+    summary{
+      cursor:pointer;
+      padding: 10px 12px;
+      color: var(--text);
+      list-style:none;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    summary::-webkit-details-marker{display:none}
+    summary .chev{
+      width: 10px; height: 10px;
+      border-right:2px solid var(--muted);
+      border-bottom:2px solid var(--muted);
+      transform: rotate(-45deg);
+      transition: transform .16s ease;
+      flex:0 0 auto;
+    }
+    details[open] summary .chev{transform: rotate(45deg)}
+    details .content{
+      padding: 0 12px 12px;
+      color: var(--muted);
+      font-size: 13.5px;
+    }
+
+    .figureCard{
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      background: rgba(0,0,0,.18);
+      padding: 12px;
+      overflow:hidden;
+    }
+    figure{margin: 10px 0 0}
+    figcaption{
+      color: var(--muted);
+      font-size: 12.5px;
+      margin-top: 8px;
+    }
+    canvas{
+      width: 100%;
+      height: 320px;
+      display:block;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .finalBox{
+      border:1px solid rgba(52,211,153,.35);
+      background: radial-gradient(600px 240px at 10% 20%, rgba(52,211,153,.20), transparent 60%),
+                  rgba(0,0,0,.18);
+      border-radius: var(--radius2);
+      padding: 12px;
+    }
+    .finalBox h3{margin-top:0}
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 720px){
+      canvas{height: 280px}
+      .twoCol{grid-template-columns: 1fr}
+    }
+
+    .backTop{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      text-decoration:none;
+      transition: transform .12s ease, background .12s ease;
+    }
+    .backTop:hover{transform: translateY(-1px); background: rgba(255,255,255,.08); text-decoration:none}
+    footer{
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12.5px;
+      padding: 0 4px;
+    }
+
+    @media print{
+      body{background:#fff; color:#000}
+      header.site, section, nav.toc{box-shadow:none; background:#fff; border-color:#ddd}
+      nav.toc{position:relative}
+      a{color:#000; text-decoration:underline}
+      .btn, .toast{display:none !important}
+      canvas{border-color:#ccc; background:#fff}
+      .card, .eq, .figureCard{background:#fff; border-color:#ddd}
+      section{break-inside: avoid; page-break-inside: avoid}
+      h2, h3{break-after: avoid-page; page-break-after: avoid}
+      .wrap{grid-template-columns: 1fr}
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="box">
-      <h1>25.3-1 — Number of WDM Channels</h1>
-      <p>Write your full solution here as a self-contained HTML article (vanilla HTML/CSS/JS only).</p>
-      <p class="hint">Path: <code>./problems/photonics/ch25/prob_25_3_1.html</code></p>
-    </div>
-  </header>
+  <a id="top"></a>
+  <div class="wrap">
+    <header class="site" role="banner">
+      <div class="titleRow">
+        <div>
+          <h1>Number of WDM Channels in the C-Band and O-Band (75&nbsp;GHz Spacing)</h1>
+          <p class="subtitle">
+            How many equally spaced wavelength-division multiplexing (WDM) channels can fit inside a specified wavelength band?
+            We’ll convert wavelength limits to frequency bandwidth, then translate bandwidth into a channel count—exactly the
+            reasoning used in optical network planning.
+          </p>
+        </div>
+        <div class="meta" aria-label="Key metadata">
+          <span class="pill"><span class="dot" aria-hidden="true"></span><strong>Given:</strong>&nbsp;Δf<sub>ch</sub>=75&nbsp;GHz</span>
+          <span class="pill"><span class="dot" aria-hidden="true" style="background:var(--accent2); box-shadow:0 0 0 4px rgba(167,139,250,.12)"></span><strong>Bands:</strong>&nbsp;C (1530–1565&nbsp;nm), O (1260–1360&nbsp;nm)</span>
+        </div>
+      </div>
+    </header>
 
-  <main>
-    <div class="box">
-      <p><strong>TODO:</strong> Add problem statement, derivation, final results, and (if desired) a canvas visualization.</p>
-    </div>
-  </main>
+    <nav class="toc" aria-label="Table of contents">
+      <h2>Table of Contents</h2>
+      <div class="toc">
+        <a href="#quick">Quick Summary</a>
+        <a href="#p0">Part 0 — Concept Primer</a>
+        <a href="#p0b">Part 0B — Industry & Applied Physics</a>
+        <a href="#p1">Part 1 — Problem Analysis</a>
+        <a href="#p2">Part 2 — Strategy & Tips</a>
+        <a href="#p3">Part 3 — Full Solution</a>
+        <a href="#p4">Part 4 — Deeper Understanding</a>
+        <a href="#p5">Part 5 — Optional Plot Guide</a>
+      </div>
+      <small>
+        Copy buttons are provided for key equations and the final answer. Use “Back to top” at the end.
+      </small>
+    </nav>
+
+    <main role="main">
+      <section id="quick" aria-labelledby="quickTitle">
+        <h2 id="quickTitle">Quick Summary</h2>
+        <ul>
+          <li><strong>What this is about:</strong> Counting how many WDM channels can be placed inside a wavelength band when channels are equally spaced in <em>frequency</em> (here, 75&nbsp;GHz).</li>
+          <li><strong>Key physics idea:</strong> Optical frequency and wavelength are inversely related: <span class="muted">f = c/λ</span>, so equal spacing in frequency corresponds to non-uniform spacing in wavelength.</li>
+          <li><strong>Governing equations:</strong> Bandwidth in frequency is Δf = f<sub>max</sub> − f<sub>min</sub> = c(1/λ<sub>min</sub> − 1/λ<sub>max</sub>).</li>
+          <li><strong>Channel counting model:</strong> If (N−1)Δf<sub>ch</sub> ≤ Δf<sub>band</sub>, then <strong>N = ⌊Δf<sub>band</sub>/Δf<sub>ch</sub>⌋ + 1</strong>.</li>
+          <li><strong>Result type:</strong> Numeric (bands and spacing are given numerically).</li>
+          <li><strong>C-band bandwidth:</strong> about <strong>4.38&nbsp;THz</strong> across 1530–1565&nbsp;nm → <strong>59 channels</strong> at 75&nbsp;GHz spacing.</li>
+          <li><strong>O-band bandwidth:</strong> about <strong>17.49&nbsp;THz</strong> across 1260–1360&nbsp;nm → <strong>234 channels</strong> at 75&nbsp;GHz spacing.</li>
+          <li><strong>Physical meaning:</strong> Wider frequency bandwidth (in THz) supports proportionally more channels; the O-band’s wider span yields many more channels than the C-band for the same spacing.</li>
+        </ul>
+
+        <div class="callouts">
+          <div class="card">
+            <h4>Key equations (copy)</h4>
+            <div class="eq" id="eqKey">
+              <pre>f = c / λ
+Δf_band = f_max - f_min = c(1/λ_min - 1/λ_max)
+(N - 1)Δf_ch ≤ Δf_band  ⇒  N = floor(Δf_band/Δf_ch) + 1</pre>
+            </div>
+            <div class="row">
+              <span class="kbadge">Plain text</span>
+              <button class="btn" data-copy="#eqKey"><span aria-hidden="true">📋</span>Copy key equations</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="p0" aria-labelledby="p0Title">
+        <h2 id="p0Title">PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+        <h3>0.1 Core definitions (symbols + SI units)</h3>
+        <ul>
+          <li><strong>λ</strong> — wavelength (meters, m). In telecom we often use nanometers (nm).</li>
+          <li><strong>f</strong> — optical frequency (hertz, Hz). Often expressed in terahertz (THz = 10<sup>12</sup> Hz).</li>
+          <li><strong>c</strong> — speed of light in vacuum (m/s), approximately 2.9979×10<sup>8</sup> m/s.</li>
+          <li><strong>Δf<sub>ch</sub></strong> — channel spacing in frequency (Hz). Here: 75&nbsp;GHz = 75×10<sup>9</sup> Hz.</li>
+          <li><strong>Δf<sub>band</sub></strong> — frequency span of a wavelength band (Hz).</li>
+          <li><strong>N</strong> — number of channels that fit within the band (dimensionless count).</li>
+        </ul>
+
+        <h3>0.2 Physical meaning and intuition</h3>
+        <p>
+          In WDM systems, each channel occupies a narrow slice of the optical spectrum. Networks typically define channel spacing
+          in <strong>frequency</strong> (GHz) because filtering, modulation formats, and grid standards are naturally frequency-based.
+          But many band definitions (like “C-band 1530–1565 nm”) are given in <strong>wavelength</strong>. The bridge between the two is:
+        </p>
+        <div class="callouts">
+          <div class="card">
+            <h4>Frequency–wavelength relationship</h4>
+            <div class="eq" id="eqFL">
+              <pre>f = c / λ</pre>
+            </div>
+            <p class="muted">
+              Because of the inverse relationship, a fixed Δf corresponds to a smaller Δλ at shorter wavelengths and a larger Δλ at longer wavelengths.
+            </p>
+            <div class="row">
+              <span class="kbadge">Plain text</span>
+              <button class="btn" data-copy="#eqFL"><span aria-hidden="true">📋</span>Copy f = c/λ</button>
+            </div>
+          </div>
+        </div>
+
+        <h3>0.3 Key principles and validity conditions</h3>
+        <ul>
+          <li><strong>Monochromatic approximation:</strong> Each WDM channel is treated as centered at a single frequency with small bandwidth compared to the whole band.</li>
+          <li><strong>Vacuum vs. fiber:</strong> The band boundaries are specified in wavelength in free space; for channel counting we use the same λ limits, and convert using <em>c</em>. (Dispersion affects propagation, not the bookkeeping of spectral allocation.)</li>
+          <li><strong>Grid idealization:</strong> We assume channels are evenly spaced by Δf<sub>ch</sub>, and ignore guard bands and edge roll-off unless explicitly included.</li>
+        </ul>
+
+        <h3>0.4 Common models/approximations (and why used)</h3>
+        <ul>
+          <li><strong>Rectangular packing model:</strong> Channels are “points” on a frequency grid, and the band is a continuous interval. This gives a first-pass capacity estimate.</li>
+          <li><strong>Edge fit criterion:</strong> Use (N−1)Δf ≤ Δf<sub>band</sub>. This matches the idea that N channels define N−1 gaps between them.</li>
+        </ul>
+
+        <h3>0.5 Mini intuition examples (minimal algebra)</h3>
+        <ul>
+          <li><strong>Example A (linear thinking):</strong> If a band had Δf = 3&nbsp;THz and spacing 100&nbsp;GHz, you’d expect roughly 30 “steps” of 100&nbsp;GHz across the band → about 31 channels (because endpoints count).</li>
+          <li><strong>Example B (wavelength trap):</strong> A 10&nbsp;nm band near 1550&nbsp;nm is <em>not</em> the same frequency width as a 10&nbsp;nm band near 1310&nbsp;nm. The shorter-wavelength region spans more frequency for the same nm width.</li>
+        </ul>
+
+        <h3>0.6 What to watch for (pitfalls)</h3>
+        <div class="callouts">
+          <div class="card">
+            <h4>What to watch for</h4>
+            <ul>
+              <li><strong>Do not</strong> treat nm spacing as uniform if the spacing is specified in GHz.</li>
+              <li>Use <strong>λ<sub>min</sub></strong> for <strong>f<sub>max</sub></strong> and <strong>λ<sub>max</sub></strong> for <strong>f<sub>min</sub></strong> (because f decreases as λ increases).</li>
+              <li>Channel count is usually <strong>⌊Δf/Δf<sub>ch</sub>⌋ + 1</strong>, not just ⌊Δf/Δf<sub>ch</sub>⌋.</li>
+              <li>Real systems may require guard bands and filter roll-off margins, reducing the practical N.</li>
+            </ul>
+          </div>
+        </div>
+
+        <details>
+          <summary>
+            Deeper note: Why frequency grids are preferred (engineering view)
+            <span class="chev" aria-hidden="true"></span>
+          </summary>
+          <div class="content">
+            Frequency grids align naturally with resonator/filter physics and with coherent receiver DSP, which “sees” frequency offsets directly.
+            Standard channel plans are specified in GHz or THz. Wavelength boundaries are still used as convenient labels for fiber windows
+            where attenuation and amplifier technologies are favorable.
+          </div>
+        </details>
+      </section>
+
+      <section id="p0b" aria-labelledby="p0bTitle">
+        <h2 id="p0bTitle">PART 0B — Industry &amp; Applied Physics Perspective</h2>
+
+        <h3>Why this matters in real systems</h3>
+        <p>
+          Channel counting is the first-order capacity and cost planning step for optical links. Before you worry about modulation formats,
+          OSNR, nonlinearities, or dispersion compensation, you must know how many carriers you can practically place in the spectral window.
+        </p>
+
+        <h3>Where this appears in industry (concrete application areas)</h3>
+        <ul>
+          <li><strong>Long-haul &amp; submarine fiber systems:</strong> C-band is dominant due to mature EDFAs and low loss around 1550&nbsp;nm.</li>
+          <li><strong>Metro and data-center interconnect (DCI):</strong> High channel counts with tight grids; planning depends on amplifier/filter bandwidth and ROADM technology.</li>
+          <li><strong>Access networks &amp; short-reach optics:</strong> O-band (around 1310&nbsp;nm) is attractive for low chromatic dispersion in standard SMF in many short-reach contexts.</li>
+          <li><strong>Test &amp; measurement / spectral monitoring:</strong> OSAs and wavelength meters rely on frequency–wavelength conversion for channel identification and compliance.</li>
+        </ul>
+
+        <h3>Why engineers care (performance, cost, reliability)</h3>
+        <ul>
+          <li><strong>Performance:</strong> More channels → higher aggregate throughput (Tb/s) if OSNR and nonlinearities allow.</li>
+          <li><strong>Cost:</strong> Channel count drives the number of transceivers, filters, ROADMs, and amplifier stages.</li>
+          <li><strong>Reliability &amp; manufacturability:</strong> Tighter spacing requires tighter laser stability and better filter tolerances.</li>
+          <li><strong>Energy efficiency:</strong> More channels can mean more DSP and optical amplification power; operators optimize spectral plans to reduce cost per bit.</li>
+        </ul>
+
+        <h3>Typical measurement/validation methods</h3>
+        <ul>
+          <li><strong>Spectral validation:</strong> OSA measurements of channel centers and edge margins.</li>
+          <li><strong>Wavelength/frequency stability:</strong> Wavelength meters / coherent monitoring to ensure lasers stay within allocated slots.</li>
+          <li><strong>Filter passband verification:</strong> Sweep tests of WSS/ROADM filters to ensure roll-off and ripple meet specs.</li>
+        </ul>
+
+        <h3>Design trade-offs and constraints (real-world)</h3>
+        <ul>
+          <li><strong>Guard bands:</strong> Practical deployments reserve edge margins for filter roll-off, drift, and spectral tilt.</li>
+          <li><strong>Amplifier/filter bandwidth:</strong> Hardware often limits usable span to less than a nominal “band.”</li>
+          <li><strong>Non-idealities:</strong> Laser linewidth, drift, filter ripple, and wavelength-dependent loss constrain aggressive packing.</li>
+        </ul>
+
+        <details>
+          <summary>
+            From lab to product: adapting the idealized model
+            <span class="chev" aria-hidden="true"></span>
+          </summary>
+          <div class="content">
+            In products, “how many channels fit” becomes “how many channels fit with required BER/Q-factor over temperature, aging, and worst-case tolerances.”
+            Engineers subtract margins (edge guard bands, excluded regions) and ensure the plan is robust to drift and component variation.
+            The simple calculation here remains the essential upper bound and starting point for system design.
+          </div>
+        </details>
+      </section>
+
+      <section id="p1" aria-labelledby="p1Title">
+        <h2 id="p1Title">PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+        <h3>Problem restatement (in plain words)</h3>
+        <p>
+          We are given two wavelength bands: C-band (1530–1565&nbsp;nm) and O-band (1260–1360&nbsp;nm).
+          WDM channels are spaced uniformly by 75&nbsp;GHz in frequency. Find how many such channels can fit in each band.
+        </p>
+
+        <div class="grid2">
+          <div class="card">
+            <h4>Given</h4>
+            <ul>
+              <li>C-band limits: λ ∈ [1530, 1565] nm</li>
+              <li>O-band limits: λ ∈ [1260, 1360] nm</li>
+              <li>Channel spacing: Δf<sub>ch</sub> = 75 GHz</li>
+              <li>Speed of light: c ≈ 2.9979×10<sup>8</sup> m/s</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Unknowns</h4>
+            <ul>
+              <li>N<sub>C</sub> = number of channels in the C-band</li>
+              <li>N<sub>O</sub> = number of channels in the O-band</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Relevant principles (and why they apply)</h3>
+        <ul>
+          <li><strong>Frequency conversion:</strong> We must convert wavelength limits into frequency limits because spacing is specified in GHz.</li>
+          <li><strong>Uniform grid packing:</strong> Channel centers are placed at f = f<sub>0</sub> + kΔf<sub>ch</sub> within the available band.</li>
+        </ul>
+        <p class="muted">
+          Dispersion, nonlinearities, and modulation formats are not needed here; this is spectral bookkeeping plus an inverse conversion.
+        </p>
+
+        <div class="callouts">
+          <div class="card">
+            <h4>Assumptions</h4>
+            <ul>
+              <li>Ideal channels with negligible width (no guard bands, no roll-off constraints).</li>
+              <li>Endpoints are usable for channel centers (counting includes both edges if the grid lands there).</li>
+              <li>Band limits are treated as hard wavelength boundaries and converted using f = c/λ.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Possible approaches (compare 2–3 methods)</h3>
+        <ul>
+          <li><strong>Approach 1 (best):</strong> Convert λ-limits to f-limits, compute Δf, then N = ⌊Δf/Δf<sub>ch</sub>⌋ + 1.</li>
+          <li><strong>Approach 2:</strong> Use differential estimate Δf ≈ (c/λ<sup>2</sup>)Δλ at a center wavelength (quick but approximate).</li>
+          <li><strong>Approach 3:</strong> Convert 75 GHz to an equivalent Δλ and divide wavelength span by Δλ (dangerous unless handled as λ-dependent).</li>
+        </ul>
+
+        <p><strong>Chosen approach:</strong> Approach 1, because it is exact for endpoint-defined bands and a fixed frequency spacing.</p>
+      </section>
+
+      <section id="p2" aria-labelledby="p2Title">
+        <h2 id="p2Title">PART 2 — Strategy &amp; Tips (Roadmap Only)</h2>
+
+        <ol>
+          <li><strong>Convert nm to meters</strong> so c (m/s) works directly.</li>
+          <li><strong>Compute endpoint frequencies</strong> with f = c/λ.</li>
+          <li><strong>Compute band width in frequency</strong>: Δf = f<sub>max</sub> − f<sub>min</sub>.</li>
+          <li><strong>Count channels</strong> using (N−1)Δf<sub>ch</sub> ≤ Δf and N = ⌊Δf/Δf<sub>ch</sub>⌋ + 1.</li>
+          <li><strong>Repeat</strong> for both bands.</li>
+          <li><strong>Sanity check</strong> magnitudes and units.</li>
+        </ol>
+
+        <div class="callouts">
+          <div class="card">
+            <h4>Common mistakes</h4>
+            <ul>
+              <li>Swapping which wavelength gives f<sub>max</sub> (remember: smaller λ → larger f).</li>
+              <li>Forgetting the <strong>+1</strong> in N = ⌊Δf/Δf<sub>ch</sub>⌋ + 1.</li>
+              <li>Confusing GHz with THz (1 THz = 1000 GHz).</li>
+              <li>Using a single Δλ for the entire band when spacing is defined in Δf.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="p3" aria-labelledby="p3Title">
+        <h2 id="p3Title">PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+        <h3>3.1 Intuition</h3>
+        <p>
+          The number of channels should be approximately the band’s frequency width (in THz) divided by 0.075&nbsp;THz.
+          So a few THz gives a few dozen channels, while ~10–20 THz gives a few hundred.
+        </p>
+
+        <h3>3.2 Core conversion: wavelength to frequency</h3>
+        <div class="eq" id="eqConvert">
+          <pre>f = c / λ</pre>
+        </div>
+        <p class="muted">
+          Since f decreases as λ increases, the band’s shortest wavelength is the highest frequency edge.
+        </p>
+
+        <h3>3.3 Bandwidth in frequency form</h3>
+        <div class="eq" id="eqBandwidth">
+          <pre>f_max = c / λ_min
+f_min = c / λ_max
+
+Δf_band = f_max - f_min
+        = c(1/λ_min - 1/λ_max)</pre>
+        </div>
+
+        <h3>3.4 Channel counting logic</h3>
+        <p>
+          Place N channels with uniform spacing Δf<sub>ch</sub>. The first and last channel centers span (N−1) spacings, so:
+        </p>
+        <div class="eq" id="eqCount">
+          <pre>(N - 1)Δf_ch ≤ Δf_band
+N = floor(Δf_band/Δf_ch) + 1</pre>
+        </div>
+
+        <h3>3.5 C-band calculation (1530–1565 nm)</h3>
+        <p>
+          λ<sub>min</sub> = 1530×10<sup>−9</sup> m, λ<sub>max</sub> = 1565×10<sup>−9</sup> m, c = 299,792,458 m/s.
+        </p>
+        <div class="eq" id="eqC">
+          <pre>Δf_C = c(1/1530e-9 - 1/1565e-9)
+     ≈ 4.382 × 10^12 Hz
+     ≈ 4.382 THz</pre>
+        </div>
+        <p>
+          Δf<sub>ch</sub> = 75 GHz = 0.075 THz:
+        </p>
+        <div class="eq" id="eqNC">
+          <pre>N_C = floor(4.382/0.075) + 1
+    = floor(58.43) + 1
+    = 58 + 1
+    = 59 channels</pre>
+        </div>
+
+        <h3>3.6 O-band calculation (1260–1360 nm)</h3>
+        <p>
+          λ<sub>min</sub> = 1260×10<sup>−9</sup> m, λ<sub>max</sub> = 1360×10<sup>−9</sup> m.
+        </p>
+        <div class="eq" id="eqO">
+          <pre>Δf_O = c(1/1260e-9 - 1/1360e-9)
+     ≈ 1.7495 × 10^13 Hz
+     ≈ 17.495 THz</pre>
+        </div>
+        <p>
+          Channel count:
+        </p>
+        <div class="eq" id="eqNO">
+          <pre>N_O = floor(17.495/0.075) + 1
+    = floor(233.27) + 1
+    = 233 + 1
+    = 234 channels</pre>
+        </div>
+
+        <div class="finalBox" id="finalAnswerBox">
+          <h3>Final Answer (copy-ready)</h3>
+          <div class="eq" id="finalText">
+            <pre>C-band (1530–1565 nm), Δf_ch = 75 GHz:
+N_C = 59 channels
+
+O-band (1260–1360 nm), Δf_ch = 75 GHz:
+N_O = 234 channels</pre>
+          </div>
+          <div class="row">
+            <span class="kbadge">Plain text</span>
+            <button class="btn" data-copy="#finalText"><span aria-hidden="true">📋</span>Copy final answer</button>
+          </div>
+
+          <details>
+            <summary>
+              Sanity checks (units, limits, interpretation)
+              <span class="chev" aria-hidden="true"></span>
+            </summary>
+            <div class="content">
+              <ul>
+                <li><strong>Units:</strong> Δf is in Hz (or THz), Δf<sub>ch</sub> is in Hz (or THz), so their ratio is dimensionless → a count.</li>
+                <li><strong>Magnitude check:</strong> 4.382 THz / 0.075 THz ≈ 58.4 → 59 channels is sensible.</li>
+                <li><strong>Comparative check:</strong> O-band here is ~4× wider in frequency than C-band → ~4× channels (234 vs 59), consistent.</li>
+                <li><strong>Physical meaning:</strong> This is an ideal upper bound; practical channel plans may subtract guard bands and account for filter roll-off.</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+
+        <h3>3.7 One optional static plot (f vs λ)</h3>
+        <p class="muted">
+          The plot below reinforces the core concept: <strong>f = c/λ is nonlinear</strong>, so converting wavelength spans to frequency spans must use the inverse relation.
+          The C- and O-band windows are highlighted.
+        </p>
+
+        <div class="figureCard">
+          <figure aria-label="Frequency versus wavelength with highlighted bands">
+            <canvas id="plot" width="900" height="360"></canvas>
+            <figcaption>
+              Static plot of f(λ)=c/λ (THz vs nm), with O-band (1260–1360 nm) and C-band (1530–1565 nm) highlighted.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="p4" aria-labelledby="p4Title">
+        <h2 id="p4Title">PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+        <h3>4.1 What each term controls</h3>
+        <ul>
+          <li><strong>c</strong> sets the absolute scale converting wavelength to frequency.</li>
+          <li><strong>λ<sub>min</sub>, λ<sub>max</sub></strong> set the usable spectral window; because of the inverse, the “frequency budget” depends on 1/λ.</li>
+          <li><strong>Δf<sub>ch</sub></strong> is the engineering grid: tighter spacing increases N but increases demands on lasers/filters and system impairments.</li>
+        </ul>
+
+        <h3>4.2 Parameter dependence</h3>
+        <ul>
+          <li>Decrease Δf<sub>ch</sub> → N increases approximately proportionally to 1/Δf<sub>ch</sub>.</li>
+          <li>Move to shorter wavelengths (smaller λ) for the same Δλ → Δf grows because |df/dλ| = c/λ² increases.</li>
+          <li>Widen the wavelength band (increase λ<sub>max</sub>−λ<sub>min</sub>) → generally increases Δf, thus increases N.</li>
+        </ul>
+
+        <h3>4.3 Alternative derivation idea</h3>
+        <p>
+          Instead of computing f<sub>max</sub> and f<sub>min</sub> separately, you can directly compute the band’s width:
+        </p>
+        <div class="eq" id="eqAlt">
+          <pre>Δf_band = c(1/λ_min - 1/λ_max)</pre>
+        </div>
+
+        <h3>4.4 Concept check (with answers)</h3>
+        <ul>
+          <li><strong>Q:</strong> Why is f<sub>max</sub> = c/λ<sub>min</sub>? <strong>A:</strong> Smaller wavelength means higher frequency because f is inversely proportional to λ.</li>
+          <li><strong>Q:</strong> If Δf<sub>ch</sub> is halved, what happens to N? <strong>A:</strong> Approximately doubles (ideal packing).</li>
+          <li><strong>Q:</strong> Why not use a constant nm spacing? <strong>A:</strong> Because the channels are specified by constant GHz spacing, which maps to varying nm spacing across the band.</li>
+          <li><strong>Q:</strong> What does the “+1” represent? <strong>A:</strong> N channels span only (N−1) gaps/spacings between them.</li>
+        </ul>
+
+        <details>
+          <summary>
+            Applied note: how guard bands change the count
+            <span class="chev" aria-hidden="true"></span>
+          </summary>
+          <div class="content">
+            In real networks, you may reserve a few channel spacings at each edge (guard bands) and sometimes between sub-bands.
+            If you reserve G spacings total, a quick adjustment is:
+            N_real ≈ floor((Δf_band - G·Δf_ch)/Δf_ch) + 1, provided Δf_band > G·Δf_ch.
+            The exact value depends on filter roll-off, laser drift specs, and ROADM/WSS characteristics.
+          </div>
+        </details>
+      </section>
+
+      <section id="p5" aria-labelledby="p5Title">
+        <h2 id="p5Title">PART 5 — Optional Plot Guide (Only If a Plot Exists)</h2>
+
+        <h3>What it shows</h3>
+        <p>
+          It shows the inverse mapping between wavelength and frequency. The shaded vertical regions mark the given bands in wavelength,
+          while the curve reveals the corresponding frequency range, which is what matters for a fixed GHz channel grid.
+        </p>
+
+        <h3>Axes (units)</h3>
+        <ul>
+          <li><strong>x-axis:</strong> wavelength λ (nm)</li>
+          <li><strong>y-axis:</strong> frequency f (THz)</li>
+        </ul>
+
+        <h3>Features to notice</h3>
+        <ul>
+          <li><strong>Nonlinearity:</strong> the curve bends; slope magnitude is larger at shorter wavelengths.</li>
+          <li><strong>Span comparison:</strong> O-band covers a larger THz span than C-band for the given nm limits, explaining why it fits more 75 GHz channels.</li>
+        </ul>
+
+        <div class="row" style="margin-top:12px">
+          <a class="backTop" href="#top" aria-label="Back to top"><span aria-hidden="true">⬆</span>Back to top</a>
+        </div>
+
+        <footer role="contentinfo">
+          Self-contained article (vanilla HTML/CSS/JS). Constants: c = 299,792,458 m/s. Model: ideal frequency-grid packing without guard bands.
+        </footer>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function(){
+      const toast = document.getElementById('toast');
+      let toastTimer = null;
+
+      function showToast(msg){
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(()=>toast.classList.remove('show'), 1400);
+      }
+
+      async function copyFrom(selector){
+        const el = document.querySelector(selector);
+        if(!el) return showToast("Copy failed: element not found.");
+        const text = (el.innerText || el.textContent || "").trim();
+        if(!text) return showToast("Nothing to copy.");
+        try{
+          await navigator.clipboard.writeText(text);
+          showToast("Copied to clipboard.");
+        }catch(e){
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly','');
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          try{
+            document.execCommand('copy');
+            showToast("Copied to clipboard.");
+          }catch(err){
+            showToast("Copy blocked by browser.");
+          }
+          document.body.removeChild(ta);
+        }
+      }
+
+      document.addEventListener('click', (ev)=>{
+        const btn = ev.target.closest('[data-copy]');
+        if(!btn) return;
+        const sel = btn.getAttribute('data-copy');
+        copyFrom(sel);
+      });
+
+      const canvas = document.getElementById('plot');
+      const ctx = canvas.getContext('2d');
+
+      function draw(){
+        if(!canvas) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+        const w = Math.max(520, Math.floor(rect.width));
+        const h = Math.floor(rect.height);
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+
+        const padL = 58, padR = 18, padT = 16, padB = 44;
+        const W = w, H = h;
+        const plotW = W - padL - padR;
+        const plotH = H - padT - padB;
+
+        const xMin = 1200, xMax = 1600;
+        const c = 299792458;
+        function fTHz(lam_nm){
+          return (c / (lam_nm * 1e-9)) / 1e12;
+        }
+        const yMax = fTHz(xMin);
+        const yMin = fTHz(xMax);
+        const yPad = 0.6;
+        const Ymin = Math.floor((yMin - yPad) * 10) / 10;
+        const Ymax = Math.ceil((yMax + yPad) * 10) / 10;
+
+        function xToPx(x){
+          return padL + (x - xMin) / (xMax - xMin) * plotW;
+        }
+        function yToPx(y){
+          return padT + (Ymax - y) / (Ymax - Ymin) * plotH;
+        }
+
+        ctx.clearRect(0,0,W,H);
+        const grad = ctx.createRadialGradient(W*0.2, H*0.2, 20, W*0.5, H*0.5, Math.max(W,H));
+        grad.addColorStop(0, 'rgba(255,255,255,0.06)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0,0,W,H);
+
+        ctx.save();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+        for(let x=1200; x<=1600; x+=50){
+          const X = xToPx(x);
+          ctx.beginPath();
+          ctx.moveTo(X, padT);
+          ctx.lineTo(X, padT + plotH);
+          ctx.stroke();
+        }
+        const yRange = (Ymax - Ymin);
+        const step = (yRange > 70) ? 20 : 10;
+        const yStart = Math.ceil(Ymin / step) * step;
+        for(let y=yStart; y<=Ymax; y+=step){
+          const Y = yToPx(y);
+          ctx.beginPath();
+          ctx.moveTo(padL, Y);
+          ctx.lineTo(padL + plotW, Y);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + plotH);
+        ctx.lineTo(padL + plotW, padT + plotH);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.font = '600 13px ' + getComputedStyle(document.body).fontFamily;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Static relationship: optical frequency f = c/λ (highlighting O- and C-band windows)', padL, 6);
+        ctx.restore();
+
+        function bandRect(l1, l2, fillStyle, label){
+          const x1 = xToPx(l1), x2 = xToPx(l2);
+          ctx.save();
+          ctx.fillStyle = fillStyle;
+          ctx.fillRect(x1, padT, x2 - x1, plotH);
+          ctx.restore();
+
+          ctx.save();
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          ctx.font = '600 12px ' + getComputedStyle(document.body).fontFamily;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillText(label, x1 + 6, padT + 8);
+          ctx.restore();
+        }
+
+        bandRect(1260, 1360, 'rgba(125,211,252,0.13)', 'O-band: 1260–1360 nm');
+        bandRect(1530, 1565, 'rgba(167,139,250,0.13)', 'C-band: 1530–1565 nm');
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const n = 360;
+        for(let i=0; i<=n; i++){
+          const lam = xMin + (xMax - xMin) * (i/n);
+          const y = fTHz(lam);
+          const X = xToPx(lam);
+          const Y = yToPx(y);
+          if(i===0) ctx.moveTo(X,Y);
+          else ctx.lineTo(X,Y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.78)';
+        ctx.font = '500 12px ' + getComputedStyle(document.body).fontFamily;
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('Wavelength, λ (nm)', padL + plotW/2, H - 10);
+
+        ctx.translate(14, padT + plotH/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('Frequency, f (THz)', 0, 0);
+        ctx.restore();
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.70)';
+        ctx.font = '500 11px ' + getComputedStyle(document.body).fontFamily;
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        for(let x=1200; x<=1600; x+=100){
+          const X = xToPx(x);
+          ctx.fillText(String(x), X, padT + plotH + 6);
+        }
+
+        const yRange2 = (Ymax - Ymin);
+        const yStep = (yRange2 > 70) ? 20 : 10;
+        const y0 = Math.ceil(Ymin / yStep) * yStep;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for(let y=y0; y<=Ymax; y+=yStep){
+          const Y = yToPx(y);
+          ctx.fillText(String(y), padL - 8, Y);
+        }
+        ctx.restore();
+
+        ctx.save();
+        const lx = padL + plotW - 190;
+        const ly = padT + 10;
+        const lw = 180, lh = 64;
+        ctx.fillStyle = 'rgba(16,24,39,0.70)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+        ctx.lineWidth = 1;
+        roundRect(ctx, lx, ly, lw, lh, 12);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = '500 12px ' + getComputedStyle(document.body).fontFamily;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(lx+12, ly+18);
+        ctx.lineTo(lx+44, ly+18);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.82)';
+        ctx.fillText('f = c/λ', lx+54, ly+18);
+
+        ctx.fillStyle = 'rgba(125,211,252,0.18)';
+        ctx.fillRect(lx+12, ly+32, 32, 12);
+        ctx.fillStyle = 'rgba(255,255,255,0.82)';
+        ctx.fillText('O-band window', lx+54, ly+38);
+
+        ctx.fillStyle = 'rgba(167,139,250,0.18)';
+        ctx.fillRect(lx+12, ly+48, 32, 12);
+        ctx.fillStyle = 'rgba(255,255,255,0.82)';
+        ctx.fillText('C-band window', lx+54, ly+54);
+
+        ctx.restore();
+
+        function roundRect(c2, x, y, w2, h2, r){
+          const rr = Math.min(r, w2/2, h2/2);
+          c2.beginPath();
+          c2.moveTo(x+rr, y);
+          c2.arcTo(x+w2, y, x+w2, y+h2, rr);
+          c2.arcTo(x+w2, y+h2, x, y+h2, rr);
+          c2.arcTo(x, y+h2, x, y, rr);
+          c2.arcTo(x, y, x+w2, y, rr);
+          c2.closePath();
+        }
+      }
+
+      let raf = 0;
+      function requestDraw(){
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(draw);
+      }
+      window.addEventListener('resize', requestDraw, {passive:true});
+      requestDraw();
+    })();
+  </script>
 </body>
 </html>
