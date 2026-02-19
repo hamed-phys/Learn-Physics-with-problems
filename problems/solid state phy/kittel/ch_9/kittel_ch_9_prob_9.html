@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Wannier Functions: Orthogonality and 1D Localization (Sinc Form)</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --panel:#0f172a;
+      --card:#111c33;
+      --text:#e6edf7;
+      --muted:#a9b6cc;
+      --line:rgba(255,255,255,.12);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 700px at 20% -10%, rgba(125,211,252,.14), transparent 55%),
+                  radial-gradient(1200px 700px at 110% 10%, rgba(167,139,250,.10), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding:28px 18px 12px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15,23,42,.85), rgba(11,15,23,.55));
+      position:relative;
+      overflow:hidden;
+    }
+    header .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1.3fr .7fr;
+      gap:16px;
+      align-items:end;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(1.6rem, 2.4vw, 2.3rem);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:.35rem 0 0;
+      color:var(--muted);
+      font-size:1rem;
+    }
+    .meta{
+      justify-self:end;
+      text-align:right;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+    .meta .pill{
+      display:inline-block;
+      padding:6px 10px;
+      margin-left:8px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(17,28,51,.55);
+      box-shadow: 0 1px 0 rgba(255,255,255,.05) inset;
+      white-space:nowrap;
+    }
+
+    main{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px;
+      display:grid;
+      grid-template-columns: 280px 1fr;
+      gap:18px;
+    }
+    nav#toc{
+      position:sticky;
+      top:14px;
+      align-self:start;
+      background: rgba(17,28,51,.62);
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow: var(--shadow);
+      padding:14px 12px;
+      backdrop-filter: blur(10px);
+    }
+    #toc h2{
+      font-size:1rem;
+      margin:0 0 10px;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    #toc h2::before{
+      content:"";
+      width:10px;height:10px;border-radius:50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 3px rgba(125,211,252,.12);
+    }
+    #toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius:12px;
+      color:var(--muted);
+      border:1px solid transparent;
+      transition: transform .12s ease, background .12s ease, color .12s ease, border-color .12s ease;
+      font-size:.95rem;
+    }
+    #toc a:hover{
+      background: rgba(125,211,252,.08);
+      border-color: rgba(125,211,252,.18);
+      color: var(--text);
+      transform: translateX(2px);
+      text-decoration:none;
+    }
+    #toc .mini{
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px solid var(--line);
+      color:var(--muted);
+      font-size:.9rem;
+    }
+
+    article{
+      background: rgba(17,28,51,.40);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .content{
+      padding:18px 18px 10px;
+    }
+    section{
+      padding:14px 0;
+      border-top:1px solid rgba(255,255,255,.08);
+    }
+    section:first-of-type{border-top:none}
+    h2{
+      margin:0 0 10px;
+      font-size:1.35rem;
+      letter-spacing:.15px;
+    }
+    h3{
+      margin:14px 0 8px;
+      font-size:1.1rem;
+      color:var(--text);
+    }
+    p{margin:8px 0;color:rgba(230,237,247,.93)}
+    ul,ol{margin:8px 0 8px 20px}
+    li{margin:6px 0;color:rgba(230,237,247,.93)}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .card{
+      background: rgba(15,23,42,.55);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      box-shadow: 0 1px 0 rgba(255,255,255,.05) inset;
+    }
+    .callout{
+      border-left: 4px solid var(--accent);
+      background: rgba(125,211,252,.08);
+      padding:12px 12px 12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(125,211,252,.18);
+    }
+    .callout.warn{border-left-color: var(--warn); background: rgba(251,191,36,.09); border-color: rgba(251,191,36,.18);}
+    .callout.good{border-left-color: var(--good); background: rgba(52,211,153,.08); border-color: rgba(52,211,153,.18);}
+    .callout.bad{border-left-color: var(--bad); background: rgba(251,113,133,.08); border-color: rgba(251,113,133,.18);}
+    .label{
+      display:inline-block;
+      font-weight:700;
+      letter-spacing:.2px;
+      font-size:.85rem;
+      color:rgba(230,237,247,.95);
+      margin-bottom:8px;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(17,28,51,.55);
+    }
+    .eqbox{
+      background: rgba(11,15,23,.65);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:16px;
+      padding:12px;
+      overflow:auto;
+      position:relative;
+    }
+    pre{
+      margin:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-family:var(--mono);
+      font-size:.95rem;
+      color:rgba(230,237,247,.95);
+    }
+    code{font-family:var(--mono)}
+    .copyRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin:10px 0 0;
+    }
+    button.copy{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      padding:9px 12px;
+      border-radius:12px;
+      color:var(--text);
+      background: linear-gradient(135deg, rgba(125,211,252,.22), rgba(167,139,250,.18));
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: 0 6px 18px rgba(0,0,0,.25);
+      transition: transform .12s ease, filter .12s ease;
+      font-weight:650;
+      letter-spacing:.15px;
+    }
+    button.copy:hover{transform: translateY(-1px); filter:brightness(1.05)}
+    button.copy:active{transform: translateY(0px); filter:brightness(.98)}
+    .copyStatus{
+      color:var(--muted);
+      font-size:.9rem;
+    }
+    details{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(15,23,42,.42);
+      border-radius:16px;
+      padding:10px 12px;
+      margin:10px 0;
+    }
+    details summary{
+      cursor:pointer;
+      font-weight:700;
+      color:rgba(230,237,247,.95);
+    }
+    details summary::-webkit-details-marker{display:none}
+    details summary::before{
+      content:"▸";
+      display:inline-block;
+      margin-right:8px;
+      color: var(--accent);
+      transform: translateY(-1px);
+      transition: transform .15s ease;
+    }
+    details[open] summary::before{transform: rotate(90deg) translateY(-1px)}
+    .backTop{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(17,28,51,.55);
+      color:var(--muted);
+      font-size:.9rem;
+      margin:10px 0 0;
+    }
+    .backTop:hover{
+      color:var(--text);
+      text-decoration:none;
+      border-color: rgba(125,211,252,.25);
+      background: rgba(125,211,252,.08);
+    }
+    footer{
+      max-width:1100px;
+      margin:0 auto;
+      padding:14px 18px 26px;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff;color:#000}
+      header, nav#toc, .copyRow, .backTop{display:none !important}
+      main{display:block; padding:0}
+      article{border:none; box-shadow:none; background:#fff}
+      .content{padding:0}
+      .eqbox{background:#f6f6f6;border:1px solid #ccc}
+      section{page-break-inside:avoid}
+      h2{page-break-after:avoid}
+      .callout, .card, details{border:1px solid #ccc; background:#f8f8f8}
+    }
+
+    @media (max-width: 980px){
+      header .wrap{grid-template-columns:1fr; align-items:start}
+      .meta{justify-self:start; text-align:left}
+      main{grid-template-columns:1fr}
+      nav#toc{position:relative; top:auto}
+    }
+  </style>
+</head>
+<body>
+  <header id="top">
+    <div class="wrap">
+      <div>
+        <h1>Wannier Functions: Orthogonality & 1D “Sinc” Localization</h1>
+        <p class="subtitle">From Bloch eigenstates to real-space orbitals — with mathematical rigor and applied/industrial relevance.</p>
+      </div>
+      <div class="meta">
+        <div>
+          <span class="pill">Quantum solids</span>
+          <span class="pill">Fourier / unitary transform</span>
+          <span class="pill">Applied physics lens</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <nav id="toc" aria-label="Table of Contents">
+      <h2>Contents</h2>
+      <a href="#quick">Quick Summary</a>
+      <a href="#part0">Part 0 — Concept Primer</a>
+      <a href="#part0b">Part 0B — Industry & Applied Physics</a>
+      <a href="#part1">Part 1 — Problem Analysis</a>
+      <a href="#part2">Part 2 — Strategy & Tips</a>
+      <a href="#part3">Part 3 — Full Solution</a>
+      <a href="#part4">Part 4 — Deeper Understanding</a>
+      <a href="#part5">Part 5 — Optional Plot Guide</a>
+      <div class="mini">
+        <div><strong>Usability:</strong> copy buttons included for key equations and the final result.</div>
+      </div>
+    </nav>
+
+    <article>
+      <div class="content">
+
+        <!-- Quick Summary -->
+        <section id="quick">
+          <h2>Quick Summary</h2>
+          <ul>
+            <li><strong>What this is:</strong> Construct Wannier functions <code>w(r-r_n)</code> for a single band from Bloch states <code>ψ_k(r)</code>.</li>
+            <li><strong>Key physics idea:</strong> Wannier functions are the <em>real-space</em> basis obtained by a (discrete) Fourier transform over crystal momentum <code>k</code>.</li>
+            <li><strong>Governing relation (definition):</strong> <code>w(r-r_n)=N^{-1/2} Σ_k e^{-i k·r_n} ψ_k(r)</code>.</li>
+            <li><strong>Main result (a):</strong> Wannier functions centered at different lattice points are orthogonal:
+              <code>∫ dV w*(r-r_n) w(r-r_m)=0</code> for <code>n≠m</code> (indeed it equals <code>δ_nm</code>).</li>
+            <li><strong>Main result (b):</strong> In 1D, if <code>ψ_k(x)=N^{-1/2} e^{ikx} u_0(x)</code> with <code>u_0</code> independent of <code>k</code>, then
+              <code>w(x-x_n)=u_0(x) · sin(π(x-x_n)/a) / (π(x-x_n)/a)</code>.</li>
+            <li><strong>Physical meaning:</strong> The sinc factor peaks at the lattice site and decays away, showing localization (band-limited Fourier synthesis).</li>
+            <li><strong>Math object view:</strong> The mapping between <code>{ψ_k}</code> and <code>{w_n}</code> is a <strong>unitary</strong> transform (discrete Fourier transform), preserving orthogonality.</li>
+            <li><strong>Result type:</strong> Symbolic; the 1D sinc form comes from approximating the <code>k</code>-sum by a Brillouin-zone integral (large <code>N</code>).</li>
+          </ul>
+        </section>
+
+        <!-- Part 0 -->
+        <section id="part0">
+          <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+          <div class="grid2">
+            <div class="card">
+              <div class="label">Core definitions (symbols & units)</div>
+              <ul>
+                <li><code>r</code> : position vector (m).</li>
+                <li><code>r_n</code> : lattice site (m). In 1D, <code>x_n = n a</code> with lattice constant <code>a</code> (m).</li>
+                <li><code>k</code> : crystal wavevector (1/m), sampled in the first Brillouin zone (BZ).</li>
+                <li><code>ψ_k(r)</code> : normalized Bloch eigenfunction of a chosen band (units: m<sup>-3/2</sup> in 3D so that <code>∫|ψ|^2 dV=1</code>).</li>
+                <li><code>w(r-r_n)</code> : Wannier function centered at <code>r_n</code> (same units as <code>ψ</code>).</li>
+                <li><code>N</code> : number of unit cells (dimensionless), under Born–von Karman periodic boundary conditions.</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <div class="label">Physical meaning</div>
+              <ul>
+                <li><strong>Bloch states</strong> are delocalized eigenstates labeled by momentum <code>k</code>.</li>
+                <li><strong>Wannier functions</strong> are real-space orbitals “centered on sites,” useful for tight-binding and localized pictures.</li>
+                <li>Wannier localization arises because a coherent superposition over the entire BZ produces spatial interference: constructive at a site, destructive away.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Key principles & validity conditions</h3>
+          <div class="callout">
+            <div class="label">Assumptions typically used</div>
+            <ul>
+              <li><strong>Single isolated band:</strong> the set <code>{ψ_k}</code> spans the band’s subspace without entanglement with other bands.</li>
+              <li><strong>Born–von Karman periodicity:</strong> impose periodic boundary conditions on a crystal of <code>N</code> cells, making <code>k</code> a discrete set and enabling a discrete Fourier transform.</li>
+              <li><strong>Orthonormal Bloch basis:</strong> <code>∫ ψ_k*(r) ψ_{k'}(r) dV = δ_{k,k'}</code> for the chosen band.</li>
+              <li><strong>Gauge freedom:</strong> <code>ψ_k → e^{iφ(k)} ψ_k</code>. Different phases change the shape/localization of Wannier functions but not the band subspace.</li>
+            </ul>
+          </div>
+
+          <h3>Mathematical model (explicit)</h3>
+          <div class="eqbox" id="eq-model">
+<pre><code>Domain: crystal volume V with N unit cells (Born–von Karman periodic BCs).
+State space: Hilbert space L^2(V) with inner product ⟨f|g⟩ = ∫_V f*(r) g(r) dV.
+
+Given (single-band Bloch eigenproblem):
+  H ψ_k(r) = E(k) ψ_k(r),
+with periodic lattice potential in H, and normalization:
+  ⟨ψ_k|ψ_k'⟩ = δ_{k,k'}.
+
+Define Wannier functions:
+  w_n(r) ≡ w(r - r_n) = N^{-1/2} Σ_k e^{-i k·r_n} ψ_k(r).
+
+Goal:
+  (a) Show ⟨w_n|w_m⟩ = δ_{n,m} (hence 0 for n≠m).
+  (b) In 1D, for ψ_k(x)=N^{-1/2} e^{ikx} u_0(x) (u_0 independent of k),
+      show w(x-x_n)=u_0(x) * sin(π(x-x_n)/a)/(π(x-x_n)/a) (large-N/BZ integral form).</code></pre>
+          </div>
+          <div class="copyRow">
+            <button class="copy" data-copy-target="#eq-model">Copy math model (plain text)</button>
+            <span class="copyStatus" id="status-eq-model" aria-live="polite"></span>
+          </div>
+
+          <h3>Mini intuition examples (conceptual)</h3>
+          <ul>
+            <li><strong>Fourier optics analogy:</strong> limiting <code>k</code> to a band (<em>band-limited</em>) produces a real-space point-spread function (often sinc-like).</li>
+            <li><strong>Tight-binding viewpoint:</strong> if electrons are mostly near atoms, Wannier functions resemble atomic orbitals but remain orthogonal across sites.</li>
+            <li><strong>Interference picture:</strong> summing many plane-wave factors <code>e^{ik(x-x_n)}</code> makes a sharp peak at <code>x=x_n</code> by constructive interference.</li>
+          </ul>
+
+          <h3>What to watch for (pitfalls)</h3>
+          <div class="callout warn">
+            <div class="label">Pitfalls</div>
+            <ul>
+              <li>Mixing normalizations (some texts normalize <code>ψ_k</code> to one unit cell, others to the full crystal).</li>
+              <li>For (b), the given sinc form comes from replacing the discrete <code>k</code>-sum by a Brillouin-zone integral (large <code>N</code>); for finite <code>N</code> you get the Dirichlet kernel instead.</li>
+              <li>Gauge/phase choice matters: a wild <code>φ(k)</code> can make <code>w_n</code> poorly localized even though orthogonality remains.</li>
+            </ul>
+          </div>
+
+          <details>
+            <summary>Math Insight (core equation as a mathematical object)</summary>
+            <p>
+              The map <code>ψ_k ↔ w_n</code> is (up to normalization) a <strong>discrete Fourier transform</strong> between
+              a momentum-labeled orthonormal basis and a lattice-site-labeled basis. This transform is <strong>unitary</strong>,
+              so inner products are preserved:
+              orthogonality in <code>k</code>-space implies orthogonality in real-space lattice indexing <code>n</code>.
+              In 1D, restricting <code>k</code> to the first Brillouin zone makes the synthesis band-limited, whose real-space kernel is a <strong>sinc</strong> (the Fourier transform of a rectangular window in <code>k</code>).
+            </p>
+          </details>
+
+          <a class="backTop" href="#top">↑ Back to top</a>
+        </section>
+
+        <!-- Part 0B -->
+        <section id="part0b">
+          <h2>PART 0B — Industry & Applied Physics Perspective</h2>
+
+          <h3>Where this appears in industry (concrete application areas)</h3>
+          <ul>
+            <li><strong>Semiconductor device modeling (CMOS, power electronics):</strong> tight-binding / Wannier-based Hamiltonians enable fast bandstructure and transport modeling for nanostructures and strained materials.</li>
+            <li><strong>Materials discovery & digital twins:</strong> “Wannierization” creates compact models from first-principles (DFT) to evaluate many candidate materials for thermoelectrics, photovoltaics, and catalysts.</li>
+            <li><strong>Quantum and spintronic materials:</strong> localized orbitals support modeling of magnetic exchange, spin–orbit coupling, and topological properties in a tractable basis.</li>
+          </ul>
+
+          <h3>Why engineers care</h3>
+          <div class="grid2">
+            <div class="card">
+              <div class="label">Performance & efficiency</div>
+              <ul>
+                <li>Localized bases reduce model size: faster simulations, lower compute cost.</li>
+                <li>Orthogonality helps numerical stability in large-scale solvers (less ill-conditioning).</li>
+              </ul>
+            </div>
+            <div class="card">
+              <div class="label">Reliability & manufacturability</div>
+              <ul>
+                <li>Localized orbitals link directly to defects, impurities, interfaces—key in yield and reliability analysis.</li>
+                <li>Supports “what-if” sensitivity studies (process variation, strain, composition gradients).</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Typical measurement/validation methods</h3>
+          <ul>
+            <li><strong>ARPES</strong> validates <code>E(k)</code> (band dispersion) that underlies Bloch/Wannier descriptions.</li>
+            <li><strong>STM/STS</strong> probes local density of states (real-space signatures related to localized orbitals).</li>
+            <li><strong>Transport</strong> (mobility, Hall, magnetoresistance) validates effective tight-binding parameters derived from Wannier models.</li>
+          </ul>
+
+          <h3>Design trade-offs & constraints</h3>
+          <div class="callout">
+            <div class="label">Reality check</div>
+            <ul>
+              <li>Real materials have disorder, finite temperature, electron–phonon interactions: the “clean band” picture is an idealization but still provides a strong baseline model.</li>
+              <li>Choosing the gauge (phases <code>φ(k)</code>) affects localization; in practice one optimizes spread (e.g., “maximally localized” Wannier functions) to get compact couplings.</li>
+              <li>Finite samples & boundaries break perfect translation symmetry; Wannier-like localized bases remain useful but require careful edge handling.</li>
+            </ul>
+          </div>
+
+          <h3>From lab to product: adapting the idealized model</h3>
+          <p>
+            In product-grade simulation flows, one often starts from first-principles Bloch states, constructs Wannier functions to obtain a compact tight-binding model,
+            then adds <em>engineering layers</em>: disorder potentials, interface-specific hopping modifications, temperature-dependent scattering, and calibration to measured transport.
+            The orthogonality proven in this problem is a key reason this workflow stays numerically stable and modular.
+          </p>
+
+          <a class="backTop" href="#top">↑ Back to top</a>
+        </section>
+
+        <!-- Part 1 -->
+        <section id="part1">
+          <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+          <h3>Problem rewritten in plain words</h3>
+          <p>
+            You are given Wannier functions for a single band defined as a superposition of Bloch functions with phase factors tied to lattice sites.
+            (a) You must prove that Wannier functions centered on different lattice sites are orthogonal.
+            (b) In a 1D crystal with lattice spacing <code>a</code>, assuming the periodic part of the Bloch function is the same for all <code>k</code>,
+            you must show the Wannier function becomes a site-centered sinc-like function times that periodic factor.
+          </p>
+
+          <div class="grid2">
+            <div class="card">
+              <div class="label">Given</div>
+              <ul>
+                <li><code>w(r-r_n)=N^{-1/2} Σ_k exp(-i k·r_n) ψ_k(r)</code></li>
+                <li><code>r_n</code> is a lattice point; <code>N</code> cells; <code>k</code> runs over allowed BZ values.</li>
+                <li>Standard Bloch orthonormality for the band: <code>∫ ψ_k*(r) ψ_{k'}(r) dV = δ_{k,k'}</code>.</li>
+                <li>For (b): in 1D, <code>ψ_k(x)=N^{-1/2} e^{ikx} u_0(x)</code>, with <code>u_0</code> independent of <code>k</code>.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <div class="label">Unknowns / What to show</div>
+              <ul>
+                <li>(a) Prove <code>∫ dV w*(r-r_n) w(r-r_m)=0</code> for <code>n≠m</code> (equivalently <code>=δ_nm</code>).</li>
+                <li>(b) Derive <code>w(x-x_n)=u_0(x) · sin(π(x-x_n)/a)/(π(x-x_n)/a)</code> for a 1D chain.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Relevant principles and why they apply</h3>
+          <ul>
+            <li><strong>Hilbert space orthonormality:</strong> inner products distribute over sums (linearity) and conjugate-linearity in the first slot.</li>
+            <li><strong>Unitary Fourier transform:</strong> the lattice-index basis is the Fourier transform of the momentum basis, preserving orthogonality.</li>
+            <li><strong>Large-<code>N</code> BZ continuum approximation (for part b):</strong> replace <code>(1/N)Σ_k</code> by <code>(a/2π)∫_{BZ} dk</code>.</li>
+          </ul>
+
+          <div class="callout warn">
+            <div class="label">Explicit assumptions (used later)</div>
+            <ul>
+              <li>Single band; Bloch states are orthonormal within the crystal volume.</li>
+              <li>Born–von Karman periodic boundary conditions → discrete allowed <code>k</code>.</li>
+              <li>For (b) the displayed sinc form uses the continuum BZ integral (large <code>N</code>).</li>
+            </ul>
+          </div>
+
+          <h3>Possible approaches (compare and choose)</h3>
+          <div class="grid2">
+            <div class="card">
+              <div class="label">Approach A: Direct inner-product computation</div>
+              <ul>
+                <li><strong>Tool:</strong> substitute definition of <code>w_n</code>, use <code>⟨ψ_k|ψ_{k'}⟩=δ_{k,k'}</code>.</li>
+                <li><strong>Pros:</strong> shortest, most explicit, minimal prerequisites.</li>
+                <li><strong>Cons:</strong> must know/accept discrete Fourier identity <code>(1/N)Σ_k e^{ik·(r_n-r_m)}=δ_nm</code>.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <div class="label">Approach B: Operator/projection viewpoint</div>
+              <ul>
+                <li><strong>Tool:</strong> treat <code>{ψ_k}</code> and <code>{w_n}</code> as two orthonormal bases related by a unitary transform.</li>
+                <li><strong>Pros:</strong> conceptually powerful; generalizes to multi-band, gauge discussions.</li>
+                <li><strong>Cons:</strong> slightly more abstract.</li>
+              </ul>
+            </div>
+          </div>
+          <p>
+            <strong>Chosen:</strong> Approach A (direct computation) for (a), then a controlled Fourier integral for (b). This aligns best with the problem statement and keeps every step checkable.
+          </p>
+
+          <a class="backTop" href="#top">↑ Back to top</a>
+        </section>
+
+        <!-- Part 2 -->
+        <section id="part2">
+          <h2>PART 2 — Strategy & Tips (Roadmap Only)</h2>
+
+          <ol>
+            <li><strong>Write Wannier functions explicitly</strong> as sums over <code>k</code> for sites <code>n</code> and <code>m</code>.</li>
+            <li><strong>Compute the inner product</strong> <code>⟨w_n|w_m⟩ = ∫ w_n*(r) w_m(r) dV</code> using linearity of the integral.</li>
+            <li><strong>Swap sum and integral</strong> (finite sum; always valid) to isolate <code>∫ ψ_k* ψ_{k'} dV</code>.</li>
+            <li><strong>Use Bloch orthonormality</strong> to collapse the double sum to a single sum over <code>k</code>.</li>
+            <li><strong>Recognize the remaining sum</strong> as a discrete Fourier identity giving <code>δ_nm</code>.</li>
+            <li><strong>For 1D part (b):</strong> substitute <code>ψ_k(x)=N^{-1/2} e^{ikx} u_0(x)</code> into the Wannier definition.</li>
+            <li><strong>Factor out <code>u_0(x)</code></strong> and identify the remaining <code>k</code>-sum as a band-limited synthesis kernel.</li>
+            <li><strong>Replace the sum by a BZ integral</strong> for large <code>N</code>: <code>(1/N)Σ_k → (a/2π)∫_{-π/a}^{π/a} dk</code>.</li>
+            <li><strong>Evaluate the integral</strong> to obtain the sinc form.</li>
+            <li><strong>Sanity checks:</strong> normalization/orthogonality, dimensionless arguments of sine, limiting behavior at <code>x=x_n</code>.</li>
+          </ol>
+
+          <div class="callout bad">
+            <div class="label">Common mistakes</div>
+            <ul>
+              <li>Dropping complex conjugation on the phase factors in <code>w_n*</code>.</li>
+              <li>Confusing <code>δ_{k,k'}</code> with <code>δ(k-k')</code> (discrete vs continuous normalization).</li>
+              <li>Forgetting that <code>sin(π(x-x_n)/a)/(π(x-x_n)/a)</code> is defined by its limit <code>→1</code> at <code>x=x_n</code>.</li>
+              <li>Mixing <code>N^{-1/2}</code> factors (there are two in an inner product, giving <code>N^{-1}</code> overall).</li>
+            </ul>
+          </div>
+
+          <a class="backTop" href="#top">↑ Back to top</a>
+        </section>
+
+        <!-- Part 3 -->
+        <section id="part3">
+          <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+          <h3>Physical intuition first</h3>
+          <p>
+            Because Bloch states with different <code>k</code> are orthogonal, any <em>unitary mixing</em> of them should also produce orthogonal states.
+            The Wannier construction is exactly such a mixing: a Fourier transform across the discrete <code>k</code>-grid. Therefore we expect
+            <code>w_n</code> and <code>w_m</code> to be orthogonal when centered on different lattice sites. For the 1D special gauge choice in (b),
+            the superposition is a rectangular window in <code>k</code> (the BZ), whose Fourier transform is a sinc peak in real space.
+          </p>
+
+          <h3>(a) Prove orthogonality for different lattice points</h3>
+
+          <div class="callout good">
+            <div class="label">Key equation (Wannier definition)</div>
+            <div class="eqbox" id="eq-def">
+<pre><code>w_n(r) ≡ w(r - r_n) = N^{-1/2} Σ_k e^{-i k·r_n} ψ_k(r).</code></pre>
+            </div>
+            <div class="copyRow">
+              <button class="copy" data-copy-target="#eq-def">Copy equation</button>
+              <span class="copyStatus" id="status-eq-def" aria-live="polite"></span>
+            </div>
+          </div>
+
+          <p><strong>Step 1 — Write the inner product.</strong> In Hilbert-space notation:</p>
+          <div class="eqbox" id="eq-inner1">
+<pre><code>⟨w_n|w_m⟩ = ∫_V w_n*(r) w_m(r) dV.</code></pre>
+          </div>
+
+          <p>
+            <strong>Step 2 — Substitute the definitions of</strong> <code>w_n</code> <strong>and</strong> <code>w_m</code>.
+            Remember complex conjugation flips the sign in the exponential:
+            <code>(e^{-i k·r_n})* = e^{+i k·r_n}</code>.
+          </p>
+          <div class="eqbox" id="eq-inner2">
+<pre><code>w_n*(r) = N^{-1/2} Σ_k e^{+i k·r_n} ψ_k*(r),
+w_m(r)  = N^{-1/2} Σ_k' e^{-i k'·r_m} ψ_k'(r).
+
+Therefore,
+⟨w_n|w_m⟩
+= ∫_V [N^{-1/2} Σ_k e^{i k·r_n} ψ_k*(r)] [N^{-1/2} Σ_k' e^{-i k'·r_m} ψ_k'(r)] dV
+= N^{-1} Σ_k Σ_k' e^{i k·r_n} e^{-i k'·r_m} ∫_V ψ_k*(r) ψ_k'(r) dV.</code></pre>
+          </div>
+
+          <p>
+            <strong>Why this step is valid:</strong> the sums are finite (there are <code>N</code> allowed <code>k</code> values under Born–von Karman BCs),
+            so exchanging sum and integral is always justified by linearity of the integral.
+          </p>
+
+          <p><strong>Step 3 — Use Bloch orthonormality.</strong></p>
+          <div class="eqbox" id="eq-orth-bloch">
+<pre><code>Given: ∫_V ψ_k*(r) ψ_k'(r) dV = δ_{k,k'}  (discrete orthonormality within the band).</code></pre>
+          </div>
+
+          <p>
+            Substitute this into the double sum to collapse it:
+          </p>
+          <div class="eqbox" id="eq-collapse">
+<pre><code>⟨w_n|w_m⟩
+= N^{-1} Σ_k Σ_k' e^{i k·r_n} e^{-i k'·r_m} δ_{k,k'}
+= N^{-1} Σ_k e^{i k·r_n} e^{-i k·r_m}
+= N^{-1} Σ_k e^{i k·(r_n - r_m)}.</code></pre>
+          </div>
+
+          <p>
+            <strong>Step 4 — Evaluate the discrete Fourier sum.</strong>
+            Under Born–von Karman periodicity for a crystal of <code>N</code> unit cells, the allowed <code>k</code> values form the reciprocal discrete grid
+            that is dual to the lattice positions. The sum
+            <code>(1/N) Σ_k e^{i k·(r_n - r_m)}</code> is the discrete Fourier representation of the Kronecker delta in the lattice index:
+          </p>
+
+          <div class="eqbox" id="eq-delta">
+<pre><code>N^{-1} Σ_k e^{i k·(r_n - r_m)} = δ_{n,m}.</code></pre>
+          </div>
+
+          <p>
+            <strong>Why this identity holds (brief but meaningful):</strong>
+            the matrix <code>U_{nk} = N^{-1/2} e^{-i k·r_n}</code> is unitary (DFT matrix). Unitarity implies
+            <code>Σ_k U_{nk} U*_{mk} = δ_{n,m}</code>, which is exactly the sum above.
+          </p>
+
+          <div class="callout good">
+            <div class="label">Result (a)</div>
+            <div class="eqbox" id="eq-final-a">
+<pre><code>∫_V dV  w*(r - r_n) w(r - r_m) = ⟨w_n|w_m⟩ = δ_{n,m}.
+In particular, for n ≠ m:  ∫_V dV  w*(r - r_n) w(r - r_m) = 0.</code></pre>
+            </div>
+            <div class="copyRow">
+              <button class="copy" data-copy-target="#eq-final-a">Copy final (a)</button>
+              <span class="copyStatus" id="status-eq-final-a" aria-live="polite"></span>
+            </div>
+          </div>
+
+          <h3>(b) Show the Wannier function is peaked: 1D sinc form</h3>
+
+          <p>
+            <strong>Setup (1D chain):</strong> lattice sites at <code>x_n = n a</code>.
+            Assume the Bloch functions have the special form
+            <code>ψ_k(x) = N^{-1/2} e^{ikx} u_0(x)</code>,
+            where <code>u_0(x)</code> is periodic with period <code>a</code> and does not depend on <code>k</code>.
+          </p>
+
+          <div class="callout">
+            <div class="label">Dimensional analysis checkpoint</div>
+            <ul>
+              <li><code>k</code> has units 1/m, so <code>k(x-x_n)</code> is dimensionless.</li>
+              <li>The argument <code>π(x-x_n)/a</code> is also dimensionless — correct for sine and sinc.</li>
+            </ul>
+          </div>
+
+          <p><strong>Step 1 — Substitute into the Wannier definition.</strong></p>
+          <div class="eqbox" id="eq-b1">
+<pre><code>w(x - x_n)
+= N^{-1/2} Σ_k e^{-ik x_n} ψ_k(x)
+= N^{-1/2} Σ_k e^{-ik x_n} [N^{-1/2} e^{ikx} u_0(x)]
+= N^{-1} u_0(x) Σ_k e^{ik(x - x_n)}.</code></pre>
+          </div>
+
+          <p>
+            The localization is entirely in the kernel <code>(1/N) Σ_k e^{ik(x-x_n)}</code>, which is a finite Fourier synthesis of a “delta-like” peak.
+          </p>
+
+          <details>
+            <summary>Finite-N note: Dirichlet kernel vs sinc</summary>
+            <p>
+              For a finite chain with discrete allowed <code>k</code>, the sum is a <em>Dirichlet kernel</em>, producing periodic peaks.
+              The problem’s stated sinc form is obtained cleanly in the large-<code>N</code> limit by replacing the sum with an integral over the first BZ.
+            </p>
+          </details>
+
+          <p><strong>Step 2 — Large-N continuum approximation for the k-sum.</strong></p>
+          <p>
+            For a 1D crystal of length <code>L = N a</code> with periodic BCs, the allowed <code>k</code> are spaced by
+            <code>Δk = 2π/L = 2π/(N a)</code>.
+            The first Brillouin zone is <code>k ∈ [-π/a, +π/a]</code>.
+            Thus,
+          </p>
+          <div class="eqbox" id="eq-b2">
+<pre><code>(1/N) Σ_k f(k)  ≈  (a/2π) ∫_{-π/a}^{π/a} f(k) dk     (large N).</code></pre>
+          </div>
+
+          <p>
+            Apply this with <code>f(k)=e^{ik(x-x_n)}</code>:
+          </p>
+          <div class="eqbox" id="eq-b3">
+<pre><code>(1/N) Σ_k e^{ik(x-x_n)}
+≈ (a/2π) ∫_{-π/a}^{π/a} e^{ik(x-x_n)} dk.</code></pre>
+          </div>
+
+          <p><strong>Step 3 — Evaluate the integral exactly.</strong></p>
+          <p>
+            Let <code>Δx = x - x_n</code>. Then:
+          </p>
+          <div class="eqbox" id="eq-b4">
+<pre><code>I(Δx) = ∫_{-π/a}^{π/a} e^{ikΔx} dk.
+
+For Δx ≠ 0:
+I(Δx) = [ e^{ikΔx} / (iΔx) ]_{k=-π/a}^{k=+π/a}
+      = (1/(iΔx)) ( e^{i(π/a)Δx} - e^{-i(π/a)Δx} )
+      = (1/(iΔx)) ( 2i sin( (π/a)Δx ) )
+      = 2 sin( (πΔx)/a ) / Δx.</code></pre>
+          </div>
+
+          <p>
+            Multiply by the prefactor <code>(a/2π)</code>:
+          </p>
+          <div class="eqbox" id="eq-b5">
+<pre><code>(a/2π) I(Δx)
+= (a/2π) * [ 2 sin( (πΔx)/a ) / Δx ]
+= (a/π) * sin( (πΔx)/a ) / Δx
+= sin( (πΔx)/a ) / ( (πΔx)/a ).</code></pre>
+          </div>
+
+          <p>
+            Finally substitute back into <code>w</code>:
+          </p>
+
+          <div class="callout good">
+            <div class="label">Result (b): Wannier peak (sinc form)</div>
+            <div class="eqbox" id="eq-final-b">
+<pre><code>For a 1D chain with lattice constant a, and ψ_k(x)=N^{-1/2} e^{ikx} u_0(x) (u_0 independent of k),
+
+w(x - x_n) = u_0(x) * sin(π(x - x_n)/a) / (π(x - x_n)/a).
+
+(Defined by continuity at x=x_n:  w(0)=u_0(x_n) since lim_{y→0} sin y / y = 1.)</code></pre>
+            </div>
+            <div class="copyRow">
+              <button class="copy" data-copy-target="#eq-final-b">Copy final (b)</button>
+              <span class="copyStatus" id="status-eq-final-b" aria-live="polite"></span>
+            </div>
+          </div>
+
+          <h3>Sanity checks</h3>
+          <div class="grid2">
+            <div class="card">
+              <div class="label">Units / dimensions</div>
+              <ul>
+                <li><code>sin(π(x-x_n)/a)</code> takes a dimensionless argument.</li>
+                <li>The sinc factor is dimensionless, so <code>w</code> has the same units as <code>u_0</code> (and <code>ψ</code>).</li>
+              </ul>
+            </div>
+            <div class="card">
+              <div class="label">Limiting behavior</div>
+              <ul>
+                <li>At the site: <code>x→x_n</code> gives <code>w → u_0(x)</code> (peak).</li>
+                <li>Far from the site: sinc decays ~ <code>1/|x-x_n|</code> with oscillations → localization (not exponential here due to sharp BZ cutoff).</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout">
+            <div class="label">Copy: Final answer (plain text)</div>
+            <div class="eqbox" id="final-answer">
+<pre><code>(a) ⟨w_n|w_m⟩ = ∫_V w*(r-r_n) w(r-r_m) dV
+    = (1/N) Σ_k e^{i k·(r_n-r_m)} = δ_{n,m}. Hence it is 0 for n≠m.
+
+(b) In 1D, with ψ_k(x)=N^{-1/2} e^{ikx} u_0(x) (u_0 independent of k), and in the large-N BZ-integral limit:
+    w(x-x_n) = u_0(x) * sin(π(x-x_n)/a) / (π(x-x_n)/a).</code></pre>
+            </div>
+            <div class="copyRow">
+              <button class="copy" data-copy-target="#final-answer">Copy final answer</button>
+              <span class="copyStatus" id="status-final-answer" aria-live="polite"></span>
+            </div>
+          </div>
+
+          <a class="backTop" href="#top">↑ Back to top</a>
+        </section>
+
+        <!-- Part 4 -->
+        <section id="part4">
+          <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+          <h3>Re-interpreting the formulas</h3>
+          <ul>
+            <li>
+              <strong>Orthogonality (a) as unitarity:</strong>
+              the coefficients <code>N^{-1/2} e^{-ik·r_n}</code> form a unitary matrix relating two bases. Orthogonality is preserved automatically:
+              <code>U U† = I</code>.
+            </li>
+            <li>
+              <strong>Localization (b) as band-limiting:</strong>
+              taking <code>k</code> only within the first BZ is like multiplying by a rectangular window in <code>k</code>-space.
+              The Fourier transform of a rectangle is a sinc, hence the peak at the lattice site and algebraic decay.
+            </li>
+          </ul>
+
+          <h3>Parameter dependence (qualitative)</h3>
+          <ul>
+            <li><strong>Lattice constant <code>a</code>:</strong> smaller <code>a</code> widens the BZ (<code>π/a</code> larger), producing a narrower sinc peak (more spatial localization).</li>
+            <li><strong>Phase (gauge) choice:</strong> changing <code>ψ_k → e^{iφ(k)} ψ_k</code> changes interference among <code>k</code> components, reshaping <code>w_n</code> and potentially improving localization.</li>
+            <li><strong>Finite vs infinite N:</strong> finite <code>N</code> yields a periodic kernel (Dirichlet) with exact orthogonality; large <code>N</code> approximates a single sinc-like peak in the central region.</li>
+          </ul>
+
+          <h3>Alternative derivation idea (brief but meaningful)</h3>
+          <p>
+            Instead of computing sums explicitly, define the transform matrix
+            <code>U_{nk}=N^{-1/2} e^{-ik·r_n}</code>.
+            Then <code>|w_n⟩ = Σ_k U_{nk} |ψ_k⟩</code>. If <code>{|ψ_k⟩}</code> is orthonormal and <code>U</code> is unitary (DFT),
+            then automatically <code>⟨w_n|w_m⟩ = (U U†)_{nm} = δ_{nm}</code>.
+            This makes (a) essentially a one-line consequence of unitarity.
+          </p>
+
+          <h3>Concept check (self-test with answers)</h3>
+          <ul>
+            <li><strong>Q:</strong> Why does <code>w_n</code> depend on the phase choice of <code>ψ_k</code>? <strong>A:</strong> Because Wannier functions are coherent sums over <code>k</code>; changing phases changes interference in real space.</li>
+            <li><strong>Q:</strong> Does orthogonality depend on that phase choice? <strong>A:</strong> No—any unit-modulus phase <code>e^{iφ(k)}</code> keeps the transform unitary, preserving orthogonality.</li>
+            <li><strong>Q:</strong> Why is the decay in (b) algebraic (~1/|x|) rather than exponential? <strong>A:</strong> A sharp BZ cutoff is non-analytic in <code>k</code>, whose Fourier transform has slow (power-law) tails.</li>
+            <li><strong>Q:</strong> What physical situation makes Wannier functions especially useful? <strong>A:</strong> When electrons/holes are localized around atoms, bonds, defects, or interfaces—tight-binding and local interactions become natural.</li>
+          </ul>
+
+          <a class="backTop" href="#top">↑ Back to top</a>
+        </section>
+
+        <!-- Part 5 -->
+        <section id="part5">
+          <h2>PART 5 — Optional Plot Guide</h2>
+          <div class="callout">
+            <div class="label">No plot included (and why)</div>
+            <p>
+              This problem is fundamentally <strong>symbolic</strong>: it asks for exact orthogonality and an analytic closed form (a sinc).
+              A plot would require choosing numerical values and would not add essential insight beyond the already clear peak-and-tail structure of the sinc.
+            </p>
+          </div>
+          <a class="backTop" href="#top">↑ Back to top</a>
+        </section>
+
+      </div>
+    </article>
+  </main>
+
+  <footer>
+    <div>
+      <strong>Note:</strong> Normalization conventions vary across textbooks (cell-normalized vs crystal-normalized Bloch states).
+      The orthogonality proof relies on consistent normalization and the discrete <code>k</code> set from periodic boundary conditions.
+      The 1D sinc expression is the large-<code>N</code> Brillouin-zone integral form; the finite-<code>N</code> expression is a Dirichlet kernel.
+    </div>
+  </footer>
+
+  <script>
+    // Smooth scrolling (no external libraries)
+    document.querySelectorAll('#toc a, .backTop').forEach(a=>{
+      a.addEventListener('click', (e)=>{
+        const href = a.getAttribute('href');
+        if(!href || !href.startsWith('#')) return;
+        const el = document.querySelector(href);
+        if(!el) return;
+        e.preventDefault();
+        el.scrollIntoView({behavior:'smooth', block:'start'});
+        history.replaceState(null, '', href);
+      });
+    });
+
+    // Copy-to-clipboard buttons: copy plain text inside target element (typically .eqbox)
+    function getTextFromTarget(sel){
+      const target = document.querySelector(sel);
+      if(!target) return '';
+      // Prefer code/pre text if present
+      const code = target.querySelector('code, pre');
+      return (code ? code.innerText : target.innerText).trim();
+    }
+
+    async function copyText(text){
+      // Fallback if clipboard API blocked
+      try{
+        await navigator.clipboard.writeText(text);
+        return true;
+      }catch(err){
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position='fixed';
+        ta.style.left='-9999px';
+        ta.style.top='-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        let ok=false;
+        try{ ok = document.execCommand('copy'); }catch(e){ ok=false; }
+        document.body.removeChild(ta);
+        return ok;
+      }
+    }
+
+    function flashStatus(btn, msg, ok){
+      const row = btn.closest('.copyRow');
+      const status = row ? row.querySelector('.copyStatus') : null;
+      if(!status) return;
+      status.textContent = msg;
+      status.style.color = ok ? 'rgba(52,211,153,.95)' : 'rgba(251,113,133,.95)';
+      setTimeout(()=>{ status.textContent=''; status.style.color=''; }, 1400);
+    }
+
+    document.querySelectorAll('button.copy').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const sel = btn.getAttribute('data-copy-target');
+        const text = getTextFromTarget(sel);
+        const ok = await copyText(text);
+        flashStatus(btn, ok ? 'Copied!' : 'Copy failed', ok);
+      });
+    });
+
+    // Small micro-animation: gently highlight the section when navigated by hash
+    function highlightFromHash(){
+      const id = location.hash;
+      if(!id) return;
+      const el = document.querySelector(id);
+      if(!el) return;
+      el.animate(
+        [{backgroundColor:'rgba(125,211,252,.0)'},{backgroundColor:'rgba(125,211,252,.06)'},{backgroundColor:'rgba(125,211,252,.0)'}],
+        {duration: 900, easing:'ease-out'}
+      );
+    }
+    window.addEventListener('hashchange', highlightFromHash);
+    highlightFromHash();
+  </script>
+</body>
+</html>

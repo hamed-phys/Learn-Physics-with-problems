@@ -2,119 +2,963 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <meta name="theme-color" content="#050608" />
-  <title>Kittel Chapter 8 — Problem 3</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Hall Effect with Two Carrier Types (Electrons + Holes): Drift/Drude Derivation</title>
   <style>
-    :root {
-      --bg: #050608;
-      --panel: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.14);
-      --shadow: 0 18px 50px rgba(0,0,0,0.35);
+    :root{
+      --bg:#0b0f14;
+      --card:#0f1620;
+      --muted:#a9b6c6;
+      --text:#e9f0f7;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:rgba(233,240,247,.12);
+      --shadow: 0 18px 50px rgba(0,0,0,.38);
+      --shadow2: 0 10px 30px rgba(0,0,0,.32);
+      --radius:18px;
+      --radius2:14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
 
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
       background:
-        radial-gradient(900px 500px at 15% 0%, rgba(120,120,255,0.14), transparent 60%),
-        radial-gradient(800px 500px at 100% 10%, rgba(120,255,200,0.10), transparent 55%),
+        radial-gradient(1200px 800px at 20% -10%, rgba(125,211,252,.18), transparent 60%),
+        radial-gradient(900px 600px at 100% 0%, rgba(167,139,250,.14), transparent 55%),
+        radial-gradient(1000px 800px at 60% 120%, rgba(52,211,153,.10), transparent 55%),
         var(--bg);
-      color: var(--text);
-      line-height: 1.6;
+      line-height:1.6;
     }
 
-    header, main, footer {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 22px 16px;
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    code, pre{font-family:var(--mono)}
+    .wrap{
+      max-width:1200px;
+      margin:0 auto;
+      padding:28px 18px 80px;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:18px;
+      align-items:start;
     }
 
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      padding: 18px;
+    header.site{
+      grid-column:1 / -1;
+      background:linear-gradient(180deg, rgba(125,211,252,.10), rgba(167,139,250,.08));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:22px 18px;
+      box-shadow:var(--shadow2);
+      position:relative;
+      overflow:hidden;
+    }
+    header.site:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(600px 200px at 20% 0%, rgba(125,211,252,.22), transparent 65%),
+        radial-gradient(480px 260px at 80% 20%, rgba(167,139,250,.18), transparent 60%);
+      filter:blur(2px);
+      opacity:.85;
+      pointer-events:none;
+    }
+    header.site > *{position:relative; z-index:1}
+    .title{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px 14px;
+      align-items:baseline;
+      justify-content:space-between;
+    }
+    .title h1{
+      margin:0;
+      font-size: clamp(1.2rem, 2.2vw, 2.0rem);
+      letter-spacing:.2px;
+    }
+    .title .meta{
+      color:var(--muted);
+      font-size:.95rem;
     }
 
-    h1 {
-      margin: 0 0 10px;
-      font-size: 1.25rem;
-      letter-spacing: 0.2px;
+    .toc{
+      position:sticky;
+      top:14px;
+      background:rgba(15,22,32,.78);
+      backdrop-filter: blur(10px);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:14px 14px 10px;
+      box-shadow:var(--shadow2);
+    }
+    .toc h2{
+      margin:0 0 8px;
+      font-size:1rem;
+      letter-spacing:.2px;
+    }
+    .toc nav{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      font-size:.95rem;
+    }
+    .toc a{
+      padding:7px 10px;
+      border-radius:12px;
+      border:1px solid transparent;
+      color:var(--text);
+      background:rgba(233,240,247,.03);
+      transition:transform .12s ease, background .12s ease, border-color .12s ease;
+      text-decoration:none;
+    }
+    .toc a:hover{
+      transform:translateY(-1px);
+      background:rgba(125,211,252,.08);
+      border-color:rgba(125,211,252,.25);
+      text-decoration:none;
     }
 
-    p {
-      margin: 0 0 10px;
-      color: var(--muted);
+    main{min-width:0}
+
+    section.card{
+      background:rgba(15,22,32,.72);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:18px 18px;
+      box-shadow:var(--shadow2);
+      margin-bottom:16px;
+      overflow:hidden;
+    }
+    section.card h2{
+      margin:0 0 10px;
+      font-size:1.35rem;
+      letter-spacing:.2px;
+    }
+    section.card h3{
+      margin:16px 0 8px;
+      font-size:1.08rem;
+      color:rgba(233,240,247,.92);
+    }
+    .grid2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 980px){
+      .wrap{grid-template-columns:1fr}
+      .toc{position:relative; top:auto}
+    }
+    @media (max-width: 720px){
+      .grid2{grid-template-columns:1fr}
     }
 
-    code {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.10);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .bullets{margin:10px 0 0 0; padding:0 0 0 18px; color:rgba(233,240,247,.92)}
+    .bullets li{margin:6px 0}
+    .muted{color:var(--muted)}
+    .small{font-size:.95rem}
+
+    .callouts{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0 6px}
+    .callout{
+      border-radius:var(--radius2);
+      padding:12px 12px;
+      border:1px solid var(--line);
+      background:rgba(233,240,247,.03);
+      position:relative;
+      overflow:hidden;
+    }
+    .callout:before{
+      content:"";
+      position:absolute; inset:0;
+      background:linear-gradient(90deg, rgba(125,211,252,.14), transparent 35%, rgba(167,139,250,.10));
+      opacity:.55;
+      pointer-events:none;
+    }
+    .callout > *{position:relative; z-index:1}
+    .callout h4{
+      margin:0 0 6px;
+      font-size:1.0rem;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.18);
+      color:rgba(233,240,247,.9);
+      font-size:.82rem;
+      white-space:nowrap;
+    }
+    .tag.ok{border-color:rgba(52,211,153,.35)}
+    .tag.warn{border-color:rgba(251,191,36,.35)}
+    .tag.bad{border-color:rgba(251,113,133,.35)}
+
+    .eqbox{
+      border-radius:var(--radius2);
+      padding:12px 12px;
+      border:1px solid rgba(125,211,252,.25);
+      background:rgba(125,211,252,.06);
+      margin:10px 0;
+      overflow:auto;
+    }
+    .eq{
+      font-family:var(--mono);
+      white-space:pre-wrap;
+      word-break:break-word;
+      margin:0;
+      font-size:.98rem;
+      line-height:1.45;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
+    .btnrow{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+    button.copy{
+      appearance:none;
+      border:none;
+      background:rgba(233,240,247,.06);
+      color:var(--text);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:8px 10px;
+      font-size:.92rem;
+      cursor:pointer;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    button.copy:hover{
+      transform:translateY(-1px);
+      background:rgba(125,211,252,.10);
+      border-color:rgba(125,211,252,.28);
+    }
+    button.copy:active{transform:translateY(0px)}
+    .toast{
+      display:inline-block;
+      margin-left:8px;
+      color:var(--ok);
+      font-size:.9rem;
+      opacity:0;
+      transform:translateY(2px);
+      transition:opacity .18s ease, transform .18s ease;
+    }
+    .toast.show{opacity:1; transform:translateY(0)}
+
+    details{
+      border:1px dashed rgba(233,240,247,.18);
+      border-radius:var(--radius2);
+      padding:10px 12px;
+      background:rgba(0,0,0,.12);
+      margin:10px 0 0;
+    }
+    details summary{
+      cursor:pointer;
+      color:rgba(233,240,247,.92);
+      font-weight:600;
+      list-style:none;
+    }
+    details summary::-webkit-details-marker{display:none}
+    details summary:before{
+      content:"▸";
+      display:inline-block;
+      margin-right:8px;
+      color:var(--accent);
+      transform:translateY(-1px);
+      transition:transform .16s ease;
+    }
+    details[open] summary:before{transform:rotate(90deg) translateX(1px)}
+    .backtop{
+      display:inline-block;
+      margin-top:10px;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(233,240,247,.04);
     }
 
-    @media (min-width: 820px) {
-      .grid { grid-template-columns: 1.2fr 0.8fr; }
+    figure{
+      margin:12px 0 0;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:12px;
+      background:rgba(0,0,0,.14);
+      box-shadow:var(--shadow2);
+    }
+    figure figcaption{
+      color:var(--muted);
+      font-size:.92rem;
+      margin-top:8px;
+    }
+    canvas{
+      width:100%;
+      height:320px;
+      display:block;
+      border-radius:14px;
+      background:rgba(255,255,255,.02);
+      border:1px solid rgba(233,240,247,.10);
     }
 
-    .badge {
-      display: inline-block;
-      font-size: 0.85rem;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.82);
+    footer{
+      grid-column:1 / -1;
+      color:var(--muted);
+      font-size:.95rem;
+      padding:18px 6px 0;
+    }
+
+    @media print{
+      body{background:#fff; color:#000}
+      .toc{display:none}
+      header.site, section.card, figure{box-shadow:none; background:#fff; border:1px solid #ddd}
+      a{color:#000; text-decoration:underline}
+      button.copy{display:none}
+      .backtop{display:none}
+      .callout:before, header.site:before{display:none}
+      section.card{break-inside:avoid; page-break-inside:avoid}
+      h2, h3{page-break-after:avoid}
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="card">
-      <span class="badge">Kittel • Chapter 8 • Problem 3</span>
-      <h1>Kittel Chapter 8 — Problem 3</h1>
-      <p>Replace this scaffold with your full solution as a self-contained HTML learning article (no external libraries).</p>
-      <p><strong>File path:</strong> <code>./problems/kittel/ch_8/kittel_ch_8_prob_3.html</code></p>
-    </div>
-  </header>
+  <a id="top"></a>
+  <div class="wrap">
+    <header class="site">
+      <div class="title">
+        <h1>Hall Effect with Two Carrier Types (Electrons + Holes): Drift/Drude Derivation of <span class="muted">R<sub>H</sub></span></h1>
+        <div class="meta">Expert physics tutor + mathematical physics rigor + industrial/applied lens</div>
+      </div>
+      <p class="muted small" style="margin:10px 0 0;">
+        Goal: Derive the low-field (drift-velocity / Drude) two-carrier Hall coefficient and show
+        <span style="white-space:nowrap;">R<sub>H</sub> = (1/ec)·(p − n b²)/(p + n b)²</span> (CGS),
+        where <span style="white-space:nowrap;">b = μ<sub>e</sub>/μ<sub>h</sub></span>. In SI, drop <span style="white-space:nowrap;">c</span>.
+      </p>
+    </header>
 
-  <main>
-    <div class="grid">
-      <section class="card">
-        <h2 style="margin:0 0 8px; font-size:1.05rem;">Problem</h2>
-        <p><em>Paste the problem statement here.</em></p>
+    <aside class="toc">
+      <h2>Table of Contents</h2>
+      <nav>
+        <a href="#quick">Quick Summary</a>
+        <a href="#part0">PART 0 — Concept Primer</a>
+        <a href="#part0b">PART 0B — Industry &amp; Applied Physics Perspective</a>
+        <a href="#part1">PART 1 — Problem Analysis</a>
+        <a href="#part2">PART 2 — Strategy &amp; Tips</a>
+        <a href="#part3">PART 3 — Full Solution</a>
+        <a href="#part4">PART 4 — Deeper Understanding</a>
+        <a href="#part5">PART 5 — Optional Plot Guide</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="card" id="quick">
+        <h2>Quick Summary</h2>
+        <ul class="bullets">
+          <li><strong>What the problem is:</strong> Find the Hall coefficient when <strong>both electrons and holes</strong> carry current.</li>
+          <li><strong>Key physics idea:</strong> Lorentz deflection produces a Hall field <span class="muted">E<sub>y</sub></span> such that <strong>net transverse current vanishes</strong>: <span class="muted">J<sub>y</sub>=0</span>.</li>
+          <li><strong>Governing equation:</strong> Drude momentum balance (steady state):
+            <span class="muted">0 = q(E + v×B) − mv/τ</span> for each carrier species.</li>
+          <li><strong>Math core:</strong> Solve a <strong>linear 2×2 system</strong> (x–y plane) for each species, add currents, enforce <span class="muted">J<sub>y</sub>=0</span>.</li>
+          <li><strong>Low-field approximation:</strong> keep terms linear in <span class="muted">B</span>; neglect <span class="muted">O(B²)</span> (e.g., magnetoresistance terms).</li>
+          <li><strong>Result (SI):</strong>
+            <span class="muted">R<sub>H</sub> = (p μ<sub>h</sub>² − n μ<sub>e</sub>²) / ( e (p μ<sub>h</sub> + n μ<sub>e</sub>)² )</span>.</li>
+          <li><strong>Mobility ratio form:</strong> with <span class="muted">b=μ<sub>e</sub>/μ<sub>h</sub></span>:
+            <span class="muted">R<sub>H</sub> = (1/e)(p − n b²)/(p + n b)²</span> (SI); in CGS multiply by <span class="muted">1/c</span>.</li>
+          <li><strong>Physical meaning:</strong> Hall sign and magnitude reflect a <strong>mobility-squared weighted</strong> competition of electrons vs holes.</li>
+        </ul>
       </section>
 
-      <aside class="card">
-        <h2 style="margin:0 0 8px; font-size:1.05rem;">Plan</h2>
-        <p><em>List givens, unknowns, and the method you’ll use.</em></p>
-      </aside>
+      <section class="card" id="part0">
+        <h2>PART 0 — Concept Primer (THEORY BEFORE SOLVING)</h2>
 
-      <section class="card" style="grid-column: 1 / -1;">
-        <h2 style="margin:0 0 8px; font-size:1.05rem;">Solution</h2>
-        <p><em>Derivation + final numerical/analytic result.</em></p>
+        <h3>Core definitions (symbols + SI units)</h3>
+        <div class="grid2">
+          <div class="callout">
+            <h4><span class="tag ok">Fields</span> Geometry</h4>
+            <ul class="bullets small">
+              <li>Magnetic field: <span class="muted">B = B ẑ</span> [T].</li>
+              <li>Electric field: <span class="muted">E = (E<sub>x</sub>, E<sub>y</sub>, 0)</span> [V·m<sup>−1</sup>].</li>
+              <li>Current density: <span class="muted">J = (J<sub>x</sub>, J<sub>y</sub>, 0)</span> [A·m<sup>−2</sup>].</li>
+            </ul>
+          </div>
+          <div class="callout">
+            <h4><span class="tag ok">Carriers</span> Material parameters</h4>
+            <ul class="bullets small">
+              <li>Electron density <span class="muted">n</span>, charge <span class="muted">q<sub>e</sub>=−e</span>.</li>
+              <li>Hole density <span class="muted">p</span>, charge <span class="muted">q<sub>h</sub>=+e</span>.</li>
+              <li>Relaxation times <span class="muted">τ<sub>e</sub>, τ<sub>h</sub></span>, masses <span class="muted">m<sub>e</sub>, m<sub>h</sub></span>.</li>
+              <li>Mobilities <span class="muted">μ<sub>e</sub>, μ<sub>h</sub></span> with <span class="muted">μ = |q|τ/m</span> [m²/(V·s)].</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>Physical meaning of key quantities</h3>
+        <ul class="bullets">
+          <li><strong>Mobility</strong> sets drift speed per field: <span class="muted">v_d ∝ μE</span>.</li>
+          <li><strong>Hall coefficient</strong> (SI convention used here):
+            <span class="muted">R_H = E_y/(J_x B)</span> (sign included by axis convention).</li>
+          <li><strong>Hall field mechanism:</strong> Lorentz force drives sideways motion until charge buildup creates <span class="muted">E_y</span> that enforces <span class="muted">J_y=0</span>.</li>
+        </ul>
+
+        <h3>Key laws/principles and validity conditions</h3>
+        <div class="callout">
+          <h4><span class="tag warn">Assumptions</span> Drude + steady state + low field</h4>
+          <ul class="bullets small">
+            <li>Steady DC: <span class="muted">∂/∂t = 0</span>.</li>
+            <li>Uniform bulk: no spatial PDE needed (effectively <span class="muted">∇E≈0</span> in the region modeled).</li>
+            <li>Linear response: drift velocities small enough that <span class="muted">τ</span> and <span class="muted">μ</span> are field-independent.</li>
+            <li>Low B: neglect <span class="muted">O(B²)</span> terms (mathematically, keep only first order in <span class="muted">B</span>).</li>
+          </ul>
+        </div>
+
+        <h3>What to watch for (pitfalls)</h3>
+        <ul class="bullets">
+          <li>Electrons have <span class="muted">q=-e</span> (Hall contribution flips sign).</li>
+          <li>In low-B, do not keep products of two <span class="muted">O(B)</span> terms (they are <span class="muted">O(B²)</span>).</li>
+          <li>CGS vs SI differs by a factor of <span class="muted">1/c</span> in the Lorentz term conventions (problem explicitly says “in SI drop c”).</li>
+        </ul>
+
+        <div class="callout">
+          <h4><span class="tag">Math Insight</span> Linear system viewpoint</h4>
+          <p class="small" style="margin:0;">
+            In steady state, Drude gives <span class="muted">A(B) v = (q/m)E</span>, a linear algebra problem.
+            The magnetic field creates an antisymmetric (off-diagonal) coupling between <span class="muted">v_x</span> and <span class="muted">v_y</span>,
+            which ultimately yields <span class="muted">E_y ∝ B</span>.
+          </p>
+        </div>
+
+        <a class="backtop" href="#top">Back to top ↑</a>
       </section>
-    </div>
-  </main>
 
-  <footer>
-    <div class="card">
-      <p style="margin:0;">© Your site • Kittel problem scaffold</p>
-    </div>
-  </footer>
+      <section class="card" id="part0b">
+        <h2>PART 0B — Industry &amp; Applied Physics Perspective</h2>
+        <ul class="bullets">
+          <li><strong>Semiconductor manufacturing:</strong> Hall measurements extract <span class="muted">n/p</span> and <span class="muted">μ</span> to control doping and process yield.</li>
+          <li><strong>Thin films &amp; coatings:</strong> mixed conduction (or compensation) can flip Hall sign; two-carrier modeling prevents misdiagnosis.</li>
+          <li><strong>Sensors &amp; metrology:</strong> accurate Hall calibration requires understanding multi-carrier effects in some materials.</li>
+        </ul>
+        <p class="small muted">
+          Practical validation uses field reversal/current reversal to remove offsets; at higher fields engineers must keep <span class="muted">B²</span> terms and do full tensor fits.
+        </p>
+        <a class="backtop" href="#top">Back to top ↑</a>
+      </section>
+
+      <section class="card" id="part1">
+        <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+        <p>
+          We have electrons (density <span class="muted">n</span>, mobility <span class="muted">μ_e</span>) and holes (density <span class="muted">p</span>, mobility <span class="muted">μ_h</span>) in a DC Hall geometry:
+          <span class="muted">B=Bẑ</span>, applied longitudinal drive along x, and a transverse Hall field <span class="muted">E_y</span> develops such that <span class="muted">J_y=0</span>.
+          We must derive <span class="muted">R_H</span> in the low-B limit and express it using <span class="muted">b=μ_e/μ_h</span>.
+        </p>
+        <div class="callout">
+          <h4><span class="tag warn">Assumptions to state</span></h4>
+          <ul class="bullets small">
+            <li>Steady state, uniform bulk fields, linear response (Drude).</li>
+            <li>Two independent carrier contributions add linearly in current.</li>
+            <li>Neglect <span class="muted">O(B²)</span> terms.</li>
+          </ul>
+        </div>
+        <a class="backtop" href="#top">Back to top ↑</a>
+      </section>
+
+      <section class="card" id="part2">
+        <h2>PART 2 — Strategy &amp; Tips (roadmap only)</h2>
+        <ol class="bullets">
+          <li>Write steady Drude for each carrier: <span class="muted">0=q(E+v×B)−mv/τ</span>.</li>
+          <li>Expand <span class="muted">v×B</span> for <span class="muted">B=Bẑ</span> to get a 2×2 linear system in <span class="muted">v_x,v_y</span>.</li>
+          <li>Solve and identify conductivity tensor elements <span class="muted">σ_xx, σ_xy</span> for each species.</li>
+          <li>Low-B expansion: keep linear in B; drop <span class="muted">O(B²)</span>.</li>
+          <li>Sum electron+hole tensors; impose <span class="muted">J_y=0</span> to obtain <span class="muted">E_y/E_x</span>.</li>
+          <li>Use <span class="muted">J_x≈σ_0 E_x</span> (since corrections are <span class="muted">O(B²)</span>).</li>
+          <li>Compute <span class="muted">R_H=E_y/(J_x B)</span> and rewrite using <span class="muted">b=μ_e/μ_h</span>.</li>
+        </ol>
+        <div class="callout">
+          <h4><span class="tag bad">Common mistakes</span></h4>
+          <ul class="bullets small">
+            <li>Keeping <span class="muted">σ_xy E_y</span> inside <span class="muted">J_x</span> (it is <span class="muted">O(B²)</span>).</li>
+            <li>Dropping the electron charge sign in <span class="muted">σ_xy</span>.</li>
+            <li>Mixing SI/CGS factors (remember: in CGS include <span class="muted">1/c</span>).</li>
+          </ul>
+        </div>
+        <a class="backtop" href="#top">Back to top ↑</a>
+      </section>
+
+      <section class="card" id="part3">
+        <h2>PART 3 — Full Solution (DETAILED + TEACHING)</h2>
+
+        <h3>Step 1 — Mathematical model and constraint</h3>
+        <p class="small">
+          Let <span class="muted">B=Bẑ</span>, <span class="muted">E=(E_x,E_y,0)</span>. For each species <span class="muted">s∈{e,h}</span> we seek steady drift velocity
+          <span class="muted">v_s=(v_{s,x},v_{s,y},0)</span>. The Hall measurement enforces open-circuit in y:
+          <span class="muted">J_y=0</span>.
+        </p>
+
+        <h3>Step 2 — Drude steady-state equation (vector form)</h3>
+        <div class="eqbox">
+          <pre class="eq" id="eq1">m_s d v_s/dt = q_s ( E + v_s × B ) - (m_s/τ_s) v_s</pre>
+        </div>
+        <p class="small">
+          Steady state means <span class="muted">d v_s/dt = 0</span>, so:
+        </p>
+        <div class="eqbox">
+          <pre class="eq" id="eq2">(m_s/τ_s) v_s - q_s ( v_s × B ) = q_s E</pre>
+        </div>
+
+        <h3>Step 3 — Component expansion and linear system</h3>
+        <p class="small">
+          With <span class="muted">B=Bẑ</span>:
+        </p>
+        <div class="eqbox">
+          <pre class="eq" id="eq3">v_s × B = ( v_{s,y} B, -v_{s,x} B, 0 )</pre>
+        </div>
+        <p class="small">
+          Insert into <span class="muted">eq2</span> to get:
+        </p>
+        <div class="eqbox">
+          <pre class="eq" id="eq4">(m_s/τ_s) v_{s,x} - q_s B v_{s,y} = q_s E_x
+(m_s/τ_s) v_{s,y} + q_s B v_{s,x} = q_s E_y</pre>
+        </div>
+        <p class="small">
+          This is a linear 2×2 system in <span class="muted">v_{s,x}, v_{s,y}</span>. Linearity holds because friction is linear in <span class="muted">v</span> and Lorentz force is linear in <span class="muted">v</span>.
+        </p>
+
+        <h3>Step 4 — Exact solution (to expose where B² would appear)</h3>
+        <p class="small">Define <span class="muted">a_s:=m_s/τ_s</span>. Matrix form:</p>
+        <div class="eqbox">
+          <pre class="eq" id="eq5">[ a_s   -q_s B ] [v_{s,x}] = q_s [E_x]
+[ q_s B  a_s   ] [v_{s,y}]      [E_y]</pre>
+        </div>
+        <p class="small">
+          Determinant: <span class="muted">Δ_s = a_s^2 + (q_s B)^2</span>. Thus:
+        </p>
+        <div class="eqbox">
+          <pre class="eq" id="eq6">v_{s,x} = (q_s/Δ_s)( a_s E_x + q_s B E_y )
+v_{s,y} = (q_s/Δ_s)( a_s E_y - q_s B E_x )</pre>
+        </div>
+
+        <h3>Step 5 — Currents and conductivity tensor for each species</h3>
+        <p class="small">
+          Current from species <span class="muted">s</span>: <span class="muted">J_s = n_s q_s v_s</span>, with <span class="muted">n_e=n</span>, <span class="muted">n_h=p</span>.
+          Define mobility magnitude <span class="muted">μ_s=|q_s|τ_s/m_s</span>. Then the standard Drude tensor (x–y plane, B along z) is:
+        </p>
+        <div class="eqbox">
+          <pre class="eq" id="eq7">σ_xx^(s) = n_s e μ_s / (1 + (μ_s B)^2)
+σ_xy^(s) = n_s q_s μ_s^2 B / (1 + (μ_s B)^2)
+
+J_x^(s) = σ_xx^(s) E_x + σ_xy^(s) E_y
+J_y^(s) = -σ_xy^(s) E_x + σ_xx^(s) E_y</pre>
+        </div>
+
+        <h3>Step 6 — Low-field approximation (neglect O(B²))</h3>
+        <p class="small">
+          Expand <span class="muted">1/(1+(μB)^2) ≈ 1</span> and keep only terms linear in <span class="muted">B</span>:
+        </p>
+        <div class="eqbox">
+          <pre class="eq" id="eq8">σ_xx^(e) ≈ n e μ_e
+σ_xy^(e) ≈ n q_e μ_e^2 B = - n e μ_e^2 B
+
+σ_xx^(h) ≈ p e μ_h
+σ_xy^(h) ≈ p q_h μ_h^2 B = + p e μ_h^2 B</pre>
+        </div>
+
+        <h3>Step 7 — Enforce J<sub>y</sub>=0 to determine E<sub>y</sub></h3>
+        <p class="small">
+          Total <span class="muted">J_y = J_y^(e)+J_y^(h)</span>. Using the tensor form:
+        </p>
+        <div class="eqbox">
+          <pre class="eq" id="eq9">J_y = - (σ_xy^(e)+σ_xy^(h)) E_x + (σ_xx^(e)+σ_xx^(h)) E_y</pre>
+        </div>
+        <p class="small">
+          Set <span class="muted">J_y=0</span>:
+        </p>
+        <div class="eqbox">
+          <pre class="eq" id="eq10">0 = - (σ_xy,total) E_x + (σ_xx,total) E_y
+⇒ E_y/E_x = σ_xy,total / σ_xx,total</pre>
+        </div>
+        <p class="small">
+          Substitute <span class="muted">eq8</span>:
+        </p>
+        <div class="eqbox">
+          <pre class="eq" id="eq11">σ_xy,total ≈ eB( p μ_h^2 - n μ_e^2 )
+σ_xx,total ≈ e( p μ_h + n μ_e )
+
+⇒ E_y/E_x ≈ B ( p μ_h^2 - n μ_e^2 ) / ( p μ_h + n μ_e )</pre>
+        </div>
+
+        <h3>Step 8 — Compute R<sub>H</sub> = E<sub>y</sub>/(J<sub>x</sub>B) and justify dropping O(B²)</h3>
+        <p class="small">
+          Total longitudinal current:
+          <span class="muted">J_x = σ_xx,total E_x + σ_xy,total E_y</span>.
+          But <span class="muted">σ_xy,total = O(B)</span> and <span class="muted">E_y=O(B)E_x</span>, so <span class="muted">σ_xy,total E_y = O(B²)</span> and is neglected.
+          Therefore:
+        </p>
+        <div class="eqbox">
+          <pre class="eq" id="eq12">J_x ≈ σ_xx,total E_x = e( p μ_h + n μ_e ) E_x</pre>
+        </div>
+        <p class="small">
+          Now:
+        </p>
+        <div class="eqbox">
+          <pre class="eq" id="eq13">R_H = E_y/(J_x B)
+≈ [ (E_y/E_x) ] / [ (J_x/E_x) B ]
+= [ B ( p μ_h^2 - n μ_e^2 )/(p μ_h + n μ_e) ] / [ e( p μ_h + n μ_e ) B ]
+= ( p μ_h^2 - n μ_e^2 ) / ( e ( p μ_h + n μ_e )^2 )</pre>
+        </div>
+
+        <h3>Step 9 — Mobility-ratio form and CGS factor</h3>
+        <p class="small">
+          Let <span class="muted">b = μ_e/μ_h</span>. Factor out <span class="muted">μ_h^2</span>:
+        </p>
+        <div class="eqbox">
+          <pre class="eq" id="eq14">p μ_h^2 - n μ_e^2 = μ_h^2 (p - n b^2)
+(p μ_h + n μ_e)^2 = μ_h^2 (p + n b)^2
+
+⇒ R_H (SI) = (1/e) (p - n b^2)/(p + n b)^2</pre>
+        </div>
+
+        <div class="callout">
+          <h4><span class="tag ok">Final Answer</span></h4>
+          <div class="eqbox" style="margin:10px 0 0;">
+            <pre class="eq" id="finalAnswer">SI:
+R_H = (p μ_h^2 - n μ_e^2) / ( e (p μ_h + n μ_e)^2 )
+    = (1/e) (p - n b^2)/(p + n b)^2,   b = μ_e/μ_h.
+
+CGS:
+R_H = (1/(e c)) (p - n b^2)/(p + n b)^2.</pre>
+          </div>
+          <div class="btnrow">
+            <button class="copy" data-copy-target="eq14">Copy key equation (plain text)</button>
+            <button class="copy" data-copy-target="finalAnswer">Copy final answer (plain text)</button>
+            <span class="toast" id="toast">Copied!</span>
+          </div>
+        </div>
+
+        <h3>Sanity checks</h3>
+        <div class="grid2">
+          <div class="callout">
+            <h4><span class="tag ok">Units</span></h4>
+            <p class="small" style="margin:0;">
+              In SI, <span class="muted">R_H</span> has units <span class="muted">m³/C</span>, consistent with scaling like <span class="muted">1/(e·density)</span>.
+            </p>
+          </div>
+          <div class="callout">
+            <h4><span class="tag ok">Limiting cases</span></h4>
+            <ul class="bullets small" style="margin:0; padding-left:18px;">
+              <li><span class="muted">p=0</span> → <span class="muted">R_H = -1/(ne)</span>.</li>
+              <li><span class="muted">n=0</span> → <span class="muted">R_H = +1/(pe)</span>.</li>
+              <li><span class="muted">p=n</span>, <span class="muted">μ_e=μ_h</span> → <span class="muted">R_H=0</span>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <a class="backtop" href="#top">Back to top ↑</a>
+      </section>
+
+      <section class="card" id="part4">
+        <h2>PART 4 — Deeper Understanding (THEORY AROUND THE RESULT)</h2>
+
+        <h3>Interpretation of terms</h3>
+        <ul class="bullets">
+          <li><span class="muted">p μ_h^2 − n μ_e^2</span> sets the Hall sign (mobility-squared weighting).</li>
+          <li><span class="muted">(p μ_h + n μ_e)^2</span> is tied to the square of the zero-field conductivity <span class="muted">σ_0=e(p μ_h+n μ_e)</span>.</li>
+        </ul>
+
+        <h3>Alternative derivation idea</h3>
+        <p class="small">
+          Compute total <span class="muted">σ</span>, invert to get <span class="muted">ρ=σ^{-1}</span>, then use <span class="muted">ρ_xy≈R_H B</span> at low B.
+          Low-field inversion gives <span class="muted">ρ_xy≈-σ_xy,total/σ_0^2</span>, reproducing the same formula.
+        </p>
+
+        <h3>Concept check (Q&amp;A)</h3>
+        <ul class="bullets">
+          <li><strong>Q:</strong> When does <span class="muted">R_H</span> flip sign? <strong>A:</strong> When <span class="muted">p μ_h^2 = n μ_e^2</span> (i.e., <span class="muted">b=√(p/n)</span>).</li>
+          <li><strong>Q:</strong> Why neglect <span class="muted">σ_xy E_y</span> in <span class="muted">J_x</span>? <strong>A:</strong> It is <span class="muted">O(B²)</span> because both factors are <span class="muted">O(B)</span>.</li>
+        </ul>
+
+        <a class="backtop" href="#top">Back to top ↑</a>
+      </section>
+
+      <section class="card" id="part5">
+        <h2>PART 5 — Optional Plot Guide</h2>
+        <p class="small">
+          A plot helps visualize <strong>Hall sign reversal</strong> as the mobility ratio <span class="muted">b</span> changes.
+          The plot uses <em>example values</em> for <span class="muted">r=p/n</span> to show qualitative behavior only.
+        </p>
+
+        <figure>
+          <canvas id="plot" aria-label="Plot of dimensionless Hall proxy vs mobility ratio"></canvas>
+          <figcaption>
+            We plot <span class="muted">R̃(b)=e n R_H=(r-b²)/(r+b)²</span> with <span class="muted">r=p/n</span> (example).
+            Zero crossing at <span class="muted">b=√r</span>.
+          </figcaption>
+        </figure>
+
+        <div class="callout">
+          <h4><span class="tag">Plot notes</span></h4>
+          <ul class="bullets small" style="margin:0; padding-left:18px;">
+            <li><strong>x-axis:</strong> <span class="muted">b=μ_e/μ_h</span> (dimensionless).</li>
+            <li><strong>y-axis:</strong> <span class="muted">R̃=e n R_H</span> (dimensionless).</li>
+            <li><strong>Example values:</strong> <span class="muted">r=p/n</span> chosen as 0.2 and 1.0.</li>
+            <li><strong>Features:</strong> sign change at <span class="muted">b=√r</span>; large-b electron dominance (negative).</li>
+          </ul>
+        </div>
+
+        <a class="backtop" href="#top">Back to top ↑</a>
+      </section>
+    </main>
+
+    <footer>
+      <p style="margin:0;">
+        Low-field two-carrier Hall coefficient derived from Drude drift dynamics + <span class="muted">J_y=0</span> constraint.
+        In CGS, include factor <span class="muted">1/c</span>; in SI, drop <span class="muted">c</span>.
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    // Copy buttons
+    (function(){
+      const toast = document.getElementById('toast');
+      let tHandle = null;
+
+      async function copyTextFrom(el){
+        const text = (el && el.textContent) ? el.textContent.trim() : "";
+        if(!text) return false;
+        try{
+          await navigator.clipboard.writeText(text);
+          return true;
+        }catch(e){
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly','');
+          ta.style.position='absolute';
+          ta.style.left='-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          try{
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            return true;
+          }catch(err){
+            document.body.removeChild(ta);
+            return false;
+          }
+        }
+      }
+
+      function showToast(){
+        if(!toast) return;
+        toast.classList.add('show');
+        clearTimeout(tHandle);
+        tHandle = setTimeout(()=>toast.classList.remove('show'), 1200);
+      }
+
+      document.querySelectorAll('button.copy').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const id = btn.getAttribute('data-copy-target');
+          const el = document.getElementById(id);
+          const ok = await copyTextFrom(el);
+          if(ok) showToast();
+        });
+      });
+    })();
+
+    // Single static plot (canvas), crisp on high DPI, responsive
+    (function(){
+      const canvas = document.getElementById('plot');
+      if(!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      function Rtilde(b, r){
+        const num = (r - b*b);
+        const den = (r + b);
+        return num/(den*den);
+      }
+
+      function draw(){
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        const rect = canvas.getBoundingClientRect();
+        const W = Math.max(320, rect.width);
+        const H = Math.max(260, rect.height);
+
+        canvas.width = Math.floor(W * dpr);
+        canvas.height = Math.floor(H * dpr);
+        canvas.style.width = W + "px";
+        canvas.style.height = H + "px";
+
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+
+        const padL = 56, padR = 18, padT = 36, padB = 46;
+        const plotW = W - padL - padR;
+        const plotH = H - padT - padB;
+
+        const xMin = 0.0, xMax = 5.0;
+        const yMin = -1.2, yMax = 1.2;
+
+        function xMap(x){ return padL + (x - xMin) * plotW / (xMax - xMin); }
+        function yMap(y){ return padT + (yMax - y) * plotH / (yMax - yMin); }
+
+        ctx.clearRect(0,0,W,H);
+        ctx.fillStyle = "rgba(255,255,255,0.02)";
+        ctx.fillRect(0,0,W,H);
+
+        // gridlines
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgba(233,240,247,0.10)";
+        const xTicks = 6;
+        const yTicks = 6;
+        for(let i=0;i<=xTicks;i++){
+          const x = xMin + i*(xMax-xMin)/xTicks;
+          const X = xMap(x);
+          ctx.beginPath();
+          ctx.moveTo(X, padT);
+          ctx.lineTo(X, padT+plotH);
+          ctx.stroke();
+        }
+        for(let j=0;j<=yTicks;j++){
+          const y = yMin + j*(yMax-yMin)/yTicks;
+          const Y = yMap(y);
+          ctx.beginPath();
+          ctx.moveTo(padL, Y);
+          ctx.lineTo(padL+plotW, Y);
+          ctx.stroke();
+        }
+
+        // axes
+        ctx.strokeStyle = "rgba(233,240,247,0.35)";
+        ctx.lineWidth = 1.2;
+        const Y0 = yMap(0);
+        ctx.beginPath();
+        ctx.moveTo(padL, Y0);
+        ctx.lineTo(padL+plotW, Y0);
+        ctx.stroke();
+        const X0 = xMap(0);
+        ctx.beginPath();
+        ctx.moveTo(X0, padT);
+        ctx.lineTo(X0, padT+plotH);
+        ctx.stroke();
+
+        // tick labels
+        ctx.fillStyle = "rgba(233,240,247,0.85)";
+        ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace";
+
+        for(let i=0;i<=xTicks;i++){
+          const x = xMin + i*(xMax-xMin)/xTicks;
+          const X = xMap(x);
+          ctx.beginPath();
+          ctx.moveTo(X, Y0-4);
+          ctx.lineTo(X, Y0+4);
+          ctx.strokeStyle = "rgba(233,240,247,0.25)";
+          ctx.stroke();
+          ctx.strokeStyle = "rgba(233,240,247,0.35)";
+          ctx.fillText(x.toFixed(0), X-3, padT+plotH+18);
+        }
+        for(let j=0;j<=yTicks;j++){
+          const y = yMin + j*(yMax-yMin)/yTicks;
+          const Y = yMap(y);
+          ctx.beginPath();
+          ctx.moveTo(X0-4, Y);
+          ctx.lineTo(X0+4, Y);
+          ctx.strokeStyle = "rgba(233,240,247,0.25)";
+          ctx.stroke();
+          ctx.strokeStyle = "rgba(233,240,247,0.35)";
+          ctx.fillText(y.toFixed(1), 10, Y+4);
+        }
+
+        // title and axis labels
+        ctx.fillStyle = "rgba(233,240,247,0.92)";
+        ctx.font = "14px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText("Example: R̃(b) = e n R_H vs b = μ_e/μ_h", padL, 18);
+
+        ctx.fillStyle = "rgba(233,240,247,0.80)";
+        ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillText("b = μ_e/μ_h (dimensionless)", padL + plotW/2 - 85, padT+plotH+38);
+
+        ctx.save();
+        ctx.translate(18, padT + plotH/2 + 45);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText("R̃ = e n R_H (dimensionless)", 0, 0);
+        ctx.restore();
+
+        const curves = [
+          {r: 0.2, label: "r = p/n = 0.2"},
+          {r: 1.0, label: "r = p/n = 1.0"}
+        ];
+
+        curves.forEach((c, idx)=>{
+          ctx.beginPath();
+          const N = 400;
+          for(let i=0;i<=N;i++){
+            const b = xMin + (xMax-xMin)*(i/N);
+            const y = Rtilde(b, c.r);
+            const X = xMap(b);
+            const Y = yMap(Math.max(yMin, Math.min(yMax, y)));
+            if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y);
+          }
+          ctx.setLineDash(idx===0 ? [] : [6,4]);
+          ctx.lineWidth = idx===0 ? 2.2 : 2.0;
+          ctx.strokeStyle = "rgba(233,240,247,0.85)";
+          ctx.stroke();
+
+          // mark zero crossing b0 = sqrt(r)
+          const b0 = Math.sqrt(c.r);
+          const X0c = xMap(b0);
+          const Y0c = yMap(0);
+          ctx.setLineDash([]);
+          ctx.lineWidth = 1.2;
+          ctx.strokeStyle = "rgba(233,240,247,0.28)";
+          ctx.beginPath();
+          ctx.moveTo(X0c, padT);
+          ctx.lineTo(X0c, padT+plotH);
+          ctx.stroke();
+
+          ctx.fillStyle = "rgba(233,240,247,0.92)";
+          ctx.beginPath();
+          ctx.arc(X0c, Y0c, 3.2, 0, Math.PI*2);
+          ctx.fill();
+        });
+
+        // legend (distinguish by dash)
+        const legX = padL + plotW - 210;
+        const legY = padT + 10;
+        ctx.fillStyle = "rgba(0,0,0,0.25)";
+        ctx.fillRect(legX, legY, 200, 56);
+        ctx.strokeStyle = "rgba(233,240,247,0.12)";
+        ctx.strokeRect(legX, legY, 200, 56);
+
+        ctx.font = "12px " + getComputedStyle(document.body).fontFamily;
+        ctx.fillStyle = "rgba(233,240,247,0.86)";
+
+        ctx.setLineDash([]);
+        ctx.lineWidth = 2.2;
+        ctx.strokeStyle = "rgba(233,240,247,0.85)";
+        ctx.beginPath();
+        ctx.moveTo(legX+10, legY+18);
+        ctx.lineTo(legX+44, legY+18);
+        ctx.stroke();
+        ctx.fillText("r = p/n = 0.2", legX+54, legY+22);
+
+        ctx.setLineDash([6,4]);
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.moveTo(legX+10, legY+38);
+        ctx.lineTo(legX+44, legY+38);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillText("r = p/n = 1.0", legX+54, legY+42);
+      }
+
+      const ro = new ResizeObserver(()=>draw());
+      ro.observe(canvas);
+      window.addEventListener('orientationchange', draw);
+      draw();
+    })();
+  </script>
 </body>
 </html>
