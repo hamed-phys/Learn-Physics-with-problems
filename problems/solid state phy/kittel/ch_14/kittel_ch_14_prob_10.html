@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Response of an Electron Gas to a Suddenly Applied Electric Field (Copper Sheet, Damping Included)</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1620;
+      --panel2:#111b27;
+      --text:#e7eef7;
+      --muted:#b6c2d4;
+      --faint:#8ea0b8;
+      --accent:#7dd3fc;
+      --accent2:#a7f3d0;
+      --warn:#fde68a;
+      --danger:#fca5a5;
+      --line:rgba(231,238,247,.12);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+      --radius2:22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 18% -10%, rgba(125,211,252,.18), transparent 55%),
+        radial-gradient(900px 600px at 100% 10%, rgba(167,243,208,.10), transparent 50%),
+        radial-gradient(900px 600px at 25% 120%, rgba(167,243,208,.08), transparent 55%),
+        var(--bg);
+      line-height:1.55;
+    }
+
+    header{
+      position:relative;
+      padding:48px 18px 18px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15,22,32,.85), rgba(15,22,32,.35));
+      overflow:hidden;
+    }
+
+    .wrap{
+      max-width:1180px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:18px;
+      padding:18px;
+    }
+
+    .hero{
+      max-width:1180px;
+      margin:0 auto;
+      padding:0 18px 16px;
+    }
+
+    h1{
+      margin:0 0 10px;
+      font-weight:800;
+      letter-spacing:-.02em;
+      line-height:1.15;
+      font-size: clamp(1.6rem, 2.6vw, 2.4rem);
+    }
+    .subtitle{
+      color:var(--muted);
+      max-width:78ch;
+      margin:0;
+      font-size:1.02rem;
+    }
+
+    nav.toc{
+      position:sticky;
+      top:14px;
+      align-self:start;
+      background: rgba(17,27,39,.72);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      padding:14px 14px 10px;
+      backdrop-filter: blur(8px);
+    }
+    nav.toc h2{
+      font-size:.98rem;
+      margin:2px 0 10px;
+      letter-spacing:.02em;
+      color:var(--muted);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .toc a{
+      display:block;
+      padding:8px 10px;
+      border-radius: 12px;
+      text-decoration:none;
+      color:var(--text);
+      border:1px solid transparent;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      font-size:.95rem;
+      line-height:1.25;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,.10);
+      border-color: rgba(125,211,252,.25);
+      transform: translateY(-1px);
+    }
+    .toc small{
+      color:var(--faint);
+      display:block;
+      margin-top:8px;
+      padding:0 10px 4px;
+    }
+
+    main{
+      min-width:0;
+    }
+
+    section, article{
+      background: rgba(15,22,32,.66);
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      padding:18px 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(6px);
+      margin-bottom:16px;
+      overflow:hidden;
+    }
+
+    h2{
+      margin:0 0 12px;
+      font-size: clamp(1.1rem, 1.55vw, 1.35rem);
+      letter-spacing:-.01em;
+    }
+    h3{
+      margin:18px 0 10px;
+      font-size:1.05rem;
+      color:var(--muted);
+      letter-spacing:.01em;
+    }
+    p{margin:10px 0}
+    ul,ol{margin:10px 0 10px 22px}
+    li{margin:6px 0}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 980px){
+      .wrap{grid-template-columns: 1fr}
+      nav.toc{position:relative; top:auto}
+      .grid2{grid-template-columns: 1fr}
+    }
+
+    .callout{
+      border-radius: var(--radius);
+      padding:12px 12px;
+      border:1px solid var(--line);
+      background: rgba(17,27,39,.62);
+      margin:12px 0;
+    }
+    .callout strong{color:var(--accent)}
+    .callout.warn strong{color:var(--warn)}
+    .callout.danger strong{color:var(--danger)}
+    .callout .title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:700;
+      margin-bottom:6px;
+      color:var(--muted);
+    }
+
+    .eqbox{
+      margin:12px 0;
+      border:1px solid rgba(125,211,252,.25);
+      background: linear-gradient(180deg, rgba(125,211,252,.10), rgba(125,211,252,.05));
+      border-radius: var(--radius);
+      padding:12px 12px 10px;
+    }
+    pre{
+      margin:10px 0;
+      padding:12px;
+      border-radius: var(--radius);
+      background: rgba(5,8,12,.75);
+      border:1px solid var(--line);
+      overflow:auto;
+      font-family: var(--mono);
+      font-size:.93rem;
+      line-height:1.45;
+      color: var(--text);
+    }
+    code{font-family: var(--mono)}
+    .btnrow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:8px 0 0;
+    }
+    button.copy{
+      border:1px solid rgba(231,238,247,.18);
+      background: rgba(17,27,39,.65);
+      color: var(--text);
+      border-radius: 12px;
+      padding:8px 10px;
+      cursor:pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+      font-size:.9rem;
+    }
+    button.copy:hover{
+      transform: translateY(-1px);
+      border-color: rgba(125,211,252,.35);
+      background: rgba(125,211,252,.10);
+    }
+    .pill{
+      display:inline-block;
+      padding:2px 10px;
+      border-radius:999px;
+      background: rgba(167,243,208,.10);
+      border:1px solid rgba(167,243,208,.25);
+      color: var(--muted);
+      font-size:.85rem;
+      margin-left:8px;
+      vertical-align:middle;
+    }
+
+    details{
+      border:1px solid var(--line);
+      background: rgba(17,27,39,.45);
+      border-radius: var(--radius);
+      padding:10px 12px;
+      margin:12px 0;
+    }
+    summary{
+      cursor:pointer;
+      font-weight:700;
+      color:var(--muted);
+      list-style:none;
+    }
+    summary::-webkit-details-marker{display:none}
+    summary:after{
+      content:"▾";
+      float:right;
+      color:var(--faint);
+      transition: transform .15s ease;
+    }
+    details[open] summary:after{transform: rotate(180deg)}
+
+    figure{
+      margin:12px 0 0;
+      padding:12px;
+      border-radius: var(--radius);
+      background: rgba(5,8,12,.55);
+      border:1px solid var(--line);
+    }
+    figcaption{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+    canvas{
+      width:100%;
+      height:auto;
+      display:block;
+      border-radius: 12px;
+      background: rgba(10,14,20,.65);
+      border: 1px solid rgba(231,238,247,.12);
+    }
+
+    .backtop{
+      display:inline-block;
+      margin-top:10px;
+      text-decoration:none;
+      color:var(--accent);
+      border:1px solid rgba(125,211,252,.25);
+      background: rgba(125,211,252,.06);
+      padding:7px 10px;
+      border-radius: 12px;
+      transition: transform .12s ease;
+    }
+    .backtop:hover{transform: translateY(-1px)}
+
+    footer{
+      max-width:1180px;
+      margin:0 auto;
+      padding:8px 18px 28px;
+      color:var(--faint);
+      font-size:.92rem;
+    }
+
+    /* print-friendly */
+    @media print{
+      body{background:#fff;color:#000}
+      header, nav.toc{display:none !important}
+      section, article{box-shadow:none; border:1px solid #ddd; background:#fff}
+      a{color:#000; text-decoration:none}
+      pre{background:#f6f6f6; color:#000}
+      .backtop, button{display:none !important}
+      section, article{break-inside:avoid; page-break-inside:avoid}
+      h2{page-break-after:avoid}
+    }
+
+    /* subtle micro-animation for section headings */
+    .fadein{
+      animation: fadeUp .35s ease both;
+    }
+    @keyframes fadeUp{
+      from{opacity:0; transform: translateY(6px)}
+      to{opacity:1; transform: translateY(0)}
+    }
+  </style>
+</head>
+
+<body>
+<header id="top">
+  <div class="hero">
+    <h1>Response of an Electron Gas to a Suddenly Applied Electric Field <span class="pill">Copper sheet • damping included</span></h1>
+    <p class="subtitle">
+      We debunk the common misconception that the <em>static</em> conductivity “sets the response frequency.”
+      Using a self-consistent Drude–plasma model, we compute the relevant timescales for copper and solve the
+      step-response problem for a field applied normal to a sheet.
+    </p>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Table of contents">
+    <h2>
+      Table of Contents
+      <span class="pill" style="font-size:.8rem">sticky</span>
+    </h2>
+    <a href="#quick-summary">Quick Summary</a>
+    <a href="#part0">PART 0 — Concept Primer</a>
+    <a href="#part0b">PART 0B — Industry &amp; Applied Physics Perspective</a>
+    <a href="#part1">PART 1 — Problem Analysis</a>
+    <a href="#part2">PART 2 — Strategy &amp; Tips</a>
+    <a href="#part3">PART 3 — Full Solution</a>
+    <a href="#part4">PART 4 — Deeper Understanding</a>
+    <a href="#part5">PART 5 — Optional Plot Guide</a>
+    <small>Tip: Use the copy buttons next to key equations and the final result.</small>
+  </nav>
+
+  <main>
+    <section id="quick-summary" class="fadein">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><strong>What this is about:</strong> How a metal’s electron gas responds in time when a DC electric field is turned on suddenly.</li>
+        <li><strong>Key physics idea:</strong> For fast transients, the electrons have <em>inertia</em> and the field is <em>self-consistently screened</em> by charge separation; the natural timescale is set by the <strong>plasma frequency</strong> and <strong>scattering rate</strong>, not the DC conductivity.</li>
+        <li><strong>Governing model:</strong> 1D damped plasma oscillator for electron displacement <code>x(t)</code>:
+          <div class="eqbox">
+            <pre id="eq-ode">x¨ + (1/τ) x˙ + ω_p^2 x = -(e/m) E_ext(t)</pre>
+            <div class="btnrow">
+              <button class="copy" data-copy-target="eq-ode">Copy equation</button>
+            </div>
+          </div>
+        </li>
+        <li><strong>Self-consistency:</strong> Total internal field is <code>E(t)=E_ext(t) - 4π n e x(t)</code> (Gaussian), so screening emerges dynamically.</li>
+        <li><strong>Order-of-magnitude frequencies for copper (room T):</strong> <code>1/τ ≈ 4×10^13 s^-1</code>, <code>ω_p ≈ 1.6×10^16 s^-1</code> (rad/s), while the “conductivity frequency” <code>σ/ε0</code> in SI is ~<code>10^19 s^-1</code>—not physically controlling the transient.</li>
+        <li><strong>Result type:</strong> Symbolic step-response (damped oscillations) plus numerical scales for copper.</li>
+        <li><strong>Physical meaning:</strong> Turning on a normal field makes electrons slosh (plasma oscillations) while damping removes energy; the internal field decays toward zero (electrostatic screening).</li>
+      </ul>
+      <a class="backtop" href="#top">Back to top</a>
+    </section>
+
+    <article id="part0" class="fadein">
+      <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+      <h3>Core definitions (symbols + SI units)</h3>
+      <ul>
+        <li><code>n</code> — conduction electron density <span class="pill">m<sup>−3</sup></span></li>
+        <li><code>e</code> — elementary charge magnitude <span class="pill">C</span> (electron charge is <code>−e</code>)</li>
+        <li><code>m</code> — electron mass <span class="pill">kg</span></li>
+        <li><code>τ</code> — momentum-relaxation time (scattering time) <span class="pill">s</span></li>
+        <li><code>σ</code> — conductivity: SI <span class="pill">S/m</span>; Gaussian-cgs <span class="pill">s<sup>−1</sup></span> (same symbol, different units)</li>
+        <li><code>ρ</code> — resistivity <span class="pill">Ω·m</span>, with <code>σ = 1/ρ</code> in SI</li>
+        <li><code>ω_p</code> — plasma angular frequency <span class="pill">rad/s</span></li>
+        <li><code>E</code> — electric field <span class="pill">V/m</span> (SI) or <span class="pill">statV/cm</span> (Gaussian)</li>
+        <li><code>j</code> — current density <span class="pill">A/m<sup>2</sup></span></li>
+      </ul>
+
+      <h3>Physical meaning of key quantities</h3>
+      <ul>
+        <li><strong>DC conductivity <code>σ(0)</code>:</strong> how much steady current flows long after transients die out (low-frequency/steady transport).</li>
+        <li><strong>Relaxation rate <code>1/τ</code>:</strong> how quickly momentum is lost to phonons/impurities—this is the damping scale in time-domain dynamics.</li>
+        <li><strong>Plasma frequency <code>ω_p</code>:</strong> the natural “spring” frequency of collective electron motion against the positively charged lattice background; it sets how fast charge separation restores neutrality (screening dynamics).</li>
+      </ul>
+
+      <h3>Key laws/principles and validity conditions</h3>
+      <div class="grid2">
+        <div class="callout">
+          <div class="title">Maxwell + charge continuity</div>
+          <p>
+            The electromagnetic field and charges obey, in operator form,
+            <code>∇·E = ρ/ε0</code>, <code>∇×B = μ0 j + μ0ε0 ∂E/∂t</code>, and <code>∂ρ/∂t + ∇·j = 0</code>.
+            In a spatially uniform 1D normal geometry, these reduce to an ODE for the collective motion.
+          </p>
+        </div>
+        <div class="callout">
+          <div class="title">Drude equation of motion (with damping)</div>
+          <p>
+            For the average electron velocity <code>v(t)</code>:
+            <code>m dv/dt + (m/τ) v = -e E(t)</code>.
+            This is linear, time-invariant (LTI), so step inputs produce exponential/oscillatory responses.
+          </p>
+        </div>
+      </div>
+
+      <h3>Common models/approximations (and why)</h3>
+      <ul>
+        <li><strong>Linear response:</strong> fields small enough that drift velocity ≪ Fermi velocity, so response is proportional to <code>E</code>.</li>
+        <li><strong>Uniform electron gas + rigid positive background:</strong> lets us treat collective motion as a single displacement <code>x(t)</code>.</li>
+        <li><strong>Single relaxation time <code>τ</code>:</strong> captures damping without microscopic complexity; good for order-of-magnitude and many engineering calculations.</li>
+        <li><strong>1D normal geometry:</strong> field applied normal to a sheet; symmetry kills lateral variation (no <code>∂/∂x</code>, <code>∂/∂y</code>), only time dependence remains.</li>
+      </ul>
+
+      <h3>Mini intuition examples (no heavy algebra)</h3>
+      <ol>
+        <li><strong>Slowly varying field (ωτ ≪ 1):</strong> electrons track the field almost instantly in a drift sense; you measure DC conductivity.</li>
+        <li><strong>Very fast field (ωτ ≫ 1):</strong> collisions can’t keep up; inertia dominates and the current lags the field—conductivity becomes complex and decreases in magnitude.</li>
+        <li><strong>Normal field to a conductor:</strong> steady-state internal field tends toward zero because charges rearrange to screen; the time to do so is tied to collective charge motion (plasma dynamics) plus damping.</li>
+      </ol>
+
+      <h3>What to watch for (pitfalls &amp; misconceptions)</h3>
+      <div class="callout warn">
+        <div class="title"><strong>Pitfall:</strong> “σ has units of frequency, so it measures response frequency.”</div>
+        <p>
+          In Gaussian units <code>σ</code> indeed carries <code>s^-1</code> dimensions, but a dimensional resemblance is not a dynamical law.
+          The real transient can be limited by <code>ω_p</code> (collective restoring force) and <code>1/τ</code> (damping), and by electromagnetic propagation/geometry.
+        </p>
+      </div>
+
+      <details>
+        <summary>Math Insight (core equation as a mathematical object)</summary>
+        <p>
+          The step-response here reduces to a <strong>linear damped harmonic oscillator</strong> ODE with forcing:
+          <code>x¨ + (1/τ) x˙ + ω_p^2 x = constant·Θ(t)</code>.
+          As an LTI system, its solution is the sum of a particular (steady) solution plus a homogeneous transient.
+          The transient is <em>exponentially decaying oscillation</em> when <code>ω_p &gt; 1/(2τ)</code> (underdamped), which is true for good metals.
+        </p>
+      </details>
+
+      <a class="backtop" href="#top">Back to top</a>
+    </article>
+
+    <article id="part0b" class="fadein">
+      <h2>PART 0B — Industry &amp; Applied Physics Perspective</h2>
+
+      <h3>Where this appears in industry (concrete areas)</h3>
+      <ul>
+        <li><strong>High-speed interconnects &amp; packaging:</strong> sub-ps/ps transients, EMC, and signal integrity depend on how quickly conductors screen fields.</li>
+        <li><strong>RF &amp; microwave components:</strong> complex conductivity <code>σ(ω)</code>, skin depth, and reflection depend on <code>τ</code> and <code>ω_p</code> at high frequencies.</li>
+        <li><strong>Ultrafast lasers &amp; pump–probe metrology:</strong> femtosecond excitation drives electron gases far from equilibrium; plasma oscillations and damping show up in optical response.</li>
+        <li><strong>Electrostatic discharge (ESD) &amp; transient robustness:</strong> fast field changes can couple into metal structures; understanding the correct timescales matters for protection design.</li>
+      </ul>
+
+      <h3>Why engineers care</h3>
+      <ul>
+        <li><strong>Performance:</strong> transient screening affects impedance, crosstalk, and rise-time fidelity.</li>
+        <li><strong>Reliability:</strong> fast transients can concentrate currents/fields at edges (field enhancement), stressing materials.</li>
+        <li><strong>Cost &amp; manufacturability:</strong> selecting copper vs. alloys, plating thickness, and surface treatments depends on conductivity and high-frequency behavior.</li>
+      </ul>
+
+      <h3>Typical measurement/validation methods</h3>
+      <ul>
+        <li><strong>Four-point probe</strong> for DC <code>ρ</code> (gives <code>σ(0)</code>).</li>
+        <li><strong>THz time-domain spectroscopy (THz-TDS)</strong> to extract <code>σ(ω)</code>, <code>τ</code>, and sometimes signatures related to <code>ω_p</code>.</li>
+        <li><strong>Ellipsometry/reflectometry</strong> in optics: plasma frequency influences reflectance cutoffs.</li>
+      </ul>
+
+      <h3>Design trade-offs &amp; constraints</h3>
+      <ul>
+        <li><strong>Real materials:</strong> <code>τ</code> is reduced by impurities, grain boundaries, roughness, and temperature—especially in thin films.</li>
+        <li><strong>Geometry:</strong> “sheet” vs. bulk changes boundary conditions and field penetration; edges break the ideal 1D symmetry.</li>
+        <li><strong>Frequency regime:</strong> DC specs don’t predict ultrafast response; for GHz–THz you need <code>σ(ω)</code> and the correct electrodynamic model.</li>
+      </ul>
+
+      <div class="callout">
+        <div class="title">From lab to product</div>
+        <p>
+          In product design, the ideal Drude/plasma model becomes: (i) frequency-dependent material data (<code>σ(ω)</code> from measurements),
+          (ii) geometry-resolved Maxwell solvers (skin effect, edges), and (iii) temperature/process variability for robust tolerancing.
+        </p>
+      </div>
+
+      <a class="backtop" href="#top">Back to top</a>
+    </article>
+
+    <article id="part1" class="fadein">
+      <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+      <h3>Problem restatement (in plain words)</h3>
+      <p>
+        Some books say “the static conductivity <code>σ</code> (Gaussian units: frequency) measures the response frequency of a metal.”
+        For copper at room temperature, evaluate the relevant characteristic frequencies: the conductivity frequency scale,
+        the plasma frequency <code>ω_p</code>, and the scattering rate <code>1/τ</code>. Then set up and solve the time response <code>x(t)</code> of the electron gas
+        when an electric field is switched on suddenly, applied <em>normal</em> to a copper sheet:
+        <code>E(t&lt;0)=0</code>, <code>E_ext(t&gt;0)=1</code> (a step). Include damping.
+      </p>
+
+      <h3>Given quantities</h3>
+      <ul>
+        <li>Resistivity: <code>ρ = 1 μΩ·cm</code></li>
+        <li>Electron concentration: <code>n = 8×10^22 cm^-3</code></li>
+        <li>Mean free path: <code>ℓ = 400 Å</code></li>
+        <li>Fermi velocity: <code>v_F = 1.6×10^8 cm/s</code></li>
+      </ul>
+
+      <h3>Unknowns / outputs</h3>
+      <ul>
+        <li>Order-of-magnitude of three frequency scales: “conductivity frequency,” <code>ω_p</code>, <code>1/τ</code>.</li>
+        <li>Mathematical model and solution for <code>x(t)</code> (electron displacement) and related current <code>j(t)</code> after a step field is applied.</li>
+        <li>Critique: why DC conductivity does <em>not</em> generally set the response frequency.</li>
+      </ul>
+
+      <h3>Relevant principles and why they apply</h3>
+      <ul>
+        <li><strong>Drude dynamics</strong> applies because we are modeling average electron motion with damping (scattering).</li>
+        <li><strong>Self-consistent electrostatics</strong> applies because a normal field produces charge separation and a restoring field (plasma oscillations).</li>
+        <li><strong>Linearity</strong> applies (small-signal), so superposition and standard ODE solution methods are valid.</li>
+      </ul>
+
+      <h3>Assumptions (explicit)</h3>
+      <div class="callout warn">
+        <div class="title"><strong>Assumptions</strong></div>
+        <ul>
+          <li>Uniform, isotropic copper; electron gas described by a single displacement <code>x(t)</code> along the field normal.</li>
+          <li>Positive lattice background fixed (ions immobile on these ultrafast timescales).</li>
+          <li>Field applied uniformly over a large sheet → effectively 1D normal problem (no edge effects).</li>
+          <li>Single relaxation time <code>τ</code> (phenomenological damping), constant during the transient.</li>
+          <li>Nonrelativistic; ignore magnetic induction details beyond the 1D electrostatic restoring field (appropriate for the normal-charge-separation mode).</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (compare 2–3)</h3>
+      <ol>
+        <li><strong>Self-consistent displacement model (plasma oscillator):</strong> set up <code>x(t)</code> with restoring field from charge separation; yields a damped oscillator ODE. <em>Best for this geometry.</em></li>
+        <li><strong>Frequency-domain conductivity <code>σ(ω)</code> + inverse transform:</strong> use Drude <code>σ(ω)</code> and solve for fields/currents via Laplace/Fourier. Powerful but more algebra and boundary-condition heavy.</li>
+        <li><strong>Maxwell + continuity PDE reduction:</strong> start from <code>∂ρ/∂t + ∇·j=0</code> and <code>∇·E=ρ/ε0</code>, eliminate variables to get an ODE. Equivalent insight, more “field-theory” style.</li>
+      </ol>
+
+      <h3>Chosen approach</h3>
+      <p>
+        We use the <strong>self-consistent displacement (plasma oscillator)</strong> approach because the field is normal to the sheet,
+        so screening is driven by a collective displacement and the mathematics becomes a clean, solvable ODE with clear physical interpretation.
+      </p>
+
+      <a class="backtop" href="#top">Back to top</a>
+    </article>
+
+    <article id="part2" class="fadein">
+      <h2>PART 2 — Strategy &amp; Tips (Roadmap Only)</h2>
+
+      <ol>
+        <li><strong>Convert given data to SI</strong> (or consistently use Gaussian) so each frequency can be compared on the same scale.</li>
+        <li><strong>Estimate</strong> <code>τ = ℓ / v_F</code> (ballistic between collisions), hence <code>1/τ</code>.</li>
+        <li><strong>Compute plasma frequency</strong> <code>ω_p = sqrt(n e^2/(m ε0))</code> (SI) (or <code>ω_p^2=4π n e^2/m</code> in Gaussian).</li>
+        <li><strong>Interpret “conductivity as frequency”</strong> via Maxwell: compare conduction term to displacement term → characteristic scale <code>σ/ε0</code> in SI (or <code>4πσ</code> in Gaussian).</li>
+        <li><strong>Build the 1D model</strong>: electron displacement <code>x(t)</code>, velocity <code>v=x˙</code>, current <code>j=-n e v</code>.</li>
+        <li><strong>Self-consistent field</strong>: total field <code>E = E_ext - E_restoring</code>, where <code>E_restoring ∝ x</code>.</li>
+        <li><strong>Derive the ODE</strong>: insert <code>E</code> into Drude equation → damped, driven harmonic oscillator.</li>
+        <li><strong>Solve the ODE</strong> for a step input using elementary methods (homogeneous + particular, apply initial conditions).</li>
+        <li><strong>Extract current and screening behavior</strong> and interpret limits (<code>t→0+</code>, <code>t→∞</code>, weak/strong damping).</li>
+      </ol>
+
+      <div class="callout danger">
+        <div class="title"><strong>Common mistakes</strong></div>
+        <ul>
+          <li>Mixing SI and Gaussian formulas for <code>ω_p</code> and the restoring field without converting.</li>
+          <li>Thinking “units of frequency” means “controls time response.” Dimensional analysis suggests candidates; dynamics selects which one actually appears in the governing ODE.</li>
+          <li>Forgetting that a normal field leads to charge buildup and a restoring field (you can’t treat <code>E</code> as externally fixed everywhere inside the conductor).</li>
+          <li>Dropping inertia (<code>m dv/dt</code>)—that erases plasma oscillations and mispredicts ultrafast response.</li>
+        </ul>
+      </div>
+
+      <a class="backtop" href="#top">Back to top</a>
+    </article>
+
+    <article id="part3" class="fadein">
+      <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+      <h3>Qualitative expectation (before calculating)</h3>
+      <p>
+        When the field is switched on normal to the copper sheet, electrons accelerate briefly, but they quickly pile up at the surface,
+        creating an opposing electric field that screens the interior. Because electrons have inertia, they don’t stop exactly at the screened state;
+        they “overshoot” and oscillate collectively at about the plasma frequency <code>ω_p</code>. Scattering (finite <code>τ</code>) damps these oscillations.
+      </p>
+
+      <h3>A. Order-of-magnitude frequency scales for copper</h3>
+
+      <h4>A1) Scattering rate <code>1/τ</code> from mean free path</h4>
+      <p>
+        The relaxation time is estimated by ballistic travel between collisions:
+        <code>τ ≈ ℓ / v_F</code>.
+        Convert:
+        <code>ℓ = 400 Å = 400×10^-10 m = 4.0×10^-8 m</code>,
+        <code>v_F = 1.6×10^8 cm/s = 1.6×10^6 m/s</code>.
+      </p>
+      <div class="eqbox">
+        <pre id="eq-tau">τ ≈ ℓ / v_F = (4.0×10^-8 m) / (1.6×10^6 m/s) ≈ 2.5×10^-14 s
+1/τ ≈ 4×10^13 s^-1</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-tau">Copy calculation</button>
+        </div>
+      </div>
+      <p>
+        <strong>Dimensional check:</strong> length / (length/time) = time. Good.
+      </p>
+
+      <h4>A2) Plasma frequency <code>ω_p</code></h4>
+      <p>
+        In SI, the electron plasma frequency is
+        <code>ω_p = sqrt(n e^2/(m ε0))</code>.
+        Convert density:
+        <code>n = 8×10^22 cm^-3 = 8×10^28 m^-3</code>.
+      </p>
+      <div class="eqbox">
+        <pre id="eq-wp">ω_p = sqrt(n e^2/(m ε0))
+n = 8×10^28 m^-3
+⇒ ω_p ≈ 1.6×10^16 s^-1 (rad/s)</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-wp">Copy ωp estimate</button>
+        </div>
+      </div>
+      <p>
+        This corresponds to a timescale <code>ω_p^-1 ~ 6×10^-17 s</code> and frequency <code>f_p = ω_p/(2π) ≈ 2.5×10^15 Hz</code>.
+      </p>
+
+      <h4>A3) The “conductivity frequency” and why it misleads</h4>
+      <p>
+        In <strong>Gaussian</strong> units, <code>σ</code> indeed has dimensions of <code>s^-1</code> because it appears in Maxwell’s equation as
+        <code>∇×B = (1/c) ∂E/∂t + (4π/c) j</code> with <code>j = σ E</code>,
+        so the conduction term is <code>(4πσ/c)E</code), to be compared with the displacement term <code>(1/c)∂E/∂t ~ (ω/c)E</code>.
+        This suggests a crossover scale <code>ω ~ 4πσ</code> (Gaussian).
+      </p>
+      <p>
+        In <strong>SI</strong>, the analogous comparison in
+        <code>∇×B = μ0 j + μ0ε0 ∂E/∂t</code>
+        yields a crossover
+        <code>μ0 σ E</code> vs <code>μ0 ε0 ω E</code>, i.e.
+        <code>ω ~ σ/ε0</code>.
+      </p>
+      <p>
+        From <code>ρ = 1 μΩ·cm = 10^-8 Ω·m</code>, we get
+        <code>σ = 1/ρ = 10^8 S/m</code>.
+      </p>
+      <div class="eqbox">
+        <pre id="eq-sigeps">σ ≈ 10^8 S/m
+σ/ε0 ≈ (10^8) / (8.85×10^-12) ≈ 1.1×10^19 s^-1</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-sigeps">Copy σ/ε0 estimate</button>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <div class="title"><strong>Critique (core point)</strong></div>
+        <p>
+          The number <code>σ/ε0 ~ 10^19 s^-1</code> is far larger than the physically relevant microscopic rates in copper,
+          namely <code>ω_p ~ 10^16 s^-1</code> and <code>1/τ ~ 10^13 s^-1</code>. The time response cannot be faster than the
+          system’s natural collective dynamics (plasma oscillations) and damping; therefore, the “σ-as-response-frequency”
+          claim is misleading for fast transients. DC conductivity describes the <em>low-frequency limit</em> of transport,
+          not the ultrafast screening transient.
+        </p>
+      </div>
+
+      <h4>A4) Compare the three scales (numerically)</h4>
+      <div class="eqbox">
+        <pre id="eq-scales">Copper (room T, order of magnitude):
+1/τ  ≈ 4×10^13 s^-1
+ω_p  ≈ 1.6×10^16 s^-1   (rad/s)
+σ/ε0 ≈ 1.1×10^19 s^-1   (SI "crossover" scale)</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-scales">Copy frequency scales</button>
+        </div>
+      </div>
+
+      <p>
+        Since <code>ω_p ≫ 1/τ</code>, copper is strongly <strong>underdamped</strong> on the plasma timescale:
+        <code>ω_p τ ~ 1.6×10^16 × 2.5×10^-14 ≈ 400 ≫ 1</code>.
+      </p>
+
+      <h3>B. Mathematical model for the step-response normal to a sheet</h3>
+
+      <h4>B1) Variables, domain, coordinates, and boundary/initial conditions</h4>
+      <div class="callout">
+        <div class="title">Mathematical model (explicit)</div>
+        <ul>
+          <li><strong>Coordinate:</strong> 1D normal direction <code>z</code>. By symmetry, all quantities depend only on <code>t</code>.</li>
+          <li><strong>Unknown:</strong> electron displacement <code>x(t)</code> along +<code>z</code> (relative to fixed ionic background).</li>
+          <li><strong>Velocity:</strong> <code>v(t) = x˙(t)</code>.</li>
+          <li><strong>Current density:</strong> <code>j(t) = -n e v(t) = -n e x˙(t)</code>.</li>
+          <li><strong>External field (step):</strong> <code>E_ext(t) = E0 Θ(t)</code> with <code>E0 = 1</code> (given).</li>
+          <li><strong>Initial conditions:</strong> system at rest for <code>t&lt;0</code>:
+            <code>x(0)=0</code>, <code>x˙(0)=0</code>.</li>
+        </ul>
+      </div>
+
+      <h4>B2) Self-consistent restoring field (screening)</h4>
+      <p>
+        A displacement <code>x</code> creates a charge separation: electrons shift relative to ions, producing polarization
+        <code>P = -n e x</code> (dipole moment per volume). In Gaussian electrostatics, the depolarization (restoring) field
+        for a uniform displacement is proportional to <code>x</code>:
+      </p>
+      <div class="eqbox">
+        <pre id="eq-Ed">E_restoring(t) = 4π n e x(t)   (Gaussian; direction opposes electron shift)
+E_total(t) = E_ext(t) - E_restoring(t)</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-Ed">Copy restoring field</button>
+        </div>
+      </div>
+      <p>
+        The key point is linearity: for small displacements, the restoring field is linear in <code>x</code>.
+        This is the mathematical origin of harmonic-oscillator behavior.
+      </p>
+
+      <details>
+        <summary>Why this step is valid (linearity &amp; symmetry)</summary>
+        <p>
+          Because the sheet is large and the field is applied normal, the problem is translationally invariant in the plane.
+          Therefore <code>∂/∂x = ∂/∂y = 0</code> and only the normal displacement matters. For small perturbations around neutrality,
+          Gauss’s law makes the electric field proportional to the separated charge density, which is proportional to displacement.
+          Hence the restoring force is linear in <code>x</code>.
+        </p>
+      </details>
+
+      <h4>B3) Drude equation with damping (ODE)</h4>
+      <p>
+        The average electron (charge <code>−e</code>) obeys the damped equation of motion:
+      </p>
+      <div class="eqbox">
+        <pre id="eq-drude">m x¨(t) + (m/τ) x˙(t) = -e E_total(t)
+E_total(t) = E_ext(t) - 4π n e x(t)</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-drude">Copy Drude setup</button>
+        </div>
+      </div>
+
+      <p>
+        Substitute <code>E_total</code> into the equation (algebra shown explicitly):
+      </p>
+      <div class="eqbox">
+        <pre id="eq-algebra">m x¨ + (m/τ) x˙ = -e [E_ext - 4π n e x]
+= -e E_ext + 4π n e^2 x
+
+Bring all x-terms to the left and divide by m:
+x¨ + (1/τ) x˙ + (4π n e^2 / m) x = -(e/m) E_ext(t)
+
+Define ω_p^2 ≡ 4π n e^2 / m  (Gaussian)
+⇒ x¨ + (1/τ) x˙ + ω_p^2 x = -(e/m) E_ext(t)</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-algebra">Copy derivation</button>
+        </div>
+      </div>
+
+      <p>
+        <strong>Dimensional check:</strong> <code>x¨</code> has units <code>m/s^2</code>, <code>(1/τ)x˙</code> has <code>(1/s)(m/s)=m/s^2</code>,
+        and <code>ω_p^2 x</code> has <code>(1/s^2)m=m/s^2</code>. The forcing term <code>(e/m)E</code> has units of acceleration. Consistent.
+      </p>
+
+      <h4>B4) Nondimensionalization (scaling argument)</h4>
+      <p>
+        Let <code>t̃ = ω_p t</code> and <code>γ = 1/(2τ)</code>. Then the ODE becomes
+        <code>x''(t̃) + 2(γ/ω_p) x'(t̃) + x(t̃) = -(e/m)(E_ext/ω_p^2)</code>,
+        showing the single key dimensionless damping parameter <code>γ/ω_p = 1/(2ω_p τ)</code>.
+        For copper, <code>ω_p τ ≈ 400</code> so <code>γ/ω_p ≈ 1/800</code>: very weak damping on the plasma period.
+      </p>
+
+      <h3>C. Solve the ODE for a step field (elementary method)</h3>
+
+      <h4>C1) Specify forcing and initial conditions</h4>
+      <p>
+        Take <code>E_ext(t) = E0 Θ(t)</code> with <code>E0=1</code> for the given step.
+        For <code>t&gt;0</code>, the forcing is constant, so we solve
+        <code>x¨ + (1/τ) x˙ + ω_p^2 x = -(e/m) E0</code>,
+        with <code>x(0)=0</code>, <code>x˙(0)=0</code>.
+      </p>
+
+      <h4>C2) Particular (steady) solution</h4>
+      <p>
+        Seek a constant particular solution <code>x_p = constant</code>.
+        Then <code>x˙=x¨=0</code>, giving
+        <code>ω_p^2 x_p = -(e/m)E0</code>, so
+      </p>
+      <div class="eqbox">
+        <pre id="eq-xp">x_p = -(e E0)/(m ω_p^2)
+Using ω_p^2 = 4π n e^2/m ⇒ x_p = -E0/(4π n e)</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-xp">Copy particular solution</button>
+        </div>
+      </div>
+      <p>
+        This is precisely the displacement needed so that <code>E_restoring = 4π n e x</code> cancels the external field:
+        as <code>t→∞</code>, <code>E_total → E0 - 4π n e x_p = 0</code> (perfect screening in the ideal model).
+      </p>
+
+      <h4>C3) Homogeneous solution (transient)</h4>
+      <p>
+        Solve <code>x¨ + (1/τ) x˙ + ω_p^2 x = 0</code>.
+        Characteristic equation:
+        <code>r^2 + (1/τ) r + ω_p^2 = 0</code>.
+        Let <code>γ = 1/(2τ)</code>. Then
+        <code>r = -γ ± i ω_d</code>, with
+        <code>ω_d = sqrt(ω_p^2 - γ^2)</code>.
+      </p>
+
+      <div class="eqbox">
+        <pre id="eq-xh">γ = 1/(2τ)
+ω_d = sqrt(ω_p^2 - γ^2)   (underdamped if ω_p > γ)
+
+x_h(t) = e^{-γ t} [A cos(ω_d t) + B sin(ω_d t)]</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-xh">Copy homogeneous solution</button>
+        </div>
+      </div>
+
+      <h4>C4) Apply initial conditions (show steps)</h4>
+      <p>
+        The full solution for <code>t&gt;0</code> is <code>x(t)=x_p + x_h(t)</code>.
+        Use <code>x(0)=0</code>:
+      </p>
+      <div class="eqbox">
+        <pre id="eq-ic1">x(0)= x_p + A = 0  ⇒ A = -x_p</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-ic1">Copy IC step 1</button>
+        </div>
+      </div>
+
+      <p>
+        Now use <code>x˙(0)=0</code>. Differentiate:
+      </p>
+      <div class="eqbox">
+        <pre id="eq-deriv">x_h(t)= e^{-γ t}[A cos(ω_d t)+B sin(ω_d t)]
+
+x˙_h(t)= e^{-γ t}[
+ -γ(A cos(ω_d t)+B sin(ω_d t))
+ + (-A ω_d sin(ω_d t) + B ω_d cos(ω_d t))
+]
+
+At t=0:
+x˙_h(0)= -γ A + B ω_d</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-deriv">Copy derivative</button>
+        </div>
+      </div>
+
+      <p>
+        Since <code>x_p</code> is constant, <code>x˙(0)=x˙_h(0)=0</code> gives
+        <code>-γ A + B ω_d = 0</code> so <code>B = (γ/ω_d)A</code>.
+        With <code>A=-x_p</code>:
+      </p>
+      <div class="eqbox">
+        <pre id="eq-ic2">B = (γ/ω_d) A = -(γ/ω_d) x_p</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-ic2">Copy IC step 2</button>
+        </div>
+      </div>
+
+      <h4>C5) Final closed-form displacement and current</h4>
+      <p>
+        Substitute <code>A</code> and <code>B</code>:
+      </p>
+      <div class="eqbox">
+        <pre id="eq-xfinal">x(t) = x_p + e^{-γ t}[A cos(ω_d t)+B sin(ω_d t)]
+     = x_p + e^{-γ t}[-x_p cos(ω_d t) -(γ/ω_d) x_p sin(ω_d t)]
+
+⇒ x(t) = x_p [ 1 - e^{-γ t}( cos(ω_d t) + (γ/ω_d) sin(ω_d t) ) ]</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-xfinal">Copy x(t)</button>
+        </div>
+      </div>
+
+      <p>
+        The current density (along the normal) is
+        <code>j(t) = -n e x˙(t)</code>.
+        Differentiate the compact form (one clean way is to differentiate the bracketed term):
+      </p>
+
+      <div class="eqbox">
+        <pre id="eq-jfinal">Let F(t)= e^{-γ t}( cos(ω_d t) + (γ/ω_d) sin(ω_d t) )
+x(t)= x_p[1 - F(t)]
+⇒ x˙(t)= -x_p F˙(t)
+
+Compute F˙(t):
+F˙ = e^{-γ t}[ -γ( cos + (γ/ω_d) sin ) + ( -ω_d sin + (γ/ω_d) ω_d cos ) ]
+   = e^{-γ t}[ -γ cos -(γ^2/ω_d) sin -ω_d sin + γ cos ]
+   = -e^{-γ t}[ (ω_d + γ^2/ω_d) sin(ω_d t) ]
+   = -e^{-γ t}[ (ω_p^2/ω_d) sin(ω_d t) ]   (since ω_d^2=ω_p^2-γ^2)
+
+Thus:
+x˙(t)= -x_p(-e^{-γ t})(ω_p^2/ω_d) sin(ω_d t)
+      = x_p (ω_p^2/ω_d) e^{-γ t} sin(ω_d t)
+
+With x_p = -(eE0)/(m ω_p^2):
+x˙(t)= -(eE0)/(m ω_d) e^{-γ t} sin(ω_d t)
+
+Finally:
+j(t)= -n e x˙(t) = (n e^2 E0)/(m ω_d) e^{-γ t} sin(ω_d t)</pre>
+        <div class="btnrow">
+          <button class="copy" data-copy-target="eq-jfinal">Copy j(t) derivation</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="title"><strong>Final Answer (boxed)</strong></div>
+        <div class="eqbox">
+          <pre id="final-answer">For t>0 with E_ext(t)=E0 Θ(t), define γ=1/(2τ), ω_d = sqrt(ω_p^2 - γ^2), and ω_p^2 = 4π n e^2/m (Gaussian).
+
+Displacement:
+x(t) = x_p [ 1 - e^{-γ t} ( cos(ω_d t) + (γ/ω_d) sin(ω_d t) ) ],
+where x_p = -(eE0)/(m ω_p^2) = -E0/(4π n e).
+
+Current density (normal):
+j(t) = (n e^2 E0)/(m ω_d) e^{-γ t} sin(ω_d t).
+
+Copper scales (room T, using given data):
+τ ≈ 2.5×10^-14 s  ⇒ 1/τ ≈ 4×10^13 s^-1
+ω_p ≈ 1.6×10^16 s^-1 (rad/s)
+σ/ε0 ≈ 1.1×10^19 s^-1  (does NOT set the transient timescale).</pre>
+          <div class="btnrow">
+            <button class="copy" data-copy-target="final-answer">Copy final answer</button>
+          </div>
+        </div>
+      </div>
+
+      <h3>D. Sanity checks</h3>
+      <ul>
+        <li><strong>Units:</strong> <code>j</code> has units (in SI form) consistent with <code>n e^2 E / (m ω)</code> → A/m² (up to unit-system conventions). The time dependence is dimensionless.</li>
+        <li><strong>Initial behavior:</strong> For small <code>t</code>, <code>sin(ω_d t) ≈ ω_d t</code>, so
+          <code>j(t) ≈ (n e^2 E0/m) t</code> (linear ramp) — electrons initially accelerate almost freely.</li>
+        <li><strong>Long-time limit:</strong> <code>e^{-γ t}→0</code> so <code>j(t)→0</code> and <code>x(t)→x_p</code>.
+          That means charges have rearranged to screen the interior (<code>E_total→0</code>), so no steady conduction current flows in the normal direction.</li>
+        <li><strong>Damping regime:</strong> For copper, <code>ω_p ≫ γ</code>, so <code>ω_d ≈ ω_p</code> and decay envelope is <code>e^{-t/(2τ)}</code>.</li>
+      </ul>
+
+      <h3>E. Optional single plot (example values) — normalized current vs time</h3>
+      <figure>
+        <canvas id="plot" width="900" height="440" aria-label="Plot of normalized current response"></canvas>
+        <figcaption>
+          Example visualization (not required for the symbolic result): normalized current
+          <code>j(t)/j_max</code> showing fast plasma oscillations at ~<code>ω_p</code> with slow exponential damping set by <code>τ</code>.
+          Example values used: <code>ω_p = 1.6×10^16 s^-1</code>, <code>τ = 2.5×10^-14 s</code>.
+        </figcaption>
+      </figure>
+
+      <a class="backtop" href="#top">Back to top</a>
+    </article>
+
+    <article id="part4" class="fadein">
+      <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+      <h3>Re-interpret the final formula (what controls what)</h3>
+      <ul>
+        <li><strong><code>ω_p</code> sets the oscillation timescale:</strong> how fast electrons collectively “spring back” when displaced. Higher <code>n</code> → larger <code>ω_p</code> → faster screening oscillations.</li>
+        <li><strong><code>τ</code> sets damping:</strong> the envelope <code>e^{-t/(2τ)}</code> comes from momentum relaxation. Smaller <code>τ</code> (dirtier metal, higher T, thinner film) → faster decay of oscillations.</li>
+        <li><strong>Step forcing sets final displacement:</strong> <code>x_p = -E0/(4π n e)</code> is exactly what’s needed to cancel the applied field internally (ideal screening).</li>
+      </ul>
+
+      <h3>Parameter dependence (qualitative)</h3>
+      <ul>
+        <li>If <strong><code>n</code> increases</strong>: <code>ω_p ∝ √n</code> increases, so oscillations are faster; <code>x_p ∝ 1/n</code> decreases (less displacement needed to build the same screening field).</li>
+        <li>If <strong><code>τ</code> decreases</strong>: damping rate <code>γ=1/(2τ)</code> increases → oscillations die sooner; in the overdamped limit <code>γ ≥ ω_p</code>, you lose oscillations entirely (monotone relaxation).</li>
+        <li>If <strong>field is not normal</strong>: then steady current can persist (tangential fields drive conduction), and <code>σ(0)</code> becomes central for long-time response.</li>
+      </ul>
+
+      <details>
+        <summary>Alternative derivation idea (brief but meaningful)</summary>
+        <p>
+          Start from Maxwell + continuity in 1D: <code>∂ρ/∂t + ∂j/∂z = 0</code>, with <code>j=σ(ω)E</code> (Drude) and <code>∂E/∂z=ρ/ε0</code>.
+          Eliminating <code>ρ</code> yields a dynamical equation for <code>E(t)</code> inside the conductor that contains <code>ω_p</code> and <code>τ</code>.
+          In Laplace space, the step input produces poles at <code>-γ ± iω_d</code>, the same damped-plasma modes found above.
+        </p>
+      </details>
+
+      <h3>Concept check (self-test)</h3>
+      <ul>
+        <li><strong>Q:</strong> Why does the normal current <code>j(t)</code> go to zero at long times even though the applied field is constant?<br>
+            <strong>A:</strong> Surface charge builds until the internal field is screened (<code>E_total→0</code>), so there is no field to sustain bulk drift in the normal direction.</li>
+        <li><strong>Q:</strong> What sets the fastest timescale in the model?<br>
+            <strong>A:</strong> The plasma period <code>~1/ω_p</code> (collective restoring force), not <code>σ</code>.</li>
+        <li><strong>Q:</strong> Where does damping enter mathematically?<br>
+            <strong>A:</strong> Through the linear friction term <code>(1/τ)x˙</code>, giving exponential decay envelope <code>e^{-t/(2τ)}</code>.</li>
+        <li><strong>Q:</strong> When would “conductivity-like” scales matter more directly?<br>
+            <strong>A:</strong> In tangential-field conduction (steady transport), or in electromagnetic diffusion/skin-effect problems where geometry and Maxwell coupling make <code>σ</code> appear in field-penetration time constants.</li>
+      </ul>
+
+      <a class="backtop" href="#top">Back to top</a>
+    </article>
+
+    <article id="part5" class="fadein">
+      <h2>PART 5 — Optional Plot Guide (Only If a Plot Exists)</h2>
+
+      <h3>What the plot shows and why it’s useful</h3>
+      <p>
+        The plot visualizes the <strong>damped plasma oscillation</strong> in the normal current:
+        <code>j(t) ∝ e^{-γ t} sin(ω_d t)</code>.
+        It helps connect the symbolic solution to intuition: rapid oscillations at <code>ω_p</code> with a much slower exponential decay set by <code>τ</code>.
+      </p>
+
+      <h3>Axes and units</h3>
+      <ul>
+        <li><strong>x-axis:</strong> time <code>t</code> in femtoseconds (fs).</li>
+        <li><strong>y-axis:</strong> normalized current <code>j(t)/j_max</code> (dimensionless), so the shape is emphasized rather than absolute units.</li>
+      </ul>
+
+      <h3>Example values used</h3>
+      <ul>
+        <li><code>ω_p = 1.6×10^16 s^-1</code>, <code>τ = 2.5×10^-14 s</code> (from the copper estimates above).</li>
+      </ul>
+
+      <h3>Features to notice</h3>
+      <ul>
+        <li><strong>Oscillation period:</strong> about <code>2π/ω_p</code> (sub-fs scale).</li>
+        <li><strong>Envelope decay:</strong> approximately <code>e^{-t/(2τ)}</code>, much slower than the oscillation.</li>
+        <li><strong>No DC offset:</strong> current oscillates around zero because final state is screened (<code>j→0</code>).</li>
+      </ul>
+
+      <a class="backtop" href="#top">Back to top</a>
+    </article>
+  </main>
+</div>
+
+<footer>
+  <p>
+    Notes: This article used a linear Drude + self-consistent plasma restoring field model (idealized). Real copper includes band structure, nonlocality at nm scales,
+    surface roughness, and finite geometry/edges; these modify details but do not change the key lesson: <strong>ultrafast response is governed by plasma dynamics and damping, not DC σ alone</strong>.
+  </p>
+</footer>
+
+<script>
+  // Copy buttons (plain text)
+  (function(){
+    function copyTextFromElementId(id){
+      const el = document.getElementById(id);
+      if(!el) return;
+      const text = el.textContent.replace(/\u00A0/g,' ');
+      navigator.clipboard.writeText(text).then(()=>{
+        flashCopied(id);
+      }).catch(()=>{ /* ignore */ });
+    }
+    function flashCopied(id){
+      const btns = document.querySelectorAll('button.copy[data-copy-target="'+id+'"]');
+      btns.forEach(btn=>{
+        const old = btn.textContent;
+        btn.textContent = "Copied ✓";
+        btn.style.borderColor = "rgba(167,243,208,.45)";
+        btn.style.background = "rgba(167,243,208,.10)";
+        setTimeout(()=>{
+          btn.textContent = old;
+          btn.style.borderColor = "";
+          btn.style.background = "";
+        }, 900);
+      });
+    }
+    document.querySelectorAll('button.copy').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.getAttribute('data-copy-target');
+        copyTextFromElementId(id);
+      });
+    });
+  })();
+
+  // Single static plot on <canvas> (normalized j(t))
+  (function(){
+    const canvas = document.getElementById('plot');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    function draw(){
+      const dpr = window.devicePixelRatio || 1;
+      const cssW = canvas.clientWidth;
+      const cssH = Math.round(cssW * (440/900));
+      canvas.style.height = cssH + "px";
+      canvas.width = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+
+      const W = cssW, H = cssH;
+      ctx.clearRect(0,0,W,H);
+
+      // plot area
+      const padL = 56, padR = 18, padT = 34, padB = 44;
+      const x0 = padL, y0 = padT;
+      const pw = W - padL - padR;
+      const ph = H - padT - padB;
+
+      // example parameters (from article)
+      const wp = 1.6e16;         // s^-1
+      const tau = 2.5e-14;       // s
+      const gamma = 1/(2*tau);
+      const wd = Math.sqrt(Math.max(0, wp*wp - gamma*gamma));
+
+      // time window (fs)
+      const tMin = 0, tMax = 10; // fs
+      const toSec = fs => fs*1e-15;
+
+      // compute normalized signal
+      const N = 2200;
+      const ys = new Array(N);
+      let yMax = 0;
+      for(let i=0;i<N;i++){
+        const tfs = tMin + (tMax-tMin)*i/(N-1);
+        const t = toSec(tfs);
+        const y = Math.exp(-gamma*t) * Math.sin(wd*t);
+        ys[i] = y;
+        yMax = Math.max(yMax, Math.abs(y));
+      }
+      if(yMax === 0) yMax = 1;
+
+      // axes mapping
+      function X(tfs){ return x0 + pw*(tfs - tMin)/(tMax - tMin); }
+      function Y(y){ // y in [-1,1] normalized
+        const yN = y; // already normalized
+        return y0 + ph*(0.5 - 0.45*yN); // leave margins
+      }
+
+      // background grid
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = 1;
+
+      // Title
+      ctx.fillStyle = "rgba(231,238,247,.92)";
+      ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("Damped plasma-oscillation response (example): normalized current j(t)/j_max", x0, 18);
+
+      // grid lines
+      ctx.strokeStyle = "rgba(231,238,247,.10)";
+      ctx.fillStyle = "rgba(231,238,247,.72)";
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+
+      // x ticks
+      const xTicks = [0,2,4,6,8,10];
+      xTicks.forEach(tfs=>{
+        const xx = X(tfs);
+        ctx.beginPath();
+        ctx.moveTo(xx, y0);
+        ctx.lineTo(xx, y0+ph);
+        ctx.stroke();
+        ctx.fillText(tfs.toString(), xx-4, y0+ph+20);
+      });
+
+      // y ticks
+      const yTicks = [-1,-0.5,0,0.5,1];
+      yTicks.forEach(v=>{
+        const yy = Y(v);
+        ctx.beginPath();
+        ctx.moveTo(x0, yy);
+        ctx.lineTo(x0+pw, yy);
+        ctx.stroke();
+        const label = (Math.round(v*10)/10).toString();
+        ctx.fillText(label, x0-36, yy+4);
+      });
+
+      // axes
+      ctx.strokeStyle = "rgba(231,238,247,.25)";
+      ctx.beginPath();
+      ctx.rect(x0, y0, pw, ph);
+      ctx.stroke();
+
+      // labels
+      ctx.fillStyle = "rgba(231,238,247,.82)";
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("time t (fs)", x0 + pw/2 - 28, y0+ph+38);
+
+      // y label (rotated)
+      ctx.save();
+      ctx.translate(16, y0 + ph/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText("normalized current  j(t)/j_max",  -84, 0);
+      ctx.restore();
+
+      // curve
+      ctx.strokeStyle = "rgba(125,211,252,.95)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for(let i=0;i<N;i++){
+        const tfs = tMin + (tMax-tMin)*i/(N-1);
+        const y = ys[i]/yMax;
+        const xx = X(tfs);
+        const yy = Y(y);
+        if(i===0) ctx.moveTo(xx,yy);
+        else ctx.lineTo(xx,yy);
+      }
+      ctx.stroke();
+
+      // legend
+      const lx = x0 + pw - 190;
+      const ly = y0 + 12;
+      ctx.fillStyle = "rgba(17,27,39,.78)";
+      ctx.strokeStyle = "rgba(231,238,247,.14)";
+      roundRect(ctx, lx, ly, 178, 44, 10, true, true);
+      ctx.strokeStyle = "rgba(125,211,252,.95)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(lx+12, ly+18);
+      ctx.lineTo(lx+44, ly+18);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(231,238,247,.88)";
+      ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.fillText("j(t) ∝ e^{-t/(2τ)} sin(ω_d t)", lx+50, ly+22);
+      ctx.fillStyle = "rgba(182,194,212,.85)";
+      ctx.fillText("example: ω_p=1.6×10^16 s^-1, τ=2.5×10^-14 s", lx+12, ly+38);
+    }
+
+    function roundRect(ctx, x, y, w, h, r, fill, stroke){
+      if (w < 2*r) r = w/2;
+      if (h < 2*r) r = h/2;
+      ctx.beginPath();
+      ctx.moveTo(x+r, y);
+      ctx.arcTo(x+w, y,   x+w, y+h, r);
+      ctx.arcTo(x+w, y+h, x,   y+h, r);
+      ctx.arcTo(x,   y+h, x,   y,   r);
+      ctx.arcTo(x,   y,   x+w, y,   r);
+      ctx.closePath();
+      if(fill) ctx.fill();
+      if(stroke) ctx.stroke();
+    }
+
+    window.addEventListener('resize', draw, {passive:true});
+    draw();
+  })();
+</script>
+</body>
+</html>

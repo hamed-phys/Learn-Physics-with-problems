@@ -2,119 +2,1170 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
-  <meta name="theme-color" content="#050608" />
-  <title>Kittel Chapter 17 — Problem 3</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>2D Electron Gas (2DEG): Density of States, Fermi Wavevector, and Drude Sheet Resistance</title>
   <style>
-    :root {
-      --bg: #050608;
-      --panel: rgba(255,255,255,0.06);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.72);
-      --border: rgba(255,255,255,0.14);
-      --shadow: 0 18px 50px rgba(0,0,0,0.35);
+    :root{
+      --bg:#0b0f17;
+      --panel:#111827;
+      --panel2:#0f172a;
+      --text:#e5e7eb;
+      --muted:#a7b0c0;
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --ok:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --line:rgba(255,255,255,.10);
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background:
-        radial-gradient(900px 500px at 15% 0%, rgba(120,120,255,0.14), transparent 60%),
-        radial-gradient(800px 500px at 100% 10%, rgba(120,255,200,0.10), transparent 55%),
-        var(--bg);
-      color: var(--text);
-      line-height: 1.6;
+    html{scroll-behavior:smooth;}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 800px at 20% 0%, rgba(125,211,252,.14), transparent 55%),
+                  radial-gradient(1100px 700px at 85% 20%, rgba(167,139,250,.14), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      line-height:1.6;
     }
-
-    header, main, footer {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 22px 16px;
+    a{color:var(--accent); text-decoration:none;}
+    a:hover{text-decoration:underline;}
+    header{
+      padding: 28px 18px 10px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(to bottom, rgba(17,24,39,.9), rgba(11,15,23,.6));
+      position:relative;
+      overflow:hidden;
     }
-
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      padding: 18px;
+    header::after{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(800px 220px at 20% 0%, rgba(125,211,252,.16), transparent 65%);
+      pointer-events:none;
     }
-
-    h1 {
-      margin: 0 0 10px;
-      font-size: 1.25rem;
-      letter-spacing: 0.2px;
+    .wrap{max-width:1160px; margin:0 auto;}
+    .title{
+      display:flex; gap:14px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;
     }
-
-    p {
-      margin: 0 0 10px;
-      color: var(--muted);
+    h1{
+      margin:0;
+      font-size: clamp(1.55rem, 2.6vw, 2.25rem);
+      letter-spacing:.2px;
+      line-height:1.2;
     }
-
-    code {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.10);
-      padding: 2px 6px;
-      border-radius: 8px;
+    .subtitle{
+      margin: 8px 0 0;
+      color:var(--muted);
+      max-width: 78ch;
+      font-size: 1rem;
     }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
+    .meta{
+      margin-top:14px;
+      display:flex; flex-wrap:wrap; gap:8px;
+      color:var(--muted);
+      font-size:.9rem;
     }
-
-    @media (min-width: 820px) {
-      .grid { grid-template-columns: 1.2fr 0.8fr; }
-    }
-
-    .badge {
-      display: inline-block;
-      font-size: 0.85rem;
-      padding: 4px 10px;
+    .pill{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      padding:6px 10px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.82);
+      backdrop-filter: blur(10px);
+    }
+
+    main{
+      padding: 18px 18px 60px;
+    }
+    .layout{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .layout{grid-template-columns: 1fr;}
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 12px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17,24,39,.88), rgba(15,23,42,.72));
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 14px;
+      overflow:hidden;
+    }
+    nav.toc h2{
+      margin: 2px 0 10px;
+      font-size: 1.05rem;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    nav.toc ul{
+      list-style:none;
+      padding:0;
+      margin:0;
+      display:grid;
+      gap: 8px;
+    }
+    nav.toc a{
+      display:block;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      color: var(--text);
+      background: rgba(255,255,255,.03);
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    nav.toc a:hover{
+      background: rgba(125,211,252,.08);
+      border-color: rgba(125,211,252,.22);
+      transform: translateY(-1px);
+      text-decoration:none;
+    }
+    .toc small{color:var(--muted); font-weight:500;}
+
+    article{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17,24,39,.76), rgba(15,23,42,.56));
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    section{scroll-margin-top: 14px;}
+    h2{
+      margin: 18px 0 8px;
+      font-size: 1.35rem;
+      letter-spacing:.2px;
+    }
+    h3{
+      margin: 14px 0 6px;
+      font-size: 1.1rem;
+      letter-spacing:.15px;
+      color: rgba(229,231,235,.96);
+    }
+    p{margin: 8px 0;}
+    ul{margin: 8px 0 8px 22px;}
+    li{margin: 6px 0;}
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 900px){
+      .grid2{grid-template-columns: 1fr;}
+    }
+
+    .card{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.035);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .callout{
+      border-left: 4px solid var(--accent);
+      background: rgba(125,211,252,.06);
+      border-radius: 14px;
+      padding: 12px;
+      margin: 10px 0;
+    }
+    .callout strong{color:var(--accent);}
+    .callout.warn{border-left-color: var(--warn); background: rgba(251,191,36,.07);}
+    .callout.warn strong{color: var(--warn);}
+    .callout.ok{border-left-color: var(--ok); background: rgba(52,211,153,.07);}
+    .callout.ok strong{color: var(--ok);}
+    .callout.bad{border-left-color: var(--bad); background: rgba(251,113,133,.07);}
+    .callout.bad strong{color: var(--bad);}
+
+    .eqbox{
+      border:1px solid rgba(125,211,252,.22);
+      background: rgba(15,23,42,.6);
+      border-radius: 16px;
+      padding: 12px;
+      margin: 10px 0;
+      overflow:hidden;
+    }
+    .eqhead{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom:8px;
+    }
+    .eqhead .label{
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing:.2px;
+      font-size:.95rem;
+    }
+    pre.eq{
+      margin:0;
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .95rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    button.copy{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:650;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    button.copy:hover{
+      background: rgba(167,139,250,.08);
+      border-color: rgba(167,139,250,.25);
+      transform: translateY(-1px);
+    }
+    button.copy:active{transform: translateY(0px) scale(.99);}
+    .copied{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      color: var(--ok);
+      font-weight:700;
+      font-size:.9rem;
+    }
+
+    details{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.03);
+      padding: 10px 12px;
+      margin: 10px 0;
+    }
+    details summary{
+      cursor:pointer;
+      font-weight:750;
+      color: rgba(229,231,235,.96);
+      list-style:none;
+    }
+    details summary::-webkit-details-marker{display:none;}
+    details summary:before{
+      content:"▸";
+      display:inline-block;
+      margin-right:10px;
+      color: var(--accent2);
+      transform: translateY(-1px);
+      transition: transform .14s ease;
+    }
+    details[open] summary:before{transform: rotate(90deg) translateX(2px);}
+    .mathinsight{
+      border:1px dashed rgba(167,139,250,.35);
+      background: rgba(167,139,250,.06);
+      border-radius: 16px;
+      padding: 12px;
+      margin: 12px 0;
+    }
+    .mathinsight h4{
+      margin:0 0 6px;
+      color: var(--accent2);
+      font-size: 1rem;
+      letter-spacing:.2px;
+    }
+
+    figure{
+      margin: 12px 0;
+      border:1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.02);
+      overflow:hidden;
+    }
+    figcaption{
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: .92rem;
+      border-top:1px solid var(--line);
+    }
+    canvas{
+      width:100%;
+      height: 280px;
+      display:block;
+      background: radial-gradient(900px 320px at 30% 20%, rgba(125,211,252,.07), transparent 60%),
+                  rgba(0,0,0,.15);
+    }
+
+    .backtop{
+      display:flex;
+      justify-content:flex-end;
+      margin-top: 14px;
+    }
+    .backtop a{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+    }
+    .backtop a:hover{
+      text-decoration:none;
+      background: rgba(125,211,252,.08);
+      border-color: rgba(125,211,252,.22);
+    }
+
+    footer{
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top:1px solid var(--line);
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff; color:#000;}
+      header, nav.toc{display:none;}
+      article{box-shadow:none; border:1px solid #ccc; background:#fff;}
+      .eqbox, .callout, .mathinsight, details{break-inside:avoid;}
+      a{color:#000; text-decoration:underline;}
+      button.copy{display:none;}
+      canvas{display:none;}
+      figure{display:none;}
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="card">
-      <span class="badge">Kittel • Chapter 17 • Problem 3</span>
-      <h1>Kittel Chapter 17 — Problem 3</h1>
-      <p>Replace this scaffold with your full solution as a self-contained HTML learning article (no external libraries).</p>
-      <p><strong>File path:</strong> <code>./problems/kittel/ch_17/kittel_ch_17_prob_3.html</code></p>
+  <header id="top">
+    <div class="wrap">
+      <div class="title">
+        <div>
+          <h1>Properties of the Two-Dimensional Electron Gas (2DEG)</h1>
+          <p class="subtitle">
+            We derive (a) the 2D density of states per unit area, (b) the sheet density–Fermi wavevector relation,
+            and (c) the Drude sheet resistance of a square, emphasizing mathematical physics rigor and applied/industrial relevance.
+          </p>
+          <div class="meta">
+            <span class="pill">Spin degeneracy: g<sub>s</sub>=2</span>
+            <span class="pill">No valley degeneracy: g<sub>v</sub>=1</span>
+            <span class="pill">Model: free-electron (effective mass) + Drude</span>
+            <span class="pill">Results: symbolic (closed form)</span>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
   <main>
-    <div class="grid">
-      <section class="card">
-        <h2 style="margin:0 0 8px; font-size:1.05rem;">Problem</h2>
-        <p><em>Paste the problem statement here.</em></p>
-      </section>
+    <div class="wrap layout">
+      <nav class="toc" aria-label="Table of contents">
+        <h2>
+          <span>Contents</span>
+          <small>sticky</small>
+        </h2>
+        <ul>
+          <li><a href="#qs">Quick Summary</a></li>
+          <li><a href="#p0">PART 0 — Concept Primer</a></li>
+          <li><a href="#p0b">PART 0B — Industry & Applied Physics</a></li>
+          <li><a href="#p1">PART 1 — Problem Analysis</a></li>
+          <li><a href="#p2">PART 2 — Strategy & Tips</a></li>
+          <li><a href="#p3">PART 3 — Full Solution</a></li>
+          <li><a href="#p4">PART 4 — Deeper Understanding</a></li>
+          <li><a href="#p5">PART 5 — Optional Plot Guide</a></li>
+        </ul>
+      </nav>
 
-      <aside class="card">
-        <h2 style="margin:0 0 8px; font-size:1.05rem;">Plan</h2>
-        <p><em>List givens, unknowns, and the method you’ll use.</em></p>
-      </aside>
+      <article>
+        <section id="qs">
+          <h2>Quick Summary</h2>
+          <ul>
+            <li><strong>What this is:</strong> a 2D electron gas (electrons confined to a plane) with spin degeneracy 2 and no valley degeneracy.</li>
+            <li><strong>Key physics idea:</strong> in 2D, the number of k-states grows with k, so the density of states in energy is <em>constant</em>.</li>
+            <li><strong>Governing dispersion:</strong> free-electron (effective mass) band: ε(k)=ħ²k²/(2m).</li>
+            <li><strong>Main mathematical tool:</strong> counting eigenstates in k-space with periodic boundary conditions (a lattice in reciprocal space).</li>
+            <li><strong>Result (a):</strong> density of states per area per energy is D(ε)=m/(πħ²) (includes spin degeneracy 2).</li>
+            <li><strong>Result (b):</strong> sheet density and Fermi wavevector: n<sub>s</sub>=k<sub>F</sub>²/(2π).</li>
+            <li><strong>Transport model:</strong> Drude: σ = n e²τ/m; in 2D use sheet density n<sub>s</sub>.</li>
+            <li><strong>Result (c):</strong> sheet resistance (square resistance): R<sub>s</sub> = (h/e²)/(k<sub>F</sub>ℓ), where ℓ=v<sub>F</sub>τ is mean free path.</li>
+            <li><strong>Physical meaning:</strong> R<sub>s</sub> decreases with larger k<sub>F</sub> (more carriers) and larger ℓ (less scattering).</li>
+          </ul>
+        </section>
 
-      <section class="card" style="grid-column: 1 / -1;">
-        <h2 style="margin:0 0 8px; font-size:1.05rem;">Solution</h2>
-        <p><em>Derivation + final numerical/analytic result.</em></p>
-      </section>
+        <section id="p0">
+          <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+          <div class="grid2">
+            <div class="card">
+              <h3>Core definitions (symbols + SI units)</h3>
+              <ul>
+                <li>Position in plane: r=(x,y), domain A (area) in m².</li>
+                <li>Wavevector: k=(k<sub>x</sub>,k<sub>y</sub>) in m⁻¹, magnitude k=|k|.</li>
+                <li>Energy dispersion (effective mass): ε(k)=ħ²k²/(2m) in J (or eV).</li>
+                <li>Spin degeneracy: g<sub>s</sub>=2 (two spin states per k).</li>
+                <li>Sheet density: n<sub>s</sub>=N/A in m⁻² (carriers per area).</li>
+                <li>Fermi wavevector: k<sub>F</sub> in m⁻¹, defined by ε(k<sub>F</sub>)=ε<sub>F</sub>.</li>
+                <li>Relaxation time: τ in s; mean free path: ℓ=v<sub>F</sub>τ in m.</li>
+                <li>Sheet conductivity: σ<sub>□</sub> in S (Siemens) and sheet resistance R<sub>s</sub>=1/σ<sub>□</sub> in Ω (ohms per square).</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h3>Physical meaning (intuition)</h3>
+              <ul>
+                <li><strong>D(ε)</strong>: “how many quantum orbitals are available near energy ε” per area per energy.</li>
+                <li><strong>n<sub>s</sub></strong>: how many electrons you have per unit chip area (key in 2D materials and MOSFET inversion layers).</li>
+                <li><strong>k<sub>F</sub></strong>: sets typical momentum scale; determines v<sub>F</sub>=ħk<sub>F</sub>/m.</li>
+                <li><strong>ℓ</strong>: average distance traveled between momentum-randomizing collisions (scattering).</li>
+                <li><strong>R<sub>s</sub></strong>: the resistance of any square piece of a uniform thin conducting sheet—independent of square size.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout">
+            <strong>Key laws/principles and validity conditions:</strong>
+            <ul>
+              <li><strong>Quantum state counting</strong> assumes a large area A so boundary effects are negligible (thermodynamic limit).</li>
+              <li><strong>Effective mass approximation</strong>: band is parabolic near the Fermi level with constant m (valid near band minima/maxima).</li>
+              <li><strong>Drude model</strong>: linear response, steady state, weak electric field, scattering captured by a single relaxation time τ.</li>
+            </ul>
+          </div>
+
+          <h3>Mathematical model (rigorous setup)</h3>
+          <p>
+            We model noninteracting electrons confined to a 2D region of area A in the (x,y) plane.
+            The one-electron Hamiltonian (effective mass, no magnetic field) is
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">Hamiltonian and eigenvalue problem</div>
+              <button class="copy" data-copy-target="eq-ham">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-ham">Hψ = εψ,
+H = -(ħ²/2m) ∇²   with   ∇² = ∂²/∂x² + ∂²/∂y²</pre>
+          </div>
+
+          <p>
+            Using periodic boundary conditions on a square L×L (so A=L²) makes eigenstates plane waves ψ<sub>k</sub>(r)=A<sup>-1/2</sup>e^{i k·r}.
+            Allowed k-values form a reciprocal lattice with spacing Δk<sub>x</sub>=Δk<sub>y</sub>=2π/L. In the large-A limit, sums over k become integrals.
+          </p>
+
+          <details>
+            <summary>Optional deeper note: why periodic boundary conditions are legitimate</summary>
+            <p>
+              Periodic boundary conditions are a mathematical convenience that preserves translational symmetry and makes eigenstates plane waves.
+              For macroscopic A, boundary conditions only affect a negligible fraction of states near the edges; bulk quantities like D(ε) converge to the same limit.
+            </p>
+          </details>
+
+          <h3>Mini intuition examples (conceptual)</h3>
+          <ul>
+            <li><strong>2D vs 3D DOS:</strong> In 3D, DOS grows like √ε; in 2D, DOS is constant; in 1D, DOS diverges near band edges.</li>
+            <li><strong>More carriers → lower resistance:</strong> Larger n<sub>s</sub> increases conductivity linearly in Drude theory.</li>
+            <li><strong>Cleaner material → lower resistance:</strong> Larger τ (or ℓ) means fewer collisions, so higher conductivity.</li>
+          </ul>
+
+          <div class="callout warn">
+            <strong>What to watch for (pitfalls):</strong>
+            <ul>
+              <li>Missing degeneracy factors: here g<sub>s</sub>=2, g<sub>v</sub>=1.</li>
+              <li>Confusing 3D density n (m⁻³) with 2D sheet density n<sub>s</sub> (m⁻²).</li>
+              <li>For sheet resistance, “Ω per square” is not Ω/m: it is just Ω (geometry cancels for a square).</li>
+              <li>For transport, ensure you use v<sub>F</sub>=ħk<sub>F</sub>/m and ℓ=v<sub>F</sub>τ consistently.</li>
+            </ul>
+          </div>
+
+          <div class="mathinsight">
+            <h4>Math Insight: state counting as a geometric measure</h4>
+            <p>
+              The density of states is a <em>pushforward measure</em> from k-space to energy space under ε(k)=ħ²k²/(2m).
+              In 2D, the “surface” of constant energy is a circle of radius k, whose circumference scales as k.
+              The Jacobian dε/dk ∝ k exactly cancels that k, producing a constant D(ε).
+            </p>
+          </div>
+        </section>
+
+        <section id="p0b">
+          <h2>PART 0B — Industry & Applied Physics Perspective</h2>
+          <p>
+            A 2DEG is not just a textbook construct—it is a working medium in many high-value technologies where engineers must control
+            carrier density, scattering, and sheet resistance.
+          </p>
+
+          <div class="grid2">
+            <div class="card">
+              <h3>Where this appears (applications)</h3>
+              <ul>
+                <li><strong>MOSFETs & CMOS:</strong> inversion layer at Si/SiO₂ forms a quasi-2DEG; n<sub>s</sub> is gate-tunable.</li>
+                <li><strong>GaAs/AlGaAs HEMTs:</strong> modulation-doped 2DEG enables ultra-high mobility for RF/5G/6G front-ends.</li>
+                <li><strong>2D materials:</strong> graphene, MoS₂, etc. (often modeled as 2D carriers; details differ but sheet concepts persist).</li>
+                <li><strong>Quantum Hall / metrology:</strong> 2DEGs provide precision resistance standards linked to h/e².</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Why engineers care</h3>
+              <ul>
+                <li><strong>Performance:</strong> sheet resistance impacts RC delay, gain, noise figure, and power dissipation.</li>
+                <li><strong>Reliability:</strong> scattering and defects (reducing ℓ) can increase heating and accelerate degradation.</li>
+                <li><strong>Cost & manufacturability:</strong> process steps that improve mobility (larger τ) can be expensive; trade-offs matter.</li>
+                <li><strong>Design knobs:</strong> gate bias (controls n<sub>s</sub>), material quality (controls τ), geometry (affects total R via squares).</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Measurement/validation in practice</h3>
+          <ul>
+            <li><strong>Van der Pauw</strong> and <strong>four-point probe</strong> methods measure sheet resistance R<sub>s</sub> while minimizing contact resistance errors.</li>
+            <li><strong>Hall measurements</strong> yield n<sub>s</sub> and mobility μ=eτ/m (thus inferring τ, ℓ via v<sub>F</sub>).</li>
+            <li><strong>Temperature dependence</strong> helps separate phonon scattering from impurity/defect scattering (changes τ).</li>
+          </ul>
+
+          <div class="callout">
+            <strong>From lab to product:</strong>
+            Ideal 2DEG theory assumes a perfectly 2D, uniform, parabolic band and a single τ.
+            Real devices include finite thickness, nonparabolic bands, multiple subbands, interface roughness, remote impurities,
+            and nonuniform carrier density. Engineers often use the same formulas locally (or per subband) and then integrate/average
+            across the device stack and operating conditions.
+          </div>
+        </section>
+
+        <section id="p1">
+          <h2>PART 1 — Problem Analysis (No solving yet)</h2>
+          <h3>Problem restatement (in plain words)</h3>
+          <p>
+            For a 2D electron gas with two spin states and no valley degeneracy:
+            (a) show the density of states per unit area per unit energy is D(ε)=m/(πħ²);
+            (b) show the sheet density relates to the Fermi wavevector by n<sub>s</sub>=k<sub>F</sub>²/(2π);
+            (c) using the Drude model, show the sheet resistance of a square is R<sub>s</sub>=(h/e²)/(k<sub>F</sub>ℓ), where ℓ=v<sub>F</sub>τ is mean free path.
+          </p>
+
+          <div class="grid2">
+            <div class="card">
+              <h3>Given</h3>
+              <ul>
+                <li>2DEG (motion only in x-y plane), area A large.</li>
+                <li>Spin degeneracy g<sub>s</sub>=2, valley degeneracy g<sub>v</sub>=1.</li>
+                <li>Parabolic dispersion ε(k)=ħ²k²/(2m).</li>
+                <li>Drude transport with relaxation time τ.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>Unknowns / must show</h3>
+              <ul>
+                <li>(a) D(ε) per unit area per unit energy.</li>
+                <li>(b) Relation between n<sub>s</sub> and k<sub>F</sub>.</li>
+                <li>(c) Sheet resistance R<sub>s</sub> in terms of k<sub>F</sub> and ℓ.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Relevant principles and why they apply</h3>
+          <ul>
+            <li><strong>Eigenstate counting in k-space:</strong> valid because H is translationally invariant (with periodic BC), so plane-wave eigenstates exist.</li>
+            <li><strong>Fermi sea filling at T=0 (or T≪T<sub>F</sub>):</strong> states filled up to k<sub>F</sub>.</li>
+            <li><strong>Linear-response Drude model:</strong> relates conductivity to carrier density and scattering time via momentum relaxation.</li>
+          </ul>
+
+          <div class="callout ok">
+            <strong>Assumptions (explicit):</strong>
+            <ul>
+              <li>Noninteracting electrons (or interactions absorbed into effective mass m and τ).</li>
+              <li>Single parabolic band, isotropic in-plane mass m.</li>
+              <li>Large-area limit A→∞ so sums over k become integrals (continuum approximation).</li>
+              <li>Steady state and small electric field (linear response) for Drude conductivity.</li>
+            </ul>
+          </div>
+
+          <h3>Possible approaches (compare)</h3>
+          <ul>
+            <li><strong>Approach 1 (best):</strong> geometric k-space counting + Jacobian dε/dk → D(ε). Fast, transparent, minimal machinery.</li>
+            <li><strong>Approach 2:</strong> start from general formula D(ε)=g ∫(d²k/(2π)²) δ(ε-ε(k)). More “operator/Green’s-function” flavored; compact and general.</li>
+            <li><strong>Approach 3:</strong> compute N(ε) first, then differentiate: D(ε)=dN/dε. Equivalent to Approach 1; good for teaching.</li>
+          </ul>
+          <p>
+            We will use Approach 3 for clarity (count then differentiate) and briefly connect to the δ-function integral as an alternative.
+          </p>
+        </section>
+
+        <section id="p2">
+          <h2>PART 2 — Strategy & Tips (Roadmap only)</h2>
+          <ol>
+            <li><strong>Set up k-space quantization:</strong> determine how many states live in an area element d²k (uses periodic BC and state density A/(2π)²).</li>
+            <li><strong>Count states up to k:</strong> compute N(k) using the area of a disk πk² and multiply by spin degeneracy g<sub>s</sub>.</li>
+            <li><strong>Convert to energy:</strong> use ε=ħ²k²/(2m) to write N(ε).</li>
+            <li><strong>Differentiate:</strong> D(ε) = (1/A) dN/dε.</li>
+            <li><strong>Fermi filling:</strong> set n<sub>s</sub>=N(ε<sub>F</sub>)/A and solve for k<sub>F</sub>.</li>
+            <li><strong>Drude sheet conductivity:</strong> σ<sub>□</sub>=n<sub>s</sub> e² τ / m.</li>
+            <li><strong>Rewrite with ℓ:</strong> use v<sub>F</sub>=ħk<sub>F</sub>/m and ℓ=v<sub>F</sub>τ to eliminate τ and m.</li>
+            <li><strong>Recognize h=2πħ:</strong> express result in (h/e²)/(k<sub>F</sub>ℓ).</li>
+          </ol>
+
+          <div class="callout warn">
+            <strong>Common mistakes (quick tips):</strong>
+            <ul>
+              <li>Forgetting factor g<sub>s</sub>=2 in both D(ε) and n<sub>s</sub>.</li>
+              <li>Using 3D Drude formula with volume density instead of sheet density.</li>
+              <li>Mixing ħ and h: remember h=2πħ.</li>
+              <li>Using ℓ= v<sub>F</sub>τ but with wrong v<sub>F</sub> (must use k<sub>F</sub>).</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="p3">
+          <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+          <h3>Qualitative expectation (before math)</h3>
+          <p>
+            In 2D, the number of k-states inside a radius k grows like the disk area ~k².
+            But energy scales as ε~k², so N(ε)~ε, implying D(ε)=dN/dε is a constant (independent of ε).
+            For transport, higher k<sub>F</sub> means more carriers (lower R<sub>s</sub>), and larger ℓ means fewer scattering events (also lower R<sub>s</sub>).
+          </p>
+
+          <h3>(a) Density of states per unit area D(ε)=m/(πħ²)</h3>
+          <p>
+            <strong>Step 1: k-space state density.</strong>
+            With periodic boundary conditions on a square L×L (A=L²), allowed wavevectors are
+            k<sub>x</sub>=2πn<sub>x</sub>/L, k<sub>y</sub>=2πn<sub>y</sub>/L (n<sub>x</sub>,n<sub>y</sub> integers).
+            Therefore one quantum state occupies an area in k-space
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">k-space cell area</div>
+              <button class="copy" data-copy-target="eq-cell">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-cell">Δk_x Δk_y = (2π/L)(2π/L) = (2π)² / A</pre>
+          </div>
+
+          <p>
+            Hence the number of k-states in a k-space region of area Ω<sub>k</sub> is
+            N = g<sub>s</sub> · (Ω<sub>k</sub>) / ( (2π)² / A ) = g<sub>s</sub> · A · Ω<sub>k</sub> / (2π)²,
+            where g<sub>s</sub>=2 accounts for spin degeneracy.
+          </p>
+
+          <p>
+            <strong>Step 2: count states with |k| ≤ k.</strong>
+            The set {|k|≤k} is a disk of area Ω<sub>k</sub>=πk² in 2D.
+            Therefore,
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">Number of states inside Fermi disk of radius k</div>
+              <button class="copy" data-copy-target="eq-Nk">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-Nk">N(k) = g_s * A * (π k²) / (2π)²
+     = g_s * A * k² / (4π)</pre>
+          </div>
+
+          <p>
+            With g<sub>s</sub>=2, this becomes N(k)= A k²/(2π).
+          </p>
+
+          <p>
+            <strong>Step 3: convert k to energy.</strong>
+            Using the parabolic dispersion,
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">Dispersion and inversion</div>
+              <button class="copy" data-copy-target="eq-disp">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-disp">ε(k) = ħ² k² / (2m)
+⇒ k² = (2m/ħ²) ε</pre>
+          </div>
+
+          <p>
+            Substitute into N(k):
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">Integrated state count vs energy</div>
+              <button class="copy" data-copy-target="eq-Neps">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-Neps">N(ε) = A * (k²)/(2π) = A * (1/(2π)) * (2m/ħ²) ε
+     = A * (m/(π ħ²)) ε</pre>
+          </div>
+
+          <p>
+            <strong>Step 4: differentiate to get the density of states per unit area.</strong>
+            Define D(ε) as the number of states per unit area per unit energy:
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">Density of states definition and result</div>
+              <button class="copy" data-copy-target="eq-D">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-D">D(ε) = (1/A) dN/dε
+     = (1/A) * d/dε [ A * (m/(π ħ²)) ε ]
+     = m/(π ħ²)</pre>
+          </div>
+
+          <div class="callout ok">
+            <strong>Conclusion (a):</strong> For a 2DEG with spin degeneracy 2 and no valley degeneracy,
+            the density of states per unit area is constant:
+            <strong>D(ε)=m/(πħ²)</strong>.
+          </div>
+
+          <h3>Sanity checks for (a)</h3>
+          <ul>
+            <li><strong>Units:</strong> m/(ħ²) has units kg / (J²·s²). Since 1 J = kg·m²/s², ħ² ~ kg²·m⁴/s², so m/ħ² ~ 1/(kg·m⁴)·s².
+              Multiply by energy (J) gives ~1/m², consistent with states per area. More directly: D(ε) must be (m⁻²·J⁻¹); indeed m/(ħ²) ~ (J·m²)⁻¹.</li>
+            <li><strong>Energy dependence:</strong> constant D(ε) is a hallmark of 2D parabolic bands.</li>
+          </ul>
+
+          <h3>(b) Sheet density n<sub>s</sub> = k<sub>F</sub>²/(2π)</h3>
+          <p>
+            At zero temperature (or T≪T<sub>F</sub>), all states with ε≤ε<sub>F</sub> are occupied.
+            The sheet density is number per area:
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">Definition of sheet density from filled states</div>
+              <button class="copy" data-copy-target="eq-nsdef">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-nsdef">n_s = N(ε_F)/A = N(k_F)/A</pre>
+          </div>
+
+          <p>
+            Using the result from state counting with g<sub>s</sub>=2,
+            N(k)=A k²/(2π). Therefore,
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">Sheet density–Fermi wavevector relation</div>
+              <button class="copy" data-copy-target="eq-ns">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-ns">n_s = (A k_F²/(2π)) / A = k_F²/(2π)</pre>
+          </div>
+
+          <div class="callout ok">
+            <strong>Conclusion (b):</strong> <strong>n<sub>s</sub>=k<sub>F</sub>²/(2π)</strong>, so k<sub>F</sub>=√(2π n<sub>s</sub>).
+          </div>
+
+          <h3>(c) Drude sheet resistance of a square: R<sub>s</sub> = (h/e²)/(k<sub>F</sub>ℓ)</h3>
+          <p>
+            <strong>Step 1: Drude conductivity in 2D (sheet conductivity).</strong>
+            In Drude theory, current density and electric field satisfy J = σ E.
+            For carriers of density n and charge −e, the steady-state drift velocity v<sub>d</sub> follows
+            (in relaxation-time form of the momentum balance ODE)
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">Drude momentum relaxation (ODE)</div>
+              <button class="copy" data-copy-target="eq-drudeode">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-drudeode">m dv_d/dt = -e E - (m/τ) v_d
+Steady state (dv_d/dt=0): v_d = -(e τ/m) E</pre>
+          </div>
+
+          <p>
+            In 2D, the sheet current density (current per width) is J<sub>2D</sub> = (−e) n<sub>s</sub> v<sub>d</sub>.
+            Its magnitude gives the sheet conductivity σ<sub>□</sub> via J<sub>2D</sub> = σ<sub>□</sub> E:
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">2D (sheet) Drude conductivity</div>
+              <button class="copy" data-copy-target="eq-sigma">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-sigma">σ_□ = n_s e² τ / m</pre>
+          </div>
+
+          <p>
+            The sheet resistance (resistance per square) is
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">Sheet resistance definition</div>
+              <button class="copy" data-copy-target="eq-Rsdef">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-Rsdef">R_s = 1/σ_□</pre>
+          </div>
+
+          <p>
+            <strong>Step 2: express n<sub>s</sub> using k<sub>F</sub>.</strong>
+            From part (b), n<sub>s</sub>=k<sub>F</sub>²/(2π). Substitute into σ<sub>□</sub>:
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">σ<sub>□</sub> in terms of k<sub>F</sub></div>
+              <button class="copy" data-copy-target="eq-sigkf">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-sigkf">σ_□ = (k_F²/(2π)) * (e² τ / m)</pre>
+          </div>
+
+          <p>
+            <strong>Step 3: eliminate τ/m using mean free path ℓ.</strong>
+            The Fermi velocity for a parabolic band is
+            v<sub>F</sub> = (1/ħ) dε/dk |<sub>k=kF</sub>.
+            Since ε=ħ²k²/(2m),
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">Fermi velocity from derivative (Jacobian)</div>
+              <button class="copy" data-copy-target="eq-vf">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-vf">v_F = (1/ħ) (dε/dk)|_{k_F}
+    = (1/ħ) (ħ² k/m)|_{k_F}
+    = ħ k_F / m</pre>
+          </div>
+
+          <p>
+            Define mean free path ℓ = v<sub>F</sub> τ, so τ/m = ℓ/(ħ k<sub>F</sub>).
+            Substitute into σ<sub>□</sub>:
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">Insert ℓ = v<sub>F</sub>τ</div>
+              <button class="copy" data-copy-target="eq-sigl">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-sigl">σ_□ = (k_F²/(2π)) * e² * (τ/m)
+    = (k_F²/(2π)) * e² * (ℓ/(ħ k_F))
+    = (e²/ħ) * (k_F ℓ)/(2π)</pre>
+          </div>
+
+          <p>
+            Now use h = 2πħ, so (e²/ħ)(1/2π) = e²/h. Therefore,
+          </p>
+
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">Final σ<sub>□</sub> and R<sub>s</sub></div>
+              <button class="copy" data-copy-target="eq-final">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-final">σ_□ = (e²/h) (k_F ℓ)
+⇒ R_s = 1/σ_□ = (h/e²) * 1/(k_F ℓ)</pre>
+          </div>
+
+          <div class="callout ok">
+            <strong>Conclusion (c):</strong>
+            The Drude sheet resistance (resistance of a square) is
+            <strong>R<sub>s</sub> = (h/e²)/(k<sub>F</sub>ℓ)</strong>,
+            where ℓ = v<sub>F</sub>τ is the mean free path.
+          </div>
+
+          <h3>Sanity checks for (c)</h3>
+          <ul>
+            <li><strong>Dimensions:</strong> h/e² has units of ohms (quantum of resistance scale). k<sub>F</sub>ℓ is dimensionless (m⁻¹·m), so R<sub>s</sub> has units of ohms.</li>
+            <li><strong>Limiting cases:</strong>
+              <ul>
+                <li>Cleaner sample (ℓ→∞) ⇒ R<sub>s</sub>→0 (more ballistic-like, less dissipation).</li>
+                <li>Higher density (k<sub>F</sub> increases) ⇒ R<sub>s</sub> decreases (more conducting channels in semiclassical sense).</li>
+              </ul>
+            </li>
+            <li><strong>Physical interpretation:</strong> k<sub>F</sub>ℓ is a “metallicity” parameter; large k<sub>F</sub>ℓ means good metal, small k<sub>F</sub>ℓ means strong scattering (approaching localization regimes beyond Drude).</li>
+          </ul>
+
+          <div class="callout bad">
+            <strong>Final Answer (plain text, copy-ready):</strong>
+            <div class="eqbox" style="margin-top:10px;">
+              <div class="eqhead">
+                <div class="label">Final results</div>
+                <button class="copy" data-copy-target="final-answers">Copy final answer</button>
+              </div>
+              <pre class="eq" id="final-answers">(a) D(ε) = m/(π ħ²)     (per unit area, includes spin degeneracy 2)
+
+(b) n_s = k_F²/(2π)     (so k_F = √(2π n_s))
+
+(c) R_s = (h/e²)/(k_F ℓ),  with ℓ = v_F τ and v_F = ħ k_F/m</pre>
+            </div>
+          </div>
+
+          <div class="backtop"><a href="#top" aria-label="Back to top">↑ Back to top</a></div>
+        </section>
+
+        <section id="p4">
+          <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+          <h3>Reinterpreting the formulas</h3>
+          <ul>
+            <li><strong>D(ε)=m/(πħ²):</strong> only depends on effective mass m (heavier mass ⇒ more states per energy per area).</li>
+            <li><strong>n<sub>s</sub>=k<sub>F</sub>²/(2π):</strong> Fermi disk geometry; density is proportional to occupied k-space area.</li>
+            <li><strong>R<sub>s</sub>=(h/e²)/(k<sub>F</sub>ℓ):</strong> resistance scale (h/e²) reduced by a dimensionless transport quality factor (k<sub>F</sub>ℓ).</li>
+          </ul>
+
+          <h3>Parameter dependence (qualitative)</h3>
+          <ul>
+            <li>Increase n<sub>s</sub> ⇒ k<sub>F</sub> increases as √n<sub>s</sub> ⇒ R<sub>s</sub> decreases ~1/√n<sub>s</sub> if ℓ fixed.</li>
+            <li>Increase τ (fewer collisions) ⇒ ℓ increases linearly ⇒ R<sub>s</sub> decreases ~1/τ.</li>
+            <li>Increase m ⇒ at fixed n<sub>s</sub>, k<sub>F</sub> unchanged (since n<sub>s</sub> set by k-space), but v<sub>F</sub>=ħk<sub>F</sub>/m decreases, changing ℓ for fixed τ; practical impact depends on what is held fixed.</li>
+          </ul>
+
+          <h3>Alternative derivation idea (brief but meaningful)</h3>
+          <p>
+            A compact mathematical route uses the δ-function representation of DOS:
+          </p>
+          <div class="eqbox">
+            <div class="eqhead">
+              <div class="label">Alternative DOS formula (δ-function integral)</div>
+              <button class="copy" data-copy-target="eq-alt">Copy equation</button>
+            </div>
+            <pre class="eq" id="eq-alt">D(ε) = g_s ∫ (d²k/(2π)²) δ(ε - ħ²k²/(2m))</pre>
+          </div>
+          <p>
+            Switching to polar coordinates (k,θ) with d²k = k dk dθ and using δ(f(k)) = Σ δ(k-k_i)/|f'(k_i)|,
+            the k in the measure cancels the k in f'(k) ∝ k, producing a constant D(ε).
+          </p>
+
+          <details>
+            <summary>Optional deeper note: “square resistance” as a geometry-invariant</summary>
+            <p>
+              For a uniform thin sheet with sheet resistivity R<sub>s</sub> (Ω/□), a rectangle of length L and width W has resistance
+              R = R<sub>s</sub>(L/W). If L=W (a square), then R=R<sub>s</sub> independent of the size of the square—only the number of “squares” in series matters.
+              This is why layout engineers often count squares to estimate interconnect resistances.
+            </p>
+          </details>
+
+          <h3>Concept check (self-test with answers)</h3>
+          <ul>
+            <li><strong>Q:</strong> Why is D(ε) constant in 2D for a parabolic band? <strong>A:</strong> circumference of constant-energy circle ∝k cancels Jacobian dε/dk ∝k.</li>
+            <li><strong>Q:</strong> If valley degeneracy were g<sub>v</sub>, how would D(ε) change? <strong>A:</strong> Multiply by g<sub>v</sub>: D(ε)=g<sub>v</sub>m/(πħ²).</li>
+            <li><strong>Q:</strong> What does increasing ℓ do to R<sub>s</sub>? <strong>A:</strong> Decreases R<sub>s</sub> inversely: R<sub>s</sub>∝1/ℓ.</li>
+            <li><strong>Q:</strong> Does k<sub>F</sub> depend on m at fixed n<sub>s</sub>? <strong>A:</strong> No, because n<sub>s</sub> is purely k-space area for a single band in 2D.</li>
+          </ul>
+
+          <div class="backtop"><a href="#top" aria-label="Back to top">↑ Back to top</a></div>
+        </section>
+
+        <section id="p5">
+          <h2>PART 5 — Optional Plot Guide</h2>
+
+          <p>
+            A plot is useful here because it highlights a distinctive 2D signature: the density of states D(ε) is a constant
+            for a parabolic band (unlike 3D where it grows with √ε). The plot below shows a normalized constant DOS versus energy.
+            <em>It is schematic (dimensionless axes)</em>; the final results remain fully symbolic.
+          </p>
+
+          <figure>
+            <canvas id="dosPlot" aria-label="Plot of constant 2D density of states"></canvas>
+            <figcaption>
+              Schematic: normalized 2D density of states D(ε)/D0 versus ε/ε0. For a parabolic 2DEG, the curve is flat (constant DOS).
+            </figcaption>
+          </figure>
+
+          <div class="card">
+            <h3>What the plot shows and why it’s useful</h3>
+            <ul>
+              <li><strong>y-axis:</strong> D(ε)/D0 (dimensionless), a normalized density of states.</li>
+              <li><strong>x-axis:</strong> ε/ε0 (dimensionless), a normalized energy.</li>
+              <li><strong>Feature to notice:</strong> zero slope (flat line) — the defining 2D parabolic-band behavior.</li>
+            </ul>
+          </div>
+
+          <div class="backtop"><a href="#top" aria-label="Back to top">↑ Back to top</a></div>
+        </section>
+
+        <footer>
+          <p>
+            Notes: This derivation assumes a single isotropic parabolic band, large-area limit, and semiclassical Drude transport.
+            In strongly disordered or quantum-coherent regimes (small k<sub>F</sub>ℓ), corrections beyond Drude may be needed.
+          </p>
+        </footer>
+      </article>
     </div>
   </main>
 
-  <footer>
-    <div class="card">
-      <p style="margin:0;">© Your site • Kittel problem scaffold</p>
-    </div>
-  </footer>
+  <script>
+    // Copy buttons (plain text)
+    (function(){
+      const buttons = document.querySelectorAll('button.copy');
+      const toast = (btn, msg) => {
+        const old = btn.innerHTML;
+        btn.innerHTML = 'Copied ✓';
+        btn.style.borderColor = 'rgba(52,211,153,.35)';
+        btn.style.background = 'rgba(52,211,153,.10)';
+        setTimeout(() => {
+          btn.innerHTML = old;
+          btn.style.borderColor = '';
+          btn.style.background = '';
+        }, 950);
+      };
+
+      buttons.forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-copy-target');
+          const el = document.getElementById(id);
+          if(!el) return;
+          const text = el.textContent.replace(/\n{3,}/g, "\n\n").trim();
+          try{
+            await navigator.clipboard.writeText(text);
+            toast(btn);
+          }catch(e){
+            // Fallback
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            try{ document.execCommand('copy'); toast(btn); } catch(err){}
+            document.body.removeChild(ta);
+          }
+        });
+      });
+    })();
+
+    // Canvas plot: constant DOS
+    (function(){
+      const canvas = document.getElementById('dosPlot');
+      if(!canvas) return;
+
+      function draw(){
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.max(320, rect.width);
+        const h = rect.height;
+
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+        ctx.clearRect(0,0,w,h);
+
+        // Plot area
+        const padL = 54, padR = 18, padT = 24, padB = 44;
+        const x0 = padL, y0 = h - padB;
+        const x1 = w - padR, y1 = padT;
+        const pw = x1 - x0, ph = y0 - y1;
+
+        // Helpers
+        const x = (t) => x0 + t * pw;       // t in [0,1]
+        const y = (u) => y0 - u * ph;       // u in [0,1]
+
+        // Title
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = 'rgba(229,231,235,.95)';
+        ctx.font = '700 14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillText('2D Parabolic Band: Constant Density of States', x0, 18);
+
+        // Gridlines + ticks
+        ctx.strokeStyle = 'rgba(255,255,255,.10)';
+        ctx.lineWidth = 1;
+
+        const nx = 6, ny = 5;
+        for(let i=0;i<=nx;i++){
+          const xi = x(i/nx);
+          ctx.beginPath();
+          ctx.moveTo(xi, y0);
+          ctx.lineTo(xi, y1);
+          ctx.stroke();
+        }
+        for(let j=0;j<=ny;j++){
+          const yj = y(j/ny);
+          ctx.beginPath();
+          ctx.moveTo(x0, yj);
+          ctx.lineTo(x1, yj);
+          ctx.stroke();
+        }
+
+        // Axes
+        ctx.strokeStyle = 'rgba(229,231,235,.55)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y0);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x0, y1);
+        ctx.stroke();
+
+        // Axis labels
+        ctx.fillStyle = 'rgba(167,176,192,.95)';
+        ctx.font = '600 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillText('ε / ε0 (dimensionless)', Math.max(x0, (x0+x1)/2 - 70), h - 14);
+
+        ctx.save();
+        ctx.translate(16, (y0+y1)/2 + 70);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText('D(ε) / D0 (dimensionless)', 0, 0);
+        ctx.restore();
+
+        // Tick labels
+        ctx.fillStyle = 'rgba(167,176,192,.9)';
+        ctx.font = '500 11px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        for(let i=0;i<=nx;i++){
+          const xi = x(i/nx);
+          const val = (i/nx).toFixed(1);
+          ctx.fillText(val, xi - 8, y0 + 16);
+        }
+        for(let j=0;j<=ny;j++){
+          const yj = y(j/ny);
+          const val = (j/ny).toFixed(1);
+          ctx.fillText(val, x0 - 30, yj + 4);
+        }
+
+        // DOS line (constant at u=0.7)
+        const uConst = 0.7;
+        ctx.strokeStyle = 'rgba(125,211,252,.95)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x(0), y(uConst));
+        ctx.lineTo(x(1), y(uConst));
+        ctx.stroke();
+
+        // Legend
+        const lx = x0 + 12, ly = y1 + 12;
+        ctx.fillStyle = 'rgba(17,24,39,.72)';
+        ctx.strokeStyle = 'rgba(255,255,255,.14)';
+        ctx.lineWidth = 1;
+        const boxW = 170, boxH = 34;
+        ctx.beginPath();
+        ctx.roundRect(lx, ly, boxW, boxH, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(125,211,252,.95)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(lx + 12, ly + 17);
+        ctx.lineTo(lx + 42, ly + 17);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(229,231,235,.92)';
+        ctx.font = '650 12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+        ctx.fillText('D(ε) is constant', lx + 52, ly + 21);
+      }
+
+      // Polyfill for roundRect if needed
+      if (!CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+          const min = Math.min(w, h) / 2;
+          r = Math.min(r, min);
+          this.beginPath();
+          this.moveTo(x + r, y);
+          this.arcTo(x + w, y, x + w, y + h, r);
+          this.arcTo(x + w, y + h, x, y + h, r);
+          this.arcTo(x, y + h, x, y, r);
+          this.arcTo(x, y, x + w, y, r);
+          this.closePath();
+          return this;
+        };
+      }
+
+      const ro = new ResizeObserver(() => draw());
+      ro.observe(canvas);
+      window.addEventListener('load', draw, {once:true});
+    })();
+  </script>
 </body>
 </html>
