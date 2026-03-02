@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rotation Matrices Preserve Dot Products and Lengths (2D & 3D)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1733;
+      --panel2:#111b3c;
+      --text:#e9eefc;
+      --muted:#b8c3ea;
+      --line:rgba(255,255,255,.12);
+      --accent:#76a7ff;
+      --accent2:#7bf0c6;
+      --warn:#ffcf6e;
+      --ok:#7bf0c6;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 10% 10%, rgba(118,167,255,.18), transparent 60%),
+        radial-gradient(1000px 700px at 90% 20%, rgba(123,240,198,.12), transparent 55%),
+        radial-gradient(900px 600px at 50% 100%, rgba(255,207,110,.10), transparent 60%),
+        var(--bg);
+      line-height:1.55;
+    }
+    a{color:var(--accent); text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{
+      padding: 28px 16px 10px;
+      position:relative;
+    }
+    .wrap{
+      max-width: 1200px;
+      margin:0 auto;
+      padding: 0 12px 60px;
+    }
+    .topbar{
+      display:grid;
+      grid-template-columns: 1.3fr .7fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    .hero{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px 18px 16px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: linear-gradient(120deg, rgba(118,167,255,.22), rgba(123,240,198,.14), rgba(255,207,110,.14));
+      opacity:.25;
+      filter: blur(14px);
+      z-index:0;
+    }
+    .hero > *{position:relative; z-index:1}
+    h1{
+      margin:0 0 8px;
+      font-size: clamp(22px, 2.2vw, 34px);
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:0;
+      color:var(--muted);
+      font-size: 15px;
+      max-width: 70ch;
+    }
+    .meta{
+      margin-top: 12px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pill{
+      padding:6px 10px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .pill .dot{
+      width:8px; height:8px; border-radius:999px;
+      background: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(123,240,198,.15);
+    }
+
+    .toc{
+      position: sticky;
+      top: 12px;
+      align-self:start;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 14px 10px;
+      box-shadow: var(--shadow);
+      max-height: calc(100vh - 24px);
+      overflow:auto;
+    }
+    .toc h2{
+      margin: 0 0 8px;
+      font-size: 14px;
+      letter-spacing:.3px;
+      text-transform:uppercase;
+      color: var(--muted);
+    }
+    .toc a{
+      display:block;
+      padding:8px 10px;
+      margin:4px 0;
+      border-radius: 12px;
+      border:1px solid transparent;
+      color: var(--text);
+      background: transparent;
+      font-size: 14px;
+    }
+    .toc a:hover{
+      background: rgba(118,167,255,.10);
+      border-color: rgba(118,167,255,.25);
+      text-decoration:none;
+    }
+    .toc a.active{
+      background: rgba(123,240,198,.10);
+      border-color: rgba(123,240,198,.28);
+    }
+
+    main{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: 1.3fr .7fr;
+      gap:18px;
+    }
+    @media (max-width: 980px){
+      .topbar, main{grid-template-columns: 1fr}
+      .toc{position:relative; top:auto}
+    }
+
+    section, article{
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    section h2, article h2{
+      margin: 2px 0 10px;
+      font-size: 20px;
+    }
+    h3{
+      margin: 14px 0 8px;
+      font-size: 16px;
+      color: var(--text);
+    }
+    p{margin: 8px 0}
+    ul{margin: 8px 0 8px 18px}
+    li{margin: 6px 0}
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 720px){ .grid2{grid-template-columns:1fr} }
+
+    .callout{
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.035);
+      border-radius: 16px;
+      padding: 12px 12px 10px;
+      margin: 12px 0;
+      position:relative;
+      overflow:hidden;
+    }
+    .callout::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(90deg, rgba(118,167,255,.10), transparent 55%);
+      opacity:.9;
+      pointer-events:none;
+    }
+    .callout > *{position:relative}
+    .callout h4{
+      margin: 0 0 6px;
+      font-size: 13px;
+      letter-spacing:.35px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .callout.assumptions::before{ background: linear-gradient(90deg, rgba(255,207,110,.14), transparent 55%); }
+    .callout.mistakes::before{ background: linear-gradient(90deg, rgba(255,111,111,.14), transparent 55%); }
+    .callout.keyeq::before{ background: linear-gradient(90deg, rgba(123,240,198,.14), transparent 55%); }
+    .callout.math::before{ background: linear-gradient(90deg, rgba(118,167,255,.16), transparent 55%); }
+
+    .eqbox{
+      border:1px solid rgba(123,240,198,.28);
+      background: rgba(10,18,40,.55);
+      border-radius: 16px;
+      padding: 12px;
+      margin: 10px 0;
+    }
+    .eqhead{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom: 8px;
+    }
+    .eqhead strong{
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing:.25px;
+      text-transform:uppercase;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-size: 13px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:hover{
+      background: rgba(118,167,255,.12);
+      border-color: rgba(118,167,255,.30);
+      transform: translateY(-1px);
+    }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+    .code{
+      font-family: var(--mono);
+      font-size: 13.5px;
+      line-height:1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #eaf2ff;
+      margin:0;
+    }
+
+    details{
+      border:1px solid var(--line);
+      border-radius: 16px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.03);
+      margin: 12px 0;
+    }
+    details summary{
+      cursor:pointer;
+      color: var(--text);
+      font-weight: 600;
+      list-style:none;
+    }
+    details summary::-webkit-details-marker{display:none}
+    details summary::before{
+      content:"▸";
+      display:inline-block;
+      margin-right:8px;
+      color: var(--accent2);
+      transform: translateY(-1px);
+      transition: transform .15s ease;
+    }
+    details[open] summary::before{ transform: rotate(90deg) translateY(-1px); }
+
+    .backtop{
+      display:flex; justify-content:flex-end; margin-top: 10px;
+    }
+    .backtop a{
+      color: var(--muted);
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      padding: 8px 10px;
+      border-radius: 12px;
+    }
+    .backtop a:hover{
+      text-decoration:none;
+      color: var(--text);
+      border-color: rgba(118,167,255,.30);
+      background: rgba(118,167,255,.10);
+    }
+
+    footer{
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 12px 18px 24px;
+      border-top: 1px solid var(--line);
+    }
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff; color:#000}
+      .hero, .toc, section, article{box-shadow:none; background:#fff; border:1px solid #ddd}
+      a{color:#000; text-decoration:underline}
+      .btn{display:none}
+      details{border:1px solid #ddd}
+      .eqbox{background:#fff; border:1px solid #aaa}
+      .code{color:#000}
+      header{padding:10px 0}
+      main{grid-template-columns:1fr}
+      .toc{display:none}
+      section, article{break-inside: avoid; page-break-inside: avoid}
+      h2, h3{break-after: avoid-page}
+    }
+
+    /* Micro animation for section highlight on jump */
+    .flash{
+      outline: 2px solid rgba(123,240,198,.55);
+      outline-offset: 4px;
+      animation: flashfade .9s ease forwards;
+    }
+    @keyframes flashfade{
+      0%{ outline-color: rgba(123,240,198,.80); }
+      100%{ outline-color: rgba(123,240,198,0); }
+    }
+  </style>
+</head>
+<body>
+  <header id="top">
+    <div class="wrap">
+      <div class="topbar">
+        <div class="hero">
+          <h1>Problem 1.8 — Why Rotation Matrices Preserve Dot Products (2D) and Lengths (3D)</h1>
+          <p class="subtitle">
+            We prove (a) a 2D rotation leaves the dot product invariant, and (b) derive the exact algebraic constraints on
+            a 3D rotation matrix so that every vector keeps its length. This is the mathematical backbone of “rigid motion”
+            used across physics and engineering.
+          </p>
+          <div class="meta" aria-label="metadata">
+            <span class="pill"><span class="dot" aria-hidden="true"></span>Applied physics + mathematical rigor</span>
+            <span class="pill">Result type: symbolic proofs</span>
+            <span class="pill">Key structure: orthogonality (RᵀR = I)</span>
+          </div>
+        </div>
+
+        <nav class="toc" aria-label="Table of contents">
+          <h2>Contents</h2>
+          <a href="#quick-summary">Quick Summary</a>
+          <a href="#part0">PART 0 — Concept Primer</a>
+          <a href="#part0b">PART 0B — Industry & Applied Physics</a>
+          <a href="#part1">PART 1 — Problem Analysis</a>
+          <a href="#part2">PART 2 — Strategy & Tips</a>
+          <a href="#part3">PART 3 — Full Solution</a>
+          <a href="#part4">PART 4 — Deeper Understanding</a>
+          <a href="#part5">PART 5 — Plot Guide</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <main>
+      <div>
+        <section id="quick-summary">
+          <h2>Quick Summary</h2>
+          <ul>
+            <li><strong>What this is about:</strong> Rotations in 2D/3D and the algebraic conditions that make them “length-preserving.”</li>
+            <li><strong>Key physics idea:</strong> A rotation represents a rigid change of coordinates (or rigid motion), so it must keep <em>angles</em> and <em>lengths</em> unchanged.</li>
+            <li><strong>Governing equations:</strong> Linear map <span style="font-family:var(--mono)">A′ = R A</span> with dot product invariance <span style="font-family:var(--mono)">A′·B′ = A·B</span>.</li>
+            <li><strong>2D result:</strong> The standard rotation matrix
+              <span style="font-family:var(--mono)">R(φ) = [[cosφ, sinφ],[-sinφ, cosφ]]</span>
+              satisfies <span style="font-family:var(--mono)">R(φ)ᵀ R(φ) = I</span>, hence preserves dot products.</li>
+            <li><strong>3D condition:</strong> To preserve length for <em>all</em> vectors, the 3×3 matrix must satisfy
+              <span style="font-family:var(--mono)">RᵀR = I</span> (orthogonal columns/rows). For a proper rotation: <span style="font-family:var(--mono)">det R = +1</span>.</li>
+            <li><strong>Physical meaning:</strong> Orthogonality encodes “no stretching/shearing”; determinant +1 selects orientation-preserving rotations (not reflections).</li>
+            <li><strong>Sanity check:</strong> If <span style="font-family:var(--mono)">RᵀR = I</span> then <span style="font-family:var(--mono)">|RA|² = (RA)·(RA) = A·A = |A|²</span> automatically.</li>
+          </ul>
+
+          <div class="callout math">
+            <h4>Math Insight</h4>
+            <p>
+              “Preserving dot products” means the transformation is an <strong>isometry</strong> of Euclidean space.
+              In linear algebra, the set of all matrices that preserve the Euclidean inner product forms the <strong>orthogonal group</strong>
+              <span style="font-family:var(--mono)">O(n) = { R ∈ ℝ^{n×n} : RᵀR = I }</span>.
+              The subset with <span style="font-family:var(--mono)">det R = +1</span> is the <strong>special orthogonal group</strong> <span style="font-family:var(--mono)">SO(n)</span>, i.e., proper rotations.
+            </p>
+          </div>
+
+          <div class="backtop"><a href="#top">Back to top ↑</a></div>
+        </section>
+
+        <article id="part0">
+          <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+          <h3>0.1 Mathematical model (explicit)</h3>
+          <p>
+            We model vectors as elements of Euclidean space:
+            <strong>2D</strong> vectors <span style="font-family:var(--mono)">A,B ∈ ℝ²</span> and <strong>3D</strong> vectors <span style="font-family:var(--mono)">A ∈ ℝ³</span>.
+            A rotation is a <strong>linear operator</strong> <span style="font-family:var(--mono)">R</span> acting by
+            <span style="font-family:var(--mono)">A′ = R A</span>.
+          </p>
+          <ul>
+            <li><strong>Domain:</strong> vectors in <span style="font-family:var(--mono)">ℝ²</span> or <span style="font-family:var(--mono)">ℝ³</span>.</li>
+            <li><strong>Coordinate system:</strong> Cartesian basis (unit vectors along axes). Components are <span style="font-family:var(--mono)">A = (A_y, A_z)</span> in 2D (as given) and <span style="font-family:var(--mono)">A = (A_x, A_y, A_z)</span> in 3D.</li>
+            <li><strong>Boundary/initial conditions:</strong> Not applicable (this is linear algebra / geometry, not a PDE/ODE evolution problem).</li>
+          </ul>
+
+          <h3>0.2 Core definitions (symbols + SI units)</h3>
+          <div class="grid2">
+            <div class="callout keyeq">
+              <h4>Dot product (inner product)</h4>
+              <p><span style="font-family:var(--mono)">A·B = Σ_i A_i B_i</span> (units: product of units of A and B)</p>
+              <p>In 2D: <span style="font-family:var(--mono)">A·B = A_y B_y + A_z B_z</span>.</p>
+              <p>In 3D: <span style="font-family:var(--mono)">A·B = A_x B_x + A_y B_y + A_z B_z</span>.</p>
+            </div>
+            <div class="callout keyeq">
+              <h4>Length (Euclidean norm)</h4>
+              <p><span style="font-family:var(--mono)">|A| = sqrt(A·A)</span> (same SI units as A)</p>
+              <p>Squared length: <span style="font-family:var(--mono)">|A|² = A·A</span>.</p>
+            </div>
+          </div>
+
+          <h3>0.3 Physical meaning</h3>
+          <ul>
+            <li><strong>Dot product</strong> encodes angles: <span style="font-family:var(--mono)">A·B = |A||B| cosθ</span>. If dot products are preserved for all pairs, then angles and lengths are preserved.</li>
+            <li><strong>Rotation</strong> is a rigid transformation: it changes orientation but not shape, size, or angles.</li>
+          </ul>
+
+          <h3>0.4 Key principle (and when it’s valid)</h3>
+          <p>
+            A true rotation in Euclidean space is an <strong>orthogonal linear transformation</strong>.
+            Algebraically, orthogonality is expressed by:
+            <span style="font-family:var(--mono)">RᵀR = I</span>.
+            This is valid when we use the standard Euclidean metric (ordinary Cartesian dot product).
+          </p>
+
+          <div class="callout assumptions">
+            <h4>Assumptions (hidden in the word “rotation”)</h4>
+            <ul>
+              <li>The space is Euclidean (standard dot product, no curved metrics).</li>
+              <li>The transformation is linear and acts the same everywhere (no translations, no nonlinear warping).</li>
+              <li>We mean a rigid rotation (no scaling, shearing, or reflection unless stated).</li>
+            </ul>
+          </div>
+
+          <h3>0.5 Mini intuition examples (minimal algebra)</h3>
+          <ul>
+            <li><strong>Compass needle:</strong> Rotating the coordinate axes should not change the measured length of the needle; only its components change.</li>
+            <li><strong>Robot arm pose:</strong> The orientation of a tool changes with joint angles, but the tool’s physical size does not. Rotation matrices model these orientation changes.</li>
+            <li><strong>RF / EM polarization:</strong> If you rotate your reference axes, the measured field components change, but the field magnitude (power) must remain the same in lossless coordinate change.</li>
+          </ul>
+
+          <h3>0.6 What to watch for (pitfalls)</h3>
+          <ul>
+            <li>Mixing up <strong>active</strong> rotation (rotating the vector) vs <strong>passive</strong> rotation (rotating the coordinate axes). The same matrix forms appear, but interpretation matters.</li>
+            <li>For 2D matrices, not every matrix with determinant 1 is a rotation; you still need <span style="font-family:var(--mono)">RᵀR=I</span>.</li>
+            <li>In 3D, <span style="font-family:var(--mono)">RᵀR=I</span> includes both rotations and reflections; <span style="font-family:var(--mono)">det R</span> separates them.</li>
+          </ul>
+
+          <div class="backtop"><a href="#top">Back to top ↑</a></div>
+        </article>
+
+        <article id="part0b">
+          <h2>PART 0B — Industry & Applied Physics Perspective</h2>
+
+          <h3>Where rotations show up in industry (concrete examples)</h3>
+          <ul>
+            <li><strong>Robotics & automation:</strong> Forward/inverse kinematics use rotation matrices to convert between link frames and tool frames.</li>
+            <li><strong>Manufacturing metrology & quality:</strong> Coordinate transformations in CMM (coordinate measuring machines), alignment of parts, and best-fit rigid-body registration rely on orthogonal transforms.</li>
+            <li><strong>Aerospace / automotive:</strong> Attitude estimation (IMU fusion), rigid body dynamics, and frame transformations (body ↔ inertial frames) use rotation matrices.</li>
+            <li><strong>Computer vision & AR:</strong> Camera pose estimation and 3D reconstruction involve rotations; preserving lengths is essential for consistent geometry.</li>
+            <li><strong>EM/RF test and calibration:</strong> Rotating polarization bases or reference frames should not change power norms; orthogonality ensures “energy-preserving” coordinate changes.</li>
+          </ul>
+
+          <h3>Why engineers care (performance, safety, cost)</h3>
+          <ul>
+            <li><strong>Safety & reliability:</strong> A non-orthogonal “rotation” introduces artificial stretching, causing accumulated errors in control loops and state estimators.</li>
+            <li><strong>Accuracy:</strong> Sensor fusion and robot calibration depend on keeping rotation matrices orthonormal; drift can destabilize computations.</li>
+            <li><strong>Efficiency & manufacturability:</strong> Enforcing orthogonality constraints avoids expensive compensation downstream and improves numerical conditioning.</li>
+          </ul>
+
+          <h3>How it’s measured/validated in practice</h3>
+          <ul>
+            <li><strong>Orthonormality checks:</strong> compute <span style="font-family:var(--mono)">RᵀR</span> and verify it is close to <span style="font-family:var(--mono)">I</span> within tolerance.</li>
+            <li><strong>Determinant check:</strong> verify <span style="font-family:var(--mono)">det R ≈ +1</span> to ensure it’s a proper rotation.</li>
+            <li><strong>Calibration experiments:</strong> rigid-body motions with known geometry (calibration fixtures, gauge blocks, turntables) to verify that lengths/angles are preserved.</li>
+          </ul>
+
+          <h3>Design trade-offs & non-idealities</h3>
+          <ul>
+            <li><strong>Noise and drift:</strong> IMU integration yields matrices that slowly lose orthogonality; engineers re-orthonormalize (e.g., via Gram–Schmidt or SVD projection onto <span style="font-family:var(--mono)">SO(3)</span>).</li>
+            <li><strong>Tolerances:</strong> Small misalignments are modeled as small-angle rotations; using correct orthogonal structure avoids biasing error budgets.</li>
+            <li><strong>Numerical stability:</strong> Repeated matrix multiplications can accumulate floating-point error; constraints like <span style="font-family:var(--mono)">RᵀR=I</span> act like “physical plausibility” guards.</li>
+          </ul>
+
+          <details>
+            <summary>From lab to product: how ideal rotations become real engineering tools</summary>
+            <p>
+              In textbooks, <span style="font-family:var(--mono)">R</span> is exactly orthogonal. In products, measurements produce an approximate <span style="font-family:var(--mono)">R̃</span>.
+              A common industrial step is to <em>project</em> <span style="font-family:var(--mono)">R̃</span> onto the nearest valid rotation:
+              find <span style="font-family:var(--mono)">R</span> minimizing <span style="font-family:var(--mono)">||R − R̃||</span> subject to <span style="font-family:var(--mono)">RᵀR=I</span> and <span style="font-family:var(--mono)">det R=+1</span>.
+              This turns “messy sensor reality” into a physically consistent rigid rotation used for control and design decisions.
+            </p>
+          </details>
+
+          <div class="backtop"><a href="#top">Back to top ↑</a></div>
+        </article>
+
+        <article id="part1">
+          <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+          <h3>Restating the problem in clear words</h3>
+          <p>
+            You are given the 2D rotation matrix (acting on components <span style="font-family:var(--mono)">y,z</span>) and asked to:
+          </p>
+          <ol>
+            <li>
+              <strong>(a)</strong> Prove that applying the 2D rotation to vectors <span style="font-family:var(--mono)">A</span> and <span style="font-family:var(--mono)">B</span> leaves their dot product unchanged:
+              <span style="font-family:var(--mono)">A′·B′ = A·B</span>.
+            </li>
+            <li>
+              <strong>(b)</strong> For a general 3D rotation matrix with elements <span style="font-family:var(--mono)">R_ij</span>, determine the constraints those elements must satisfy so that the length of <em>any</em> vector <span style="font-family:var(--mono)">A</span> is preserved:
+              <span style="font-family:var(--mono)">|A′| = |A|</span> for all <span style="font-family:var(--mono)">A</span>.
+            </li>
+          </ol>
+
+          <h3>Given quantities</h3>
+          <ul>
+            <li>2D rotation matrix (as provided):<br/>
+              <span style="font-family:var(--mono)">[A′_y; A′_z] = [[cosφ, sinφ],[-sinφ, cosφ]] [A_y; A_z]</span>
+            </li>
+            <li>General 3D linear transformation labeled as rotation:<br/>
+              <span style="font-family:var(--mono)">[A′_x; A′_y; A′_z] = R [A_x; A_y; A_z]</span>
+              where <span style="font-family:var(--mono)">R</span> has entries <span style="font-family:var(--mono)">R_ij</span>.
+            </li>
+          </ul>
+
+          <h3>Unknowns / what must be found</h3>
+          <ul>
+            <li>(a) A proof of dot-product invariance under the given 2D rotation.</li>
+            <li>(b) Algebraic conditions on <span style="font-family:var(--mono)">R_ij</span> that guarantee length preservation for all vectors.</li>
+          </ul>
+
+          <h3>Relevant principles (and why they apply)</h3>
+          <ul>
+            <li><strong>Linearity:</strong> Rotations are linear maps in Euclidean space: <span style="font-family:var(--mono)">A′ = R A</span>.</li>
+            <li><strong>Euclidean inner product invariance:</strong> A rigid rotation preserves the dot product, which implies preservation of both lengths and angles.</li>
+            <li><strong>Matrix transpose identity:</strong> <span style="font-family:var(--mono)">(RA)·(RB) = Aᵀ(RᵀR)B</span>. This converts geometry into algebra.</li>
+          </ul>
+
+          <div class="callout assumptions">
+            <h4>Assumptions for this problem</h4>
+            <ul>
+              <li>We use the standard Euclidean dot product in Cartesian coordinates.</li>
+              <li>“Preserve the length of A for all vectors A” means the condition must hold for every choice of components, not just special cases.</li>
+              <li>In (b), we interpret “rotation matrix” in physics as a proper rotation, typically implying <span style="font-family:var(--mono)">det R = +1</span>, though the length-preservation condition itself gives <span style="font-family:var(--mono)">RᵀR=I</span>.</li>
+            </ul>
+          </div>
+
+          <h3>Possible approaches (compare)</h3>
+          <div class="grid2">
+            <div class="callout">
+              <h4>Approach 1: Direct component expansion</h4>
+              <p>
+                Expand <span style="font-family:var(--mono)">A′</span> and <span style="font-family:var(--mono)">B′</span> in components using trig identities (e.g., <span style="font-family:var(--mono)">cos²φ + sin²φ = 1</span>).
+              </p>
+              <p><strong>Pros:</strong> Very explicit; matches many introductory physics texts.</p>
+              <p><strong>Cons:</strong> Longer; can obscure the general pattern.</p>
+            </div>
+            <div class="callout">
+              <h4>Approach 2: Matrix/inner-product form</h4>
+              <p>
+                Use <span style="font-family:var(--mono)">A′·B′ = (RA)·(RB) = Aᵀ(RᵀR)B</span>, then show <span style="font-family:var(--mono)">RᵀR = I</span>.
+              </p>
+              <p><strong>Pros:</strong> Short, general, scales to any dimension.</p>
+              <p><strong>Cons:</strong> Requires comfort with transpose and matrix multiplication.</p>
+            </div>
+          </div>
+          <p>
+            <strong>Best choice:</strong> Use the matrix/inner-product form for conceptual clarity and generalization, while still showing the key intermediate steps in full detail.
+          </p>
+
+          <div class="backtop"><a href="#top">Back to top ↑</a></div>
+        </article>
+
+        <article id="part2">
+          <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+          <ol>
+            <li>
+              <strong>Define the objects.</strong>
+              <span style="font-family:var(--mono)">A,B</span> as vectors; <span style="font-family:var(--mono)">R</span> as the rotation matrix; <span style="font-family:var(--mono)">A′=RA</span>, <span style="font-family:var(--mono)">B′=RB</span>.
+              <em>Meaning:</em> components change by rotation.
+            </li>
+            <li>
+              <strong>Rewrite dot products in matrix notation.</strong>
+              Use <span style="font-family:var(--mono)">A·B = AᵀB</span>.
+              <em>Meaning:</em> dot product becomes an algebraic bilinear form.
+            </li>
+            <li>
+              <strong>Compute <span style="font-family:var(--mono)">A′·B′</span>.</strong>
+              <span style="font-family:var(--mono)">A′·B′ = (RA)ᵀ(RB) = Aᵀ(RᵀR)B</span>.
+              <em>Meaning:</em> invariance depends on <span style="font-family:var(--mono)">RᵀR</span>.
+            </li>
+            <li>
+              <strong>(a) Show <span style="font-family:var(--mono)">R(φ)ᵀR(φ)=I</span> in 2D.</strong>
+              Multiply explicitly and use trig identity <span style="font-family:var(--mono)">sin²φ+cos²φ=1</span>.
+              <em>Meaning:</em> the map is orthogonal, so it preserves dot products.
+            </li>
+            <li>
+              <strong>(b) Translate length preservation into an algebraic condition.</strong>
+              Length preservation means <span style="font-family:var(--mono)">|RA|² = |A|²</span> for all <span style="font-family:var(--mono)">A</span>, i.e.,
+              <span style="font-family:var(--mono)">Aᵀ(RᵀR)A = AᵀA</span> for all <span style="font-family:var(--mono)">A</span>.
+              <em>Meaning:</em> forces <span style="font-family:var(--mono)">RᵀR=I</span>.
+            </li>
+            <li>
+              <strong>Convert <span style="font-family:var(--mono)">RᵀR=I</span> into component constraints.</strong>
+              This yields orthonormality of columns/rows:
+              <span style="font-family:var(--mono)">Σ_k R_{k i} R_{k j} = δ_{ij}</span>.
+              <em>Meaning:</em> columns are unit vectors and mutually perpendicular.
+            </li>
+            <li>
+              <strong>Add the “proper rotation” condition.</strong>
+              Require <span style="font-family:var(--mono)">det R = +1</span>.
+              <em>Meaning:</em> excludes reflections (orientation reversal).
+            </li>
+          </ol>
+
+          <div class="callout mistakes">
+            <h4>Common mistakes</h4>
+            <ul>
+              <li>Forgetting the transpose: <span style="font-family:var(--mono)">(RA)·(RB)</span> becomes <span style="font-family:var(--mono)">Aᵀ(RᵀR)B</span>, not <span style="font-family:var(--mono)">Aᵀ(RR)B</span>.</li>
+              <li>Assuming “length preserved” implies <span style="font-family:var(--mono)">det R = +1</span>. Actually, length preservation gives <span style="font-family:var(--mono)">|det R|=1</span>; reflections have <span style="font-family:var(--mono)">det R = −1</span>.</li>
+              <li>Only checking length for one vector. The condition must hold for <em>all</em> vectors, which is much stronger.</li>
+            </ul>
+          </div>
+
+          <div class="backtop"><a href="#top">Back to top ↑</a></div>
+        </article>
+
+        <article id="part3">
+          <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+          <h3>Qualitative intuition before calculating</h3>
+          <p>
+            A rotation is “rigid”: it turns arrows without stretching them or changing the angle between them. Since
+            dot products encode both length and angle, we expect a true rotation to preserve dot products.
+            Algebraically, that rigidity becomes the orthogonality condition <span style="font-family:var(--mono)">RᵀR = I</span>.
+          </p>
+
+          <section aria-label="Part a solution">
+            <h3>(a) Prove the 2D rotation matrix preserves dot products</h3>
+
+            <div class="callout assumptions">
+              <h4>Setup</h4>
+              <p>
+                Let <span style="font-family:var(--mono)">A = (A_y, A_z)ᵀ</span> and <span style="font-family:var(--mono)">B = (B_y, B_z)ᵀ</span>.
+                Define the rotated vectors by
+                <span style="font-family:var(--mono)">A′ = R(φ)A</span> and <span style="font-family:var(--mono)">B′ = R(φ)B</span>,
+                where
+                <span style="font-family:var(--mono)">R(φ) = [[cosφ, sinφ],[-sinφ, cosφ]]</span>.
+              </p>
+            </div>
+
+            <div class="eqbox" data-copy="eq-a1">
+              <div class="eqhead">
+                <strong>Key equation to prove</strong>
+                <button class="btn" type="button" data-copy-btn="eq-a1" aria-label="Copy equation">Copy equation</button>
+              </div>
+              <pre class="code" id="eq-a1">A′·B′ = A·B</pre>
+            </div>
+
+            <h3>Step 1: Write the dot product in matrix form</h3>
+            <p>
+              In Euclidean space, the dot product equals the transpose product:
+              <span style="font-family:var(--mono)">A·B = AᵀB</span>.
+              This is valid because the Euclidean metric in Cartesian coordinates is the identity matrix.
+            </p>
+
+            <h3>Step 2: Express the rotated dot product and simplify using transpose rules</h3>
+            <p>
+              Start from the left-hand side:
+            </p>
+            <div class="eqbox" data-copy="eq-a2">
+              <div class="eqhead">
+                <strong>Algebra (no jumps)</strong>
+                <button class="btn" type="button" data-copy-btn="eq-a2" aria-label="Copy derivation">Copy</button>
+              </div>
+              <pre class="code" id="eq-a2">A′·B′
+= (A′)ᵀ B′
+= (RA)ᵀ (RB)
+= Aᵀ Rᵀ R B</pre>
+            </div>
+            <p>
+              Each step is justified:
+            </p>
+            <ul>
+              <li><span style="font-family:var(--mono)">(RA)ᵀ = AᵀRᵀ</span> (transpose of a product reverses order).</li>
+              <li>Matrix multiplication is associative, so we group as <span style="font-family:var(--mono)">Aᵀ (RᵀR) B</span>.</li>
+            </ul>
+
+            <h3>Step 3: Compute <span style="font-family:var(--mono)">RᵀR</span> explicitly in 2D</h3>
+            <p>
+              First write the transpose:
+              <span style="font-family:var(--mono)">Rᵀ = [[cosφ, -sinφ],[sinφ, cosφ]]</span>.
+              Now multiply:
+            </p>
+            <div class="eqbox" data-copy="eq-a3">
+              <div class="eqhead">
+                <strong>Compute RᵀR</strong>
+                <button class="btn" type="button" data-copy-btn="eq-a3" aria-label="Copy multiplication">Copy</button>
+              </div>
+              <pre class="code" id="eq-a3">RᵀR
+= [[cosφ, -sinφ],[sinφ, cosφ]] [[cosφ, sinφ],[-sinφ, cosφ]]
+
+= [[cosφ·cosφ + (-sinφ)(-sinφ), cosφ·sinφ + (-sinφ)·cosφ],
+   [sinφ·cosφ + cosφ·(-sinφ),   sinφ·sinφ + cosφ·cosφ]]
+
+= [[cos²φ + sin²φ,  cosφ sinφ - sinφ cosφ],
+   [sinφ cosφ - cosφ sinφ,     sin²φ + cos²φ]]
+
+= [[1, 0],
+   [0, 1]]
+= I.</pre>
+            </div>
+
+            <p>
+              The only trigonometric identity used is <span style="font-family:var(--mono)">sin²φ + cos²φ = 1</span>, and the cross-terms cancel exactly.
+            </p>
+
+            <h3>Step 4: Conclude dot product invariance</h3>
+            <p>
+              Since <span style="font-family:var(--mono)">RᵀR = I</span>, we return to Step 2:
+              <span style="font-family:var(--mono)">A′·B′ = Aᵀ(RᵀR)B = Aᵀ I B = AᵀB = A·B</span>.
+              Therefore the given 2D rotation matrix preserves dot products.
+            </p>
+
+            <div class="callout keyeq">
+              <h4>Result (a)</h4>
+              <p><strong>Dot products are preserved:</strong> <span style="font-family:var(--mono)">A′·B′ = A·B</span> for all <span style="font-family:var(--mono)">A,B ∈ ℝ²</span>.</p>
+              <p><strong>Underlying reason:</strong> <span style="font-family:var(--mono)">R(φ)</span> is orthogonal: <span style="font-family:var(--mono)">R(φ)ᵀR(φ)=I</span>.</p>
+            </div>
+
+            <h3>Sanity checks for (a)</h3>
+            <ul>
+              <li><strong>Units/dimensions:</strong> dot product units remain the same because we are just linearly recombining components.</li>
+              <li><strong>Limiting case:</strong> if <span style="font-family:var(--mono)">φ=0</span>, then <span style="font-family:var(--mono)">R=I</span> and invariance is trivial.</li>
+              <li><strong>Right angle:</strong> if <span style="font-family:var(--mono)">φ=π/2</span>, the matrix swaps axes (up to sign), which clearly should not change dot products.</li>
+            </ul>
+          </section>
+
+          <section aria-label="Part b solution">
+            <h3>(b) Constraints on a 3D rotation matrix to preserve the length of A (for all A)</h3>
+
+            <h3>Step 1: State the requirement in mathematical form</h3>
+            <p>
+              Let <span style="font-family:var(--mono)">A ∈ ℝ³</span> be arbitrary and define <span style="font-family:var(--mono)">A′ = R A</span> where
+              <span style="font-family:var(--mono)">R ∈ ℝ^{3×3}</span> has entries <span style="font-family:var(--mono)">R_ij</span>.
+              “Preserve length for all vectors” means:
+            </p>
+
+            <div class="eqbox" data-copy="eq-b1">
+              <div class="eqhead">
+                <strong>Length preservation condition</strong>
+                <button class="btn" type="button" data-copy-btn="eq-b1" aria-label="Copy equation">Copy</button>
+              </div>
+              <pre class="code" id="eq-b1">|A′| = |A|  for all A ∈ ℝ³
+equivalently: |A′|² = |A|² for all A</pre>
+            </div>
+
+            <p>
+              We use squared lengths because they avoid square roots and are algebraically equivalent for nonnegative norms.
+            </p>
+
+            <h3>Step 2: Rewrite squared length using dot products and matrix transpose</h3>
+            <p>
+              Compute:
+            </p>
+            <div class="eqbox" data-copy="eq-b2">
+              <div class="eqhead">
+                <strong>Algebra (explicit)</strong>
+                <button class="btn" type="button" data-copy-btn="eq-b2" aria-label="Copy derivation">Copy</button>
+              </div>
+              <pre class="code" id="eq-b2">|A′|²
+= A′·A′
+= (RA)·(RA)
+= (RA)ᵀ (RA)
+= Aᵀ Rᵀ R A.</pre>
+            </div>
+
+            <p>
+              Also, <span style="font-family:var(--mono)">|A|² = A·A = AᵀA</span>. Therefore the requirement becomes:
+            </p>
+
+            <div class="eqbox" data-copy="eq-b3">
+              <div class="eqhead">
+                <strong>Condition for all A</strong>
+                <button class="btn" type="button" data-copy-btn="eq-b3" aria-label="Copy condition">Copy</button>
+              </div>
+              <pre class="code" id="eq-b3">Aᵀ Rᵀ R A = Aᵀ A  for all A ∈ ℝ³.</pre>
+            </div>
+
+            <h3>Step 3: Deduce the matrix constraint <span style="font-family:var(--mono)">RᵀR = I</span></h3>
+            <p>
+              Let <span style="font-family:var(--mono)">M = RᵀR</span>. The condition is:
+              <span style="font-family:var(--mono)">Aᵀ M A = Aᵀ I A</span> for all <span style="font-family:var(--mono)">A</span>, i.e.,
+              <span style="font-family:var(--mono)">Aᵀ (M - I) A = 0</span> for all <span style="font-family:var(--mono)">A</span>.
+            </p>
+            <p>
+              A standard linear-algebra fact: if a symmetric matrix <span style="font-family:var(--mono)">S</span> satisfies
+              <span style="font-family:var(--mono)">Aᵀ S A = 0</span> for all vectors <span style="font-family:var(--mono)">A</span>, then <span style="font-family:var(--mono)">S = 0</span>.
+              Here, <span style="font-family:var(--mono)">M - I</span> is symmetric because <span style="font-family:var(--mono)">M = RᵀR</span> is symmetric:
+              <span style="font-family:var(--mono)">(RᵀR)ᵀ = Rᵀ(Rᵀ)ᵀ = RᵀR</span>.
+              Thus <span style="font-family:var(--mono)">M - I = 0</span>, so:
+            </p>
+
+            <div class="eqbox" data-copy="eq-b4">
+              <div class="eqhead">
+                <strong>Core constraint</strong>
+                <button class="btn" type="button" data-copy-btn="eq-b4" aria-label="Copy constraint">Copy</button>
+              </div>
+              <pre class="code" id="eq-b4">Rᵀ R = I.</pre>
+            </div>
+
+            <details>
+              <summary>Optional deeper note: why “for all A” forces RᵀR = I (sketch)</summary>
+              <p>
+                Write <span style="font-family:var(--mono)">S = M - I</span> and let <span style="font-family:var(--mono)">e_i</span> be standard basis vectors.
+                From <span style="font-family:var(--mono)">e_iᵀ S e_i = S_{ii} = 0</span>, all diagonal entries vanish.
+                Then using <span style="font-family:var(--mono)">A = e_i + e_j</span> gives
+                <span style="font-family:var(--mono)">(e_i+e_j)ᵀ S (e_i+e_j) = S_{ii}+S_{jj}+2S_{ij} = 0</span>,
+                so <span style="font-family:var(--mono)">S_{ij}=0</span>. Hence <span style="font-family:var(--mono)">S=0</span> and <span style="font-family:var(--mono)">M=I</span>.
+              </p>
+            </details>
+
+            <h3>Step 4: Convert <span style="font-family:var(--mono)">RᵀR=I</span> into conditions on the elements <span style="font-family:var(--mono)">R_ij</span></h3>
+            <p>
+              The matrix product <span style="font-family:var(--mono)">RᵀR</span> has elements:
+              <span style="font-family:var(--mono)">(RᵀR)_{ij} = Σ_{k=1..3} (Rᵀ)_{ik} R_{kj} = Σ_{k=1..3} R_{k i} R_{k j}</span>.
+              Setting this equal to <span style="font-family:var(--mono)">I</span> means:
+            </p>
+
+            <div class="eqbox" data-copy="eq-b5">
+              <div class="eqhead">
+                <strong>Element-wise orthonormality</strong>
+                <button class="btn" type="button" data-copy-btn="eq-b5" aria-label="Copy element constraints">Copy</button>
+              </div>
+              <pre class="code" id="eq-b5">Σ_{k=1}^{3} R_{k i} R_{k j} = δ_{ij}  for i,j ∈ {1,2,3}.</pre>
+            </div>
+
+            <p>
+              Interpretation:
+            </p>
+            <ul>
+              <li>If <span style="font-family:var(--mono)">i=j</span>, then <span style="font-family:var(--mono)">Σ_k R_{k i}² = 1</span>: each column has unit length.</li>
+              <li>If <span style="font-family:var(--mono)">i≠j</span>, then <span style="font-family:var(--mono)">Σ_k R_{k i} R_{k j} = 0</span>: different columns are perpendicular.</li>
+            </ul>
+
+            <div class="callout math">
+              <h4>Geometric meaning</h4>
+              <p>
+                The columns of <span style="font-family:var(--mono)">R</span> are the images of the basis vectors under the rotation.
+                The conditions above say those images form an <strong>orthonormal triad</strong>: three mutually perpendicular unit vectors.
+                That is exactly “a rotated coordinate frame.”
+              </p>
+            </div>
+
+            <h3>Step 5: Proper rotations vs reflections</h3>
+            <p>
+              From <span style="font-family:var(--mono)">RᵀR=I</span>, taking determinants gives:
+              <span style="font-family:var(--mono)">det(RᵀR)=det(I)=1</span> ⇒ <span style="font-family:var(--mono)">(det R)²=1</span> ⇒ <span style="font-family:var(--mono)">det R = ±1</span>.
+              Both values preserve length, but:
+            </p>
+            <ul>
+              <li><span style="font-family:var(--mono)">det R = +1</span> → orientation-preserving: a <strong>proper rotation</strong>.</li>
+              <li><span style="font-family:var(--mono)">det R = −1</span> → includes a <strong>reflection</strong> (improper rotation).</li>
+            </ul>
+
+            <div class="callout keyeq">
+              <h4>Final result (b)</h4>
+              <p><strong>Length preservation for all vectors:</strong> <span style="font-family:var(--mono)">RᵀR = I</span> (orthogonality).</p>
+              <p><strong>Element constraints:</strong> <span style="font-family:var(--mono)">Σ_{k=1}^{3} R_{k i} R_{k j} = δ_{ij}</span>.</p>
+              <p><strong>For a true rotation (no reflection):</strong> additionally require <span style="font-family:var(--mono)">det R = +1</span>.</p>
+            </div>
+
+            <h3>Sanity checks for (b)</h3>
+            <ul>
+              <li><strong>Dimensional analysis:</strong> <span style="font-family:var(--mono)">R</span> is dimensionless; it mixes components without changing units, so <span style="font-family:var(--mono)">|A|</span> has the same units as before.</li>
+              <li><strong>Limiting case:</strong> If <span style="font-family:var(--mono)">R=I</span>, all constraints hold and length is preserved.</li>
+              <li><strong>Physical interpretation:</strong> Orthogonality blocks stretching/shear; determinant +1 ensures handedness (right-handed stays right-handed).</li>
+            </ul>
+          </section>
+
+          <div class="eqbox" data-copy="final-answer">
+            <div class="eqhead">
+              <strong>Final Answer (copy plain text)</strong>
+              <button class="btn" type="button" data-copy-btn="final-answer" aria-label="Copy final answer">Copy final answer</button>
+            </div>
+            <pre class="code" id="final-answer">(a) For A′=R(φ)A and B′=R(φ)B with R(φ)=[[cosφ, sinφ],[-sinφ, cosφ]]:
+A′·B′ = (RA)ᵀ(RB) = Aᵀ(RᵀR)B.  A direct multiplication gives RᵀR=I, hence A′·B′=AᵀB=A·B.
+
+(b) In 3D, requiring |A′|=|A| for all A with A′=RA implies
+|A′|² = AᵀRᵀRA = AᵀA for all A, so RᵀR=I.
+Element-wise: Σ_{k=1}^{3} R_{k i}R_{k j}=δ_{ij} (columns/rows orthonormal).
+For a proper rotation (no reflection) also require det R = +1 (since orthogonality gives det R = ±1).</pre>
+          </div>
+
+          <div class="backtop"><a href="#top">Back to top ↑</a></div>
+        </article>
+
+        <article id="part4">
+          <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+          <h3>Re-interpreting the final formulas</h3>
+          <ul>
+            <li><strong><span style="font-family:var(--mono)">RᵀR=I</span></strong> says the transformation preserves the Euclidean metric (inner product). In physics terms: it preserves “geometric measurements.”</li>
+            <li><strong>Element form <span style="font-family:var(--mono)">Σ_k R_{k i}R_{k j}=δ_{ij}</span></strong> says the columns are an orthonormal basis—exactly what you get by rotating coordinate axes.</li>
+            <li><strong><span style="font-family:var(--mono)">det R = +1</span></strong> distinguishes rotations from reflections; it preserves handedness (right-hand rule), crucial for cross products and angular momentum.</li>
+          </ul>
+
+          <h3>Parameter dependence (qualitative)</h3>
+          <p>
+            In 2D, the single parameter is the rotation angle <span style="font-family:var(--mono)">φ</span>.
+            As <span style="font-family:var(--mono)">φ</span> varies, components mix sinusoidally, but invariants like dot products and lengths do not change.
+            In 3D, a rotation has (effectively) three degrees of freedom (e.g., axis + angle), yet the constraint <span style="font-family:var(--mono)">RᵀR=I</span> always holds.
+          </p>
+
+          <details>
+            <summary>Small-angle approximation (useful in engineering)</summary>
+            <p>
+              For small <span style="font-family:var(--mono)">φ</span>, <span style="font-family:var(--mono)">sinφ ≈ φ</span>, <span style="font-family:var(--mono)">cosφ ≈ 1 − φ²/2</span>.
+              Then in 2D:
+              <span style="font-family:var(--mono)">R(φ) ≈ [[1, φ],[-φ, 1]]</span> up to first order.
+              This is widely used for alignment tolerances and error propagation. Mathematically, you are neglecting terms of order <span style="font-family:var(--mono)">O(φ²)</span> (and higher) when linearizing.
+            </p>
+          </details>
+
+          <h3>Alternative derivation idea (brief but meaningful)</h3>
+          <p>
+            Instead of computing <span style="font-family:var(--mono)">RᵀR</span>, you can argue geometrically:
+            if a transformation preserves dot products, it preserves lengths and angles, so it maps an orthonormal basis to another orthonormal basis.
+            The matrix formed by those new basis vectors must have orthonormal columns—again giving <span style="font-family:var(--mono)">RᵀR=I</span>.
+            In applications, this viewpoint directly connects to “columns of R are the new axes.”
+          </p>
+
+          <h3>Concept check (self-test with answers)</h3>
+          <ul>
+            <li><strong>Q:</strong> If <span style="font-family:var(--mono)">RᵀR=I</span>, does that automatically imply dot product preservation for all <span style="font-family:var(--mono)">A,B</span>? <strong>A:</strong> Yes, because <span style="font-family:var(--mono)">(RA)·(RB)=Aᵀ(RᵀR)B=AᵀB</span>.</li>
+            <li><strong>Q:</strong> Can a matrix preserve lengths but flip orientation? <strong>A:</strong> Yes; reflections preserve length and have <span style="font-family:var(--mono)">RᵀR=I</span> but <span style="font-family:var(--mono)">det R = −1</span>.</li>
+            <li><strong>Q:</strong> Why is “for all vectors A” crucial in (b)? <strong>A:</strong> It forces the quadratic form <span style="font-family:var(--mono)">Aᵀ(RᵀR−I)A</span> to vanish for every direction and magnitude, which can only happen if <span style="font-family:var(--mono)">RᵀR−I=0</span>.</li>
+            <li><strong>Q:</strong> What do the off-diagonal conditions <span style="font-family:var(--mono)">Σ_k R_{k i}R_{k j}=0</span> mean physically? <strong>A:</strong> Different axes remain perpendicular after rotation.</li>
+          </ul>
+
+          <div class="backtop"><a href="#top">Back to top ↑</a></div>
+        </article>
+
+        <article id="part5">
+          <h2>PART 5 — Optional Plot Guide</h2>
+          <p>
+            No plot is necessary here because the problem is purely symbolic: it asks for invariance proofs and algebraic constraints.
+            A plot would require choosing numerical vectors and angles and would not add new general insight beyond the exact identities shown.
+          </p>
+          <div class="backtop"><a href="#top">Back to top ↑</a></div>
+        </article>
+
+        <footer>
+          <p>
+            Notes: This article used only vanilla HTML/CSS/JS and emphasized the operator viewpoint: rotations are linear maps that preserve the Euclidean inner product.
+            In advanced physics, these ideas generalize to other metrics (e.g., Lorentz transformations preserve a different inner product), where the condition becomes <span style="font-family:var(--mono)">Rᵀ G R = G</span>.
+          </p>
+        </footer>
+      </div>
+
+      <aside>
+        <section aria-label="Quick tools">
+          <h2 style="margin-top:2px">Tools</h2>
+          <p style="color:var(--muted); margin-top:6px">
+            Use these to quickly copy key results.
+          </p>
+
+          <div class="eqbox" data-copy="eq-tool-1">
+            <div class="eqhead">
+              <strong>Key identity (copy)</strong>
+              <button class="btn" type="button" data-copy-btn="eq-tool-1">Copy</button>
+            </div>
+            <pre class="code" id="eq-tool-1">(RA)·(RB) = Aᵀ(RᵀR)B</pre>
+          </div>
+
+          <div class="eqbox" data-copy="eq-tool-2">
+            <div class="eqhead">
+              <strong>Orthogonality constraints (copy)</strong>
+              <button class="btn" type="button" data-copy-btn="eq-tool-2">Copy</button>
+            </div>
+            <pre class="code" id="eq-tool-2">RᵀR = I
+Σ_{k=1}^{3} R_{k i}R_{k j} = δ_{ij}
+(det R = +1 for a proper rotation)</pre>
+          </div>
+
+          <details>
+            <summary>Operator notation note (why no ∇ here)</summary>
+            <p>
+              This problem concerns a finite-dimensional linear operator <span style="font-family:var(--mono)">R</span> acting on vectors, not a field operator on functions.
+              Therefore differential operators like <span style="font-family:var(--mono)">∇</span>, <span style="font-family:var(--mono)">∇·</span>, <span style="font-family:var(--mono)">∇×</span>, or the Laplacian do not naturally appear.
+              The relevant “operator” is the matrix (linear map) itself and its adjoint (transpose) <span style="font-family:var(--mono)">Rᵀ</span>.
+            </p>
+          </details>
+
+          <p style="color:var(--muted); font-size:13px; margin-top:12px">
+            Tip: In numerical pipelines, if you ever get a matrix that is “almost” a rotation, verify <span style="font-family:var(--mono)">RᵀR≈I</span> and <span style="font-family:var(--mono)">det R≈+1</span>.
+          </p>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    (function(){
+      // Smooth scroll + section flash
+      function flashTarget(id){
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.classList.remove('flash');
+        // force reflow
+        void el.offsetWidth;
+        el.classList.add('flash');
+        setTimeout(()=>el.classList.remove('flash'), 950);
+      }
+
+      document.querySelectorAll('a[href^="#"]').forEach(a=>{
+        a.addEventListener('click', (e)=>{
+          const href = a.getAttribute('href');
+          if(!href || href.length < 2) return;
+          const id = href.slice(1);
+          const target = document.getElementById(id);
+          if(!target) return;
+          e.preventDefault();
+          target.scrollIntoView({behavior:'smooth', block:'start'});
+          history.pushState(null, '', href);
+          flashTarget(id);
+        });
+      });
+
+      // Copy buttons
+      async function copyText(text){
+        try{
+          await navigator.clipboard.writeText(text);
+          return true;
+        }catch(err){
+          // Fallback
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          ta.style.top = '0';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          let ok = false;
+          try{ ok = document.execCommand('copy'); }catch(e){ ok = false; }
+          document.body.removeChild(ta);
+          return ok;
+        }
+      }
+
+      document.querySelectorAll('[data-copy-btn]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const id = btn.getAttribute('data-copy-btn');
+          const el = document.getElementById(id);
+          if(!el) return;
+          const text = el.innerText.replace(/\u00A0/g,' ').trim();
+          const ok = await copyText(text);
+          const original = btn.textContent;
+          btn.textContent = ok ? 'Copied ✓' : 'Copy failed';
+          btn.style.borderColor = ok ? 'rgba(123,240,198,.45)' : 'rgba(255,111,111,.45)';
+          btn.style.background = ok ? 'rgba(123,240,198,.10)' : 'rgba(255,111,111,.10)';
+          setTimeout(()=>{
+            btn.textContent = original;
+            btn.style.borderColor = '';
+            btn.style.background = '';
+          }, 1100);
+        });
+      });
+
+      // Active TOC highlight on scroll
+      const tocLinks = Array.from(document.querySelectorAll('.toc a[href^="#"]'));
+      const sections = tocLinks
+        .map(a => document.getElementById(a.getAttribute('href').slice(1)))
+        .filter(Boolean);
+
+      const obs = new IntersectionObserver((entries)=>{
+        const visible = entries
+          .filter(e=>e.isIntersecting)
+          .sort((a,b)=> b.intersectionRatio - a.intersectionRatio)[0];
+        if(!visible) return;
+        const id = visible.target.id;
+        tocLinks.forEach(a=>{
+          const match = a.getAttribute('href') === '#' + id;
+          a.classList.toggle('active', match);
+        });
+      }, {root:null, threshold:[0.15,0.22,0.35,0.5,0.65]});
+
+      sections.forEach(s=>obs.observe(s));
+    })();
+  </script>
+</body>
+</html>

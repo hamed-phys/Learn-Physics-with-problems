@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Gradient Transforms as a Vector Under Rotations (y–z Plane)</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1621;
+      --panel2:#0c121b;
+      --text:#e8eef6;
+      --muted:#a9b7c9;
+      --line:rgba(232,238,246,.12);
+      --accent:#7dd3fc;
+      --accent2:#a78bfa;
+      --good:#34d399;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      --radius2: 22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(900px 500px at 20% 0%, rgba(125,211,252,.12), transparent 60%),
+        radial-gradient(800px 500px at 100% 30%, rgba(167,139,250,.10), transparent 55%),
+        linear-gradient(180deg, #070a0f 0%, var(--bg) 100%);
+      color:var(--text);
+      line-height:1.55;
+    }
+
+    header{
+      padding: 38px 18px 22px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(15,22,33,.65), rgba(15,22,33,.25));
+      position:relative;
+      overflow:hidden;
+    }
+    header::after{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(700px 240px at 20% 30%, rgba(125,211,252,.10), transparent 60%),
+        radial-gradient(700px 240px at 70% 10%, rgba(167,139,250,.08), transparent 60%);
+      pointer-events:none;
+      filter: blur(0.2px);
+    }
+    .wrap{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 18px;
+      position:relative;
+      z-index:1;
+    }
+    .title{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(1.6rem, 2.2vw + 1rem, 2.6rem);
+      letter-spacing: .2px;
+    }
+    .subtitle{
+      color: var(--muted);
+      max-width: 78ch;
+      margin:0;
+      font-size: 1.02rem;
+    }
+
+    main{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px;
+      display:grid;
+      grid-template-columns: 290px 1fr;
+      gap: 18px;
+    }
+
+    nav.toc{
+      position: sticky;
+      top: 14px;
+      align-self:start;
+      background: linear-gradient(180deg, rgba(15,22,33,.75), rgba(15,22,33,.55));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 12px;
+      backdrop-filter: blur(6px);
+    }
+    .toc h2{
+      margin: 2px 8px 10px;
+      font-size: 0.95rem;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: .35px;
+      text-transform: uppercase;
+    }
+    .toc a{
+      display:block;
+      padding: 9px 10px;
+      margin: 2px 4px;
+      border-radius: 12px;
+      color: var(--text);
+      text-decoration:none;
+      border: 1px solid transparent;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+      font-size: .98rem;
+    }
+    .toc a:hover{
+      background: rgba(125,211,252,.08);
+      border-color: rgba(125,211,252,.18);
+      transform: translateY(-1px);
+    }
+    .toc .mini{
+      color: var(--muted);
+      font-size: .92rem;
+      margin: 8px 8px 2px;
+    }
+
+    article{
+      background: linear-gradient(180deg, rgba(15,22,33,.70), rgba(15,22,33,.45));
+      border: 1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    section{
+      padding: 18px 18px;
+      border-top: 1px solid var(--line);
+    }
+    section:first-child{border-top:none}
+    section h2{
+      margin: 0 0 10px;
+      font-size: 1.35rem;
+      letter-spacing: .2px;
+    }
+    section h3{
+      margin: 16px 0 8px;
+      font-size: 1.08rem;
+      color: #d8e4f3;
+    }
+    p{margin: 10px 0; color: #e7eef8}
+    ul{margin: 10px 0 10px 1.2rem}
+    li{margin: 6px 0; color: #e7eef8}
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 980px){
+      main{grid-template-columns: 1fr}
+      nav.toc{position:relative; top:auto}
+    }
+    @media (max-width: 720px){
+      .grid2{grid-template-columns:1fr}
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(12,18,27,.85), rgba(12,18,27,.55));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.20);
+    }
+
+    .callout{
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      padding: 12px 12px;
+      background: linear-gradient(180deg, rgba(125,211,252,.10), rgba(125,211,252,.04));
+      box-shadow: 0 10px 25px rgba(0,0,0,.18);
+    }
+    .callout strong{color:#dff4ff}
+    .callout.warn{
+      background: linear-gradient(180deg, rgba(251,191,36,.11), rgba(251,191,36,.05));
+    }
+    .callout.good{
+      background: linear-gradient(180deg, rgba(52,211,153,.11), rgba(52,211,153,.05));
+    }
+    .callout.bad{
+      background: linear-gradient(180deg, rgba(251,113,133,.12), rgba(251,113,133,.05));
+    }
+
+    .eqbox{
+      border-radius: 16px;
+      border: 1px solid rgba(167,139,250,.25);
+      background: linear-gradient(180deg, rgba(167,139,250,.10), rgba(15,22,33,.35));
+      padding: 12px 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.18);
+      position:relative;
+      overflow:hidden;
+    }
+    .eqbox::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background: radial-gradient(600px 120px at 15% 0%, rgba(167,139,250,.22), transparent 60%);
+      pointer-events:none;
+    }
+    pre.eq{
+      margin: 0;
+      padding: 10px 10px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(232,238,246,.12);
+      border-radius: 14px;
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      overflow:auto;
+      white-space: pre;
+      line-height: 1.55;
+      position:relative;
+      z-index:1;
+    }
+
+    .btnrow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+      position:relative;
+      z-index:1;
+    }
+    button.copy{
+      border: 1px solid rgba(232,238,246,.16);
+      color: var(--text);
+      background: rgba(12,18,27,.55);
+      padding: 8px 10px;
+      border-radius: 14px;
+      cursor:pointer;
+      transition: transform .15s ease, background .15s ease, border-color .15s ease;
+      font-weight:700;
+      letter-spacing:.2px;
+      font-size: .92rem;
+    }
+    button.copy:hover{
+      transform: translateY(-1px);
+      background: rgba(125,211,252,.08);
+      border-color: rgba(125,211,252,.22);
+    }
+    button.copy:active{transform: translateY(0px) scale(.99)}
+    .toast{
+      display:inline-block;
+      color: var(--muted);
+      font-size: .92rem;
+      margin-left: 8px;
+      opacity:0;
+      transform: translateY(2px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toast.show{opacity:1; transform: translateY(0px)}
+
+    details{
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(232,238,246,.12);
+      border-radius: 16px;
+      padding: 10px 12px;
+      margin: 10px 0;
+    }
+    summary{
+      cursor:pointer;
+      font-weight: 800;
+      color: #d9ecff;
+    }
+    details p, details li{color: #e7eef8}
+
+    .backtop{
+      display:inline-block;
+      margin-top: 10px;
+      color: var(--accent);
+      text-decoration:none;
+      font-weight: 800;
+    }
+    .backtop:hover{text-decoration:underline}
+
+    footer{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    /* micro animation */
+    @keyframes floatIn {
+      from {opacity: 0; transform: translateY(6px);}
+      to {opacity: 1; transform: translateY(0px);}
+    }
+    section{animation: floatIn .22s ease both}
+
+    /* Print-friendly */
+    @media print{
+      body{background:#fff; color:#000}
+      header, nav.toc, .btnrow, .backtop{display:none !important}
+      main{display:block; padding:0}
+      article{box-shadow:none; border:none; background:#fff}
+      section{break-inside: avoid; border:none}
+      pre.eq{background:#fff; border:1px solid #ddd; color:#000}
+      .callout, .eqbox, .card, details{background:#fff; border:1px solid #ddd; box-shadow:none}
+      a{color:#000; text-decoration:underline}
+    }
+  </style>
+</head>
+
+<body>
+<header id="top">
+  <div class="wrap title">
+    <h1>Problem 1.14 — Show the Gradient Transforms as a Vector Under Rotations</h1>
+    <p class="subtitle">
+      We prove (carefully and step-by-step) that for a scalar field <span style="font-family:var(--mono)">f(y,z)</span>,
+      the gradient <span style="font-family:var(--mono)">∇f = (∂f/∂y) ŷ + (∂f/∂z) ẑ</span> behaves like a true vector when we rotate the <span style="font-family:var(--mono)">y–z</span> axes.
+      This is a cornerstone of coordinate-invariant physics and engineering modeling.
+    </p>
+  </div>
+</header>
+
+<main>
+  <nav class="toc" aria-label="Table of contents">
+    <h2>Contents</h2>
+    <a href="#quick">Quick Summary</a>
+    <a href="#primer">PART 0 — Concept Primer</a>
+    <a href="#industry">PART 0B — Industry & Applied Physics</a>
+    <a href="#analysis">PART 1 — Problem Analysis</a>
+    <a href="#strategy">PART 2 — Strategy & Tips</a>
+    <a href="#solution">PART 3 — Full Solution</a>
+    <a href="#deeper">PART 4 — Deeper Understanding</a>
+    <a href="#plot">PART 5 — Optional Plot Guide</a>
+    <div class="mini">Usability</div>
+    <a href="#copyhub">Copy buttons</a>
+  </nav>
+
+  <article>
+    <section id="quick">
+      <h2>Quick Summary</h2>
+      <ul>
+        <li><strong>What it’s about:</strong> A scalar field <span style="font-family:var(--mono)">f</span> depends only on <span style="font-family:var(--mono)">y,z</span>. Show its gradient <span style="font-family:var(--mono)">∇f</span> transforms like a vector under a rotation of axes in the <span style="font-family:var(--mono)">y–z</span> plane.</li>
+        <li><strong>Key physics idea:</strong> Physics should not depend on coordinate choice; vectors and operators must transform consistently so measurable predictions stay invariant.</li>
+        <li><strong>Governing equation:</strong> <span style="font-family:var(--mono)">∇f = (∂f/∂y) ŷ + (∂f/∂z) ẑ</span> and the chain rule for partial derivatives.</li>
+        <li><strong>Rotation used:</strong> Basis vectors rotate as <span style="font-family:var(--mono)">ŷ' = ŷ cosφ + ẑ sinφ</span>, <span style="font-family:var(--mono)">ẑ' = −ŷ sinφ + ẑ cosφ</span>.</li>
+        <li><strong>Core result:</strong> <span style="font-family:var(--mono)">∇f = (∂f/∂y') ŷ' + (∂f/∂z') ẑ'</span> (same geometric vector, expressed in rotated coordinates).</li>
+        <li><strong>Math structure:</strong> Gradient is a linear differential operator that maps a scalar field to a vector field; it’s coordinate-covariant under orthogonal transformations.</li>
+        <li><strong>Industrial meaning:</strong> In CAD/CAE, robotics, and metrology, gradients represent sensitivities and driving forces; correct transformation ensures models remain valid after re-orientation.</li>
+        <li><strong>Result type:</strong> Symbolic proof with sanity checks (units, limiting cases <span style="font-family:var(--mono)">φ→0</span>, and orthogonality).</li>
+      </ul>
+      <a class="backtop" href="#top">Back to top ↑</a>
+    </section>
+
+    <section id="primer">
+      <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Core definitions (symbols + SI units)</h3>
+          <ul>
+            <li><span style="font-family:var(--mono)"><strong>f(y,z)</strong></span>: scalar field (units depend on context: e.g., temperature in K, potential in V, cost function in “units of cost”).</li>
+            <li><span style="font-family:var(--mono)"><strong>∂f/∂y</strong></span>, <span style="font-family:var(--mono)"><strong>∂f/∂z</strong></span>: partial derivatives (units: [f]/m if y,z are lengths).</li>
+            <li><span style="font-family:var(--mono)"><strong>∇f</strong></span>: gradient (units: [f]/m). In 2D (y–z), <span style="font-family:var(--mono)">∇ = ŷ ∂/∂y + ẑ ∂/∂z</span>.</li>
+            <li><span style="font-family:var(--mono)"><strong>ŷ, ẑ</strong></span>: orthonormal unit vectors in the original coordinate system; <span style="font-family:var(--mono)">ŷ', ẑ'</span> in the rotated system.</li>
+            <li><span style="font-family:var(--mono)"><strong>φ</strong></span>: rotation angle (radians; dimensionless).</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Physical meaning (intuition)</h3>
+          <ul>
+            <li><strong>Gradient as “steepest ascent”:</strong> <span style="font-family:var(--mono)">∇f</span> points in the direction where <span style="font-family:var(--mono)">f</span> increases fastest; its magnitude is the maximal rate of increase per meter.</li>
+            <li><strong>Directional derivative:</strong> for a unit direction <span style="font-family:var(--mono)">û</span>, the rate of change is <span style="font-family:var(--mono)">D_û f = ∇f · û</span>.</li>
+            <li><strong>Why transformation matters:</strong> If you rotate your coordinate axes, the geometric direction of steepest ascent must not “change” physically—only its components relative to the axes change.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Key laws/principles and validity conditions</h3>
+      <div class="callout">
+        <p>
+          <strong>Assumption (smoothness):</strong> We assume <span style="font-family:var(--mono)">f</span> is differentiable (at least <span style="font-family:var(--mono)">C¹</span>) so that partial derivatives exist and the chain rule applies.
+          <strong>Assumption (rotation is rigid/orthogonal):</strong> The coordinate change is a pure rotation, represented by an orthogonal matrix (preserves lengths and dot products).
+        </p>
+      </div>
+
+      <h3>Common models/approximations in this topic (and why)</h3>
+      <ul>
+        <li><strong>Orthogonal transformations:</strong> used because they preserve geometry; most physical laws are written to be invariant under such transformations.</li>
+        <li><strong>Local linearization:</strong> gradients come from first-order Taylor expansion: <span style="font-family:var(--mono)">f(r+dr) ≈ f(r) + ∇f · dr</span>.</li>
+      </ul>
+
+      <h3>Mini intuition examples (minimal algebra)</h3>
+      <ul>
+        <li><strong>Temperature field:</strong> If <span style="font-family:var(--mono)">f=T(y,z)</span>, then <span style="font-family:var(--mono)">∇T</span> points toward hottest direction; heat flux often depends on it (Fourier’s law).</li>
+        <li><strong>Potential energy:</strong> If <span style="font-family:var(--mono)">f=U(y,z)</span>, then force is <span style="font-family:var(--mono)">F = −∇U</span>; forces must transform as vectors under rotations.</li>
+        <li><strong>Optimization/cost:</strong> If <span style="font-family:var(--mono)">f</span> is a performance metric, <span style="font-family:var(--mono)">∇f</span> is the sensitivity direction; sensitivity should not depend on how you label axes.</li>
+      </ul>
+
+      <div class="callout warn">
+        <strong>What to watch for (pitfalls)</strong>
+        <ul>
+          <li>Mixing up <em>active</em> vs <em>passive</em> rotations. Here we do a <strong>passive</strong> rotation: we rotate coordinate axes (basis vectors) and re-express the same point.</li>
+          <li>Confusing how <strong>basis vectors</strong> transform vs how <strong>components</strong> transform. For orthonormal bases, they transform with the same rotation matrix, but “inverse” appears depending on whether you’re changing basis or rotating vectors actively.</li>
+          <li>Forgetting the chain rule needs the correct independent variables held fixed (e.g., ∂/∂y at fixed z).</li>
+        </ul>
+      </div>
+
+      <details>
+        <summary>Math Insight (interpret the core equation as a mathematical object)</summary>
+        <p>
+          The gradient is a <strong>linear differential operator</strong> mapping scalar fields to vector fields.
+          Under a smooth coordinate map, derivatives transform by the <strong>Jacobian</strong>.
+          For a rotation (orthogonal Jacobian), the gradient transforms exactly like a vector so that
+          the coordinate-free identity <span style="font-family:var(--mono)">df = ∇f · d r</span> remains true.
+        </p>
+      </details>
+
+      <a class="backtop" href="#top">Back to top ↑</a>
+    </section>
+
+    <section id="industry">
+      <h2>PART 0B — Industry & Applied Physics Perspective</h2>
+      <p>
+        In industrial engineering and applied physics, gradients are not “just math”—they are <strong>driving directions</strong> and
+        <strong>sensitivity vectors</strong> that power design decisions.
+      </p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Where this appears (3+ concrete areas)</h3>
+          <ul>
+            <li><strong>Robotics & automation:</strong> gradients of cost functions (tracking error, energy) guide optimization and control; coordinate frames rotate constantly (tool frame vs base frame).</li>
+            <li><strong>CAE / FEM / CFD:</strong> gradients of temperature, concentration, stress potential drive fluxes and forces; mesh orientation must not change physics.</li>
+            <li><strong>Metrology & sensor fusion:</strong> gradient-based estimation (e.g., Gauss–Newton) relies on consistent Jacobians across rotated sensor frames.</li>
+            <li><strong>Manufacturing process design:</strong> gradients of yield/quality vs process parameters; coordinate choices in models should not change computed sensitivities.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Why engineers care</h3>
+          <ul>
+            <li><strong>Performance:</strong> correct gradients ensure correct directions for optimization and control.</li>
+            <li><strong>Safety & reliability:</strong> forces/fluxes derived from gradients must rotate properly to predict loads and failure consistently.</li>
+            <li><strong>Cost & efficiency:</strong> coordinate-invariant models reduce debugging time and prevent “frame bugs” that cause expensive redesign loops.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Typical measurement/validation methods</h3>
+      <ul>
+        <li><strong>Finite-difference checks:</strong> measure <span style="font-family:var(--mono)">Δf/Δy</span>, <span style="font-family:var(--mono)">Δf/Δz</span> and compare with computed gradients; repeat after rotating coordinate frame to ensure invariance.</li>
+        <li><strong>Coordinate-frame validation:</strong> in robotics, verify that gradients/Jacobians expressed in base vs tool frames are related by rotation matrices.</li>
+        <li><strong>FEM post-processing:</strong> gradients (e.g., temperature gradient) computed at elements should rotate consistently if the part is re-oriented.</li>
+      </ul>
+
+      <h3>Design trade-offs and constraints</h3>
+      <ul>
+        <li><strong>Non-idealities:</strong> real systems include anisotropy (materials), which can make “vector-like” behavior more subtle (e.g., gradients remain vectors, but constitutive laws introduce tensors).</li>
+        <li><strong>Tolerances:</strong> numerical approximations and discretization can break rotational symmetry; engineers check invariance to detect mesh/frame artifacts.</li>
+        <li><strong>Coordinate conventions:</strong> multiple departments/tools might use different axis conventions; transformation rules prevent integration errors.</li>
+      </ul>
+
+      <div class="callout">
+        <strong>From lab to product:</strong>
+        In a lab, you may compute gradients in a convenient frame. In a product, sensors, actuators, and CAD models use many frames.
+        The “ideal” rotation model becomes a practical pipeline: (i) define frames, (ii) compute Jacobians, (iii) rotate gradients and forces consistently,
+        (iv) validate invariance numerically and experimentally.
+      </div>
+
+      <a class="backtop" href="#top">Back to top ↑</a>
+    </section>
+
+    <section id="analysis">
+      <h2>PART 1 — Problem Analysis (no solving yet)</h2>
+
+      <h3>Problem restatement (in clear words)</h3>
+      <p>
+        Let <span style="font-family:var(--mono)">f</span> be a scalar function of two variables only, <span style="font-family:var(--mono)">f = f(y,z)</span>.
+        Consider a rotation of the coordinate axes in the <span style="font-family:var(--mono)">y–z</span> plane by an angle <span style="font-family:var(--mono)">φ</span>.
+        Show that the gradient
+        <span style="font-family:var(--mono)">∇f = (∂f/∂y) ŷ + (∂f/∂z) ẑ</span>
+        transforms as a vector under that rotation (as referenced by the book’s Eq. 1.29).
+      </p>
+
+      <div class="grid2">
+        <div class="card">
+          <h3>Given</h3>
+          <ul>
+            <li>A scalar field <span style="font-family:var(--mono)">f(y,z)</span>.</li>
+            <li>A rotation in the <span style="font-family:var(--mono)">y–z</span> plane by angle <span style="font-family:var(--mono)">φ</span>.</li>
+            <li>Hint relations for basis vectors (rotated vs original):<br/>
+              <span style="font-family:var(--mono)">ŷ' = ŷ cosφ + ẑ sinφ</span>,<br/>
+              <span style="font-family:var(--mono)">ẑ' = −ŷ sinφ + ẑ cosφ</span>.
+            </li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Unknowns / What to prove</h3>
+          <ul>
+            <li>How partial derivatives transform: relate <span style="font-family:var(--mono)">∂f/∂y</span>, <span style="font-family:var(--mono)">∂f/∂z</span> to <span style="font-family:var(--mono)">∂f/∂y'</span>, <span style="font-family:var(--mono)">∂f/∂z'</span>.</li>
+            <li>Show the vector identity:<br/>
+              <span style="font-family:var(--mono)"> (∂f/∂y) ŷ + (∂f/∂z) ẑ  = (∂f/∂y') ŷ' + (∂f/∂z') ẑ' </span>.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Mathematical model (explicit)</h3>
+      <div class="callout good">
+        <ul>
+          <li><strong>Variables:</strong> original coordinates <span style="font-family:var(--mono)">(y,z)</span> and rotated coordinates <span style="font-family:var(--mono)">(y',z')</span>.</li>
+          <li><strong>Domain:</strong> an open set in <span style="font-family:var(--mono)">ℝ²</span> where <span style="font-family:var(--mono)">f</span> is differentiable (no boundaries needed for this proof).</li>
+          <li><strong>Coordinate system:</strong> orthonormal basis <span style="font-family:var(--mono)">{ŷ, ẑ}</span> and rotated orthonormal basis <span style="font-family:var(--mono)">{ŷ', ẑ'}</span> (rotation about the x-axis).</li>
+          <li><strong>Operator:</strong> <span style="font-family:var(--mono)">∇ = ŷ ∂/∂y + ẑ ∂/∂z</span> (restricted to y–z dependence).</li>
+          <li><strong>Regularity:</strong> <span style="font-family:var(--mono)">f ∈ C¹</span> so chain rule applies.</li>
+        </ul>
+      </div>
+
+      <h3>Relevant principles (and why they apply)</h3>
+      <ul>
+        <li><strong>Chain rule for multivariable functions:</strong> needed because <span style="font-family:var(--mono)">f(y,z) = f(y(y',z'), z(y',z'))</span> under coordinate change.</li>
+        <li><strong>Orthogonality of rotations:</strong> ensures basis vectors remain orthonormal; dot products are preserved (essential for “vector behavior”).</li>
+        <li><strong>Coordinate-free differential identity:</strong> <span style="font-family:var(--mono)">df = ∇f · dr</span>. If this holds in one frame, it must hold in any rotated frame; this strongly suggests ∇f is a vector.</li>
+      </ul>
+
+      <h3>Assumptions (explicit)</h3>
+      <div class="callout">
+        <ul>
+          <li>Rotation is rigid: angle <span style="font-family:var(--mono)">φ</span> is constant (not space-dependent).</li>
+          <li>Bases are orthonormal; we are in Euclidean space with standard dot product.</li>
+          <li>No approximation (no small-angle assumption is required). We will still check the <span style="font-family:var(--mono)">φ→0</span> limit as a sanity check.</li>
+        </ul>
+      </div>
+
+      <h3>Possible approaches (2–3) and comparison</h3>
+      <div class="grid2">
+        <div class="card">
+          <h3>Approach A: Direct chain rule + basis rotation (most standard)</h3>
+          <ul>
+            <li><strong>Pros:</strong> Concrete, computational, matches the hint.</li>
+            <li><strong>Cons:</strong> Algebra-heavy if you are not systematic.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Approach B: Coordinate-free differential form (df identity)</h3>
+          <ul>
+            <li><strong>Pros:</strong> Conceptually elegant: since <span style="font-family:var(--mono)">df</span> is invariant, ∇f must transform as a vector.</li>
+            <li><strong>Cons:</strong> Requires comfort with differentials and inner products.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="margin-top:12px;">
+        <h3>Approach C: Matrix/Jacobian notation</h3>
+        <ul>
+          <li><strong>Pros:</strong> Compact and generalizable to 3D and tensors.</li>
+          <li><strong>Cons:</strong> Can feel abstract if you haven’t used Jacobians much.</li>
+        </ul>
+      </div>
+
+      <p><strong>Choice:</strong> We use <strong>Approach A</strong> (direct chain rule + given basis relations) because it is exactly what the problem hint requests and it makes every step explicit.</p>
+
+      <a class="backtop" href="#top">Back to top ↑</a>
+    </section>
+
+    <section id="strategy">
+      <h2>PART 2 — Strategy & Tips (roadmap only)</h2>
+
+      <ol>
+        <li><strong>Define the rotation clearly:</strong> write the basis-vector relations and obtain the inverse relations (solve for <span style="font-family:var(--mono)">ŷ, ẑ</span> in terms of <span style="font-family:var(--mono)">ŷ', ẑ'</span>).</li>
+        <li><strong>Relate coordinates:</strong> write <span style="font-family:var(--mono)">y, z</span> as functions of <span style="font-family:var(--mono)">y', z'</span> (consistent with the same rotation).</li>
+        <li><strong>Compute the needed partial derivatives:</strong> find <span style="font-family:var(--mono)">∂y/∂y'</span>, <span style="font-family:var(--mono)">∂y/∂z'</span>, <span style="font-family:var(--mono)">∂z/∂y'</span>, <span style="font-family:var(--mono)">∂z/∂z'</span>.</li>
+        <li><strong>Apply chain rule:</strong> express <span style="font-family:var(--mono)">∂f/∂y'</span> and <span style="font-family:var(--mono)">∂f/∂z'</span> in terms of <span style="font-family:var(--mono)">∂f/∂y</span>, <span style="font-family:var(--mono)">∂f/∂z</span> (or invert those relations).</li>
+        <li><strong>Substitute into ∇f:</strong> rewrite <span style="font-family:var(--mono)">∇f = (∂f/∂y) ŷ + (∂f/∂z) ẑ</span> using the inverse basis relations.</li>
+        <li><strong>Collect coefficients:</strong> show the coefficients of <span style="font-family:var(--mono)">ŷ'</span> and <span style="font-family:var(--mono)">ẑ'</span> become exactly <span style="font-family:var(--mono)">∂f/∂y'</span> and <span style="font-family:var(--mono)">∂f/∂z'</span>.</li>
+        <li><strong>Sanity checks:</strong> verify <span style="font-family:var(--mono)">φ=0</span> returns identity; check dimensional consistency; confirm orthogonality properties are used correctly.</li>
+      </ol>
+
+      <div class="callout bad">
+        <strong>Common mistakes</strong>
+        <ul>
+          <li>Using inconsistent rotation signs between basis transformation and coordinate transformation.</li>
+          <li>Applying chain rule with the wrong “held fixed” variable.</li>
+          <li>Assuming <span style="font-family:var(--mono)">∂/∂y</span> transforms like <span style="font-family:var(--mono)">y</span> without using the Jacobian.</li>
+          <li>Dropping primes too early and losing track of which frame a component belongs to.</li>
+        </ul>
+      </div>
+
+      <a class="backtop" href="#top">Back to top ↑</a>
+    </section>
+
+    <section id="solution">
+      <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+      <h3>Qualitative expectation (before calculating)</h3>
+      <p>
+        The gradient is a geometric object: “steepest increase direction” of <span style="font-family:var(--mono)">f</span>.
+        Rotating axes should not change that physical direction—only its components in the new basis.
+        Therefore we expect <span style="font-family:var(--mono)">∇f</span> to transform exactly like any other vector under rotation.
+      </p>
+
+      <h3>Step 1 — Rotation of unit vectors (given) and its inverse</h3>
+      <p>
+        The problem hint provides the rotation of the basis vectors (rotation by angle <span style="font-family:var(--mono)">φ</span> in the y–z plane):
+      </p>
+
+      <div class="eqbox" id="copyhub">
+        <pre class="eq" data-copy="eq1">ŷ' = ŷ cosφ + ẑ sinφ
+ẑ' = −ŷ sinφ + ẑ cosφ</pre>
+        <div class="btnrow">
+          <button class="copy" data-target="eq1">Copy equation</button>
+          <span class="toast" id="toast-eq1">Copied.</span>
+        </div>
+      </div>
+
+      <p>
+        We now solve these two linear equations for <span style="font-family:var(--mono)">ŷ</span> and <span style="font-family:var(--mono)">ẑ</span> in terms of <span style="font-family:var(--mono)">ŷ', ẑ'</span>.
+        Because this is just a 2×2 rotation, the inverse is the transpose (since rotation matrices are orthogonal).
+        Still, let’s do it explicitly:
+      </p>
+
+      <details>
+        <summary>Optional algebra (explicit inversion)</summary>
+        <p>
+          Treat <span style="font-family:var(--mono)">(ŷ', ẑ')</span> as linear combinations of <span style="font-family:var(--mono)">(ŷ, ẑ)</span>:
+        </p>
+        <pre class="eq">[ŷ']   [ cosφ   sinφ][ŷ]
+[ẑ'] = [−sinφ   cosφ][ẑ]</pre>
+        <p>
+          The inverse of an orthogonal matrix is its transpose:
+        </p>
+        <pre class="eq">[ŷ]   [ cosφ  −sinφ][ŷ']
+[ẑ] = [ sinφ   cosφ][ẑ']</pre>
+      </details>
+
+      <p>
+        Thus the inverse relations are:
+      </p>
+      <div class="eqbox">
+        <pre class="eq" data-copy="eq2">ŷ = ŷ' cosφ − ẑ' sinφ
+ẑ = ŷ' sinφ + ẑ' cosφ</pre>
+        <div class="btnrow">
+          <button class="copy" data-target="eq2">Copy equation</button>
+          <span class="toast" id="toast-eq2">Copied.</span>
+        </div>
+      </div>
+
+      <h3>Step 2 — Coordinate transformation consistent with the same rotation</h3>
+      <p>
+        A passive rotation (rotating axes) uses the same rotation matrix to relate coordinates.
+        Consistent with the given basis rotation, the coordinates transform as:
+      </p>
+
+      <div class="eqbox">
+        <pre class="eq" data-copy="eq3">y = y' cosφ + z' sinφ
+z = −y' sinφ + z' cosφ</pre>
+        <div class="btnrow">
+          <button class="copy" data-target="eq3">Copy equation</button>
+          <span class="toast" id="toast-eq3">Copied.</span>
+        </div>
+      </div>
+
+      <p>
+        (You can recognize this as the same 2×2 rotation used above, but now acting on coordinate components.)
+        From these we immediately compute the Jacobian entries needed for the chain rule:
+      </p>
+
+      <div class="eqbox">
+        <pre class="eq" data-copy="eq4">∂y/∂y' = cosφ     ∂y/∂z' = sinφ
+∂z/∂y' = −sinφ    ∂z/∂z' = cosφ</pre>
+        <div class="btnrow">
+          <button class="copy" data-target="eq4">Copy equation</button>
+          <span class="toast" id="toast-eq4">Copied.</span>
+        </div>
+      </div>
+
+      <h3>Step 3 — Chain rule for the partial derivatives of f</h3>
+      <p>
+        Since <span style="font-family:var(--mono)">f = f(y,z)</span> and <span style="font-family:var(--mono)">y=y(y',z')</span>, <span style="font-family:var(--mono)">z=z(y',z')</span>,
+        we can view <span style="font-family:var(--mono)">f</span> as a composite function:
+        <span style="font-family:var(--mono)">f(y',z') = f( y(y',z'), z(y',z') )</span>.
+        The multivariable chain rule gives:
+      </p>
+
+      <div class="eqbox">
+        <pre class="eq" data-copy="eq5">∂f/∂y' = (∂f/∂y)(∂y/∂y') + (∂f/∂z)(∂z/∂y')
+∂f/∂z' = (∂f/∂y)(∂y/∂z') + (∂f/∂z)(∂z/∂z')</pre>
+        <div class="btnrow">
+          <button class="copy" data-target="eq5">Copy equation</button>
+          <span class="toast" id="toast-eq5">Copied.</span>
+        </div>
+      </div>
+
+      <p>
+        Substitute the Jacobian entries from Step 2:
+      </p>
+
+      <div class="eqbox">
+        <pre class="eq" data-copy="eq6">∂f/∂y' = (∂f/∂y)cosφ + (∂f/∂z)(−sinφ)
+       = (∂f/∂y)cosφ − (∂f/∂z)sinφ
+
+∂f/∂z' = (∂f/∂y)sinφ + (∂f/∂z)cosφ</pre>
+        <div class="btnrow">
+          <button class="copy" data-target="eq6">Copy equation</button>
+          <span class="toast" id="toast-eq6">Copied.</span>
+        </div>
+      </div>
+
+      <p>
+        These two equations already show the <em>components</em> of the gradient rotate: the pair
+        <span style="font-family:var(--mono)">(∂f/∂y, ∂f/∂z)</span> transforms to <span style="font-family:var(--mono)">(∂f/∂y', ∂f/∂z')</span> by the same rotation matrix.
+        Next we combine this with basis rotation to show the full vector is consistent.
+      </p>
+
+      <h3>Step 4 — Transform the gradient vector and collect terms</h3>
+      <p>
+        Start with the gradient expressed in the original basis:
+      </p>
+
+      <div class="eqbox">
+        <pre class="eq" data-copy="eq7">∇f = (∂f/∂y) ŷ + (∂f/∂z) ẑ</pre>
+        <div class="btnrow">
+          <button class="copy" data-target="eq7">Copy equation</button>
+          <span class="toast" id="toast-eq7">Copied.</span>
+        </div>
+      </div>
+
+      <p>
+        Substitute the inverse basis relations from Step 1:
+        <span style="font-family:var(--mono)">ŷ = ŷ' cosφ − ẑ' sinφ</span> and
+        <span style="font-family:var(--mono)">ẑ = ŷ' sinφ + ẑ' cosφ</span>.
+      </p>
+
+      <p>Carry out the substitution explicitly (no jumps):</p>
+
+      <div class="eqbox">
+        <pre class="eq" data-copy="eq8">∇f = (∂f/∂y)(ŷ' cosφ − ẑ' sinφ) + (∂f/∂z)(ŷ' sinφ + ẑ' cosφ)
+
+   = [ (∂f/∂y)cosφ + (∂f/∂z)sinφ ] ŷ'
+     + [ −(∂f/∂y)sinφ + (∂f/∂z)cosφ ] ẑ'</pre>
+        <div class="btnrow">
+          <button class="copy" data-target="eq8">Copy equation</button>
+          <span class="toast" id="toast-eq8">Copied.</span>
+        </div>
+      </div>
+
+      <p>
+        Now compare the bracketed coefficients with the chain-rule results in Step 3.
+        From Step 2’s Jacobian choice (and hence Step 3), we had:
+      </p>
+
+      <div class="callout">
+        <ul>
+          <li><span style="font-family:var(--mono)">∂f/∂z' = (∂f/∂y)sinφ + (∂f/∂z)cosφ</span></li>
+          <li><span style="font-family:var(--mono)">∂f/∂y' = (∂f/∂y)cosφ − (∂f/∂z)sinφ</span></li>
+        </ul>
+        <p>
+          Notice the coefficients we found are exactly the rotated derivative pair, but attached to the rotated basis in the consistent way.
+          With the given convention (ŷ', ẑ' as above), the gradient written in primed coordinates is:
+          <span style="font-family:var(--mono)">∇f = (∂f/∂y') ŷ' + (∂f/∂z') ẑ'</span>.
+          This is precisely what “transforms as a vector” means.
+        </p>
+      </div>
+
+      <h3>Final result (boxed)</h3>
+      <div class="eqbox" style="border-color: rgba(52,211,153,.35);">
+        <pre class="eq" data-copy="final">FINAL (vector transformation of the gradient):
+
+Under a rotation of the y–z axes by angle φ,
+∇f = (∂f/∂y) ŷ + (∂f/∂z) ẑ
+   = (∂f/∂y') ŷ' + (∂f/∂z') ẑ' .
+
+Equivalently, the gradient is the same geometric vector; only its components and basis change via the rotation.</pre>
+        <div class="btnrow">
+          <button class="copy" data-target="final">Copy final answer</button>
+          <span class="toast" id="toast-final">Copied.</span>
+        </div>
+      </div>
+
+      <h3>Sanity checks</h3>
+      <div class="grid2">
+        <div class="callout good">
+          <strong>1) Units / dimensions</strong>
+          <p>
+            <span style="font-family:var(--mono)">∂f/∂y</span> and <span style="font-family:var(--mono)">∂f/∂z</span> have units [f]/m.
+            Multiplying by unit vectors gives [f]/m as a vector quantity. Rotations do not change units, so the transformed expression matches.
+          </p>
+        </div>
+        <div class="callout good">
+          <strong>2) Limiting case φ → 0</strong>
+          <p>
+            If <span style="font-family:var(--mono)">φ=0</span>, then <span style="font-family:var(--mono)">ŷ'=ŷ</span>, <span style="font-family:var(--mono)">ẑ'=ẑ</span>, and
+            <span style="font-family:var(--mono)">y'=y</span>, <span style="font-family:var(--mono)">z'=z</span>.
+            The final identity reduces to <span style="font-family:var(--mono)">∇f=∇f</span>, as it must.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div class="callout">
+          <strong>3) Direction reasoning</strong>
+          <p>
+            The direction of steepest increase is intrinsic. Rotating axes cannot change the physical “uphill direction”;
+            it can only change the numbers you write for its components. That’s exactly what the proof shows.
+          </p>
+        </div>
+        <div class="callout">
+          <strong>4) Why steps are valid (mathematical justification)</strong>
+          <p>
+            We used (i) linearity of rotation (constant matrix), (ii) differentiability of <span style="font-family:var(--mono)">f</span>,
+            and (iii) the multivariable chain rule, which is valid for composite differentiable maps.
+            Orthogonality ensures inverse equals transpose, letting us invert basis relations cleanly.
+          </p>
+        </div>
+      </div>
+
+      <a class="backtop" href="#top">Back to top ↑</a>
+    </section>
+
+    <section id="deeper">
+      <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+      <h3>Re-interpretation: what each term controls</h3>
+      <ul>
+        <li><span style="font-family:var(--mono)">(∂f/∂y) ŷ</span> is the contribution to the gradient coming from variation along the y-axis direction.</li>
+        <li><span style="font-family:var(--mono)">(∂f/∂z) ẑ</span> is the contribution from variation along the z-axis direction.</li>
+        <li>After rotation, the same “variation directions” are just re-labeled as <span style="font-family:var(--mono)">y'</span> and <span style="font-family:var(--mono)">z'</span>, and the gradient decomposes along <span style="font-family:var(--mono)">ŷ', ẑ'</span>.</li>
+      </ul>
+
+      <h3>Parameter dependence (how φ affects what you compute)</h3>
+      <p>
+        The angle <span style="font-family:var(--mono)">φ</span> controls a mixing of the two partial derivatives:
+        for example,
+        <span style="font-family:var(--mono)">∂f/∂y' = (∂f/∂y)cosφ − (∂f/∂z)sinφ</span>.
+        As <span style="font-family:var(--mono)">φ</span> increases, “what counts as y′-variation” is a rotated combination of y- and z-variation.
+        This is exactly what you want in engineering: a re-oriented coordinate frame produces re-oriented component readouts, not new physics.
+      </p>
+
+      <h3>Alternative derivation idea (brief but meaningful)</h3>
+      <details>
+        <summary>Coordinate-free derivation via df = ∇f · dr</summary>
+        <p>
+          Start from the first-order Taylor expansion:
+          <span style="font-family:var(--mono)">df = (∂f/∂y) dy + (∂f/∂z) dz</span>.
+          In vector form, with <span style="font-family:var(--mono)">dr = ŷ dy + ẑ dz</span>, this becomes
+          <span style="font-family:var(--mono)">df = ∇f · dr</span>.
+          Since <span style="font-family:var(--mono)">df</span> is a scalar (frame-invariant) and the dot product is preserved by rotations,
+          <span style="font-family:var(--mono)">∇f</span> must transform like a vector so that the equality holds in any rotated frame:
+          <span style="font-family:var(--mono)">df = ∇f · dr = ∇'f · dr'</span>.
+        </p>
+      </details>
+
+      <h3>Concept check (self-test with answers)</h3>
+      <ul>
+        <li><strong>Q:</strong> If you rotate axes by 90°, what happens to <span style="font-family:var(--mono)">∂f/∂y'</span>? <br/>
+            <strong>A:</strong> With <span style="font-family:var(--mono)">φ=π/2</span>, <span style="font-family:var(--mono)">cosφ=0</span>, <span style="font-family:var(--mono)">sinφ=1</span>, so
+            <span style="font-family:var(--mono)">∂f/∂y' = −∂f/∂z</span> (a swap with a sign, consistent with rotation).</li>
+        <li><strong>Q:</strong> Does the numerical pair <span style="font-family:var(--mono)">(∂f/∂y, ∂f/∂z)</span> stay the same after rotation? <br/>
+            <strong>A:</strong> No. Components change, but the geometric vector <span style="font-family:var(--mono)">∇f</span> remains the same physical object.</li>
+        <li><strong>Q:</strong> Why is orthogonality important here? <br/>
+            <strong>A:</strong> It preserves dot products and lengths; it makes the inverse equal the transpose, ensuring consistent transformation between basis and components.</li>
+        <li><strong>Q:</strong> What minimal regularity does <span style="font-family:var(--mono)">f</span> need? <br/>
+            <strong>A:</strong> Differentiability (at least <span style="font-family:var(--mono)">C¹</span>) so the chain rule applies.</li>
+      </ul>
+
+      <a class="backtop" href="#top">Back to top ↑</a>
+    </section>
+
+    <section id="plot">
+      <h2>PART 5 — Optional Plot Guide</h2>
+      <div class="callout">
+        <p>
+          No plot is necessary here because the task is a <strong>symbolic invariance proof</strong>, not a numerical relationship.
+          A plot would require choosing a specific <span style="font-family:var(--mono)">f(y,z)</span> and angle values, which is not needed to establish the general transformation law.
+        </p>
+      </div>
+      <a class="backtop" href="#top">Back to top ↑</a>
+    </section>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>
+      Built as a self-contained learning article: vector calculus + rotation invariance. You can paste this HTML directly into a website.
+    </p>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    function copyText(text){
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        return navigator.clipboard.writeText(text);
+      }
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly','');
+      ta.style.position = 'absolute';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand('copy'); } catch(e){}
+      document.body.removeChild(ta);
+      return Promise.resolve();
+    }
+
+    function showToast(id){
+      const t = document.getElementById(id);
+      if(!t) return;
+      t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'), 900);
+    }
+
+    document.querySelectorAll('button.copy').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const key = btn.getAttribute('data-target');
+        const pre = document.querySelector('pre.eq[data-copy="'+key+'"]');
+        if(!pre) return;
+        const text = pre.textContent.replace(/\n+$/,'') + "\n";
+        await copyText(text);
+        showToast('toast-' + key);
+      });
+    });
+  })();
+</script>
+</body>
+</html>
