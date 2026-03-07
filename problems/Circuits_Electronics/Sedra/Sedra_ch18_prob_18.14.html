@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wien Bridge Oscillator Limiter Design — Exercise D18.14</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root{
+--bg:#f7f9fc;
+--card:#ffffff;
+--accent:#2a6df4;
+--text:#1b1f23;
+--muted:#6a737d;
+--border:#e1e4e8;
+}
+
+*{box-sizing:border-box}
+
+body{
+margin:0;
+font-family:system-ui,Segoe UI,Arial,sans-serif;
+background:var(--bg);
+color:var(--text);
+line-height:1.6;
+}
+
+header{
+background:#0d1b2a;
+color:white;
+padding:2rem;
+text-align:center;
+}
+
+main{
+max-width:1100px;
+margin:auto;
+padding:2rem;
+display:grid;
+grid-template-columns:260px 1fr;
+gap:2rem;
+}
+
+nav{
+position:sticky;
+top:1rem;
+height:fit-content;
+background:var(--card);
+border:1px solid var(--border);
+padding:1rem;
+border-radius:10px;
+}
+
+nav a{
+display:block;
+padding:.4rem 0;
+text-decoration:none;
+color:var(--accent);
+font-size:.95rem;
+}
+
+article{
+background:var(--card);
+border:1px solid var(--border);
+padding:2rem;
+border-radius:12px;
+}
+
+h1,h2,h3{margin-top:1.4em}
+
+.callout{
+border-left:5px solid var(--accent);
+background:#eef3ff;
+padding:1rem;
+margin:1.2rem 0;
+border-radius:6px;
+}
+
+.equation{
+background:#f1f3f5;
+padding:.7rem;
+border-radius:6px;
+font-family:monospace;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.copybtn{
+border:none;
+background:var(--accent);
+color:white;
+padding:.2rem .6rem;
+border-radius:5px;
+cursor:pointer;
+font-size:.8rem;
+}
+
+.final{
+background:#e6fffa;
+border-left:6px solid #1abc9c;
+padding:1.2rem;
+margin:1.4rem 0;
+font-size:1.1rem;
+}
+
+footer{
+text-align:center;
+color:var(--muted);
+padding:2rem;
+}
+
+details{
+background:#fafafa;
+padding:1rem;
+border-radius:6px;
+margin:1rem 0;
+}
+
+@media(max-width:900px){
+main{grid-template-columns:1fr}
+nav{position:relative}
+}
+</style>
+
+<script>
+function copyText(text){
+navigator.clipboard.writeText(text);
+}
+</script>
+</head>
+
+<body>
+
+<header>
+<h1>Wien-Bridge Oscillator Limiter Design</h1>
+<p>Amplitude Control Using Diode Limiter Network</p>
+</header>
+
+<main>
+
+<nav>
+<strong>Contents</strong>
+<a href="#summary">Quick Summary</a>
+<a href="#primer">Concept Primer</a>
+<a href="#industry">Industry Perspective</a>
+<a href="#analysis">Problem Analysis</a>
+<a href="#strategy">Strategy</a>
+<a href="#solution">Full Solution</a>
+<a href="#understanding">Deeper Understanding</a>
+<a href="#plotnote">Plot Note</a>
+</nav>
+
+<article>
+
+<section id="summary">
+<h2>Quick Summary</h2>
+
+<ul>
+<li>The problem concerns amplitude control in a <strong>Wien-bridge oscillator</strong>.</li>
+<li>Oscillation frequency is determined by the RC network while amplitude is stabilized using <strong>diode limiters</strong>.</li>
+<li>The limiter activates when the diode voltage reaches roughly <strong>0.7 V</strong>.</li>
+<li>The oscillator amplifier gain is approximately <strong>3</strong>, so the relation between node voltage and output is  
+<code>v₁ ≈ v₀ / 3</code>.</li>
+<li>Changing <strong>R₃ and R₆</strong> alters the voltage divider that determines when the diodes conduct.</li>
+<li>The original circuit produced <strong>21.36 V peak-to-peak</strong>.</li>
+<li>To reduce amplitude to <strong>8 V peak-to-peak</strong>, the limiter threshold must increase proportionally.</li>
+<li>The required values are approximately  
+<strong>R₃ = R₆ ≈ 8 kΩ</strong>.</li>
+<li>If <strong>R₃ and R₆ are open-circuited</strong>, the limiter engages almost immediately and the oscillator amplitude collapses to about  
+<strong>≈ 2.1 V peak-to-peak</strong>.</li>
+</ul>
+
+</section>
+
+<section id="primer">
+
+<h2>PART 0 — Concept Primer</h2>
+
+<h3>Wien Bridge Oscillator</h3>
+
+A Wien bridge oscillator is a sinusoidal oscillator that uses a frequency-selective RC network.
+
+At the oscillation frequency:
+
+<div class="equation">
+<span>ω₀ = 1 / (RC)</span>
+<button class="copybtn" onclick="copyText('omega0 = 1/(R*C)')">copy</button>
+</div>
+
+and the network attenuation is
+
+<div class="equation">
+<span>β = 1/3</span>
+<button class="copybtn" onclick="copyText('beta = 1/3')">copy</button>
+</div>
+
+Therefore the amplifier must provide gain
+
+<div class="equation">
+<span>A = 3</span>
+<button class="copybtn" onclick="copyText('A = 3')">copy</button>
+</div>
+
+so that the Barkhausen criterion
+
+<div class="equation">
+<span>Aβ = 1</span>
+<button class="copybtn" onclick="copyText('A*beta = 1')">copy</button>
+</div>
+
+is satisfied.
+
+---
+
+<h3>Amplitude Control</h3>
+
+If gain is slightly greater than 3, oscillations grow.  
+A limiter is used so that once the signal becomes large enough, the effective gain drops back to exactly 3.
+
+In this circuit the limiter consists of:
+
+<ul>
+<li>two diodes</li>
+<li>a voltage divider (R₃,R₄,R₅,R₆)</li>
+</ul>
+
+When the diode voltage reaches about
+
+<div class="equation">
+<span>V_D ≈ 0.7 V</span>
+<button class="copybtn" onclick="copyText('Vd ≈ 0.7 V')">copy</button>
+</div>
+
+the diode conducts and changes the feedback network.
+
+---
+
+<h3>Amplifier Relation</h3>
+
+The op-amp gain is approximately
+
+<div class="equation">
+<span>A ≈ 1 + R₂/R₁ ≈ 3</span>
+<button class="copybtn" onclick="copyText('A ≈ 1 + R2/R1 ≈ 3')">copy</button>
+</div>
+
+Thus
+
+<div class="equation">
+<span>v₁ ≈ v₀ / 3</span>
+<button class="copybtn" onclick="copyText('v1 ≈ v0/3')">copy</button>
+</div>
+
+This relation is crucial for determining the limiter threshold.
+
+</section>
+
+<section id="industry">
+
+<h2>PART 0B — Industry & Applied Physics Perspective</h2>
+
+<h3>Where Wien Oscillators Are Used</h3>
+
+Engineers use this circuit in:
+
+<ul>
+<li>audio signal generators</li>
+<li>instrument calibration equipment</li>
+<li>sensor excitation sources</li>
+<li>low-distortion test oscillators</li>
+</ul>
+
+<h3>Why Amplitude Control Matters</h3>
+
+In industry the oscillator must have
+
+<ul>
+<li>stable amplitude</li>
+<li>low distortion</li>
+<li>temperature stability</li>
+</ul>
+
+Poor amplitude control produces clipping or distortion.
+
+<h3>Real-World Amplitude Control Methods</h3>
+
+Practical systems may use
+
+<ul>
+<li>lamp stabilizers (classic HP oscillators)</li>
+<li>diode limiters</li>
+<li>automatic gain control loops</li>
+</ul>
+
+<h3>Design Trade-offs</h3>
+
+Engineers balance
+
+<ul>
+<li>startup reliability</li>
+<li>distortion level</li>
+<li>component tolerance</li>
+<li>temperature drift</li>
+</ul>
+
+The diode limiter used here is inexpensive and simple but slightly increases distortion.
+
+</section>
+
+<section id="analysis">
+
+<h2>PART 1 — Problem Analysis</h2>
+
+<h3>Given</h3>
+
+From Exercise 18.5:
+
+<ul>
+<li>Oscillator amplitude: <strong>21.36 V peak-to-peak</strong></li>
+<li>R₃ = R₆ = 3 kΩ</li>
+<li>R₄ = R₅ = 1 kΩ</li>
+<li>Diode drop = 0.7 V</li>
+</ul>
+
+<h3>Find</h3>
+
+1. New values of R₃ and R₆ that give
+
+<strong>8 V peak-to-peak output</strong>
+
+2. What happens if R₃ and R₆ are open-circuited.
+
+<h3>Key Principle</h3>
+
+The limiter activates when
+
+<div class="equation">
+<span>v₀ − v₁ ≈ 0.7 V</span>
+<button class="copybtn" onclick="copyText('vo - v1 ≈ 0.7')">copy</button>
+</div>
+
+Since
+
+<div class="equation">
+<span>v₁ ≈ v₀ / 3</span>
+<button class="copybtn" onclick="copyText('v1 ≈ v0/3')">copy</button>
+</div>
+
+the conduction condition becomes
+
+<div class="equation">
+<span>(2/3)v₀ ≈ 0.7</span>
+<button class="copybtn" onclick="copyText('(2/3)vo ≈ 0.7')">copy</button>
+</div>
+
+</section>
+
+<section id="strategy">
+
+<h2>PART 2 — Strategy & Tips</h2>
+
+Plan:
+
+<ol>
+<li>Relate amplifier node voltage to output voltage.</li>
+<li>Determine diode conduction condition.</li>
+<li>Use scaling from the known amplitude (21.36 Vpp).</li>
+<li>Adjust R₃ and R₆ to shift the limiter threshold.</li>
+<li>Evaluate the open-circuit case.</li>
+</ol>
+
+<div class="callout">
+<strong>Common mistakes</strong>
+
+<ul>
+<li>Forgetting that oscillators use <strong>peak-to-peak</strong> amplitude.</li>
+<li>Ignoring the amplifier gain relation v₁ ≈ v₀/3.</li>
+<li>Confusing peak and RMS values.</li>
+</ul>
+</div>
+
+</section>
+
+<section id="solution">
+
+<h2>PART 3 — Full Solution</h2>
+
+<h3>1. Original Oscillator Amplitude</h3>
+
+Given
+
+<div class="equation">
+<span>Vpp₁ = 21.36 V</span>
+<button class="copybtn" onclick="copyText('Vpp1 = 21.36 V')">copy</button>
+</div>
+
+Peak value:
+
+<div class="equation">
+<span>Vp₁ = 10.68 V</span>
+<button class="copybtn" onclick="copyText('Vp1 = 10.68 V')">copy</button>
+</div>
+
+This corresponds to
+
+<div class="equation">
+<span>R₃ = R₆ = 3 kΩ</span>
+<button class="copybtn" onclick="copyText('R3 = R6 = 3kΩ')">copy</button>
+</div>
+
+---
+
+<h3>2. Desired Output</h3>
+
+<div class="equation">
+<span>Vpp₂ = 8 V</span>
+<button class="copybtn" onclick="copyText('Vpp2 = 8 V')">copy</button>
+</div>
+
+Peak:
+
+<div class="equation">
+<span>Vp₂ = 4 V</span>
+<button class="copybtn" onclick="copyText('Vp2 = 4 V')">copy</button>
+</div>
+
+---
+
+<h3>3. Scaling the Divider</h3>
+
+Limiter threshold scales approximately with the divider ratio.
+
+Therefore
+
+<div class="equation">
+<span>R₃(new) ≈ R₃(old) × (21.36 / 8)</span>
+<button class="copybtn" onclick="copyText('R3new ≈ R3old × (21.36/8)')">copy</button>
+</div>
+
+Thus
+
+<div class="equation">
+<span>R₃(new) ≈ 3kΩ × 2.67 ≈ 8kΩ</span>
+<button class="copybtn" onclick="copyText('R3 ≈ 8kΩ')">copy</button>
+</div>
+
+Because of symmetry
+
+<div class="equation">
+<span>R₆(new) ≈ 8kΩ</span>
+<button class="copybtn" onclick="copyText('R6 ≈ 8kΩ')">copy</button>
+</div>
+
+---
+
+<div class="final">
+
+<strong>Required resistor values</strong>
+
+<br><br>
+
+R₃ ≈ 8 kΩ  
+R₆ ≈ 8 kΩ
+
+</div>
+
+---
+
+<h3>4. If R₃ and R₆ Are Open-Circuited</h3>
+
+Then nodes a and b connect directly to the output through R₄ and R₅.
+
+The diode conducts when
+
+<div class="equation">
+<span>v₀ − v₁ ≈ 0.7 V</span>
+<button class="copybtn" onclick="copyText('vo - v1 ≈ 0.7')">copy</button>
+</div>
+
+Substitute
+
+<div class="equation">
+<span>v₁ ≈ v₀ / 3</span>
+<button class="copybtn" onclick="copyText('v1 ≈ v0/3')">copy</button>
+</div>
+
+Thus
+
+<div class="equation">
+<span>(2/3)v₀ ≈ 0.7</span>
+<button class="copybtn" onclick="copyText('(2/3)vo ≈ 0.7')">copy</button>
+</div>
+
+Solve:
+
+<div class="equation">
+<span>v₀ ≈ 1.05 V (peak)</span>
+<button class="copybtn" onclick="copyText('vo ≈ 1.05 V peak')">copy</button>
+</div>
+
+Therefore
+
+<div class="equation">
+<span>Vpp ≈ 2.1 V</span>
+<button class="copybtn" onclick="copyText('Vpp ≈ 2.1 V')">copy</button>
+</div>
+
+</section>
+
+<section id="understanding">
+
+<h2>PART 4 — Deeper Understanding</h2>
+
+<h3>What Controls the Amplitude?</h3>
+
+The amplitude depends on
+
+<ul>
+<li>diode threshold</li>
+<li>feedback divider</li>
+<li>amplifier gain</li>
+</ul>
+
+Increasing R₃ and R₆ raises the voltage needed to forward-bias the diode.
+
+Thus the oscillator stabilizes at a lower output level.
+
+---
+
+<h3>Concept Checks</h3>
+
+<strong>Q1:</strong> Why is amplifier gain ≈3?  
+A: Because the Wien bridge attenuates by 1/3.
+
+<strong>Q2:</strong> Why are two diodes used?  
+A: To limit both positive and negative peaks.
+
+<strong>Q3:</strong> What happens if gain is less than 3?  
+A: Oscillations decay to zero.
+
+<strong>Q4:</strong> Why does increasing R₃ reduce amplitude?  
+A: It raises the limiter threshold.
+
+</section>
+
+<section id="plotnote">
+
+<h2>PART 5 — Plot Note</h2>
+
+A plot is unnecessary for this problem because the result follows directly from algebraic threshold conditions rather than a continuous parameter relationship.
+
+</section>
+
+</article>
+
+</main>
+
+<footer>
+Educational physics & engineering tutorial
+</footer>
+
+</body>
+</html>

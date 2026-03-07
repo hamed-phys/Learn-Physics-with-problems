@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comparator / Limiter Design from Sedra Problem 18.8</title>
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --ink:#18212f;
+      --muted:#5c6b7a;
+      --line:#d9e1ea;
+      --accent:#0b6efd;
+      --accent-2:#0a4fb3;
+      --good:#0f9d58;
+      --warn:#b26a00;
+      --soft:#eef4ff;
+      --soft2:#f4f8f2;
+      --soft3:#fff8ea;
+      --shadow:0 10px 30px rgba(16,24,40,.08);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background:linear-gradient(180deg,#f8fbff 0%, #f4f7fb 100%);
+      line-height:1.65;
+    }
+    a{color:var(--accent)}
+    .wrap{
+      max-width:1280px;
+      margin:0 auto;
+      padding:24px 18px 80px;
+    }
+    header.hero{
+      background:linear-gradient(135deg,#ffffff 0%, #eef5ff 100%);
+      border:1px solid var(--line);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      padding:28px 26px;
+      margin-bottom:24px;
+      position:relative;
+      overflow:hidden;
+    }
+    header.hero:before{
+      content:"";
+      position:absolute;
+      inset:auto -80px -80px auto;
+      width:220px;height:220px;
+      border-radius:50%;
+      background:radial-gradient(circle at center, rgba(11,110,253,.15), rgba(11,110,253,0));
+      pointer-events:none;
+    }
+    h1,h2,h3,h4{line-height:1.2;margin:0 0 12px}
+    h1{font-size:clamp(1.9rem,3vw,3rem)}
+    h2{font-size:clamp(1.35rem,2.1vw,2rem); margin-top:10px}
+    h3{font-size:1.15rem}
+    p{margin:10px 0 14px}
+    .subtitle{
+      color:var(--muted);
+      font-size:1.03rem;
+      max-width:920px;
+    }
+    .layout{
+      display:grid;
+      grid-template-columns:280px 1fr;
+      gap:22px;
+      align-items:start;
+    }
+    .toc{
+      position:sticky;
+      top:16px;
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:20px;
+      padding:18px 16px;
+      box-shadow:var(--shadow);
+    }
+    .toc h2{
+      font-size:1rem;
+      margin-bottom:10px;
+    }
+    .toc ol{
+      margin:0;
+      padding-left:18px;
+    }
+    .toc li{margin:8px 0}
+    .toc a{
+      text-decoration:none;
+      color:var(--ink);
+    }
+    .toc a:hover{color:var(--accent)}
+    main article{
+      display:grid;
+      gap:20px;
+    }
+    section{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      padding:24px 22px;
+      animation:fadeUp .45s ease both;
+    }
+    @keyframes fadeUp{
+      from{opacity:0; transform:translateY(8px)}
+      to{opacity:1; transform:translateY(0)}
+    }
+    .grid-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:14px;
+    }
+    .card{
+      background:#fbfdff;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+    }
+    .callout{
+      border-left:5px solid var(--accent);
+      background:var(--soft);
+      padding:14px 16px;
+      border-radius:14px;
+      margin:14px 0;
+    }
+    .callout.good{
+      border-left-color:var(--good);
+      background:var(--soft2);
+    }
+    .callout.warn{
+      border-left-color:var(--warn);
+      background:var(--soft3);
+    }
+    ul,ol{margin:10px 0 14px}
+    li{margin:6px 0}
+    .eq{
+      background:#0f172a;
+      color:#f8fafc;
+      border-radius:16px;
+      padding:16px;
+      font-family:var(--mono);
+      overflow:auto;
+      font-size:.98rem;
+      white-space:pre-wrap;
+      word-break:break-word;
+      position:relative;
+    }
+    .eq-wrap{position:relative}
+    .copy-btn{
+      appearance:none;
+      border:none;
+      background:var(--accent);
+      color:white;
+      padding:9px 12px;
+      border-radius:12px;
+      font-weight:600;
+      cursor:pointer;
+      transition:.2s ease;
+      box-shadow:0 6px 18px rgba(11,110,253,.18);
+    }
+    .copy-btn:hover{background:var(--accent-2); transform:translateY(-1px)}
+    .copy-btn.small{
+      position:absolute;
+      top:10px;
+      right:10px;
+      padding:7px 10px;
+      font-size:.84rem;
+    }
+    .pill{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      background:#edf3ff;
+      border:1px solid #d6e4ff;
+      color:#174ea6;
+      font-size:.88rem;
+      margin:4px 6px 0 0;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin:12px 0 8px;
+      font-size:.97rem;
+    }
+    th,td{
+      border:1px solid var(--line);
+      padding:10px 12px;
+      vertical-align:top;
+      text-align:left;
+    }
+    th{background:#f7fbff}
+    details{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 14px;
+      background:#fcfdff;
+      margin:12px 0;
+    }
+    summary{
+      cursor:pointer;
+      font-weight:700;
+    }
+    .final-box{
+      border:2px solid #b9d2ff;
+      background:linear-gradient(180deg,#f8fbff,#eef5ff);
+      border-radius:18px;
+      padding:18px;
+    }
+    .final-box h3{margin-bottom:8px}
+    .foot{
+      text-align:center;
+      color:var(--muted);
+      margin-top:20px;
+      font-size:.94rem;
+    }
+    .back-top{
+      display:inline-block;
+      margin-top:10px;
+      text-decoration:none;
+      font-weight:700;
+    }
+    .mini{
+      color:var(--muted);
+      font-size:.94rem;
+    }
+    .nowrap{white-space:nowrap}
+    .katex-like{
+      font-family:var(--mono);
+      font-size:0.98rem;
+    }
+    @media (max-width:980px){
+      .layout{grid-template-columns:1fr}
+      .toc{position:relative; top:auto}
+      .grid-2,.grid-3{grid-template-columns:1fr}
+    }
+    @media print{
+      body{background:#fff}
+      .toc,.copy-btn,.back-top{display:none !important}
+      section,header.hero{
+        box-shadow:none;
+        break-inside:avoid;
+        border:1px solid #cfd8e3;
+      }
+      a{text-decoration:none;color:#000}
+    }
+  </style>
+</head>
+<body id="top">
+  <div class="wrap">
+    <header class="hero">
+      <h1>Design of the Comparator Version of the Diode–Resistor Limiter</h1>
+      <p class="subtitle">
+        We design the resistor values for the circuit of Fig. 18.4(a) with <span class="katex-like">R<sub>f</sub></span> removed, so that the two comparator output levels are
+        <span class="nowrap">±3 V</span> and the slope of the piecewise-linear limiting characteristic is <span class="nowrap">0.05</span>, using supplies of <span class="nowrap">±5 V</span>
+        and a forward diode drop of <span class="nowrap">0.7 V</span>.
+      </p>
+      <div>
+        <span class="pill">Piecewise-linear circuit</span>
+        <span class="pill">Ideal op-amp approximation</span>
+        <span class="pill">Comparator / limiter design</span>
+        <span class="pill">Applied electronics</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="toc" aria-label="Table of contents">
+        <h2>Contents</h2>
+        <ol>
+          <li><a href="#quick-summary">Quick Summary</a></li>
+          <li><a href="#part-0">Part 0 — Concept Primer</a></li>
+          <li><a href="#part-0b">Part 0B — Industry &amp; Applied Physics Perspective</a></li>
+          <li><a href="#part-1">Part 1 — Problem Analysis</a></li>
+          <li><a href="#part-2">Part 2 — Strategy &amp; Tips</a></li>
+          <li><a href="#part-3">Part 3 — Full Solution</a></li>
+          <li><a href="#part-4">Part 4 — Deeper Understanding</a></li>
+          <li><a href="#part-5">Part 5 — Optional Plot Guide</a></li>
+        </ol>
+      </aside>
+
+      <main>
+        <article>
+          <section id="quick-summary">
+            <h2>Quick Summary</h2>
+            <ul>
+              <li>This problem is about designing a <strong>piecewise-linear comparator / limiter network</strong> built from an op-amp, two diodes, and a resistor ladder.</li>
+              <li>The key physics-and-circuit idea is <strong>piecewise operation</strong>: when one diode conducts, the circuit becomes a linear feedback system; when the sign of the input reverses, the other diode conducts instead.</li>
+              <li>The governing equations are <strong>Kirchhoff’s current law (KCL)</strong>, the <strong>ideal op-amp virtual-ground condition</strong> during the conducting branch, and the <strong>constant-drop diode model</strong> with <span class="katex-like">V<sub>D</sub> = 0.7 V</span>.</li>
+              <li>Mathematically, the transfer characteristic is <strong>piecewise affine</strong>: each branch is a straight line of slope magnitude <span class="nowrap">0.05</span>.</li>
+              <li>Symmetry is natural here, so a clean design uses <span class="katex-like">R<sub>2</sub> = R<sub>5</sub></span> and <span class="katex-like">R<sub>3</sub> = R<sub>4</sub></span>.</li>
+              <li>The design conditions give <span class="katex-like">R<sub>3</sub>/R<sub>1</sub> = R<sub>4</sub>/R<sub>1</sub> = 0.05</span> and <span class="katex-like">R<sub>3</sub>/R<sub>2</sub> = R<sub>4</sub>/R<sub>5</sub> = 2.3/5.7</span>.</li>
+              <li>One convenient numeric set is:
+                <span class="katex-like">R<sub>1</sub> = 100 kΩ</span>,
+                <span class="katex-like">R<sub>3</sub> = R<sub>4</sub> = 5.0 kΩ</span>,
+                <span class="katex-like">R<sub>2</sub> = R<sub>5</sub> ≈ 12.4 kΩ</span>.
+              </li>
+              <li>Physically, this means the output sits on the two comparison branches
+                <span class="katex-like">v<sub>o</sub> = +3 - 0.05v<sub>i</sub></span> for one polarity and
+                <span class="katex-like">v<sub>o</sub> = -3 - 0.05v<sub>i</sub></span> for the other.
+              </li>
+            </ul>
+          </section>
+
+          <section id="part-0">
+            <h2>PART 0 — Concept Primer</h2>
+
+            <div class="grid-2">
+              <div class="card">
+                <h3>Core definitions</h3>
+                <ul>
+                  <li><strong><span class="katex-like">v<sub>i</sub></span></strong>: input voltage (V).</li>
+                  <li><strong><span class="katex-like">v<sub>o</sub></span></strong>: output voltage (V).</li>
+                  <li><strong><span class="katex-like">R<sub>1</sub>, R<sub>2</sub>, R<sub>3</sub>, R<sub>4</sub>, R<sub>5</sub></span></strong>: resistances (Ω).</li>
+                  <li><strong><span class="katex-like">V = 5 V</span></strong>: supply magnitude, so rails are <span class="katex-like">+5 V</span> and <span class="katex-like">-5 V</span>.</li>
+                  <li><strong><span class="katex-like">V<sub>D</sub> = 0.7 V</span></strong>: conducting diode drop under the constant-drop approximation.</li>
+                </ul>
+              </div>
+              <div class="card">
+                <h3>Physical meaning</h3>
+                <ul>
+                  <li><span class="katex-like">R<sub>1</sub></span> converts the input voltage into an input current.</li>
+                  <li>The resistor string <span class="katex-like">R<sub>2</sub>–R<sub>5</sub></span> sets reference nodes <strong>A</strong> and <strong>B</strong> tied to the output node through <span class="katex-like">R<sub>3</sub></span> and <span class="katex-like">R<sub>4</sub></span>.</li>
+                  <li>The diodes “select” which feedback path is active for a given signal polarity.</li>
+                  <li>The op-amp, when feedback is established through a conducting diode, forces its inverting input near ground, creating a virtual reference point.</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>Key laws / principles and validity conditions</h3>
+            <div class="callout">
+              <p><strong>1) Kirchhoff’s Current Law:</strong> At any node, the algebraic sum of currents is zero. Since this is a lumped, low-frequency circuit model, we use algebraic nodal equations rather than field equations.</p>
+              <p><strong>2) Ideal op-amp under negative feedback:</strong> When a feedback path is active and the op-amp is not rail-limited, <span class="katex-like">v<sub>-</sub> ≈ v<sub>+</sub></span>. Here <span class="katex-like">v<sub>+</sub> = 0</span>, so the inverting node is driven to approximately 0 V.</p>
+              <p><strong>3) Constant-drop diode model:</strong> A conducting diode is modeled as a fixed voltage drop of 0.7 V. This is a controlled approximation that replaces the exponential Shockley law with a piecewise-linear rule.</p>
+            </div>
+
+            <h3>Mathematical model</h3>
+            <p>
+              This is not a PDE problem; it is a <strong>piecewise-linear algebraic network problem</strong>. The state variables are the node voltages
+              <span class="katex-like">(v_n, v_A, v_B, v_o)</span>, where <span class="katex-like">v_n</span> is the op-amp inverting-input node.
+              The model is piecewise because the diode conduction state changes with polarity.
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="Piecewise model:
+If D2 conducts: v_n = 0, v_B = 0.7, and KCL at node B sets v_o.
+If D1 conducts: v_n = 0, v_A = -0.7, and KCL at node A sets v_o.
+Slope conditions: R4/R1 = 0.05 and R3/R1 = 0.05.
+Level conditions at v_i = 0: 0.7 + 5.7(R4/R5) = 3 and -0.7 - 5.7(R3/R2) = -3.">Copy equation</button>
+              <pre class="eq">State variables: (v_n, v_A, v_B, v_o)
+
+Branch 1 (positive output branch, D2 ON):
+  v_n = 0
+  v_B = v_n + 0.7 = 0.7
+  KCL at B:
+    (v_o - v_B)/R4 = (-v_i)/R1 + (v_B + 5)/R5
+
+Branch 2 (negative output branch, D1 ON):
+  v_n = 0
+  v_A = v_n - 0.7 = -0.7
+  KCL at A:
+    (v_A - v_o)/R3 = v_i/R1 + (5 - v_A)/R2</pre>
+            </div>
+
+            <div class="callout good">
+              <strong>Math Insight:</strong>
+              The transfer characteristic is a <strong>piecewise affine map</strong>. Each branch has the form
+              <span class="katex-like">v<sub>o</sub> = a + bv<sub>i</sub></span>.
+              In mathematics, this is a simple example of a system with <strong>complementarity constraints</strong>:
+              one diode conducts while the other is off, so different linear equations apply in different regions.
+            </div>
+
+            <h3>Common models / approximations used here</h3>
+            <ul>
+              <li><strong>Ideal op-amp:</strong> infinite gain, zero input current, output capable of sustaining the required node voltages within the given supply range.</li>
+              <li><strong>Piecewise-linear diode:</strong> the real exponential <span class="katex-like">i-v</span> relation is replaced by an ON/OFF model with a 0.7 V drop.</li>
+              <li><strong>Symmetry design:</strong> because the supplies are symmetric and the desired levels are <span class="nowrap">±3 V</span>, a symmetric resistor choice is the cleanest route.</li>
+            </ul>
+
+            <h3>Mini intuition examples</h3>
+            <ul>
+              <li>If the input is slightly <strong>negative</strong>, the output should go <strong>positive</strong> because the signal is applied to the inverting terminal.</li>
+              <li>Once the output goes positive, the lower diode path becomes the stabilizing feedback path, fixing the branch line associated with the positive output.</li>
+              <li>If the input changes sign, the active diode flips, so the circuit jumps to the other affine branch.</li>
+            </ul>
+
+            <div class="callout warn">
+              <strong>What to watch for</strong>
+              <ul>
+                <li>Do not assume both diodes conduct simultaneously.</li>
+                <li>Do not forget the diode polarity: here <span class="katex-like">D<sub>1</sub></span> and <span class="katex-like">D<sub>2</sub></span> conduct for opposite output polarities.</li>
+                <li>Keep the sign of the inverting action straight: positive input tends to drive the output negative.</li>
+                <li>The 0.7 V drop changes the resistor ratio numerically; it is not a small correction here.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section id="part-0b">
+            <h2>PART 0B — Industry &amp; Applied Physics Perspective</h2>
+
+            <h3>Where this appears in industry</h3>
+            <div class="grid-3">
+              <div class="card">
+                <h4>1) Signal conditioning</h4>
+                <p>Front-end electronics often need bounded outputs before ADCs, logic circuits, or protection stages. Piecewise limiter/comparator networks provide low-cost analog conditioning.</p>
+              </div>
+              <div class="card">
+                <h4>2) Protection and fault detection</h4>
+                <p>Overvoltage/undervoltage detection, zero-crossing detection, and threshold alarms use related comparator structures with reference ladders and clamping elements.</p>
+              </div>
+              <div class="card">
+                <h4>3) Industrial instrumentation</h4>
+                <p>Sensors in noisy environments often need robust thresholding with known bounded output levels to interface with PLCs, data loggers, or embedded controllers.</p>
+              </div>
+            </div>
+
+            <h3>Why engineers care</h3>
+            <ul>
+              <li><strong>Performance:</strong> precise branch slopes and output levels determine detection sensitivity.</li>
+              <li><strong>Safety:</strong> bounded outputs help protect downstream electronics.</li>
+              <li><strong>Reliability:</strong> predictable switching regions matter in noisy factories and automotive systems.</li>
+              <li><strong>Cost and manufacturability:</strong> resistor ladders and diode clamps are cheap, compact, and easy to mass-produce.</li>
+            </ul>
+
+            <h3>Typical measurement / validation methods</h3>
+            <ul>
+              <li>Bench sweep of <span class="katex-like">v<sub>i</sub></span> while recording <span class="katex-like">v<sub>o</sub></span> to reconstruct the transfer characteristic.</li>
+              <li>Oscilloscope verification of branch slopes and switching near zero input.</li>
+              <li>DMM measurement of resistor values and tolerance stack-up analysis.</li>
+              <li>Thermal testing because diode drop and op-amp behavior drift with temperature.</li>
+            </ul>
+
+            <h3>Design trade-offs and constraints</h3>
+            <ul>
+              <li>Real diodes do not have an exactly constant 0.7 V drop.</li>
+              <li>Op-amp output swing may not reach the ideal branch values if the chosen amplifier is not rail capable.</li>
+              <li>Input source impedance can alter the effective slope if the signal source is not ideal.</li>
+              <li>Resistor tolerance changes both the slope and the level intercepts.</li>
+            </ul>
+
+            <div class="callout">
+              <strong>From lab to product:</strong>
+              The textbook model is idealized. In a production design, engineers would include resistor tolerances, diode temperature coefficients, op-amp output current limits, finite slew rate, and noise margins. The ideal algebra gives the nominal design; the product version adds tolerance analysis and corner verification.
+            </div>
+          </section>
+
+          <section id="part-1">
+            <h2>PART 1 — Problem Analysis</h2>
+
+            <h3>Problem restated clearly</h3>
+            <p>
+              Remove <span class="katex-like">R<sub>f</sub></span> from the limiter circuit so that it operates in the comparator-style piecewise mode. Choose resistor values so that the two output branches correspond to output levels of <span class="nowrap">+3 V</span> and <span class="nowrap">−3 V</span> at the switching point, and each branch has slope magnitude <span class="nowrap">0.05</span>.
+            </p>
+
+            <div class="grid-2">
+              <div class="card">
+                <h3>Given quantities</h3>
+                <ul>
+                  <li>Supply rails: <span class="katex-like">±5 V</span></li>
+                  <li>Diode forward drop: <span class="katex-like">0.7 V</span></li>
+                  <li>Desired output levels: <span class="katex-like">±3 V</span></li>
+                  <li>Desired slope magnitude: <span class="katex-like">0.05</span></li>
+                </ul>
+              </div>
+              <div class="card">
+                <h3>Unknowns</h3>
+                <ul>
+                  <li><span class="katex-like">R<sub>1</sub>, R<sub>2</sub>, R<sub>3</sub>, R<sub>4</sub>, R<sub>5</sub></span></li>
+                  <li>Or, more precisely, the resistor <strong>ratios</strong> that satisfy the design goals</li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>What must be found</h3>
+            <ul>
+              <li>A consistent set of resistor values.</li>
+              <li>The piecewise output equations, showing the required branch slope and levels.</li>
+            </ul>
+
+            <h3>Relevant principles and why they apply</h3>
+            <ul>
+              <li><strong>KCL</strong> applies because this is a lumped resistive network.</li>
+              <li><strong>Ideal op-amp virtual ground</strong> applies on the active branch because the conducting diode closes a negative-feedback path.</li>
+              <li><strong>Constant-drop diode model</strong> applies because the problem explicitly tells us to assume 0.7 V for a conducting diode.</li>
+              <li>We do <strong>not</strong> need Maxwell’s equations, wave equations, or dynamic ODEs here because the problem is static / quasi-static and purely circuit-theoretic.</li>
+            </ul>
+
+            <div class="callout good">
+              <strong>Assumptions</strong>
+              <ul>
+                <li>Ideal op-amp: infinite gain, zero input current.</li>
+                <li>Exactly one diode conducts on each branch.</li>
+                <li>Diode drop is fixed at 0.7 V when ON.</li>
+                <li>The circuit is symmetric enough that a symmetric resistor choice is desirable and physically sensible.</li>
+                <li>No parasitic capacitances or dynamic switching effects are included.</li>
+              </ul>
+            </div>
+
+            <h3>Possible approaches</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Approach</th>
+                  <th>Idea</th>
+                  <th>Pros</th>
+                  <th>Cons</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Direct nodal analysis</td>
+                  <td>Write KCL on the active branch for each diode state.</td>
+                  <td>Fast, exact, transparent.</td>
+                  <td>Requires careful sign handling.</td>
+                </tr>
+                <tr>
+                  <td>Symmetry first, then one branch</td>
+                  <td>Use odd symmetry to solve one branch and mirror it.</td>
+                  <td>Elegant and efficient.</td>
+                  <td>Can hide sign errors if not checked carefully.</td>
+                </tr>
+                <tr>
+                  <td>Thevenin equivalent of ladder sections</td>
+                  <td>Reduce the ladder seen from A and B.</td>
+                  <td>Useful conceptually.</td>
+                  <td>Longer than needed here.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p>
+              <strong>Best approach:</strong> direct nodal analysis with symmetry. It is the cleanest way to expose the slope and level conditions without unnecessary algebra.
+            </p>
+          </section>
+
+          <section id="part-2">
+            <h2>PART 2 — Strategy &amp; Tips</h2>
+
+            <ol>
+              <li><strong>Identify the active diode</strong> for each output polarity.
+                <span class="mini">Goal: determine which feedback branch is closed.</span>
+              </li>
+              <li><strong>Use the virtual-ground condition</strong> at the inverting node.
+                <span class="mini">Tool: ideal op-amp under feedback gives <span class="katex-like">v<sub>n</sub> = 0</span>.</span>
+              </li>
+              <li><strong>Apply the diode-drop relation</strong> to get <span class="katex-like">v<sub>A</sub></span> or <span class="katex-like">v<sub>B</sub></span>.
+                <span class="mini">This fixes the branch reference node.</span>
+              </li>
+              <li><strong>Write KCL at the active ladder node</strong>.
+                <span class="mini">This yields a linear relation between <span class="katex-like">v<sub>o</sub></span> and <span class="katex-like">v<sub>i</sub></span>.</span>
+              </li>
+              <li><strong>Read the slope from the coefficient of <span class="katex-like">v<sub>i</sub></span></strong>.
+                <span class="mini">This sets <span class="katex-like">R<sub>3</sub>/R<sub>1</sub></span> and <span class="katex-like">R<sub>4</sub>/R<sub>1</sub></span>.</span>
+              </li>
+              <li><strong>Set <span class="katex-like">v<sub>i</sub>=0</span></strong> to match the required output levels <span class="nowrap">±3 V</span>.
+                <span class="mini">This fixes the ladder ratios <span class="katex-like">R<sub>3</sub>/R<sub>2</sub></span> and <span class="katex-like">R<sub>4</sub>/R<sub>5</sub></span>.</span>
+              </li>
+              <li><strong>Choose convenient absolute values</strong> from the resulting ratios.
+                <span class="mini">Any common scale works in the ideal model.</span>
+              </li>
+            </ol>
+
+            <div class="callout warn">
+              <strong>Common mistakes</strong>
+              <ul>
+                <li>Using the wrong diode orientation.</li>
+                <li>Forgetting that the input is applied to the <strong>inverting</strong> input.</li>
+                <li>Dropping the 0.7 V term with the wrong sign.</li>
+                <li>Confusing “output level at the switching point” with the branch slope.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section id="part-3">
+            <h2>PART 3 — Full Solution</h2>
+
+            <h3>Physical intuition before calculating</h3>
+            <p>
+              Because the input enters the <strong>inverting</strong> terminal, a negative input should produce a positive output branch, while a positive input should produce a negative output branch.
+              Each branch will be linear because once one diode turns on, the circuit becomes a resistive feedback network.
+              So we expect a piecewise-linear transfer with two branches centered around <span class="nowrap">+3 V</span> and <span class="nowrap">−3 V</span>.
+            </p>
+
+            <h3>Step 1: Positive output branch</h3>
+            <p>
+              For a slightly negative input, the output goes positive. In this branch, <span class="katex-like">D<sub>2</sub></span> conducts, closing the feedback path through node <strong>B</strong>.
+            </p>
+
+            <div class="callout">
+              With the ideal op-amp under feedback,
+              <span class="katex-like">v<sub>n</sub> = v<sub>-</sub> = v<sub>+</sub> = 0</span>.
+              Since <span class="katex-like">D<sub>2</sub></span> is ON and directed from <span class="katex-like">B → n</span>,
+              <span class="katex-like">v<sub>B</sub> = v<sub>n</sub> + 0.7 = 0.7 V</span>.
+            </div>
+
+            <p>
+              The input current through <span class="katex-like">R<sub>1</sub></span> is
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="For the positive output branch:
+v_n = 0
+v_B = 0.7
+I_in = -v_i / R1  (since v_i < 0 on this branch)">Copy equation</button>
+              <pre class="eq">I_in = (v_n - v_i)/R1 = (0 - v_i)/R1 = -v_i/R1</pre>
+            </div>
+
+            <p>
+              Since the op-amp input current is zero, this same current must come from node <span class="katex-like">B</span> through the diode.
+              Applying KCL at node <span class="katex-like">B</span>:
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="(v_o - 0.7)/R4 = (-v_i)/R1 + (0.7 + 5)/R5">Copy equation</button>
+              <pre class="eq">(v_o - v_B)/R4 = (-v_i)/R1 + (v_B + 5)/R5</pre>
+            </div>
+
+            <p>
+              Substitute <span class="katex-like">v<sub>B</sub> = 0.7</span>:
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="(v_o - 0.7)/R4 = (-v_i)/R1 + 5.7/R5">Copy equation</button>
+              <pre class="eq">(v_o - 0.7)/R4 = (-v_i)/R1 + 5.7/R5</pre>
+            </div>
+
+            <p>Solve for <span class="katex-like">v<sub>o</sub></span>:</p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="v_o = 0.7 + (R4/R1)(-v_i) + 5.7(R4/R5)">Copy equation</button>
+              <pre class="eq">v_o = 0.7 + (R4/R1)(-v_i) + 5.7(R4/R5)</pre>
+            </div>
+
+            <p>
+              Rearranged in the usual slope-intercept form,
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="v_o = [0.7 + 5.7(R4/R5)] - (R4/R1) v_i">Copy equation</button>
+              <pre class="eq">v_o = [0.7 + 5.7(R4/R5)] - (R4/R1) v_i</pre>
+            </div>
+
+            <p>
+              Therefore, the slope magnitude on this branch is
+              <span class="katex-like">R<sub>4</sub>/R<sub>1</sub></span>.
+              The design requirement gives
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="R4 / R1 = 0.05">Copy equation</button>
+              <pre class="eq">R4 / R1 = 0.05</pre>
+            </div>
+
+            <p>
+              Now impose the required positive output level at the switching point, i.e. at <span class="katex-like">v<sub>i</sub> = 0</span>,
+              <span class="katex-like">v<sub>o</sub> = +3 V</span>:
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="3 = 0.7 + 5.7(R4/R5)">Copy equation</button>
+              <pre class="eq">3 = 0.7 + 5.7(R4/R5)</pre>
+            </div>
+
+            <p>So</p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="R4 / R5 = (3 - 0.7)/5.7 = 2.3/5.7 ≈ 0.4035">Copy equation</button>
+              <pre class="eq">R4 / R5 = (3 - 0.7)/5.7 = 2.3/5.7 ≈ 0.4035</pre>
+            </div>
+
+            <h3>Step 2: Negative output branch</h3>
+            <p>
+              For a slightly positive input, the output goes negative. In this branch, <span class="katex-like">D<sub>1</sub></span> conducts, closing feedback through node <strong>A</strong>.
+            </p>
+
+            <div class="callout">
+              Again, ideal negative feedback gives
+              <span class="katex-like">v<sub>n</sub> = 0</span>.
+              Since <span class="katex-like">D<sub>1</sub></span> is ON and directed from <span class="katex-like">n → A</span>,
+              <span class="katex-like">v<sub>A</sub> = v<sub>n</sub> - 0.7 = -0.7 V</span>.
+            </div>
+
+            <p>
+              The current through <span class="katex-like">R<sub>1</sub></span> is now
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="I_in = (v_i - 0)/R1 = v_i / R1">Copy equation</button>
+              <pre class="eq">I_in = (v_i - v_n)/R1 = v_i/R1</pre>
+            </div>
+
+            <p>
+              This current leaves the input node through <span class="katex-like">D<sub>1</sub></span> toward node <span class="katex-like">A</span>.
+              Applying KCL at node <span class="katex-like">A</span>:
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="(v_A - v_o)/R3 = v_i/R1 + (5 - v_A)/R2">Copy equation</button>
+              <pre class="eq">(v_A - v_o)/R3 = v_i/R1 + (5 - v_A)/R2</pre>
+            </div>
+
+            <p>
+              Substitute <span class="katex-like">v<sub>A</sub> = -0.7</span>:
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="(-0.7 - v_o)/R3 = v_i/R1 + 5.7/R2">Copy equation</button>
+              <pre class="eq">(-0.7 - v_o)/R3 = v_i/R1 + 5.7/R2</pre>
+            </div>
+
+            <p>Solve for <span class="katex-like">v<sub>o</sub></span>:</p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="v_o = -0.7 - (R3/R1)v_i - 5.7(R3/R2)">Copy equation</button>
+              <pre class="eq">v_o = -0.7 - (R3/R1)v_i - 5.7(R3/R2)</pre>
+            </div>
+
+            <p>
+              Therefore the slope magnitude on this branch is
+              <span class="katex-like">R<sub>3</sub>/R<sub>1</sub></span>, so the design requirement gives
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="R3 / R1 = 0.05">Copy equation</button>
+              <pre class="eq">R3 / R1 = 0.05</pre>
+            </div>
+
+            <p>
+              Now impose the required negative output level at <span class="katex-like">v<sub>i</sub> = 0</span>,
+              namely <span class="katex-like">v<sub>o</sub> = -3 V</span>:
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="-3 = -0.7 - 5.7(R3/R2)">Copy equation</button>
+              <pre class="eq">-3 = -0.7 - 5.7(R3/R2)</pre>
+            </div>
+
+            <p>Hence</p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="R3 / R2 = (3 - 0.7)/5.7 = 2.3/5.7 ≈ 0.4035">Copy equation</button>
+              <pre class="eq">R3 / R2 = 2.3/5.7 ≈ 0.4035</pre>
+            </div>
+
+            <h3>Step 3: Use symmetry for a clean design</h3>
+            <p>
+              Because the supplies are symmetric and the desired levels are symmetric, choose
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="R3 = R4,   R2 = R5">Copy equation</button>
+              <pre class="eq">R3 = R4,   R2 = R5</pre>
+            </div>
+
+            <p>
+              Then both branches automatically have the same slope magnitude and the same absolute level.
+              Since
+              <span class="katex-like">R<sub>3</sub>/R<sub>1</sub> = R<sub>4</sub>/R<sub>1</sub> = 0.05</span>,
+              we can write
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="R3 = R4 = 0.05 R1">Copy equation</button>
+              <pre class="eq">R3 = R4 = 0.05 R1</pre>
+            </div>
+
+            <p>
+              Also, since
+              <span class="katex-like">R<sub>3</sub>/R<sub>2</sub> = R<sub>4</sub>/R<sub>5</sub> = 2.3/5.7</span>,
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="R2 = R5 = R3 / 0.4035 ≈ 2.478 R3">Copy equation</button>
+              <pre class="eq">R2 = R5 = R3 / 0.4035 ≈ 2.478 R3</pre>
+            </div>
+
+            <p>
+              A convenient choice is to start with <span class="katex-like">R<sub>1</sub> = 100 kΩ</span>. Then
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="R1 = 100 kΩ
+R3 = R4 = 5.0 kΩ
+R2 = R5 ≈ 12.4 kΩ">Copy equation</button>
+              <pre class="eq">R1 = 100 kΩ
+R3 = R4 = 5.0 kΩ
+R2 = R5 ≈ 12.4 kΩ</pre>
+            </div>
+
+            <div class="callout good">
+              <strong>Check:</strong>
+              <span class="katex-like">R<sub>3</sub>/R<sub>1</sub> = R<sub>4</sub>/R<sub>1</sub> = 5/100 = 0.05</span> exactly, and
+              <span class="katex-like">R<sub>3</sub>/R<sub>2</sub> = 5/12.4 ≈ 0.403</span>, close to the required 0.4035.
+            </div>
+
+            <h3>Step 4: Final branch equations</h3>
+            <p>
+              Using the design conditions, the two branches become
+            </p>
+            <div class="eq-wrap">
+              <button class="copy-btn small" data-copy="For v_i < 0:  v_o = +3 - 0.05 v_i
+For v_i > 0:  v_o = -3 - 0.05 v_i">Copy equation</button>
+              <pre class="eq">For v_i < 0:  v_o = +3 - 0.05 v_i
+For v_i > 0:  v_o = -3 - 0.05 v_i</pre>
+            </div>
+
+            <p>
+              At <span class="katex-like">v<sub>i</sub> = 0</span>, the output jumps between the two comparator levels <span class="nowrap">+3 V</span> and <span class="nowrap">−3 V</span>, depending on the sign of the infinitesimal input perturbation.
+            </p>
+
+            <div class="final-box">
+              <h3>Final Answer</h3>
+              <p>The required resistor ratios are</p>
+              <div class="eq-wrap">
+                <button class="copy-btn small" data-copy="R3/R1 = R4/R1 = 0.05
+R3/R2 = R4/R5 = 2.3/5.7 ≈ 0.4035">Copy equation</button>
+                <pre class="eq">R3/R1 = R4/R1 = 0.05
+R3/R2 = R4/R5 = 2.3/5.7 ≈ 0.4035</pre>
+              </div>
+              <p>A convenient numerical choice is</p>
+              <div class="eq-wrap">
+                <button class="copy-btn small" data-copy="R1 = 100 kΩ
+R3 = R4 = 5.0 kΩ
+R2 = R5 ≈ 12.4 kΩ">Copy equation</button>
+                <pre class="eq">R1 = 100 kΩ
+R3 = R4 = 5.0 kΩ
+R2 = R5 ≈ 12.4 kΩ</pre>
+              </div>
+              <p>
+                These values give comparator output levels of approximately
+                <span class="nowrap">±3 V</span> at the switching point and branch slope magnitude <span class="nowrap">0.05</span>.
+              </p>
+              <p>
+                <button class="copy-btn" data-copy="Final answer:
+R3/R1 = R4/R1 = 0.05
+R3/R2 = R4/R5 = 2.3/5.7 ≈ 0.4035
+
+One convenient set:
+R1 = 100 kΩ
+R3 = R4 = 5.0 kΩ
+R2 = R5 ≈ 12.4 kΩ
+
+Branch equations:
+For v_i < 0, v_o = +3 - 0.05 v_i
+For v_i > 0, v_o = -3 - 0.05 v_i">Copy final answer</button>
+              </p>
+            </div>
+
+            <h3>Sanity checks</h3>
+            <ul>
+              <li><strong>Dimensions:</strong> all slopes are resistor ratios, hence dimensionless, as required.</li>
+              <li><strong>Symmetry:</strong> symmetric supplies and symmetric targets produce symmetric resistor choices.</li>
+              <li><strong>Sign check:</strong> positive input produces negative output branch, consistent with the inverting input.</li>
+              <li><strong>Physical interpretation:</strong> the ladder and diode drops shift the branch intercepts from 0 V to <span class="nowrap">±3 V</span>.</li>
+            </ul>
+
+            <details>
+              <summary>Deeper math note: why each step is valid</summary>
+              <p>
+                Each branch is linear because, once a diode is assumed ON, the diode equation becomes an algebraic voltage constraint and all remaining constitutive relations are Ohm’s law. That turns the branch into a linear resistive network. The op-amp relation is then used only through the virtual-ground condition, which follows from negative feedback and very large open-loop gain.
+              </p>
+              <p>
+                This is mathematically a <strong>piecewise-linear complementarity system</strong>. The full exact problem would include ON/OFF inequalities for both diodes. Here the intended operating branch is identified from the sign of the input and then solved directly.
+              </p>
+            </details>
+          </section>
+
+          <section id="part-4">
+            <h2>PART 4 — Deeper Understanding</h2>
+
+            <h3>Re-interpret the final formulas</h3>
+            <ul>
+              <li><span class="katex-like">R<sub>3</sub>/R<sub>1</sub></span> and <span class="katex-like">R<sub>4</sub>/R<sub>1</sub></span> control the <strong>branch slope</strong>.</li>
+              <li><span class="katex-like">R<sub>3</sub>/R<sub>2</sub></span> and <span class="katex-like">R<sub>4</sub>/R<sub>5</sub></span> control the <strong>level offset</strong> caused by the supply rails and diode drop.</li>
+              <li>The number <span class="katex-like">2.3</span> appears because the desired level is 3 V while the active node is shifted by 0.7 V due to the conducting diode:
+                <span class="katex-like">3 - 0.7 = 2.3</span>.</li>
+              <li>The number <span class="katex-like">5.7</span> appears because the active reference node is 0.7 V away from ground while referenced to a 5 V rail:
+                <span class="katex-like">5 + 0.7 = 5.7</span>.</li>
+            </ul>
+
+            <h3>Parameter dependence</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>If increased</th>
+                  <th>Effect</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="katex-like">R<sub>1</sub></span></td>
+                  <td>Slope magnitude decreases</td>
+                  <td>The transfer branches become flatter.</td>
+                </tr>
+                <tr>
+                  <td><span class="katex-like">R<sub>3</sub>, R<sub>4</sub></span></td>
+                  <td>Slope magnitude increases; level offset also changes</td>
+                  <td>These resistors influence both gain and intercept.</td>
+                </tr>
+                <tr>
+                  <td><span class="katex-like">R<sub>2</sub>, R<sub>5</sub></span></td>
+                  <td>Level offset decreases when they increase</td>
+                  <td>Weaker coupling to the supply rails.</td>
+                </tr>
+                <tr>
+                  <td>Diode drop <span class="katex-like">V<sub>D</sub></span></td>
+                  <td>Changes level equations</td>
+                  <td>Temperature drift can shift the nominal ±3 V levels.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3>Alternative derivation idea</

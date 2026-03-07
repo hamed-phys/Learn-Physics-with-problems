@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Comparator / Limiter Design from Fig. 18.4(a)</title>
+  <style>
+    :root{
+      --bg:#f7f9fc;
+      --card:#ffffff;
+      --ink:#17212b;
+      --muted:#5a6877;
+      --accent:#1d5fbf;
+      --accent-2:#0f8b8d;
+      --border:#d9e2ec;
+      --soft:#eef4fb;
+      --warn:#fff7e6;
+      --good:#edf9f1;
+      --shadow:0 10px 30px rgba(23,33,43,.08);
+      --radius:18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--ink);
+      background:linear-gradient(180deg,#f7f9fc 0%,#f3f7fb 100%);
+      line-height:1.65;
+    }
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    code,.eq,.mono{font-family:var(--mono)}
+    .page{
+      max-width:1400px;
+      margin:0 auto;
+      padding:24px;
+      display:grid;
+      grid-template-columns: 290px minmax(0,1fr);
+      gap:24px;
+    }
+    .toc{
+      position:sticky;
+      top:16px;
+      align-self:start;
+      background:rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px 18px 12px;
+    }
+    .toc h2{
+      font-size:1rem;
+      margin:0 0 12px;
+      letter-spacing:.02em;
+    }
+    .toc ol{
+      margin:0;
+      padding-left:18px;
+    }
+    .toc li{margin:.45rem 0}
+    .content{
+      min-width:0;
+    }
+    header.hero{
+      background:linear-gradient(135deg,#ffffff 0%,#f0f6ff 100%);
+      border:1px solid var(--border);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      padding:28px;
+      overflow:hidden;
+      position:relative;
+    }
+    header.hero::after{
+      content:"";
+      position:absolute;
+      inset:auto -90px -90px auto;
+      width:240px;
+      height:240px;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(29,95,191,.12), rgba(29,95,191,0));
+      pointer-events:none;
+    }
+    h1,h2,h3{line-height:1.2}
+    h1{
+      margin:0 0 10px;
+      font-size:clamp(1.8rem, 3vw, 2.7rem);
+    }
+    .subtitle{
+      color:var(--muted);
+      max-width:70ch;
+      margin:0;
+    }
+    main section{
+      margin-top:22px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:26px;
+    }
+    .grid-2{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:18px;
+    }
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:18px;
+    }
+    .card,.callout,.mini{
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px 18px;
+      background:#fff;
+    }
+    .callout{
+      background:var(--soft);
+      border-left:6px solid var(--accent);
+    }
+    .callout.warn{
+      background:var(--warn);
+      border-left-color:#d38b00;
+    }
+    .callout.good{
+      background:var(--good);
+      border-left-color:#1f8f4d;
+    }
+    ul.tight li, ol.tight li{margin:.28rem 0}
+    .pill{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--muted);
+      font-size:.92rem;
+      margin:0 6px 8px 0;
+    }
+    .eqbox{
+      background:#0f1720;
+      color:#eff6ff;
+      border-radius:16px;
+      padding:16px 18px;
+      margin:14px 0;
+      position:relative;
+      overflow:auto;
+    }
+    .eqbox .label{
+      display:block;
+      color:#a7c3ff;
+      font-size:.86rem;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      margin-bottom:8px;
+    }
+    .copy-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:12px 0 0;
+    }
+    button.copy-btn{
+      border:none;
+      background:var(--accent);
+      color:white;
+      padding:10px 14px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:600;
+      box-shadow:0 8px 18px rgba(29,95,191,.18);
+      transition:transform .15s ease, opacity .15s ease;
+    }
+    button.copy-btn:hover{transform:translateY(-1px)}
+    button.copy-btn:active{transform:translateY(0)}
+    .table-wrap{overflow:auto}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin:10px 0 2px;
+      font-size:.98rem;
+    }
+    th,td{
+      border:1px solid var(--border);
+      padding:10px 12px;
+      vertical-align:top;
+    }
+    th{
+      background:#f5f8fc;
+      text-align:left;
+    }
+    .final-answer{
+      border:2px solid #1f8f4d;
+      background:linear-gradient(180deg,#f6fff8,#eefaf1);
+      border-radius:20px;
+      padding:18px 20px;
+    }
+    .badge{
+      display:inline-block;
+      margin-bottom:10px;
+      background:#1f8f4d;
+      color:#fff;
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:700;
+      letter-spacing:.02em;
+      font-size:.9rem;
+    }
+    details{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px 14px;
+      background:#fcfdff;
+      margin:12px 0;
+    }
+    summary{
+      cursor:pointer;
+      font-weight:700;
+    }
+    .math-insight{
+      background:linear-gradient(180deg,#fff,#f7fbff);
+      border:1px solid #cfe0ff;
+      border-left:6px solid #437be6;
+      border-radius:16px;
+      padding:16px 18px;
+    }
+    figure{
+      margin:18px 0;
+    }
+    figcaption{
+      color:var(--muted);
+      font-size:.95rem;
+      margin-top:8px;
+    }
+    svg{
+      width:100%;
+      height:auto;
+      display:block;
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:white;
+    }
+    footer{
+      text-align:center;
+      color:var(--muted);
+      padding:20px 0 40px;
+    }
+    .toplink{
+      display:inline-block;
+      margin-top:8px;
+      font-weight:700;
+    }
+    .small{font-size:.94rem;color:var(--muted)}
+    .nowrap{white-space:nowrap}
+    @media (max-width: 1040px){
+      .page{
+        grid-template-columns:1fr;
+      }
+      .toc{
+        position:relative;
+        top:auto;
+      }
+      .grid-2,.grid-3{
+        grid-template-columns:1fr;
+      }
+    }
+    @media print{
+      body{background:white}
+      .page{display:block;max-width:none;padding:0}
+      .toc{display:none}
+      main section, header.hero{
+        box-shadow:none;
+        border:1px solid #bbb;
+        break-inside:avoid;
+        margin-top:18px;
+      }
+      button.copy-btn{display:none}
+      a{text-decoration:none;color:black}
+    }
+  </style>
+</head>
+<body id="top">
+  <div class="page">
+    <aside class="toc" aria-label="Table of contents">
+      <h2>Contents</h2>
+      <ol class="tight">
+        <li><a href="#summary">Quick Summary</a></li>
+        <li><a href="#part0">Part 0 — Concept Primer</a></li>
+        <li><a href="#part0b">Part 0B — Industry &amp; Applied Physics Perspective</a></li>
+        <li><a href="#part1">Part 1 — Problem Analysis</a></li>
+        <li><a href="#part2">Part 2 — Strategy &amp; Tips</a></li>
+        <li><a href="#part3">Part 3 — Full Solution</a></li>
+        <li><a href="#part4">Part 4 — Deeper Understanding</a></li>
+        <li><a href="#part5">Part 5 — Optional Plot Guide</a></li>
+      </ol>
+      <p class="small" style="margin-top:14px">
+        Topic: op-amp comparator obtained from a limiter by removing the linear feedback resistor.
+      </p>
+    </aside>
+
+    <div class="content">
+      <header class="hero">
+        <p class="pill">Electronics / Applied Physics</p>
+        <p class="pill">Comparator Design</p>
+        <p class="pill">Limiter Levels</p>
+        <h1>Designing the Comparator Characteristic from Fig. 18.4(a)</h1>
+        <p class="subtitle">
+          We convert the limiter into a comparator by removing <span class="mono">R<sub>f</sub></span>, derive the output levels from the diode-resistor ladder, prove how a bias source shifts the switching threshold, and then choose standard 5% resistor values to realize output levels of ±3 V and a threshold at <span class="mono">v<sub>I</sub> = +2 V</span>.
+        </p>
+      </header>
+
+      <main>
+        <section id="summary">
+          <h2>Quick Summary</h2>
+          <ul class="tight">
+            <li>This problem is about an <strong>op-amp comparator</strong> obtained by removing the linear feedback resistor from a diode limiter circuit.</li>
+            <li>The key physical idea is that the op-amp saturates, while the <strong>diode-resistor ladder fixes the output plateaus</strong> at finite positive and negative levels.</li>
+            <li>The governing relations come from <strong>ideal-op-amp logic</strong>, <strong>KCL</strong>, and <strong>piecewise-linear circuit analysis</strong>.</li>
+            <li>With ideal diodes and rails ±V, the output levels are
+              <span class="mono">L<sub>+</sub> = (R<sub>4</sub>/R<sub>5</sub>)V</span> and
+              <span class="mono">L<sub>-</sub> = -(R<sub>3</sub>/R<sub>2</sub>)V</span>.
+            </li>
+            <li>Adding a dc source <span class="mono">V<sub>B</sub></span> through <span class="mono">R<sub>B</sub></span> shifts the threshold to
+              <span class="mono">v<sub>I,th</sub> = -(R<sub>1</sub>/R<sub>B</sub>)V<sub>B</sub></span>.
+            </li>
+            <li>For the required design, choose <span class="mono">R<sub>1</sub> = 100 kΩ</span>,
+              <span class="mono">R<sub>2</sub> = R<sub>5</sub> = 30 kΩ</span>,
+              <span class="mono">R<sub>3</sub> = R<sub>4</sub> = 18 kΩ</span>,
+              and <span class="mono">R<sub>B</sub> = 250 kΩ</span> with <span class="mono">V<sub>B</sub> = -5 V</span>.
+            </li>
+            <li>The result is a <strong>numeric design</strong>: output levels ±3 V, threshold +2 V, input resistance 100 kΩ, and plateau slope 0 V/V, which certainly satisfies the ≤0.05 V/V requirement.</li>
+          </ul>
+
+          <div class="eqbox" id="key-equations-box">
+            <span class="label">Key equations</span>
+            <div class="eq">L+ = (R4/R5) V</div>
+            <div class="eq">L- = -(R3/R2) V</div>
+            <div class="eq">vI,th = -(R1/RB) VB</div>
+            <div class="eq">For ±3 V with V = 5 V: R4/R5 = R3/R2 = 3/5 = 0.6</div>
+            <div class="eq">For vI,th = +2 V with R1 = 100 kΩ and VB = -5 V: RB = 250 kΩ</div>
+          </div>
+          <div class="copy-row">
+            <button class="copy-btn" data-copy-target="key-equations-plain">Copy key equations</button>
+          </div>
+          <textarea id="key-equations-plain" style="position:absolute;left:-9999px;top:-9999px;">
+L+ = (R4/R5) V
+L- = -(R3/R2) V
+vI,th = -(R1/RB) VB
+For V = 5 V and output levels ±3 V:
+R4/R5 = 3/5 and R3/R2 = 3/5
+Choose R2 = R5 = 30 kΩ, R3 = R4 = 18 kΩ
+Choose R1 = 100 kΩ
+For threshold +2 V using VB = -5 V:
+RB = 250 kΩ
+          </textarea>
+        </section>
+
+        <section id="part0">
+          <h2>PART 0 — Concept Primer</h2>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3>Core definitions</h3>
+              <ul class="tight">
+                <li><strong>v<sub>I</sub></strong> (V): input voltage applied through <span class="mono">R<sub>1</sub></span>.</li>
+                <li><strong>v<sub>O</sub></strong> (V): op-amp output voltage.</li>
+                <li><strong>+V, -V</strong> (V): dc supply rails for the resistor ladder.</li>
+                <li><strong>R<sub>1</sub></strong> (Ω): input resistor, sets input resistance seen by the source.</li>
+                <li><strong>R<sub>2</sub>, R<sub>3</sub>, R<sub>4</sub>, R<sub>5</sub></strong> (Ω): ladder resistors that determine the plateau values.</li>
+                <li><strong>D<sub>1</sub>, D<sub>2</sub></strong>: ideal diodes used as state-selecting feedback elements.</li>
+                <li><strong>R<sub>B</sub>, V<sub>B</sub></strong>: threshold-shifting network connected to the inverting-input node.</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h3>Physical meaning</h3>
+              <ul class="tight">
+                <li>The op-amp compares the inverting-input node voltage with ground at the non-inverting terminal.</li>
+                <li>Without <span class="mono">R<sub>f</sub></span>, the circuit is no longer a linear amplifier; it becomes a <strong>piecewise nonlinear switching device</strong>.</li>
+                <li>The ladder plus diodes do not merely “clip”; they <strong>define reproducible output states</strong>.</li>
+                <li>The added bias source shifts the switching point horizontally along the input axis, which is the same idea used in threshold detectors and level-crossing circuits.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout">
+            <strong>Key principles and validity conditions</strong>
+            <ul class="tight">
+              <li><strong>Ideal op-amp approximation:</strong> infinite open-loop gain, zero input current, and output able to move as needed until constrained by the circuit state.</li>
+              <li><strong>Ideal diode approximation:</strong> when ON, the diode drop is 0 V; when OFF, the current is 0.</li>
+              <li><strong>Piecewise-linear analysis:</strong> we solve the circuit separately in the positive-output state and the negative-output state, then stitch the results together.</li>
+              <li><strong>Steady-state dc analysis:</strong> no capacitors or inductors are involved, so no differential equation in time is needed here.</li>
+            </ul>
+          </div>
+
+          <div class="math-insight">
+            <h3 style="margin-top:0">Math Insight</h3>
+            <p>
+              The core equation here is not a PDE or wave equation; it is a <strong>piecewise algebraic switching law</strong>.
+              Mathematically, the circuit is a <strong>hybrid system</strong>: each diode configuration defines a linear algebraic subproblem, while the diode ON/OFF conditions define the state boundaries.
+              In other words, the comparator characteristic is a <strong>piecewise-constant map</strong> from input voltage to output voltage, shifted by a linear bias relation.
+            </p>
+          </div>
+
+          <h3>Mathematical model</h3>
+          <div class="card">
+            <p>
+              Let <span class="mono">x</span> denote the inverting-input node voltage. The non-inverting input is grounded, so
+              <span class="mono">v<sub>+</sub> = 0</span>. The op-amp state is determined by the sign of
+              <span class="mono">v<sub>+</sub> - v<sub>-</sub> = -x</span>.
+            </p>
+            <p>
+              The model is <strong>static</strong> and <strong>piecewise</strong>:
+            </p>
+            <div class="eqbox">
+              <span class="label">State law</span>
+              <div class="eq">If x &gt; 0, then vO goes negative and the lower diode path becomes relevant.</div>
+              <div class="eq">If x &lt; 0, then vO goes positive and the upper/lower conduction state switches accordingly.</div>
+              <div class="eq">At the switching boundary, x = 0.</div>
+            </div>
+            <p>
+              Because the op-amp input current is zero, KCL at node <span class="mono">x</span> gives, before switching,
+            </p>
+            <div class="eqbox">
+              <span class="label">Threshold relation</span>
+              <div class="eq">x = weighted node voltage determined by sources through R1 and RB</div>
+              <div class="eq">At x = 0: vI/R1 + VB/RB = 0</div>
+              <div class="eq">Therefore vI,th = -(R1/RB) VB</div>
+            </div>
+            <p>
+              This is dimensionally correct because <span class="mono">R<sub>1</sub>/R<sub>B</sub></span> is dimensionless, so the right-hand side has units of volts.
+            </p>
+          </div>
+
+          <h3>Mini intuition examples</h3>
+          <div class="grid-3">
+            <div class="mini">
+              <strong>Example 1</strong>
+              <p>If no bias source is attached, symmetry suggests the switching threshold is at 0 V. That is exactly what the formula gives when <span class="mono">V<sub>B</sub>=0</span>.</p>
+            </div>
+            <div class="mini">
+              <strong>Example 2</strong>
+              <p>If <span class="mono">V<sub>B</sub></span> is negative, then <span class="mono">-(R<sub>1</sub>/R<sub>B</sub>)V<sub>B</sub></span> is positive, so the whole transfer curve shifts to the right.</p>
+            </div>
+            <div class="mini">
+              <strong>Example 3</strong>
+              <p>If <span class="mono">R<sub>4</sub>/R<sub>5</sub></span> increases, the positive output plateau rises. This is a pure resistor-ratio effect.</p>
+            </div>
+          </div>
+
+          <div class="callout warn">
+            <strong>What to watch for</strong>
+            <ul class="tight">
+              <li>Do not confuse the op-amp supply rails with the <strong>defined comparator output plateaus</strong>; the ladder sets the latter.</li>
+              <li>Be careful with sign conventions: a positive threshold shift to <span class="mono">+2 V</span> requires a <strong>negative</strong> bias source if all resistors are positive.</li>
+              <li>The input resistance requirement refers to what the source sees at <span class="mono">v<sub>I</sub></span>, which is set by <span class="mono">R<sub>1</sub></span>.</li>
+              <li>When <span class="mono">R<sub>f</sub></span> is removed, the output plateaus are flat, so the slope in those regions is <strong>zero</strong>.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="part0b">
+          <h2>PART 0B — Industry &amp; Applied Physics Perspective</h2>
+
+          <p>
+            Comparator and limiter ideas appear everywhere in engineering because real systems often need to decide whether a signal is above or below a threshold, while keeping outputs within safe, standardized voltage ranges.
+          </p>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3>Where this appears in industry</h3>
+              <ul class="tight">
+                <li><strong>Industrial automation:</strong> sensor thresholding, proximity detection, over/under-voltage alarms.</li>
+                <li><strong>Power electronics:</strong> zero-crossing detection, current-limit supervision, fault detection.</li>
+                <li><strong>Instrumentation:</strong> window comparators, level detectors, trigger conditioning for ADCs and counters.</li>
+                <li><strong>Medical devices:</strong> physiological signal threshold triggers and safety interlocks.</li>
+                <li><strong>Telecom and digital interfaces:</strong> analog-to-digital front ends and pulse restoration.</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h3>Why engineers care</h3>
+              <ul class="tight">
+                <li><strong>Performance:</strong> reliable switching at the desired threshold.</li>
+                <li><strong>Safety:</strong> fixed output levels prevent downstream overdrive.</li>
+                <li><strong>Reliability:</strong> diode-limited levels can be more predictable than unconstrained op-amp saturation.</li>
+                <li><strong>Cost:</strong> resistor-ratio designs are cheap and easy to manufacture.</li>
+                <li><strong>Manufacturability:</strong> standard resistor values and tolerances matter in mass production.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3>Measurement and validation in practice</h3>
+              <ul class="tight">
+                <li>Apply a slow ramp at the input and observe the switching point on an oscilloscope.</li>
+                <li>Measure output high and low plateaus with a DMM or scope.</li>
+                <li>Check tolerance spread by Monte Carlo simulation or worst-case analysis.</li>
+                <li>Validate diode non-ideality and op-amp saturation headroom in the lab.</li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h3>Design trade-offs and real constraints</h3>
+              <ul class="tight">
+                <li>Real diodes have nonzero forward drop and temperature dependence.</li>
+                <li>Real op-amps have finite slew rate, offset voltage, input bias current, and limited output swing.</li>
+                <li>Higher resistor values reduce current draw but increase sensitivity to leakage and noise.</li>
+                <li>Tighter threshold accuracy may require 1% resistors or trimming, not just 5% parts.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout">
+            <strong>From lab to product</strong>
+            <p>
+              The idealized textbook model is excellent for first design, but product-grade circuits usually add hysteresis, account for diode drops, and use tolerance analysis. In industrial environments, noise can cause chatter near the threshold; a practical design often modifies the circuit into a Schmitt trigger or uses a dedicated comparator IC.
+            </p>
+          </div>
+        </section>
+
+        <section id="part1">
+          <h2>PART 1 — Problem Analysis</h2>
+
+          <h3>Problem restated</h3>
+          <p>
+            We start from the limiter circuit of Fig. 18.4(a), but the resistor <span class="mono">R<sub>f</sub></span> is removed. This turns the circuit into a comparator-like device with two finite output levels. We must:
+          </p>
+          <ol class="tight">
+            <li>Sketch the transfer characteristic.</li>
+            <li>Show that adding a dc source <span class="mono">V<sub>B</sub></span> to the virtual-ground node through <span class="mono">R<sub>B</sub></span> shifts the characteristic horizontally to <span class="mono">v<sub>I</sub> = -(R<sub>1</sub>/R<sub>B</sub>)V<sub>B</sub></span>.</li>
+            <li>Choose standard 5% resistor values so the output levels are ±3 V, the threshold is +2 V, the input resistance is 100 kΩ, and the limiting-region slope is ≤0.05 V/V.</li>
+          </ol>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3>Given quantities</h3>
+              <ul class="tight">
+                <li>Supply rails for the ladder: <span class="mono">+V = +5 V</span>, <span class="mono">-V = -5 V</span></li>
+                <li>Available bias source: ±5 V</li>
+                <li>Desired output plateaus: <span class="mono">+3 V</span> and <span class="mono">-3 V</span></li>
+                <li>Desired comparator threshold: <span class="mono">v<sub>I,th</sub> = +2 V</span></li>
+                <li>Desired input resistance: <span class="mono">100 kΩ</span></li>
+                <li>Ideal diodes: <span class="mono">V<sub>D</sub> = 0</span></li>
+              </ul>
+            </div>
+
+            <div class="card">
+              <h3>Unknowns</h3>
+              <ul class="tight">
+                <li>Transfer characteristic <span class="mono">v<sub>O</sub>(v<sub>I</sub>)</span></li>
+                <li>Resistor values <span class="mono">R<sub>1</sub>, R<sub>2</sub>, R<sub>3</sub>, R<sub>4</sub>, R<sub>5</sub>, R<sub>B</sub></span></li>
+                <li>Bias source polarity and value used for <span class="mono">V<sub>B</sub></span></li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>Relevant principles and why they apply</h3>
+          <ul class="tight">
+            <li><strong>KCL:</strong> needed at the inverting-input node and along the resistor ladder.</li>
+            <li><strong>Ideal-op-amp switching logic:</strong> needed because removing <span class="mono">R<sub>f</sub></span> destroys linear feedback over the whole range.</li>
+            <li><strong>Ideal-diode state selection:</strong> needed because only one clamp path conducts in each output state.</li>
+            <li><strong>Resistor-divider relations:</strong> needed to determine the output plateaus.</li>
+          </ul>
+
+          <div class="callout good">
+            <strong>Assumptions</strong>
+            <ul class="tight">
+              <li>Op-amp is ideal for the purpose of the transfer characteristic.</li>
+              <li>Diodes are ideal: ON → short circuit, OFF → open circuit.</li>
+              <li>The analysis is steady-state dc.</li>
+              <li><span class="mono">R<sub>f</sub></span> is removed, so the plateaus are flat and the slope in those regions is zero.</li>
+            </ul>
+          </div>
+
+          <h3>Possible approaches</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Approach</th>
+                  <th>Idea</th>
+                  <th>Pros</th>
+                  <th>Cons</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>State-by-state diode analysis</td>
+                  <td>Assume one diode ON at a time and solve each linear subcircuit.</td>
+                  <td>Direct, physically transparent, ideal for design.</td>
+                  <td>Requires careful sign tracking.</td>
+                </tr>
+                <tr>
+                  <td>Thevenin-equivalent viewpoint</td>
+                  <td>Reduce the ladder to equivalent sources seen from nodes A and B.</td>
+                  <td>Elegant for advanced readers.</td>
+                  <td>Less intuitive for beginners.</td>
+                </tr>
+                <tr>
+                  <td>Numerical nodal matrix method</td>
+                  <td>Write linear equations for each switching state.</td>
+                  <td>Systematic and scalable.</td>
+                  <td>Overkill for this small circuit.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            <strong>Best choice:</strong> the <em>state-by-state diode analysis</em>. It exposes the physics clearly, produces the transfer characteristic immediately, and leads naturally to component selection.
+          </p>
+        </section>
+
+        <section id="part2">
+          <h2>PART 2 — Strategy &amp; Tips</h2>
+
+          <ol class="tight">
+            <li><strong>Identify the switching condition.</strong>  
+              Use the inverting-input node voltage <span class="mono">x</span> and set the threshold at <span class="mono">x = 0</span>.</li>
+            <li><strong>Derive the threshold shift.</strong>  
+              Apply KCL at node <span class="mono">x</span> with sources <span class="mono">v<sub>I</sub></span> and <span class="mono">V<sub>B</sub></span> through resistors <span class="mono">R<sub>1</sub></span> and <span class="mono">R<sub>B</sub></span>.</li>
+            <li><strong>Find the negative plateau.</strong>  
+              Assume the upper diode path conducts, set node A to virtual ground, and solve the small resistor-divider relation between <span class="mono">+V</span>, A, and <span class="mono">v<sub>O</sub></span>.</li>
+            <li><strong>Find the positive plateau.</strong>  
+              Assume the lower diode path conducts, set node B to virtual ground, and solve the analogous divider relation.</li>
+            <li><strong>Apply the design targets.</strong>  
+              Set the resistor ratios for ±3 V using ±5 V rails.</li>
+            <li><strong>Use standard 5% values.</strong>  
+              Pick exact E24 values when possible.</li>
+            <li><strong>Check input resistance and slope.</strong>  
+              Verify <span class="mono">R<sub>1</sub> = 100 kΩ</span> and note that with <span class="mono">R<sub>f</sub></span> removed the plateau slope is zero.</li>
+          </ol>
+
+          <div class="callout warn">
+            <strong>Common mistakes</strong>
+            <ul class="tight">
+              <li>Using the wrong sign for the threshold shift.</li>
+              <li>Setting the plateau equal to ±5 V instead of the resistor-ratio value.</li>
+              <li>Forgetting that <span class="mono">R<sub>1</sub></span> sets the input resistance.</li>
+              <li>Ignoring that ideal 5% resistor <em>values</em> can still be chosen to satisfy an exact ratio, even though actual manufactured parts have tolerance spread.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="part3">
+          <h2>PART 3 — Full Solution</h2>
+
+          <h3>Physical intuition first</h3>
+          <p>
+            Once <span class="mono">R<sub>f</sub></span> is removed, the circuit is no longer a linear limiter with sloped outer regions. Instead, it behaves like a comparator: the output rapidly jumps between two nearly constant values. Those values are not arbitrary; they are set by the resistor ladder and whichever diode becomes forward biased. So before doing any algebra, we already expect a step-like transfer characteristic:
+          </p>
+          <ul class="tight">
+            <li>for input below threshold → one constant output level;</li>
+            <li>for input above threshold → the opposite constant output level.</li>
+          </ul>
+
+          <h3>Step 1: threshold without and with bias</h3>
+          <p>
+            Let the inverting-input node be <span class="mono">x</span>. The non-inverting input is grounded, so the switching boundary occurs when
+          </p>
+          <div class="eqbox">
+            <span class="label">Switching condition</span>
+            <div class="eq">x = 0</div>
+          </div>
+
+          <p>
+            With the added bias source <span class="mono">V<sub>B</sub></span> connected to node <span class="mono">x</span> through <span class="mono">R<sub>B</sub></span>, and with zero op-amp input current, KCL at node <span class="mono">x</span> gives
+          </p>
+          <div class="eqbox">
+            <span class="label">KCL at the inverting-input node</span>
+            <div class="eq">(x - vI)/R1 + (x - VB)/RB = 0</div>
+          </div>
+
+          <p>
+            At the threshold, <span class="mono">x = 0</span>. Substituting:
+          </p>
+          <div class="eqbox">
+            <span class="label">Threshold derivation</span>
+            <div class="eq">(0 - vI)/R1 + (0 - VB)/RB = 0</div>
+            <div class="eq">-vI/R1 - VB/RB = 0</div>
+            <div class="eq">vI = -(R1/RB) VB</div>
+          </div>
+
+          <p>
+            Therefore the transfer characteristic is shifted along the input axis so that the switching threshold is
+          </p>
+          <div class="eqbox">
+            <span class="label">Threshold shift result</span>
+            <div class="eq">vI,th = -(R1/RB) VB</div>
+          </div>
+
+          <p>
+            This is exactly what the problem asked us to show.
+          </p>
+
+          <details>
+            <summary>Why this step is mathematically valid</summary>
+            <p>
+              KCL is valid because the node is purely resistive and no charge is accumulating in steady state. The op-amp input current is zero in the ideal model, so only the two resistor currents appear. The equation is linear because the constitutive law for each resistor is linear: <span class="mono">i = (v<sub>1</sub>-v<sub>2</sub>)/R</span>.
+            </p>
+          </details>
+
+          <h3>Step 2: derive the output plateaus</h3>
+
+          <p>
+            We now analyze the two output states separately.
+          </p>
+
+          <div class="grid-2">
+            <div class="card">
+              <h4>Negative output state</h4>
+              <p>
+                In the negative-output state, the upper diode path conducts and node A is effectively tied to the inverting-input virtual-ground level, which is 0 V in the switching model. Thus,
+              </p>
+              <div class="eqbox">
+                <span class="label">Upper clamp condition</span>
+                <div class="eq">vA = 0</div>
+              </div>
+              <p>
+                The current through <span class="mono">R<sub>2</sub></span> from <span class="mono">+V</span> to A equals the current through <span class="mono">R<sub>3</sub></span> from A to <span class="mono">v<sub>O</sub></span>:
+              </p>
+              <div class="eqbox">
+                <span class="label">Negative plateau derivation</span>
+                <div class="eq">(V - 0)/R2 = (0 - vO)/R3</div>
+                <div class="eq">V/R2 = -vO/R3</div>
+                <div class="eq">vO = -(R3/R2) V</div>
+              </div>
+              <p>
+                Therefore,
+              </p>
+              <div class="eqbox">
+                <span class="label">Negative plateau</span>
+                <div class="eq">L- = -(R3/R2) V</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h4>Positive output state</h4>
+              <p>
+                In the positive-output state, the lower diode path conducts and node B is clamped to 0 V:
+              </p>
+              <div class="eqbox">
+                <span class="label">Lower clamp condition</span>
+                <div class="eq">vB = 0</div>
+              </div>
+              <p>
+                Now the current through <span class="mono">R<sub>5</sub></span> from B to <span class="mono">-V</span> equals the current through <span class="mono">R<sub>4</sub></span> from <span class="mono">v<sub>O</sub></span> to B:
+              </p>
+              <div class="eqbox">
+                <span class="label">Positive plateau derivation</span>
+                <div class="eq">(0 - (-V))/R5 = (vO - 0)/R4</div>
+                <div class="eq">V/R5 = vO/R4</div>
+                <div class="eq">vO = (R4/R5) V</div>
+              </div>
+              <p>
+                Therefore,
+              </p>
+              <div class="eqbox">
+                <span class="label">Positive plateau</span>
+                <div class="eq">L+ = (R4/R5) V</div>
+              </div>
+            </div>
+          </div>
+
+          <h3>Step 3: choose resistor ratios for ±3 V output levels</h3>
+          <p>
+            The supplies are <span class="mono">±V = ±5 V</span>, and we want
+          </p>
+          <div class="eqbox">
+            <span class="label">Design targets for the plateaus</span>
+            <div class="eq">L+ = +3 V</div>
+            <div class="eq">L- = -3 V</div>
+          </div>
+
+          <p>
+            Using the formulas above:
+          </p>
+          <div class="eqbox">
+            <span class="label">Resistor-ratio conditions</span>
+            <div class="eq">(R4/R5) · 5 = 3  →  R4/R5 = 3/5 = 0.6</div>
+            <div class="eq">(R3/R2) · 5 = 3  →  R3/R2 = 3/5 = 0.6</div>
+          </div>
+
+          <p>
+            A convenient exact E24 choice is
+          </p>
+          <div class="eqbox">
+            <span class="label">Standard 5% plateau-setting values</span>
+            <div class="eq">R2 = 30 kΩ,  R3 = 18 kΩ</div>
+            <div class="eq">R5 = 30 kΩ,  R4 = 18 kΩ</div>
+          </div>
+
+          <p>
+            because <span class="mono">18/30 = 0.6</span> exactly as a nominal value.
+          </p>
+
+          <h3>Step 4: set the input resistance</h3>
+          <p>
+            The source sees the circuit through <span class="mono">R<sub>1</sub></span>, so to make the input resistance 100 kΩ, choose
+          </p>
+          <div class="eqbox">
+            <span class="label">Input resistance requirement</span>
+            <div class="eq">R1 = 100 kΩ</div>
+          </div>
+
+          <h3>Step 5: shift the threshold to +2 V</h3>
+          <p>
+            We want
+          </p>
+          <div class="eqbox">
+            <span class="label">Desired threshold</span>
+            <div class="eq">vI,th = +2 V</div>
+          </div>
+
+          <p>
+            Using the threshold formula,
+          </p>
+          <div class="eqbox">
+            <span class="label">Threshold design equation</span>
+            <div class="eq">2 = -(100 kΩ / RB) VB</div>
+          </div>
+
+          <p>
+            Since all resistors are positive, the threshold becomes positive only if <span class="mono">V<sub>B</sub></span> is negative. Using the available supply,
+            choose
+          </p>
+          <div class="eqbox">
+            <span class="label">Choose bias polarity</span>
+            <div class="eq">VB = -5 V</div>
+          </div>
+
+          <p>
+            Then
+          </p>
+          <div class="eqbox">
+            <span class="label">Solve for RB</span>
+            <div class="eq">2 = -(100 kΩ / RB)(-5)</div>
+            <div class="eq">2 = 500 kΩ / RB</div>
+            <div class="eq">RB = 250 kΩ</div>
+          </div>
+
+          <p>
+            The nominal value 250 kΩ is easily realized using standard 5% resistors in series, for example
+          </p>
+          <div class="eqbox">
+            <span class="label">Practical 5% realization</span>
+            <div class="eq">RB = 100 kΩ + 150 kΩ = 250 kΩ</div>
+          </div>
+
+          <h3>Step 6: transfer characteristic</h3>
+          <p>
+            With the chosen values, the comparator switches at <span class="mono">v<sub>I</sub> = +2 V</span>. Therefore the transfer characteristic is
+          </p>
+          <div class="eqbox">
+            <span class="label">Final transfer characteristic</span>
+            <div class="eq">vO = +3 V,   for vI &lt; +2 V</div>
+            <div class="eq">vO = -3 V,   for vI &gt; +2 V</div>
+          </div>
+
+          <p>
+            At exactly <span class="mono">v<sub>I</sub> = +2 V</span>, the ideal model is at the switching boundary, so the output is mathematically indeterminate in the idealized infinitely fast limit; physically, noise and device imperfections pick one state.
+          </p>
+
+          <figure>
+            <svg viewBox="0 0 860 440" role="img" aria-label="Static plot of comparator transfer characteristic">
+              <defs>
+                <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                  <path d="M0,0 L8,4 L0,8 Z" fill="#17212b"></path>
+                </marker>
+              </defs>
+
+              <rect x="70" y="50" width="730" height="300" fill="#fff"></rect>
+
+              <g stroke="#e6edf5" stroke-width="1">
+                <line x1="70" y1="80" x2="800" y2="80"></line>
+                <line x1="70" y1="140" x2="800" y2="140"></line>
+                <line x1="70" y1="200" x2="800" y2="200"></line>
+                <line x1="70" y1="260" x2="800" y2="260"></line>
+                <line x1="70" y1="320" x2="800" y2="320"></line>
+
+                <line x1="170" y1="50" x2="170" y2="350"></line>
+                <line x1="270" y1="50" x2="270" y2="350"></line>
+                <line x1="370" y1="50" x2="370" y2="350"></line>
+                <line x1="470" y1="50" x2="470" y2="350"></line>
+                <line x1="570" y1="50" x2="570" y2="350"></line>
+                <line x1="670" y1="50" x2="670" y2="350"></line>
+              </g>
+
+              <g stroke="#17212b" stroke-width="2">
+                <line x1="70" y1="200" x2="810" y2="200" marker-end="url(#arrow)"></line>
+                <line x1="420" y1="350" x2="420" y2="40" marker-end="url(#arrow)"></line>
+              </g>
+
+              <g stroke="#1d5fbf" stroke-width="4" fill="none">
+                <line x1="70" y1="110" x2="540" y2="110"></line>
+                <line x1="540" y1="110" x2="540" y2="290" stroke-dasharray="10 8"></line>
+                <line x1="540" y1="290" x2="800" y2="290"></line>
+              </g>
+
+              <g stroke="#d55f00" stroke-width="2">
+                <line x1="540" y1="50" x2="540" y2="350" stroke-dasharray="6 6"></line>
+              </g>
+
+              <g fill="#17212b" font-family="Arial, sans-serif" font-size="15">
+                <text x="20" y="115">+3 V</text>
+                <text x="20" y="205">0</text>
+                <text x="20" y="295">−3 V</text>
+
+                <text x="160" y="223">−4</text>
+                <text x="260" y="223">−2</text>
+                <text x="365" y="223">0</text>
+                <text x="462" y="223">+1</text>
+                <text x="530" y="223">+2</text>
+                <text x="565" y="223">+3</text>
+                <text x="665" y="223">+5</text>
+
+                <text x="770" y="192">v<tspan baseline-shift="sub">I</tspan> (V)</text>
+                <text x="432" y="62">v<tspan baseline-shift="sub">O</tspan> (V)</text>
+
+                <text x="255" y="94" fill="#1d5fbf">output high = +3 V</text>
+                <text x="595" y="275" fill="#1d5fbf">output low = −3 V</text>
+                <text x="505" y="76" fill="#d55f00">threshold at +2 V</text>
+                <text x="95" y="28" font-size="18" font-weight="700">Comparator transfer characteristic (example equals final design here)</text>
+              </g>
+            </svg>
+            <figcaption>
+              Static sketch of the designed transfer characteristic. Because the non-inverting input is grounded and the input is applied to the inverting terminal, the characteristic is <em>inverting</em>: the output jumps from +3 V to −3 V at <span class="mono">v<sub>I</sub> = +2 V</span>.
+            </figcaption>
+          </figure>
+
+          <h3>Step 7: slope requirement</h3>
+          <p>
+            Since <span class="mono">R<sub>f</sub></span> is removed, the outer regions are horizontal plateaus:
+          </p>
+          <div class="eqbox">
+            <span class="label">Slope in limiting regions</span>
+            <div class="eq">dvO/dvI = 0</div>
+          </div>
+          <p>
+            Therefore,
+          </p>
+          <div class="eqbox">
+            <span class="label">Check</span>
+            <div class="eq">0 ≤ 0.05 V/V</div>
+          </div>
+          <p>
+            so the specification is automatically satisfied.
+          </p>
+
+          <h3>Sanity checks</h3>
+          <div class="grid-2">
+            <div class="card">
+              <h4>Units</h4>
+              <ul class="tight">
+                <li><span class="mono">R<sub>4</sub>/R<sub>5</sub></span> and <span class="mono">R<sub>3</sub>/R<sub>2</sub></span> are dimensionless.</li>
+                <li>Multiplying a dimensionless ratio by <span class="mono">V</span> gives volts, as required for output levels.</li>
+                <li><span class="mono">-(R<sub>1</sub>/R<sub>B</sub>)V<sub>B</sub></span> also has units of volts.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Limiting cases</h4>
+              <ul class="tight">
+                <li>If <span class="mono">V<sub>B</sub>=0</span>, then the threshold returns to 0 V.</li>
+                <li>If <span class="mono">R<sub>4</sub>=R<sub>5</sub></span>, the positive plateau becomes +5 V.</li>
+                <li>If <span class="mono">R<sub>3</sub>=R<sub>2</sub></span>, the negative plateau becomes −5 V.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="final-answer" id="final-answer-box">
+            <span class="badge">Final Answer</span>
+            <p><strong>Threshold shift:</strong></p>
+            <p class="mono">vI,th = -(R1/RB) VB</p>
+
+            <p><strong>Output levels with ideal diodes:</strong></p>
+            <p class="mono">L+ = (R4/R5) V, &nbsp;&nbsp; L- = -(R3/R2) V</p>
+
+            <p><strong>Choose the following nominal 5% resistor values:</strong></p>
+            <ul class="tight">
+              <li><span class="mono">R1 = 100 kΩ</span></li>
+              <li><span class="mono">R2 = 30 kΩ</span></li>
+              <li><span class="mono">R3 = 18 kΩ</span></li>
+              <li><span class="mono">R4 = 18 kΩ</span></li>
+              <li><span class="mono">R5 = 30 kΩ</span></li>
+              <li><span class="mono">RB = 250 kΩ = 100 kΩ + 150 kΩ</span></li>
+              <li><span class="mono">VB = -5 V</span></li>
+            </ul>
+
+            <p><strong>Resulting characteristic:</strong></p>
+            <p class="mono">vO = +3 V for vI &lt; +2 V</p>
+            <p class="mono">vO = -3 V for vI &gt; +2 V</p>
+
+            <p><strong>Checks:</strong></p>
+            <ul class="tight">
+              <li>Input resistance = <span class="mono">100 kΩ</span></li>
+              <li>Limiting-region slope = <span class="mono">0 V/V</span> ≤ <span class="mono">0.05 V/V</span></li>
+            </ul>
+          </div>
+
+          <div class="copy-row">
+            <button class="copy-btn" data-copy-target="final-answer-plain">Copy final answer</button>
+          </div>
+          <textarea id="final-answer-plain" style="position:absolute;left:-9999px;top:-9999px;">
+Threshold shift:
+vI,th = -(R1/RB) VB
+
+Output levels:
+L+ = (R4/R5) V
+L- = -(R3/R2) V
+
+Choose:
+R1 = 100 kΩ
+R2 = 30 kΩ
+R3 = 18 kΩ
+R4 = 18 kΩ
+R5 = 30 kΩ
+RB = 250 kΩ = 100 kΩ + 150 kΩ
+VB = -5 V
+
+Then:
+vO = +3 V for vI < +2 V
+vO = -3 V for vI > +2 V
+
+Checks:
+Input resistance = 100 kΩ
+Limiting-region slope = 0 V/V ≤ 0.05 V/V
+          </textarea>
+        </section>
+
+        <section id="part4">
+          <h2>PART 4 — Deeper Understanding</h2>
+
+          <h3>Re-interpret the final formulas</h3>
+          <div class="grid-3">
+            <div class="mini">
+              <strong><span class="mono">R<sub>3</sub>/R<sub>2</sub></span></strong>
+              <p>Controls how far below zero the negative output plateau lies. Larger ratio → more negative output magnitude.</p>
+            </div>
+            <div class="mini">
+              <strong><span class="mono">R<sub>4</sub>/R<sub>5</sub></span></strong>
+              <p>Controls the positive output plateau. Larger ratio → larger positive level.</p>
+            </div>
+            <div class="mini">
+              <strong><span class="mono">R<sub>1</sub>/R<sub>B</sub></span></strong>
+              <p>Controls how strongly the bias source shifts the threshold. Larger ratio → larger shift for a given <span class="mono">V<sub>B</sub></span>.</p>
+            </div>
+          </div>
+
+          <h3>Parameter dependence</h3>
+          <ul class="tight">
+            <li>If <span class="mono">V</span> increases while the resistor ratios stay fixed, the plateau magnitudes scale linearly with <span class="mono">V</span>.</li>
+            <li>If <span class="mono">V<sub>B</sub></span> becomes more negative, the threshold moves further to the right.</li>
+            <li>If <span class="mono">R<sub>1</sub></span> increases with <span class="mono">R<sub>B</sub></span> fixed, the same bias source produces a larger threshold shift.</li>
+            <li>If real resistor tolerances are included, both threshold and output levels vary proportionally to those resistor-ratio errors.</li>
+          </ul>
+
+          <details>
+            <summary>Alternative derivation idea</summary>
+            <p>
+              One can replace the upper part of the ladder by a Thevenin equivalent seen from node A, and the lower part by another Thevenin equivalent seen from node B. Then each conducting diode simply clamps the inverting node to the Thevenin terminal voltage, making the plateau equations emerge from one-line divider formulas.
+            </p>
+          </details>
+
+          <h3>Concept checks</h3>
+          <ul class="tight">
+            <li><strong>Q:</strong> Why is the characteristic shifted horizontally rather than vertically by <span class="mono">V<sub>B</sub></span>?  
+              <strong>A:</strong> Because <span class="mono">V<sub>B</sub></span> changes the condition at which the input node reaches 0 V, i.e. the switching input value.</li>
+            <li><strong>Q:</strong> Why is the transfer characteristic inverting?  
+              <strong>A:</strong> The signal is applied to the inverting input while the non-inverting input is at ground.</li>
+            <li><strong>Q:</strong> Why is the plateau not ±5 V?  
+              <strong>A:</strong> The diode-resistor ladder clamps the output to resistor-ratio-defined values before the full rail value matters at the output node.</li>
+            <li><strong>Q:</strong> Why is the plateau slope zero here?  
+              <strong>A:</strong> Because the linear feedback resistor <span class="mono">R<sub>f</sub></span> was removed; the circuit is no longer a linear limiter in those regions.</li>
+          </ul>
+        </section>
+
+        <section id="part5">
+          <h2>PART 5 — Optional Plot Guide</h2>
+          <p>
+            The plot shows the designed transfer characteristic <span class="mono">v<sub>O</sub>(v<sub>I</sub>)</span>.
+            The horizontal axis is the input voltage in volts, and the vertical axis is the output voltage in volts.
+            The plotted values are not just “example values”; they are the actual final design targets for this problem.
+          </p>
+          <ul class="tight">
+            <li>The left plateau is <span class="mono">+3 V</span>.</li>
+            <li>The right plateau is <span class="mono">−3 V</span>.</li>
+            <li>The dashed vertical marker indicates the switching threshold at <span class="mono">+2 V</span>.</li>
+            <li>The abrupt jump illustrates the comparator nature of the circuit in the ideal model.</li>
+          </ul>
+        </section>
+      </main>
+
+      <footer>
+        <a class="toplink" href="#top">Back to top ↑</a>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      function copyText(text){
+        if(navigator.clipboard && window.isSecureContext){
+          return navigator.clipboard.writeText(text);
+        }
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        return Promise.resolve();
+      }
+
+      document.querySelectorAll('.copy-btn').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const id = btn.getAttribute('data-copy-target');
+          const el = document.getElementById(id);
+          if(!el) return;
+          const old = btn.textContent;
+          try{
+            await copyText(el.value.trim());
+            btn.textContent = 'Copied';
+            setTimeout(()=>btn.textContent = old, 1200);
+          }catch(e){
+            btn.textContent = 'Copy failed';
+            setTimeout(()=>btn.textContent = old, 1200);
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

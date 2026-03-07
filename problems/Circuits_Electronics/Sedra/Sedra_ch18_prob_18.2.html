@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Oscillator with a Second-Order Bandpass Filter — Full Solution</title>
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --ink:#16202a;
+      --muted:#5a6a7a;
+      --accent:#0b6efd;
+      --accent-2:#0a4fb3;
+      --line:#dbe3ec;
+      --soft:#eef4ff;
+      --good:#e9f8ee;
+      --warn:#fff7e8;
+      --shadow:0 10px 30px rgba(20,40,80,.08);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:linear-gradient(180deg,#f7faff 0%, #f5f7fb 100%);
+      color:var(--ink);
+      line-height:1.65;
+    }
+    a{color:var(--accent-2);text-decoration:none}
+    a:hover{text-decoration:underline}
+    code,kbd,pre{font-family:var(--mono)}
+    .page{
+      max-width:1280px;
+      margin:0 auto;
+      padding:24px;
+      display:grid;
+      grid-template-columns: 280px minmax(0,1fr);
+      gap:24px;
+    }
+    .toc{
+      position:sticky;
+      top:16px;
+      align-self:start;
+      background:rgba(255,255,255,.86);
+      backdrop-filter: blur(8px);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px 16px;
+    }
+    .toc h2{
+      font-size:1rem;
+      margin:.15rem 0 .75rem;
+    }
+    .toc ol{
+      margin:0;
+      padding-left:1.15rem;
+    }
+    .toc li{
+      margin:.45rem 0;
+      color:var(--muted);
+    }
+    .toc .toplink{
+      display:inline-block;
+      margin-top:14px;
+      font-size:.95rem;
+      font-weight:600;
+    }
+    .content{
+      min-width:0;
+    }
+    header.hero{
+      background:linear-gradient(135deg,#ffffff 0%, #eef5ff 100%);
+      border:1px solid var(--line);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      padding:28px;
+      margin-bottom:22px;
+      overflow:hidden;
+      position:relative;
+    }
+    header.hero::after{
+      content:"";
+      position:absolute;
+      inset:auto -60px -60px auto;
+      width:220px;
+      height:220px;
+      border-radius:50%;
+      background:radial-gradient(circle at center, rgba(11,110,253,.12), rgba(11,110,253,0));
+      pointer-events:none;
+    }
+    .eyebrow{
+      display:inline-block;
+      padding:.3rem .6rem;
+      border-radius:999px;
+      background:var(--soft);
+      color:var(--accent-2);
+      font-weight:700;
+      font-size:.84rem;
+      letter-spacing:.02em;
+    }
+    h1{
+      font-size:clamp(1.9rem,3.8vw,3rem);
+      line-height:1.15;
+      margin:.8rem 0 .5rem;
+    }
+    .subtitle{
+      color:var(--muted);
+      font-size:1.03rem;
+      max-width:900px;
+      margin:0;
+    }
+    main section{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:26px;
+      margin-bottom:22px;
+    }
+    h2{
+      font-size:1.6rem;
+      margin:.1rem 0 1rem;
+      line-height:1.25;
+    }
+    h3{
+      font-size:1.18rem;
+      margin:1.35rem 0 .6rem;
+    }
+    h4{
+      font-size:1rem;
+      margin:1rem 0 .5rem;
+    }
+    p{margin:.6rem 0}
+    ul,ol{padding-left:1.2rem}
+    li{margin:.35rem 0}
+    .grid-2{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:18px;
+    }
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:18px;
+    }
+    .card{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:16px;
+      background:#fff;
+    }
+    .callout{
+      border-left:5px solid var(--accent);
+      background:var(--soft);
+      padding:16px 16px 16px 18px;
+      border-radius:12px;
+      margin:14px 0;
+    }
+    .callout.good{
+      background:var(--good);
+      border-left-color:#2c9c5e;
+    }
+    .callout.warn{
+      background:var(--warn);
+      border-left-color:#d28b00;
+    }
+    .eqbox{
+      border:1px solid #cfe0ff;
+      background:#f8fbff;
+      border-radius:14px;
+      padding:14px 16px;
+      margin:14px 0;
+      position:relative;
+    }
+    .eq{
+      font-family:var(--mono);
+      white-space:pre-wrap;
+      overflow-x:auto;
+      font-size:.97rem;
+      line-height:1.6;
+      margin:0;
+      padding-right:120px;
+    }
+    .copy-btn{
+      position:absolute;
+      top:12px;
+      right:12px;
+      border:none;
+      background:var(--accent);
+      color:#fff;
+      border-radius:10px;
+      padding:.55rem .8rem;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 6px 18px rgba(11,110,253,.22);
+      transition:transform .14s ease, opacity .14s ease, background .14s ease;
+    }
+    .copy-btn:hover{transform:translateY(-1px); background:var(--accent-2)}
+    .copy-btn:active{transform:translateY(0)}
+    .small{
+      font-size:.94rem;
+      color:var(--muted);
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin:12px 0;
+      font-size:.97rem;
+    }
+    th,td{
+      border:1px solid var(--line);
+      padding:10px 12px;
+      vertical-align:top;
+      text-align:left;
+    }
+    th{
+      background:#f7faff;
+    }
+    details{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px 14px;
+      background:#fcfdff;
+      margin:12px 0;
+    }
+    summary{
+      cursor:pointer;
+      font-weight:700;
+    }
+    .final-answer{
+      border:2px solid #9fc2ff;
+      background:linear-gradient(180deg,#f8fbff 0%, #eef5ff 100%);
+      border-radius:16px;
+      padding:18px;
+      margin-top:14px;
+      position:relative;
+    }
+    .kpi{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:14px;
+      margin:12px 0;
+    }
+    .pill{
+      display:inline-block;
+      font-size:.85rem;
+      color:var(--accent-2);
+      background:#edf4ff;
+      border:1px solid #d6e5ff;
+      padding:.2rem .55rem;
+      border-radius:999px;
+      margin-right:.35rem;
+      margin-top:.25rem;
+    }
+    footer{
+      color:var(--muted);
+      font-size:.95rem;
+      padding:8px 4px 40px;
+    }
+    .backtop{
+      display:inline-block;
+      margin-top:10px;
+      font-weight:700;
+    }
+    .microfade{
+      animation:fadeUp .45s ease both;
+    }
+    @keyframes fadeUp{
+      from{opacity:0; transform:translateY(6px)}
+      to{opacity:1; transform:translateY(0)}
+    }
+    @media (max-width: 980px){
+      .page{
+        grid-template-columns:1fr;
+      }
+      .toc{
+        position:relative;
+        top:auto;
+      }
+      .grid-2,.grid-3,.kpi{
+        grid-template-columns:1fr;
+      }
+      .eq{padding-right:0}
+      .copy-btn{
+        position:static;
+        margin-top:10px;
+      }
+    }
+    @media print{
+      body{background:#fff}
+      .page{display:block; max-width:none; padding:0}
+      .toc{display:none}
+      section, header.hero{
+        box-shadow:none;
+        break-inside:avoid;
+        page-break-inside:avoid;
+      }
+      .copy-btn{display:none}
+      a{text-decoration:none;color:#000}
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="top">
+    <nav class="toc microfade" aria-label="Table of contents">
+      <h2>Table of Contents</h2>
+      <ol>
+        <li><a href="#summary">Quick Summary</a></li>
+        <li><a href="#primer">Part 0 — Concept Primer</a></li>
+        <li><a href="#industry">Part 0B — Industry & Applied Physics Perspective</a></li>
+        <li><a href="#analysis">Part 1 — Problem Analysis</a></li>
+        <li><a href="#strategy">Part 2 — Strategy & Tips</a></li>
+        <li><a href="#solution">Part 3 — Full Solution</a></li>
+        <li><a href="#deeper">Part 4 — Deeper Understanding</a></li>
+        <li><a href="#plotguide">Part 5 — Optional Plot Guide</a></li>
+      </ol>
+      <a class="toplink" href="#top">Back to top</a>
+    </nav>
+
+    <div class="content">
+      <header class="hero microfade">
+        <span class="eyebrow">Oscillators • Bandpass Filters • Frequency Sensitivity</span>
+        <h1>Second-Order Bandpass Oscillator: Frequency of Oscillation, Sustained Condition, and Phase-Sensitivity</h1>
+        <p class="subtitle">
+          This article solves Problems 18.1 and 18.2 in a teaching-first way. We use the Barkhausen criterion,
+          a standard second-order bandpass transfer function, and a small-signal phase perturbation analysis
+          to determine the oscillation frequency, the gain condition for sustained oscillation, and the sensitivity
+          of the oscillation frequency to an amplifier phase shift.
+        </p>
+      </header>
+
+      <main>
+        <section id="summary" class="microfade">
+          <h2>Quick Summary</h2>
+          <ul>
+            <li>The problem is about an oscillator built from a frequency-independent amplifier of gain <strong>A &gt; 0</strong> and a <strong>second-order bandpass filter</strong> having pole frequency <strong>ω0</strong>, pole quality factor <strong>Q</strong>, and center-frequency gain <strong>K &gt; 0</strong>.</li>
+            <li>The key physics/electronics idea is the <strong>Barkhausen criterion</strong>: sustained oscillation requires total loop phase equal to an integer multiple of <strong>2π</strong> and loop-magnitude equal to <strong>1</strong>.</li>
+            <li>A convenient bandpass model is
+              <code>H(jω) = K / [1 + jQ(ω/ω0 - ω0/ω)]</code>,
+              which has gain <strong>K</strong> and zero phase at <strong>ω = ω0</strong>.
+            </li>
+            <li>Therefore the oscillation frequency is <strong>ωosc = ω0</strong>.</li>
+            <li>The sustained-oscillation condition is <strong>AK = 1</strong>.</li>
+            <li>The bandpass phase is <strong>φ(ω) = -tan^-1{Q(ω/ω0 - ω0/ω)}</strong>, so
+              <strong>dφ/dω |ω=ω0 = -2Q/ω0</strong>.
+            </li>
+            <li>If the amplifier introduces a small extra phase shift <strong>Δφ</strong> (in radians), the new oscillation frequency shifts by
+              <strong>Δω/ω0 = Δφ/(2Q)</strong>.
+            </li>
+            <li>The result is symbolic and physically means that <strong>higher-Q oscillators are less frequency-sensitive to amplifier phase errors</strong>.</li>
+          </ul>
+        </section>
+
+        <section id="primer" class="microfade">
+          <h2>PART 0 — Concept Primer</h2>
+
+          <h3>Core definitions</h3>
+          <div class="grid-2">
+            <div class="card">
+              <p><strong>Oscillator</strong>: a feedback system that produces a periodic output without an external periodic input once start-up noise or an initial disturbance is present.</p>
+              <p><strong>Loop gain</strong>: product of gains around the feedback loop. Here it is the amplifier gain times the bandpass transfer function.</p>
+            </div>
+            <div class="card">
+              <p><strong>Bandpass filter</strong>: a system that passes a band of frequencies around a center frequency and suppresses frequencies far below and far above that center.</p>
+              <p><strong>Quality factor Q</strong>: a dimensionless measure of frequency selectivity. Larger <strong>Q</strong> means a narrower passband and steeper phase slope near resonance.</p>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Meaning</th>
+                <th>SI Unit</th>
+                <th>Physical interpretation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ω</td>
+                <td>Angular frequency</td>
+                <td>rad/s</td>
+                <td>Independent frequency variable</td>
+              </tr>
+              <tr>
+                <td>ω0</td>
+                <td>Pole or center angular frequency</td>
+                <td>rad/s</td>
+                <td>Natural frequency at which the bandpass phase is zero</td>
+              </tr>
+              <tr>
+                <td>Q</td>
+                <td>Quality factor</td>
+                <td>dimensionless</td>
+                <td>Controls selectivity and phase slope near resonance</td>
+              </tr>
+              <tr>
+                <td>K</td>
+                <td>Center-frequency gain of filter</td>
+                <td>dimensionless</td>
+                <td>Magnitude of filter response at ω = ω0</td>
+              </tr>
+              <tr>
+                <td>A</td>
+                <td>Frequency-independent amplifier gain</td>
+                <td>dimensionless</td>
+                <td>Constant real positive gain</td>
+              </tr>
+              <tr>
+                <td>φ</td>
+                <td>Phase of filter transfer function</td>
+                <td>rad</td>
+                <td>Angle contribution to loop-phase condition</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Mathematical model</h3>
+          <div class="callout">
+            <p><strong>System type:</strong> linear time-invariant lumped-parameter feedback system analyzed in the frequency domain.</p>
+            <p><strong>Variables and domain:</strong></p>
+            <ul>
+              <li>Frequency variable: <strong>ω ∈ (0, ∞)</strong>.</li>
+              <li>Loop transfer function: <strong>L(jω) = A H(jω)</strong>.</li>
+              <li>The filter is a second-order bandpass section with a single resonance scale <strong>ω0</strong> and damping encoded by <strong>Q</strong>.</li>
+            </ul>
+            <p><strong>Standard transfer-function form:</strong></p>
+            <div class="eqbox">
+              <pre class="eq" id="eq-model">H(s) = K [(ω0/Q)s] / [s^2 + (ω0/Q)s + ω0^2]</pre>
+              <button class="copy-btn" data-copy-target="eq-model">Copy equation</button>
+            </div>
+            <p>Setting <strong>s = jω</strong> gives the steady-state sinusoidal response. This is an ODE-derived rational transfer function. The underlying time-domain model is a second-order linear constant-coefficient ODE, but since the problem asks about sinusoidal oscillation conditions, the frequency-domain form is the natural tool.</p>
+          </div>
+
+          <h3>Why this model is valid</h3>
+          <ul>
+            <li><strong>Linearity:</strong> We assume the amplifier and filter are operating in a small-signal linear regime for the purpose of finding the oscillation condition.</li>
+            <li><strong>Time invariance:</strong> Parameters do not change with time during the analysis.</li>
+            <li><strong>Frequency-domain analysis:</strong> For sinusoidal steady state, replacing <strong>s</strong> by <strong>jω</strong> is valid.</li>
+            <li><strong>No PDEs needed:</strong> This is a lumped circuit problem, so the governing mathematics is a transfer function from an ODE, not a field equation like <strong>∇²u = 0</strong> or a wave PDE.</li>
+          </ul>
+
+          <h3>Key laws and principles</h3>
+          <div class="grid-2">
+            <div class="card">
+              <h4>Barkhausen criterion</h4>
+              <p>For sustained oscillation at frequency <strong>ωosc</strong>:</p>
+              <ul>
+                <li><strong>|L(jωosc)| = 1</strong></li>
+                <li><strong>∠L(jωosc) = 2mπ</strong>, for integer <strong>m</strong></li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Resonant bandpass phase property</h4>
+              <p>A second-order bandpass filter has zero phase shift at its center frequency, while its phase changes rapidly near resonance. This rapid phase change is why the oscillation frequency becomes sensitive to additional phase errors in the loop.</p>
+            </div>
+          </div>
+
+          <h3>Common approximations in this topic</h3>
+          <ul>
+            <li><strong>Ideal constant amplifier gain:</strong> Here <strong>A</strong> is real, positive, and frequency-independent.</li>
+            <li><strong>Small phase perturbation:</strong> In Part 18.2(b), the added amplifier phase shift <strong>Δφ</strong> is assumed small enough that linearization about <strong>ω = ω0</strong> is valid.</li>
+            <li><strong>Linear steady-state criterion:</strong> The Barkhausen criterion predicts oscillation condition and frequency, though real amplitudes are ultimately limited by nonlinear saturation.</li>
+          </ul>
+
+          <h3>Mini intuition examples</h3>
+          <ol>
+            <li>If the filter phase is exactly zero at one frequency and the amplifier adds no phase shift, that frequency is the natural candidate for oscillation.</li>
+            <li>If the loop magnitude is less than one, oscillations decay; if greater than one, they grow until nonlinearities clip them.</li>
+            <li>If <strong>Q</strong> is large, the phase changes rapidly with frequency, so only a small frequency shift is needed to compensate a small phase error.</li>
+          </ol>
+
+          <div class="callout good">
+            <strong>Math Insight.</strong>
+            The central object here is a <strong>rational transfer function</strong> of a second-order linear system. Near resonance it behaves like a locally linear phase map:
+            <code>Δφ ≈ (dφ/dω) Δω</code>.
+            This is a first-order Taylor expansion, and it is the key mathematical reason that phase error converts into frequency error.
+          </div>
+
+          <h3>What to watch for</h3>
+          <div class="callout warn">
+            <ul>
+              <li>Do not confuse the filter’s center-frequency gain <strong>K</strong> with the total loop gain <strong>AK</strong>.</li>
+              <li>Phase must be handled in <strong>radians</strong> when using derivatives such as <strong>dφ/dω</strong>.</li>
+              <li>The sign of <strong>dφ/dω</strong> matters. Here it is negative.</li>
+              <li>“Sustained oscillation” means magnitude exactly one in the linear model, not merely greater than one.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="industry" class="microfade">
+          <h2>PART 0B — Industry &amp; Applied Physics Perspective</h2>
+
+          <h3>Where this appears in industry</h3>
+          <div class="grid-3">
+            <div class="card">
+              <h4>Communications</h4>
+              <p>RF local oscillators, IF oscillators, and selective tone-generation stages depend on resonant sections and phase conditions very similar to the one in this problem.</p>
+            </div>
+            <div class="card">
+              <h4>Instrumentation</h4>
+              <p>Signal generators, lock-in amplifiers, and sensor excitation sources use oscillators whose frequency stability depends strongly on loop phase and resonator Q.</p>
+            </div>
+            <div class="card">
+              <h4>Industrial electronics</h4>
+              <p>Motor drives, ultrasonic transducers, switching-control references, and embedded timing subsystems all rely on stable oscillation and predictable phase behavior.</p>
+            </div>
+          </div>
+
+          <h3>Why engineers care</h3>
+          <ul>
+            <li><strong>Performance:</strong> Oscillation frequency sets channel allocation, timing accuracy, and spectral purity.</li>
+            <li><strong>Reliability:</strong> Small phase shifts from temperature, aging, or parasitics can move the oscillation frequency.</li>
+            <li><strong>Cost:</strong> Higher-Q resonators often improve stability but may increase part cost or process complexity.</li>
+            <li><strong>Manufacturability:</strong> Component tolerances change <strong>Q</strong>, <strong>K</strong>, and phase margins.</li>
+            <li><strong>Efficiency:</strong> In RF and power systems, incorrect oscillation conditions can increase loss or create unstable behavior.</li>
+          </ul>
+
+          <h3>Typical measurement and validation methods</h3>
+          <ul>
+            <li>Frequency-response measurements with a network analyzer to get <strong>|H(jω)|</strong> and <strong>φ(ω)</strong>.</li>
+            <li>Oscilloscope and frequency counter measurements to verify startup, steady oscillation, and drift.</li>
+            <li>Phase-noise and spectrum measurements for high-performance oscillators.</li>
+            <li>Parameter extraction from Bode plots to estimate <strong>Q</strong>, center frequency, and phase slope.</li>
+          </ul>
+
+          <h3>Design trade-offs and constraints</h3>
+          <ul>
+            <li>Higher <strong>Q</strong> gives lower frequency sensitivity to phase errors, but can slow startup and narrow tuning range.</li>
+            <li>Larger amplifier gain helps startup, but too much excess gain can increase distortion and nonlinear clipping.</li>
+            <li>Real amplifiers are not perfectly frequency-independent; parasitic capacitances introduce phase lag and shift the oscillation frequency.</li>
+            <li>Process spread, temperature coefficients, and PCB layout parasitics alter the effective loop phase.</li>
+          </ul>
+
+          <div class="callout">
+            <strong>From lab to product.</strong>
+            In real systems, the ideal criterion <strong>AK = 1</strong> is only the equilibrium condition of a nonlinear oscillator. Designers usually choose startup gain slightly greater than one, then rely on amplitude-limiting mechanisms—device saturation, AGC loops, or nonlinear resistive elements—to settle to a stable amplitude.
+          </div>
+        </section>
+
+        <section id="analysis" class="microfade">
+          <h2>PART 1 — Problem Analysis</h2>
+
+          <h3>Restating the problem</h3>
+          <p>
+            We have a feedback oscillator made from two blocks in the loop:
+            a frequency-independent amplifier of gain <strong>A &gt; 0</strong> and a second-order bandpass filter
+            with pole frequency <strong>ω0</strong>, quality factor <strong>Q</strong>, and center-frequency gain <strong>K &gt; 0</strong>.
+            We must:
+          </p>
+          <ol>
+            <li>Find the oscillation frequency.</li>
+            <li>Find the gain condition on <strong>A</strong> and <strong>K</strong> for sustained oscillation.</li>
+            <li>For the same oscillator, derive <strong>dφ/dω</strong> at <strong>ω = ω0</strong>.</li>
+            <li>Use that derivative to find the fractional change in oscillation frequency caused by a small amplifier phase-angle change <strong>Δφ</strong>.</li>
+          </ol>
+
+          <h3>Given quantities</h3>
+          <ul>
+            <li>Amplifier gain: <strong>A</strong>, real, positive, frequency-independent.</li>
+            <li>Bandpass pole frequency: <strong>ω0</strong>.</li>
+            <li>Bandpass quality factor: <strong>Q</strong>.</li>
+            <li>Bandpass center-frequency gain: <strong>K</strong>.</li>
+          </ul>
+
+          <h3>Unknowns</h3>
+          <ul>
+            <li>Oscillation frequency <strong>ωosc</strong>.</li>
+            <li>Sustained-oscillation condition linking <strong>A</strong> and <strong>K</strong>.</li>
+            <li>Phase slope <strong>dφ/dω</strong> evaluated at <strong>ω0</strong>.</li>
+            <li>Fractional frequency shift <strong>Δω/ω0</strong> resulting from small <strong>Δφ</strong>.</li>
+          </ul>
+
+          <h3>Relevant principles and why they apply</h3>
+          <ul>
+            <li><strong>Barkhausen criterion</strong> applies because we are finding steady sinusoidal self-oscillation conditions in a linear feedback loop.</li>
+            <li><strong>Bandpass phase formula</strong> applies because the filter is explicitly second-order bandpass with known <strong>ω0</strong>, <strong>Q</strong>, and <strong>K</strong>.</li>
+            <li><strong>First-order Taylor expansion</strong> applies in Part 18.2(b) because the phase perturbation <strong>Δφ</strong> is assumed small.</li>
+          </ul>
+
+          <h3>Assumptions</h3>
+          <div class="callout">
+            <ul>
+              <li>The loop is analyzed in the linear regime.</li>
+              <li>The amplifier phase is initially zero because <strong>A</strong> is positive and frequency-independent.</li>
+              <li>The filter is described by the standard second-order bandpass form.</li>
+              <li>The extra amplifier phase-angle change <strong>Δφ</strong> is small enough for linearization.</li>
+              <li>Angles are measured in radians in derivative relations.</li>
+            </ul>
+          </div>
+
+          <h3>Possible approaches</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Approach</th>
+                <th>Idea</th>
+                <th>Pros</th>
+                <th>Cons</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Direct Barkhausen on canonical bandpass form</td>
+                <td>Write <strong>H(jω)</strong>, inspect magnitude and phase, apply loop conditions</td>
+                <td>Fast, transparent, best for symbolic results</td>
+                <td>Requires knowing the standard bandpass form</td>
+              </tr>
+              <tr>
+                <td>Start from second-order denominator and normalize</td>
+                <td>Substitute <strong>s=jω</strong>, separate real and imaginary parts</td>
+                <td>More foundational</td>
+                <td>Longer algebra</td>
+              </tr>
+              <tr>
+                <td>Pole-zero geometric reasoning</td>
+                <td>Use resonance symmetry and argument of numerator/denominator</td>
+                <td>Good intuition</td>
+                <td>Less direct for derivative calculation</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p><strong>Best choice:</strong> the direct Barkhausen approach using the canonical bandpass response, because it gives both the frequency condition and the phase derivative with minimal ambiguity and clear physical interpretation.</p>
+        </section>
+
+        <section id="strategy" class="microfade">
+          <h2>PART 2 — Strategy &amp; Tips</h2>
+
+          <ol>
+            <li><strong>Write the filter transfer function.</strong><br/>Tool: standard second-order bandpass form.<br/>Meaning: fixes how magnitude and phase depend on frequency.</li>
+            <li><strong>Convert to the sinusoidal response.</strong><br/>Tool: set <strong>s = jω</strong>.<br/>Meaning: expresses what happens to a sinusoid in the loop.</li>
+            <li><strong>Put the response into magnitude-phase form.</strong><br/>Tool: algebraic normalization.<br/>Meaning: separates the Barkhausen magnitude and phase conditions.</li>
+            <li><strong>Apply the phase condition.</strong><br/>Tool: <strong>∠L(jω) = 0</strong> modulo <strong>2π</strong>.<br/>Meaning: selects the oscillation frequency.</li>
+            <li><strong>Apply the magnitude condition.</strong><br/>Tool: <strong>|L(jω)|=1</strong>.<br/>Meaning: gives sustained oscillation, neither growing nor decaying.</li>
+            <li><strong>Differentiate the phase formula.</strong><br/>Tool: derivative of <strong>tan^-1</strong> using the provided hint.<br/>Meaning: measures how sharply phase changes near resonance.</li>
+            <li><strong>Linearize around resonance.</strong><br/>Tool: first-order Taylor expansion.<br/>Meaning: converts a small phase error into a small frequency shift.</li>
+            <li><strong>Check units and limiting behavior.</strong><br/>Tool: dimensional analysis and physical reasoning.<br/>Meaning: ensures the formula makes physical sense.</li>
+          </ol>
+
+          <div class="callout warn">
+            <strong>Common mistakes.</strong>
+            <ul>
+              <li>Using degrees instead of radians in <strong>Δφ</strong>.</li>
+              <li>Forgetting that the amplifier is <strong>positive</strong>, so it contributes zero phase in the nominal problem.</li>
+              <li>Writing <strong>AK &gt; 1</strong> as the sustained condition. That is a startup condition, not the exact sustained condition in the ideal linear model.</li>
+              <li>Losing the minus sign in <strong>dφ/dω</strong>.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="solution" class="microfade">
+          <h2>PART 3 — Full Solution</h2>
+
+          <h3>Physical intuition before calculation</h3>
+          <p>
+            A bandpass filter has maximum transmission around its center frequency and zero phase shift exactly at that center.
+            Since the amplifier gain <strong>A</strong> is positive and frequency-independent, it contributes no phase shift.
+            Therefore, the only frequency where the loop phase can naturally be zero is expected to be the filter center frequency
+            <strong>ω0</strong>. The magnitude condition will then simply require the product of amplifier gain and filter gain at that frequency to be one.
+          </p>
+
+          <h3>Step 1: Write the standard bandpass transfer function</h3>
+          <p>
+            For a second-order bandpass filter with center-frequency gain <strong>K</strong>, pole frequency <strong>ω0</strong>,
+            and quality factor <strong>Q</strong>, a standard form is
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq1">H(s) = K [(ω0/Q)s] / [s^2 + (ω0/Q)s + ω0^2]</pre>
+            <button class="copy-btn" data-copy-target="eq1">Copy equation</button>
+          </div>
+
+          <p>
+            This form is chosen because at <strong>s = jω0</strong> the magnitude becomes exactly <strong>K</strong>.
+            Let us verify that carefully.
+          </p>
+
+          <h3>Step 2: Evaluate the sinusoidal response</h3>
+          <p>Set <strong>s = jω</strong>:</p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq2">H(jω) = K [(ω0/Q)(jω)] / [ (jω)^2 + (ω0/Q)(jω) + ω0^2 ]
+      = K [ j(ω0ω/Q) ] / [ -ω^2 + j(ω0ω/Q) + ω0^2 ]</pre>
+            <button class="copy-btn" data-copy-target="eq2">Copy equation</button>
+          </div>
+
+          <p>
+            Now factor the denominator in a way that exposes the phase structure. Divide numerator and denominator by
+            <strong>j(ω0ω/Q)</strong>:
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq3">H(jω) = K / { 1 + [(-ω^2 + ω0^2)] / [j(ω0ω/Q)] }
+      = K / { 1 - jQ(ω0^2 - ω^2)/(ω0ω) }</pre>
+            <button class="copy-btn" data-copy-target="eq3">Copy equation</button>
+          </div>
+
+          <p>Since</p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq4">(ω0^2 - ω^2)/(ω0ω) = (ω0/ω) - (ω/ω0),</pre>
+            <button class="copy-btn" data-copy-target="eq4">Copy equation</button>
+          </div>
+
+          <p>we can write</p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq5">H(jω) = K / [ 1 + jQ(ω/ω0 - ω0/ω) ]</pre>
+            <button class="copy-btn" data-copy-target="eq5">Copy equation</button>
+          </div>
+
+          <p>
+            This is the most useful form for both the phase and magnitude calculations.
+          </p>
+
+          <h3>Step 3: Magnitude and phase of the filter</h3>
+          <p>
+            For a complex number of the form <strong>1 + jy</strong>, its magnitude is <strong>√(1+y²)</strong> and its angle is <strong>tan^-1(y)</strong>.
+            Since the number appears in the denominator, the filter phase is the negative of that angle.
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq6">|H(jω)| = K / √{1 + [Q(ω/ω0 - ω0/ω)]^2}
+
+φ(ω) = -tan^-1{ Q(ω/ω0 - ω0/ω) }</pre>
+            <button class="copy-btn" data-copy-target="eq6">Copy equation</button>
+          </div>
+
+          <h3>Step 4: Oscillation frequency from the phase condition</h3>
+          <p>
+            The amplifier gain <strong>A</strong> is positive and frequency-independent, so its phase is zero.
+            Thus the loop transfer function is
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq7">L(jω) = A H(jω)</pre>
+            <button class="copy-btn" data-copy-target="eq7">Copy equation</button>
+          </div>
+
+          <p>
+            The Barkhausen phase condition requires
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq8">∠L(jωosc) = ∠A + ∠H(jωosc) = 0 (mod 2π)</pre>
+            <button class="copy-btn" data-copy-target="eq8">Copy equation</button>
+          </div>
+
+          <p>
+            Because <strong>A &gt; 0</strong>, we have <strong>∠A = 0</strong>. Therefore we need
+            <strong>φ(ωosc) = 0</strong>. From the phase formula,
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq9">-tan^-1{ Q(ωosc/ω0 - ω0/ωosc) } = 0</pre>
+            <button class="copy-btn" data-copy-target="eq9">Copy equation</button>
+          </div>
+
+          <p>
+            The arctangent is zero only when its argument is zero:
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq10">Q(ωosc/ω0 - ω0/ωosc) = 0</pre>
+            <button class="copy-btn" data-copy-target="eq10">Copy equation</button>
+          </div>
+
+          <p>
+            Since <strong>Q ≠ 0</strong>,
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq11">ωosc/ω0 - ω0/ωosc = 0</pre>
+            <button class="copy-btn" data-copy-target="eq11">Copy equation</button>
+          </div>
+
+          <p>Multiply by <strong>ω0ωosc</strong>:</p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq12">ωosc^2 - ω0^2 = 0</pre>
+            <button class="copy-btn" data-copy-target="eq12">Copy equation</button>
+          </div>
+
+          <p>
+            Since angular frequency is positive,
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq13">ωosc = ω0</pre>
+            <button class="copy-btn" data-copy-target="eq13">Copy equation</button>
+          </div>
+
+          <p><strong>This solves Problem 18.1 for the oscillation frequency.</strong></p>
+
+          <h3>Step 5: Sustained oscillation condition from the magnitude condition</h3>
+          <p>
+            The Barkhausen magnitude condition is
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq14">|L(jωosc)| = A |H(jωosc)| = 1</pre>
+            <button class="copy-btn" data-copy-target="eq14">Copy equation</button>
+          </div>
+
+          <p>
+            At <strong>ωosc = ω0</strong>, the term
+            <strong>(ω/ω0 - ω0/ω)</strong> becomes <strong>1 - 1 = 0</strong>, so
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq15">|H(jω0)| = K</pre>
+            <button class="copy-btn" data-copy-target="eq15">Copy equation</button>
+          </div>
+
+          <p>Hence</p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq16">A K = 1</pre>
+            <button class="copy-btn" data-copy-target="eq16">Copy equation</button>
+          </div>
+
+          <p><strong>This is the sustained-oscillation condition.</strong></p>
+
+          <div class="callout good">
+            <strong>Answer to Problem 18.1.</strong><br/>
+            Oscillation occurs at the filter center frequency <strong>ω0</strong>, and sustained oscillation requires the loop gain magnitude to be unity, namely <strong>AK = 1</strong>.
+          </div>
+
+          <h3>Step 6: Derive dφ/dω at ω = ω0</h3>
+          <p>
+            The filter phase is
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq17">φ(ω) = -tan^-1 y(ω),
+where y(ω) = Q(ω/ω0 - ω0/ω)</pre>
+            <button class="copy-btn" data-copy-target="eq17">Copy equation</button>
+          </div>
+
+          <p>
+            Using the hint,
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq18">dφ/dω = -(1 / (1 + y^2)) (dy/dω)</pre>
+            <button class="copy-btn" data-copy-target="eq18">Copy equation</button>
+          </div>
+
+          <p>Now differentiate <strong>y(ω)</strong> term by term:</p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq19">y(ω) = Q(ω/ω0 - ω0/ω)
+
+dy/dω = Q[d/dω (ω/ω0) - d/dω (ω0/ω)]
+      = Q[1/ω0 - ( -ω0/ω^2 )]
+      = Q(1/ω0 + ω0/ω^2)</pre>
+            <button class="copy-btn" data-copy-target="eq19">Copy equation</button>
+          </div>
+
+          <p>Evaluate at <strong>ω = ω0</strong>:</p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq20">y(ω0) = Q(1 - 1) = 0
+
+(dy/dω)|ω=ω0 = Q(1/ω0 + ω0/ω0^2)
+              = Q(1/ω0 + 1/ω0)
+              = 2Q/ω0</pre>
+            <button class="copy-btn" data-copy-target="eq20">Copy equation</button>
+          </div>
+
+          <p>Substitute into the derivative formula:</p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq21">(dφ/dω)|ω=ω0 = -(1/(1+0^2))(2Q/ω0)
+                 = -2Q/ω0</pre>
+            <button class="copy-btn" data-copy-target="eq21">Copy equation</button>
+          </div>
+
+          <p>
+            This solves Problem 18.2(a).
+          </p>
+
+          <h3>Step 7: Use the phase slope to find the fractional frequency shift</h3>
+          <p>
+            Suppose the amplifier now has a small additional phase shift <strong>Δφ</strong>.
+            The total loop phase must still be zero for oscillation:
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq22">φfilter(ωosc,new) + Δφ = 0</pre>
+            <button class="copy-btn" data-copy-target="eq22">Copy equation</button>
+          </div>
+
+          <p>
+            Since the original oscillation was at <strong>ω0</strong> and <strong>φ(ω0) = 0</strong>,
+            we linearize the filter phase about <strong>ω0</strong>:
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq23">φfilter(ω0 + Δω) ≈ φfilter(ω0) + (dφ/dω)|ω0 Δω
+                  = 0 + (dφ/dω)|ω0 Δω</pre>
+            <button class="copy-btn" data-copy-target="eq23">Copy equation</button>
+          </div>
+
+          <p>Thus the phase condition becomes</p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq24">(dφ/dω)|ω0 Δω + Δφ = 0</pre>
+            <button class="copy-btn" data-copy-target="eq24">Copy equation</button>
+          </div>
+
+          <p>Therefore</p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq25">Δω = -Δφ / [(dφ/dω)|ω0]</pre>
+            <button class="copy-btn" data-copy-target="eq25">Copy equation</button>
+          </div>
+
+          <p>Substitute <strong>(dφ/dω)|ω0 = -2Q/ω0</strong>:</p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq26">Δω = -Δφ / (-2Q/ω0)
+   = (ω0 Δφ)/(2Q)</pre>
+            <button class="copy-btn" data-copy-target="eq26">Copy equation</button>
+          </div>
+
+          <p>Finally divide by <strong>ω0</strong>:</p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq27">Δω/ω0 = Δφ/(2Q)</pre>
+            <button class="copy-btn" data-copy-target="eq27">Copy equation</button>
+          </div>
+
+          <p>
+            This solves Problem 18.2(b). Since <strong>f = ω/(2π)</strong>, the same fractional change applies to ordinary frequency:
+          </p>
+
+          <div class="eqbox">
+            <pre class="eq" id="eq28">Δf/f0 = Δω/ω0 = Δφ/(2Q)</pre>
+            <button class="copy-btn" data-copy-target="eq28">Copy equation</button>
+          </div>
+
+          <h3>Dimensional analysis and sanity checks</h3>
+          <div class="grid-2">
+            <div class="card">
+              <h4>Units check</h4>
+              <p>
+                <strong>dφ/dω</strong> must have units of time because phase is dimensionless and
+                <strong>ω</strong> has units of rad/s. Our result <strong>-2Q/ω0</strong> indeed has units of seconds because <strong>Q</strong> is dimensionless.
+              </p>
+            </div>
+            <div class="card">
+              <h4>Limiting-case check</h4>
+              <p>
+                If <strong>Q</strong> is very large, then <strong>Δω/ω0 = Δφ/(2Q)</strong> becomes very small.
+                That is physically correct: a high-Q resonator pins the oscillation frequency more tightly.
+              </p>
+            </div>
+          </div>
+
+          <details>
+            <summary>Optional deeper note: nondimensionalization</summary>
+            <p>
+              Define the dimensionless frequency ratio <strong>x = ω/ω0</strong>. Then the phase becomes
+            </p>
+            <div class="eqbox">
+              <pre class="eq" id="eq29">φ(x) = -tan^-1[Q(x - 1/x)]</pre>
+              <button class="copy-btn" data-copy-target="eq29">Copy equation</button>
+            </div>
+            <p>
+              This shows that the phase shape depends only on <strong>Q</strong>, not on the absolute frequency scale.
+              Near resonance, let <strong>x = 1 + ε</strong> with <strong>|ε| &lt;&lt; 1</strong>. Then
+            </p>
+            <div class="eqbox">
+              <pre class="eq" id="eq30">1/x ≈ 1 - ε
+
+x - 1/x ≈ (1 + ε) - (1 - ε) = 2ε</pre>
+              <button class="copy-btn" data-copy-target="eq30">Copy equation</button>
+            </div>
+            <p>
+              Hence near resonance,
+            </p>
+            <div class="eqbox">
+              <pre class="eq" id="eq31">φ ≈ -tan^-1(2Qε) ≈ -2Qε</pre>
+              <button class="copy-btn" data-copy-target="eq31">Copy equation</button>
+            </div>
+            <p>
+              Since <strong>ε = Δω/ω0</strong>, the relation
+              <strong>φ ≈ -2Q(Δω/ω0)</strong> immediately yields
+              <strong>Δω/ω0 = Δφ/(2Q)</strong>.
+            </p>
+          </details>
+
+          <div class="final-answer">
+            <h3 style="margin-top:0">Final Answer</h3>
+            <div class="eqbox" style="margin-top:0">
+              <pre class="eq" id="final-answer-text">For the second-order bandpass oscillator,
+
+1) Oscillation frequency:
+   ωosc = ω0
+
+2) Sustained-oscillation condition:
+   AK = 1
+
+3) Filter phase:
+   φ(ω) = -tan^-1{Q(ω/ω0 - ω0/ω)}
+
+4) Phase slope at resonance:
+   (dφ/dω)|ω=ω0 = -2Q/ω0
+
+5) Small frequency shift caused by an amplifier phase change Δφ:
+   Δω/ω0 = Δφ/(2Q)
+
+Equivalently, since f = ω/(2π),
+   Δf/f0 = Δφ/(2Q)
+
+with Δφ measured in radians.</pre>
+              <button class="copy-btn" data-copy-target="final-answer-text">Copy final answer</button>
+            </div>
+            <p class="small">Interpretation: the oscillation frequency sits at the bandpass center frequency, and larger <strong>Q</strong> makes the oscillator less sensitive to phase errors in the amplifier.</p>
+          </div>
+        </section>
+
+        <section id="deeper" class="microfade">
+          <h2>PART 4 — Deeper Understanding</h2>
+
+          <h3>Re-interpreting the final formulas</h3>
+          <div class="kpi">
+            <div class="card">
+              <h4><code>ωosc = ω0</code></h4>
+              <p>The filter center frequency is where the phase is exactly zero, so the loop can satisfy the phase criterion with a positive amplifier.</p>
+            </div>
+            <div class="card">
+              <h4><code>AK = 1</code></h4>
+              <p>This is the neutral stability condition of the linear model: each round trip reproduces the same amplitude.</p>
+            </div>
+            <div class="card">
+              <h4><code>(dφ/dω) = -2Q/ω0</code> at resonance</h4>
+              <p>The negative slope means increasing frequency makes the filter phase more negative near resonance.</p>
+            </div>
+            <div class="card">
+              <h4><code>Δω/ω0 = Δφ/(2Q)</code></h4>
+              <p>A given phase error causes a smaller fractional frequency error when <strong>Q</strong> is larger.</p>
+            </div>
+          </div>
+
+          <h3>Parameter dependence</h3>
+          <ul>
+            <li><strong>Increasing A</strong> alone does not change the nominal oscillation frequency in the ideal model; it affects the magnitude condition.</li>
+            <li><strong>Increasing K</strong> also affects only the magnitude condition at the center frequency.</li>
+            <li><strong>Increasing Q</strong> makes the passband narrower, increases the magnitude of the phase slope, and reduces frequency sensitivity to phase perturbations.</li>
+            <li><strong>Increasing ω0</strong> rescales the entire system in frequency; the relative sensitivity <strong>Δω/ω0</strong> remains set by <strong>Δφ/(2Q)</strong>.</li>
+          </ul>
+
+          <h3>Alternative derivation idea</h3>
+          <p>
+            Instead of differentiating the exact phase formula, one can use the dimensionless resonance expansion:
+            let <strong>x = ω/ω0 = 1 + ε</strong> with <strong>|ε| &lt;&lt; 1</strong>.
+            Then <strong>x - 1/x ≈ 2ε</strong>, so
+            <strong>φ ≈ -tan^-1(2Qε) ≈ -2Qε</strong>.
+            This directly gives
+            <strong>φ ≈ -2Q(Δω/ω0)</strong>,
+            and therefore <strong>Δω/ω0 = Δφ/(2Q)</strong>.
+          </p>
+
+          <h3>Concept checks</h3>
+          <ul>
+            <li><strong>Q:</strong> Why does a higher-Q oscillator resist frequency drift from amplifier phase errors?<br/>
+              <strong>A:</strong> Because the phase-versus-frequency slope is steeper, so only a smaller frequency shift is needed to compensate a given phase change.</li>
+            <li><strong>Q:</strong> If the amplifier were negative instead of positive, would the oscillation frequency still necessarily be <strong>ω0</strong>?<br/>
+              <strong>A:</strong> Not with the same phase condition. A negative amplifier contributes an extra phase of <strong>π</strong>, so the required filter phase would be different.</li>
+            <li><strong>Q:</strong> Is <strong>AK &gt; 1</strong> the sustained condition?<br/>
+              <strong>A:</strong> No. In the ideal linear model, sustained oscillation requires <strong>AK = 1</strong>. Greater than one means growth, not steady amplitude.</li>
+            <li><strong>Q:</strong> Why can we use a Taylor expansion in Part 18.2(b)?<br/>
+              <strong>A:</strong> Because the problem asks about a small phase-angle change <strong>Δφ</strong>, so the resulting frequency shift is small and linearization is justified.</li>
+          </ul>
+        </section>
+
+        <section id="plotguide" class="microfade">
+          <h2>PART 5 — Optional Plot Guide</h2>
+          <p>
+            No plot is necessary for this problem type because the result is fully symbolic and the essential learning comes from
+            the exact phase formula and its local slope at resonance. A plot would require choosing example numerical values,
+            but the core conclusions already follow cleanly from the algebra.
+          </p>
+        </section>
+      </main>
+
+      <footer>
+        <p>
+          Key tags:
+          <span class="pill">Barkhausen criterion</span>
+          <span class="pill">bandpass filter</span>
+          <span class="pill">quality factor</span>
+          <span class="pill">oscillation condition</span>
+          <span class="pill">phase sensitivity</span>
+        </p>
+        <a class="backtop" href="#top">Back to top</a>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      function copyTextFrom(id){
+        var el = document.getElementById(id);
+        if(!el) return;
+        var text = el.innerText || el.textContent;
+        navigator.clipboard.writeText(text).then(function(){
+          var btn = document.querySelector('[data-copy-target="' + id + '"]');
+          if(!btn) return;
+          var old = btn.textContent;
+          btn.textContent = 'Copied';
+          setTimeout(function(){ btn.textContent = old; }, 1300);
+        }).catch(function(){
+          var btn = document.querySelector('[data-copy-target="' + id + '"]');
+          if(!btn) return;
+          btn.textContent = 'Copy failed';
+          setTimeout(function(){ btn.textContent = 'Copy'; }, 1300);
+        });
+      }
+
+      document.querySelectorAll('.copy-btn').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          copyTextFrom(btn.getAttribute('data-copy-target'));
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
