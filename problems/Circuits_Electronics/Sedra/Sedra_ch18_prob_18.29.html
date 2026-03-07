@@ -3,22 +3,1121 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sedra Chapter 18 — Problem 18.29</title>
+  <title>Cross-Coupled LC Oscillator Design — Worked Article</title>
   <style>
-    body { font-family: Arial, Helvetica, sans-serif; line-height: 1.6; max-width: 900px; margin: 40px auto; padding: 0 20px; color: #111; background: #fff; }
-    .wrap { border: 1px solid #ddd; border-radius: 14px; padding: 28px; }
-    h1 { margin-top: 0; font-size: 28px; }
-    .meta { color: #555; margin-bottom: 24px; font-size: 14px; }
-    .problem-box { background: #f8f8f8; border-left: 4px solid #333; padding: 16px; }
-    .note { margin-top: 24px; padding: 14px; background: #fff8e1; border: 1px solid #f0d98c; border-radius: 10px; }
+    :root{
+      --bg:#f7f9fc;
+      --panel:#ffffff;
+      --ink:#172033;
+      --muted:#5b6780;
+      --line:#d9e2f0;
+      --accent:#1f6feb;
+      --accent-2:#0b57d0;
+      --soft:#eef5ff;
+      --good:#eaf8ee;
+      --warn:#fff6e5;
+      --bad:#fff0f0;
+      --shadow:0 10px 30px rgba(20,40,90,.08);
+      --radius:18px;
+      --radius-sm:12px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:linear-gradient(180deg,#f3f7fc 0%, #f8fbff 100%);
+      color:var(--ink);
+      line-height:1.65;
+    }
+
+    a{color:var(--accent-2); text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    .page{
+      max-width:1280px;
+      margin:0 auto;
+      padding:24px;
+    }
+
+    header.hero{
+      background:linear-gradient(135deg,#eaf2ff 0%, #f8fbff 100%);
+      border:1px solid var(--line);
+      border-radius:24px;
+      padding:28px 28px 22px;
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+
+    header.hero::after{
+      content:"";
+      position:absolute;
+      inset:auto -80px -80px auto;
+      width:220px;
+      height:220px;
+      background:radial-gradient(circle, rgba(31,111,235,.14), rgba(31,111,235,0));
+      pointer-events:none;
+    }
+
+    .eyebrow{
+      display:inline-block;
+      font-size:.82rem;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--accent-2);
+      font-weight:800;
+      margin-bottom:8px;
+    }
+
+    h1,h2,h3,h4{
+      line-height:1.2;
+      margin:0 0 12px;
+      color:#13203a;
+    }
+
+    h1{font-size:clamp(1.8rem, 2.9vw, 3rem)}
+    h2{font-size:clamp(1.35rem, 2.1vw, 2rem); margin-top:4px}
+    h3{font-size:1.15rem}
+    p{margin:0 0 12px}
+    ul,ol{margin:10px 0 14px 22px}
+    li{margin:5px 0}
+    .subtitle{
+      color:var(--muted);
+      font-size:1.03rem;
+      max-width:900px;
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 280px minmax(0,1fr);
+      gap:24px;
+      align-items:start;
+      margin-top:24px;
+    }
+
+    .toc{
+      position:sticky;
+      top:18px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+
+    .toc h2{
+      font-size:1rem;
+      margin-bottom:10px;
+    }
+
+    .toc nav a{
+      display:block;
+      padding:9px 10px;
+      border-radius:10px;
+      color:var(--ink);
+      font-size:.96rem;
+      transition:transform .18s ease, background .18s ease;
+    }
+
+    .toc nav a:hover{
+      background:var(--soft);
+      transform:translateX(3px);
+      text-decoration:none;
+    }
+
+    main article{
+      display:grid;
+      gap:22px;
+    }
+
+    section{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      padding:24px;
+      animation:fadeUp .45s ease both;
+    }
+
+    @keyframes fadeUp{
+      from{opacity:0; transform:translateY(8px)}
+      to{opacity:1; transform:translateY(0)}
+    }
+
+    .summary-list{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+      gap:12px;
+      padding:0;
+      list-style:none;
+      margin:12px 0 0;
+    }
+
+    .summary-list li{
+      background:#fbfdff;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 14px;
+      margin:0;
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:14px;
+    }
+
+    .card, .callout, .eqbox, .finalbox, .mistakes{
+      border-radius:16px;
+      padding:16px;
+      border:1px solid var(--line);
+      background:#fcfdff;
+    }
+
+    .callout.assumption{background:#f7fbff}
+    .callout.key{background:var(--soft)}
+    .callout.warn, .mistakes{background:var(--warn)}
+    .callout.good, .finalbox{background:var(--good)}
+    .callout.bad{background:var(--bad)}
+
+    .label{
+      display:inline-block;
+      font-size:.78rem;
+      font-weight:800;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--accent-2);
+      margin-bottom:8px;
+    }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:16px;
+    }
+
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:16px;
+    }
+
+    @media (max-width:1000px){
+      .layout{grid-template-columns:1fr}
+      .toc{position:relative; top:auto}
+      .grid-2, .grid-3{grid-template-columns:1fr}
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin:10px 0 4px;
+      font-size:.97rem;
+      overflow:hidden;
+      border-radius:12px;
+    }
+
+    th,td{
+      border:1px solid var(--line);
+      padding:10px 12px;
+      text-align:left;
+      vertical-align:top;
+    }
+
+    th{
+      background:#f4f8ff;
+      font-weight:700;
+    }
+
+    .equation{
+      font-family:var(--mono);
+      white-space:pre-wrap;
+      word-break:break-word;
+      background:#f8fbff;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px 16px;
+      margin:10px 0;
+      font-size:.96rem;
+    }
+
+    .eqrow{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    .copy-btn{
+      appearance:none;
+      border:1px solid #bcd0f7;
+      background:#fff;
+      color:#1347a8;
+      padding:9px 12px;
+      border-radius:10px;
+      font-weight:700;
+      cursor:pointer;
+      transition:background .18s ease, transform .18s ease;
+      font-size:.92rem;
+    }
+
+    .copy-btn:hover{
+      background:#eef5ff;
+      transform:translateY(-1px);
+    }
+
+    .copy-btn:active{transform:translateY(0)}
+
+    details{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 14px;
+      background:#fcfdff;
+      margin:12px 0;
+    }
+
+    summary{
+      cursor:pointer;
+      font-weight:700;
+      color:#183158;
+    }
+
+    .math-insight{
+      border-left:5px solid var(--accent);
+      background:#f7fbff;
+      padding:14px 16px;
+      border-radius:12px;
+      margin:14px 0;
+    }
+
+    .finalbox{
+      border:1px solid #bfe2c9;
+    }
+
+    .finalbox .equation{
+      background:#f6fff7;
+    }
+
+    .small{
+      color:var(--muted);
+      font-size:.95rem;
+    }
+
+    .backtop{
+      display:inline-block;
+      margin-top:8px;
+      font-weight:700;
+    }
+
+    footer{
+      text-align:center;
+      color:var(--muted);
+      padding:12px 8px 32px;
+      font-size:.95rem;
+    }
+
+    .nowrap{white-space:nowrap}
+
+    @media print{
+      body{background:#fff}
+      .page{max-width:none; padding:0}
+      .layout{display:block}
+      .toc{display:none}
+      section, header.hero{
+        box-shadow:none;
+        border:1px solid #bbb;
+        break-inside:avoid;
+        page-break-inside:avoid;
+        margin-bottom:14px;
+      }
+      .copy-btn{display:none}
+      a{text-decoration:none; color:#000}
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Sedra Chapter 18 — Problem 18.29</h1>
-    <div class="meta">Problem Page • Section LC and Crystal Oscillators</div>
-    <div class="problem-box">Problem 18.29</div>
-    <div class="note">Solution content can be added here later.</div>
+  <div class="page" id="top">
+    <header class="hero">
+      <div class="eyebrow">Applied Physics • Oscillators • Electronic Design</div>
+      <h1>Design of a Cross-Coupled LC Oscillator</h1>
+      <p class="subtitle">
+        We determine the tank capacitance needed for a specified oscillation frequency and the minimum transistor transconductance required to overcome tank loss in a cross-coupled LC oscillator. The treatment is physics-friendly, mathematically explicit, and connected to real engineering practice.
+      </p>
+    </header>
+
+    <div class="layout">
+      <aside class="toc" aria-label="Table of contents">
+        <h2>Table of Contents</h2>
+        <nav>
+          <a href="#quick-summary">Quick Summary</a>
+          <a href="#part0">Part 0 — Concept Primer</a>
+          <a href="#part0b">Part 0B — Industry &amp; Applied Physics</a>
+          <a href="#part1">Part 1 — Problem Analysis</a>
+          <a href="#part2">Part 2 — Strategy &amp; Tips</a>
+          <a href="#part3">Part 3 — Full Solution</a>
+          <a href="#part4">Part 4 — Deeper Understanding</a>
+          <a href="#part5">Part 5 — Optional Plot Guide</a>
+          <a href="#final-answer">Final Answer</a>
+        </nav>
+      </aside>
+
+      <main>
+        <article>
+          <section id="quick-summary">
+            <h2>Quick Summary</h2>
+            <ul class="summary-list">
+              <li><strong>What the problem is about:</strong> designing a differential cross-coupled LC oscillator to oscillate at a target angular frequency <span class="nowrap">&omega;<sub>0</sub></span>.</li>
+              <li><strong>Key physics idea:</strong> the LC tank stores and exchanges electric and magnetic energy, while the cross-coupled transistors provide <em>negative conductance</em> to cancel losses.</li>
+              <li><strong>Governing equations:</strong> <span class="nowrap">&omega;<sub>0</sub> = 1/&radic;(LC)</span>, and startup occurs when transistor negative conductance equals or exceeds the tank loss conductance.</li>
+              <li><strong>Inductor loss model:</strong> an inductor with finite quality factor <em>Q</em> is represented by an equivalent parallel resistance <span class="nowrap">R<sub>P</sub> &asymp; Q&omega;<sub>0</sub>L</span>.</li>
+              <li><strong>Role of transistor output resistance:</strong> finite <span class="nowrap">r<sub>o</sub></span> adds extra positive conductance, so it increases the required <span class="nowrap">g<sub>m</sub></span>.</li>
+              <li><strong>Mathematical model:</strong> a linear small-signal differential-mode admittance balance at each resonant node.</li>
+              <li><strong>Result type:</strong> numeric. We find the required capacitance and the minimum transconductance per transistor.</li>
+              <li><strong>Physical meaning:</strong> the oscillator starts reliably only if the active devices can replenish at least as much energy per cycle as the lossy tank dissipates.</li>
+            </ul>
+          </section>
+
+          <section id="part0">
+            <h2>PART 0 — Concept Primer (Theory Before Solving)</h2>
+
+            <div class="cards">
+              <div class="card">
+                <div class="label">Core definitions</div>
+                <p><strong>L</strong> — inductance, unit: henry (H). It measures magnetic-energy storage.</p>
+                <p><strong>C</strong> — capacitance, unit: farad (F). It measures electric-energy storage.</p>
+                <p><strong>&omega;<sub>0</sub></strong> — oscillation angular frequency, unit: rad/s.</p>
+                <p><strong>Q</strong> — quality factor, dimensionless. A measure of how weakly damped the resonator is.</p>
+                <p><strong>R<sub>P</sub></strong> — equivalent parallel resistance representing tank loss.</p>
+                <p><strong>g<sub>m</sub></strong> — transistor transconductance, unit: siemens (S = A/V).</p>
+                <p><strong>r<sub>o</sub></strong> — transistor small-signal output resistance, unit: ohm (&Omega;).</p>
+              </div>
+
+              <div class="card">
+                <div class="label">Physical meaning</div>
+                <p>In an ideal LC tank, energy sloshes back and forth between the electric field of the capacitor and the magnetic field of the inductor. No net energy is lost.</p>
+                <p>In a real tank, metal loss, substrate loss, and device nonidealities dissipate energy. This damping can be represented by a conductance.</p>
+                <p>The cross-coupled transistor pair acts like a source of <em>negative conductance</em>, injecting energy back into the tank.</p>
+              </div>
+
+              <div class="card">
+                <div class="label">Key law</div>
+                <p>For a lossless resonator, the natural frequency follows from the harmonic-oscillator equation:</p>
+                <div class="equation">d²v/dt² + (1/LC) v = 0</div>
+                <p>Thus:</p>
+                <div class="equation">&omega;<sub>0</sub> = 1/&radic;(LC)</div>
+              </div>
+            </div>
+
+            <div class="math-insight">
+              <strong>Math Insight:</strong> the LC tank is a <em>second-order linear oscillator</em>. Mathematically, it is the same type of object as the mass-spring harmonic oscillator. The undamped equation
+              <span class="nowrap">d²x/dt² + &omega;<sub>0</sub><sup>2</sup>x = 0</span>
+              has oscillatory eigenmodes. Real losses add damping; the active devices must make the net damping zero or negative at startup.
+            </div>
+
+            <h3>Key laws, assumptions, and validity conditions</h3>
+            <div class="callout assumption">
+              <div class="label">Assumptions</div>
+              <ul>
+                <li>Small-signal startup analysis is used. This means we analyze the oscillator just at the moment oscillation begins, before large-signal amplitude limiting appears.</li>
+                <li>The oscillation mode is differential, so the common-source node is treated as an AC virtual ground.</li>
+                <li>The inductor loss is represented by a parallel resistance at the operating frequency.</li>
+                <li>The target frequency is set mainly by the LC tank, not by transistor parasitics.</li>
+                <li>Linearized transistor model: drain current variation is represented by <span class="nowrap">g<sub>m</sub>v<sub>gs</sub></span> plus <span class="nowrap">v<sub>ds</sub>/r<sub>o</sub></span>.</li>
+              </ul>
+            </div>
+
+            <h3>Common models and why they are used</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Use</th>
+                  <th>Why it is helpful</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Ideal LC resonator</td>
+                  <td>Set target frequency</td>
+                  <td>Captures the dominant storage physics with one simple closed-form relation.</td>
+                </tr>
+                <tr>
+                  <td>Parallel-loss tank model</td>
+                  <td>Account for finite Q</td>
+                  <td>Startup is easiest to analyze by comparing positive and negative conductances in parallel.</td>
+                </tr>
+                <tr>
+                  <td>Small-signal transistor model</td>
+                  <td>Find minimum <span class="nowrap">g<sub>m</sub></span></td>
+                  <td>Lets us express the active pair as an effective negative conductance.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3>Mini intuition examples</h3>
+            <ol>
+              <li><strong>Higher L or higher C means lower frequency:</strong> because the oscillator exchanges energy more slowly.</li>
+              <li><strong>Lower Q means more damping:</strong> therefore more transistor gain is needed to start oscillation.</li>
+              <li><strong>Smaller r<sub>o</sub> hurts startup:</strong> because it behaves like an additional leakage path that drains energy from the tank.</li>
+            </ol>
+
+            <h3>What to watch for</h3>
+            <div class="mistakes">
+              <ul>
+                <li>Do not confuse ordinary frequency <span class="nowrap">f</span> (Hz) with angular frequency <span class="nowrap">&omega;</span> (rad/s).</li>
+                <li>Do not forget that finite transistor <span class="nowrap">r<sub>o</sub></span> adds <em>positive</em> conductance.</li>
+                <li>Do not mix series and parallel Q formulas without stating the approximation.</li>
+                <li>The startup condition is a <em>small-signal</em> criterion, not the final large-signal operating condition.</li>
+              </ul>
+            </div>
+
+            <details>
+              <summary>Optional deeper note: exact versus approximate inductor-loss conversion</summary>
+              <p>
+                If an inductor is modeled as a series pair <span class="nowrap">L</span> and <span class="nowrap">R<sub>s</sub></span>, then
+                <span class="nowrap">Q = &omega;L/R<sub>s</sub></span>. The exact equivalent parallel resistance at that frequency is
+              </p>
+              <div class="equation">R<sub>P,exact</sub> = R<sub>s</sub>(1 + Q²)</div>
+              <p>
+                Since <span class="nowrap">R<sub>s</sub> = &omega;L/Q</span>, this becomes
+              </p>
+              <div class="equation">R<sub>P,exact</sub> = (&omega;L/Q)(1 + Q²) = &omega;L(Q + 1/Q)</div>
+              <p>
+                For <span class="nowrap">Q &gg; 1</span>, the term <span class="nowrap">1/Q</span> is small, so
+                <span class="nowrap">R<sub>P</sub> &asymp; Q&omega;L</span>.
+                Here <span class="nowrap">Q = 10</span>, so the approximation is quite reasonable.
+              </p>
+            </details>
+
+            <a class="backtop" href="#top">Back to top ↑</a>
+          </section>
+
+          <section id="part0b">
+            <h2>PART 0B — Industry &amp; Applied Physics Perspective</h2>
+
+            <h3>Where this appears in industry</h3>
+            <ul>
+              <li><strong>RF transceivers:</strong> local oscillators and voltage-controlled oscillators in wireless chips for phones, Wi-Fi, Bluetooth, satellite links, and radar front ends.</li>
+              <li><strong>Clock generation:</strong> on-chip frequency synthesis and timing references for processors, serializers, high-speed links, and mixed-signal SoCs.</li>
+              <li><strong>Instrumentation:</strong> precision signal sources, test equipment, spectrum analyzers, and sensor interfaces.</li>
+            </ul>
+
+            <h3>Why engineers care</h3>
+            <div class="grid-2">
+              <div class="callout key">
+                <div class="label">Performance</div>
+                <p>Oscillators affect phase noise, startup margin, power consumption, tuning range, and frequency accuracy.</p>
+              </div>
+              <div class="callout key">
+                <div class="label">Reliability and cost</div>
+                <p>Poor startup margin can cause production failures across process, voltage, and temperature corners. Oversizing devices raises current and chip area.</p>
+              </div>
+            </div>
+
+            <h3>Measurement and validation in practice</h3>
+            <ul>
+              <li>S-parameter and impedance extraction for inductors and tanks.</li>
+              <li>Phase-noise and startup-time measurements in lab characterization.</li>
+              <li>Corner simulation across process-voltage-temperature variations.</li>
+              <li>Parasitic extraction from layout to capture real on-chip wiring and substrate effects.</li>
+            </ul>
+
+            <h3>Design trade-offs and constraints</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Constraint</th>
+                  <th>Effect</th>
+                  <th>Design consequence</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Finite inductor Q</td>
+                  <td>More loss</td>
+                  <td>Requires larger <span class="nowrap">g<sub>m</sub></span> or more current</td>
+                </tr>
+                <tr>
+                  <td>Smaller transistor <span class="nowrap">r<sub>o</sub></span></td>
+                  <td>Extra tank loading</td>
+                  <td>Raises startup requirement</td>
+                </tr>
+                <tr>
+                  <td>Process tolerances</td>
+                  <td>Frequency shift</td>
+                  <td>Usually needs tuning elements such as varactors or switched capacitors</td>
+                </tr>
+                <tr>
+                  <td>Power budget</td>
+                  <td>Limits bias current</td>
+                  <td>Pushes design toward high-Q passives and efficient device sizing</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3>From lab to product</h3>
+            <p>
+              The ideal LC model is only the starting point. Real products include parasitic capacitances, bond-pad effects, package inductance, substrate loss, temperature variation, and amplitude stabilization. Engineers therefore design with margin: the startup condition in production is usually stronger than the bare mathematical minimum.
+            </p>
+
+            <a class="backtop" href="#top">Back to top ↑</a>
+          </section>
+
+          <section id="part1">
+            <h2>PART 1 — Problem Analysis (No Solving Yet)</h2>
+
+            <h3>Problem restated clearly</h3>
+            <p>
+              We are given a cross-coupled LC oscillator. The required oscillation angular frequency is
+              <span class="nowrap">&omega;<sub>0</sub> = 20 Grad/s = 20 &times; 10<sup>9</sup> rad/s</span>.
+              The available integrated inductor has
+              <span class="nowrap">L = 5 nH</span> and
+              <span class="nowrap">Q = 10</span>.
+              Each transistor has output resistance
+              <span class="nowrap">r<sub>o</sub> = 5 k&Omega;</span>.
+              We must find:
+            </p>
+            <ol>
+              <li>the required capacitance <span class="nowrap">C</span> for resonance at the specified frequency,</li>
+              <li>the minimum transconductance <span class="nowrap">g<sub>m</sub></span> per transistor needed for startup.</li>
+            </ol>
+
+            <div class="grid-2">
+              <div class="card">
+                <div class="label">Given quantities</div>
+                <ul>
+                  <li><span class="nowrap">&omega;<sub>0</sub> = 20 &times; 10<sup>9</sup> rad/s</span></li>
+                  <li><span class="nowrap">L = 5 &times; 10<sup>-9</sup> H</span></li>
+                  <li><span class="nowrap">Q = 10</span></li>
+                  <li><span class="nowrap">r<sub>o</sub> = 5 &times; 10<sup>3</sup> &Omega;</span></li>
+                </ul>
+              </div>
+              <div class="card">
+                <div class="label">Unknowns</div>
+                <ul>
+                  <li>Tank capacitance <span class="nowrap">C</span></li>
+                  <li>Minimum startup transconductance <span class="nowrap">g<sub>m,min</sub></span></li>
+                </ul>
+              </div>
+            </div>
+
+            <h3>Relevant principles and why they apply</h3>
+            <ul>
+              <li><strong>LC resonance:</strong> applies because the oscillation frequency is determined primarily by the tank.</li>
+              <li><strong>Quality-factor loss model:</strong> applies because the inductor is nonideal and its Q is specified.</li>
+              <li><strong>Small-signal startup criterion:</strong> applies because the question asks for the <em>minimum required</em> <span class="nowrap">g<sub>m</sub></span>, which is a startup threshold quantity.</li>
+            </ul>
+            <p>
+              We do <strong>not</strong> need a large-signal nonlinear amplitude analysis, because the problem does not ask for steady-state amplitude or waveform distortion.
+            </p>
+
+            <h3>Mathematical model</h3>
+            <div class="callout key">
+              <div class="label">Model statement</div>
+              <p>
+                Let <span class="nowrap">v<sub>1</sub>(t)</span> and <span class="nowrap">v<sub>2</sub>(t)</span> be the two tank node voltages. In differential oscillation,
+                <span class="nowrap">v<sub>2</sub>(t) = -v<sub>1</sub>(t)</span>.
+                The relevant domain is time <span class="nowrap">t &ge; 0</span>.
+                The initial condition is a small noise or perturbation that seeds startup.
+              </p>
+              <p>
+                The tank obeys a lumped-element ODE, not a field PDE. Thus operators such as <span class="nowrap">&nabla;</span> or <span class="nowrap">&Delta;</span> are not needed here because the system is modeled as spatially lumped rather than distributed.
+              </p>
+              <p>
+                At small signal, the node-admittance balance is the essential mathematical object:
+              </p>
+              <div class="equation">Y<sub>tank</sub>(&omega;) + Y<sub>loss</sub> + Y<sub>active</sub> = 0</div>
+              <p>
+                At resonance, the susceptances cancel, leaving a conductance-balance condition.
+              </p>
+            </div>
+
+            <h3>Assumptions</h3>
+            <div class="callout assumption">
+              <ul>
+                <li>Differential symmetry is used, so one half-circuit represents the full oscillator mode.</li>
+                <li>The tail current source is ideal enough to keep the source node approximately at AC ground for differential signals.</li>
+                <li>The loss of the tank is dominated by the inductor Q and transistor output resistance.</li>
+                <li>Parasitic capacitances are neglected unless already absorbed into the stated <span class="nowrap">C</span>.</li>
+              </ul>
+            </div>
+
+            <h3>Possible approaches</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Approach</th>
+                  <th>Idea</th>
+                  <th>Pros</th>
+                  <th>Cons</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Direct resonance + conductance balance</td>
+                  <td>Use <span class="nowrap">&omega;<sub>0</sub> = 1/&radic;(LC)</span> and compare positive and negative conductances</td>
+                  <td>Fast, transparent, standard for design</td>
+                  <td>Depends on small-signal assumptions</td>
+                </tr>
+                <tr>
+                  <td>Differential negative-resistance derivation</td>
+                  <td>Compute the equivalent negative resistance of the cross-coupled pair seen by the tank</td>
+                  <td>Gives strong physical intuition</td>
+                  <td>More algebra than needed</td>
+                </tr>
+                <tr>
+                  <td>Full state-space eigenvalue analysis</td>
+                  <td>Form linear ODE system and require a nondecaying mode</td>
+                  <td>Most rigorous</td>
+                  <td>Overkill for this numeric design problem</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p><strong>Best choice:</strong> the direct resonance + conductance-balance approach. It is mathematically clean, physically transparent, and exactly matched to the asked quantities.</p>
+
+            <a class="backtop" href="#top">Back to top ↑</a>
+          </section>
+
+          <section id="part2">
+            <h2>PART 2 — Strategy &amp; Tips (Roadmap Only)</h2>
+
+            <ol>
+              <li><strong>Set the resonant frequency relation.</strong><br>
+                Tool: <span class="nowrap">&omega;<sub>0</sub> = 1/&radic;(LC)</span>.<br>
+                Meaning: links the desired oscillation rate to the energy-storage elements.</li>
+
+              <li><strong>Solve for the required capacitor.</strong><br>
+                Tool: algebraic rearrangement.<br>
+                Meaning: determines the needed electric-energy storage for the chosen inductor.</li>
+
+              <li><strong>Translate inductor Q into an equivalent parallel loss resistance.</strong><br>
+                Tool: <span class="nowrap">R<sub>P</sub> &asymp; Q&omega;<sub>0</sub>L</span>.<br>
+                Meaning: converts “how lossy the inductor is” into an actual conductance seen by the tank.</li>
+
+              <li><strong>Add transistor output-resistance loading.</strong><br>
+                Tool: parallel conductance addition.<br>
+                Meaning: captures extra energy leakage from finite <span class="nowrap">r<sub>o</sub></span>.</li>
+
+              <li><strong>Write the startup condition.</strong><br>
+                Tool: negative conductance from cross-coupled pair must at least cancel total positive conductance.<br>
+                Meaning: zero net damping at threshold.</li>
+
+              <li><strong>Compute the minimum <span class="nowrap">g<sub>m</sub></span>.</strong><br>
+                Tool: solve the conductance balance numerically.<br>
+                Meaning: the smallest small-signal device strength that lets oscillation start.</li>
+
+              <li><strong>Do sanity checks.</strong><br>
+                Tool: unit analysis, limiting cases, physical interpretation.<br>
+                Meaning: confirms the result is not just algebraically correct but physically meaningful.</li>
+            </ol>
+
+            <div class="mistakes">
+              <div class="label">Common mistakes</div>
+              <ul>
+                <li>Using <span class="nowrap">f</span> instead of <span class="nowrap">&omega;</span> without the factor <span class="nowrap">2&pi;</span>.</li>
+                <li>Forgetting that conductances add in parallel: <span class="nowrap">G<sub>tot</sub> = 1/R<sub>P</sub> + 1/r<sub>o</sub></span>.</li>
+                <li>Using the wrong sign for the active-device contribution.</li>
+                <li>Reporting capacitance in farads without converting to picofarads.</li>
+              </ul>
+            </div>
+
+            <a class="backtop" href="#top">Back to top ↑</a>
+          </section>
+
+          <section id="part3">
+            <h2>PART 3 — Full Solution (Detailed + Teaching)</h2>
+
+            <h3>Physical intuition before calculating</h3>
+            <p>
+              The given inductor is small, only <span class="nowrap">5 nH</span>, while the desired angular frequency is very high,
+              <span class="nowrap">20 &times; 10<sup>9</sup> rad/s</span>.
+              So we expect the required capacitance to be small, in the sub-picofarad range.
+              Also, since <span class="nowrap">Q = 10</span> is not extremely high, the tank has noticeable loss. Therefore the cross-coupled pair must supply a nontrivial negative conductance. Finite <span class="nowrap">r<sub>o</sub></span> adds extra loading, so the required <span class="nowrap">g<sub>m</sub></span> should be somewhat larger than the tank-loss conductance alone.
+            </p>
+
+            <h3>Step 1: Find the required capacitance</h3>
+            <p>
+              For an LC resonator, the resonance condition is
+            </p>
+
+            <div class="eqrow">
+              <div class="equation" id="eq1">&omega;<sub>0</sub> = 1/&radic;(LC)</div>
+              <button class="copy-btn" data-copy-target="eq1">Copy equation</button>
+            </div>
+
+            <p>
+              Solve this for <span class="nowrap">C</span>. Since each symbol is defined:
+            </p>
+            <ul>
+              <li><span class="nowrap">&omega;<sub>0</sub></span> = target angular frequency,</li>
+              <li><span class="nowrap">L</span> = given inductance,</li>
+              <li><span class="nowrap">C</span> = unknown capacitance.</li>
+            </ul>
+
+            <div class="equation">
+&omega;<sub>0</sub> = 1/&radic;(LC)
+
+&omega;<sub>0</sub><sup>2</sup> = 1/(LC)
+
+C = 1/(&omega;<sub>0</sub><sup>2</sup>L)
+            </div>
+
+            <p>Substitute the numerical values:</p>
+            <div class="equation">
+C = 1 / [ (20 &times; 10<sup>9</sup>)<sup>2</sup> (5 &times; 10<sup>-9</sup>) ]
+            </div>
+
+            <p>Now calculate carefully:</p>
+            <div class="equation">
+(20 &times; 10<sup>9</sup>)<sup>2</sup> = 400 &times; 10<sup>18</sup> = 4 &times; 10<sup>20</sup>
+
+(&omega;<sub>0</sub><sup>2</sup>L) = (4 &times; 10<sup>20</sup>)(5 &times; 10<sup>-9</sup>)
+                    = 20 &times; 10<sup>11</sup>
+                    = 2 &times; 10<sup>12</sup>
+
+Therefore,
+
+C = 1 / (2 &times; 10<sup>12</sup>) F
+  = 0.5 &times; 10<sup>-12</sup> F
+  = 5 &times; 10<sup>-13</sup> F
+            </div>
+
+            <div class="callout good">
+              <strong>Capacitance result:</strong>
+              <div class="equation">C = 0.5 pF</div>
+            </div>
+
+            <h3>Step 2: Convert inductor Q into an equivalent parallel resistance</h3>
+            <p>
+              The tank loss is represented by an equivalent parallel resistor <span class="nowrap">R<sub>P</sub></span>.
+              For a reasonably high-Q inductor, the standard approximation at the operating frequency is
+            </p>
+
+            <div class="eqrow">
+              <div class="equation" id="eq2">R<sub>P</sub> &asymp; Q &omega;<sub>0</sub> L</div>
+              <button class="copy-btn" data-copy-target="eq2">Copy equation</button>
+            </div>
+
+            <p>
+              This is valid because at a fixed frequency the inductor loss can be mapped from series form to parallel form, and for <span class="nowrap">Q &gg; 1</span>, the leading behavior is proportional to <span class="nowrap">Q&omega;L</span>. Here <span class="nowrap">Q = 10</span>, so the approximation is acceptable for design-level work.
+            </p>
+
+            <p>Substitute the numbers:</p>
+            <div class="equation">
+R<sub>P</sub> &asymp; (10)(20 &times; 10<sup>9</sup>)(5 &times; 10<sup>-9</sup>) &Omega;
+            </div>
+
+            <div class="equation">
+(20 &times; 10<sup>9</sup>)(5 &times; 10<sup>-9</sup>) = 100
+
+Therefore,
+
+R<sub>P</sub> &asymp; 10 &times; 100 = 1000 &Omega;
+            </div>
+
+            <div class="callout good">
+              <strong>Equivalent tank-loss resistance:</strong>
+              <div class="equation">R<sub>P</sub> &asymp; 1.0 k&Omega;</div>
+            </div>
+
+            <details>
+              <summary>Optional deeper note: exact value with the series-to-parallel conversion</summary>
+              <p>
+                Since <span class="nowrap">Q = &omega;L/R<sub>s</sub></span>, the series loss is
+              </p>
+              <div class="equation">R<sub>s</sub> = &omega;L/Q = 100/10 = 10 &Omega;</div>
+              <p>Then the exact parallel equivalent at that frequency is</p>
+              <div class="equation">R<sub>P,exact</sub> = R<sub>s</sub>(1 + Q<sup>2</sup>) = 10(101) = 1010 &Omega;</div>
+              <p>
+                This is very close to <span class="nowrap">1.0 k&Omega;</span>, so the approximation is fully consistent here.
+              </p>
+            </details>
+
+            <h3>Step 3: Build the conductance balance for startup</h3>
+            <p>
+              At resonance, the reactive parts cancel. What remains is a comparison of conductances:
+            </p>
+            <ul>
+              <li>Positive conductance from the tank loss: <span class="nowrap">1/R<sub>P</sub></span></li>
+              <li>Positive conductance from finite transistor output resistance: <span class="nowrap">1/r<sub>o</sub></span></li>
+              <li>Negative conductance supplied by the cross-coupled action: approximately <span class="nowrap">-g<sub>m</sub></span> per node in the differential half-circuit</li>
+            </ul>
+
+            <p>
+              Why is the active contribution <span class="nowrap">-g<sub>m</sub></span> here? Because by symmetry, in differential mode
+              <span class="nowrap">v<sub>2</sub> = -v<sub>1</sub></span>.
+              For the left transistor,
+              <span class="nowrap">i<sub>d1</sub> = g<sub>m</sub>v<sub>gs1</sub> + v<sub>ds1</sub>/r<sub>o</sub></span>.
+              Since the gate of the left transistor is tied to the right node,
+              <span class="nowrap">v<sub>gs1</sub> = v<sub>2</sub> = -v<sub>1</sub></span>,
+              and <span class="nowrap">v<sub>ds1</sub> = v<sub>1</sub></span>.
+              Hence:
+            </p>
+
+            <div class="equation">
+i<sub>d1</sub> = g<sub>m</sub>(-v<sub>1</sub>) + v<sub>1</sub>/r<sub>o</sub>
+              = (-g<sub>m</sub> + 1/r<sub>o</sub>)v<sub>1</sub>
+            </div>
+
+            <p>
+              Therefore the transistor pair appears, at each node in the differential half-circuit, as a conductance
+              <span class="nowrap">(-g<sub>m</sub> + 1/r<sub>o</sub>)</span>.
+              Adding the tank loss gives total small-signal conductance
+            </p>
+
+            <div class="eqrow">
+              <div class="equation" id="eq3">G<sub>net</sub> = 1/R<sub>P</sub> + 1/r<sub>o</sub> - g<sub>m</sub></div>
+              <button class="copy-btn" data-copy-target="eq3">Copy equation</button>
+            </div>
+
+            <p>
+              The startup threshold is the point of zero net damping:
+            </p>
+            <div class="equation">
+G<sub>net</sub> = 0
+            </div>
+
+            <p>So the minimum transconductance is</p>
+            <div class="equation">
+g<sub>m,min</sub> = 1/R<sub>P</sub> + 1/r<sub>o</sub>
+            </div>
+
+            <h3>Step 4: Compute the minimum transconductance</h3>
+            <p>Now substitute the numbers:</p>
+            <div class="equation">
+1/R<sub>P</sub> = 1/1000 = 0.001 S = 1.0 mS
+
+1/r<sub>o</sub> = 1/5000 = 0.0002 S = 0.2 mS
+            </div>
+
+            <div class="equation">
+g<sub>m,min</sub> = 1.0 mS + 0.2 mS = 1.2 mS
+            </div>
+
+            <div class="callout good">
+              <strong>Minimum startup transconductance per transistor:</strong>
+              <div class="equation">g<sub>m,min</sub> = 1.2 mS</div>
+            </div>
+
+            <h3>Dimensional analysis check</h3>
+            <div class="grid-2">
+              <div class="card">
+                <div class="label">Capacitance</div>
+                <p>
+                  From <span class="nowrap">C = 1/(&omega;<sub>0</sub><sup>2</sup>L)</span>:
+                </p>
+                <div class="equation">
+[&omega;<sub>0</sub><sup>2</sup>L] = s<sup>-2</sup> &middot; H
+= s<sup>-2</sup> &middot; (V s/A)
+= V/(A s)
+= 1/F
+                </div>
+                <p>So <span class="nowrap">C</span> indeed has units of farads.</p>
+              </div>
+
+              <div class="card">
+                <div class="label">Transconductance</div>
+                <p>
+                  From <span class="nowrap">g<sub>m,min</sub> = 1/R<sub>P</sub> + 1/r<sub>o</sub></span>,
+                  each term has units
+                </p>
+                <div class="equation">1/&Omega; = S</div>
+                <p>So the result is correctly in siemens.</p>
+              </div>
+            </div>
+
+            <h3>Limiting-case sanity checks</h3>
+            <ul>
+              <li><strong>If the inductor were ideal</strong> (<span class="nowrap">Q &rarr; &infin;</span>), then <span class="nowrap">R<sub>P</sub> &rarr; &infin;</span> and the tank-loss term would vanish. The required <span class="nowrap">g<sub>m</sub></span> would be reduced.</li>
+              <li><strong>If the transistor output resistance were infinite</strong> (<span class="nowrap">r<sub>o</sub> &rarr; &infin;</span>), then the extra loading term disappears and <span class="nowrap">g<sub>m,min</sub> &rarr; 1/R<sub>P</sub> = 1.0 mS</span>.</li>
+              <li><strong>If Q were lower</strong>, then <span class="nowrap">R<sub>P</sub></span> would be smaller, so the required <span class="nowrap">g<sub>m</sub></span> would be larger. That is physically consistent.</li>
+            </ul>
+
+            <h3>Plain-language interpretation</h3>
+            <p>
+              The oscillator needs a capacitance of <strong>0.5 pF</strong> to resonate with the given <strong>5 nH</strong> inductor at the required angular frequency. Because the tank and the transistors both dissipate energy, each transistor must be biased to provide at least <strong>1.2 mS</strong> of transconductance so that the cross-coupled pair can cancel the total damping and allow oscillation to start.
+            </p>
+
+            <a class="backtop" href="#top">Back to top ↑</a>
+          </section>
+
+          <section id="part4">
+            <h2>PART 4 — Deeper Understanding (Theory Around the Result)</h2>
+
+            <h3>Re-interpret the final formulas</h3>
+            <div class="cards">
+              <div class="card">
+                <div class="label">Frequency-setting formula</div>
+                <div class="equation">C = 1/(&omega;<sub>0</sub><sup>2</sup>L)</div>
+                <p>
+                  This says the required capacitance scales inversely with both inductance and the square of frequency.
+                  Doubling the target frequency cuts the required capacitance by a factor of four.
+                </p>
+              </div>
+
+              <div class="card">
+                <div class="label">Startup formula</div>
+                <div class="equation">g<sub>m,min</sub> = 1/R<sub>P</sub> + 1/r<sub>o</sub></div>
+                <p>
+                  This is a conductance-balance law. Every dissipative path adds a positive conductance, and the active device must match that total with negative conductance.
+                </p>
+              </div>
+            </div>
+
+            <h3>Parameter dependence</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Increase it</th>
+                  <th>Effect on result</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="nowrap">&omega;<sub>0</sub></span></td>
+                  <td>Higher target frequency</td>
+                  <td><span class="nowrap">C</span> decreases as <span class="nowrap">1/&omega;<sub>0</sub><sup>2</sup></span>; <span class="nowrap">R<sub>P</sub></span> rises as <span class="nowrap">&omega;<sub>0</sub></span> if <span class="nowrap">Q</span> and <span class="nowrap">L</span> are fixed</td>
+                </tr>
+                <tr>
+                  <td><span class="nowrap">L</span></td>
+                  <td>Larger inductance</td>
+                  <td><span class="nowrap">C</span> decreases as <span class="nowrap">1/L</span>; <span class="nowrap">R<sub>P</sub></span> increases linearly if <span class="nowrap">Q</span> and <span class="nowrap">&omega;<sub>0</sub></span> are fixed</td>
+                </tr>
+                <tr>
+                  <td><span class="nowrap">Q</span></td>
+                  <td>Better inductor quality</td>
+                  <td><span class="nowrap">R<sub>P</sub></span> increases, so <span class="nowrap">g<sub>m,min</sub></span> decreases</td>
+                </tr>
+                <tr>
+                  <td><span class="nowrap">r<sub>o</sub></span></td>
+                  <td>Larger output resistance</td>
+                  <td>Less loading, so <span class="nowrap">g<sub>m,min</sub></span> decreases</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3>Alternative derivation idea</h3>
+            <p>
+              One can also derive the startup condition by writing a second-order ODE for the tank voltage with an effective damping coefficient. In that form,
+              the active pair enters as a term that reduces the damping. Startup occurs when the damping coefficient crosses zero. This is mathematically the same condition as the conductance balance used above.
+            </p>
+
+            <div class="math-insight">
+              <strong>Math Insight:</strong> the startup threshold is an <em>eigenvalue crossing</em>. In a linearized dynamical system, the time dependence is of the form
+              <span class="nowrap">e<sup>st</sup></span>. At the threshold, the real part of <span class="nowrap">s</span> changes sign from negative (decay) to zero and then positive (growth). The condition
+              <span class="nowrap">g<sub>m</sub> = 1/R<sub>P</sub> + 1/r<sub>o</sub></span>
+              is exactly the boundary between damped and growing oscillatory solutions.
+            </div>
+
+            <h3>Concept checks</h3>
+            <ul>
+              <li><strong>Q:</strong> Why is <span class="nowrap">g<sub>m,min</sub></span> not just <span class="nowrap">1/R<sub>P</sub></span>?<br>
+                  <strong>A:</strong> Because finite <span class="nowrap">r<sub>o</sub></span> provides an additional loss path, adding conductance <span class="nowrap">1/r<sub>o</sub></span>.</li>
+              <li><strong>Q:</strong> If the oscillator does not start in silicon but the math says it should, what is a likely reason?<br>
+                  <strong>A:</strong> Parasitics, process spread, and layout-induced loss can reduce the real startup margin, so designers usually choose <span class="nowrap">g<sub>m</sub></span> above the ideal minimum.</li>
+              <li><strong>Q:</strong> Does the formula for <span class="nowrap">C</span> depend on transistor <span class="nowrap">g<sub>m</sub></span>?<br>
+                  <strong>A:</strong> Not in the ideal first-order resonance design. <span class="nowrap">g<sub>m</sub></span> sets startup, while <span class="nowrap">LC</span> sets frequency.</li>
+              <li><strong>Q:</strong> What kind of mathematical system is this?<br>
+                  <strong>A:</strong> A lumped, linearized, second-order dynamical system with gain and damping.</li>
+            </ul>
+
+            <a class="backtop" href="#top">Back to top ↑</a>
+          </section>
+
+          <section id="part5">
+            <h2>PART 5 — Optional Plot Guide</h2>
+            <p>
+              A plot is not necessary for this problem type because the task is fully determined by two direct algebraic design relations. A graph would add visual length without improving the core understanding as much as the conductance-balance derivation does.
+            </p>
+            <a class="backtop" href="#top">Back to top ↑</a>
+          </section>
+
+          <section id="final-answer">
+            <h2>Final Answer</h2>
+
+            <div class="finalbox">
+              <div class="eqrow">
+                <div class="equation" id="finalText">
+Required capacitance:
+C = 1/(&omega;0²L) = 1 / [ (20×10^9)² (5×10^-9) ] = 0.5 pF
+
+Inductor loss resistance:
+R_P ≈ Q&omega;0L = (10)(20×10^9)(5×10^-9) = 1000 Ω = 1.0 kΩ
+
+Startup condition:
+g_m,min = 1/R_P + 1/r_o = 1/1000 + 1/5000
+        = 0.001 + 0.0002
+        = 0.0012 S = 1.2 mS
+
+Final results:
+C = 0.5 pF
+g_m,min = 1.2 mS per transistor
+                </div>
+                <button class="copy-btn" data-copy-target="finalText">Copy final answer</button>
+              </div>
+
+              <p><strong>Boxed result:</strong></p>
+              <div class="equation">
+C = 0.5 pF
+
+g<sub>m,min</sub> = 1.2 mS
+              </div>
+              <p class="small">
+                This is the minimum small-signal value for startup. In practical design, engineers usually choose a larger value to ensure robust operation over process, voltage, temperature, and parasitic variation.
+              </p>
+            </div>
+
+            <a class="backtop" href="#top">Back to top ↑</a>
+          </section>
+        </article>
+      </main>
+    </div>
+
+    <footer>
+      End of article.
+    </footer>
   </div>
+
+  <script>
+    (function(){
+      function textFromNode(node){
+        return node.innerText.replace(/\u00A0/g, ' ').trim();
+      }
+
+      async function copyText(text, button){
+        try{
+          await navigator.clipboard.writeText(text);
+          const old = button.textContent;
+          button.textContent = 'Copied!';
+          setTimeout(() => button.textContent = old, 1200);
+        }catch(err){
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          try{ document.execCommand('copy'); }catch(e){}
+          document.body.removeChild(ta);
+          const old = button.textContent;
+          button.textContent = 'Copied!';
+          setTimeout(() => button.textContent = old, 1200);
+        }
+      }
+
+      document.querySelectorAll('.copy-btn').forEach(btn=>{
+        btn.addEventListener('click', function(){
+          const id = this.getAttribute('data-copy-target');
+          const node = document.getElementById(id);
+          if(node) copyText(textFromNode(node), this);
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
